@@ -1,0 +1,14 @@
+{
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key",
+      "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_key",
+      "SMTP_HOST": "@smtp_host",
+      "SMTP_PORT": "@smtp_port", 
+      "SMTP_USER": "@smtp_user",
+      "SMTP_PASS": "@smtp_pass",
+      "SMTP_FROM": "@smtp_from"
+    }
+  }
+}
