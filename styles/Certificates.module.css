@@ -1,0 +1,20 @@
+.certificates {
+  padding: 2rem;
+  text-align: center;
+}
+
+.certificates ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.certificates li {
+  background: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}

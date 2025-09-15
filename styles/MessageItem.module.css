@@ -1,0 +1,21 @@
+
+.message {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  background-color: #fefefe;
+}
+
+.sender {
+  font-weight: 600;
+}
+
+.text {
+  margin: 0.25rem 0;
+}
+
+.timestamp {
+  font-size: 0.8rem;
+  color: #666;
+}
