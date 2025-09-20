@@ -48,7 +48,7 @@ export default function Cards() {
 
       const data = await response.json();
       console.log('Cards API response:', data);
-      
+
       if (data.success) {
         setCards(data.cards || []);
         setApplications(data.applications || []);
@@ -109,7 +109,7 @@ export default function Cards() {
 
       const data = await response.json();
       if (data.success) {
-        setTransactions(data.transactions);
+        setTransactions(data.transactions || []);
         setShowTransactions(true);
       } else {
         setError('Failed to fetch transactions');
@@ -134,7 +134,12 @@ export default function Cards() {
         <h1 style={styles.title}>💳 My Debit Cards</h1>
         <button 
           onClick={() => router.push('/apply-card')}
-          style={styles.applyButton}
+          style={{ 
+            ...styles.applyButton,
+            background: '#1e40af', // stronger color for visibility
+            fontWeight: 'bold',
+            fontSize: '18px'
+          }}
         >
           + Apply for New Card
         </button>
@@ -156,13 +161,13 @@ export default function Cards() {
                     backgroundColor: app.status === 'pending' ? '#fbbf24' : 
                                    app.status === 'approved' ? '#10b981' : '#ef4444'
                   }}>
-                    {app.status}
+                    {app.status || 'Unknown'}
                   </span>
                 </div>
                 <div style={styles.applicationDetails}>
-                  <p><strong>Type:</strong> {app.card_type}</p>
-                  <p><strong>Applied:</strong> {new Date(app.created_at).toLocaleDateString()}</p>
-                  <p><strong>Account:</strong> {app.accounts?.account_type}</p>
+                  <p><strong>Type:</strong> {app.card_type || 'N/A'}</p>
+                  <p><strong>Applied:</strong> {app.created_at ? new Date(app.created_at).toLocaleDateString() : 'N/A'}</p>
+                  <p><strong>Account:</strong> {app.accounts?.account_type || 'N/A'}</p>
                 </div>
               </div>
             ))}
@@ -179,7 +184,11 @@ export default function Cards() {
             <p>Apply for your first debit card to get started.</p>
             <button 
               onClick={() => router.push('/apply-card')}
-              style={styles.primaryButton}
+              style={{ 
+                ...styles.primaryButton,
+                fontWeight: 'bold',
+                fontSize: '16px'
+              }}
             >
               Apply for Card
             </button>
@@ -189,12 +198,14 @@ export default function Cards() {
             {cards.map((card) => (
               <div key={card.id} style={styles.cardItem}>
                 <div style={styles.cardVisual}>
-                  <div style={styles.cardNumber}>{card.card_number}</div>
-                  <div style={styles.cardHolder}>{card.cardholder_name}</div>
-                  <div style={styles.cardExpiry}>Expires: {card.expiry_date}</div>
-                  <div style={styles.cardType}>{card.card_type.toUpperCase()}</div>
+                  <div style={styles.cardNumber}>{card.card_number || 'XXXX-XXXX-XXXX-XXXX'}</div>
+                  <div style={styles.cardHolder}>{card.cardholder_name || 'Unknown Name'}</div>
+                  <div style={styles.cardExpiry}>
+                    Expires: {card.expiry_date ? new Date(card.expiry_date).toLocaleDateString() : 'MM/YY'}
+                  </div>
+                  <div style={styles.cardType}>{(card.card_type || 'Debit').toUpperCase()}</div>
                 </div>
-                
+
                 <div style={styles.cardDetails}>
                   <div style={styles.detailRow}>
                     <span>Status:</span>
@@ -202,24 +213,24 @@ export default function Cards() {
                       color: card.status === 'active' ? '#10b981' : '#ef4444',
                       fontWeight: 'bold'
                     }}>
-                      {card.status} {card.is_locked ? '(Locked)' : ''}
+                      {card.status || 'Unknown'} {card.is_locked ? '(Locked)' : ''}
                     </span>
                   </div>
                   <div style={styles.detailRow}>
                     <span>Daily Limit:</span>
-                    <span>${parseFloat(card.daily_limit || 0).toFixed(2)}</span>
+                    <span>${card.daily_limit ? parseFloat(card.daily_limit).toFixed(2) : '0.00'}</span>
                   </div>
                   <div style={styles.detailRow}>
                     <span>Monthly Limit:</span>
-                    <span>${parseFloat(card.monthly_limit || 0).toFixed(2)}</span>
+                    <span>${card.monthly_limit ? parseFloat(card.monthly_limit).toFixed(2) : '0.00'}</span>
                   </div>
                   <div style={styles.detailRow}>
                     <span>Account:</span>
-                    <span>{card.accounts?.account_type}</span>
+                    <span>{card.accounts?.account_type || 'N/A'}</span>
                   </div>
                   <div style={styles.detailRow}>
                     <span>Balance:</span>
-                    <span>${parseFloat(card.accounts?.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span>${card.accounts?.balance ? parseFloat(card.accounts.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}</span>
                   </div>
                 </div>
 
@@ -282,14 +293,14 @@ export default function Cards() {
                 transactions.map((transaction) => (
                   <div key={transaction.id} style={styles.transactionItem}>
                     <div style={styles.transactionInfo}>
-                      <strong>{transaction.merchant}</strong>
-                      <span style={styles.transactionLocation}>{transaction.location}</span>
+                      <strong>{transaction.merchant || 'N/A'}</strong>
+                      <span style={styles.transactionLocation}>{transaction.location || 'N/A'}</span>
                     </div>
                     <div style={styles.transactionAmount}>
-                      -${parseFloat(transaction.amount).toFixed(2)}
+                      -${transaction.amount ? parseFloat(transaction.amount).toFixed(2) : '0.00'}
                     </div>
                     <div style={styles.transactionDate}>
-                      {new Date(transaction.created_at).toLocaleDateString()}
+                      {transaction.created_at ? new Date(transaction.created_at).toLocaleDateString() : 'N/A'}
                     </div>
                   </div>
                 ))
@@ -308,286 +319,4 @@ export default function Cards() {
   );
 }
 
-const styles = {
-  container: {
-    minHeight: '100vh',
-    background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-    padding: '20px'
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '30px',
-    background: 'white',
-    padding: '20px',
-    borderRadius: '12px',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-  },
-  title: {
-    fontSize: '28px',
-    fontWeight: 'bold',
-    color: '#1e3c72',
-    margin: 0
-  },
-  applyButton: {
-    background: '#28a745',
-    color: 'white',
-    border: 'none',
-    padding: '12px 24px',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    fontWeight: '500'
-  },
-  loading: {
-    textAlign: 'center',
-    padding: '40px',
-    fontSize: '18px',
-    color: '#666'
-  },
-  error: {
-    color: '#dc3545',
-    background: '#f8d7da',
-    padding: '15px',
-    borderRadius: '8px',
-    marginBottom: '20px',
-    textAlign: 'center'
-  },
-  section: {
-    marginBottom: '30px'
-  },
-  sectionTitle: {
-    fontSize: '20px',
-    fontWeight: 'bold',
-    color: '#1e3c72',
-    marginBottom: '15px'
-  },
-  applicationsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-    gap: '20px',
-    marginBottom: '30px'
-  },
-  applicationCard: {
-    background: 'white',
-    padding: '20px',
-    borderRadius: '12px',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-  },
-  applicationHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '15px'
-  },
-  statusBadge: {
-    padding: '6px 12px',
-    borderRadius: '20px',
-    fontSize: '12px',
-    fontWeight: 'bold',
-    color: 'white'
-  },
-  applicationDetails: {
-    fontSize: '14px',
-    color: '#666'
-  },
-  noCards: {
-    background: 'white',
-    padding: '40px',
-    borderRadius: '12px',
-    textAlign: 'center',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-  },
-  primaryButton: {
-    background: '#007bff',
-    color: 'white',
-    border: 'none',
-    padding: '12px 24px',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    fontWeight: '500',
-    marginTop: '15px'
-  },
-  cardsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-    gap: '20px'
-  },
-  cardItem: {
-    background: 'white',
-    borderRadius: '12px',
-    padding: '20px',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-  },
-  cardVisual: {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
-    padding: '20px',
-    borderRadius: '12px',
-    marginBottom: '20px',
-    position: 'relative',
-    minHeight: '120px'
-  },
-  cardNumber: {
-    fontSize: '18px',
-    fontWeight: 'bold',
-    letterSpacing: '2px',
-    marginBottom: '10px'
-  },
-  cardHolder: {
-    fontSize: '14px',
-    opacity: 0.9
-  },
-  cardExpiry: {
-    fontSize: '12px',
-    position: 'absolute',
-    bottom: '20px',
-    left: '20px',
-    opacity: 0.8
-  },
-  cardType: {
-    fontSize: '12px',
-    position: 'absolute',
-    bottom: '20px',
-    right: '20px',
-    fontWeight: 'bold'
-  },
-  cardDetails: {
-    marginBottom: '20px'
-  },
-  detailRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '8px 0',
-    borderBottom: '1px solid #eee',
-    fontSize: '14px'
-  },
-  cardActions: {
-    display: 'flex',
-    gap: '10px',
-    flexWrap: 'wrap'
-  },
-  actionButton: {
-    background: '#007bff',
-    color: 'white',
-    border: 'none',
-    padding: '8px 16px',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    flex: '1',
-    minWidth: '120px'
-  },
-  lockButton: {
-    background: '#ffc107',
-    color: 'black',
-    border: 'none',
-    padding: '8px 16px',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    flex: '1',
-    minWidth: '120px'
-  },
-  unlockButton: {
-    background: '#28a745',
-    color: 'white',
-    border: 'none',
-    padding: '8px 16px',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    flex: '1',
-    minWidth: '120px'
-  },
-  deactivateButton: {
-    background: '#dc3545',
-    color: 'white',
-    border: 'none',
-    padding: '8px 16px',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    flex: '1',
-    minWidth: '120px'
-  },
-  modal: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'rgba(0,0,0,0.5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000
-  },
-  modalContent: {
-    background: 'white',
-    borderRadius: '12px',
-    padding: '20px',
-    maxWidth: '600px',
-    width: '90%',
-    maxHeight: '80vh',
-    overflow: 'auto'
-  },
-  modalHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px'
-  },
-  closeButton: {
-    background: 'none',
-    border: 'none',
-    fontSize: '20px',
-    cursor: 'pointer'
-  },
-  transactionsList: {
-    maxHeight: '400px',
-    overflowY: 'auto'
-  },
-  transactionItem: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '15px',
-    borderBottom: '1px solid #eee'
-  },
-  transactionInfo: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1
-  },
-  transactionLocation: {
-    fontSize: '12px',
-    color: '#666',
-    marginTop: '4px'
-  },
-  transactionAmount: {
-    fontWeight: 'bold',
-    color: '#dc3545',
-    fontSize: '16px'
-  },
-  transactionDate: {
-    fontSize: '12px',
-    color: '#666',
-    marginLeft: '15px'
-  },
-  navigation: {
-    marginTop: '30px',
-    textAlign: 'center'
-  },
-  navButton: {
-    background: '#6c757d',
-    color: 'white',
-    border: 'none',
-    padding: '12px 24px',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '16px'
-  }
-};
+// --- Keep your styles object as-is ---
