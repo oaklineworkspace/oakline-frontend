@@ -25,8 +25,8 @@ export default function Cards() {
       }
       setUser(session.user);
       await fetchUserCards();
-    } catch (error) {
-      console.error('Auth check error:', error);
+    } catch (err) {
+      console.error('Auth check error:', err);
       router.push('/login');
     }
   };
@@ -39,7 +39,7 @@ export default function Cards() {
       // Fetch cards with account info
       const { data: cardsData, error: cardsError } = await supabase
         .from('cards')
-        .select(`*, accounts:account_id(account_name, account_type, balance)`)
+        .select(`*, accounts:account_id(id, account_number, account_type, balance)`)
         .eq('user_id', session.user.id);
 
       if (cardsError) throw cardsError;
@@ -48,7 +48,7 @@ export default function Cards() {
       // Fetch card applications with account info
       const { data: appsData, error: appsError } = await supabase
         .from('card_applications')
-        .select(`*, accounts:account_id(account_name, account_type)`)
+        .select(`*, accounts:account_id(id, account_number, account_type)`)
         .eq('user_id', session.user.id);
 
       if (appsError) throw appsError;
@@ -82,8 +82,8 @@ export default function Cards() {
       } else {
         setError(data.error || 'Failed to update card');
       }
-    } catch (error) {
-      console.error('Error updating card:', error);
+    } catch (err) {
+      console.error('Error updating card:', err);
       setError('Error updating card');
     }
   };
@@ -104,8 +104,8 @@ export default function Cards() {
       } else {
         setError('Failed to fetch transactions');
       }
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
+    } catch (err) {
+      console.error('Error fetching transactions:', err);
       setError('Error loading transactions');
     }
   };
@@ -123,6 +123,7 @@ export default function Cards() {
 
       {error && <div style={styles.error}>{error}</div>}
 
+      {/* Card Applications */}
       {applications.length > 0 && (
         <div style={styles.section}>
           <h2 style={styles.sectionTitle}>📋 Card Applications</h2>
@@ -131,14 +132,17 @@ export default function Cards() {
               <div key={app.id} style={styles.applicationCard}>
                 <div style={styles.applicationHeader}>
                   <h3>Card Application</h3>
-                  <span style={{ ...styles.statusBadge, backgroundColor: app.status === 'pending' ? '#fbbf24' : app.status === 'approved' ? '#10b981' : '#ef4444' }}>
-                    {app.status || 'Unknown'}
+                  <span style={{
+                    ...styles.statusBadge,
+                    backgroundColor: app.application_status === 'pending' ? '#fbbf24' : app.application_status === 'approved' ? '#10b981' : '#ef4444'
+                  }}>
+                    {app.application_status || 'Unknown'}
                   </span>
                 </div>
                 <div style={styles.applicationDetails}>
                   <p><strong>Type:</strong> {app.card_type || 'N/A'}</p>
-                  <p><strong>Applied:</strong> {app.created_at ? new Date(app.created_at).toLocaleDateString() : 'N/A'}</p>
-                  <p><strong>Account:</strong> {app.accounts?.account_name || 'N/A'} ({app.accounts?.account_type || 'N/A'})</p>
+                  <p><strong>Applied:</strong> {app.requested_at ? new Date(app.requested_at).toLocaleDateString() : 'N/A'}</p>
+                  <p><strong>Account:</strong> {app.accounts?.account_number || 'N/A'} ({app.accounts?.account_type || 'N/A'})</p>
                 </div>
               </div>
             ))}
@@ -146,6 +150,7 @@ export default function Cards() {
         </div>
       )}
 
+      {/* Active Cards */}
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>💳 Active Cards</h2>
         {cards.length === 0 ? (
@@ -162,7 +167,7 @@ export default function Cards() {
               <div key={card.id} style={styles.cardItem}>
                 <div style={styles.cardVisual}>
                   <div style={styles.cardNumber}>{card.card_number || 'XXXX-XXXX-XXXX-XXXX'}</div>
-                  <div style={styles.cardHolder}>{card.cardholder_name || 'Unknown Name'}</div>
+                  <div style={styles.cardHolder}>{user?.email || 'Unknown Name'}</div>
                   <div style={styles.cardExpiry}>Expires: {card.expiry_date ? new Date(card.expiry_date).toLocaleDateString() : 'MM/YY'}</div>
                   <div style={styles.cardType}>{(card.card_type || 'Debit').toUpperCase()}</div>
                 </div>
@@ -174,10 +179,10 @@ export default function Cards() {
                       {card.status || 'Unknown'} {card.is_locked ? '(Locked)' : ''}
                     </span>
                   </div>
-                  <div style={styles.detailRow}><span>Daily Limit:</span><span>${card.daily_limit ? parseFloat(card.daily_limit).toFixed(2) : '0.00'}</span></div>
-                  <div style={styles.detailRow}><span>Monthly Limit:</span><span>${card.monthly_limit ? parseFloat(card.monthly_limit).toFixed(2) : '0.00'}</span></div>
-                  <div style={styles.detailRow}><span>Account:</span><span>{card.accounts?.account_name || 'N/A'} ({card.accounts?.account_type || 'N/A'})</span></div>
-                  <div style={styles.detailRow}><span>Balance:</span><span>${card.accounts?.balance ? parseFloat(card.accounts.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}</span></div>
+                  <div style={styles.detailRow}><span>Daily Limit:</span><span>${card.daily_limit?.toFixed(2) || '0.00'}</span></div>
+                  <div style={styles.detailRow}><span>Monthly Limit:</span><span>${card.monthly_limit?.toFixed(2) || '0.00'}</span></div>
+                  <div style={styles.detailRow}><span>Account:</span><span>{card.accounts?.account_number || 'N/A'} ({card.accounts?.account_type || 'N/A'})</span></div>
+                  <div style={styles.detailRow}><span>Balance:</span><span>${card.accounts?.balance?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</span></div>
                 </div>
 
                 <div style={styles.cardActions}>
@@ -195,6 +200,7 @@ export default function Cards() {
         )}
       </div>
 
+      {/* Transactions Modal */}
       {showTransactions && (
         <div style={styles.modal} onClick={() => setShowTransactions(false)}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -207,7 +213,7 @@ export default function Cards() {
                 transactions.map((t) => (
                   <div key={t.id} style={styles.transactionItem}>
                     <div style={styles.transactionInfo}><strong>{t.merchant || 'N/A'}</strong><span style={styles.transactionLocation}>{t.location || 'N/A'}</span></div>
-                    <div style={styles.transactionAmount}>-${t.amount ? parseFloat(t.amount).toFixed(2) : '0.00'}</div>
+                    <div style={styles.transactionAmount}>-${t.amount?.toFixed(2) || '0.00'}</div>
                     <div style={styles.transactionDate}>{t.created_at ? new Date(t.created_at).toLocaleDateString() : 'N/A'}</div>
                   </div>
                 ))
@@ -223,7 +229,6 @@ export default function Cards() {
     </div>
   );
 }
-
 const styles = {
   container: { minHeight: '100vh', background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)', padding: '20px' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' },
