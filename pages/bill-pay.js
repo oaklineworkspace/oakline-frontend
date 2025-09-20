@@ -2,208 +2,130 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
-import Link from 'next/link';
 
 export default function BillPay() {
-  // ... (keep your state & logic unchanged)
+  const [user, setUser] = useState(null);
+  const [bills, setBills] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const router = useRouter();
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/login');
+        return;
+      }
+      setUser(session.user);
+      await fetchBills();
+    } catch (err) {
+      console.error('Auth check error:', err);
+      router.push('/login');
+    }
+  };
+
+  const fetchBills = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch('/api/get-user-bills', {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setBills(data.bills || []);
+      } else {
+        setError('Failed to fetch bills: ' + (data.message || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error('Error fetching bills:', err);
+      setError('Error loading bills: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const payBill = async (billId) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const res = await fetch('/api/pay-bill', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ billId })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        await fetchBills();
+        setError('');
+      } else {
+        setError(data.error || 'Failed to pay bill');
+      }
+    } catch (err) {
+      console.error('Error paying bill:', err);
+      setError('Error paying bill');
+    }
+  };
+
+  if (loading) return <div style={styles.container}><div style={styles.loading}>Loading bills...</div></div>;
 
   return (
     <div style={styles.container}>
-      {/* Header */}
-      <header style={styles.header}>
-        <Link href="/" style={styles.logoContainer}>
-          <img src="/images/logo-primary.png.jpg" alt="Oakline Bank" style={styles.logo} />
-          <span style={styles.logoText}>Oakline Bank</span>
-        </Link>
-        <div style={styles.headerInfo}>
-          <div style={styles.routingInfo}>Routing Number: 075915826</div>
-          <Link href="/dashboard" style={styles.backButton}>← Back to Dashboard</Link>
+      <h1 style={styles.title}>💵 Bill Payments</h1>
+
+      {error && <div style={styles.error}>{error}</div>}
+
+      {bills.length === 0 ? (
+        <div style={styles.noBills}>
+          <h3>No bills found</h3>
+          <p>Add a bill to start making payments.</p>
+          <button onClick={() => router.push('/add-bill')} style={styles.primaryButton}>Add Bill</button>
         </div>
-      </header>
-
-      <main style={styles.content}>
-        {/* Title Section */}
-        <section style={styles.titleSection}>
-          <h1 style={styles.title}>🧾 Bill Pay</h1>
-          <p style={styles.subtitle}>Manage and pay your bills with security and ease</p>
-        </section>
-
-        {/* Features */}
-        <section style={styles.infoCard}>
-          <h3 style={styles.infoTitle}>💡 Why Use Bill Pay?</h3>
-          <div style={styles.featureGrid}>
-            <Feature icon="📅" text="Schedule Future Payments" />
-            <Feature icon="🔄" text="Set Recurring Payments" />
-            <Feature icon="📧" text="Email Confirmations" />
-            <Feature icon="🔒" text="Bank-Level Security" />
-          </div>
-        </section>
-
-        {/* Messages */}
-        {message && (
-          <div
-            style={{
-              ...styles.message,
-              backgroundColor: message.includes('✅') ? '#ecfdf5' : '#fef2f2',
-              color: message.includes('✅') ? '#065f46' : '#991b1b',
-              borderColor: message.includes('✅') ? '#6ee7b7' : '#fca5a5'
-            }}
-          >
-            {message}
-          </div>
-        )}
-
-        {/* Payment Form */}
-        <form onSubmit={handlePayment} style={styles.form}>
-          <h3 style={styles.formTitle}>💳 Schedule a Payment</h3>
-
-          {/* Accounts */}
-          <FormGroup label="Pay From Account *">
-            <select
-              value={selectedAccount}
-              onChange={(e) => setSelectedAccount(e.target.value)}
-              style={styles.select}
-              required
-            >
-              <option value="">Select Account</option>
-              {accounts.map(account => (
-                <option key={account.id} value={account.id}>
-                  {account.account_name || account.account_type?.toUpperCase()} • 
-                  ****{account.account_number?.slice(-4)} • 
-                  {formatCurrency(account.balance || 0)}
-                </option>
-              ))}
-            </select>
-          </FormGroup>
-
-          {/* Payees */}
-          <FormGroup label="Pay To *">
-            <div style={styles.payeeSection}>
-              <select
-                value={selectedPayee}
-                onChange={(e) => setSelectedPayee(e.target.value)}
-                style={styles.select}
-                required
-              >
-                <option value="">Select Payee</option>
-                {payees.map(payee => (
-                  <option key={payee.id} value={payee.id}>
-                    {payee.name} {payee.category && `(${payee.category})`}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => setShowAddPayee(!showAddPayee)}
-                style={styles.addPayeeButton}
-              >
-                + Add Payee
-              </button>
-            </div>
-          </FormGroup>
-
-          {/* Add Payee Form */}
-          {showAddPayee && (
-            <div style={styles.addPayeeForm}>
-              <h4 style={styles.addPayeeTitle}>➕ New Payee</h4>
-              <div style={styles.payeeGrid}>
-                {['name', 'address', 'phone', 'accountNumber'].map(field => (
-                  <input
-                    key={field}
-                    type="text"
-                    placeholder={field === 'name' ? 'Payee Name *' : field.charAt(0).toUpperCase() + field.slice(1)}
-                    value={newPayee[field]}
-                    onChange={(e) => setNewPayee({ ...newPayee, [field]: e.target.value })}
-                    style={styles.input}
-                  />
-                ))}
+      ) : (
+        <div style={styles.billsGrid}>
+          {bills.map(bill => (
+            <div key={bill.id} style={styles.billCard}>
+              <div style={styles.billInfo}>
+                <p><strong>Payee:</strong> {bill.payee || 'Unknown'}</p>
+                <p><strong>Amount:</strong> ${bill.amount ? parseFloat(bill.amount).toFixed(2) : '0.00'}</p>
+                <p><strong>Due:</strong> {bill.due_date ? new Date(bill.due_date).toLocaleDateString() : 'N/A'}</p>
               </div>
-              <div style={styles.payeeActions}>
-                <button type="button" onClick={handleAddPayee} style={styles.savePayeeButton}>Save</button>
-                <button type="button" onClick={() => setShowAddPayee(false)} style={styles.cancelButton}>Cancel</button>
-              </div>
+              <button onClick={() => payBill(bill.id)} style={styles.payButton}>💸 Pay Now</button>
             </div>
-          )}
+          ))}
+        </div>
+      )}
 
-          {/* Payment Info */}
-          <div style={styles.formRow}>
-            <FormGroup label="Amount ($) *">
-              <input
-                type="number"
-                step="0.01"
-                min="0.01"
-                value={paymentData.amount}
-                onChange={(e) => setPaymentData({...paymentData, amount: e.target.value})}
-                style={styles.input}
-                placeholder="0.00"
-                required
-              />
-            </FormGroup>
-            <FormGroup label="Payment Date *">
-              <input
-                type="date"
-                value={paymentData.scheduledDate}
-                onChange={(e) => setPaymentData({...paymentData, scheduledDate: e.target.value})}
-                style={styles.input}
-                min={new Date().toISOString().split('T')[0]}
-                required
-              />
-            </FormGroup>
-          </div>
-
-          {/* Memo */}
-          <FormGroup label="Memo (Optional)">
-            <input
-              type="text"
-              value={paymentData.memo}
-              onChange={(e) => setPaymentData({...paymentData, memo: e.target.value})}
-              style={styles.input}
-              placeholder="Payment reference or notes"
-            />
-          </FormGroup>
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              ...styles.submitButton,
-              opacity: loading ? 0.7 : 1
-            }}
-          >
-            {loading ? '🔄 Processing...' : '💳 Confirm Payment'}
-          </button>
-        </form>
-
-        {/* Security Info */}
-        <section style={styles.securityNote}>
-          <h4 style={styles.securityTitle}>🔒 Security Guarantee</h4>
-          <ul style={styles.securityList}>
-            <li>All payments are encrypted and processed securely</li>
-            <li>Payments scheduled after 3 PM may process the next business day</li>
-            <li>You can modify or cancel up to 1 business day before</li>
-            <li>Confirmation receipts will be sent to your email</li>
-          </ul>
-        </section>
-      </main>
+      <div style={styles.navigation}>
+        <button onClick={() => router.push('/dashboard')} style={styles.navButton}>← Back to Dashboard</button>
+      </div>
     </div>
   );
 }
 
-/* ✅ Small reusable helpers */
-function FormGroup({ label, children }) {
-  return (
-    <div style={styles.formGroup}>
-      <label style={styles.label}>{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function Feature({ icon, text }) {
-  return (
-    <div style={styles.feature}>
-      <span style={styles.featureIcon}>{icon}</span>
-      <span>{text}</span>
-    </div>
-  );
-}
+const styles = {
+  container: { minHeight: '100vh', padding: '20px', background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' },
+  title: { fontSize: '28px', fontWeight: 'bold', marginBottom: '20px', color: '#1e3c72' },
+  loading: { textAlign: 'center', padding: '40px', fontSize: '18px', color: '#666' },
+  error: { color: '#dc3545', background: '#f8d7da', padding: '15px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center' },
+  noBills: { background: 'white', padding: '40px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' },
+  primaryButton: { background: '#007bff', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontSize: '16px', fontWeight: '500', marginTop: '15px' },
+  billsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' },
+  billCard: { background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  billInfo: { fontSize: '14px', color: '#333' },
+  payButton: { background: '#28a745', color: 'white', border: 'none', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' },
+  navigation: { marginTop: '30px', textAlign: 'center' },
+  navButton: { background: '#6c757d', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontSize: '16px' }
+};
