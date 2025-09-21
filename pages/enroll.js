@@ -8,25 +8,18 @@ import Link from 'next/link';
 export default function Enroll() {
   const router = useRouter();
 
-  // Step State
-  const [step, setStep] = useState(1);
-
-  // Account Verification
   const [accountNumber, setAccountNumber] = useState('');
   const [ssn, setSSN] = useState('');
-  const [accountInfo, setAccountInfo] = useState(null);
-
-  // Login Credentials
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordStrength, setPasswordStrength] = useState('');
-
-  // Feedback
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // ---------------- Real-Time Account Verification ----------------
+  const [accountInfo, setAccountInfo] = useState(null);
+  const [passwordStrength, setPasswordStrength] = useState('');
+
+  // ---------- Real-Time Account Verification ----------
   useEffect(() => {
     const verifyAccount = async () => {
       if (accountNumber.length < 6 || ssn.length !== 4) {
@@ -40,6 +33,7 @@ export default function Enroll() {
           .eq('account_number', accountNumber)
           .eq('ssn', ssn)
           .single();
+
         if (data && !error) setAccountInfo(data);
         else setAccountInfo(null);
       } catch (err) {
@@ -47,11 +41,12 @@ export default function Enroll() {
         setAccountInfo(null);
       }
     };
-    const debounce = setTimeout(verifyAccount, 500);
-    return () => clearTimeout(debounce);
+
+    const delayDebounce = setTimeout(verifyAccount, 500); // Debounce 500ms
+    return () => clearTimeout(delayDebounce);
   }, [accountNumber, ssn]);
 
-  // ---------------- Password Strength ----------------
+  // ---------- Password Strength ----------
   useEffect(() => {
     if (!password) return setPasswordStrength('');
     if (password.length < 8) setPasswordStrength('Weak');
@@ -59,34 +54,26 @@ export default function Enroll() {
     else setPasswordStrength('Medium');
   }, [password]);
 
-  // ---------------- Step Navigation ----------------
-  const nextStep = () => {
-    if (step === 1 && !accountInfo) {
-      setMessage('Please verify your account first.');
+  const handleEnroll = async (e) => {
+    e.preventDefault();
+    setMessage('');
+
+    if (!accountNumber || !ssn || !email || !password || !confirmPassword) {
+      setMessage('All fields are required.');
       return;
     }
-    if (step === 2) {
-      if (!email || !password || !confirmPassword) {
-        setMessage('All fields are required.');
-        return;
-      }
-      if (password !== confirmPassword) {
-        setMessage('Passwords do not match.');
-        return;
-      }
+    if (password !== confirmPassword) {
+      setMessage('Passwords do not match.');
+      return;
     }
-    setMessage('');
-    setStep(step + 1);
-  };
-  const prevStep = () => setStep(step - 1);
+    if (!accountInfo) {
+      setMessage('Account not found or SSN incorrect.');
+      return;
+    }
 
-  // ---------------- Handle Enrollment ----------------
-  const handleEnroll = async () => {
     setLoading(true);
-    setMessage('');
 
     try {
-      // Check existing profile
       const { data: existingUser } = await supabase
         .from('profiles')
         .select('*')
@@ -99,10 +86,9 @@ export default function Enroll() {
         return;
       }
 
-      // Sign up auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
-        password,
+        password
       });
 
       if (authError) {
@@ -111,13 +97,12 @@ export default function Enroll() {
         return;
       }
 
-      // Create profile linking to account
       const { error: profileError } = await supabase
         .from('profiles')
         .insert([{
           id: authData.user.id,
           account_id: accountInfo.id,
-          email,
+          email
         }]);
 
       if (profileError) {
@@ -127,10 +112,9 @@ export default function Enroll() {
       }
 
       setMessage('✅ Enrollment successful! Check your email to verify your account.');
-      setLoading(false);
-      setStep(1);
       setAccountNumber(''); setSSN(''); setEmail(''); setPassword(''); setConfirmPassword('');
-      setAccountInfo(null);
+      setLoading(false);
+      // router.push('/login');
     } catch (err) {
       console.error(err);
       setMessage('An error occurred. Please try again.');
@@ -138,97 +122,153 @@ export default function Enroll() {
     }
   };
 
-  // ---------------- Step Indicators ----------------
-  const steps = ['Verify Account', 'Set Credentials', 'Review & Submit'];
+  // ---------- Inline Styles ----------
+  const styles = {
+    container: {
+      minHeight: '100vh',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: '#f3f4f6',
+      padding: '1rem'
+    },
+    card: {
+      backgroundColor: '#fff',
+      borderRadius: '12px',
+      padding: '2rem',
+      maxWidth: '450px',
+      width: '100%',
+      boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
+    },
+    title: {
+      fontSize: '1.8rem',
+      fontWeight: '700',
+      marginBottom: '1.5rem',
+      textAlign: 'center'
+    },
+    input: {
+      width: '100%',
+      padding: '0.75rem 1rem',
+      borderRadius: '8px',
+      border: '1px solid #d1d5db',
+      marginBottom: '0.75rem',
+      fontSize: '1rem'
+    },
+    label: {
+      fontWeight: '600',
+      marginBottom: '0.25rem',
+      display: 'block'
+    },
+    button: {
+      width: '100%',
+      padding: '0.75rem',
+      borderRadius: '10px',
+      border: 'none',
+      backgroundColor: '#1e40af',
+      color: '#fff',
+      fontWeight: '600',
+      fontSize: '1rem',
+      cursor: 'pointer'
+    },
+    messageSuccess: {
+      backgroundColor: '#d1fae5',
+      border: '1px solid #10b981',
+      color: '#065f46',
+      padding: '0.75rem',
+      borderRadius: '8px',
+      marginBottom: '1rem',
+      fontSize: '0.9rem'
+    },
+    messageError: {
+      backgroundColor: '#fee2e2',
+      border: '1px solid #ef4444',
+      color: '#991b1b',
+      padding: '0.75rem',
+      borderRadius: '8px',
+      marginBottom: '1rem',
+      fontSize: '0.9rem'
+    },
+    infoBox: {
+      backgroundColor: '#e0f2fe',
+      border: '1px solid #60a5fa',
+      color: '#1e3a8a',
+      padding: '0.75rem',
+      borderRadius: '8px',
+      marginBottom: '0.75rem',
+      fontSize: '0.9rem'
+    },
+    passwordStrength: (strength) => ({
+      color: strength === 'Weak' ? '#dc2626' : strength === 'Medium' ? '#ca8a04' : '#16a34a',
+      fontSize: '0.85rem',
+      marginBottom: '0.75rem'
+    }),
+    footerText: {
+      fontSize: '0.875rem',
+      textAlign: 'center',
+      marginTop: '1rem'
+    },
+    footerLink: {
+      color: '#1e40af',
+      textDecoration: 'underline',
+      cursor: 'pointer'
+    }
+  };
 
   return (
     <>
       <Head>
         <title>Enroll - Oakline Bank</title>
       </Head>
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg">
-          <h1 className="text-2xl font-bold mb-6 text-center">Enroll for Online Access</h1>
-
-          {/* Step Indicator */}
-          <div className="flex justify-between mb-6">
-            {steps.map((s, i) => (
-              <div key={i} className="flex-1 text-center">
-                <div className={`w-8 h-8 mx-auto rounded-full text-white font-bold flex items-center justify-center ${i + 1 <= step ? 'bg-blue-800' : 'bg-gray-300'}`}>
-                  {i + 1}
-                </div>
-                <p className={`mt-2 text-xs ${i + 1 <= step ? 'text-blue-800' : 'text-gray-400'}`}>{s}</p>
-              </div>
-            ))}
-          </div>
+      <div style={styles.container}>
+        <div style={styles.card}>
+          <h1 style={styles.title}>Enroll for Online Access</h1>
 
           {message && (
-            <div className={`p-3 mb-4 rounded-md text-sm border ${message.includes('✅') ? 'bg-green-100 border-green-400 text-green-800' : 'bg-red-100 border-red-400 text-red-800'}`}>
+            <div style={message.includes('✅') ? styles.messageSuccess : styles.messageError}>
               {message}
             </div>
           )}
 
-          {/* Step 1: Account Verification */}
-          {step === 1 && (
-            <div className="space-y-4">
-              <div>
-                <label className="block font-semibold mb-1">Account Number *</label>
-                <input type="text" value={accountNumber} onChange={e => setAccountNumber(e.target.value)} placeholder="123456789" className="w-full p-3 border rounded-md" />
-              </div>
-              <div>
-                <label className="block font-semibold mb-1">SSN (Last 4 digits) *</label>
-                <input type="password" value={ssn} onChange={e => setSSN(e.target.value)} placeholder="1234" maxLength={4} className="w-full p-3 border rounded-md" />
-              </div>
-              {accountInfo && (
-                <div className="bg-blue-50 border border-blue-200 p-3 rounded-md text-sm text-blue-800">
-                  Account Verified: {accountInfo.account_type.toUpperCase()} | Balance: ${accountInfo.balance.toFixed(2)}
-                </div>
-              )}
+          <form onSubmit={handleEnroll}>
+            <div>
+              <label style={styles.label}>Account Number *</label>
+              <input type="text" value={accountNumber} onChange={e => setAccountNumber(e.target.value)} placeholder="123456789" style={styles.input} required />
             </div>
-          )}
 
-          {/* Step 2: Set Credentials */}
-          {step === 2 && (
-            <div className="space-y-4">
-              <div>
-                <label className="block font-semibold mb-1">Email *</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" className="w-full p-3 border rounded-md" />
-              </div>
-              <div>
-                <label className="block font-semibold mb-1">Password *</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="********" className="w-full p-3 border rounded-md" />
-                {password && (
-                  <p className={`mt-1 text-sm ${passwordStrength === 'Weak' ? 'text-red-600' : passwordStrength === 'Medium' ? 'text-yellow-600' : 'text-green-600'}`}>
-                    Strength: {passwordStrength}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block font-semibold mb-1">Confirm Password *</label>
-                <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="********" className="w-full p-3 border rounded-md" />
-              </div>
+            <div>
+              <label style={styles.label}>SSN (Last 4 digits) *</label>
+              <input type="password" value={ssn} onChange={e => setSSN(e.target.value)} placeholder="1234" maxLength={4} style={styles.input} required />
             </div>
-          )}
 
-          {/* Step 3: Review & Submit */}
-          {step === 3 && (
-            <div className="space-y-4">
-              <h2 className="font-semibold mb-2">Review Your Info</h2>
-              <p><strong>Account:</strong> {accountInfo.account_type.toUpperCase()} ****{accountNumber.slice(-4)}</p>
-              <p><strong>Balance:</strong> ${accountInfo.balance.toFixed(2)}</p>
-              <p><strong>Email:</strong> {email}</p>
+            {accountInfo && (
+              <div style={styles.infoBox}>
+                Account Verified: {accountInfo.account_type.toUpperCase()} | Balance: ${accountInfo.balance.toFixed(2)}
+              </div>
+            )}
+
+            <div>
+              <label style={styles.label}>Email *</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" style={styles.input} required />
             </div>
-          )}
 
-          {/* Navigation Buttons */}
-          <div className="flex justify-between mt-6">
-            {step > 1 && <button onClick={prevStep} className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400">Back</button>}
-            {step < 3 && <button onClick={nextStep} className="ml-auto px-4 py-2 bg-blue-800 text-white rounded-md hover:bg-blue-900">Next</button>}
-            {step === 3 && <button onClick={handleEnroll} disabled={loading} className="ml-auto px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">{loading ? 'Processing...' : 'Enroll'}</button>}
-          </div>
+            <div>
+              <label style={styles.label}>Password *</label>
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="********" style={styles.input} required />
+              {password && <p style={styles.passwordStrength(passwordStrength)}>Strength: {passwordStrength}</p>}
+            </div>
 
-          <p className="mt-4 text-sm text-center">
-            Already have an account? <Link href="/login" className="text-blue-600 underline">Login</Link>
+            <div>
+              <label style={styles.label}>Confirm Password *</label>
+              <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="********" style={styles.input} required />
+            </div>
+
+            <button type="submit" disabled={loading} style={styles.button}>
+              {loading ? 'Processing...' : 'Enroll'}
+            </button>
+          </form>
+
+          <p style={styles.footerText}>
+            Already have an account? <Link href="/login" style={styles.footerLink}>Login</Link>
           </p>
         </div>
       </div>
