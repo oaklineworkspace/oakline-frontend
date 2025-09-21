@@ -19,38 +19,40 @@ export default function Enroll() {
   const [accountInfo, setAccountInfo] = useState(null);
   const [passwordStrength, setPasswordStrength] = useState('');
 
-  // Real-time account verification
+  // ---------- Real-Time Account Verification ----------
   useEffect(() => {
     const verifyAccount = async () => {
       if (accountNumber.length < 6 || ssn.length !== 4) {
         setAccountInfo(null);
         return;
       }
+
       try {
-        const { data: applicationData, error: appError } = await supabase
-          .from('applications')
-          .select(`
-            id,
-            first_name,
-            last_name,
-            email,
-            ssn,
-            accounts(id, account_number, balance, account_type)
-          `)
-          .eq('ssn', ssn)
+        // 1️⃣ Query accounts table by account_number
+        const { data: accountData, error: accountError } = await supabase
+          .from('accounts')
+          .select('id, account_number, balance, account_type, application_id')
+          .eq('account_number', accountNumber)
           .single();
 
-        if (appError || !applicationData) {
+        if (accountError || !accountData) {
           setAccountInfo(null);
           return;
         }
 
-        const accountData = applicationData.accounts.find(a => a.account_number === accountNumber);
-        if (!accountData) {
+        // 2️⃣ Fetch application to verify SSN
+        const { data: applicationData, error: appError } = await supabase
+          .from('applications')
+          .select('id, ssn')
+          .eq('id', accountData.application_id)
+          .single();
+
+        if (appError || !applicationData || applicationData.ssn.slice(-4) !== ssn) {
           setAccountInfo(null);
           return;
         }
 
+        // ✅ Account and SSN match
         setAccountInfo({ ...accountData, applicationId: applicationData.id });
       } catch (err) {
         console.error(err);
@@ -58,11 +60,11 @@ export default function Enroll() {
       }
     };
 
-    const debounce = setTimeout(verifyAccount, 500);
+    const debounce = setTimeout(verifyAccount, 500); // debounce 500ms
     return () => clearTimeout(debounce);
   }, [accountNumber, ssn]);
 
-  // Password strength
+  // ---------- Password Strength ----------
   useEffect(() => {
     if (!password) return setPasswordStrength('');
     if (password.length < 8) setPasswordStrength('Weak');
@@ -70,6 +72,7 @@ export default function Enroll() {
     else setPasswordStrength('Medium');
   }, [password]);
 
+  // ---------- Handle Enrollment ----------
   const handleEnroll = async (e) => {
     e.preventDefault();
     setMessage('');
@@ -94,7 +97,7 @@ export default function Enroll() {
       const { data: existingUser } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', accountInfo.id)
+        .eq('account_id', accountInfo.id)
         .single();
 
       if (existingUser) {
@@ -121,7 +124,7 @@ export default function Enroll() {
         .insert([{
           id: authData.user.id,
           account_id: accountInfo.id,
-          email
+          email,
         }]);
 
       if (profileError) {
@@ -132,7 +135,11 @@ export default function Enroll() {
 
       setMessage('✅ Enrollment successful! Check your email to verify your account.');
       setAccountNumber(''); setSSN(''); setEmail(''); setPassword(''); setConfirmPassword('');
+      setAccountInfo(null);
       setLoading(false);
+
+      // Optional redirect
+      // router.push('/login');
     } catch (err) {
       console.error(err);
       setMessage('An error occurred. Please try again.');
@@ -140,161 +147,105 @@ export default function Enroll() {
     }
   };
 
-  // Inline Styles
-  const containerStyle = {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f3f4f6',
-    padding: '20px'
-  };
-
-  const cardStyle = {
-    backgroundColor: '#fff',
-    padding: '30px',
-    borderRadius: '15px',
-    boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-    width: '100%',
-    maxWidth: '400px'
-  };
-
-  const titleStyle = {
-    fontSize: '24px',
-    fontWeight: 'bold',
-    marginBottom: '20px',
-    textAlign: 'center'
-  };
-
-  const inputStyle = {
-    width: '100%',
-    padding: '12px',
-    marginBottom: '15px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    fontSize: '16px'
-  };
-
-  const buttonStyle = {
-    width: '100%',
-    padding: '12px',
-    backgroundColor: '#1e3a8a',
-    color: '#fff',
-    borderRadius: '8px',
-    fontSize: '16px',
-    cursor: 'pointer',
-    border: 'none'
-  };
-
-  const buttonHoverStyle = {
-    backgroundColor: '#1e40af'
-  };
-
-  const messageStyle = (success) => ({
-    padding: '12px',
-    marginBottom: '15px',
-    borderRadius: '8px',
-    fontSize: '14px',
-    border: `1px solid ${success ? '#4ade80' : '#f87171'}`,
-    backgroundColor: success ? '#d1fae5' : '#fee2e2',
-    color: success ? '#065f46' : '#b91c1c'
-  });
-
-  const verifiedStyle = {
-    backgroundColor: '#e0f2fe',
-    border: '1px solid #bae6fd',
-    padding: '10px',
-    borderRadius: '8px',
-    fontSize: '14px',
-    color: '#0369a1',
-    marginBottom: '15px'
-  };
-
-  const linkStyle = {
-    color: '#1d4ed8',
-    textDecoration: 'underline'
-  };
-
   return (
     <>
       <Head>
         <title>Enroll - Oakline Bank</title>
       </Head>
-      <div style={containerStyle}>
-        <div style={cardStyle}>
-          <h1 style={titleStyle}>Enroll for Online Access</h1>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+          <h1 className="text-2xl font-bold mb-6 text-center">Enroll for Online Access</h1>
 
           {message && (
-            <div style={messageStyle(message.includes('✅'))}>
+            <div className={`p-3 mb-4 rounded-md text-sm border ${message.includes('✅') ? 'bg-green-100 border-green-400 text-green-800' : 'bg-red-100 border-red-400 text-red-800'}`}>
               {message}
             </div>
           )}
 
-          <form onSubmit={handleEnroll}>
-            <input
-              type="text"
-              value={accountNumber}
-              onChange={e => setAccountNumber(e.target.value)}
-              placeholder="Account Number"
-              style={inputStyle}
-              required
-            />
+          <form onSubmit={handleEnroll} className="space-y-4">
+            <div>
+              <label className="block font-semibold mb-1">Account Number *</label>
+              <input
+                type="text"
+                value={accountNumber}
+                onChange={e => setAccountNumber(e.target.value)}
+                placeholder="123456789"
+                className="w-full p-3 border rounded-md"
+                required
+              />
+            </div>
 
-            <input
-              type="password"
-              value={ssn}
-              onChange={e => setSSN(e.target.value)}
-              placeholder="SSN (Last 4 digits)"
-              maxLength={4}
-              style={inputStyle}
-              required
-            />
+            <div>
+              <label className="block font-semibold mb-1">SSN (Last 4 digits) *</label>
+              <input
+                type="password"
+                value={ssn}
+                onChange={e => setSSN(e.target.value)}
+                placeholder="1234"
+                maxLength={4}
+                className="w-full p-3 border rounded-md"
+                required
+              />
+            </div>
 
             {accountInfo && (
-              <div style={verifiedStyle}>
+              <div className="bg-blue-50 border border-blue-200 p-3 rounded-md text-sm text-blue-800">
                 Account Verified: {accountInfo.account_type.toUpperCase()} | Balance: ${accountInfo.balance.toFixed(2)}
               </div>
             )}
 
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="Email"
-              style={inputStyle}
-              required
-            />
+            <div>
+              <label className="block font-semibold mb-1">Email *</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="w-full p-3 border rounded-md"
+                required
+              />
+            </div>
 
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Password"
-              style={inputStyle}
-              required
-            />
-            {password && (
-              <p style={{ fontSize: '14px', color: passwordStrength === 'Weak' ? '#b91c1c' : passwordStrength === 'Medium' ? '#f59e0b' : '#16a34a', marginBottom: '10px' }}>
-                Strength: {passwordStrength}
-              </p>
-            )}
+            <div>
+              <label className="block font-semibold mb-1">Password *</label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="********"
+                className="w-full p-3 border rounded-md"
+                required
+              />
+              {password && (
+                <p className={`mt-1 text-sm ${passwordStrength === 'Weak' ? 'text-red-600' : passwordStrength === 'Medium' ? 'text-yellow-600' : 'text-green-600'}`}>
+                  Strength: {passwordStrength}
+                </p>
+              )}
+            </div>
 
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              placeholder="Confirm Password"
-              style={inputStyle}
-              required
-            />
+            <div>
+              <label className="block font-semibold mb-1">Confirm Password *</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="********"
+                className="w-full p-3 border rounded-md"
+                required
+              />
+            </div>
 
-            <button type="submit" style={{ ...buttonStyle, ...(loading ? { opacity: 0.6, cursor: 'not-allowed' } : {}) }}>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full p-3 bg-blue-800 text-white rounded-md mt-2 hover:bg-blue-900 transition"
+            >
               {loading ? 'Processing...' : 'Enroll'}
             </button>
           </form>
 
-          <p style={{ textAlign: 'center', marginTop: '15px', fontSize: '14px' }}>
-            Already have an account? <Link href="/login" style={linkStyle}>Login</Link>
+          <p className="mt-4 text-sm text-center">
+            Already have an account? <Link href="/login" className="text-blue-600 underline">Login</Link>
           </p>
         </div>
       </div>
