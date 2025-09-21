@@ -8,7 +8,6 @@ import Link from 'next/link';
 export default function Enroll() {
   const router = useRouter();
 
-  const [accountNumber, setAccountNumber] = useState('');
   const [ssn, setSSN] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,53 +15,34 @@ export default function Enroll() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const [accountInfo, setAccountInfo] = useState(null);
+  const [application, setApplication] = useState(null); // User's application
   const [passwordStrength, setPasswordStrength] = useState('');
 
-  // ---------- Real-Time Account Verification ----------
+  // ---------- Fetch Application & Accounts ----------
   useEffect(() => {
-    const verifyAccount = async () => {
-      if (accountNumber.length < 6 || ssn.length !== 4) {
-        setAccountInfo(null);
+    const fetchApplication = async () => {
+      if (ssn.length !== 4) {
+        setApplication(null);
         return;
       }
-
       try {
-        // 1️⃣ Query accounts table by account_number
-        const { data: accountData, error: accountError } = await supabase
-          .from('accounts')
-          .select('id, account_number, balance, account_type, application_id')
-          .eq('account_number', accountNumber)
-          .single();
-
-        if (accountError || !accountData) {
-          setAccountInfo(null);
-          return;
-        }
-
-        // 2️⃣ Fetch application to verify SSN
-        const { data: applicationData, error: appError } = await supabase
+        const { data, error } = await supabase
           .from('applications')
-          .select('id, ssn')
-          .eq('id', accountData.application_id)
+          .select(`id, first_name, last_name, accounts(id, account_number, balance, account_type)`)
+          .eq('ssn', ssn)
           .single();
 
-        if (appError || !applicationData || applicationData.ssn.slice(-4) !== ssn) {
-          setAccountInfo(null);
-          return;
-        }
-
-        // ✅ Account and SSN match
-        setAccountInfo({ ...accountData, applicationId: applicationData.id });
+        if (data && !error) setApplication(data);
+        else setApplication(null);
       } catch (err) {
         console.error(err);
-        setAccountInfo(null);
+        setApplication(null);
       }
     };
 
-    const debounce = setTimeout(verifyAccount, 500); // debounce 500ms
+    const debounce = setTimeout(fetchApplication, 500);
     return () => clearTimeout(debounce);
-  }, [accountNumber, ssn]);
+  }, [ssn]);
 
   // ---------- Password Strength ----------
   useEffect(() => {
@@ -77,7 +57,7 @@ export default function Enroll() {
     e.preventDefault();
     setMessage('');
 
-    if (!accountNumber || !ssn || !email || !password || !confirmPassword) {
+    if (!ssn || !email || !password || !confirmPassword) {
       setMessage('All fields are required.');
       return;
     }
@@ -85,23 +65,23 @@ export default function Enroll() {
       setMessage('Passwords do not match.');
       return;
     }
-    if (!accountInfo) {
-      setMessage('Account not found or SSN incorrect.');
+    if (!application) {
+      setMessage('SSN not found or no accounts linked.');
       return;
     }
 
     setLoading(true);
 
     try {
-      // Check if user already enrolled
-      const { data: existingUser } = await supabase
+      // Check if user already has profile
+      const { data: existingProfile } = await supabase
         .from('profiles')
         .select('*')
-        .eq('account_id', accountInfo.id)
+        .eq('id', email) // We'll link by auth user ID after signup
         .single();
 
-      if (existingUser) {
-        setMessage('This account already has online access. Please log in.');
+      if (existingProfile) {
+        setMessage('This SSN/email already has online access. Please log in.');
         setLoading(false);
         return;
       }
@@ -118,13 +98,13 @@ export default function Enroll() {
         return;
       }
 
-      // Link profile to account
+      // Create profile linked to auth user
       const { error: profileError } = await supabase
         .from('profiles')
         .insert([{
           id: authData.user.id,
-          account_id: accountInfo.id,
           email,
+          enrollment_completed: true
         }]);
 
       if (profileError) {
@@ -133,12 +113,12 @@ export default function Enroll() {
         return;
       }
 
-      setMessage('✅ Enrollment successful! Check your email to verify your account.');
-      setAccountNumber(''); setSSN(''); setEmail(''); setPassword(''); setConfirmPassword('');
-      setAccountInfo(null);
+      setMessage('✅ Enrollment successful! You now have access to all linked accounts.');
+      setSSN(''); setEmail(''); setPassword(''); setConfirmPassword('');
+      setApplication(null);
       setLoading(false);
 
-      // Optional redirect
+      // Optionally redirect to login
       // router.push('/login');
     } catch (err) {
       console.error(err);
@@ -163,17 +143,6 @@ export default function Enroll() {
           )}
 
           <form onSubmit={handleEnroll} className="space-y-4">
-            <div>
-              <label className="block font-semibold mb-1">Account Number *</label>
-              <input
-                type="text"
-                value={accountNumber}
-                onChange={e => setAccountNumber(e.target.value)}
-                placeholder="123456789"
-                className="w-full p-3 border rounded-md"
-                required
-              />
-            </div>
 
             <div>
               <label className="block font-semibold mb-1">SSN (Last 4 digits) *</label>
@@ -188,9 +157,16 @@ export default function Enroll() {
               />
             </div>
 
-            {accountInfo && (
+            {application && application.accounts.length > 0 && (
               <div className="bg-blue-50 border border-blue-200 p-3 rounded-md text-sm text-blue-800">
-                Account Verified: {accountInfo.account_type.toUpperCase()} | Balance: ${accountInfo.balance.toFixed(2)}
+                <p>Accounts linked to this SSN:</p>
+                <ul className="list-disc pl-5 mt-1">
+                  {application.accounts.map(acc => (
+                    <li key={acc.id}>
+                      {acc.account_type.toUpperCase()} | #{acc.account_number} | Balance: ${acc.balance.toFixed(2)}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 
@@ -235,11 +211,7 @@ export default function Enroll() {
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full p-3 bg-blue-800 text-white rounded-md mt-2 hover:bg-blue-900 transition"
-            >
+            <button type="submit" disabled={loading} className="w-full p-3 bg-blue-800 text-white rounded-md mt-2 hover:bg-blue-900 transition">
               {loading ? 'Processing...' : 'Enroll'}
             </button>
           </form>
