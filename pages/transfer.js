@@ -1,51 +1,41 @@
+// pages/transfer.js
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
 import Head from 'next/head';
 import { supabase } from '../lib/supabaseClient';
+import Link from 'next/link';
 
 // ---------- Reusable Components ----------
 const MessageBox = ({ message }) => {
   if (!message) return null;
   const success = message.includes('✅');
   return (
-    <div style={{
-      padding: '1rem',
-      borderRadius: '8px',
-      border: '2px solid',
-      marginBottom: '1rem',
-      fontSize: '0.9rem',
-      backgroundColor: success ? '#d4edda' : '#f8d7da',
-      borderColor: success ? '#c3e6cb' : '#f5c6cb',
-      color: success ? '#155724' : '#721c24'
-    }}>
+    <div className={`p-4 rounded-md mb-4 border ${success ? 'bg-green-100 border-green-400 text-green-800' : 'bg-red-100 border-red-400 text-red-800'}`}>
       {message}
     </div>
   );
 };
 
 const PendingAccounts = ({ accounts }) => {
-  if (!accounts || accounts.length === 0) return null;
+  if (!accounts?.length) return null;
   return (
-    <div style={styles.pendingAccountsDisplay}>
-      <h2 style={styles.pendingTitle}>Pending Accounts</h2>
-      <div style={styles.pendingAccountsList}>
-        {accounts.map(acc => (
-          <div key={acc.id} style={styles.pendingAccountCard}>
-            <p><strong>Type:</strong> {acc.account_type?.replace('_', ' ').toUpperCase()}</p>
-            <p><strong>Number:</strong> ****{acc.account_number?.slice(-4)}</p>
-            <p style={styles.pendingStatus}>Status: Pending Approval</p>
-          </div>
-        ))}
-      </div>
-      <p style={styles.contactInfo}>Please wait for approval or contact support for assistance.</p>
+    <div className="bg-yellow-50 p-4 rounded-md border mb-4">
+      <h2 className="text-lg font-semibold mb-2 text-yellow-800 text-center">Pending Accounts</h2>
+      {accounts.map(acc => (
+        <div key={acc.id} className="bg-yellow-100 border border-yellow-300 rounded-md p-3 mb-2">
+          <p><strong>Type:</strong> {acc.account_type?.replace('_', ' ').toUpperCase()}</p>
+          <p><strong>Number:</strong> ****{acc.account_number?.slice(-4)}</p>
+          <p className="text-sm font-semibold text-yellow-900">Status: Pending Approval</p>
+        </div>
+      ))}
+      <p className="text-sm text-yellow-800 italic mt-2 text-center">Please wait for approval or contact support.</p>
     </div>
   );
 };
 
 const FormGroup = ({ label, children }) => (
-  <div style={styles.formGroup}>
-    <label style={styles.label}>{label}</label>
+  <div className="mb-4">
+    <label className="block font-semibold mb-1">{label}</label>
     {children}
   </div>
 );
@@ -65,11 +55,13 @@ export default function Transfer() {
     recipient_name: '', recipient_email: '', memo: '', routing_number: '',
     bank_name: '', swift_code: '', country: '', purpose: '', recipient_address: ''
   });
+  const [previousRecipients, setPreviousRecipients] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [pageLoading, setPageLoading] = useState(true);
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  // ---------- Fetch User, Profile, and Accounts ----------
+  // ---------- Fetch User, Profile, Accounts & Recipients ----------
   useEffect(() => {
     const init = async () => {
       setPageLoading(true);
@@ -78,26 +70,30 @@ export default function Transfer() {
         if (!session?.user) return router.push('/login');
         setUser(session.user);
 
-        // Fetch profile
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+        // Profile
+        const { data: profileData } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
         setProfile(profileData || null);
 
-        // Fetch accounts
+        // Accounts
         const { data: accountsData } = await supabase
           .from('accounts')
           .select('*')
           .or(`user_id.eq.${session.user.id},application_id.eq.${profileData?.application_id}`)
           .order('created_at', { ascending: true });
-
+        
         const active = accountsData?.filter(a => a.status === 'active') || [];
         const pending = accountsData?.filter(a => a.status === 'pending') || [];
         setAccounts(active);
         setPendingAccounts(pending);
         if (active.length) setFromAccount(active[0].id.toString());
+
+        // Previous recipients
+        const { data: recipients } = await supabase
+          .from('recipients')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('created_at', { ascending: false });
+        setPreviousRecipients(recipients || []);
       } catch (err) {
         console.error(err);
         setMessage('Error loading data. Please refresh.');
@@ -108,12 +104,13 @@ export default function Transfer() {
     init();
   }, [router]);
 
-  // ---------- Handle Transfer Form ----------
+  // ---------- Helpers ----------
   const handleTransferDetailsChange = (field, value) => {
     setTransferDetails(prev => ({ ...prev, [field]: value }));
   };
 
   const selectedAccountData = useMemo(() => accounts.find(a => a.id.toString() === fromAccount), [accounts, fromAccount]);
+
   const fee = useMemo(() => {
     const amt = parseFloat(amount) || 0;
     switch (transferType) {
@@ -123,6 +120,7 @@ export default function Transfer() {
       default: return 0;
     }
   }, [amount, transferType]);
+
   const totalAmount = useMemo(() => (parseFloat(amount) || 0) + fee, [amount, fee]);
 
   const validateForm = () => {
@@ -131,7 +129,6 @@ export default function Transfer() {
     if (amt > parseFloat(selectedAccountData?.balance || 0)) return setMessage('Insufficient funds.') || false;
     if (amt > 25000 && transferType !== 'internal') return setMessage('External transfers > $25k need verification.') || false;
 
-    // Transfer type-specific validation
     if (transferType === 'domestic_external' && (!transferDetails.recipient_name || !transferDetails.routing_number || !transferDetails.bank_name)) {
       return setMessage('Fill all domestic transfer fields.') || false;
     }
@@ -146,14 +143,14 @@ export default function Transfer() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     if (!validateForm()) return;
     setLoading(true);
     setMessage('');
 
     try {
       const transferAmount = parseFloat(amount);
-      // Create transaction record
+      // Create transaction
       await supabase.from('transactions').insert([{
         user_id: user.id,
         account_id: parseInt(fromAccount),
@@ -184,7 +181,7 @@ export default function Transfer() {
         recipient_name: '', recipient_email: '', memo: '', routing_number: '',
         bank_name: '', swift_code: '', country: '', purpose: '', recipient_address: ''
       });
-
+      setShowConfirm(false);
       router.push('/dashboard');
     } catch (err) {
       console.error(err);
@@ -199,42 +196,47 @@ export default function Transfer() {
       case 'internal': return (
         <>
           <FormGroup label="Recipient Name *">
-            <input type="text" value={transferDetails.recipient_name} onChange={e => handleTransferDetailsChange('recipient_name', e.target.value)} placeholder="Name for reference" required style={styles.input}/>
+            <select value={transferDetails.recipient_name} onChange={e => handleTransferDetailsChange('recipient_name', e.target.value)} className="w-full p-3 border rounded-md">
+              <option value="">Select recipient</option>
+              {previousRecipients.map(r => (
+                <option key={r.id} value={r.name}>{r.name} - ****{r.account_number.slice(-4)}</option>
+              ))}
+            </select>
           </FormGroup>
           <FormGroup label="Memo (Optional)">
-            <input type="text" value={transferDetails.memo} onChange={e => handleTransferDetailsChange('memo', e.target.value)} placeholder="Purpose" style={styles.input}/>
+            <input type="text" value={transferDetails.memo} onChange={e => handleTransferDetailsChange('memo', e.target.value)} placeholder="Purpose" className="w-full p-3 border rounded-md"/>
           </FormGroup>
         </>
       );
       case 'domestic_external': return (
         <>
           <FormGroup label="Recipient Name *">
-            <input type="text" value={transferDetails.recipient_name} onChange={e => handleTransferDetailsChange('recipient_name', e.target.value)} placeholder="Full name" style={styles.input}/>
+            <input type="text" value={transferDetails.recipient_name} onChange={e => handleTransferDetailsChange('recipient_name', e.target.value)} placeholder="Full name" className="w-full p-3 border rounded-md"/>
           </FormGroup>
           <FormGroup label="Bank Name *">
-            <input type="text" value={transferDetails.bank_name} onChange={e => handleTransferDetailsChange('bank_name', e.target.value)} placeholder="Bank name" style={styles.input}/>
+            <input type="text" value={transferDetails.bank_name} onChange={e => handleTransferDetailsChange('bank_name', e.target.value)} placeholder="Bank name" className="w-full p-3 border rounded-md"/>
           </FormGroup>
           <FormGroup label="Routing Number *">
-            <input type="text" value={transferDetails.routing_number} onChange={e => handleTransferDetailsChange('routing_number', e.target.value)} placeholder="123456789" maxLength={9} style={styles.input}/>
+            <input type="text" value={transferDetails.routing_number} onChange={e => handleTransferDetailsChange('routing_number', e.target.value)} placeholder="123456789" maxLength={9} className="w-full p-3 border rounded-md"/>
           </FormGroup>
           <FormGroup label="Memo (Optional)">
-            <input type="text" value={transferDetails.memo} onChange={e => handleTransferDetailsChange('memo', e.target.value)} placeholder="Purpose" style={styles.input}/>
+            <input type="text" value={transferDetails.memo} onChange={e => handleTransferDetailsChange('memo', e.target.value)} placeholder="Purpose" className="w-full p-3 border rounded-md"/>
           </FormGroup>
         </>
       );
       case 'international': return (
         <>
           <FormGroup label="Recipient Name *">
-            <input type="text" value={transferDetails.recipient_name} onChange={e => handleTransferDetailsChange('recipient_name', e.target.value)} placeholder="Full name" style={styles.input}/>
+            <input type="text" value={transferDetails.recipient_name} onChange={e => handleTransferDetailsChange('recipient_name', e.target.value)} placeholder="Full name" className="w-full p-3 border rounded-md"/>
           </FormGroup>
           <FormGroup label="Country *">
-            <input type="text" value={transferDetails.country} onChange={e => handleTransferDetailsChange('country', e.target.value)} placeholder="Destination country" style={styles.input}/>
+            <input type="text" value={transferDetails.country} onChange={e => handleTransferDetailsChange('country', e.target.value)} placeholder="Destination country" className="w-full p-3 border rounded-md"/>
           </FormGroup>
           <FormGroup label="SWIFT Code *">
-            <input type="text" value={transferDetails.swift_code} onChange={e => handleTransferDetailsChange('swift_code', e.target.value)} placeholder="ABCDUS33XXX" style={styles.input}/>
+            <input type="text" value={transferDetails.swift_code} onChange={e => handleTransferDetailsChange('swift_code', e.target.value)} placeholder="ABCDUS33XXX" className="w-full p-3 border rounded-md"/>
           </FormGroup>
           <FormGroup label="Purpose *">
-            <select value={transferDetails.purpose} onChange={e => handleTransferDetailsChange('purpose', e.target.value)} required style={styles.select}>
+            <select value={transferDetails.purpose} onChange={e => handleTransferDetailsChange('purpose', e.target.value)} className="w-full p-3 border rounded-md">
               <option value="">Select purpose</option>
               <option value="family_support">Family Support</option>
               <option value="education">Education</option>
@@ -245,7 +247,7 @@ export default function Transfer() {
             </select>
           </FormGroup>
           <FormGroup label="Recipient Address">
-            <textarea value={transferDetails.recipient_address} onChange={e => handleTransferDetailsChange('recipient_address', e.target.value)} style={{...styles.input, minHeight: '60px', resize: 'vertical'}}/>
+            <textarea value={transferDetails.recipient_address} onChange={e => handleTransferDetailsChange('recipient_address', e.target.value)} className="w-full p-3 border rounded-md min-h-[60px] resize-y"/>
           </FormGroup>
         </>
       );
@@ -253,40 +255,38 @@ export default function Transfer() {
     }
   };
 
-  if (pageLoading) return <div style={styles.loadingContainer}><div style={styles.spinner}></div><p>Loading...</p></div>;
-  if (!user) return <div>Please log in. <Link href="/login">Login</Link></div>;
+  if (pageLoading) return <div className="flex flex-col items-center justify-center min-h-screen"><p className="text-gray-600">Loading...</p></div>;
+  if (!user) return <div className="p-4 text-center">Please log in. <Link href="/login" className="text-blue-600 underline">Login</Link></div>;
 
   return (
     <>
-      <Head>
-        <title>Transfer Funds - Oakline Bank</title>
-      </Head>
-      <div style={styles.container}>
-        <header style={styles.header}>
-          <Link href="/" style={styles.logoContainer}>🏦 Oakline Bank</Link>
-          <div style={styles.headerInfo}>
-            <span>Routing: 075915826</span>
-            <Link href="/dashboard" style={styles.backButton}>← Back</Link>
-          </div>
+      <Head><title>Transfer Funds - Oakline Bank</title></Head>
+      <div className="min-h-screen bg-gray-50 font-sans p-4">
+        <header className="flex justify-between items-center bg-blue-800 text-white p-4 rounded-md mb-4">
+          <Link href="/" className="text-lg font-bold">🏦 Oakline Bank</Link>
+          <Link href="/dashboard" className="text-sm bg-white text-blue-800 px-3 py-1 rounded-md">← Dashboard</Link>
         </header>
 
-        <main style={styles.content}>
-          <h1>💸 Transfer Funds</h1>
+        <main className="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-md">
+          <h1 className="text-2xl font-semibold mb-4">💸 Transfer Funds</h1>
+
           <MessageBox message={message} />
           <PendingAccounts accounts={pendingAccounts} />
 
           {accounts.length === 0 && !pendingAccounts.length && <p>No active accounts. Please apply.</p>}
 
           {accounts.length > 0 && (
-            <form onSubmit={handleSubmit} style={styles.form}>
+            <form onSubmit={(e) => { e.preventDefault(); setShowConfirm(true); }}>
               <FormGroup label="From Account *">
-                <select value={fromAccount} onChange={e => setFromAccount(e.target.value)} required style={styles.select}>
-                  {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.account_type?.replace('_',' ').toUpperCase()} ****{acc.account_number?.slice(-4)} - ${acc.balance}</option>)}
+                <select value={fromAccount} onChange={e => setFromAccount(e.target.value)} className="w-full p-3 border rounded-md mb-2">
+                  {accounts.map(acc => (
+                    <option key={acc.id} value={acc.id}>{acc.account_type?.replace('_',' ').toUpperCase()} ****{acc.account_number?.slice(-4)} - ${acc.balance}</option>
+                  ))}
                 </select>
               </FormGroup>
 
               <FormGroup label="Transfer Type *">
-                <select value={transferType} onChange={e => setTransferType(e.target.value)} style={styles.select}>
+                <select value={transferType} onChange={e => setTransferType(e.target.value)} className="w-full p-3 border rounded-md mb-2">
                   <option value="internal">Internal</option>
                   <option value="domestic_external">Domestic</option>
                   <option value="international">International</option>
@@ -294,23 +294,51 @@ export default function Transfer() {
               </FormGroup>
 
               <FormGroup label="To Account Number *">
-                <input type="text" value={toAccountNumber} onChange={e => setToAccountNumber(e.target.value)} placeholder="Recipient account number" style={styles.input}/>
+                <input type="text" value={toAccountNumber} onChange={e => setToAccountNumber(e.target.value)} placeholder="Recipient account number" className="w-full p-3 border rounded-md mb-2"/>
               </FormGroup>
 
               <FormGroup label="Amount ($) *">
-                <input type="number" value={amount} onChange={e => setAmount(e.target.value)} min="0.01" step="0.01" max={selectedAccountData?.balance} style={styles.input}/>
+                <input type="number" value={amount} onChange={e => setAmount(e.target.value)} min="0.01" step="0.01" max={selectedAccountData?.balance} className="w-full p-3 border rounded-md mb-1"/>
+                <p className="text-sm text-gray-600">Available: ${selectedAccountData?.balance || 0} | Fee: ${fee.toFixed(2)} | Total Deduction: ${totalAmount.toFixed(2)}</p>
               </FormGroup>
 
               {renderTransferTypeFields()}
 
-              {fee > 0 && <p>Fee: ${fee} | Total: ${totalAmount}</p>}
-
-              <button type="submit" disabled={loading} style={styles.submitButton}>
+              <button type="submit" disabled={loading} className="w-full p-3 mt-4 bg-blue-800 text-white rounded-md">
                 {loading ? 'Processing...' : `Transfer $${amount || 0}`}
               </button>
             </form>
           )}
+
+          {/* Recent Transactions */}
+          {selectedAccountData?.transactions?.length > 0 && (
+            <div className="mt-6 bg-gray-100 p-4 rounded-md text-sm">
+              <h3 className="font-semibold mb-2">Recent Transfers:</h3>
+              <ul>
+                {selectedAccountData.transactions.slice(-3).map(tx => (
+                  <li key={tx.id}>{tx.description} - ${Math.abs(tx.amount)}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </main>
+
+        {/* Confirmation Modal */}
+        {showConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center">
+            <div className="bg-white p-6 rounded-xl shadow-lg w-96">
+              <h2 className="text-lg font-semibold mb-4">Confirm Transfer</h2>
+              <p>From: {selectedAccountData?.account_type} ****{selectedAccountData?.account_number.slice(-4)}</p>
+              <p>To: {toAccountNumber} - {transferDetails.recipient_name}</p>
+              <p>Amount: ${amount}</p>
+              <p>Fee: ${fee.toFixed(2)} | Total: ${totalAmount.toFixed(2)}</p>
+              <div className="mt-4 flex justify-end gap-2">
+                <button onClick={() => setShowConfirm(false)} className="px-4 py-2 rounded-md border">Cancel</button>
+                <button onClick={handleSubmit} className="px-4 py-2 rounded-md bg-blue-800 text-white">Confirm</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
