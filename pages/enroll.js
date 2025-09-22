@@ -1,261 +1,134 @@
 // pages/enroll.js
-import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
-import Head from "next/head";
-import { supabase } from "../lib/supabaseClient";
-import Link from "next/link";
+import { useState } from 'react';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 
-export default function Enroll() {
+export default function EnrollPage() {
   const router = useRouter();
-
-  const [ssn, setSSN] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    dob: '',
+    ssnLast4: ''
+  });
   const [loading, setLoading] = useState(false);
-  const [application, setApplication] = useState(null);
-  const [passwordStrength, setPasswordStrength] = useState("");
+  const [message, setMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-  // --------- Fetch matching application ---------
-  useEffect(() => {
-    if (ssn.length !== 4) {
-      setApplication(null);
-      return;
-    }
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-    const fetchApp = async () => {
-      const { data, error } = await supabase
-        .from("applications")
-        .select("id, first_name, last_name, email, accounts(id, account_number, account_type, balance)")
-        .eq("ssn", ssn)
-        .single();
-
-      if (error || !data) setApplication(null);
-      else setApplication(data);
-    };
-
-    const debounce = setTimeout(fetchApp, 500);
-    return () => clearTimeout(debounce);
-  }, [ssn]);
-
-  // --------- Password strength check ---------
-  useEffect(() => {
-    if (!password) return setPasswordStrength("");
-    if (password.length < 8) setPasswordStrength("Weak");
-    else if (password.match(/(?=.*[0-9])(?=.*[!@#$%^&*])/))
-      setPasswordStrength("Strong");
-    else setPasswordStrength("Medium");
-  }, [password]);
-
-  // --------- Handle enrollment ---------
   const handleEnroll = async (e) => {
     e.preventDefault();
-    setMessage("");
-
-    if (!ssn || !email || !password || !confirmPassword) {
-      setMessage("⚠️ All fields are required.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setMessage("⚠️ Passwords do not match.");
-      return;
-    }
-    if (!application) {
-      setMessage("❌ SSN not found or no linked accounts.");
-      return;
-    }
-
     setLoading(true);
+    setMessage('');
 
     try {
-      // Check if already enrolled
-      const { data: existingProfile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("email", email)
-        .maybeSingle();
-
-      if (existingProfile) {
-        setMessage("⚠️ This email is already enrolled. Please login.");
-        setLoading(false);
-        return;
-      }
-
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
+      const response = await fetch('/api/users/enroll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
       });
 
-      if (authError) {
-        setMessage("❌ " + authError.message);
-        setLoading(false);
-        return;
-      }
+      const data = await response.json();
 
-      const userId = authData.user.id;
+      if (!response.ok) throw new Error(data.error || 'Enrollment failed');
 
-      // Create profile linked to auth user
-      const { error: profileError } = await supabase.from("profiles").insert([
-        {
-          id: userId,
-          email,
-          ssn,
-          enrollment_completed: true,
-        },
-      ]);
+      setMessage('Enrollment successful! Redirecting to sign-in...');
+      setFormData({ email: '', password: '', dob: '', ssnLast4: '' });
 
-      if (profileError) {
-        setMessage("❌ Error creating profile: " + profileError.message);
-        setLoading(false);
-        return;
-      }
-
-      // Link accounts to user
-      await supabase
-        .from("accounts")
-        .update({ user_id: userId })
-        .eq("application_id", application.id);
-
-      setMessage("✅ Enrollment successful! You can now login.");
-      setSSN("");
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
-      setApplication(null);
-      setLoading(false);
-
-      // Redirect after short delay
-      setTimeout(() => router.push("/login"), 2000);
+      setTimeout(() => router.push('/sign-in'), 2000);
     } catch (err) {
-      console.error(err);
-      setMessage("❌ An error occurred. Please try again.");
+      setMessage(err.message);
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <>
-      <Head>
-        <title>Enroll - Oakline Bank</title>
-      </Head>
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-          <h1 className="text-2xl font-bold mb-6 text-center">
-            Enroll for Online Access
-          </h1>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 50%, #1A3E6F 100%)',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      <header style={{
+        color: 'white',
+        padding: '1rem 2rem',
+        backdropFilter: 'blur(10px)',
+        backgroundColor: 'rgba(255,255,255,0.1)'
+      }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', color: 'white' }}>
+          <div style={{ fontSize: '2rem' }}>🏦</div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>Oakline Bank</span>
+            <span style={{ fontSize: '0.9rem', color: '#FFC857', fontWeight: '500' }}>Secure Banking Enrollment</span>
+          </div>
+        </Link>
+      </header>
 
-          {message && (
-            <div
-              className={`p-3 mb-4 rounded-md text-sm border ${
-                message.includes("✅")
-                  ? "bg-green-100 border-green-400 text-green-800"
-                  : "bg-red-100 border-red-400 text-red-800"
-              }`}
-            >
-              {message}
+      <main style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem 1rem',
+        minHeight: 'calc(100vh - 100px)'
+      }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '450px',
+          backgroundColor: 'white',
+          borderRadius: '20px',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+          padding: '2.5rem',
+          border: '1px solid rgba(255,255,255,0.2)',
+          backdropFilter: 'blur(10px)'
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              backgroundColor: '#1A3E6F',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1rem',
+              background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
+              boxShadow: '0 8px 32px rgba(26,62,111,0.3)'
+            }}>
+              <span style={{ fontSize: '2rem', color: 'white' }}>🏦</span>
             </div>
-          )}
+            <h1 style={{ fontSize: '2.2rem', fontWeight: '700', color: '#1A3E6F', marginBottom: '0.5rem' }}>Enroll for Online Access</h1>
+            <p style={{ fontSize: '1rem', color: '#64748b', margin: 0 }}>Enter your email, password, and verify your identity</p>
+          </div>
 
-          <form onSubmit={handleEnroll} className="space-y-4">
-            <div>
-              <label className="block font-semibold mb-1">
-                SSN (Last 4 digits) *
-              </label>
-              <input
-                type="password"
-                value={ssn}
-                onChange={(e) => setSSN(e.target.value)}
-                placeholder="1234"
-                maxLength={4}
-                className="w-full p-3 border rounded-md"
-                required
-              />
-            </div>
+          <form onSubmit={handleEnroll} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required style={{ padding: '0.875rem 1rem', borderRadius: '10px', border: '2px solid #e2e8f0' }} />
 
-            {application && application.accounts.length > 0 && (
-              <div className="bg-blue-50 border border-blue-200 p-3 rounded-md text-sm text-blue-800">
-                <p>Accounts linked to this SSN:</p>
-                <ul className="list-disc pl-5 mt-1">
-                  {application.accounts.map((acc) => (
-                    <li key={acc.id}>
-                      {acc.account_type.toUpperCase()} • #{acc.account_number} •
-                      Balance: ${acc.balance.toFixed(2)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div>
-              <label className="block font-semibold mb-1">Email *</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full p-3 border rounded-md"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold mb-1">Password *</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="********"
-                className="w-full p-3 border rounded-md"
-                required
-              />
-              {password && (
-                <p
-                  className={`mt-1 text-sm ${
-                    passwordStrength === "Weak"
-                      ? "text-red-600"
-                      : passwordStrength === "Medium"
-                      ? "text-yellow-600"
-                      : "text-green-600"
-                  }`}
-                >
-                  Strength: {passwordStrength}
-                </p>
-              )}
+            <div style={{ position: 'relative' }}>
+              <input type={showPassword ? 'text' : 'password'} name="password" placeholder="Password" value={formData.password} onChange={handleChange} required style={{ width: '100%', padding: '0.875rem 3rem 0.875rem 1rem', borderRadius: '10px', border: '2px solid #e2e8f0' }} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>{showPassword ? '🙈' : '👁️'}</button>
             </div>
 
-            <div>
-              <label className="block font-semibold mb-1">
-                Confirm Password *
-              </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="********"
-                className="w-full p-3 border rounded-md"
-                required
-              />
-            </div>
+            <input type="date" name="dob" placeholder="Date of Birth" value={formData.dob} onChange={handleChange} style={{ padding: '0.875rem 1rem', borderRadius: '10px', border: '2px solid #e2e8f0' }} />
+            <input type="text" name="ssnLast4" placeholder="Last 4 digits of SSN" value={formData.ssnLast4} onChange={handleChange} maxLength={4} style={{ padding: '0.875rem 1rem', borderRadius: '10px', border: '2px solid #e2e8f0' }} />
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full p-3 bg-blue-800 text-white rounded-md mt-2 hover:bg-blue-900 transition"
-            >
-              {loading ? "Processing..." : "Enroll"}
+            <button type="submit" disabled={loading} style={{ padding: '1rem', borderRadius: '12px', background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', color: 'white', fontWeight: '700', fontSize: '1.1rem', cursor: loading ? 'not-allowed' : 'pointer' }}>
+              {loading ? 'Enrolling...' : 'Enroll'}
             </button>
           </form>
 
-          <p className="mt-4 text-sm text-center">
-            Already enrolled?{" "}
-            <Link href="/login" className="text-blue-600 underline">
-              Login
-            </Link>
+          {message && <div style={{ marginTop: '1.5rem', padding: '1rem', borderRadius: '10px', backgroundColor: message.includes('successful') ? '#d1fae5' : '#fee2e2', color: message.includes('successful') ? '#065f46' : '#dc2626' }}>{message}</div>}
+
+          <p style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.85rem' }}>
+            Already enrolled? <Link href="/sign-in" style={{ color: '#1A3E6F', fontWeight: '600' }}>Sign In</Link>
           </p>
         </div>
-      </div>
-    </>
+      </main>
+    </div>
   );
 }
