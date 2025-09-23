@@ -10,15 +10,18 @@ export default function EnrollPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+  // ------------------------
   // Step 1: Verify identity
+  // ------------------------
   const handleVerify = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
+
     try {
       console.log('Verifying user...');
       const res = await fetch(`${backendUrl}/api/users/verify-identity`, {
@@ -26,6 +29,7 @@ export default function EnrollPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dob: formData.dob, ssnLast4: formData.ssnLast4 })
       });
+
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || 'Verification failed');
@@ -41,27 +45,31 @@ export default function EnrollPage() {
     }
   };
 
+  // ------------------------
   // Step 2: Enroll user
+  // ------------------------
   const handleEnroll = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
+
     try {
       console.log('Enrolling user...');
       const res = await fetch(`${backendUrl}/api/users/enroll`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: userInfo.email, 
-          password: formData.password, 
-          full_name: `${userInfo.first_name} ${userInfo.middle_name || ''} ${userInfo.last_name}`.trim() 
+        body: JSON.stringify({
+          email: userInfo.email,
+          password: formData.password,
+          full_name: `${userInfo.first_name} ${userInfo.middle_name || ''} ${userInfo.last_name}`.trim()
         })
       });
+
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || 'Enrollment failed');
 
-      setMessage('Enrollment successful! Redirecting to sign-in...');
+      setMessage('✅ Enrollment successful! Redirecting to sign-in...');
       setTimeout(() => router.push('/sign-in'), 2000);
     } catch (err) {
       console.error(err);
@@ -74,6 +82,7 @@ export default function EnrollPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '2rem' }}>
       <div style={{ width: '100%', maxWidth: '400px', padding: '2rem', border: '1px solid #ccc', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+
         {step === 1 && (
           <form onSubmit={handleVerify}>
             <h2>Verify Your Identity</h2>
