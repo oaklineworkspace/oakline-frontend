@@ -1,71 +1,50 @@
-// pages/enroll.js
 import { useState } from 'react';
-import { useRouter } from 'next/router';
 
 export default function EnrollPage() {
-  const router = useRouter();
-  const [step, setStep] = useState(1); // 1 = verify, 2 = enroll
-  const [formData, setFormData] = useState({ dob: '', ssnLast4: '', password: '' });
-  const [userInfo, setUserInfo] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(1); // 1=request, 2=complete
+  const [formData, setFormData] = useState({ email: '', last_name: '', ssn: '', password: '', token: '' });
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  // Step 1: Verify identity (using applications table)
-  const handleVerify = async (e) => {
+  const handleRequest = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
     try {
-      const res = await fetch(`${backendUrl}/api/users/verify-identity`, {
+      const res = await fetch(`${backendUrl}/api/users/request-enroll`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dob: formData.dob, ssnLast4: formData.ssnLast4 })
+        body: JSON.stringify({ email: formData.email, last_name: formData.last_name, ssn: formData.ssn }),
       });
       const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || 'Verification failed');
-
-      setUserInfo(data.user); // expects: id, first_name, middle_name, last_name, email
+      if (!res.ok) throw new Error(data.error || 'Request failed');
+      setMessage(data.message);
       setStep(2);
-      setFormData((prev) => ({ ...prev, password: '' }));
     } catch (err) {
-      console.error(err);
       setMessage(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Step 2: Enroll user (creates auth.user + profile)
-  const handleEnroll = async (e) => {
+  const handleComplete = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
     try {
-      const res = await fetch(`${backendUrl}/api/users/enroll`, {
+      const res = await fetch(`${backendUrl}/api/users/complete-enroll`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          applicationId: userInfo.id, // link to applications.id
-          email: userInfo.email,
-          password: formData.password,
-          first_name: userInfo.first_name,
-          middle_name: userInfo.middle_name || '',
-          last_name: userInfo.last_name
-        })
+        body: JSON.stringify({ token: formData.token, password: formData.password }),
       });
       const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || 'Enrollment failed');
-
-      setMessage('Enrollment successful! Redirecting to sign-in...');
-      setTimeout(() => router.push('/sign-in'), 2000);
+      if (!res.ok) throw new Error(data.error || 'Completion failed');
+      setMessage(data.message);
     } catch (err) {
-      console.error(err);
       setMessage(err.message);
     } finally {
       setLoading(false);
@@ -73,56 +52,28 @@ export default function EnrollPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '2rem' }}>
-      <div style={{ width: '100%', maxWidth: '400px', padding: '2rem', border: '1px solid #ccc', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ width: '100%', maxWidth: '400px', padding: '2rem', border: '1px solid #ccc', borderRadius: '12px' }}>
         {step === 1 && (
-          <form onSubmit={handleVerify}>
-            <h2>Verify Your Identity</h2>
-            <input
-              type="date"
-              name="dob"
-              value={formData.dob}
-              onChange={handleChange}
-              required
-              placeholder="Date of Birth"
-              style={{ width: '100%', padding: '0.5rem', margin: '0.5rem 0' }}
-            />
-            <input
-              type="text"
-              name="ssnLast4"
-              value={formData.ssnLast4}
-              onChange={handleChange}
-              required
-              maxLength={4}
-              placeholder="Last 4 of SSN"
-              style={{ width: '100%', padding: '0.5rem', margin: '0.5rem 0' }}
-            />
-            <button type="submit" disabled={loading} style={{ width: '100%', padding: '0.75rem', marginTop: '1rem', cursor: 'pointer' }}>
-              {loading ? 'Verifying...' : 'Verify'}
-            </button>
+          <form onSubmit={handleRequest}>
+            <h2>Request Enrollment Link</h2>
+            <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="Email" />
+            <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} placeholder="Last Name" />
+            <input type="text" name="ssn" value={formData.ssn} onChange={handleChange} placeholder="Last 4 SSN" maxLength={4} />
+            <button type="submit" disabled={loading}>{loading ? 'Sending...' : 'Send Enrollment Link'}</button>
           </form>
         )}
 
-        {step === 2 && userInfo && (
-          <form onSubmit={handleEnroll}>
-            <h2>Welcome, {`${userInfo.first_name} ${userInfo.middle_name || ''} ${userInfo.last_name}`.trim()}</h2>
-            <p>Email: {userInfo.email}</p>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="Set your password"
-              style={{ width: '100%', padding: '0.5rem', margin: '0.5rem 0' }}
-            />
-            <button type="submit" disabled={loading} style={{ width: '100%', padding: '0.75rem', marginTop: '1rem', cursor: 'pointer' }}>
-              {loading ? 'Enrolling...' : 'Enroll'}
-            </button>
+        {step === 2 && (
+          <form onSubmit={handleComplete}>
+            <h2>Complete Enrollment</h2>
+            <input type="text" name="token" value={formData.token} onChange={handleChange} required placeholder="Enrollment Token" />
+            <input type="password" name="password" value={formData.password} onChange={handleChange} required placeholder="Set Password" />
+            <button type="submit" disabled={loading}>{loading ? 'Completing...' : 'Complete Enrollment'}</button>
           </form>
         )}
 
-        {message && <p style={{ color: message.includes('successful') ? 'green' : 'red', marginTop: '1rem' }}>{message}</p>}
+        {message && <p style={{ color: message.includes('completed') ? 'green' : 'red' }}>{message}</p>}
       </div>
     </div>
   );
