@@ -1,80 +1,97 @@
-import { useState } from 'react';
+// pages/enroll.js
+import { useState } from "react";
 
 export default function EnrollPage() {
-  const [step, setStep] = useState(1); // 1=request, 2=complete
-  const [formData, setFormData] = useState({ email: '', last_name: '', ssn: '', password: '', token: '' });
-  const [message, setMessage] = useState('');
+  const [formData, setFormData] = useState({
+    email: "",
+    lastName: "",
+    ssn: "",
+  });
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
-  const handleRequest = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage('');
-    try {
-      const res = await fetch(`${backendUrl}/api/users/request-enroll`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email, last_name: formData.last_name, ssn: formData.ssn }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Request failed');
-      setMessage(data.message);
-      setStep(2);
-    } catch (err) {
-      setMessage(err.message);
-    } finally {
-      setLoading(false);
-    }
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
   };
 
-  const handleComplete = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage('');
+    setMessage("");
+
     try {
-      const res = await fetch(`${backendUrl}/api/users/complete-enroll`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: formData.token, password: formData.password }),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/request-enroll`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: formData.email,
+            last_name: formData.lastName,
+            ssn: formData.ssn,
+          }),
+        }
+      );
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Completion failed');
-      setMessage(data.message);
+
+      if (!res.ok) {
+        throw new Error(data.error || "Enrollment failed");
+      }
+
+      setMessage("✅ Enrollment request submitted successfully!");
     } catch (err) {
-      setMessage(err.message);
+      console.error(err);
+      setMessage(`❌ ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <div style={{ width: '100%', maxWidth: '400px', padding: '2rem', border: '1px solid #ccc', borderRadius: '12px' }}>
-        {step === 1 && (
-          <form onSubmit={handleRequest}>
-            <h2>Request Enrollment Link</h2>
-            <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="Email" />
-            <input type="text" name="last_name" value={formData.last_name} onChange={handleChange} placeholder="Last Name" />
-            <input type="text" name="ssn" value={formData.ssn} onChange={handleChange} placeholder="Last 4 SSN" maxLength={4} />
-            <button type="submit" disabled={loading}>{loading ? 'Sending...' : 'Send Enrollment Link'}</button>
-          </form>
-        )}
+    <div style={{ maxWidth: "400px", margin: "2rem auto" }}>
+      <h1>Online Banking Enrollment</h1>
+      <form onSubmit={handleSubmit}>
+        <label>Email:</label>
+        <input
+          type="email"
+          name="email"
+          required
+          value={formData.email}
+          onChange={handleChange}
+        />
+        <br />
 
-        {step === 2 && (
-          <form onSubmit={handleComplete}>
-            <h2>Complete Enrollment</h2>
-            <input type="text" name="token" value={formData.token} onChange={handleChange} required placeholder="Enrollment Token" />
-            <input type="password" name="password" value={formData.password} onChange={handleChange} required placeholder="Set Password" />
-            <button type="submit" disabled={loading}>{loading ? 'Completing...' : 'Complete Enrollment'}</button>
-          </form>
-        )}
+        <label>Last Name:</label>
+        <input
+          type="text"
+          name="lastName"
+          required
+          value={formData.lastName}
+          onChange={handleChange}
+        />
+        <br />
 
-        {message && <p style={{ color: message.includes('completed') ? 'green' : 'red' }}>{message}</p>}
-      </div>
+        <label>SSN (Last 4 digits):</label>
+        <input
+          type="text"
+          name="ssn"
+          required
+          maxLength={4}
+          value={formData.ssn}
+          onChange={handleChange}
+        />
+        <br />
+
+        <button type="submit" disabled={loading}>
+          {loading ? "Submitting..." : "Submit Enrollment"}
+        </button>
+      </form>
+
+      {message && <p>{message}</p>}
     </div>
   );
 }
