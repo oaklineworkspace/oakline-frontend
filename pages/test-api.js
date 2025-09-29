@@ -1,7 +1,7 @@
 // pages/test-api.js
 import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabaseClient'; // Make sure this points to your Supabase client
 
-// List all API endpoints relative to NEXT_PUBLIC_BACKEND_URL
 const endpoints = [
   '/api/account-management',
   '/api/account-types',
@@ -24,25 +24,35 @@ const endpoints = [
   '/api/verify-magic-link-enrollment',
   '/api/zelle-contacts',
   '/api/zelle-transactions',
-  '/api/admin',        // Subfolder admin
-  '/api/stripe'        // Subfolder stripe
+  '/api/admin',
+  '/api/stripe'
 ];
 
 export default function TestAPI() {
   const [results, setResults] = useState({});
 
   useEffect(() => {
-    const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const fetchEndpoints = async () => {
+      // Get the current session from Supabase
+      const session = supabase.auth.session();
+      const token = session?.access_token;
 
-    endpoints.forEach(async (endpoint) => {
-      try {
-        const res = await fetch(`${API_URL}${endpoint}`);
-        const data = await res.json();
-        setResults(prev => ({ ...prev, [endpoint]: { data, status: res.status } }));
-      } catch (err) {
-        setResults(prev => ({ ...prev, [endpoint]: { error: err.message } }));
-      }
-    });
+      const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+      endpoints.forEach(async (endpoint) => {
+        try {
+          const res = await fetch(`${API_URL}${endpoint}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          });
+          const data = await res.json();
+          setResults(prev => ({ ...prev, [endpoint]: { data, status: res.status } }));
+        } catch (err) {
+          setResults(prev => ({ ...prev, [endpoint]: { error: err.message } }));
+        }
+      });
+    };
+
+    fetchEndpoints();
   }, []);
 
   return (
