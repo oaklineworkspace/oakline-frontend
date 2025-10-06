@@ -38,51 +38,36 @@ function DashboardContent() {
         setUserProfile(profile);
       }
 
-      // Fetch accounts with better error handling
+      // Fetch accounts - use single query method to avoid duplicates
       let accountsData = [];
 
       try {
-        // First try to get user's application to find linked accounts
-        const { data: userApplication } = await supabase
-          .from('applications')
-          .select('id')
-          .eq('email', user.email)
-          .single();
+        // Primary method: fetch by user_id
+        const { data: accountsByUserId, error: accountsError } = await supabase
+          .from('accounts')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: true });
 
-        if (userApplication) {
-          // Try to find accounts linked to the application
-          const { data: accountsByAppId } = await supabase
+        if (!accountsError && accountsByUserId && accountsByUserId.length > 0) {
+          accountsData = accountsByUserId;
+        } else {
+          // Fallback: try by email if user_id doesn't work
+          const { data: accountsByEmail } = await supabase
             .from('accounts')
             .select('*')
-            .eq('application_id', userApplication.id)
+            .eq('email', user.email)
             .order('created_at', { ascending: true });
 
-          if (accountsByAppId && accountsByAppId.length > 0) {
-            accountsData = accountsByAppId;
-          }
+          accountsData = accountsByEmail || [];
         }
 
-        // If no accounts found by application, try other methods
-        if (accountsData.length === 0) {
-          const { data: accountsByUserId } = await supabase
-            .from('accounts')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: true });
+        // Remove duplicates by account_number (in case there are any)
+        const uniqueAccounts = accountsData.filter((account, index, self) =>
+          index === self.findIndex((a) => a.account_number === account.account_number)
+        );
 
-          if (accountsByUserId && accountsByUserId.length > 0) {
-            accountsData = accountsByUserId;
-          } else {
-            // Try by email
-            const { data: accountsByEmail } = await supabase
-              .from('accounts')
-              .select('*')
-              .or(`user_email.eq.${user.email},email.eq.${user.email}`)
-              .order('created_at', { ascending: true });
-
-            accountsData = accountsByEmail || [];
-          }
-        }
+        accountsData = uniqueAccounts;
       } catch (accountError) {
         console.error('Error fetching accounts:', accountError);
         accountsData = [];
@@ -231,7 +216,7 @@ function DashboardContent() {
         <div style={styles.headerContainer}>
           <div style={styles.headerLeft}>
             <Link href="/" style={styles.logoContainer}>
-              <img src="/images/logo-primary.png" alt="Oakline Bank" style={styles.logo} />
+              <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.logo} />
               <div style={styles.brandInfo}>
                 <h1 style={styles.brandName}>Oakline Bank</h1>
                 <span style={styles.brandTagline}>Your Financial Partner</span>
@@ -271,6 +256,12 @@ function DashboardContent() {
                   </div>
                   <div style={styles.dropdownDivider}></div>
                   <div style={styles.dropdownSection}>
+                    <h4 style={styles.dropdownSectionTitle}>📬 Communications</h4>
+                    <Link href="/notifications" style={styles.dropdownLink}>🔔 Alerts & Notifications</Link>
+                    <Link href="/messages" style={styles.dropdownLink}>💬 Messages</Link>
+                  </div>
+                  <div style={styles.dropdownDivider}></div>
+                  <div style={styles.dropdownSection}>
                     <h4 style={styles.dropdownSectionTitle}>❓ Help & Support</h4>
                     <Link href="/support" style={styles.dropdownLink}>🎧 Customer Support</Link>
                     <Link href="/faq" style={styles.dropdownLink}>❓ FAQ</Link>
@@ -291,21 +282,11 @@ function DashboardContent() {
 
           <div style={styles.headerRight}>
             <div style={styles.userSection}>
-            <div style={styles.userInfo}>
-              <span style={styles.welcomeText}>Welcome back</span>
-              <span style={styles.userName}>{getUserDisplayName()}</span>
+              <div style={styles.userInfo}>
+                <span style={styles.welcomeText}>Welcome back</span>
+                <span style={styles.userName}>{getUserDisplayName()}</span>
+              </div>
             </div>
-            <div style={styles.userActions}>
-              <Link href="/notifications" style={styles.actionButton}>
-                <span style={styles.actionIcon}>🔔</span>
-                Alerts
-              </Link>
-              <Link href="/messages" style={styles.actionButton}>
-                <span style={styles.actionIcon}>💬</span>
-                Messages
-              </Link>
-            </div>
-          </div>
           </div>
         </div>
       </header>
@@ -320,17 +301,42 @@ function DashboardContent() {
           </div>
 
           <div style={styles.summaryCards}>
-            <div style={styles.summaryCard}>
-              <div style={styles.cardIcon}>💰</div>
-              <div style={styles.cardContent}>
-                <h3 style={styles.cardLabel}>Total Balance</h3>
-                <div style={styles.cardValue}>{formatCurrency(getTotalBalance())}</div>
-                <span style={styles.cardSubtext}>Across {accounts.length} account{accounts.length !== 1 ? 's' : ''}</span>
+            <div style={styles.primaryBalanceCard}>
+              <div style={styles.balanceCardHeader}>
+                <div style={styles.balanceIconLarge}>💰</div>
+                <div style={styles.balanceHeaderInfo}>
+                  <h3 style={styles.balanceCardLabel}>Total Available Balance</h3>
+                  <span style={styles.balanceCardSubtext}>Across {accounts.length} account{accounts.length !== 1 ? 's' : ''}</span>
+                </div>
+              </div>
+              <div style={styles.balanceAmountContainer}>
+                <div style={styles.balanceAmount}>
+                  {new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  }).format(getTotalBalance())}
+                </div>
+                <div style={styles.balanceGrowthIndicator}>
+                  <span style={styles.growthArrow}>↗</span>
+                  <span style={styles.growthText}>+2.4% this month</span>
+                </div>
+              </div>
+              <div style={styles.balanceCardFooter}>
+                <div style={styles.balanceFooterItem}>
+                  <span style={styles.footerIcon}>💵</span>
+                  <span style={styles.footerText}>Liquid Assets</span>
+                </div>
+                <div style={styles.balanceFooterItem}>
+                  <span style={styles.footerIcon}>🔒</span>
+                  <span style={styles.footerText}>FDIC Insured</span>
+                </div>
               </div>
             </div>
 
             <div style={styles.summaryCard}>
-              <div style={{...styles.cardIcon, backgroundColor: '#f3e5f5'}}>📈</div>
+              <div style={{...styles.cardIcon, backgroundColor: '#f3e5f5', color: '#8b5cf6'}}>📈</div>
               <div style={styles.cardContent}>
                 <h3 style={styles.cardLabel}>Monthly Growth</h3>
                 <div style={styles.cardValue}>+2.4%</div>
@@ -339,7 +345,7 @@ function DashboardContent() {
             </div>
 
             <div style={styles.summaryCard}>
-              <div style={{...styles.cardIcon, backgroundColor: '#e8f5e8'}}>💳</div>
+              <div style={{...styles.cardIcon, backgroundColor: '#e8f5e8', color: '#059669'}}>💳</div>
               <div style={styles.cardContent}>
                 <h3 style={styles.cardLabel}>Available Credit</h3>
                 <div style={styles.cardValue}>$15,000</div>
@@ -470,7 +476,7 @@ export default function Dashboard() {
 const styles = {
   container: {
     minHeight: '100vh',
-    backgroundColor: '#f8fafc',
+    background: '#f8fafc',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     width: '100%',
     overflowX: 'hidden'
@@ -506,7 +512,7 @@ const styles = {
     opacity: 0.95
   },
   header: {
-    backgroundColor: '#1a365d',
+    background: '#1a365d',
     borderBottom: '3px solid #059669',
     boxShadow: '0 4px 12px rgba(26, 54, 93, 0.2)'
   },
@@ -514,16 +520,16 @@ const styles = {
     maxWidth: '100%',
     margin: '0 auto',
     padding: '0.75rem 1rem',
-    display: 'flex',
+    display: 'grid',
+    gridTemplateColumns: '1fr auto 1fr',
     alignItems: 'center',
-    justifyContent: 'space-between',
     minHeight: '70px',
-    flexWrap: 'wrap',
-    gap: '0.5rem'
+    gap: '1rem'
   },
   headerLeft: {
     display: 'flex',
-    alignItems: 'center'
+    alignItems: 'center',
+    justifyContent: 'flex-start'
   },
   logoContainer: {
     display: 'flex',
@@ -555,7 +561,6 @@ const styles = {
     display: 'flex',
     gap: '0.25rem',
     flexWrap: 'wrap',
-    flex: 1,
     justifyContent: 'center'
   },
   navItem: {
@@ -641,7 +646,8 @@ const styles = {
   },
   headerRight: {
     display: 'flex',
-    alignItems: 'center'
+    alignItems: 'center',
+    justifyContent: 'flex-end'
   },
   userSection: {
     display: 'flex',
@@ -652,10 +658,8 @@ const styles = {
   userInfo: {
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'flex-end',
-    '@media (max-width: 768px)': {
-      alignItems: 'center'
-    }
+    alignItems: 'center',
+    textAlign: 'center'
   },
   welcomeText: {
     fontSize: '0.8rem',
@@ -666,31 +670,13 @@ const styles = {
     fontWeight: '600',
     color: 'white'
   },
-  userActions: {
-    display: 'flex',
-    gap: '0.25rem',
-    flexWrap: 'wrap'
-  },
-  actionButton: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.3rem',
-    padding: '0.4rem 0.6rem',
-    backgroundColor: 'rgba(5, 150, 105, 0.2)',
-    color: 'white',
-    textDecoration: 'none',
-    borderRadius: '6px',
-    fontSize: '0.75rem',
-    fontWeight: '500',
-    transition: 'all 0.2s',
-    whiteSpace: 'nowrap'
-  },
+  
   logoutButton: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
     padding: '0.5rem 0.75rem',
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    background: 'rgba(255,255,255,0.2)',
     color: 'white',
     border: 'none',
     borderRadius: '6px',
@@ -698,9 +684,6 @@ const styles = {
     fontSize: '0.85rem',
     fontWeight: '500',
     transition: 'all 0.2s'
-  },
-  actionIcon: {
-    fontSize: '0.9rem'
   },
   routingInfo: {
     display: 'flex',
@@ -725,7 +708,7 @@ const styles = {
     alignItems: 'center',
     gap: '0.5rem',
     padding: '0.5rem 0.75rem',
-    backgroundColor: 'rgba(5, 150, 105, 0.2)',
+    background: 'rgba(5, 150, 105, 0.2)',
     borderRadius: '8px',
     fontSize: '0.85rem',
     fontWeight: '600',
@@ -756,14 +739,7 @@ const styles = {
     userSection: {
       order: 1,
       width: '100%',
-      justifyContent: 'space-between'
-    },
-    userActions: {
-      gap: '0.25rem'
-    },
-    actionButton: {
-      padding: '0.3rem 0.5rem',
-      fontSize: '0.7rem'
+      justifyContent: 'flex-end'
     },
     main: {
       padding: '0.75rem 0.5rem'
@@ -813,7 +789,7 @@ const styles = {
     boxSizing: 'border-box'
   },
   summarySection: {
-    backgroundColor: 'white',
+    background: 'white',
     borderRadius: '12px',
     padding: '2rem',
     boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
@@ -845,7 +821,7 @@ const styles = {
     alignItems: 'center',
     gap: '1rem',
     padding: '1.5rem',
-    backgroundColor: '#f8fafc',
+    background: '#f8fafc',
     borderRadius: '10px',
     border: '1px solid #e2e8f0'
   },
@@ -853,7 +829,7 @@ const styles = {
     fontSize: '2rem',
     padding: '1rem',
     borderRadius: '10px',
-    backgroundColor: '#e3f2fd'
+    background: '#e3f2fd'
   },
   cardContent: {
     flex: 1
@@ -874,8 +850,102 @@ const styles = {
     fontSize: '0.8rem',
     color: '#64748b'
   },
+  primaryBalanceCard: {
+    gridColumn: 'span 1',
+    background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%)',
+    borderRadius: '16px',
+    padding: '2rem',
+    color: 'white',
+    boxShadow: '0 8px 24px rgba(30, 58, 138, 0.25)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    position: 'relative',
+    overflow: 'hidden',
+    minWidth: '320px'
+  },
+  balanceCardHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    marginBottom: '1.5rem'
+  },
+  balanceIconLarge: {
+    fontSize: '2.5rem',
+    background: 'rgba(255,255,255,0.2)',
+    padding: '1rem',
+    borderRadius: '12px',
+    backdropFilter: 'blur(10px)'
+  },
+  balanceHeaderInfo: {
+    flex: 1
+  },
+  balanceCardLabel: {
+    fontSize: '1rem',
+    fontWeight: '600',
+    margin: '0 0 0.25rem 0',
+    color: 'rgba(255,255,255,0.9)'
+  },
+  balanceCardSubtext: {
+    fontSize: '0.85rem',
+    color: 'rgba(255,255,255,0.7)'
+  },
+  balanceAmountContainer: {
+    margin: '1.5rem 0',
+    width: '100%',
+    overflow: 'visible'
+  },
+  balanceAmount: {
+    fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)',
+    fontWeight: 'bold',
+    marginBottom: '0.5rem',
+    textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    letterSpacing: '0.5px',
+    wordBreak: 'keep-all',
+    whiteSpace: 'nowrap',
+    overflow: 'visible',
+    fontFamily: '"Courier New", Courier, monospace',
+    display: 'block'
+  },
+  balanceGrowthIndicator: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    background: 'rgba(34, 197, 94, 0.2)',
+    padding: '0.5rem 1rem',
+    borderRadius: '20px',
+    width: 'fit-content',
+    border: '1px solid rgba(34, 197, 94, 0.3)'
+  },
+  growthArrow: {
+    fontSize: '1.2rem',
+    color: '#4ade80'
+  },
+  growthText: {
+    fontSize: '0.9rem',
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.95)'
+  },
+  balanceCardFooter: {
+    display: 'flex',
+    gap: '1.5rem',
+    marginTop: '1.5rem',
+    paddingTop: '1.5rem',
+    borderTop: '1px solid rgba(255,255,255,0.2)'
+  },
+  balanceFooterItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem'
+  },
+  footerIcon: {
+    fontSize: '1.2rem'
+  },
+  footerText: {
+    fontSize: '0.85rem',
+    color: 'rgba(255,255,255,0.85)',
+    fontWeight: '500'
+  },
   quickActionsSection: {
-    backgroundColor: 'white',
+    background: 'white',
     borderRadius: '12px',
     padding: '1.5rem',
     boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
@@ -893,7 +963,7 @@ const styles = {
     alignItems: 'center',
     gap: '0.5rem',
     padding: '1.5rem 1rem',
-    backgroundColor: '#f8fafc',
+    background: '#f8fafc',
     borderRadius: '10px',
     border: '2px solid #e2e8f0',
     textDecoration: 'none',
@@ -917,7 +987,7 @@ const styles = {
     fontWeight: '500'
   },
   accountsSection: {
-    backgroundColor: 'white',
+    background: 'white',
     borderRadius: '12px',
     padding: '1.5rem',
     boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
@@ -945,7 +1015,7 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '1rem',
-    backgroundColor: '#f8fafc',
+    background: '#f8fafc',
     borderRadius: '8px',
     border: '1px solid #e2e8f0'
   },
@@ -957,7 +1027,7 @@ const styles = {
   accountTypeIcon: {
     fontSize: '1.5rem',
     padding: '0.5rem',
-    backgroundColor: '#eff6ff',
+    background: '#eff6ff',
     borderRadius: '8px'
   },
   accountDetails: {
@@ -981,7 +1051,7 @@ const styles = {
     color: '#1e40af'
   },
   transactionsSection: {
-    backgroundColor: 'white',
+    background: 'white',
     borderRadius: '12px',
     padding: '1.5rem',
     boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
@@ -997,14 +1067,14 @@ const styles = {
     alignItems: 'center',
     gap: '1rem',
     padding: '1rem',
-    backgroundColor: '#f8fafc',
+    background: '#f8fafc',
     borderRadius: '8px',
     border: '1px solid #e2e8f0'
   },
   transactionIcon: {
     fontSize: '1.2rem',
     padding: '0.5rem',
-    backgroundColor: '#eff6ff',
+    background: '#eff6ff',
     borderRadius: '6px'
   },
   transactionDetails: {
