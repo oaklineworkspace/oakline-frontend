@@ -12,10 +12,12 @@ function DashboardContent() {
   const [userProfile, setUserProfile] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [dropdownOpen, setDropdownOpen] = useState({});
   const [cardApplicationStatus, setCardApplicationStatus] = useState(null);
+  const [flippedCards, setFlippedCards] = useState({});
   const router = useRouter();
 
   useEffect(() => {
@@ -85,6 +87,15 @@ function DashboardContent() {
 
       setTransactions(transactionsData || []);
 
+      // Fetch user cards
+      const { data: cardsData } = await supabase
+        .from('cards')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      setCards(cardsData || []);
+
     } catch (error) {
       console.error('Error fetching user data:', error);
       setError('Failed to load dashboard data. Please try again.');
@@ -135,7 +146,9 @@ function DashboardContent() {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     }).format(Math.abs(amount || 0));
   };
 
@@ -243,7 +256,22 @@ function DashboardContent() {
                     <Link href="/transactions" style={styles.dropdownLink}>📜 Transaction History</Link>
                     <Link href="/bill-pay" style={styles.dropdownLink}>🧾 Pay Bills</Link>
                     <Link href="/deposit-real" style={styles.dropdownLink}>📱 Mobile Deposit</Link>
+                    <Link href="/withdrawal" style={styles.dropdownLink}>📤 Withdraw Funds</Link>
                     <Link href="/zelle" style={styles.dropdownLink}>💰 Zelle</Link>
+                  </div>
+                  <div style={styles.dropdownDivider}></div>
+                  <div style={styles.dropdownSection}>
+                    <h4 style={styles.dropdownSectionTitle}>💼 Loans & Credit</h4>
+                    <Link href="/loans" style={styles.dropdownLink}>💰 Apply for Loan</Link>
+                    <Link href="/credit-report" style={styles.dropdownLink}>📊 Credit Report</Link>
+                    <Link href="/apply-card" style={styles.dropdownLink}>💳 Apply for Card</Link>
+                  </div>
+                  <div style={styles.dropdownDivider}></div>
+                  <div style={styles.dropdownSection}>
+                    <h4 style={styles.dropdownSectionTitle}>📈 Investments</h4>
+                    <Link href="/investments" style={styles.dropdownLink}>📊 Portfolio</Link>
+                    <Link href="/crypto" style={styles.dropdownLink}>₿ Crypto Trading</Link>
+                    <Link href="/market-news" style={styles.dropdownLink}>📰 Market News</Link>
                   </div>
                   <div style={styles.dropdownDivider}></div>
                   <div style={styles.dropdownSection}>
@@ -303,7 +331,6 @@ function DashboardContent() {
           <div style={styles.summaryCards}>
             <div style={styles.primaryBalanceCard}>
               <div style={styles.balanceCardHeader}>
-                <div style={styles.balanceIconLarge}>💰</div>
                 <div style={styles.balanceHeaderInfo}>
                   <h3 style={styles.balanceCardLabel}>Total Available Balance</h3>
                   <span style={styles.balanceCardSubtext}>Across {accounts.length} account{accounts.length !== 1 ? 's' : ''}</span>
@@ -318,83 +345,24 @@ function DashboardContent() {
                     maximumFractionDigits: 2
                   }).format(getTotalBalance())}
                 </div>
-                <div style={styles.balanceGrowthIndicator}>
-                  <span style={styles.growthArrow}>↗</span>
-                  <span style={styles.growthText}>+2.4% this month</span>
+                <div style={styles.balanceSubInfo}>
+                  Available Balance • Updated {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
               <div style={styles.balanceCardFooter}>
                 <div style={styles.balanceFooterItem}>
-                  <span style={styles.footerIcon}>💵</span>
-                  <span style={styles.footerText}>Liquid Assets</span>
-                </div>
-                <div style={styles.balanceFooterItem}>
-                  <span style={styles.footerIcon}>🔒</span>
                   <span style={styles.footerText}>FDIC Insured</span>
                 </div>
               </div>
             </div>
-
-            <div style={styles.summaryCard}>
-              <div style={{...styles.cardIcon, backgroundColor: '#f3e5f5', color: '#8b5cf6'}}>📈</div>
-              <div style={styles.cardContent}>
-                <h3 style={styles.cardLabel}>Monthly Growth</h3>
-                <div style={styles.cardValue}>+2.4%</div>
-                <span style={styles.cardSubtext}>vs last month</span>
-              </div>
-            </div>
-
-            <div style={styles.summaryCard}>
-              <div style={{...styles.cardIcon, backgroundColor: '#e8f5e8', color: '#059669'}}>💳</div>
-              <div style={styles.cardContent}>
-                <h3 style={styles.cardLabel}>Available Credit</h3>
-                <div style={styles.cardValue}>$15,000</div>
-                <span style={styles.cardSubtext}>85% available</span>
-              </div>
-            </div>
           </div>
         </section>
 
-        {/* Quick Actions */}
-        <section style={styles.quickActionsSection}>
-          <h3 style={styles.sectionTitle}>Quick Actions</h3>
-          <div style={styles.quickActions}>
-            <Link href="/transfer" style={styles.quickAction}>
-              <span style={styles.quickActionIcon}>💸</span>
-              <span style={styles.quickActionText}>Transfer Money</span>
-            </Link>
-            <Link href="/deposit-real" style={styles.quickAction}>
-              <span style={styles.quickActionIcon}>📥</span>
-              <span style={styles.quickActionText}>Mobile Deposit</span>
-            </Link>
-            <Link href="/bill-pay" style={styles.quickAction}>
-              <span style={styles.quickActionIcon}>🧾</span>
-              <span style={styles.quickActionText}>Pay Bills</span>
-            </Link>
-            <button onClick={applyForCard} style={{...styles.quickAction, background: 'none', border: 'none'}}>
-              <span style={styles.quickActionIcon}>💳</span>
-              <span style={styles.quickActionText}>Apply for Card</span>
-            </button>
-          </div>
-
-          {cardApplicationStatus && (
-            <div style={{
-              ...styles.statusMessage,
-              backgroundColor: cardApplicationStatus.startsWith('error') ? '#ffebee' : '#e8f5e8',
-              color: cardApplicationStatus.startsWith('error') ? '#c62828' : '#2e7d32'
-            }}>
-              {cardApplicationStatus.startsWith('error') 
-                ? cardApplicationStatus.replace('error: ', '❌ ') 
-                : '✅ Card application submitted successfully!'}
-            </div>
-          )}
-        </section>
-
-        {/* Accounts Overview */}
+        {/* Account Details Section - Moved below balance */}
         <section style={styles.accountsSection}>
           <div style={styles.sectionHeaderWithAction}>
-            <h3 style={styles.sectionTitle}>My Accounts</h3>
-            <Link href="/account-details" style={styles.viewAllLink}>View All Details →</Link>
+            <h3 style={styles.sectionTitle}>Account Details</h3>
+            <Link href="/account-details-list" style={styles.viewAllLink}>View All Details →</Link>
           </div>
 
           <div style={styles.accountsList}>
@@ -420,7 +388,7 @@ function DashboardContent() {
           </div>
         </section>
 
-        {/* Recent Transactions */}
+        {/* Recent Transactions - Moved after Account Details */}
         <section style={styles.transactionsSection}>
           <div style={styles.sectionHeaderWithAction}>
             <h3 style={styles.sectionTitle}>Recent Transactions</h3>
@@ -459,6 +427,142 @@ function DashboardContent() {
             )}
           </div>
         </section>
+
+        {/* Quick Actions */}
+        <section style={styles.quickActionsSection}>
+          <h3 style={styles.sectionTitle}>Quick Actions</h3>
+          <div style={styles.quickActions}>
+            <Link href="/transfer" style={styles.standardActionButton}>
+              <span style={styles.quickActionIcon}>💸</span>
+              <span style={styles.quickActionText}>Transfer Money</span>
+            </Link>
+            <Link href="/deposit-real" style={styles.standardActionButton}>
+              <span style={styles.quickActionIcon}>📥</span>
+              <span style={styles.quickActionText}>Mobile Deposit</span>
+            </Link>
+            <Link href="/bill-pay" style={styles.standardActionButton}>
+              <span style={styles.quickActionIcon}>🧾</span>
+              <span style={styles.quickActionText}>Pay Bills</span>
+            </Link>
+            <Link href="/withdrawal" style={styles.standardActionButton}>
+              <span style={styles.quickActionIcon}>📤</span>
+              <span style={styles.quickActionText}>Withdraw Funds</span>
+            </Link>
+            <Link href="/apply-card" style={styles.standardActionButton}>
+              <span style={styles.quickActionIcon}>💳</span>
+              <span style={styles.quickActionText}>Apply for Card</span>
+            </Link>
+            <Link href="/zelle" style={styles.standardActionButton}>
+              <span style={styles.quickActionIcon}>⚡</span>
+              <span style={styles.quickActionText}>Send with Zelle</span>
+            </Link>
+            <Link href="/loans" style={styles.standardActionButton}>
+              <span style={styles.quickActionIcon}>💰</span>
+              <span style={styles.quickActionText}>Apply for Loan</span>
+            </Link>
+            <Link href="/investments" style={styles.standardActionButton}>
+              <span style={styles.quickActionIcon}>📈</span>
+              <span style={styles.quickActionText}>Invest</span>
+            </Link>
+          </div>
+        </section>
+
+        
+
+        {/* My Cards Section */}
+        {cards.length > 0 && (
+          <section style={styles.cardsSection}>
+            <div style={styles.sectionHeaderWithAction}>
+              <h3 style={styles.sectionTitle}>My Cards</h3>
+              <Link href="/cards" style={styles.viewAllLink}>Manage Cards →</Link>
+            </div>
+
+            <div style={styles.cardsGrid}>
+              {cards.map(card => (
+                <div key={card.id} style={styles.cardContainer}>
+                  <div 
+                    style={{
+                      ...styles.cardFlipWrapper,
+                      transform: flippedCards[card.id] ? 'rotateY(180deg)' : 'rotateY(0deg)'
+                    }}
+                    onClick={() => setFlippedCards(prev => ({ ...prev, [card.id]: !prev[card.id] }))}
+                  >
+                    {/* Card Front */}
+                    <div style={{
+                      ...styles.cardFace,
+                      ...styles.cardFront,
+                      opacity: flippedCards[card.id] ? 0 : 1
+                    }}>
+                      <div style={styles.cardHeader}>
+                        <span style={styles.bankNameCard}>OAKLINE BANK</span>
+                        <span style={styles.cardTypeLabel}>DEBIT</span>
+                      </div>
+                      
+                      <div style={styles.chipSection}>
+                        <div style={styles.chip}></div>
+                        <div style={styles.contactless}>
+                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 18C15.3137 18 18 15.3137 18 12C18 8.68629 15.3137 6 12 6" stroke="white" strokeWidth="2"/>
+                            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2" stroke="white" strokeWidth="2"/>
+                            <path d="M12 14C13.1046 14 14 13.1046 14 12C14 10.8954 13.1046 10 12 10" stroke="white" strokeWidth="2"/>
+                          </svg>
+                        </div>
+                      </div>
+
+                      <div style={styles.cardNumberDisplay}>
+                        {card.card_number ? card.card_number.replace(/(.{4})/g, '$1 ').trim() : '**** **** **** ****'}
+                      </div>
+
+                      <div style={styles.cardFooterDetails}>
+                        <div>
+                          <div style={styles.cardLabelSmall}>CARDHOLDER</div>
+                          <div style={styles.cardValueSmall}>
+                            {userProfile ? `${userProfile.first_name?.toUpperCase() || ''} ${userProfile.last_name?.toUpperCase() || ''}`.trim() : card.cardholder_name || 'CARDHOLDER NAME'}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={styles.cardLabelSmall}>EXPIRES</div>
+                          <div style={styles.cardValueSmall}>{card.expiry_date || 'MM/YY'}</div>
+                        </div>
+                        <div>
+                          <div style={styles.cardLabelSmall}>CVV</div>
+                          <div style={styles.cardValueSmall}>{card.cvv || '***'}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card Back */}
+                    <div style={{
+                      ...styles.cardFace,
+                      ...styles.cardBack,
+                      opacity: flippedCards[card.id] ? 1 : 0,
+                      transform: 'rotateY(180deg)'
+                    }}>
+                      <div style={styles.magneticStripe}></div>
+                      <div style={styles.cvvSection}>
+                        <div style={styles.cvvLabel}>CVV</div>
+                        <div style={styles.cvvBox}>{card.cvv || '***'}</div>
+                      </div>
+                      <div style={styles.cardBackInfo}>
+                        <p style={styles.cardBackText}>For customer service call 1-800-OAKLINE</p>
+                        <p style={styles.cardBackText}>This card is property of Oakline Bank</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style={styles.cardStatus}>
+                    <span style={{
+                      ...styles.statusBadge,
+                      backgroundColor: card.is_locked ? '#ef4444' : '#10b981'
+                    }}>
+                      {card.is_locked ? '🔒 Locked' : '✓ Active'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
       <LiveChat />
     </div>
@@ -670,7 +774,7 @@ const styles = {
     fontWeight: '600',
     color: 'white'
   },
-  
+
   logoutButton: {
     display: 'flex',
     alignItems: 'center',
@@ -790,10 +894,12 @@ const styles = {
   },
   summarySection: {
     background: 'white',
-    borderRadius: '12px',
-    padding: '2rem',
+    borderRadius: '16px',
+    padding: '2.5rem',
     boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-    border: '1px solid #e2e8f0'
+    border: '1px solid #e2e8f0',
+    position: 'relative',
+    overflow: 'hidden',
   },
   summaryHeader: {
     display: 'flex',
@@ -802,18 +908,18 @@ const styles = {
     marginBottom: '1.5rem'
   },
   sectionTitle: {
-    fontSize: '1.4rem',
+    fontSize: '1.7rem',
     fontWeight: 'bold',
-    color: '#1e293b',
+    color: '#1a365d',
     margin: 0
   },
   lastUpdated: {
-    fontSize: '0.85rem',
+    fontSize: '0.9rem',
     color: '#64748b'
   },
   summaryCards: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gridTemplateColumns: '1fr',
     gap: '1rem'
   },
   summaryCard: {
@@ -821,43 +927,46 @@ const styles = {
     alignItems: 'center',
     gap: '1rem',
     padding: '1.5rem',
-    background: '#f8fafc',
-    borderRadius: '10px',
-    border: '1px solid #e2e8f0'
+    background: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: '12px',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    backdropFilter: 'blur(10px)',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
   },
   cardIcon: {
     fontSize: '2rem',
     padding: '1rem',
     borderRadius: '10px',
-    background: '#e3f2fd'
+    background: 'rgba(255, 255, 255, 0.25)'
   },
   cardContent: {
     flex: 1
   },
   cardLabel: {
-    fontSize: '0.9rem',
-    color: '#64748b',
+    fontSize: '1rem',
+    fontWeight: '600',
     margin: '0 0 0.5rem 0',
-    fontWeight: '600'
+    color: 'rgba(255,255,255,0.9)'
   },
   cardValue: {
-    fontSize: '1.8rem',
+    fontSize: '2rem',
     fontWeight: 'bold',
-    color: '#1e293b',
-    margin: '0 0 0.25rem 0'
+    color: 'white',
+    margin: '0 0 0.25rem 0',
+    textShadow: '0 1px 3px rgba(0,0,0,0.1)'
   },
   cardSubtext: {
-    fontSize: '0.8rem',
-    color: '#64748b'
+    fontSize: '0.85rem',
+    color: 'rgba(255,255,255,0.75)'
   },
   primaryBalanceCard: {
     gridColumn: 'span 1',
-    background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%)',
+    background: 'white',
     borderRadius: '16px',
     padding: '2rem',
-    color: 'white',
-    boxShadow: '0 8px 24px rgba(30, 58, 138, 0.25)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+    color: '#1a365d',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    border: '1px solid #e2e8f0',
     position: 'relative',
     overflow: 'hidden',
     minWidth: '320px'
@@ -882,11 +991,11 @@ const styles = {
     fontSize: '1rem',
     fontWeight: '600',
     margin: '0 0 0.25rem 0',
-    color: 'rgba(255,255,255,0.9)'
+    color: '#1a365d'
   },
   balanceCardSubtext: {
     fontSize: '0.85rem',
-    color: 'rgba(255,255,255,0.7)'
+    color: '#64748b'
   },
   balanceAmountContainer: {
     margin: '1.5rem 0',
@@ -897,13 +1006,19 @@ const styles = {
     fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)',
     fontWeight: 'bold',
     marginBottom: '0.5rem',
-    textShadow: '0 2px 4px rgba(0,0,0,0.1)',
     letterSpacing: '0.5px',
     wordBreak: 'keep-all',
     whiteSpace: 'nowrap',
     overflow: 'visible',
     fontFamily: '"Courier New", Courier, monospace',
-    display: 'block'
+    display: 'block',
+    color: '#1a365d'
+  },
+  balanceSubInfo: {
+    fontSize: '0.85rem',
+    color: '#64748b',
+    fontWeight: '500',
+    marginTop: '0.5rem'
   },
   balanceGrowthIndicator: {
     display: 'flex',
@@ -929,7 +1044,8 @@ const styles = {
     gap: '1.5rem',
     marginTop: '1.5rem',
     paddingTop: '1.5rem',
-    borderTop: '1px solid rgba(255,255,255,0.2)'
+    borderTop: '1px solid #e2e8f0',
+    justifyContent: 'center'
   },
   balanceFooterItem: {
     display: 'flex',
@@ -941,7 +1057,7 @@ const styles = {
   },
   footerText: {
     fontSize: '0.85rem',
-    color: 'rgba(255,255,255,0.85)',
+    color: '#64748b',
     fontWeight: '500'
   },
   quickActionsSection: {
@@ -970,6 +1086,22 @@ const styles = {
     color: '#374151',
     transition: 'all 0.2s',
     cursor: 'pointer'
+  },
+  standardActionButton: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '1.5rem 1rem',
+    backgroundColor: '#1a365d',
+    color: 'white',
+    borderRadius: '10px',
+    border: 'none',
+    textDecoration: 'none',
+    transition: 'all 0.2s',
+    cursor: 'pointer',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    fontSize: 'inherit'
   },
   quickActionIcon: {
     fontSize: '1.5rem'
@@ -1123,5 +1255,153 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center'
+  },
+  cardsSection: {
+    background: 'white',
+    borderRadius: '12px',
+    padding: '1.5rem',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    border: '1px solid #e2e8f0'
+  },
+  cardsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+    gap: '1.5rem',
+    marginTop: '1rem'
+  },
+  cardContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem'
+  },
+  cardFlipWrapper: {
+    perspective: '1000px',
+    width: '100%',
+    maxWidth: '380px',
+    height: '240px',
+    position: 'relative',
+    transformStyle: 'preserve-3d',
+    transition: 'transform 0.6s',
+    cursor: 'pointer',
+    margin: '0 auto'
+  },
+  cardFace: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    backfaceVisibility: 'hidden',
+    borderRadius: '16px',
+    padding: '1.5rem',
+    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #1e3a8a 100%)',
+    color: 'white',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    boxShadow: '0 8px 32px rgba(30, 64, 175, 0.3)',
+    transition: 'opacity 0.3s'
+  },
+  cardFront: {
+    zIndex: 2
+  },
+  cardBack: {
+    background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%)'
+  },
+  cardHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start'
+  },
+  bankNameCard: {
+    fontSize: '1rem',
+    fontWeight: 'bold',
+    letterSpacing: '1px'
+  },
+  cardTypeLabel: {
+    fontSize: '0.875rem',
+    fontWeight: 'bold',
+    opacity: 0.9
+  },
+  chipSection: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    margin: '0.5rem 0'
+  },
+  chip: {
+    width: '50px',
+    height: '40px',
+    background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)',
+    borderRadius: '8px'
+  },
+  contactless: {
+    opacity: 0.8
+  },
+  cardNumberDisplay: {
+    fontSize: '1.4rem',
+    fontWeight: 'bold',
+    letterSpacing: '3px',
+    fontFamily: 'monospace',
+    textAlign: 'center',
+    margin: '0.5rem 0'
+  },
+  cardFooterDetails: {
+    display: 'flex',
+    justifyContent: 'space-between'
+  },
+  cardLabelSmall: {
+    fontSize: '0.7rem',
+    opacity: 0.8,
+    marginBottom: '4px'
+  },
+  cardValueSmall: {
+    fontSize: '0.9rem',
+    fontWeight: 'bold'
+  },
+  magneticStripe: {
+    width: '100%',
+    height: '45px',
+    backgroundColor: '#000',
+    marginTop: '20px'
+  },
+  cvvSection: {
+    backgroundColor: 'white',
+    color: 'black',
+    padding: '1rem',
+    margin: '20px 0',
+    borderRadius: '8px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  cvvLabel: {
+    fontSize: '0.9rem',
+    fontWeight: 'bold'
+  },
+  cvvBox: {
+    backgroundColor: '#f3f4f6',
+    padding: '6px 12px',
+    borderRadius: '6px',
+    fontFamily: 'monospace',
+    fontSize: '1.1rem',
+    fontWeight: 'bold'
+  },
+  cardBackInfo: {
+    fontSize: '0.7rem',
+    opacity: 0.8
+  },
+  cardBackText: {
+    margin: '4px 0'
+  },
+  cardStatus: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginTop: '0.5rem'
+  },
+  statusBadge: {
+    padding: '0.5rem 1rem',
+    borderRadius: '20px',
+    color: 'white',
+    fontSize: '0.85rem',
+    fontWeight: '600'
   }
 };
