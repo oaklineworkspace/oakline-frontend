@@ -165,7 +165,7 @@ export default function Home() {
       color: '#f59e0b'
     },
     {
-      image: '/images/realistic-debit-card-2.svg',
+      image: '/images/premium-debit-card.svg',
       title: 'Secure Card Technology',
       description: 'Bank with confidence using our advanced chip technology and multi-layer security features.',
       features: ['EMV Chip Technology', '24/7 Fraud Monitoring', 'Instant Lock/Unlock', 'Zero Liability Protection'],
