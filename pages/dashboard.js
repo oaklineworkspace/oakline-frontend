@@ -362,7 +362,7 @@ function DashboardContent() {
         <section style={styles.accountsSection}>
           <div style={styles.sectionHeaderWithAction}>
             <h3 style={styles.sectionTitle}>Account Details</h3>
-            <Link href="/account-details-list" style={styles.viewAllLink}>View All Details →</Link>
+            <Link href="/account-details" style={styles.viewAllLink}>View All Details →</Link>
           </div>
 
           <div style={styles.accountsList}>
