@@ -3,6 +3,22 @@ import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
 
+const useMediaQuery = (query) => {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) {
+      setMatches(media.matches);
+    }
+    const listener = () => setMatches(media.matches);
+    media.addListener(listener);
+    return () => media.removeListener(listener);
+  }, [matches, query]);
+
+  return matches;
+};
+
 export default function AccountDetails() {
   const [account, setAccount] = useState(null);
   const [transactions, setTransactions] = useState([]);
@@ -11,6 +27,7 @@ export default function AccountDetails() {
   const [error, setError] = useState('');
   const router = useRouter();
   const { id } = router.query;
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   useEffect(() => {
     if (id && id !== 'undefined') {
@@ -32,14 +49,14 @@ export default function AccountDetails() {
       );
 
       const userPromise = supabase.auth.getUser();
-      
+
       const { data: { user } } = await Promise.race([userPromise, timeoutPromise]);
-      
+
       if (!user) {
         router.push('/sign-in');
         return;
       }
-      
+
       setUser(user);
       await fetchAccountDetails(user, id);
     } catch (error) {
@@ -58,10 +75,10 @@ export default function AccountDetails() {
   const fetchAccountDetails = async (user, accountId) => {
     try {
       console.log('Fetching account details for:', { accountId, userId: user.id, userEmail: user.email });
-      
+
       // First, try to get account by account_number if accountId looks like account number
       let { data: accountData, error: accountError } = null;
-      
+
       if (accountId && accountId.length >= 8) {
         // Try by account_number first
         const result = await supabase
@@ -70,7 +87,7 @@ export default function AccountDetails() {
           .eq('account_number', accountId)
           .eq('user_id', user.id)
           .single();
-        
+
         accountData = result.data;
         accountError = result.error;
       }
@@ -84,7 +101,7 @@ export default function AccountDetails() {
           .eq('id', accountId)
           .eq('user_id', user.id)
           .single();
-        
+
         accountData = result.data;
         accountError = result.error;
       }
@@ -234,7 +251,10 @@ export default function AccountDetails() {
             </div>
           </div>
 
-          <div style={styles.accountInfo}>
+          <div style={{
+            ...styles.accountInfo,
+            gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr'
+          }}>
             <div style={styles.balanceSection}>
               <div style={styles.balanceLabel}>Current Balance</div>
               <div style={styles.balanceAmount}>
@@ -277,12 +297,15 @@ export default function AccountDetails() {
         {/* Quick Actions */}
         <div style={styles.actionsCard}>
           <h2 style={styles.sectionTitle}>Quick Actions</h2>
-          <div style={styles.actionGrid}>
+          <div style={{
+            ...styles.actionGrid,
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))'
+          }}>
             <Link href="/transfer" style={styles.actionButton}>
               <span style={styles.actionIcon}>💸</span>
               <span>Transfer Money</span>
             </Link>
-            <Link href="/deposit" style={styles.actionButton}>
+            <Link href="/deposit-real" style={styles.actionButton}>
               <span style={styles.actionIcon}>📥</span>
               <span>Make Deposit</span>
             </Link>
@@ -378,67 +401,71 @@ const styles = {
   },
   errorTitle: {
     color: '#ef4444',
-    marginBottom: '1rem'
+    marginBottom: '1rem',
+    fontSize: isMobile ? '1.2rem' : '1.5rem'
   },
   errorDesc: {
     marginBottom: '2rem',
-    fontSize: '1.1rem'
+    fontSize: isMobile ? '0.9rem' : '1.1rem'
   },
   header: {
     backgroundColor: '#1e40af',
     color: 'white',
-    padding: '1rem 2rem',
+    padding: isMobile ? '0.75rem 1rem' : '1rem 2rem',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    flexWrap: 'wrap',
+    gap: isMobile ? '0.5rem' : '1rem'
   },
   logoContainer: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.75rem',
+    gap: '0.5rem',
     textDecoration: 'none',
     color: 'white'
   },
   logo: {
-    height: '40px',
+    height: isMobile ? '30px' : '40px',
     width: 'auto'
   },
   logoText: {
-    fontSize: '1.5rem',
+    fontSize: isMobile ? '1.1rem' : '1.5rem',
     fontWeight: 'bold'
   },
   headerInfo: {
     display: 'flex',
     alignItems: 'center',
-    gap: '2rem'
+    gap: isMobile ? '0.5rem' : '2rem',
+    flexWrap: 'wrap'
   },
   routingInfo: {
-    fontSize: '0.9rem',
+    fontSize: isMobile ? '0.7rem' : '0.9rem',
     backgroundColor: 'rgba(255,255,255,0.2)',
-    padding: '0.5rem 1rem',
+    padding: isMobile ? '0.3rem 0.6rem' : '0.5rem 1rem',
     borderRadius: '6px'
   },
   backButton: {
-    padding: '0.5rem 1rem',
+    padding: isMobile ? '0.3rem 0.6rem' : '0.5rem 1rem',
     backgroundColor: 'rgba(255,255,255,0.2)',
     color: 'white',
     textDecoration: 'none',
     borderRadius: '6px',
-    fontSize: '0.9rem',
+    fontSize: isMobile ? '0.75rem' : '0.9rem',
     border: '1px solid rgba(255,255,255,0.3)'
   },
   main: {
     maxWidth: '1200px',
     margin: '0 auto',
-    padding: '2rem 1rem',
+    padding: isMobile ? '1rem 0.5rem' : '2rem 1rem',
     display: 'flex',
     flexDirection: 'column',
-    gap: '2rem'
+    gap: isMobile ? '1rem' : '2rem'
   },
   accountCard: {
     backgroundColor: 'white',
-    padding: '2rem',
+    padding: isMobile ? '1rem' : '2rem',
     borderRadius: '16px',
     boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
   },
@@ -446,165 +473,181 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: '2rem'
+    marginBottom: isMobile ? '1rem' : '2rem',
+    flexWrap: 'wrap',
+    gap: '0.5rem'
   },
   accountTitle: {
-    fontSize: '2rem',
+    fontSize: isMobile ? '1.3rem' : '2rem',
     fontWeight: 'bold',
     color: '#1e293b',
     margin: '0 0 0.5rem 0'
   },
   accountType: {
-    fontSize: '1rem',
+    fontSize: isMobile ? '0.8rem' : '1rem',
     color: '#64748b',
     fontWeight: '500'
   },
   accountStatus: {
-    padding: '0.5rem 1rem',
+    padding: isMobile ? '0.3rem 0.6rem' : '0.5rem 1rem',
     backgroundColor: '#dcfce7',
     color: '#16a34a',
     borderRadius: '8px',
-    fontSize: '0.9rem',
+    fontSize: isMobile ? '0.75rem' : '0.9rem',
     fontWeight: '500'
   },
   accountInfo: {
     display: 'grid',
-    gridTemplateColumns: '1fr 2fr',
-    gap: '2rem',
+    gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr',
+    gap: isMobile ? '1rem' : '2rem',
     alignItems: 'start'
   },
   balanceSection: {
     textAlign: 'center',
-    padding: '2rem',
+    padding: isMobile ? '1rem' : '2rem',
     backgroundColor: '#f8fafc',
     borderRadius: '12px'
   },
   balanceLabel: {
-    fontSize: '1rem',
+    fontSize: isMobile ? '0.8rem' : '1rem',
     color: '#64748b',
     marginBottom: '0.5rem'
   },
   balanceAmount: {
-    fontSize: '2.5rem',
+    fontSize: isMobile ? '1.5rem' : '2.5rem',
     fontWeight: 'bold',
     color: '#1e40af',
-    marginBottom: '0.5rem'
+    marginBottom: '0.5rem',
+    wordBreak: 'break-all'
   },
   balanceNote: {
-    fontSize: '0.9rem',
+    fontSize: isMobile ? '0.75rem' : '0.9rem',
     color: '#64748b'
   },
   accountDetails: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '1rem'
+    gap: isMobile ? '0.5rem' : '1rem'
   },
   detailItem: {
     display: 'flex',
     justifyContent: 'space-between',
-    padding: '1rem',
+    padding: isMobile ? '0.5rem' : '1rem',
     backgroundColor: '#f8fafc',
-    borderRadius: '8px'
+    borderRadius: '8px',
+    gap: '0.5rem'
   },
   detailLabel: {
     fontWeight: '500',
-    color: '#64748b'
+    color: '#64748b',
+    fontSize: isMobile ? '0.75rem' : '1rem'
   },
   detailValue: {
     fontWeight: '600',
-    color: '#1e293b'
+    color: '#1e293b',
+    fontSize: isMobile ? '0.75rem' : '1rem',
+    textAlign: 'right'
   },
   actionsCard: {
     backgroundColor: 'white',
-    padding: '2rem',
+    padding: isMobile ? '1rem' : '2rem',
     borderRadius: '16px',
     boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
   },
   sectionTitle: {
-    fontSize: '1.5rem',
+    fontSize: isMobile ? '1.1rem' : '1.5rem',
     fontWeight: 'bold',
     color: '#1e293b',
-    marginBottom: '1.5rem'
+    marginBottom: isMobile ? '1rem' : '1.5rem'
   },
   actionGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '1rem'
+    gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: isMobile ? '0.5rem' : '1rem'
   },
   actionButton: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.75rem',
-    padding: '1rem',
+    padding: isMobile ? '0.75rem' : '1rem',
     backgroundColor: '#f8fafc',
     border: '2px solid #e2e8f0',
     borderRadius: '12px',
     textDecoration: 'none',
     color: '#374151',
     fontWeight: '500',
-    transition: 'all 0.2s'
+    transition: 'all 0.2s',
+    fontSize: isMobile ? '0.85rem' : '1rem'
   },
   actionIcon: {
-    fontSize: '1.25rem'
+    fontSize: isMobile ? '1rem' : '1.25rem'
   },
   transactionsCard: {
     backgroundColor: 'white',
-    padding: '2rem',
+    padding: isMobile ? '1rem' : '2rem',
     borderRadius: '16px',
     boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
   },
   transactionsList: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.75rem'
+    gap: isMobile ? '0.5rem' : '0.75rem'
   },
   transactionItem: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '1rem',
-    backgroundColor: '#f8fafc',
+    padding: isMobile ? '0.5rem' : '1rem',
+    background: '#f8fafc',
     borderRadius: '8px',
-    border: '1px solid #e2e8f0'
+    border: '1px solid #e2e8f0',
+    gap: isMobile ? '0.3rem' : '0.5rem',
+    flexWrap: isMobile ? 'nowrap' : 'nowrap'
   },
   transactionLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1rem',
-    flex: 1
+    gap: isMobile ? '0.5rem' : '1rem',
+    flex: 1,
+    minWidth: 0
   },
   transactionIcon: {
-    fontSize: '1.5rem'
+    fontSize: isMobile ? '1.2rem' : '1.5rem'
   },
   transactionInfo: {
-    flex: 1
+    flex: 1,
+    minWidth: 0
   },
   transactionDesc: {
-    fontSize: '1rem',
+    fontSize: isMobile ? '0.8rem' : '1rem',
     fontWeight: '500',
     color: '#1e293b',
-    marginBottom: '0.25rem'
+    marginBottom: '0.25rem',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap'
   },
   transactionDate: {
-    fontSize: '0.85rem',
+    fontSize: isMobile ? '0.7rem' : '0.85rem',
     color: '#64748b',
     marginBottom: '0.25rem'
   },
   transactionStatus: {
-    fontSize: '0.8rem',
+    fontSize: isMobile ? '0.65rem' : '0.8rem',
     color: '#64748b'
   },
   transactionAmount: {
-    fontSize: '1rem',
-    fontWeight: 'bold'
+    fontSize: isMobile ? '0.85rem' : '1rem',
+    fontWeight: 'bold',
+    whiteSpace: 'nowrap'
   },
   noTransactions: {
     textAlign: 'center',
-    padding: '3rem',
+    padding: isMobile ? '2rem' : '3rem',
     color: '#64748b'
   },
   noTransactionsIcon: {
-    fontSize: '3rem',
+    fontSize: isMobile ? '2rem' : '3rem',
     marginBottom: '1rem'
   }
 };
