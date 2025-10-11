@@ -7,21 +7,21 @@ export default function Testimonials() {
       name: 'John Davidson',
       title: 'Small Business Owner',
       text: 'Oakline Bank transformed how I manage my business finances. The online banking platform is intuitive and their business loan process was incredibly smooth.',
-      img: '/images/testimonial-1.jpg.JPG',
+      img: '/images/Bank_hall_business_discussion_72f98bbe.png',
       rating: 5
     },
     { 
       name: 'Samantha Rodriguez',
       title: 'Tech Professional',
       text: 'I love the mobile app and instant notifications. The no-fee checking account and excellent customer service make banking stress-free.',
-      img: '/images/testimonial-2.jpg.JPG',
+      img: '/images/Mobile_banking_user_d80a1b31.png',
       rating: 5
     },
     { 
       name: 'Michael Patterson',
       title: 'Real Estate Agent',
       text: 'Great customer support and easy account setup. Their investment advisory services helped me plan for retirement. Highly recommend!',
-      img: '/images/testimonial-3.jpg.JPG',
+      img: '/images/Digital_investment_dashboard_36d35f19.png',
       rating: 5
     },
   ];
