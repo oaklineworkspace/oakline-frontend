@@ -4,7 +4,7 @@ export default function TestimonialsSection() {
     {
       name: 'Sarah Johnson',
       role: 'Small Business Owner',
-      image: '/images/testimonial-placeholder.svg',
+      image: '/images/testimonial-1.jpeg',
       rating: 5,
       text: 'Oakline Bank has transformed how I manage my business finances. The mobile banking app is incredibly intuitive, and their customer service is exceptional. I can track expenses, make payments, and manage cash flow all in one place.',
       company: 'Johnson Marketing Agency'
@@ -12,7 +12,7 @@ export default function TestimonialsSection() {
     {
       name: 'Michael Chen',
       role: 'Real Estate Investor',
-      image: '/images/testimonial-placeholder.svg',
+      image: '/images/testimonial-2.jpeg',
       rating: 5,
       text: 'The mortgage process was seamless and fast. Their loan officers provided excellent guidance throughout, and I got a competitive rate that saved me thousands. Highly recommend for anyone looking to invest in real estate.',
       company: 'Chen Properties'
@@ -20,7 +20,7 @@ export default function TestimonialsSection() {
     {
       name: 'Emily Rodriguez',
       role: 'Tech Entrepreneur',
-      image: '/images/testimonial-placeholder.svg',
+      image: '/images/testimonial-3.jpeg',
       rating: 5,
       text: 'As someone who travels frequently, having 24/7 access to my accounts and instant international transfers is crucial. Oakline Bank\'s global banking features and security measures give me complete peace of mind.',
       company: 'TechFlow Solutions'
