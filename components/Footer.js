@@ -77,7 +77,7 @@ export default function Footer() {
           {/* Company Info */}
           <div style={styles.companySection}>
             <Link href="/" style={styles.logoContainer}>
-              <img src="/images/logo-primary.png" alt="Oakline Bank Logo" style={styles.logo} />
+              <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank Logo" style={styles.logo} />
               <span style={styles.companyName}>Oakline Bank</span>
             </Link>
             <p style={styles.companyDescription}>
