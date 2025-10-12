@@ -51,6 +51,14 @@ export default function EnrollPage() {
 
       if (response.ok) {
         console.log('Magic link verification successful');
+        
+        // Check if enrollment is already completed
+        if (result.enrollment_completed) {
+          setError('This enrollment has already been completed. Please use the login page.');
+          setStep('error');
+          return;
+        }
+        
         setApplicationInfo(result.application);
         setAccounts(result.accounts || result.account_numbers || []);
         setFormData(prev => ({ ...prev, email: user.email }));
