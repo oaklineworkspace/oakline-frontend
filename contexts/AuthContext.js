@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
@@ -45,8 +44,22 @@ export const AuthProvider = ({ children }) => {
           const noRedirectPaths = ['/enroll', '/apply', '/sign-in', '/login', '/reset-password'];
           const shouldNotRedirect = noRedirectPaths.some(path => router.pathname.includes(path));
           
-          if (!shouldNotRedirect) {
-            router.push('/dashboard');
+          // Check if user has enrollment metadata (magic link enrollment)
+          const hasEnrollmentMetadata = session?.user?.user_metadata?.application_id;
+          
+          // Check URL params for enrollment indicators
+          const urlParams = new URLSearchParams(window.location.search);
+          const isEnrollmentFlow = urlParams.get('type') === 'magiclink' || urlParams.has('application_id') || hasEnrollmentMetadata;
+          
+          console.log('Auth redirect check:', { 
+            shouldNotRedirect, 
+            hasEnrollmentMetadata, 
+            isEnrollmentFlow,
+            pathname: router.pathname 
+          });
+          
+          if (!shouldNotRedirect && !isEnrollmentFlow) {
+            window.location.href = 'https://theoaklinebank.com/dashboard';
           }
         } else if (event === 'SIGNED_OUT') {
           router.push('/sign-in');
@@ -107,3 +120,4 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
