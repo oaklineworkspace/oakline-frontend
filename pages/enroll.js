@@ -193,21 +193,32 @@ export default function EnrollPage() {
       setLoading(true);
 
       try {
-        const { token, application_id, type } = router.query;
-        console.log('URL params:', { token: !!token, application_id: !!application_id, type });
+        const { token, application_id, type, error: authError, error_description } = router.query;
+        console.log('URL params:', { token: !!token, application_id: !!application_id, type, authError });
         console.log('Full query params:', router.query);
+
+        // Check for auth errors first
+        if (authError) {
+          console.error('Auth error in URL:', authError, error_description);
+          setError(`Authentication error: ${error_description || authError}`);
+          setStep('error');
+          setAuthCreationLoading(false);
+          setLoading(false);
+          return;
+        }
 
         const { data: { session } } = await supabase.auth.getSession();
         console.log('Current session:', !!session, 'User:', session?.user?.email);
         console.log('Session metadata:', session?.user?.user_metadata);
 
-        if (session?.user && (type === 'magiclink' || !token)) {
-          console.log('User authenticated via magic link');
+        // Check if user is authenticated (from magic link)
+        if (session?.user) {
           const userAppId = session.user.user_metadata?.application_id || application_id;
-
+          
           if (userAppId) {
-            console.log('Using application ID:', userAppId);
+            console.log('User authenticated via magic link with app ID:', userAppId);
             setApplicationId(userAppId);
+            setStep('password'); // Go directly to password setup
             await verifyMagicLinkUser(session.user, userAppId);
           } else {
             console.log('No application ID found in session or query');
@@ -335,7 +346,7 @@ export default function EnrollPage() {
         setMessage('Enrollment completed successfully! Redirecting to login...');
         setStep('success');
         setTimeout(() => {
-          router.push('/login');
+          window.location.href = 'https://theoaklinebank.com/login';
         }, 2000);
       } else {
         setError(`Error: ${result.error}`);
