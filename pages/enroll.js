@@ -64,10 +64,13 @@ export default function EnrollPage() {
         setFormData(prev => ({ ...prev, email: user.email }));
         setStep('password'); // Go straight to password setup
         setValidToken(true); // Token (magic link) is implicitly valid
+        setLoading(false); // Ensure loading is false
       } else {
-        console.error('Magic link verification failed:', result.error);
-        setError(result.error || 'Invalid enrollment link or session expired.');
+        console.error('Magic link verification failed:', result);
+        console.error('Response status:', response.status);
+        setError(result.error || 'Invalid enrollment link or session expired. Please contact support.');
         setStep('error');
+        setLoading(false);
       }
     } catch (error) {
       console.error('Magic link verification error:', error);
@@ -165,6 +168,24 @@ export default function EnrollPage() {
     }
   };
 
+  // Prevent navigation away from enrollment until complete
+  useEffect(() => {
+    const handleRouteChange = (url) => {
+      if (step === 'password' && !url.includes('/enroll')) {
+        const confirmLeave = window.confirm('Are you sure you want to leave? You need to complete enrollment to access your account.');
+        if (!confirmLeave) {
+          router.events.emit('routeChangeError');
+          throw 'Enrollment incomplete';
+        }
+      }
+    };
+
+    router.events.on('routeChangeStart', handleRouteChange);
+    return () => {
+      router.events.off('routeChangeStart', handleRouteChange);
+    };
+  }, [step, router]);
+
   // Effect to handle authentication state changes and initial setup
   useEffect(() => {
     const initializeEnrollment = async () => {
@@ -174,9 +195,11 @@ export default function EnrollPage() {
       try {
         const { token, application_id, type } = router.query;
         console.log('URL params:', { token: !!token, application_id: !!application_id, type });
+        console.log('Full query params:', router.query);
 
         const { data: { session } } = await supabase.auth.getSession();
         console.log('Current session:', !!session, 'User:', session?.user?.email);
+        console.log('Session metadata:', session?.user?.user_metadata);
 
         if (session?.user && (type === 'magiclink' || !token)) {
           console.log('User authenticated via magic link');
@@ -392,7 +415,7 @@ export default function EnrollPage() {
         </div>
       )}
 
-      {validToken && step === 'password' && (
+      {(validToken || step === 'password') && step === 'password' && (
         <>
           {applicationInfo && (
             <div style={{ backgroundColor: '#f0f9ff', padding: '1rem', borderRadius: '6px', marginBottom: '2rem' }}>
@@ -604,4 +627,3 @@ export default function EnrollPage() {
       )}
     </div>
   );
-}
