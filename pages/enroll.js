@@ -207,6 +207,12 @@ export default function EnrollPage() {
           return;
         }
 
+        // Wait a bit for session to be established if this is a magic link
+        if (type === 'magiclink' || type === 'magic_link') {
+          console.log('Magic link detected, waiting for session...');
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
         const { data: { session } } = await supabase.auth.getSession();
         console.log('Current session:', !!session, 'User:', session?.user?.email);
         console.log('Session metadata:', session?.user?.user_metadata);
@@ -224,36 +230,42 @@ export default function EnrollPage() {
             console.log('No application ID found in session or query');
             setError('Application ID not found. Please use the link from your email.');
             setStep('error');
+            setAuthCreationLoading(false);
+            setLoading(false);
           }
         } else if (application_id) {
-          // If we have application_id but no session, try to use token-based enrollment
-          console.log('No session found, checking for token-based enrollment');
+          // If we have application_id but no session
           if (token) {
+            // Token-based enrollment
             console.log('Using token-based enrollment');
             setEnrollmentToken(token);
             setApplicationId(application_id);
             setStep('password');
             await validateToken(token, application_id);
-          } else {
-            // No token and no session, but we have application_id - wait for session
-            console.log('Waiting for session with application_id:', application_id);
-            setError('Loading enrollment... Please wait.');
-            setStep('loading');
-            // Session might be loading, retry after a delay
+          } else if (type === 'magiclink' || type === 'magic_link') {
+            // Magic link but session not ready yet - retry once
+            console.log('Magic link without session, retrying...');
             setTimeout(() => {
               window.location.reload();
-            }, 2000);
+            }, 1500);
+          } else {
+            console.log('Invalid enrollment link - missing required parameters');
+            setError('Invalid enrollment link. Please check your email for the correct link or request a new one.');
+            setStep('error');
+            setAuthCreationLoading(false);
+            setLoading(false);
           }
         } else {
-          console.log('Invalid enrollment link - missing required parameters');
+          console.log('Invalid enrollment link - missing application_id');
           setError('Invalid enrollment link. Please check your email for the correct link or request a new one.');
           setStep('error');
+          setAuthCreationLoading(false);
+          setLoading(false);
         }
       } catch (error) {
         console.error('Error initializing enrollment:', error);
         setError('Error loading enrollment. Please try again.');
         setStep('error');
-      } finally {
         setAuthCreationLoading(false);
         setLoading(false);
       }
