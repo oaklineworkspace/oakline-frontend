@@ -330,13 +330,27 @@ export default function AdminResendEnrollment() {
               disabled={loading}
               style={{
                 padding: '0.75rem 1.5rem',
-                backgroundColor: loading ? '#9ca3af' : '#059669',
+                backgroundColor: loading ? '#9ca3af' : '#1e40af',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
                 fontSize: '16px',
                 fontWeight: '600',
-                cursor: loading ? 'not-allowed' : 'pointer'
+                cursor: loading ? 'not-allowed' : 'pointer',
+                boxShadow: loading ? 'none' : '0 4px 6px rgba(30, 64, 175, 0.3)',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => {
+                if (!loading) {
+                  e.target.style.backgroundColor = '#1e3a8a';
+                  e.target.style.transform = 'translateY(-1px)';
+                }
+              }}
+              onMouseOut={(e) => {
+                if (!loading) {
+                  e.target.style.backgroundColor = '#1e40af';
+                  e.target.style.transform = 'translateY(0)';
+                }
               }}
             >
               {loading ? 'Sending...' : '📧 Resend Enrollment Link'}
