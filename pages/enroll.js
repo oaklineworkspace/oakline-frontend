@@ -210,6 +210,7 @@ export default function EnrollPage() {
         const { data: { session } } = await supabase.auth.getSession();
         console.log('Current session:', !!session, 'User:', session?.user?.email);
         console.log('Session metadata:', session?.user?.user_metadata);
+        console.log('URL application_id:', application_id);
 
         // Check if user is authenticated (from magic link)
         if (session?.user) {
@@ -218,7 +219,6 @@ export default function EnrollPage() {
           if (userAppId) {
             console.log('User authenticated via magic link with app ID:', userAppId);
             setApplicationId(userAppId);
-            setStep('password'); // Go directly to password setup
             await verifyMagicLinkUser(session.user, userAppId);
           } else {
             console.log('No application ID found in session or query');
@@ -232,12 +232,17 @@ export default function EnrollPage() {
             console.log('Using token-based enrollment');
             setEnrollmentToken(token);
             setApplicationId(application_id);
+            setStep('password');
             await validateToken(token, application_id);
           } else {
-            // No token and no session - invalid link
-            console.log('Invalid enrollment link - missing token and session');
-            setError('Invalid enrollment link. Please check your email for the correct link or request a new one.');
-            setStep('error');
+            // No token and no session, but we have application_id - wait for session
+            console.log('Waiting for session with application_id:', application_id);
+            setError('Loading enrollment... Please wait.');
+            setStep('loading');
+            // Session might be loading, retry after a delay
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
           }
         } else {
           console.log('Invalid enrollment link - missing required parameters');

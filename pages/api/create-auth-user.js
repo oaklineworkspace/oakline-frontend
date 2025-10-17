@@ -89,6 +89,22 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to link user to application' });
     }
 
+    // Create enrollment record
+    const { error: enrollmentError } = await supabaseAdmin
+      .from('enrollments')
+      .insert([{
+        email: email.trim().toLowerCase(),
+        application_id: application_id,
+        is_used: false,
+        click_count: 0
+      }]);
+
+    if (enrollmentError) {
+      console.error('Error creating enrollment record:', enrollmentError);
+      // Don't fail the process, enrollment will be created when sending welcome email
+    }
+
+
     res.status(200).json({
       message: 'Auth user created successfully',
       user: {
