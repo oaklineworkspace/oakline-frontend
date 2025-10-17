@@ -35,6 +35,12 @@
       "static/chunks/vendors.js",
       "static/chunks/main.js",
       "static/chunks/pages/apply.js"
+    ],
+    "/enroll": [
+      "static/chunks/webpack.js",
+      "static/chunks/vendors.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/enroll.js"
     ]
   },
   "ampFirstPages": []
