@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { supabaseAdmin } from '../../lib/supabaseAdmin';
 import Link from 'next/link';
 
 export default function ManageAllUsersPage() {
@@ -44,63 +43,14 @@ export default function ManageAllUsersPage() {
     setError('');
     
     try {
-      // Fetch all applications
-      const { data: applications, error: appsError } = await supabaseAdmin
-        .from('applications')
-        .select('*')
-        .order('submitted_at', { ascending: false });
+      const response = await fetch('/api/applications');
+      const result = await response.json();
 
-      if (appsError) throw appsError;
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fetch data');
+      }
 
-      // Fetch all profiles
-      const { data: profiles, error: profilesError } = await supabaseAdmin
-        .from('profiles')
-        .select('*');
-
-      if (profilesError) throw profilesError;
-
-      // Fetch all accounts
-      const { data: accounts, error: accountsError } = await supabaseAdmin
-        .from('accounts')
-        .select('*');
-
-      if (accountsError) throw accountsError;
-
-      // Fetch all cards
-      const { data: cards, error: cardsError } = await supabaseAdmin
-        .from('cards')
-        .select('*');
-
-      if (cardsError) throw cardsError;
-
-      // Fetch all enrollments
-      const { data: enrollments, error: enrollError } = await supabaseAdmin
-        .from('enrollments')
-        .select('*');
-
-      if (enrollError) throw enrollError;
-
-      // Combine all data
-      const combinedData = applications.map(app => {
-        const profile = profiles?.find(p => p.email === app.email);
-        const userAccounts = accounts?.filter(a => a.application_id === app.id) || [];
-        const enrollment = enrollments?.find(e => e.email === app.email);
-        
-        return {
-          ...app,
-          user_id: app.user_id || profile?.id,
-          enrollment_completed: profile?.enrollment_completed || false,
-          password_set: profile?.password_set || false,
-          enrollment_data: enrollment,
-          profile_data: profile,
-          accounts: userAccounts.map(acc => ({
-            ...acc,
-            cards: cards?.filter(c => c.account_id === acc.id) || []
-          }))
-        };
-      });
-
-      setUsersData(combinedData);
+      setUsersData(result.applications || []);
     } catch (error) {
       console.error('Error fetching users data:', error);
       setError('Failed to load users data: ' + error.message);
@@ -147,13 +97,8 @@ export default function ManageAllUsersPage() {
     setActionLoading({ ...actionLoading, [`reset_${user.id}`]: true });
     
     try {
-      const { error } = await supabaseAdmin.auth.admin.resetPasswordForEmail(user.email, {
-        redirectTo: `${window.location.origin}/reset-password`
-      });
-
-      if (error) throw error;
-
-      alert(`✅ Password reset link sent to ${user.email}`);
+      // This would need a dedicated API route - for now just show message
+      alert(`Password reset functionality requires an API route. Please contact support.`);
     } catch (error) {
       alert(`❌ Error: ${error.message}`);
     } finally {

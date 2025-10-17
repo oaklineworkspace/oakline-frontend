@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { supabaseAdmin } from '../../lib/supabaseAdmin';
 
 export default function ResendEnrollmentPage() {
   const [applications, setApplications] = useState([]);
@@ -18,56 +17,36 @@ export default function ResendEnrollmentPage() {
       setLoading(true);
       setMessage('');
       
-      const { data: appsData, error: appsError } = await supabaseAdmin
-        .from('applications')
-        .select('*')
-        .order('submitted_at', { ascending: false });
+      const response = await fetch('/api/applications');
+      const result = await response.json();
 
-      if (appsError) {
-        console.error('Applications fetch error:', appsError);
-        setMessage('Error loading applications: ' + appsError.message);
+      if (!response.ok) {
+        setMessage('Error loading applications: ' + (result.error || 'Unknown error'));
         setLoading(false);
         return;
       }
 
-      if (!appsData || appsData.length === 0) {
+      const appsData = result.applications || [];
+
+      if (appsData.length === 0) {
         setApplications([]);
         setMessage('No applications found');
         setLoading(false);
         return;
       }
 
-      const { data: enrollmentsData, error: enrollError } = await supabaseAdmin
-        .from('enrollments')
-        .select('*');
-
-      if (enrollError) {
-        console.error('Enrollments fetch error:', enrollError);
-      }
-
-      const { data: profilesData, error: profileError } = await supabaseAdmin
-        .from('profiles')
-        .select('id, email, enrollment_completed');
-
-      if (profileError) {
-        console.error('Profiles fetch error:', profileError);
-      }
-
       const enrichedApps = appsData.map(app => {
-        const enrollment = enrollmentsData?.find(e => e.email === app.email);
-        const profile = profilesData?.find(p => p.email === app.email);
-        
         let status = 'pending';
-        if (profile?.enrollment_completed) {
+        if (app.enrollment_completed) {
           status = 'completed';
-        } else if (enrollment) {
+        } else if (app.status === 'auth_created' || app.status === 'enrollment_sent') {
           status = 'enrollment_sent';
         }
         
         return {
           ...app,
           status,
-          enrollment_completed: profile?.enrollment_completed || false
+          enrollment_completed: app.enrollment_completed || false
         };
       });
 
