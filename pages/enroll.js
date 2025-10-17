@@ -401,7 +401,7 @@ export default function EnrollPage() {
               onClick={() => window.location.reload()}
               style={{
                 padding: '12px 24px',
-                backgroundColor: '#059669',
+                backgroundColor: '#2563eb',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
@@ -414,7 +414,7 @@ export default function EnrollPage() {
               onClick={() => router.push('/')}
               style={{
                 padding: '12px 24px',
-                backgroundColor: '#1e40af',
+                backgroundColor: '#2563eb',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',

@@ -48,10 +48,12 @@ export default async function handler(req, res) {
     // Generate enrollment token
     const enrollmentToken = `enroll_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 
-    // Determine site URL dynamically
-    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    // Determine site URL dynamically - prioritize actual host for correct redirects
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
     const host = req.headers['x-forwarded-host'] || req.headers.host;
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
+    // Use actual host for redirects (important for dev/preview environments)
+    // Only fall back to NEXT_PUBLIC_SITE_URL if host is not available
+    const siteUrl = host ? `${protocol}://${host}` : (process.env.NEXT_PUBLIC_SITE_URL || 'https://theoaklinebank.com');
 
     // Generate Supabase magic link for enrollment
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
