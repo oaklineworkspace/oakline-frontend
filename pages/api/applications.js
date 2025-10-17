@@ -4,6 +4,13 @@ import { supabaseAdmin } from '../../lib/supabaseAdmin';
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
+      // Log environment info for debugging (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Environment:', process.env.NODE_ENV)
+        console.log('Has SUPABASE_URL:', !!process.env.SUPABASE_URL || !!process.env.NEXT_PUBLIC_SUPABASE_URL)
+        console.log('Has SERVICE_KEY:', !!process.env.SUPABASE_SERVICE_KEY || !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+      }
+      
       const { email } = req.query;
       
       if (email) {
