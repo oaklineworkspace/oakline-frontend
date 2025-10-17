@@ -30,6 +30,12 @@
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
+    "/apply": [
+      "static/chunks/webpack.js",
+      "static/chunks/vendors.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/apply.js"
+    ],
     "/sign-in": [
       "static/chunks/webpack.js",
       "static/chunks/vendors.js",
