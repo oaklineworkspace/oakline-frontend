@@ -4,7 +4,7 @@
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
   "/apply": "pages/apply.js",
-  "/api/create-auth-user": "pages/api/create-auth-user.js",
-  "/api/resend-enrollment": "pages/api/resend-enrollment.js",
-  "/enroll": "pages/enroll.js"
+  "/enroll": "pages/enroll.js",
+  "/sign-in": "pages/sign-in.js",
+  "/dashboard": "pages/dashboard.js"
 }
