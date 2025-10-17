@@ -56,14 +56,14 @@ export default async function handler(req, res) {
       });
     }
 
-    // Create auth user with email confirmed to enable immediate login after enrollment
+    // Create auth user WITHOUT creating profile (enrollment will handle that)
     const tempPassword = `Temp${Date.now()}!${Math.random().toString(36).substring(2, 8)}`;
 
     console.log('Creating new auth user for:', userEmail);
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email: userEmail,
       password: tempPassword,
-      email_confirm: true, // Confirm email to enable login
+      email_confirm: false, // Don't confirm - let enrollment handle it
       user_metadata: {
         first_name: applicationData.first_name || '',
         last_name: applicationData.last_name || '',
@@ -78,27 +78,6 @@ export default async function handler(req, res) {
 
     console.log('Auth user created successfully:', newUser.user.id);
 
-    // Create profile record for the new user
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .insert([{
-        id: newUser.user.id,
-        email: userEmail,
-        first_name: applicationData.first_name,
-        middle_name: applicationData.middle_name,
-        last_name: applicationData.last_name,
-        enrollment_completed: false,
-        password_set: false,
-        application_status: 'pending',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }]);
-
-    if (profileError) {
-      console.error('Error creating profile:', profileError);
-      // Don't fail the process, just log the error
-    }
-
     // Update application with the new auth user ID
     const { error: updateError } = await supabaseAdmin
       .from('applications')
@@ -111,7 +90,7 @@ export default async function handler(req, res) {
     }
 
     res.status(200).json({
-      message: 'Auth user and profile created successfully',
+      message: 'Auth user created successfully',
       user: {
         id: application_id,
         email: userEmail,
@@ -122,9 +101,9 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Create auth user error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal server error',
-      details: error.message 
+      details: error.message
     });
   }
 }
