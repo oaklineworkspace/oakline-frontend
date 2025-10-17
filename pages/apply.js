@@ -412,6 +412,13 @@ export default function Apply() {
 
         if (!authResponse.ok) {
           console.error('Failed to create auth user:', authResult);
+          
+          // If auth creation failed, clean up the application record
+          await supabase
+            .from('applications')
+            .delete()
+            .eq('id', applicationId);
+          
           throw new Error(authResult.error || 'Failed to create user account');
         }
 

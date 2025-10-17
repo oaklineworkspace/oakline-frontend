@@ -39,6 +39,13 @@ export default async function handler(req, res) {
 
     if (existingUser) {
       console.log('Auth user already exists:', existingUser.id);
+      
+      // Update application with existing auth user ID
+      await supabaseAdmin
+        .from('applications')
+        .update({ user_id: existingUser.id })
+        .eq('id', application_id);
+      
       return res.status(200).json({
         message: 'Auth user already exists',
         user: {
@@ -50,7 +57,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Create auth user with email confirmation to enable magic link
+    // Create auth user WITHOUT email_confirm to avoid trigger issues
     const tempPassword = `Temp${Date.now()}!${Math.random().toString(36).substring(2, 8)}`;
     
     console.log('Creating new auth user for:', userEmail);
@@ -58,7 +65,7 @@ export default async function handler(req, res) {
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email: userEmail,
       password: tempPassword,
-      email_confirm: true, // Confirm email to enable magic link authentication
+      email_confirm: false, // Don't confirm yet - let enrollment flow handle it
       user_metadata: {
         first_name: applicationData.first_name || '',
         last_name: applicationData.last_name || '',
