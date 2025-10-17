@@ -36,11 +36,11 @@
       "static/chunks/main.js",
       "static/chunks/pages/apply.js"
     ],
-    "/sign-in": [
+    "/enroll": [
       "static/chunks/webpack.js",
       "static/chunks/vendors.js",
       "static/chunks/main.js",
-      "static/chunks/pages/sign-in.js"
+      "static/chunks/pages/enroll.js"
     ]
   },
   "ampFirstPages": []
