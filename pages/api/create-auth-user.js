@@ -1,4 +1,3 @@
-
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 
 export default async function handler(req, res) {
@@ -19,7 +18,7 @@ export default async function handler(req, res) {
       .select('*')
       .eq('id', application_id)
       .single();
-    
+
     if (appError || !applicationData) {
       console.error('Application not found:', appError);
       return res.status(404).json({ error: 'Application not found' });
@@ -29,23 +28,23 @@ export default async function handler(req, res) {
 
     // Check if auth user already exists
     const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-    
+
     if (listError) {
       console.error('Error listing users:', listError);
       return res.status(500).json({ error: 'Failed to check existing users' });
     }
-    
+
     const existingUser = existingUsers?.users?.find(user => user.email === userEmail);
 
     if (existingUser) {
       console.log('Auth user already exists:', existingUser.id);
-      
+
       // Update application with existing auth user ID
       await supabaseAdmin
         .from('applications')
         .update({ user_id: existingUser.id })
         .eq('id', application_id);
-      
+
       return res.status(200).json({
         message: 'Auth user already exists',
         user: {
@@ -57,37 +56,62 @@ export default async function handler(req, res) {
       });
     }
 
-    // Create auth user WITHOUT email_confirm to avoid trigger issues
+    // Create auth user with email confirmed to enable immediate login after enrollment
     const tempPassword = `Temp${Date.now()}!${Math.random().toString(36).substring(2, 8)}`;
-    
+
     console.log('Creating new auth user for:', userEmail);
-    
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email: userEmail,
       password: tempPassword,
-      email_confirm: false, // Don't confirm yet - let enrollment flow handle it
+      email_confirm: true, // Confirm email to enable login
       user_metadata: {
         first_name: applicationData.first_name || '',
         last_name: applicationData.last_name || '',
-        middle_name: applicationData.middle_name || '',
-        application_id: application_id,
-        created_via: 'application'
+        application_id: application_id
       }
     });
 
     if (createError) {
-      console.error('Error creating auth user:', createError);
-      return res.status(500).json({ 
-        error: 'Failed to create user account',
-        details: createError.message 
-      });
+      console.error('Supabase auth user creation error:', createError);
+      return res.status(500).json({ error: `Failed to create user account: ${createError.message}` });
     }
 
     console.log('Auth user created successfully:', newUser.user.id);
 
-    // Return success immediately - profile will be created during enrollment
+    // Create profile record for the new user
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert([{
+        id: newUser.user.id,
+        email: userEmail,
+        first_name: applicationData.first_name,
+        middle_name: applicationData.middle_name,
+        last_name: applicationData.last_name,
+        enrollment_completed: false,
+        password_set: false,
+        application_status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }]);
+
+    if (profileError) {
+      console.error('Error creating profile:', profileError);
+      // Don't fail the process, just log the error
+    }
+
+    // Update application with the new auth user ID
+    const { error: updateError } = await supabaseAdmin
+      .from('applications')
+      .update({ user_id: newUser.user.id })
+      .eq('id', application_id);
+
+    if (updateError) {
+      console.error('Error updating application with user_id:', updateError);
+      return res.status(500).json({ error: 'Failed to link user to application' });
+    }
+
     res.status(200).json({
-      message: 'Auth user created successfully',
+      message: 'Auth user and profile created successfully',
       user: {
         id: application_id,
         email: userEmail,

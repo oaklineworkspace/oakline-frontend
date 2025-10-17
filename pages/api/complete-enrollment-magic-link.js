@@ -151,8 +151,7 @@ export default async function handler(req, res) {
       .from('enrollments')
       .update({ 
         is_used: true,
-        completed_at: completedAt,
-        selected_account_number: accountNumber
+        completed_at: completedAt
       })
       .eq('email', email);
 
