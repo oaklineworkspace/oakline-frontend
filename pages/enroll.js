@@ -225,11 +225,20 @@ export default function EnrollPage() {
             setError('Application ID not found. Please use the link from your email.');
             setStep('error');
           }
-        } else if (token && application_id) {
-          console.log('Using token-based enrollment');
-          setEnrollmentToken(token);
-          setApplicationId(application_id);
-          await validateToken(token, application_id);
+        } else if (application_id) {
+          // If we have application_id but no session, try to use token-based enrollment
+          console.log('No session found, checking for token-based enrollment');
+          if (token) {
+            console.log('Using token-based enrollment');
+            setEnrollmentToken(token);
+            setApplicationId(application_id);
+            await validateToken(token, application_id);
+          } else {
+            // No token and no session - invalid link
+            console.log('Invalid enrollment link - missing token and session');
+            setError('Invalid enrollment link. Please check your email for the correct link or request a new one.');
+            setStep('error');
+          }
         } else {
           console.log('Invalid enrollment link - missing required parameters');
           setError('Invalid enrollment link. Please check your email for the correct link or request a new one.');

@@ -58,7 +58,7 @@ export default async function handler(req, res) {
       type: 'magiclink',
       email: email.trim().toLowerCase(),
       options: {
-        redirectTo: `${siteUrl}/enroll?application_id=${applicationId}`,
+        redirectTo: `${siteUrl}/enroll?application_id=${applicationId}&type=magic_link`,
         data: {
           application_id: applicationId,
           first_name: firstName || application.first_name,

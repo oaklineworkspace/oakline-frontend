@@ -195,7 +195,7 @@ export default async function handler(req, res) {
         console.error('Error updating enrollment record:', updateError);
       }
     } else {
-      // Create new enrollment record (no user_id column in enrollments table)
+      // Create new enrollment record
       const { error: insertError } = await supabaseAdmin
         .from('enrollments')
         .insert([{
@@ -203,8 +203,7 @@ export default async function handler(req, res) {
           application_id: application_id,
           token: linkData.properties.action_link,
           is_used: false,
-          click_count: 0,
-          created_at: new Date().toISOString()
+          click_count: 0
         }]);
 
       if (insertError) {
