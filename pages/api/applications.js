@@ -6,23 +6,60 @@ export default async function handler(req, res) {
     try {
       const { email } = req.query;
       
-      if (!email) {
-        return res.status(400).json({ error: 'Email parameter is required' });
+      if (email) {
+        const { data: applications, error } = await supabaseAdmin
+          .from('applications')
+          .select('*')
+          .eq('email', email.trim().toLowerCase())
+          .order('submitted_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching application:', error);
+          return res.status(500).json({ error: 'Failed to fetch application' });
+        }
+
+        return res.status(200).json(applications || []);
       }
 
-      // Search for application by email
       const { data: applications, error } = await supabaseAdmin
         .from('applications')
         .select('*')
-        .eq('email', email.trim().toLowerCase())
         .order('submitted_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching application:', error);
-        return res.status(500).json({ error: 'Failed to fetch application' });
+        console.error('Error fetching applications:', error);
+        return res.status(500).json({ error: 'Failed to fetch applications' });
       }
 
-      res.status(200).json(applications || []);
+      const enrichedApplications = await Promise.all(
+        applications.map(async (app) => {
+          const { data: profile } = await supabaseAdmin
+            .from('profiles')
+            .select('enrollment_completed, password_set')
+            .eq('email', app.email)
+            .maybeSingle();
+
+          const { data: accounts } = await supabaseAdmin
+            .from('accounts')
+            .select('id, account_number, account_type, balance, status')
+            .eq('application_id', app.id);
+
+          const { data: cards } = await supabaseAdmin
+            .from('cards')
+            .select('id, card_number, card_type, status, expiry_date')
+            .eq('account_id', accounts?.[0]?.id || null);
+
+          return {
+            ...app,
+            enrollment_completed: profile?.enrollment_completed || false,
+            password_set: profile?.password_set || false,
+            accounts: accounts || [],
+            cards: cards || []
+          };
+        })
+      );
+
+      res.status(200).json({ applications: enrichedApplications });
     } catch (error) {
       console.error('Application search error:', error);
       res.status(500).json({ error: 'Internal server error' });
