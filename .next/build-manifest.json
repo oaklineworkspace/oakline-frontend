@@ -12,12 +12,6 @@
   ],
   "rootMainFiles": [],
   "pages": {
-    "/": [
-      "static/chunks/webpack.js",
-      "static/chunks/vendors.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/index.js"
-    ],
     "/_app": [
       "static/chunks/webpack.js",
       "static/chunks/vendors.js",
@@ -29,12 +23,6 @@
       "static/chunks/vendors.js",
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
-    ],
-    "/admin/manage-all-users": [
-      "static/chunks/webpack.js",
-      "static/chunks/vendors.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/admin/manage-all-users.js"
     ],
     "/admin/resend-enrollment": [
       "static/chunks/webpack.js",

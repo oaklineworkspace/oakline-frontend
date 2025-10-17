@@ -44,17 +44,33 @@ export default async function handler(req, res) {
             .select('id, account_number, account_type, balance, status')
             .eq('application_id', app.id);
 
-          const { data: cards } = await supabaseAdmin
-            .from('cards')
-            .select('id, card_number, card_type, status, expiry_date')
-            .eq('account_id', accounts?.[0]?.id || null);
+          let enrichedAccounts = accounts || [];
+          if (accounts && accounts.length > 0) {
+            const accountIds = accounts.map(acc => acc.id);
+            const { data: cards } = await supabaseAdmin
+              .from('cards')
+              .select('id, card_number, card_type, status, expiry_date, account_id')
+              .in('account_id', accountIds);
+            
+            const cardsByAccountId = {};
+            (cards || []).forEach(card => {
+              if (!cardsByAccountId[card.account_id]) {
+                cardsByAccountId[card.account_id] = [];
+              }
+              cardsByAccountId[card.account_id].push(card);
+            });
+
+            enrichedAccounts = accounts.map(account => ({
+              ...account,
+              cards: cardsByAccountId[account.id] || []
+            }));
+          }
 
           return {
             ...app,
             enrollment_completed: profile?.enrollment_completed || false,
             password_set: profile?.password_set || false,
-            accounts: accounts || [],
-            cards: cards || []
+            accounts: enrichedAccounts
           };
         })
       );
