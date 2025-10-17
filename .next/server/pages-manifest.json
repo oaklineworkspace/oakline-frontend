@@ -4,7 +4,5 @@
   "/_document": "pages/_document.js",
   "/admin/resend-enrollment": "pages/admin/resend-enrollment.js",
   "/": "pages/index.js",
-  "/api/applications": "pages/api/applications.js",
-  "/api/resend-enrollment": "pages/api/resend-enrollment.js",
-  "/enroll": "pages/enroll.js"
+  "/api/applications": "pages/api/applications.js"
 }
