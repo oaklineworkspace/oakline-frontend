@@ -64,6 +64,7 @@ export default function LinkCard() {
         },
         body: JSON.stringify({
           public_token: publicToken,
+          user_id: user?.id,
         }),
       });
 
@@ -97,7 +98,7 @@ export default function LinkCard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   const config = {
     token: linkToken,
