@@ -122,6 +122,14 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('Error exchanging public token:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Error details:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+    });
+    res.status(500).json({ 
+      error: error.message,
+      details: error.response?.data?.error_message || 'Unknown error',
+    });
   }
 }

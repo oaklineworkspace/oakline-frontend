@@ -29,12 +29,6 @@ export default async function handler(req, res) {
       products: ['transactions'],
       country_codes: ['US'],
       language: 'en',
-      // For sandbox, allow all account types
-      account_filters: {
-        depository: {
-          account_subtypes: ['checking', 'savings'],
-        },
-      },
     });
 
     res.json({ link_token: response.data.link_token });

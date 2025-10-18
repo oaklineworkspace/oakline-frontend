@@ -52,9 +52,10 @@ export default function LinkCard() {
     }
   };
 
-  const onSuccess = useCallback(async (publicToken) => {
+  const onSuccess = useCallback(async (publicToken, metadata) => {
     setLoading(true);
     setError(null);
+    console.log('Plaid Link success, metadata:', metadata);
     try {
       // Exchange public token for access token
       const exchangeResponse = await fetch('/api/exchange-public-token', {
@@ -100,9 +101,18 @@ export default function LinkCard() {
     }
   }, [user]);
 
+  const onExit = useCallback((err, metadata) => {
+    console.log('Plaid Link exit:', { err, metadata });
+    if (err != null) {
+      setError(`Plaid Error: ${err.error_message || err.display_message || 'Unknown error'}`);
+    }
+    setLoading(false);
+  }, []);
+
   const config = {
     token: linkToken,
     onSuccess,
+    onExit,
   };
 
   const { open, ready } = usePlaidLink(config);
