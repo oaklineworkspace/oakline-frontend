@@ -130,7 +130,7 @@ export default function Home() {
     { name: 'Transaction History', href: '/transactions', icon: '📜', desc: 'View all transactions', color: '#64748B', section: 'core' },
     { name: 'Statements', href: '/dashboard', icon: '📄', desc: 'Download statements', color: '#0891B2', section: 'core' },
     { name: 'Branch Locator', href: '/branch-locator', icon: '📍', desc: 'Find nearest branch', color: '#DC2626', section: 'core' },
-    
+
     // Premium & Advanced Services
     { name: 'Investment Portfolio', href: '/investments', icon: '📈', desc: 'High-yield investments', color: '#10B981', section: 'premium' },
     { name: 'Crypto Trading', href: '/crypto', icon: '₿', desc: 'Digital asset trading', color: '#F59E0B', section: 'premium' },
@@ -857,7 +857,7 @@ export default function Home() {
                   <div style={styles.featureTag}>Mobile Card Controls</div>
                 </div>
                 {user ? (
-                  <Link href="/cards" style={styles.debitCardButton}>
+                  <Link href="/cards" style={{...styles.debitCardButton, backgroundColor: undefined}}>
                     <span style={styles.buttonIcon}>⚡</span>
                     Apply for Card
                   </Link>
@@ -894,7 +894,7 @@ export default function Home() {
                   <div style={styles.featureTag}>Priority Support</div>
                 </div>
                 {user ? (
-                  <Link href="/cards" style={styles.debitCardButton}>
+                  <Link href="/cards" style={{...styles.debitCardButton, backgroundColor: undefined}}>
                     <span style={styles.buttonIcon}>⚡</span>
                     Apply for Card
                   </Link>
@@ -1750,7 +1750,7 @@ const styles = {
     minWidth: '100px',
     justifyContent: 'center'
   },
-  
+
   // Banking+ Dropdown Styles
   bankingPlusContainer: {
     display: 'flex',
@@ -1971,7 +1971,7 @@ const styles = {
     cursor: 'pointer',
     textAlign: 'center'
   },
-  
+
   navigationDropdown: {
     position: 'relative',
     zIndex: 10
@@ -2148,7 +2148,7 @@ const styles = {
   bankingDropdownButton: {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '0.5rem',
+    justifyContent: 'center',
     padding: '0.75rem 1.25rem',
     background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
     color: 'white',
@@ -2156,15 +2156,15 @@ const styles = {
     borderRadius: '8px',
     fontSize: '0.9rem',
     fontWeight: '700',
-    boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)',
     transition: 'all 0.3s ease',
     flex: 1,
-    justifyContent: 'center'
+    minWidth: '120px',
+    boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)'
   },
   bankingDropdownSecondaryButton: {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '0.5rem',
+    justifyContent: 'center',
     padding: '0.75rem 1.25rem',
     background: 'transparent',
     color: '#1a365d',
@@ -2175,7 +2175,7 @@ const styles = {
     border: '2px solid #1a365d',
     transition: 'all 0.3s ease',
     flex: 1,
-    justifyContent: 'center'
+    minWidth: '120px'
   },
   featuresGrid: {
     display: 'grid',
@@ -3053,7 +3053,7 @@ const styles = {
     fontSize: '1rem',
     fontWeight: '700',
     transition: 'all 0.3s ease',
-    boxShadow: '0 6px 20px rgba(30, 64, 175, 0.3)'
+    boxShadow: '0 6px 20px rgba(30, 64, 175, 0.4)'
   },
 
   // Student Banking Section
@@ -3789,8 +3789,8 @@ const styles = {
     right: '20px',
     background: 'rgba(255,255,255,0.95)',
     color: '#1e40af',
-    padding: '8px 16px',
-    borderRadius: '20px',
+    padding: '10px 16px',
+    borderRadius: '12px',
     fontSize: '0.85rem',
     fontWeight: '700',
     boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
@@ -5388,8 +5388,6 @@ if (typeof document !== 'undefined') {
       0% { transform: translateX(-20px); opacity: 0; }
       60% { transform: translateX(5px); opacity: 0.8; }
       100% { transform: translateX(0); opacity: 1; }
-    }
-
     @keyframes flipInY {
       0% { transform: scale(0.8) rotateY(90deg); opacity: 0; }
       50% { transform: scale(0.9) rotateY(0deg); opacity: 0.5; }

@@ -10,10 +10,40 @@ export default function LinkCard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [savedAccounts, setSavedAccounts] = useState([]);
 
   useEffect(() => {
     getUser();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      loadSavedAccounts();
+    }
+  }, [user]);
+
+  const loadSavedAccounts = async () => {
+    try {
+      const { data: plaidItems, error: itemsError } = await supabase
+        .from('plaid_items')
+        .select('id, institution_name')
+        .eq('user_id', user.id);
+
+      if (itemsError) throw itemsError;
+
+      if (plaidItems && plaidItems.length > 0) {
+        const { data: plaidAccounts, error: accountsError } = await supabase
+          .from('plaid_accounts')
+          .select('*')
+          .in('plaid_item_id', plaidItems.map(item => item.id));
+
+        if (accountsError) throw accountsError;
+        setSavedAccounts(plaidAccounts || []);
+      }
+    } catch (err) {
+      console.error('Error loading saved accounts:', err);
+    }
+  };
 
   const getUser = async () => {
     try {
@@ -167,6 +197,48 @@ export default function LinkCard() {
               • Selecting different account types in the Plaid flow<br />
               • Or click "Return" and the connection should still work
             </p>
+          </div>
+        )}
+
+        {savedAccounts.length > 0 && accounts.length === 0 && (
+          <div style={styles.accountsContainer}>
+            <h2 style={styles.accountsTitle}>Your Saved Bank Accounts</h2>
+            <p style={{ color: '#666', marginBottom: '20px' }}>
+              These accounts are connected to your Oakline Bank profile
+            </p>
+            {savedAccounts.map((account) => (
+              <div key={account.account_id} style={styles.accountCard}>
+                <div style={styles.accountHeader}>
+                  <h3 style={styles.accountName}>{account.name}</h3>
+                  <span style={styles.accountType}>{account.subtype}</span>
+                </div>
+                <div style={styles.accountDetails}>
+                  <div style={styles.balanceRow}>
+                    <span>Available Balance:</span>
+                    <strong>
+                      ${account.available_balance?.toFixed(2) || '0.00'}
+                    </strong>
+                  </div>
+                  <div style={styles.balanceRow}>
+                    <span>Current Balance:</span>
+                    <strong>
+                      ${account.current_balance?.toFixed(2) || '0.00'}
+                    </strong>
+                  </div>
+                  <div style={styles.accountMask}>
+                    Account: ****{account.mask}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button
+              onClick={() => {
+                setLinkToken(null);
+              }}
+              style={styles.resetButton}
+            >
+              Link Another Account
+            </button>
           </div>
         )}
 
