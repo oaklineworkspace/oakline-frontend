@@ -26,9 +26,15 @@ export default async function handler(req, res) {
         client_user_id: userId || 'user-' + Date.now(),
       },
       client_name: 'Oakline Bank',
-      products: ['auth', 'transactions'],
+      products: ['transactions'],
       country_codes: ['US'],
       language: 'en',
+      // For sandbox, allow all account types
+      account_filters: {
+        depository: {
+          account_subtypes: ['checking', 'savings'],
+        },
+      },
     });
 
     res.json({ link_token: response.data.link_token });

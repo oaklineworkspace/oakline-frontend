@@ -148,9 +148,14 @@ export default function LinkCard() {
               {loading ? 'Connecting...' : 'Connect Bank Account'}
             </button>
             <p style={styles.helpText}>
-              Use Plaid Sandbox credentials:<br />
+              <strong>Plaid Sandbox Instructions:</strong><br />
+              1. Select any bank from the list<br />
+              2. Use these credentials:<br />
               <strong>Username:</strong> user_good<br />
-              <strong>Password:</strong> pass_good
+              <strong>Password:</strong> pass_good<br />
+              3. If you see "No eligible accounts", try:<br />
+              • Selecting different account types in the Plaid flow<br />
+              • Or click "Return" and the connection should still work
             </p>
           </div>
         )}
