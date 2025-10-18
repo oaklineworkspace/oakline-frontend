@@ -685,8 +685,8 @@ export default function Home() {
           <div style={styles.newBankingImageGrid}>
             <div style={styles.newBankingImageContainer}>
               <img
-                src="/images/image_1760199157530.jpeg"
-                alt="Modern Banking Experience"
+                src="/images/oakline-bank-branded-1.jpeg"
+                alt="Oakline Bank Modern Banking Experience"
                 style={styles.newBankingImage}
                 onError={(e) => {
                   e.target.style.display = 'none';
