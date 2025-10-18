@@ -2,5 +2,9 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js"
+  "/": "pages/index.js",
+  "/link-card": "pages/link-card.js",
+  "/dashboard": "pages/dashboard.js",
+  "/api/create-link-token": "pages/api/create-link-token.js",
+  "/sign-in": "pages/sign-in.js"
 }

@@ -16,6 +16,7 @@
       "static/chunks/webpack.js",
       "static/chunks/vendors.js",
       "static/chunks/main.js",
+      "static/chunks/components_LiveChat_js.js",
       "static/chunks/pages/index.js"
     ],
     "/_app": [
@@ -29,6 +30,25 @@
       "static/chunks/vendors.js",
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
+    ],
+    "/dashboard": [
+      "static/chunks/webpack.js",
+      "static/chunks/vendors.js",
+      "static/chunks/main.js",
+      "static/chunks/components_LiveChat_js.js",
+      "static/chunks/pages/dashboard.js"
+    ],
+    "/link-card": [
+      "static/chunks/webpack.js",
+      "static/chunks/vendors.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/link-card.js"
+    ],
+    "/sign-in": [
+      "static/chunks/webpack.js",
+      "static/chunks/vendors.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/sign-in.js"
     ]
   },
   "ampFirstPages": []
