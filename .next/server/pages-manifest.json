@@ -3,6 +3,7 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/link-card": "pages/link-card.js",
-  "/": "pages/index.js",
-  "/api/create-link-token": "pages/api/create-link-token.js"
+  "/api/exchange-public-token": "pages/api/exchange-public-token.js",
+  "/api/get-accounts": "pages/api/get-accounts.js",
+  "/": "pages/index.js"
 }
