@@ -253,7 +253,7 @@ const styles = {
     padding: '20px 0',
   },
   button: {
-    backgroundColor: '#0066cc',
+    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
     color: 'white',
     border: 'none',
     borderRadius: '8px',
@@ -261,6 +261,7 @@ const styles = {
     fontSize: '16px',
     fontWeight: '600',
     transition: 'all 0.3s ease',
+    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.4)',
   },
   helpText: {
     marginTop: '24px',
