@@ -3539,7 +3539,8 @@ const styles = {
   newBankingImage: {
     width: '100%',
     height: '400px',
-    objectFit: 'cover',
+    objectFit: 'contain',
+    objectPosition: 'center',
     transition: 'transform 0.3s ease'
   },
   newBankingImageContent: {
