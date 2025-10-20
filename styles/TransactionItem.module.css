@@ -1,0 +1,31 @@
+/* styles/TransactionItem.module.css */
+
+.transaction {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  background: #f4f4f4;
+}
+
+.income {
+  border-left: 4px solid green;
+}
+
+.expense {
+  border-left: 4px solid red;
+}
+
+.date {
+  flex: 1;
+}
+
+.description {
+  flex: 2;
+}
+
+.amount {
+  flex: 1;
+  text-align: right;
+}

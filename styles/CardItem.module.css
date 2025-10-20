@@ -1,0 +1,58 @@
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.card {
+  background: linear-gradient(135deg, #004080, #0066cc);
+  color: white;
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.bankLogo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: white;
+  padding: 5px;
+}
+
+.bankName {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.cardNumber {
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  margin: 1rem 0;
+}
+
+.cardDetails {
+  display: flex;
+  justify-content: space-between;
+}
+
+.label {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  display: block;
+}
+
+.cardDetails p {
+  margin: 0;
+  font-weight: bold;
+}

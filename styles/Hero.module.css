@@ -1,0 +1,26 @@
+.hero {
+  background: url('https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat;
+  color: white;
+  text-align: center;
+  padding: 120px 20px;
+  position: relative;
+}
+
+.hero h1 { font-size: 3rem; margin-bottom: 15px; }
+.hero p { font-size: 1.2rem; max-width: 700px; margin: auto 0 30px; }
+
+.ctaButton {
+  background: #28a745;
+  color: white;
+  padding: 15px 35px;
+  border-radius: 6px;
+  font-size: 1.05rem;
+  text-decoration: none;
+}
+
+.ctaButton:hover { background: #218838; }
+
+@media (max-width: 768px) {
+  .hero h1 { font-size: 2.2rem; }
+  .hero p { font-size: 1rem; }
+}

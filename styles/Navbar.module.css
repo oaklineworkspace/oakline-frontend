@@ -1,0 +1,68 @@
+
+/* styles/Navbar.module.css */
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: var(--primary-navy);
+  color: white;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.navLinks {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+}
+
+.navLinks li {
+  position: relative;
+}
+
+.link {
+  color: white;
+  font-weight: 500;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  color: var(--primary-navy);
+  padding: 0.5rem 0;
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+}
+
+.dropdownMenu li {
+  padding: 0.5rem 1rem;
+}
+
+.authButtons button {
+  margin-left: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.login {
+  background: transparent;
+  color: white;
+  border: 1px solid white;
+}
+
+.signup {
+  background: var(--accent-gold);
+  color: var(--primary-navy);
+}

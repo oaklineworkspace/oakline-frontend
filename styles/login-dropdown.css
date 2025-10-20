@@ -1,0 +1,39 @@
+
+/* Hamburger Dropdown Styles */
+.hamburger-button:hover {
+  background-color: rgba(255,255,255,0.2) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  transform: translateY(-1px);
+}
+
+.dropdown-item:hover {
+  background-color: #f3f4f6 !important;
+  color: #1e40af !important;
+  transform: translateX(3px);
+}
+
+.hamburger-lines:hover .hamburger-line {
+  background-color: #fbbf24;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .dropdown-menu {
+    right: 0 !important;
+    left: auto !important;
+    min-width: 200px !important;
+    max-width: 250px !important;
+  }
+  
+  .dropdown-item {
+    padding: 0.6rem 0.8rem !important;
+    font-size: 0.85rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .dropdown-menu {
+    right: 0.5rem !important;
+    min-width: 180px !important;
+  }
+}

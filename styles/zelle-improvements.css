@@ -1,0 +1,140 @@
+
+/* Professional Zelle Pages Styling Improvements */
+
+/* Hover effects for better interactivity */
+.zelle-service-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 12px 35px rgba(26, 62, 111, 0.2) !important;
+  border-color: #1A3E6F !important;
+}
+
+.zelle-contact-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(26, 62, 111, 0.15) !important;
+  border-color: #1A3E6F !important;
+  background-color: #f8fafc !important;
+}
+
+.zelle-action-button:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 10px 30px rgba(26, 62, 111, 0.2) !important;
+  border-color: #1A3E6F !important;
+}
+
+/* Focus states for better accessibility */
+.zelle-input:focus, .zelle-select:focus {
+  outline: none !important;
+  border-color: #1A3E6F !important;
+  box-shadow: 0 0 0 4px rgba(26, 62, 111, 0.15) !important;
+  background-color: #ffffff !important;
+}
+
+/* Submit button hover effect */
+.zelle-submit-button:hover {
+  background-color: #0f2d5a !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(26, 62, 111, 0.4) !important;
+}
+
+/* Transaction item hover effect */
+.zelle-transaction-item:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12) !important;
+  border-color: #1A3E6F !important;
+}
+
+/* Filter select improvements */
+.zelle-filter-select:focus {
+  outline: none !important;
+  border-color: #1A3E6F !important;
+  box-shadow: 0 0 0 3px rgba(26, 62, 111, 0.1) !important;
+}
+
+/* Logo container improvements */
+.zelle-logo-container {
+  transition: all 0.3s ease !important;
+}
+
+.zelle-logo-container:hover {
+  transform: scale(1.05) !important;
+}
+
+/* Back button improvements */
+.zelle-back-button {
+  transition: all 0.2s ease !important;
+}
+
+.zelle-back-button:hover {
+  background-color: rgba(255,255,255,0.3) !important;
+  transform: translateX(-2px) !important;
+}
+
+/* Message styling improvements */
+.zelle-message {
+  animation: slideInFromTop 0.5s ease-out !important;
+  position: relative !important;
+  z-index: 20 !important;
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading spinner improvements */
+.zelle-spinner {
+  border-width: 3px !important;
+  animation: spin 1s linear infinite !important;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .zelle-header {
+    padding: 1rem !important;
+  }
+  
+  .zelle-content {
+    padding: 0.75rem !important;
+  }
+  
+  .zelle-form-container {
+    padding: 1.25rem !important;
+  }
+  
+  .zelle-service-card {
+    padding: 1.5rem !important;
+  }
+}
+
+/* Professional gradient backgrounds */
+.zelle-header-gradient {
+  background: linear-gradient(135deg, #1A3E6F 0%, #0f2d5a 100%) !important;
+}
+
+.zelle-card-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+}
+
+/* Enhanced shadows for depth */
+.zelle-elevated-card {
+  box-shadow: 
+    0 4px 8px rgba(0,0,0,0.08),
+    0 12px 30px rgba(26, 62, 111, 0.1) !important;
+}
+
+/* Text contrast improvements */
+.zelle-high-contrast-text {
+  color: #1e293b !important;
+  font-weight: 600 !important;
+}
+
+.zelle-subtitle-text {
+  color: #475569 !important;
+  font-weight: 500 !important;
+}
