@@ -1238,10 +1238,10 @@ export default function Apply() {
         <header style={styles.header}>
           <div style={styles.headerContent}>
             <Link href="/" style={styles.logo}>
-              <img src="/images/logo-primary.png" alt="Oakline Bank" style={styles.logoImage} />
+              <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.logoImage} />
               <div>
                 <div style={styles.bankName}>Oakline Bank</div>
-                <div style={styles.bankTagline}>Open Your Account Today</div>
+                <div style={styles.bankTagline}>Your Financial Partner</div>
               </div>
             </Link>
 
@@ -1272,11 +1272,11 @@ export default function Apply() {
             </div>
           </div>
 
-          {/* Scrolling Text for Account Opening */}
+          {/* Scrolling Welcome Message */}
           <div style={styles.scrollingAccountContainer}>
-            <span style={styles.scrollingAccountText}>
-              Open your Oakline Bank account online in minutes! Enjoy seamless banking, competitive rates, and personalized service. Start your financial journey today.
-            </span>
+            <div style={styles.scrollingAccountText}>
+              Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $250,000 • Rated #1 Customer Service
+            </div>
           </div>
 
           {/* Progress Indicator */}
@@ -2214,10 +2214,10 @@ export default function Apply() {
           <div style={styles.footerGrid}>
             <div style={styles.footerColumn}>
               <div style={styles.footerLogo}>
-                <img src="/images/logo-primary.png" alt="Oakline Bank" style={styles.footerLogoImg} />
+                <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.footerLogoImg} />
                 <div style={styles.footerBankName}>Oakline Bank</div>
               </div>
-              <div style={styles.footerTagline}>Your trusted partner in financial growth.</div>
+              <div style={styles.footerTagline}>Your Financial Partner</div>
               <div style={styles.footerDescription}>
                 We are committed to providing exceptional banking services tailored to your needs. From everyday accounts to strategic investments, we're here to help you achieve your financial goals.
               </div>
