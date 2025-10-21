@@ -407,6 +407,21 @@ export default function Apply() {
     setErrors({});
 
     try {
+      // Double-check email verification status in database before proceeding
+      const verifyResponse = await fetch('/api/check-email-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email.trim().toLowerCase() })
+      });
+
+      const verifyResult = await verifyResponse.json();
+
+      if (!verifyResponse.ok || !verifyResult.verified) {
+        setErrors({ submit: 'Email verification has expired or is invalid. Please restart the application process.' });
+        setLoading(false);
+        return;
+      }
+
       const effectiveCountry = getEffectiveCountry();
       const effectiveState = getEffectiveState();
       const effectiveCity = getEffectiveCity();
