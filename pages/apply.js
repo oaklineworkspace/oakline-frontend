@@ -410,24 +410,38 @@ export default function Apply() {
     setErrors({});
 
     try {
+      const normalizedEmail = formData.email.trim().toLowerCase();
+      
       // CRITICAL: Double-check email verification status in database BEFORE attempting insert
       console.log('Checking email verification status before submission...');
       const verifyResponse = await fetch('/api/check-email-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email.trim().toLowerCase() })
+        body: JSON.stringify({ email: normalizedEmail })
       });
 
       const verifyResult = await verifyResponse.json();
 
       if (!verifyResponse.ok || !verifyResult.verified) {
         console.error('Email verification check failed:', verifyResult);
-        setErrors({ submit: 'Email verification has expired or is invalid. Please restart the application process.' });
+        setErrors({ submit: 'Email verification has expired or is invalid. Please go back to Step 1 and verify your email again.' });
         setLoading(false);
         return;
       }
 
       console.log('✅ Email verification confirmed:', verifyResult);
+
+      // Debug: Check the actual database state
+      const debugResponse = await fetch('/api/debug-email-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail })
+      });
+      const debugData = await debugResponse.json();
+      console.log('📊 Database state before insert:', debugData);
+
+      // Wait a moment to ensure database trigger can see the verification
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       const effectiveCountry = getEffectiveCountry();
       const effectiveState = getEffectiveState();
@@ -479,7 +493,7 @@ export default function Apply() {
       }
 
       // Insert the application with user_id = NULL (admin will create user later)
-      console.log('Creating application without user_id...');
+      console.log('Creating application without user_id for email:', normalizedEmail);
       const { data: applicationData, error: applicationError } = await supabase
         .from('applications')
         .insert([{
@@ -488,7 +502,7 @@ export default function Apply() {
           middle_name: formData.middleName.trim() || null,
           last_name: formData.lastName.trim(),
           mothers_maiden_name: formData.mothersMaidenName.trim() || null,
-          email: formData.email.trim().toLowerCase(),
+          email: normalizedEmail, // Use the verified email
           phone: formData.phone.trim(),
           date_of_birth: formData.dateOfBirth,
           country: effectiveCountry,
