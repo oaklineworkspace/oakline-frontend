@@ -1198,7 +1198,7 @@ export default function Apply() {
             <div style={styles.progressBar}>
               <div style={{
                 ...styles.progressFill,
-                width: currentStep === 0 ? '25%' : currentStep === 1 ? '50%' : currentStep === 2 ? '75%' : '100%'
+                width: currentStep === 0 ? '25%' : currentStep === 1 ? '50%' : currentStep === 2 ? '75%' : currentStep === 4 ? '100%' : '0%'
               }}></div>
             </div>
             <div style={styles.progressSteps}>
@@ -1295,6 +1295,11 @@ export default function Apply() {
             {currentStep === 3 && (
               <>
                 <span>💼</span> Account & Employment
+              </>
+            )}
+            {currentStep === 4 && (
+              <>
+                <span>🎉</span> Application Submitted
               </>
             )}
           </h2>
@@ -2300,7 +2305,7 @@ export default function Apply() {
 
           {/* Navigation Buttons */}
           <div style={styles.buttonContainer}>
-            {currentStep > 1 && (
+            {currentStep > 0 && currentStep < 4 && (
               <button
                 onClick={handleBack}
                 style={{...styles.button, ...styles.outlineButton}}
@@ -2309,7 +2314,7 @@ export default function Apply() {
               </button>
             )}
 
-            <div style={{marginLeft: currentStep === 1 ? 'auto' : '0'}}>
+            <div style={{marginLeft: currentStep === 1 ? 'auto' : currentStep === 0 ? 'auto' : '0'}}>
               {currentStep < 3 ? (
                 <button
                   onClick={handleNext}
@@ -2317,7 +2322,7 @@ export default function Apply() {
                 >
                   Next Step →
                 </button>
-              ) : (
+              ) : currentStep === 3 ? (
                 <button
                   onClick={handleSubmit}
                   disabled={loading || !formData.agreeToTerms}
@@ -2345,7 +2350,7 @@ export default function Apply() {
                     </>
                   )}
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
