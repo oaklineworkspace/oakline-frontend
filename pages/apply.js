@@ -124,6 +124,7 @@ export default function Apply() {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
+  const [verifiedEmailAddress, setVerifiedEmailAddress] = useState('');
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -261,6 +262,7 @@ export default function Apply() {
       }
 
       setIsEmailVerified(true);
+      setVerifiedEmailAddress(verificationEmail.trim().toLowerCase());
       setFormData(prev => ({ ...prev, email: verificationEmail.trim().toLowerCase() }));
       setCurrentStep(1);
       setErrors({});
@@ -394,6 +396,12 @@ export default function Apply() {
 
   const handleSubmit = async () => {
     if (!validateStep(3)) return;
+
+    // Ensure the email hasn't been changed from the verified one
+    if (!isEmailVerified || formData.email.trim().toLowerCase() !== verifiedEmailAddress) {
+      setErrors({ submit: 'Please use the verified email address or verify your new email first.' });
+      return;
+    }
 
     setLoading(true);
     setErrors({});
@@ -780,8 +788,7 @@ export default function Apply() {
     logoImage: {
       height: '50px',
       width: 'auto',
-      objectFit: 'contain',
-      filter: 'brightness(0) invert(1)'
+      objectFit: 'contain'
     },
     bankName: {
       fontSize: '1.5rem',
@@ -1222,7 +1229,8 @@ export default function Apply() {
     },
     footerLogoImg: {
       height: '40px',
-      width: 'auto'
+      width: 'auto',
+      objectFit: 'contain'
     },
     footerBankName: {
       fontSize: '1.2rem',
@@ -1644,6 +1652,23 @@ export default function Apply() {
                     >
                       {resendTimer > 0 ? `Resend Code (${resendTimer}s)` : '🔄 Resend Code'}
                     </button>
+
+                    <button
+                      onClick={() => {
+                        setCodeSent(false);
+                        setVerificationCode('');
+                        setVerificationEmail('');
+                        setErrors({});
+                      }}
+                      disabled={loading}
+                      style={{
+                        ...styles.button,
+                        ...styles.outlineButton,
+                        ...(loading ? styles.buttonDisabled : {})
+                      }}
+                    >
+                      ✏️ Change Email Address
+                    </button>
                   </div>
                 </div>
               )}
@@ -1730,12 +1755,27 @@ export default function Apply() {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
+                  readOnly={isEmailVerified}
                   style={{
                     ...styles.input,
-                    ...(errors.email ? styles.inputError : {})
+                    ...(errors.email ? styles.inputError : {}),
+                    ...(isEmailVerified ? { backgroundColor: '#f0fdf4', cursor: 'not-allowed' } : {})
                   }}
                   placeholder="Enter your email address"
                 />
+                {isEmailVerified && (
+                  <div style={{
+                    fontSize: '13px',
+                    color: '#16a34a',
+                    fontWeight: '600',
+                    marginTop: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    ✅ Email verified
+                  </div>
+                )}
                 {errors.email && (
                   <div style={styles.errorMessage}>⚠️ {errors.email}</div>
                 )}
