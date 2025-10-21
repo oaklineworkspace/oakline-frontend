@@ -1,5 +1,23 @@
 # Oakline Bank Frontend
 
+## Recent Changes (October 21, 2025)
+
+**Migration from Vercel to Replit**
+- Successfully migrated the Next.js application from Vercel to Replit environment
+- Updated configuration files for Replit compatibility:
+  - `next.config.js`: Added Cache-Control no-cache headers for HTML pages to prevent iframe caching issues
+  - `.gitignore`: Updated to exclude Next.js build artifacts (.next/, out/) and environment files
+  - Port configuration: Development server runs on port 5000 with host 0.0.0.0 for Replit proxy compatibility
+- Applied logo and branding updates:
+  - Updated `apply.js` page to use Oakline Bank logo (`/images/Oakline_Bank_logo_design_c1b04ae0.png`)
+  - Added scrolling welcome message to match homepage branding
+  - Consistent "Your Financial Partner" tagline across pages
+- Deployment configuration:
+  - Production deployment configured for Replit autoscale deployment
+  - Build command: `npm run build`
+  - Start command: `npm run start`
+- Server status: Running successfully on port 5000 (Next.js 14.2.3)
+
 ## Overview
 
 Oakline Bank is a comprehensive Next.js/React-based banking web application that provides a complete digital banking experience. The platform serves both retail customers and business clients with features including account management, transactions, card services, loan applications, cryptocurrency trading, and investment services. Built with modern web technologies, it emphasizes security, user experience, and real-time data synchronization.
