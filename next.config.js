@@ -44,7 +44,7 @@ const nextConfig = {
     return config;
   },
   
-  // Headers for better caching
+  // Headers for better caching and Replit compatibility
   async headers() {
     return [
       {
@@ -53,6 +53,15 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
           },
         ],
       },
