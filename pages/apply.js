@@ -157,11 +157,19 @@ export default function Apply() {
   };
 
   const getEffectiveState = () => {
-    return showManualState ? formData.manualState : formData.state;
+    // Return manual state if manual entry is being used, otherwise return selected state
+    if (showManualState || shouldShowManualState()) {
+      return formData.manualState;
+    }
+    return formData.state;
   };
 
   const getEffectiveCity = () => {
-    return showManualCity ? formData.manualCity : formData.city;
+    // Return manual city if manual entry is being used, otherwise return selected city
+    if (showManualCity || shouldShowManualCity()) {
+      return formData.manualCity;
+    }
+    return formData.city;
   };
 
   const getAvailableStates = () => {
@@ -216,7 +224,7 @@ export default function Apply() {
       setCodeSent(true);
       setResendTimer(60);
       setErrors({});
-      
+
     } catch (error) {
       console.error('Error sending verification code:', error);
       setErrors({ verificationEmail: 'Failed to send verification code. Please try again.' });
@@ -256,7 +264,7 @@ export default function Apply() {
       setFormData(prev => ({ ...prev, email: verificationEmail.trim().toLowerCase() }));
       setCurrentStep(1);
       setErrors({});
-      
+
     } catch (error) {
       console.error('Error verifying email:', error);
       setErrors({ verificationCode: 'Failed to verify email. Please try again.' });
@@ -301,10 +309,10 @@ export default function Apply() {
 
     if (step === 2) {
       if (!formData.address.trim()) newErrors.address = 'Address is required';
-      
+
       const effectiveCity = getEffectiveCity();
       const effectiveState = getEffectiveState();
-      
+
       if (!effectiveCity || !effectiveCity.trim()) newErrors.city = 'City is required';
       if (!effectiveState || !effectiveState.trim()) newErrors.state = 'State/Province is required';
       if (!formData.zipCode.trim()) newErrors.zipCode = 'ZIP/Postal code is required';
@@ -442,7 +450,7 @@ export default function Apply() {
 
       // STEP 1: First insert the application to get the application ID
       let applicationId = null;
-      
+
       try {
         const { data: applicationData, error: applicationError } = await supabase
           .from('applications')
@@ -473,13 +481,13 @@ export default function Apply() {
 
         if (applicationError) {
           console.error('Application creation error:', applicationError);
-          
+
           if (applicationError.code === '23505') {
             setErrors({ submit: 'An account with this email already exists. Please try another email or log in.' });
             setLoading(false);
             return;
           }
-          
+
           throw new Error('Failed to create application: ' + applicationError.message);
         }
 
@@ -510,29 +518,29 @@ export default function Apply() {
 
         if (!authResponse.ok) {
           console.error('Failed to create auth user:', authResult);
-          
+
           // If auth creation failed, clean up the application record
           await supabase
             .from('applications')
             .delete()
             .eq('id', applicationId);
-          
+
           throw new Error(authResult.error || 'Failed to create user account');
         }
 
         userId = authResult.user.auth_id;
         console.log('Auth user created successfully:', userId);
-        
+
         // Update application with user_id
         const { error: appUpdateError } = await supabase
           .from('applications')
           .update({ user_id: userId })
           .eq('id', applicationId);
-        
+
         if (appUpdateError) {
           console.error('Error updating application with user_id:', appUpdateError);
         }
-          
+
       } catch (authError) {
         console.error('Auth user creation error:', authError);
         setErrors({ submit: 'Failed to create user account: ' + authError.message });
@@ -557,7 +565,7 @@ export default function Apply() {
       for (const accountTypeId of formData.accountTypes) {
         const accountType = ACCOUNT_TYPES.find(at => at.id === accountTypeId);
         let accountNumber = generateAccountNumber();
-        
+
         // Keep generating until we get a unique one
         let isUnique = false;
         let attempts = 0;
@@ -567,7 +575,7 @@ export default function Apply() {
             .select('account_number')
             .eq('account_number', accountNumber)
             .single();
-          
+
           if (!existing) {
             isUnique = true;
           } else {
@@ -674,10 +682,10 @@ export default function Apply() {
       try {
         // Detect current site URL dynamically
         const siteUrl = window.location.origin;
-        
+
         console.log('Sending welcome email to:', formData.email.trim().toLowerCase());
         console.log('Application ID:', applicationId);
-        
+
         const emailResponse = await fetch('/api/resend-enrollment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -692,7 +700,7 @@ export default function Apply() {
         });
 
         const emailResult = await emailResponse.json();
-        
+
         if (!emailResponse.ok) {
           console.error('Failed to send welcome email:', emailResult);
           // Log error but don't fail the application
@@ -712,10 +720,10 @@ export default function Apply() {
 
     } catch (error) {
       console.error('Application submission error:', error);
-      
+
       // Enhanced error handling with specific messages
       let errorMessage = 'Failed to submit application. Please try again.';
-      
+
       if (error.message) {
         if (error.message.includes('duplicate key value violates unique constraint "enrollments_email_key"') ||
             error.message.includes('duplicate key value violates unique constraint "applications_email_key"')) {
@@ -730,7 +738,7 @@ export default function Apply() {
           errorMessage = `Error: ${error.message}`;
         }
       }
-      
+
       setErrors({ submit: errorMessage });
     } finally {
       setLoading(false);
@@ -1159,8 +1167,8 @@ export default function Apply() {
       marginTop: '1rem'
     },
     errorAlertText: {
-      color: '#dc2626',
-      fontSize: '14px',
+      color: '#ef4444',
+      fontSize: '13px',
       fontWeight: '500'
     },
     successAlert: {
@@ -2037,13 +2045,13 @@ export default function Apply() {
                     Oakline Bank
                   </div>
                 </div>
-                
+
                 <div style={{
                   fontSize: '80px',
                   marginBottom: '1rem',
                   animation: 'bounce 1s ease'
                 }}>✅</div>
-                
+
                 <h2 style={{
                   fontSize: 'clamp(28px, 5vw, 36px)',
                   marginBottom: '1rem',
@@ -2051,7 +2059,7 @@ export default function Apply() {
                 }}>
                   Application Submitted Successfully!
                 </h2>
-                
+
                 <p style={{
                   fontSize: 'clamp(16px, 3vw, 18px)',
                   marginBottom: '0',
@@ -2077,7 +2085,7 @@ export default function Apply() {
                     marginBottom: '1.5rem',
                     fontWeight: '700'
                   }}>📧 What Happens Next?</h3>
-                  
+
                   <div style={{
                     textAlign: 'left',
                     maxWidth: '600px',
@@ -2111,7 +2119,7 @@ export default function Apply() {
                         </p>
                       </div>
                     </div>
-                    
+
                     <div style={{
                       display: 'flex',
                       alignItems: 'flex-start',
@@ -2140,7 +2148,7 @@ export default function Apply() {
                         </p>
                       </div>
                     </div>
-                    
+
                     <div style={{
                       display: 'flex',
                       alignItems: 'flex-start',
@@ -2221,7 +2229,7 @@ export default function Apply() {
                   >
                     🏠 Return to Home
                   </button>
-                  
+
                   <button
                     onClick={() => router.push('/login')}
                     style={{
