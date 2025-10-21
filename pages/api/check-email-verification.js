@@ -32,24 +32,29 @@ export default async function handler(req, res) {
 
     // Check if verified
     if (!verification.verified_at) {
+      console.log('Email not verified yet:', normalizedEmail);
       return res.status(200).json({ 
         verified: false,
         message: 'Email has not been verified yet'
       });
     }
 
-    // Check if expired (15 minutes from creation)
+    // Check if expired (60 minutes from verification time)
     const verifiedAt = new Date(verification.verified_at);
     const now = new Date();
     const minutesSinceVerification = (now - verifiedAt) / (1000 * 60);
 
+    console.log('Verification age (minutes):', minutesSinceVerification);
+
     if (minutesSinceVerification > 60) { // 60 minutes validity
+      console.log('Verification expired for:', normalizedEmail);
       return res.status(200).json({ 
         verified: false,
         message: 'Email verification has expired. Please verify again.'
       });
     }
 
+    console.log('✅ Email verification valid:', normalizedEmail);
     return res.status(200).json({ 
       verified: true,
       email: normalizedEmail,

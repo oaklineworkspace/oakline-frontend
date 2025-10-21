@@ -244,6 +244,7 @@ export default function Apply() {
     setErrors({});
 
     try {
+      console.log('Verifying email:', verificationEmail.trim().toLowerCase());
       const response = await fetch('/api/verify-email-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -254,6 +255,7 @@ export default function Apply() {
       });
 
       const data = await response.json();
+      console.log('Verification response:', data);
 
       if (!response.ok) {
         setErrors({ verificationCode: data.error || 'Invalid verification code' });
@@ -261,6 +263,7 @@ export default function Apply() {
         return;
       }
 
+      console.log('✅ Email verified successfully');
       setIsEmailVerified(true);
       setVerifiedEmailAddress(verificationEmail.trim().toLowerCase());
       setFormData(prev => ({ ...prev, email: verificationEmail.trim().toLowerCase() }));
@@ -407,7 +410,8 @@ export default function Apply() {
     setErrors({});
 
     try {
-      // Double-check email verification status in database before proceeding
+      // CRITICAL: Double-check email verification status in database BEFORE attempting insert
+      console.log('Checking email verification status before submission...');
       const verifyResponse = await fetch('/api/check-email-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -417,10 +421,13 @@ export default function Apply() {
       const verifyResult = await verifyResponse.json();
 
       if (!verifyResponse.ok || !verifyResult.verified) {
+        console.error('Email verification check failed:', verifyResult);
         setErrors({ submit: 'Email verification has expired or is invalid. Please restart the application process.' });
         setLoading(false);
         return;
       }
+
+      console.log('✅ Email verification confirmed:', verifyResult);
 
       const effectiveCountry = getEffectiveCountry();
       const effectiveState = getEffectiveState();
