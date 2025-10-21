@@ -301,8 +301,12 @@ export default function Apply() {
 
     if (step === 2) {
       if (!formData.address.trim()) newErrors.address = 'Address is required';
-      if (!getEffectiveCity()) newErrors.city = 'City is required';
-      if (!getEffectiveState()) newErrors.state = 'State/Province is required';
+      
+      const effectiveCity = getEffectiveCity();
+      const effectiveState = getEffectiveState();
+      
+      if (!effectiveCity || !effectiveCity.trim()) newErrors.city = 'City is required';
+      if (!effectiveState || !effectiveState.trim()) newErrors.state = 'State/Province is required';
       if (!formData.zipCode.trim()) newErrors.zipCode = 'ZIP/Postal code is required';
     }
 
@@ -1861,8 +1865,13 @@ export default function Apply() {
                     <input
                       type="text"
                       name="manualCity"
-                      value={formData.manualCity}
-                      onChange={handleInputChange}
+                      value={formData.manualCity || ''}
+                      onChange={(e) => {
+                        handleInputChange(e);
+                        if (errors.city) {
+                          setErrors(prev => ({ ...prev, city: '' }));
+                        }
+                      }}
                       style={{
                         ...styles.input,
                         ...(errors.city ? styles.inputError : {})
@@ -1872,8 +1881,13 @@ export default function Apply() {
                   ) : (
                     <select
                       name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
+                      value={formData.city || ''}
+                      onChange={(e) => {
+                        handleInputChange(e);
+                        if (errors.city) {
+                          setErrors(prev => ({ ...prev, city: '' }));
+                        }
+                      }}
                       style={{
                         ...styles.select,
                         ...(errors.city ? styles.inputError : {})
@@ -1891,6 +1905,7 @@ export default function Apply() {
                       onClick={() => {
                         setShowManualCity(!showManualCity);
                         setFormData(prev => ({ ...prev, city: '', manualCity: '' }));
+                        setErrors(prev => ({ ...prev, city: '' }));
                       }}
                       style={styles.toggleButton}
                     >
@@ -1910,8 +1925,13 @@ export default function Apply() {
                     <input
                       type="text"
                       name="manualState"
-                      value={formData.manualState}
-                      onChange={handleInputChange}
+                      value={formData.manualState || ''}
+                      onChange={(e) => {
+                        handleInputChange(e);
+                        if (errors.state) {
+                          setErrors(prev => ({ ...prev, state: '' }));
+                        }
+                      }}
                       style={{
                         ...styles.input,
                         ...(errors.state ? styles.inputError : {})
@@ -1921,8 +1941,13 @@ export default function Apply() {
                   ) : (
                     <select
                       name="state"
-                      value={formData.state}
-                      onChange={handleInputChange}
+                      value={formData.state || ''}
+                      onChange={(e) => {
+                        handleInputChange(e);
+                        if (errors.state) {
+                          setErrors(prev => ({ ...prev, state: '' }));
+                        }
+                      }}
                       style={{
                         ...styles.select,
                         ...(errors.state ? styles.inputError : {})
@@ -1941,6 +1966,7 @@ export default function Apply() {
                         setShowManualState(!showManualState);
                         setFormData(prev => ({ ...prev, state: '', manualState: '', city: '', manualCity: '' }));
                         setShowManualCity(false);
+                        setErrors(prev => ({ ...prev, state: '', city: '' }));
                       }}
                       style={styles.toggleButton}
                     >
