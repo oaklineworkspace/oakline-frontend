@@ -473,276 +473,55 @@ export default function Apply() {
         .single();
 
       if (existingApp) {
-        setErrors({ submit: 'An account with this email already exists. Please try another email or log in.' });
+        setErrors({ submit: 'An application with this email already exists. Please try another email or contact support.' });
         setLoading(false);
         return;
       }
 
-      // STEP 1: First insert the application to get the application ID
-      let applicationId = null;
-
-      try {
-        const { data: applicationData, error: applicationError } = await supabase
-          .from('applications')
-          .insert([{
-            first_name: formData.firstName.trim(),
-            middle_name: formData.middleName.trim() || null,
-            last_name: formData.lastName.trim(),
-            mothers_maiden_name: formData.mothersMaidenName.trim() || null,
-            email: formData.email.trim().toLowerCase(),
-            phone: formData.phone.trim(),
-            date_of_birth: formData.dateOfBirth,
-            country: effectiveCountry,
-            ssn: effectiveCountry === 'US' ? formData.ssn.trim() : null,
-            id_number: effectiveCountry !== 'US' ? formData.idNumber.trim() : null,
-            address: formData.address.trim(),
-            city: effectiveCity,
-            state: effectiveState,
-            zip_code: formData.zipCode.trim(),
-            employment_status: formData.employmentStatus,
-            annual_income: formData.annualIncome,
-            account_types: mappedAccountTypes,
-            agree_to_terms: formData.agreeToTerms,
-            application_status: 'pending',
-            submitted_at: new Date().toISOString()
-          }])
-          .select()
-          .single();
-
-        if (applicationError) {
-          console.error('Application creation error:', applicationError);
-
-          if (applicationError.code === '23505') {
-            setErrors({ submit: 'An account with this email already exists. Please try another email or log in.' });
-            setLoading(false);
-            return;
-          }
-
-          throw new Error('Failed to create application: ' + applicationError.message);
-        }
-
-        applicationId = applicationData.id;
-        console.log('Application created successfully:', applicationId);
-      } catch (appError) {
-        console.error('Application creation failed:', appError);
-        setErrors({ submit: appError.message || 'Failed to create application. Please try again.' });
-        setLoading(false);
-        return;
-      }
-
-      // STEP 2: Create Supabase Auth user
-      console.log('Creating auth user for email:', formData.email.trim().toLowerCase());
-      let userId = null;
-
-      try {
-        const authResponse = await fetch('/api/create-auth-user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: formData.email.trim().toLowerCase(),
-            application_id: applicationId
-          })
-        });
-
-        const authResult = await authResponse.json();
-
-        if (!authResponse.ok) {
-          console.error('Failed to create auth user:', authResult);
-
-          // If auth creation failed, clean up the application record
-          await supabase
-            .from('applications')
-            .delete()
-            .eq('id', applicationId);
-
-          throw new Error(authResult.error || 'Failed to create user account');
-        }
-
-        userId = authResult.user.auth_id;
-        console.log('Auth user created successfully:', userId);
-
-        // Update application with user_id
-        const { error: appUpdateError } = await supabase
-          .from('applications')
-          .update({ user_id: userId })
-          .eq('id', applicationId);
-
-        if (appUpdateError) {
-          console.error('Error updating application with user_id:', appUpdateError);
-        }
-
-      } catch (authError) {
-        console.error('Auth user creation error:', authError);
-        setErrors({ submit: 'Failed to create user account: ' + authError.message });
-        setLoading(false);
-        return;
-      }
-
-      // Profile will be created during enrollment process
-      console.log('Skipping profile creation - will be handled during enrollment');
-
-      // Helper function to generate unique account number
-      const generateAccountNumber = () => {
-        // Generate a random 10-digit number (ensuring it doesn't start with 0)
-        return (Math.floor(Math.random() * 9000000000) + 1000000000).toString();
-      };
-
-      // Create accounts for each selected account type
-      const accountNumbers = [];
-      const accountTypes = [];
-      const createdAccounts = [];
-
-      for (const accountTypeId of formData.accountTypes) {
-        const accountType = ACCOUNT_TYPES.find(at => at.id === accountTypeId);
-        let accountNumber = generateAccountNumber();
-
-        // Keep generating until we get a unique one
-        let isUnique = false;
-        let attempts = 0;
-        while (!isUnique && attempts < 100) {
-          const { data: existing } = await supabase
-            .from('accounts')
-            .select('account_number')
-            .eq('account_number', accountNumber)
-            .single();
-
-          if (!existing) {
-            isUnique = true;
-          } else {
-            accountNumber = generateAccountNumber();
-            attempts++;
-          }
-        }
-
-        if (attempts >= 100) {
-          throw new Error('Could not generate unique account number');
-        }
-
-        const dbAccountType = enumMapping[accountType.name] || accountType.name.toLowerCase().replace(/\s+/g, '_');
-
-        const { data: newAccount, error: accountError } = await supabase
-          .from('accounts')
-          .insert([{
-            user_id: userId,
-            application_id: applicationId,
-            account_number: accountNumber,
-            account_type: dbAccountType,
-            balance: 0.00,
-            routing_number: '075915826',
-            status: 'pending'
-          }])
-          .select()
-          .single();
-
-        if (accountError) {
-          console.error('Account creation error:', accountError);
-          throw accountError;
-        } else {
-          accountNumbers.push(accountNumber);
-          accountTypes.push(accountType.name);
-          createdAccounts.push(newAccount);
-        }
-      }
-
-      // Generate enrollment token
-      const enrollmentToken = `enroll_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-
-      // Create enrollment record with proper error handling
-      let enrollmentRecord = null;
-      let enrollmentError = null;
-
-      console.log('Creating enrollment record for:', formData.email);
-
-      // First, check if enrollment already exists
-      const { data: existingEnrollment } = await supabase
-        .from('enrollments')
-        .select('*')
-        .eq('email', formData.email.trim().toLowerCase())
-        .eq('application_id', applicationId)
+      // Insert the application with user_id = NULL (admin will create user later)
+      console.log('Creating application without user_id...');
+      const { data: applicationData, error: applicationError } = await supabase
+        .from('applications')
+        .insert([{
+          user_id: null, // User will be created by admin during approval
+          first_name: formData.firstName.trim(),
+          middle_name: formData.middleName.trim() || null,
+          last_name: formData.lastName.trim(),
+          mothers_maiden_name: formData.mothersMaidenName.trim() || null,
+          email: formData.email.trim().toLowerCase(),
+          phone: formData.phone.trim(),
+          date_of_birth: formData.dateOfBirth,
+          country: effectiveCountry,
+          ssn: effectiveCountry === 'US' ? formData.ssn.trim() : null,
+          id_number: effectiveCountry !== 'US' ? formData.idNumber.trim() : null,
+          address: formData.address.trim(),
+          city: effectiveCity,
+          state: effectiveState,
+          zip_code: formData.zipCode.trim(),
+          employment_status: formData.employmentStatus,
+          annual_income: formData.annualIncome,
+          account_types: mappedAccountTypes,
+          agree_to_terms: formData.agreeToTerms,
+          application_status: 'pending',
+          submitted_at: new Date().toISOString()
+        }])
+        .select()
         .single();
 
-      if (existingEnrollment) {
-        // Update existing enrollment with new token
-        const { data: updatedEnrollment, error: updateError } = await supabase
-          .from('enrollments')
-          .update({
-            token: enrollmentToken,
-            is_used: false,
-            user_id: userId,
-            created_at: new Date().toISOString()
-          })
-          .eq('email', formData.email.trim().toLowerCase())
-          .eq('application_id', applicationId)
-          .select()
-          .single();
+      if (applicationError) {
+        console.error('Application creation error:', applicationError);
 
-        if (updateError) {
-          console.error('Error updating enrollment record:', updateError);
-          enrollmentError = updateError;
-        } else {
-          enrollmentRecord = updatedEnrollment;
-          console.log('Updated existing enrollment record');
+        if (applicationError.code === '23505') {
+          setErrors({ submit: 'An application with this email already exists. Please try another email or contact support.' });
+          setLoading(false);
+          return;
         }
-      } else {
-        // Create new enrollment record
-        const { data: newEnrollmentData, error: insertError } = await supabase
-          .from('enrollments')
-          .insert([{
-            email: formData.email.trim().toLowerCase(),
-            token: enrollmentToken,
-            is_used: false,
-            application_id: applicationId,
-            user_id: userId
-          }])
-          .select()
-          .single();
 
-        if (insertError) {
-          console.error('Error creating enrollment record:', insertError);
-          enrollmentError = insertError;
-        } else {
-          enrollmentRecord = newEnrollmentData;
-          console.log('Created new enrollment record with application_id:', applicationId);
-        }
+        throw new Error('Failed to create application: ' + applicationError.message);
       }
 
-      // Auth user and accounts were created - enrollment will handle profile creation
-
-      // Send welcome email with enrollment link using resend-enrollment API
-      try {
-        // Detect current site URL dynamically
-        const siteUrl = window.location.origin;
-
-        console.log('Sending welcome email to:', formData.email.trim().toLowerCase());
-        console.log('Application ID:', applicationId);
-
-        const emailResponse = await fetch('/api/resend-enrollment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            applicationId: applicationId,
-            email: formData.email.trim().toLowerCase(),
-            firstName: formData.firstName.trim(),
-            middleName: formData.middleName.trim() || '',
-            lastName: formData.lastName.trim(),
-            country: effectiveCountry
-          })
-        });
-
-        const emailResult = await emailResponse.json();
-
-        if (!emailResponse.ok) {
-          console.error('Failed to send welcome email:', emailResult);
-          // Log error but don't fail the application
-          console.warn('⚠️ Email failed but application was successful');
-        } else {
-          console.log('✅ Welcome email sent successfully:', emailResult);
-        }
-      } catch (emailError) {
-        console.error('Email sending error:', emailError);
-        // Don't fail the entire process for email issues
-        console.warn('⚠️ Email error but application was successful');
-      }
+      console.log('✅ Application created successfully:', applicationData.id);
+      console.log('Application will be reviewed by admin who will create user account and send credentials');
 
       // Show success screen
       setSubmitSuccess(true);
@@ -755,13 +534,12 @@ export default function Apply() {
       let errorMessage = 'Failed to submit application. Please try again.';
 
       if (error.message) {
-        if (error.message.includes('duplicate key value violates unique constraint "enrollments_email_key"') ||
-            error.message.includes('duplicate key value violates unique constraint "applications_email_key"')) {
-          errorMessage = 'An account with this email already exists. Please try another email or log in.';
+        if (error.message.includes('duplicate key value violates unique constraint')) {
+          errorMessage = 'An application with this email already exists. Please try another email or contact support.';
         } else if (error.message.includes('invalid input syntax')) {
           errorMessage = 'Invalid data format. Please check all fields and try again.';
-        } else if (error.message.includes('foreign key constraint')) {
-          errorMessage = 'Database constraint error. Please contact support.';
+        } else if (error.message.includes('Email must be verified')) {
+          errorMessage = 'Email verification is required. Please verify your email first.';
         } else if (error.message.includes('network') || error.message.includes('fetch')) {
           errorMessage = 'Network error. Please check your connection and try again.';
         } else {
@@ -2175,9 +1953,9 @@ export default function Apply() {
                         flexShrink: 0
                       }}>1</div>
                       <div>
-                        <strong style={{ color: '#1A3E6F', fontSize: '18px' }}>Check Your Email</strong>
+                        <strong style={{ color: '#1A3E6F', fontSize: '18px' }}>Application Review</strong>
                         <p style={{ margin: '0.5rem 0 0 0', color: '#64748b', fontSize: '15px', lineHeight: '1.6' }}>
-                          We've sent enrollment instructions to <strong style={{ color: '#1A3E6F' }}>{formData.email}</strong>
+                          Our team will review your application within 24-48 hours
                         </p>
                       </div>
                     </div>
@@ -2204,9 +1982,9 @@ export default function Apply() {
                         flexShrink: 0
                       }}>2</div>
                       <div>
-                        <strong style={{ color: '#1A3E6F', fontSize: '18px' }}>Complete Enrollment</strong>
+                        <strong style={{ color: '#1A3E6F', fontSize: '18px' }}>Approval Email</strong>
                         <p style={{ margin: '0.5rem 0 0 0', color: '#64748b', fontSize: '15px', lineHeight: '1.6' }}>
-                          Click the secure link to set up your password and verify your identity
+                          Once approved, you'll receive an email at <strong style={{ color: '#1A3E6F' }}>{formData.email}</strong> with your login credentials
                         </p>
                       </div>
                     </div>
@@ -2234,7 +2012,7 @@ export default function Apply() {
                       <div>
                         <strong style={{ color: '#1A3E6F', fontSize: '18px' }}>Start Banking</strong>
                         <p style={{ margin: '0.5rem 0 0 0', color: '#64748b', fontSize: '15px', lineHeight: '1.6' }}>
-                          Access your accounts, apply for debit cards, and enjoy premium banking services
+                          Log in with your credentials and start enjoying your new banking accounts
                         </p>
                       </div>
                     </div>
@@ -2255,8 +2033,7 @@ export default function Apply() {
                     fontSize: '15px',
                     lineHeight: '1.6'
                   }}>
-                    <strong>⏰ Important:</strong> Your enrollment link will expire in 24 hours for security purposes.
-                    If you don't see the email, please check your spam or junk folder.
+                    <strong>⏰ Important:</strong> Please allow 24-48 hours for application review. You will receive an email notification once your application has been processed.
                   </p>
                 </div>
 
