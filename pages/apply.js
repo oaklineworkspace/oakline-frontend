@@ -110,7 +110,7 @@ const MAJOR_CITIES_BY_STATE = {
 
 export default function Apply() {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [showManualCountry, setShowManualCountry] = useState(false);
@@ -118,6 +118,12 @@ export default function Apply() {
   const [showManualCity, setShowManualCity] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -177,6 +183,94 @@ export default function Apply() {
     const state = getEffectiveState();
     return !MAJOR_CITIES_BY_STATE[state] || showManualCity;
   };
+
+  const handleSendVerificationCode = async () => {
+    if (!verificationEmail.trim()) {
+      setErrors({ verificationEmail: 'Email is required' });
+      return;
+    }
+
+    if (!validateEmail(verificationEmail)) {
+      setErrors({ verificationEmail: 'Invalid email format' });
+      return;
+    }
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const response = await fetch('/api/send-verification-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: verificationEmail.trim().toLowerCase() })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErrors({ verificationEmail: data.error || 'Failed to send verification code' });
+        setLoading(false);
+        return;
+      }
+
+      setCodeSent(true);
+      setResendTimer(60);
+      setErrors({});
+      
+    } catch (error) {
+      console.error('Error sending verification code:', error);
+      setErrors({ verificationEmail: 'Failed to send verification code. Please try again.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    if (!verificationCode.trim()) {
+      setErrors({ verificationCode: 'Verification code is required' });
+      return;
+    }
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const response = await fetch('/api/verify-email-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: verificationEmail.trim().toLowerCase(),
+          code: verificationCode.trim()
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErrors({ verificationCode: data.error || 'Invalid verification code' });
+        setLoading(false);
+        return;
+      }
+
+      setIsEmailVerified(true);
+      setFormData(prev => ({ ...prev, email: verificationEmail.trim().toLowerCase() }));
+      setCurrentStep(1);
+      setErrors({});
+      
+    } catch (error) {
+      console.error('Error verifying email:', error);
+      setErrors({ verificationCode: 'Failed to verify email. Please try again.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendTimer]);
 
   const validateStep = (step) => {
     const newErrors = {};
@@ -1284,10 +1378,27 @@ export default function Apply() {
             <div style={styles.progressBar}>
               <div style={{
                 ...styles.progressFill,
-                width: currentStep === 1 ? '33%' : currentStep === 2 ? '66%' : '100%'
+                width: currentStep === 0 ? '25%' : currentStep === 1 ? '50%' : currentStep === 2 ? '75%' : '100%'
               }}></div>
             </div>
             <div style={styles.progressSteps}>
+              <div style={{...styles.progressStep, ...(currentStep >= 0 ? styles.progressStepActive : {})}}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  backgroundColor: currentStep >= 0 ? '#FFC857' : 'rgba(255, 200, 87, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: '700',
+                  fontSize: '18px',
+                  color: currentStep >= 0 ? '#1A3E6F' : 'rgba(255, 255, 255, 0.7)',
+                  border: currentStep >= 0 ? '3px solid #FFC857' : '3px solid rgba(255, 200, 87, 0.3)',
+                  transition: 'all 0.3s ease'
+                }}>✉</div>
+                <span style={{fontWeight: currentStep === 0 ? '700' : '500'}}>Verify Email</span>
+              </div>
               <div style={{...styles.progressStep, ...(currentStep >= 1 ? styles.progressStepActive : {})}}>
                 <div style={{
                   width: '40px',
@@ -1302,7 +1413,7 @@ export default function Apply() {
                   color: currentStep >= 1 ? '#1A3E6F' : 'rgba(255, 255, 255, 0.7)',
                   border: currentStep >= 1 ? '3px solid #FFC857' : '3px solid rgba(255, 200, 87, 0.3)',
                   transition: 'all 0.3s ease'
-                }}>1</div>
+                }}>👤</div>
                 <span style={{fontWeight: currentStep === 1 ? '700' : '500'}}>Personal Info</span>
               </div>
               <div style={{...styles.progressStep, ...(currentStep >= 2 ? styles.progressStepActive : {})}}>
@@ -1319,8 +1430,8 @@ export default function Apply() {
                   color: currentStep >= 2 ? '#1A3E6F' : 'rgba(255, 255, 255, 0.7)',
                   border: currentStep >= 2 ? '3px solid #FFC857' : '3px solid rgba(255, 200, 87, 0.3)',
                   transition: 'all 0.3s ease'
-                }}>2</div>
-                <span style={{fontWeight: currentStep === 2 ? '700' : '500'}}>Address Details</span>
+                }}>🏠</div>
+                <span style={{fontWeight: currentStep === 2 ? '700' : '500'}}>Address</span>
               </div>
               <div style={{...styles.progressStep, ...(currentStep >= 3 ? styles.progressStepActive : {})}}>
                 <div style={{
@@ -1336,8 +1447,8 @@ export default function Apply() {
                   color: currentStep >= 3 ? '#1A3E6F' : 'rgba(255, 255, 255, 0.7)',
                   border: currentStep >= 3 ? '3px solid #FFC857' : '3px solid rgba(255, 200, 87, 0.3)',
                   transition: 'all 0.3s ease'
-                }}>3</div>
-                <span style={{fontWeight: currentStep === 3 ? '700' : '500'}}>Review & Submit</span>
+                }}>💼</div>
+                <span style={{fontWeight: currentStep === 3 ? '700' : '500'}}>Review</span>
               </div>
             </div>
           </div>
@@ -1346,6 +1457,11 @@ export default function Apply() {
         {/* Form Card */}
         <div style={styles.formCard}>
           <h2 style={styles.sectionTitle}>
+            {currentStep === 0 && (
+              <>
+                <span>✉️</span> Email Verification
+              </>
+            )}
             {currentStep === 1 && (
               <>
                 <span>👤</span> Personal Information
@@ -1362,6 +1478,165 @@ export default function Apply() {
               </>
             )}
           </h2>
+
+          {/* Step 0: Email Verification */}
+          {currentStep === 0 && (
+            <div style={{
+              maxWidth: '500px',
+              margin: '0 auto',
+              padding: '2rem 0'
+            }}>
+              <p style={{
+                textAlign: 'center',
+                color: '#666',
+                fontSize: '16px',
+                marginBottom: '2rem',
+                lineHeight: '1.6'
+              }}>
+                To ensure the security of your application, please verify your email address. We'll send you a verification code that you'll need to enter below.
+              </p>
+
+              {!codeSent ? (
+                <div style={styles.formGrid}>
+                  <div style={styles.inputGroup}>
+                    <label style={styles.label}>
+                      Email Address <span style={styles.required}>*</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={verificationEmail}
+                      onChange={(e) => {
+                        setVerificationEmail(e.target.value);
+                        if (errors.verificationEmail) {
+                          setErrors({});
+                        }
+                      }}
+                      style={{
+                        ...styles.input,
+                        ...(errors.verificationEmail ? styles.inputError : {})
+                      }}
+                      placeholder="your.email@example.com"
+                      disabled={loading}
+                    />
+                    {errors.verificationEmail && (
+                      <div style={styles.errorMessage}>⚠️ {errors.verificationEmail}</div>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={handleSendVerificationCode}
+                    disabled={loading}
+                    style={{
+                      ...styles.button,
+                      ...styles.primaryButton,
+                      ...(loading ? styles.buttonDisabled : {})
+                    }}
+                  >
+                    {loading ? 'Sending...' : '📧 Send Verification Code'}
+                  </button>
+                </div>
+              ) : (
+                <div style={styles.formGrid}>
+                  <div style={{
+                    backgroundColor: '#f0fdf4',
+                    border: '2px solid #86efac',
+                    borderRadius: '12px',
+                    padding: '1rem',
+                    marginBottom: '1.5rem',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{
+                      fontSize: '14px',
+                      color: '#16a34a',
+                      fontWeight: '600'
+                    }}>
+                      ✅ Verification code sent to:
+                    </div>
+                    <div style={{
+                      fontSize: '16px',
+                      color: '#15803d',
+                      fontWeight: '700',
+                      marginTop: '0.5rem'
+                    }}>
+                      {verificationEmail}
+                    </div>
+                  </div>
+
+                  <div style={styles.inputGroup}>
+                    <label style={styles.label}>
+                      Verification Code <span style={styles.required}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={verificationCode}
+                      onChange={(e) => {
+                        setVerificationCode(e.target.value);
+                        if (errors.verificationCode) {
+                          setErrors({});
+                        }
+                      }}
+                      style={{
+                        ...styles.input,
+                        ...(errors.verificationCode ? styles.inputError : {}),
+                        fontSize: '24px',
+                        textAlign: 'center',
+                        letterSpacing: '0.5rem',
+                        fontFamily: 'monospace'
+                      }}
+                      placeholder="000000"
+                      maxLength="6"
+                      disabled={loading}
+                    />
+                    {errors.verificationCode && (
+                      <div style={styles.errorMessage}>⚠️ {errors.verificationCode}</div>
+                    )}
+                    <p style={{
+                      fontSize: '13px',
+                      color: '#666',
+                      marginTop: '0.5rem',
+                      textAlign: 'center'
+                    }}>
+                      Please check your email and enter the 6-digit code we sent you.
+                    </p>
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    gap: '1rem',
+                    flexDirection: 'column'
+                  }}>
+                    <button
+                      onClick={handleVerifyEmail}
+                      disabled={loading || !verificationCode}
+                      style={{
+                        ...styles.button,
+                        ...styles.primaryButton,
+                        ...(loading || !verificationCode ? styles.buttonDisabled : {})
+                      }}
+                    >
+                      {loading ? 'Verifying...' : '✓ Verify Email'}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (resendTimer === 0) {
+                          handleSendVerificationCode();
+                        }
+                      }}
+                      disabled={loading || resendTimer > 0}
+                      style={{
+                        ...styles.button,
+                        ...styles.secondaryButton,
+                        ...(loading || resendTimer > 0 ? styles.buttonDisabled : {})
+                      }}
+                    >
+                      {resendTimer > 0 ? `Resend Code (${resendTimer}s)` : '🔄 Resend Code'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Step 1: Personal Information */}
           {currentStep === 1 && (
