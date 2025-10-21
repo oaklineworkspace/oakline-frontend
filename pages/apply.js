@@ -92,7 +92,7 @@ const STATES_BY_COUNTRY = {
   ],
   BR: [
     'Acre', 'Alagoas', 'Amapá', 'Amazonas', 'Bahia', 'Ceará', 'Distrito Federal', 'Espírito Santo',
-    'Goiás', 'Maranhão', 'Mato Grosso', 'Mato Grosso do Sul', 'Minas Gerais', 'Pará', 'Paraíba',
+    'Goiás', 'Maranhão', 'Mato Grosso', 'Mato Grosso do Sul', 'Minas Gerais', 'Para', 'Paraíba',
     'Paraná', 'Pernambuco', 'Piauí', 'Rio de Janeiro', 'Rio Grande do Norte', 'Rio Grande do Sul',
     'Rondônia', 'Roraima', 'Santa Catarina', 'São Paulo', 'Sergipe', 'Tocantins'
   ]
@@ -247,7 +247,7 @@ export default function Apply() {
       const response = await fetch('/api/verify-email-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           email: verificationEmail.trim().toLowerCase(),
           code: verificationCode.trim()
         })
@@ -2072,7 +2072,7 @@ export default function Apply() {
               background: 'white',
               borderRadius: '20px',
               overflow: 'hidden',
-              animation: 'fadeInScale 0.6s ease'
+              animation: 'fadeInUp 0.6s ease'
             }}>
               {/* Header Section with Oakline Branding */}
               <div style={{
@@ -2248,7 +2248,7 @@ export default function Apply() {
                     fontSize: '15px',
                     lineHeight: '1.6'
                   }}>
-                    <strong>⏰ Important:</strong> Your enrollment link will expire in 24 hours for security purposes. 
+                    <strong>⏰ Important:</strong> Your enrollment link will expire in 24 hours for security purposes.
                     If you don't see the email, please check your spam or junk folder.
                   </p>
                 </div>
@@ -2374,7 +2374,8 @@ export default function Apply() {
                       <div style={styles.accountHeader}>
                         <div style={{
                           ...styles.accountIcon,
-                          backgroundColor: formData.accountTypes.includes(account.id) ? '#FFC857' : '#f1f5f9'
+                          backgroundColor: formData.accountTypes.includes(account.id) ? '#3b82f6' : '#f1f5f9',
+                          color: formData.accountTypes.includes(account.id) ? 'white' : 'inherit'
                         }}>
                           {account.icon}
                         </div>
