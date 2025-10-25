@@ -78,6 +78,17 @@ export default async function handler(req, res) {
     }
 
     try {
+      // Check if SMTP is configured
+      if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        console.error('SMTP configuration missing. Required: SMTP_HOST, SMTP_USER, SMTP_PASS');
+        return res.status(500).json({ 
+          error: 'Email service is not configured. Please contact support.',
+          details: 'SMTP credentials are missing'
+        });
+      }
+
+      console.log('Attempting to send verification email to:', normalizedEmail);
+      
       await sendEmail({
         to: normalizedEmail,
         subject: 'Verify Your Email - Oakline Bank',
@@ -124,9 +135,15 @@ export default async function handler(req, res) {
       console.log('✅ Verification email sent successfully to:', normalizedEmail);
     } catch (emailError) {
       console.error('Failed to send verification email:', emailError);
+      console.error('Email error details:', {
+        message: emailError.message,
+        code: emailError.code,
+        command: emailError.command
+      });
+      
       return res.status(500).json({ 
-        error: 'Failed to send verification email. Please try again.',
-        details: emailError.message 
+        error: 'Failed to send verification email. Please check your email address and try again.',
+        details: process.env.NODE_ENV === 'development' ? emailError.message : 'Email service error'
       });
     }
 
