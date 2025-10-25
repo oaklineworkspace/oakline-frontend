@@ -681,6 +681,25 @@ const styles = {
     paddingTop: '20px',
     borderTop: '1px solid #334155',
   },
+  // Additions for branch info styling
+  footerColumn: {}, // Placeholder, actual column structure is within footerGrid
+  footerColumnTitle: {
+    fontSize: '20px',
+    fontWeight: 'bold',
+    marginBottom: '30px',
+    color: '#ffffff',
+    letterSpacing: '-0.01em'
+  },
+  branchInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem'
+  },
+  branchInfoItem: {
+    fontSize: '0.9rem',
+    color: '#FFD687',
+    lineHeight: '1.6'
+  },
 };
 
 // Add hover effects

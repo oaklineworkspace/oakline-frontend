@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
@@ -19,7 +18,7 @@ export default function About() {
               <span style={styles.bankTagline}>About Our Institution</span>
             </div>
           </Link>
-          
+
           <div style={styles.headerActions}>
             <Link href="/" style={styles.headerButton}>
               <span style={styles.buttonIcon}>🏠</span>
@@ -86,13 +85,13 @@ export default function About() {
               <div style={styles.contentGrid}>
                 <div style={styles.textContent}>
                   <p style={styles.paragraph}>
-                    Founded in 1995, Oakline Bank has grown from a small community bank to a leading 
-                    financial institution serving customers across the nation. We pride ourselves on 
+                    Founded in 1995, Oakline Bank has grown from a small community bank to a leading
+                    financial institution serving customers across the nation. We pride ourselves on
                     combining traditional banking values with cutting-edge technology.
                   </p>
                   <p style={styles.paragraph}>
-                    Our commitment to excellence has earned us the trust of over 500,000 customers 
-                    who rely on us for their personal and business banking needs. From simple checking 
+                    Our commitment to excellence has earned us the trust of over 500,000 customers
+                    who rely on us for their personal and business banking needs. From simple checking
                     accounts to complex investment portfolios, we provide comprehensive financial solutions.
                   </p>
                   <div style={styles.statsList}>
@@ -111,9 +110,9 @@ export default function About() {
                   </div>
                 </div>
                 <div style={styles.imageContent}>
-                  <img 
-                    src="/images/Modern_bank_lobby_interior_d535acc7.png" 
-                    alt="Modern Bank Lobby" 
+                  <img
+                    src="/images/Modern_bank_lobby_interior_d535acc7.png"
+                    alt="Modern Bank Lobby"
                     style={styles.contentImage}
                   />
                 </div>
@@ -129,7 +128,7 @@ export default function About() {
                   <div style={styles.valueIcon}>🎯</div>
                   <h3 style={styles.valueTitle}>Our Mission</h3>
                   <p style={styles.valueText}>
-                    To empower individuals and businesses to achieve their financial goals through 
+                    To empower individuals and businesses to achieve their financial goals through
                     innovative banking solutions, exceptional service, and unwavering integrity.
                   </p>
                 </div>
@@ -137,7 +136,7 @@ export default function About() {
                   <div style={styles.valueIcon}>🔒</div>
                   <h3 style={styles.valueTitle}>Security First</h3>
                   <p style={styles.valueText}>
-                    We prioritize the security of your financial information with bank-level 
+                    We prioritize the security of your financial information with bank-level
                     encryption and industry-leading cybersecurity measures.
                   </p>
                 </div>
@@ -145,7 +144,7 @@ export default function About() {
                   <div style={styles.valueIcon}>🤝</div>
                   <h3 style={styles.valueTitle}>Customer Focus</h3>
                   <p style={styles.valueText}>
-                    Every decision we make is centered around providing exceptional value and 
+                    Every decision we make is centered around providing exceptional value and
                     service to our customers and communities.
                   </p>
                 </div>
@@ -153,7 +152,7 @@ export default function About() {
                   <div style={styles.valueIcon}>💡</div>
                   <h3 style={styles.valueTitle}>Innovation</h3>
                   <p style={styles.valueText}>
-                    We continuously invest in technology and processes to deliver modern, 
+                    We continuously invest in technology and processes to deliver modern,
                     convenient banking experiences.
                   </p>
                 </div>
@@ -235,57 +234,59 @@ export default function About() {
             <div style={styles.section}>
               <h2 style={styles.sectionTitle}>Contact Us</h2>
               <div style={styles.contactSection}>
-                <div style={styles.contactIntro}>
-                  <p style={styles.paragraph}>
-                    We're here to help you with all your banking needs. Visit us, call us, or send us an email – 
-                    we're committed to providing exceptional service and support.
-                  </p>
-                </div>
-                <div style={styles.contactGrid}>
-                  <div style={styles.contactCard}>
-                    <div style={styles.contactCardIcon}>🏦</div>
-                    <h3 style={styles.contactCardTitle}>Visit Us</h3>
-                    <p style={styles.contactCardLabel}>Oklahoma City Branch</p>
-                    <p style={styles.contactCardValue}>12201 N. May Avenue</p>
-                    <p style={styles.contactCardValue}>Oklahoma City, OK 73120</p>
-                    <div style={styles.contactCardDivider}></div>
-                    <p style={styles.contactCardLabel}>Hours</p>
-                    <p style={styles.contactCardValue}>Monday - Friday: 9:00 AM - 5:00 PM</p>
-                    <p style={styles.contactCardValue}>Saturday: 9:00 AM - 1:00 PM</p>
-                    <p style={styles.contactCardValue}>Sunday: Closed</p>
+                <p style={styles.paragraph}>
+                  We're here to help you with all your banking needs. Visit us, call us, or send us an email –
+                  we're committed to providing exceptional service and support.
+                </p>
+              </div>
+              <div style={styles.contactSection}>
+                <h3 style={styles.contactTitle}>Visit Our Branch</h3>
+                <div style={styles.branchCard}>
+                  <h4 style={styles.branchName}>Oakline Bank – Oklahoma City Branch</h4>
+                  <div style={styles.branchDetails}>
+                    <div style={styles.branchItem}>
+                      <div style={styles.branchIcon}>📍</div>
+                      <div>
+                        <div style={styles.branchLabel}>Address</div>
+                        <div style={styles.branchValue}>12201 N. May Avenue<br/>Oklahoma City, OK 73120</div>
+                      </div>
+                    </div>
+                    <div style={styles.branchItem}>
+                      <div style={styles.branchIcon}>📞</div>
+                      <div>
+                        <div style={styles.branchLabel}>Phone / Text</div>
+                        <a href="tel:+16366356122" style={styles.branchLink}>+1 (636) 635-6122</a>
+                      </div>
+                    </div>
+                    <div style={styles.branchItem}>
+                      <div style={styles.branchIcon}>✉️</div>
+                      <div>
+                        <div style={styles.branchLabel}>Email</div>
+                        <a href="mailto:info@theoaklinebank.com" style={styles.branchLink}>info@theoaklinebank.com</a>
+                      </div>
+                    </div>
+                    <div style={styles.branchItem}>
+                      <div style={styles.branchIcon}>🕒</div>
+                      <div>
+                        <div style={styles.branchLabel}>Business Hours</div>
+                        <div style={styles.branchValue}>
+                          Monday - Friday: 9:00 AM - 5:00 PM<br/>
+                          Saturday: 9:00 AM - 1:00 PM<br/>
+                          Sunday: Closed
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div style={styles.contactCard}>
-                    <div style={styles.contactCardIcon}>📞</div>
-                    <h3 style={styles.contactCardTitle}>Phone/Text</h3>
-                    <p style={styles.contactCardLabel}>Customer Service</p>
-                    <a href="tel:+14058002273" style={styles.contactCardLink}>+1 (405) 800-2273</a>
-                    <p style={styles.contactCardDescription}>
-                      Available for calls and texts Monday through Saturday
-                    </p>
-                    <div style={styles.contactCardDivider}></div>
-                    <p style={styles.contactCardLabel}>Available</p>
-                    <p style={styles.contactCardValue}>Mon-Fri: 9 AM - 5 PM</p>
-                    <p style={styles.contactCardValue}>Sat: 9 AM - 1 PM</p>
+                  <div style={styles.mapContainer}>
+                    <a
+                      href="https://www.google.com/maps/search/?api=1&query=12201+N.+May+Avenue,+Oklahoma+City,+OK+73120"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={styles.mapButton}
+                    >
+                      🗺️ View on Google Maps
+                    </a>
                   </div>
-                  <div style={styles.contactCard}>
-                    <div style={styles.contactCardIcon}>✉️</div>
-                    <h3 style={styles.contactCardTitle}>Email Us</h3>
-                    <p style={styles.contactCardLabel}>General Information</p>
-                    <a href="mailto:info@theoaklinebank.com" style={styles.contactCardLink}>info@theoaklinebank.com</a>
-                    <p style={styles.contactCardLabel}>Customer Support</p>
-                    <a href="mailto:contact-us@theoaklinebank.com" style={styles.contactCardLink}>contact-us@theoaklinebank.com</a>
-                    <p style={styles.contactCardLabel}>Account Updates</p>
-                    <a href="mailto:updates@theoaklinebank.com" style={styles.contactCardLink}>updates@theoaklinebank.com</a>
-                    <p style={styles.contactCardDescription}>
-                      We typically respond within 24 hours
-                    </p>
-                  </div>
-                </div>
-                <div style={styles.mapInfo}>
-                  <h3 style={styles.mapInfoTitle}>📍 Find Us on Maps</h3>
-                  <p style={styles.paragraph}>
-                    Search for "12201 N. May Avenue, Oklahoma City, OK 73120" on Google Maps, Apple Maps, or Bing Maps to get directions to our branch.
-                  </p>
                 </div>
               </div>
             </div>
@@ -625,83 +626,102 @@ const styles = {
     lineHeight: '1.5'
   },
   contactSection: {
-    padding: '1rem 0'
+    marginTop: '4rem',
+    padding: '3rem',
+    backgroundColor: '#f8fafc',
+    borderRadius: '20px',
+    border: '1px solid #e2e8f0'
   },
-  contactIntro: {
-    textAlign: 'center',
-    marginBottom: '3rem'
-  },
-  contactGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-    gap: '2rem',
-    marginBottom: '3rem'
-  },
-  contactCard: {
-    backgroundColor: 'white',
-    padding: '2.5rem',
-    borderRadius: '16px',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
-    border: '1px solid #e2e8f0',
+  contactTitle: {
+    fontSize: '2rem',
+    fontWeight: '700',
+    color: '#1A3E6F',
+    marginBottom: '2rem',
     textAlign: 'center'
   },
-  contactCardIcon: {
-    fontSize: '3rem',
-    marginBottom: '1.5rem'
+  branchCard: {
+    backgroundColor: 'white',
+    borderRadius: '16px',
+    padding: '2.5rem',
+    border: '2px solid #FFC857',
+    boxShadow: '0 4px 12px rgba(26, 62, 111, 0.1)'
   },
-  contactCardTitle: {
-    fontSize: '1.3rem',
+  branchName: {
+    fontSize: '1.75rem',
     fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: '1.5rem'
+    color: '#1A3E6F',
+    marginBottom: '2rem',
+    textAlign: 'center',
+    paddingBottom: '1rem',
+    borderBottom: '2px solid #FFC857'
   },
-  contactCardLabel: {
-    fontSize: '0.85rem',
+  branchDetails: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gap: '1.5rem',
+    marginBottom: '2rem'
+  },
+  branchItem: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '1rem',
+    padding: '1.25rem',
+    backgroundColor: '#f8fafc',
+    borderRadius: '12px',
+    border: '1px solid #e2e8f0',
+    transition: 'all 0.3s ease'
+  },
+  branchIcon: {
+    fontSize: '1.75rem',
+    backgroundColor: '#FFC857',
+    borderRadius: '50%',
+    width: '50px',
+    height: '50px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0
+  },
+  branchLabel: {
+    fontSize: '0.875rem',
     color: '#64748b',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    fontWeight: '600',
     marginBottom: '0.5rem',
-    marginTop: '1rem'
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
   },
-  contactCardValue: {
+  branchValue: {
     fontSize: '1rem',
-    color: '#1e293b',
-    marginBottom: '0.25rem',
-    lineHeight: '1.5'
+    color: '#1A3E6F',
+    fontWeight: '500',
+    lineHeight: '1.6'
   },
-  contactCardLink: {
-    fontSize: '1.1rem',
+  branchLink: {
+    fontSize: '1rem',
     color: '#1A3E6F',
     fontWeight: '600',
     textDecoration: 'none',
-    marginBottom: '0.5rem',
-    display: 'block',
-    transition: 'color 0.2s ease'
+    borderBottom: '2px solid transparent',
+    transition: 'all 0.3s ease'
   },
-  contactCardDescription: {
-    fontSize: '0.9rem',
-    color: '#64748b',
-    marginTop: '0.5rem',
-    fontStyle: 'italic'
-  },
-  contactCardDivider: {
-    height: '1px',
-    backgroundColor: '#e2e8f0',
-    margin: '1.5rem 0'
-  },
-  mapInfo: {
-    backgroundColor: '#f8fafc',
-    padding: '2rem',
-    borderRadius: '12px',
+  mapContainer: {
     textAlign: 'center',
-    border: '1px solid #e2e8f0'
+    paddingTop: '1.5rem',
+    borderTop: '1px solid #e2e8f0'
   },
-  mapInfoTitle: {
-    fontSize: '1.2rem',
-    fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: '1rem'
+  mapButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '1rem 2rem',
+    backgroundColor: '#1A3E6F',
+    color: 'white',
+    textDecoration: 'none',
+    borderRadius: '12px',
+    fontSize: '1rem',
+    fontWeight: '600',
+    transition: 'all 0.3s ease',
+    border: '2px solid #1A3E6F'
   },
   ctaSection: {
     backgroundColor: '#1A3E6F',
