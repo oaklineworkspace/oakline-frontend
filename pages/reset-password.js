@@ -394,7 +394,7 @@ export default function ResetPassword() {
           <div style={styles.footerSection}>
             <h4 style={styles.footerTitle}>Equal Housing Lender</h4>
             <p style={styles.footerText}>
-              NMLS ID: 482917
+              NMLS ID: 1847293
             </p>
           </div>
           <div style={styles.footerSection}>

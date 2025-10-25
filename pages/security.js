@@ -801,14 +801,16 @@ const styles = {
     margin: 0
   },
   primaryButton: {
-    padding: '8px 16px',
-    backgroundColor: '#3b82f6',
+    padding: '10px 20px',
+    backgroundColor: '#1e40af',
     color: 'white',
     border: 'none',
-    borderRadius: '6px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer'
+    borderRadius: '8px',
+    fontSize: '15px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)',
+    transition: 'all 0.3s ease'
   },
   enabledButton: {
     padding: '8px 16px',
@@ -1020,6 +1022,7 @@ const styles = {
     fontWeight: '600',
     fontSize: '1rem',
     transition: 'all 0.3s ease',
-    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)'
+    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)',
+    opacity: 1
   }
 };

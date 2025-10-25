@@ -308,21 +308,17 @@ export default function Footer() {
 
           <div style={styles.legalNotice}>
             <p style={styles.legalText}>
-              <strong>Banking Information:</strong> Oakline Bank is a full-service digital bank offering checking, savings, loans, and investment services.
-              Member FDIC. All deposit accounts are FDIC-insured up to $250,000 per depositor, per insured bank, for each account ownership category.
+              <strong>Banking Information:</strong> Oakline Bank is a full-service international digital bank offering comprehensive checking, savings, loans, and investment services worldwide. U.S. deposit accounts are Member FDIC and insured up to $250,000 per depositor, per insured bank, for each account ownership category. International accounts are protected under applicable local deposit insurance schemes.
             </p>
             <div style={styles.additionalInfo}>
               <p style={styles.legalText}>
-                <strong>Investment Disclaimer:</strong> Investment products are not FDIC insured, may lose value, and are not bank guaranteed.
-                Cryptocurrency trading involves substantial risk of loss and may not be suitable for all investors.
+                <strong>Investment Disclaimer:</strong> Investment products are not deposit insured, may lose value, and are not bank guaranteed. Cryptocurrency trading involves substantial risk of loss and may not be suitable for all investors. Past performance does not guarantee future results.
               </p>
               <p style={styles.legalText}>
-                <strong>Regulatory Information:</strong> Securities and investment advisory services offered through Oakline Securities, LLC,
-                member FINRA/SIPC. Insurance products offered through Oakline Insurance Agency. Equal Housing Lender.
+                <strong>Regulatory Information:</strong> Securities and investment advisory services offered through Oakline Securities, LLC, member FINRA/SIPC. Insurance products offered through Oakline Insurance Agency. Equal Housing Lender. Licensed and regulated in multiple jurisdictions globally.
               </p>
               <p style={styles.legalText}>
-                <strong>Important Notice:</strong> Oakline Bank products and services are available to U.S. residents only.
-                Credit approval required for loan products. Terms and conditions apply to all accounts and services.
+                <strong>International Service Notice:</strong> Oakline Bank products and services are available to eligible customers worldwide, subject to local regulations and compliance requirements. Credit approval required for loan products. Account eligibility, features, and regulatory protections may vary by country. Terms and conditions apply to all accounts and services.
               </p>
             </div>
           </div>
