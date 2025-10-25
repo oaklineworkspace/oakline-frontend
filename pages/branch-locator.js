@@ -12,163 +12,23 @@ export default function BranchLocator() {
   const branchData = [
     {
       id: 1,
-      name: 'Oakline Bank - Downtown Manhattan',
-      address: '250 Broadway, New York, NY 10007',
-      phone: '(212) 555-0150',
-      hours: {
-        monday: '9:00 AM - 6:00 PM',
-        tuesday: '9:00 AM - 6:00 PM',
-        wednesday: '9:00 AM - 6:00 PM',
-        thursday: '9:00 AM - 6:00 PM',
-        friday: '9:00 AM - 6:00 PM',
-        saturday: '9:00 AM - 4:00 PM',
-        sunday: 'Closed'
-      },
-      services: ['Full Service Branch', 'ATM', 'Safe Deposit Boxes', 'Notary Services', 'Investment Services'],
-      manager: 'Sarah Johnson',
-      state: 'NY',
-      city: 'New York',
-      featured: true
-    },
-    {
-      id: 2,
-      name: 'Oakline Bank - Beverly Hills',
-      address: '9500 Wilshire Blvd, Beverly Hills, CA 90212',
-      phone: '(310) 555-0200',
+      name: 'Oakline Bank – Oklahoma City Branch',
+      address: '12201 N. May Avenue, Oklahoma City, OK 73120',
+      phone: '+1 (636) 635-6122',
       hours: {
         monday: '9:00 AM - 5:00 PM',
         tuesday: '9:00 AM - 5:00 PM',
         wednesday: '9:00 AM - 5:00 PM',
         thursday: '9:00 AM - 5:00 PM',
         friday: '9:00 AM - 5:00 PM',
-        saturday: '10:00 AM - 3:00 PM',
+        saturday: '9:00 AM - 1:00 PM',
         sunday: 'Closed'
       },
-      services: ['Full Service Branch', 'ATM', 'Private Banking', 'Wealth Management', 'Business Services'],
-      manager: 'Michael Chen',
-      state: 'CA',
-      city: 'Beverly Hills',
+      services: ['Full Service Branch', 'ATM', 'Safe Deposit Boxes', 'Notary Services', 'Business Banking', 'Personal Banking', 'Loan Services', 'Investment Services'],
+      manager: 'Branch Manager',
+      state: 'OK',
+      city: 'Oklahoma City',
       featured: true
-    },
-    {
-      id: 3,
-      name: 'Oakline Bank - Downtown Chicago',
-      address: '135 S LaSalle St, Chicago, IL 60603',
-      phone: '(312) 555-0300',
-      hours: {
-        monday: '8:30 AM - 5:30 PM',
-        tuesday: '8:30 AM - 5:30 PM',
-        wednesday: '8:30 AM - 5:30 PM',
-        thursday: '8:30 AM - 5:30 PM',
-        friday: '8:30 AM - 5:30 PM',
-        saturday: '9:00 AM - 2:00 PM',
-        sunday: 'Closed'
-      },
-      services: ['Full Service Branch', 'ATM', 'Business Banking', 'Commercial Lending', 'Treasury Services'],
-      manager: 'David Rodriguez',
-      state: 'IL',
-      city: 'Chicago',
-      featured: false
-    },
-    {
-      id: 4,
-      name: 'Oakline Bank - Miami Beach',
-      address: '1701 Collins Ave, Miami Beach, FL 33139',
-      phone: '(305) 555-0400',
-      hours: {
-        monday: '9:00 AM - 5:00 PM',
-        tuesday: '9:00 AM - 5:00 PM',
-        wednesday: '9:00 AM - 5:00 PM',
-        thursday: '9:00 AM - 5:00 PM',
-        friday: '9:00 AM - 5:00 PM',
-        saturday: '9:00 AM - 3:00 PM',
-        sunday: 'Closed'
-      },
-      services: ['Full Service Branch', 'ATM', 'International Banking', 'Safe Deposit Boxes', 'Mortgage Services'],
-      manager: 'Maria Gonzalez',
-      state: 'FL',
-      city: 'Miami Beach',
-      featured: false
-    },
-    {
-      id: 5,
-      name: 'Oakline Bank - Austin Downtown',
-      address: '200 Congress Ave, Austin, TX 78701',
-      phone: '(512) 555-0500',
-      hours: {
-        monday: '9:00 AM - 6:00 PM',
-        tuesday: '9:00 AM - 6:00 PM',
-        wednesday: '9:00 AM - 6:00 PM',
-        thursday: '9:00 AM - 6:00 PM',
-        friday: '9:00 AM - 6:00 PM',
-        saturday: '9:00 AM - 4:00 PM',
-        sunday: '12:00 PM - 4:00 PM'
-      },
-      services: ['Full Service Branch', 'ATM', 'Business Banking', 'Student Services', 'Financial Advisory'],
-      manager: 'Jennifer Wilson',
-      state: 'TX',
-      city: 'Austin',
-      featured: true
-    },
-    {
-      id: 6,
-      name: 'Oakline Bank - Seattle Waterfront',
-      address: '1400 Western Ave, Seattle, WA 98101',
-      phone: '(206) 555-0600',
-      hours: {
-        monday: '8:30 AM - 5:30 PM',
-        tuesday: '8:30 AM - 5:30 PM',
-        wednesday: '8:30 AM - 5:30 PM',
-        thursday: '8:30 AM - 5:30 PM',
-        friday: '8:30 AM - 5:30 PM',
-        saturday: '10:00 AM - 3:00 PM',
-        sunday: 'Closed'
-      },
-      services: ['Full Service Branch', 'ATM', 'Tech Business Banking', 'Investment Services', 'Green Banking'],
-      manager: 'Robert Kim',
-      state: 'WA',
-      city: 'Seattle',
-      featured: false
-    },
-    {
-      id: 7,
-      name: 'Oakline Bank - Boston Financial District',
-      address: '100 Federal St, Boston, MA 02110',
-      phone: '(617) 555-0700',
-      hours: {
-        monday: '8:00 AM - 6:00 PM',
-        tuesday: '8:00 AM - 6:00 PM',
-        wednesday: '8:00 AM - 6:00 PM',
-        thursday: '8:00 AM - 6:00 PM',
-        friday: '8:00 AM - 6:00 PM',
-        saturday: '9:00 AM - 3:00 PM',
-        sunday: 'Closed'
-      },
-      services: ['Full Service Branch', 'ATM', 'Private Banking', 'Estate Planning', 'Trust Services'],
-      manager: 'Patricia Thompson',
-      state: 'MA',
-      city: 'Boston',
-      featured: false
-    },
-    {
-      id: 8,
-      name: 'Oakline Bank - Denver Tech Center',
-      address: '7900 E Union Ave, Denver, CO 80237',
-      phone: '(303) 555-0800',
-      hours: {
-        monday: '9:00 AM - 5:00 PM',
-        tuesday: '9:00 AM - 5:00 PM',
-        wednesday: '9:00 AM - 5:00 PM',
-        thursday: '9:00 AM - 5:00 PM',
-        friday: '9:00 AM - 5:00 PM',
-        saturday: '9:00 AM - 2:00 PM',
-        sunday: 'Closed'
-      },
-      services: ['Full Service Branch', 'ATM', 'Business Banking', 'SBA Lending', 'Cash Management'],
-      manager: 'Thomas Anderson',
-      state: 'CO',
-      city: 'Denver',
-      featured: false
     }
   ];
 
