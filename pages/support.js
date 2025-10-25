@@ -20,11 +20,11 @@ export default function Support() {
     general: [
       {
         question: 'What are Oakline Bank\'s operating hours?',
-        answer: 'Our branches are open Monday-Friday 9:00 AM - 6:00 PM, Saturday 9:00 AM - 2:00 PM, and closed on Sundays. Online banking and ATMs are available 24/7.'
+        answer: 'Our Oklahoma City branch is open Monday-Friday 9:00 AM - 5:00 PM, Saturday 9:00 AM - 1:00 PM, and closed on Sundays. Online banking and ATMs are available 24/7.'
       },
       {
         question: 'How do I contact customer service?',
-        answer: 'You can reach us by calling 1-800-OAKLINE (1-800-625-5463), using our live chat feature, visiting any branch location, or emailing support@oaklinebank.com.'
+        answer: 'You can reach us by calling +1 (636) 635-6122, using our live chat feature, visiting our Oklahoma City branch, or emailing contact-us@theoaklinebank.com.'
       },
       {
         question: 'Where can I find an ATM?',
@@ -66,7 +66,7 @@ export default function Support() {
       },
       {
         question: 'What should I do if I suspect fraud?',
-        answer: 'Contact us immediately at 1-800-OAKLINE or use our 24/7 fraud hotline. We\'ll investigate and protect your account while resolving any unauthorized transactions.'
+        answer: 'Contact us immediately at +1 (636) 635-6122 or email notify@theoaklinebank.com. We\'ll investigate and protect your account while resolving any unauthorized transactions.'
       },
       {
         question: 'How do I set up account alerts?',
@@ -106,30 +106,30 @@ export default function Support() {
   const contactMethods = [
     {
       icon: '📞',
-      title: 'Phone Banking',
-      description: '24/7 automated services and customer support',
-      contact: '1-800-OAKLINE',
-      hours: 'Available 24/7'
+      title: 'Phone/Text',
+      description: 'Customer support and banking services',
+      contact: '+1 (636) 635-6122',
+      hours: 'Mon-Fri 9AM-5PM, Sat 9AM-1PM'
     },
     {
       icon: '💬',
       title: 'Live Chat',
       description: 'Instant support from our banking specialists',
       contact: 'Chat now',
-      hours: 'Mon-Fri 8AM-8PM, Sat 9AM-5PM'
+      hours: 'Mon-Fri 9AM-5PM, Sat 9AM-1PM'
     },
     {
       icon: '🏦',
-      title: 'Branch Locations',
-      description: 'In-person banking and consultation services',
-      contact: 'Find a branch',
-      hours: 'Mon-Fri 9AM-6PM, Sat 9AM-2PM'
+      title: 'Visit Us',
+      description: 'Oklahoma City Branch - In-person banking services',
+      contact: '12201 N. May Avenue, OKC, OK 73120',
+      hours: 'Mon-Fri 9AM-5PM, Sat 9AM-1PM'
     },
     {
       icon: '✉️',
       title: 'Email Support',
       description: 'Written support for non-urgent inquiries',
-      contact: 'support@oaklinebank.com',
+      contact: 'contact-us@theoaklinebank.com',
       hours: 'Response within 24 hours'
     }
   ];
