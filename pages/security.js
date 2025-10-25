@@ -198,7 +198,7 @@ export default function Security() {
         console.error('Security setting update error:', error);
         throw error;
       }
-      
+
       setMessage('✅ Security setting updated successfully');
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
@@ -921,82 +921,105 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000,
-    padding: '20px'
+    zIndex: 9999,
+    padding: '1rem'
   },
   modalContent: {
     backgroundColor: 'white',
-    borderRadius: '12px',
-    padding: '20px',
+    borderRadius: '16px',
+    padding: '2rem',
+    maxWidth: '500px',
     width: '100%',
-    maxWidth: '400px',
     maxHeight: '90vh',
-    overflow: 'auto'
+    overflowY: 'auto',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    position: 'relative',
+    zIndex: 10000
   },
   modalHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '20px'
+    marginBottom: '1.5rem',
+    paddingBottom: '1rem',
+    borderBottom: '2px solid #e2e8f0'
   },
   modalTitle: {
-    fontSize: '20px',
-    fontWeight: 'bold',
-    color: '#1e293b',
+    fontSize: '1.5rem',
+    fontWeight: '700',
+    color: '#1e40af',
     margin: 0
   },
   closeButton: {
-    background: 'none',
+    background: '#f1f5f9',
     border: 'none',
-    fontSize: '20px',
+    fontSize: '1.5rem',
     cursor: 'pointer',
-    color: '#64748b'
+    color: '#64748b',
+    padding: '0.5rem',
+    borderRadius: '8px',
+    width: '40px',
+    height: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.3s ease'
   },
   formGroup: {
-    marginBottom: '15px'
+    marginBottom: '1.5rem'
   },
   label: {
     display: 'block',
-    fontSize: '14px',
+    marginBottom: '0.5rem',
     fontWeight: '600',
-    color: '#374151',
-    marginBottom: '5px'
+    color: '#1e40af',
+    fontSize: '0.95rem'
   },
   input: {
     width: '100%',
-    padding: '10px',
-    border: '1px solid #d1d5db',
-    borderRadius: '6px',
-    fontSize: '16px',
-    boxSizing: 'border-box'
+    padding: '0.875rem 1rem',
+    border: '2px solid #e2e8f0',
+    borderRadius: '10px',
+    fontSize: '1rem',
+    transition: 'all 0.3s ease',
+    boxSizing: 'border-box',
+    outline: 'none',
+    backgroundColor: '#ffffff',
+    color: '#1f2937'
   },
   modalActions: {
     display: 'flex',
-    gap: '10px',
-    marginTop: '20px'
+    gap: '1rem',
+    justifyContent: 'flex-end',
+    marginTop: '2rem',
+    paddingTop: '1rem',
+    borderTop: '1px solid #e2e8f0'
   },
   cancelButton: {
-    flex: 1,
-    padding: '12px',
-    backgroundColor: '#6b7280',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '14px',
-    cursor: 'pointer'
+    padding: '0.875rem 1.75rem',
+    backgroundColor: '#f1f5f9',
+    border: '2px solid #e2e8f0',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontWeight: '600',
+    color: '#64748b',
+    fontSize: '1rem',
+    transition: 'all 0.3s ease'
   },
   saveButton: {
-    flex: 1,
-    padding: '12px',
-    backgroundColor: '#3b82f6',
+    padding: '0.875rem 1.75rem',
+    backgroundColor: '#1e40af',
     color: 'white',
     border: 'none',
-    borderRadius: '6px',
-    fontSize: '14px',
-    cursor: 'pointer'
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontWeight: '600',
+    fontSize: '1rem',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)'
   }
 };
