@@ -27,8 +27,8 @@ export default async function handler(req, res) {
       .single();
 
     if (existingApp) {
-      return res.status(400).json({ 
-        error: 'An account with this email already exists. Please sign in or use a different email.' 
+      return res.status(400).json({
+        error: 'An account with this email already exists. Please sign in or use a different email.'
       });
     }
 
@@ -81,18 +81,16 @@ export default async function handler(req, res) {
       // Check if SMTP is configured
       if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
         console.error('SMTP configuration missing. Required: SMTP_HOST, SMTP_USER, SMTP_PASS');
-        return res.status(500).json({ 
+        return res.status(500).json({
           error: 'Email service is not configured. Please contact support.',
           details: 'SMTP credentials are missing'
         });
       }
 
       console.log('Attempting to send verification email to:', normalizedEmail);
-      
-      await sendEmail({
-        to: normalizedEmail,
-        subject: 'Verify Your Email - Oakline Bank',
-        html: `
+
+      // Define the email HTML structure
+      const emailHtml = `
           <!DOCTYPE html>
           <html>
           <head>
@@ -105,20 +103,20 @@ export default async function handler(req, res) {
                 <h1 style="color: white; margin: 0; font-size: 28px;">Oakline Bank</h1>
                 <p style="color: #FFC857; margin: 5px 0 0 0; font-size: 14px;">Your Financial Partner</p>
               </div>
-              
+
               <div style="background: white; padding: 40px 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                 <h2 style="color: #1A3E6F; margin-top: 0;">Email Verification</h2>
                 <p style="color: #333; line-height: 1.6;">Thank you for choosing Oakline Bank! Please use the verification code below to complete your application:</p>
-                
+
                 <div style="background: #f5f6f8; border-left: 4px solid #FFC857; padding: 20px; margin: 25px 0; text-align: center;">
                   <div style="font-size: 32px; font-weight: bold; color: #1A3E6F; letter-spacing: 5px; font-family: 'Courier New', monospace;">
                     ${verificationCode}
                   </div>
                 </div>
-                
+
                 <p style="color: #666; font-size: 14px; margin-top: 20px;">This code will expire in 15 minutes.</p>
                 <p style="color: #666; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
-                
+
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
                   <p style="color: #999; font-size: 12px; margin: 5px 0;">
                     © 2024 Oakline Bank. All rights reserved.<br>
@@ -129,7 +127,16 @@ export default async function handler(req, res) {
             </div>
           </body>
           </html>
-        `
+        `;
+
+      // Use the notify alias for verification codes
+      const notifyEmail = process.env.SMTP_FROM_NOTIFY || process.env.SMTP_FROM || 'notify@theoaklinebank.com';
+
+      await sendEmail({
+        to: normalizedEmail,
+        from: notifyEmail,
+        subject: '🔐 Your Oakline Bank Verification Code',
+        html: emailHtml
       });
 
       console.log('✅ Verification email sent successfully to:', normalizedEmail);
@@ -140,14 +147,14 @@ export default async function handler(req, res) {
         code: emailError.code,
         command: emailError.command
       });
-      
-      return res.status(500).json({ 
+
+      return res.status(500).json({
         error: 'Failed to send verification email. Please check your email address and try again.',
         details: process.env.NODE_ENV === 'development' ? emailError.message : 'Email service error'
       });
     }
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       success: true,
       message: 'Verification code sent successfully',
       expiresIn: 900
@@ -155,9 +162,9 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Error in send-verification-code:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Failed to send verification code',
-      details: error.message 
+      details: error.message
     });
   }
 }
