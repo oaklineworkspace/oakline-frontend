@@ -363,7 +363,7 @@ export default function Home() {
             {/* Scrolling Welcome Message */}
             <div style={styles.scrollingWelcomeContainer}>
               <div style={styles.scrollingWelcomeText}>
-                Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $250,000 • Rated #1 Customer Service
+                Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $500,000 • Rated #1 Customer Service
               </div>
             </div>
           </div>
@@ -387,8 +387,8 @@ export default function Home() {
 
             {showBankingDropdown && (
               <>
-                <div 
-                  style={styles.dropdownBackdrop} 
+                <div
+                  style={styles.dropdownBackdrop}
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowBankingDropdown(false);
@@ -465,14 +465,14 @@ export default function Home() {
                   </div>
 
                   <div style={styles.bankingDropdownFooter}>
-                    <Link 
+                    <Link
                       href="/account-types"
                       onClick={() => setShowBankingDropdown(false)}
                       style={styles.viewAllServicesButton}
                     >
                       Explore All Banking Services
                     </Link>
-                    <Link 
+                    <Link
                       href="/support"
                       onClick={() => setShowBankingDropdown(false)}
                       style={styles.viewAllServicesButtonSecondary}
@@ -697,8 +697,8 @@ export default function Home() {
             <div style={styles.newBankingImageContent}>
               <h3 style={styles.newBankingImageTitle}>Your Complete Banking Solution</h3>
               <p style={styles.newBankingImageDescription}>
-                Discover a comprehensive range of banking services designed to meet all your financial needs. 
-                From everyday transactions to long-term investments, we provide innovative solutions backed by 
+                Discover a comprehensive range of banking services designed to meet all your financial needs.
+                From everyday transactions to long-term investments, we provide innovative solutions backed by
                 exceptional customer service.
               </p>
 
@@ -1374,7 +1374,7 @@ export default function Home() {
             <div style={styles.mobileBankingContent}>
               <h3 style={styles.mobileBankingTitle}>Complete Control in Your Pocket</h3>
               <p style={styles.mobileBankingDescription}>
-                Experience the future of banking with our award-winning mobile app. Manage all your accounts, 
+                Experience the future of banking with our award-winning mobile app. Manage all your accounts,
                 transfer funds, pay bills, and access financial insights - all from your smartphone.
               </p>
 
@@ -1457,7 +1457,7 @@ export default function Home() {
             <div style={styles.atmContent}>
               <h3 style={styles.atmTitle}>Advanced ATM Services</h3>
               <p style={styles.atmDescription}>
-                Experience modern banking with our state-of-the-art ATM network featuring advanced security, 
+                Experience modern banking with our state-of-the-art ATM network featuring advanced security,
                 multiple transaction types, and convenient locations nationwide.
               </p>
 
@@ -1518,7 +1518,7 @@ export default function Home() {
             <div style={styles.loanBannerContent}>
               <h3 style={styles.loanBannerTitle}>Quick & Easy Loan Process</h3>
               <p style={styles.loanBannerDescription}>
-                Experience fast loan approvals with our digital-first approach. Whether you need a personal loan, 
+                Experience fast loan approvals with our digital-first approach. Whether you need a personal loan,
                 auto financing, or a mortgage, we make the process simple and transparent.
               </p>
 
@@ -1596,10 +1596,10 @@ export default function Home() {
               <div style={styles.requestEnrollmentIcon}>📧</div>
               <h3 style={styles.requestEnrollmentTitle}>Get Your Enrollment Link</h3>
               <p style={styles.requestEnrollmentDescription}>
-                If you've already submitted an application but haven't completed enrollment, 
+                If you've already submitted an application but haven't completed enrollment,
                 request a new enrollment link below. We'll send it to the email address you used during application.
               </p>
-              
+
               <div style={styles.requestEnrollmentForm}>
                 <input
                   type="email"
@@ -3495,8 +3495,8 @@ const styles = {
   dropdownButton: {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '0.5rem',
-    padding: '1rem 2rem',
+    justifyContent: 'center',
+    padding: '0.75rem 1.5rem',
     background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
     color: 'white',
     textDecoration: 'none',
@@ -5392,19 +5392,19 @@ const styles = {
   // Add CSS animations to the document
   // These should be defined in the global scope or loaded via a CSS file.
   // For example, using styled-components:
-  // const SpinKeyframes = keyframes\`
+  // const SpinKeyframes = keyframes`
   //   0% { transform: rotate(0deg); }
   //   100% { transform: rotate(360deg); }
-  // \`;
+  // `;
   //
-  // const ProgressBarKeyframes = keyframes\`
+  // const ProgressBarKeyframes = keyframes`
   //   0% { transform: translateX(-100%); }
   //   50% { transform: translateX(0%); }
   //   100% { transform: translateX(100%); }
-  // \`;
+  // `;
 };
 
-// Add hover effects for dropdown items  
+// Add hover effects for dropdown items
 if (typeof window !== 'undefined') {
   const existingStyle = document.querySelector('#dropdown-styles');
   if (!existingStyle) {
@@ -5473,13 +5473,13 @@ if (typeof document !== 'undefined') {
     }
 
     @keyframes dropdownSlideIn {
-      0% { 
-        opacity: 0; 
-        transform: translateY(-10px) scale(0.95); 
+      0% {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
       }
-      100% { 
-        opacity: 1; 
-        transform: translateY(0) scale(1); 
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
       }
     }
 
@@ -5573,6 +5573,7 @@ if (typeof document !== 'undefined') {
       0% { transform: translateX(-20px); opacity: 0; }
       60% { transform: translateX(5px); opacity: 0.8; }
       100% { transform: translateX(0); opacity: 1; }
+    }
     @keyframes flipInY {
       0% { transform: scale(0.8) rotateY(90deg); opacity: 0; }
       50% { transform: scale(0.9) rotateY(0deg); opacity: 0.5; }

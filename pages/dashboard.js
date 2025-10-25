@@ -77,15 +77,33 @@ function DashboardContent() {
 
       setAccounts(accountsData || []);
 
-      // Fetch transactions
-      const { data: transactionsData } = await supabase
+      // Fetch transactions - try both user_id and account-based lookup
+      let transactionsData = [];
+      
+      // First try by user_id
+      const { data: txByUserId } = await supabase
         .from('transactions')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(5);
 
-      setTransactions(transactionsData || []);
+      if (txByUserId && txByUserId.length > 0) {
+        transactionsData = txByUserId;
+      } else if (accountsData && accountsData.length > 0) {
+        // Fallback: get transactions by account numbers
+        const accountNumbers = accountsData.map(acc => acc.account_number);
+        const { data: txByAccount } = await supabase
+          .from('transactions')
+          .select('*')
+          .in('account_number', accountNumbers)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        transactionsData = txByAccount || [];
+      }
+
+      setTransactions(transactionsData);
 
       // Fetch user cards
       const { data: cardsData } = await supabase

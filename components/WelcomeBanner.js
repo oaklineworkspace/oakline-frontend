@@ -14,7 +14,7 @@ export default function WelcomeBanner() {
             &nbsp;&nbsp;|&nbsp;&nbsp; 
             📱 Award-winning mobile app - Bank anywhere, anytime 
             &nbsp;&nbsp;|&nbsp;&nbsp; 
-            🔒 FDIC Insured • Equal Housing Lender • Deposits protected up to $250,000 
+            🔒 FDIC Insured • Equal Housing Lender • Deposits protected up to $500,000 
             &nbsp;&nbsp;|&nbsp;&nbsp; 
             🌟 Rated #1 Customer Service - Banking the way it should be 
             &nbsp;&nbsp;|&nbsp;&nbsp; 
@@ -28,7 +28,7 @@ export default function WelcomeBanner() {
             &nbsp;&nbsp;|&nbsp;&nbsp; 
             📱 Award-winning mobile app - Bank anywhere, anytime 
             &nbsp;&nbsp;|&nbsp;&nbsp; 
-            🔒 FDIC Insured • Equal Housing Lender • Deposits protected up to $250,000 
+            🔒 FDIC Insured • Equal Housing Lender • Deposits protected up to $500,000 
             &nbsp;&nbsp;|&nbsp;&nbsp; 
             🌟 Rated #1 Customer Service - Banking the way it should be 
             &nbsp;&nbsp;|&nbsp;&nbsp; 

@@ -258,9 +258,9 @@ export default function About() {
                     <div style={styles.contactCardIcon}>📞</div>
                     <h3 style={styles.contactCardTitle}>Phone/Text</h3>
                     <p style={styles.contactCardLabel}>Customer Service</p>
-                    <a href="tel:+16366356122" style={styles.contactCardLink}>+1 (636) 635-6122</a>
+                    <a href="tel:+14058002273" style={styles.contactCardLink}>+1 (405) 800-2273</a>
                     <p style={styles.contactCardDescription}>
-                      Call or text us for immediate assistance with your banking needs
+                      Available for calls and texts Monday through Saturday
                     </p>
                     <div style={styles.contactCardDivider}></div>
                     <p style={styles.contactCardLabel}>Available</p>
