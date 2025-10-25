@@ -58,7 +58,8 @@ export default function About() {
               { id: 'company', label: 'Our Company', icon: '🏦' },
               { id: 'mission', label: 'Mission & Values', icon: '🎯' },
               { id: 'leadership', label: 'Leadership', icon: '👥' },
-              { id: 'awards', label: 'Awards', icon: '🏆' }
+              { id: 'awards', label: 'Awards', icon: '🏆' },
+              { id: 'contact', label: 'Contact Us', icon: '📞' }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -224,6 +225,66 @@ export default function About() {
                   <p style={styles.awardYear}>2023</p>
                   <p style={styles.awardDescription}>
                     Honored for industry-leading security measures and fraud prevention.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'contact' && (
+            <div style={styles.section}>
+              <h2 style={styles.sectionTitle}>Contact Us</h2>
+              <div style={styles.contactSection}>
+                <div style={styles.contactIntro}>
+                  <p style={styles.paragraph}>
+                    We're here to help you with all your banking needs. Visit us, call us, or send us an email – 
+                    we're committed to providing exceptional service and support.
+                  </p>
+                </div>
+                <div style={styles.contactGrid}>
+                  <div style={styles.contactCard}>
+                    <div style={styles.contactCardIcon}>🏦</div>
+                    <h3 style={styles.contactCardTitle}>Visit Us</h3>
+                    <p style={styles.contactCardLabel}>Oklahoma City Branch</p>
+                    <p style={styles.contactCardValue}>12201 N. May Avenue</p>
+                    <p style={styles.contactCardValue}>Oklahoma City, OK 73120</p>
+                    <div style={styles.contactCardDivider}></div>
+                    <p style={styles.contactCardLabel}>Hours</p>
+                    <p style={styles.contactCardValue}>Monday - Friday: 9:00 AM - 5:00 PM</p>
+                    <p style={styles.contactCardValue}>Saturday: 9:00 AM - 1:00 PM</p>
+                    <p style={styles.contactCardValue}>Sunday: Closed</p>
+                  </div>
+                  <div style={styles.contactCard}>
+                    <div style={styles.contactCardIcon}>📞</div>
+                    <h3 style={styles.contactCardTitle}>Phone/Text</h3>
+                    <p style={styles.contactCardLabel}>Customer Service</p>
+                    <a href="tel:+16366356122" style={styles.contactCardLink}>+1 (636) 635-6122</a>
+                    <p style={styles.contactCardDescription}>
+                      Call or text us for immediate assistance with your banking needs
+                    </p>
+                    <div style={styles.contactCardDivider}></div>
+                    <p style={styles.contactCardLabel}>Available</p>
+                    <p style={styles.contactCardValue}>Mon-Fri: 9 AM - 5 PM</p>
+                    <p style={styles.contactCardValue}>Sat: 9 AM - 1 PM</p>
+                  </div>
+                  <div style={styles.contactCard}>
+                    <div style={styles.contactCardIcon}>✉️</div>
+                    <h3 style={styles.contactCardTitle}>Email Us</h3>
+                    <p style={styles.contactCardLabel}>General Information</p>
+                    <a href="mailto:info@theoaklinebank.com" style={styles.contactCardLink}>info@theoaklinebank.com</a>
+                    <p style={styles.contactCardLabel}>Customer Support</p>
+                    <a href="mailto:contact-us@theoaklinebank.com" style={styles.contactCardLink}>contact-us@theoaklinebank.com</a>
+                    <p style={styles.contactCardLabel}>Account Updates</p>
+                    <a href="mailto:updates@theoaklinebank.com" style={styles.contactCardLink}>updates@theoaklinebank.com</a>
+                    <p style={styles.contactCardDescription}>
+                      We typically respond within 24 hours
+                    </p>
+                  </div>
+                </div>
+                <div style={styles.mapInfo}>
+                  <h3 style={styles.mapInfoTitle}>📍 Find Us on Maps</h3>
+                  <p style={styles.paragraph}>
+                    Search for "12201 N. May Avenue, Oklahoma City, OK 73120" on Google Maps, Apple Maps, or Bing Maps to get directions to our branch.
                   </p>
                 </div>
               </div>
@@ -562,6 +623,85 @@ const styles = {
     fontSize: '0.9rem',
     color: '#64748b',
     lineHeight: '1.5'
+  },
+  contactSection: {
+    padding: '1rem 0'
+  },
+  contactIntro: {
+    textAlign: 'center',
+    marginBottom: '3rem'
+  },
+  contactGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+    gap: '2rem',
+    marginBottom: '3rem'
+  },
+  contactCard: {
+    backgroundColor: 'white',
+    padding: '2.5rem',
+    borderRadius: '16px',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
+    border: '1px solid #e2e8f0',
+    textAlign: 'center'
+  },
+  contactCardIcon: {
+    fontSize: '3rem',
+    marginBottom: '1.5rem'
+  },
+  contactCardTitle: {
+    fontSize: '1.3rem',
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: '1.5rem'
+  },
+  contactCardLabel: {
+    fontSize: '0.85rem',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    fontWeight: '600',
+    marginBottom: '0.5rem',
+    marginTop: '1rem'
+  },
+  contactCardValue: {
+    fontSize: '1rem',
+    color: '#1e293b',
+    marginBottom: '0.25rem',
+    lineHeight: '1.5'
+  },
+  contactCardLink: {
+    fontSize: '1.1rem',
+    color: '#1A3E6F',
+    fontWeight: '600',
+    textDecoration: 'none',
+    marginBottom: '0.5rem',
+    display: 'block',
+    transition: 'color 0.2s ease'
+  },
+  contactCardDescription: {
+    fontSize: '0.9rem',
+    color: '#64748b',
+    marginTop: '0.5rem',
+    fontStyle: 'italic'
+  },
+  contactCardDivider: {
+    height: '1px',
+    backgroundColor: '#e2e8f0',
+    margin: '1.5rem 0'
+  },
+  mapInfo: {
+    backgroundColor: '#f8fafc',
+    padding: '2rem',
+    borderRadius: '12px',
+    textAlign: 'center',
+    border: '1px solid #e2e8f0'
+  },
+  mapInfoTitle: {
+    fontSize: '1.2rem',
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: '1rem'
   },
   ctaSection: {
     backgroundColor: '#1A3E6F',
