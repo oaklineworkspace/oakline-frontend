@@ -64,7 +64,7 @@ export default function Footer() {
               <span style={styles.infoIcon}>⚖️</span>
               <div>
                 <span style={styles.infoLabel}>Equal Housing Lender</span>
-                <span style={styles.infoValue}>NMLS ID: 234567</span>
+                <span style={styles.infoValue}>NMLS ID: 419823</span>
               </div>
             </div>
           </div>

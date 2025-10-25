@@ -896,17 +896,24 @@ export default function Apply() {
       border: '2px solid #e2e8f0',
       marginTop: '1.5rem',
       position: 'relative',
-      zIndex: 10
+      zIndex: 1,
+      backgroundColor: 'white'
     },
     checkbox: {
       width: '20px',
       height: '20px',
+      minWidth: '20px',
+      minHeight: '20px',
       marginTop: '2px',
       cursor: 'pointer',
       accentColor: '#1A3E6F',
-      transform: 'scale(1.2)',
+      transform: 'scale(1.3)',
       position: 'relative',
-      zIndex: 11
+      zIndex: 11,
+      flexShrink: 0,
+      appearance: 'auto',
+      WebkitAppearance: 'checkbox',
+      MozAppearance: 'checkbox'
     },
     checkboxLabel: {
       fontSize: '15px',
