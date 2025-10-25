@@ -22,6 +22,26 @@
 
 Oakline Bank is a comprehensive Next.js/React-based banking web application that provides a complete digital banking experience. The platform serves both retail customers and business clients with features including account management, transactions, card services, loan applications, cryptocurrency trading, and investment services. Built with modern web technologies, it emphasizes security, user experience, and real-time data synchronization.
 
+## Branch Information
+
+Oakline Bank operates with **one branch location**:
+
+**Oklahoma City Branch**
+- **Address**: 12201 N. May Avenue, Oklahoma City, OK 73120
+- **Phone**: +1 (636) 635-6122
+- **Hours**: 
+  - Monday - Friday: 9:00 AM - 5:00 PM
+  - Saturday: 9:00 AM - 1:00 PM
+  - Sunday: Closed
+
+All contact information is displayed consistently across the following pages:
+- Branch Locator (`pages/branch-locator.js`)
+- Support Page (`pages/support.js`)
+- Footer Component (`components/Footer.js`)
+- About Page - Contact Us tab (`pages/about.js`)
+
+**Important**: The bank has only ONE branch location. All fake/placeholder branch data has been removed and replaced with the real Oklahoma City branch information.
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -116,7 +136,14 @@ Preferred communication style: Simple, everyday language.
 **Email Services**
 - **Nodemailer (v6.9.0)** for transactional emails
 - Email templates for enrollment, password reset, and notifications
-- SMTP configuration with Zoho email addresses (info@theoaklinebank.com, support@theoaklinebank.com)
+- SMTP configuration with multiple email aliases:
+  - info@theoaklinebank.com - General information
+  - welcome@theoaklinebank.com - Welcome emails for new accounts
+  - updates@theoaklinebank.com - Account updates and transaction alerts
+  - contact-us@theoaklinebank.com - Customer support
+  - notify@theoaklinebank.com - System notifications
+- All email addresses are configured via environment variables (see `.env.example`)
+- Comprehensive email setup guide available in `EMAIL_SETUP.md`
 
 **Security & Validation**
 - **Validator (v13.15.15)** for input validation

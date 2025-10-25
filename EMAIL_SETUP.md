@@ -12,11 +12,11 @@ Oakline Bank uses different email aliases for different purposes. All email alia
 The following email aliases should be configured in your `.env` file:
 
 ```env
-SMTP_FROM_EMAIL=info@theoaklinebank.com
-WELCOME_EMAIL=welcome@theoaklinebank.com
-UPDATES_EMAIL=updates@theoaklinebank.com
-CONTACT_US_EMAIL=contact-us@theoaklinebank.com
-NOTIFY_EMAIL=notify@theoaklinebank.com
+SMTP_FROM=info@theoaklinebank.com
+SMTP_FROM_WELCOME=welcome@theoaklinebank.com
+SMTP_FROM_UPDATES=updates@theoaklinebank.com
+SMTP_FROM_CONTACT=contact-us@theoaklinebank.com
+SMTP_FROM_NOTIFY=notify@theoaklinebank.com
 ```
 
 ### Email Alias Usage
@@ -40,11 +40,11 @@ SMTP_USER=your-email@theoaklinebank.com
 SMTP_PASS=your-smtp-password
 
 # Email Aliases
-SMTP_FROM_EMAIL=info@theoaklinebank.com
-WELCOME_EMAIL=welcome@theoaklinebank.com
-UPDATES_EMAIL=updates@theoaklinebank.com
-CONTACT_US_EMAIL=contact-us@theoaklinebank.com
-NOTIFY_EMAIL=notify@theoaklinebank.com
+SMTP_FROM=info@theoaklinebank.com
+SMTP_FROM_WELCOME=welcome@theoaklinebank.com
+SMTP_FROM_UPDATES=updates@theoaklinebank.com
+SMTP_FROM_CONTACT=contact-us@theoaklinebank.com
+SMTP_FROM_NOTIFY=notify@theoaklinebank.com
 ```
 
 ### Popular SMTP Providers
@@ -124,7 +124,7 @@ async function testEmail() {
       to: testUser.email,
       subject,
       html,
-      from: process.env.WELCOME_EMAIL || process.env.SMTP_FROM_EMAIL
+      from: process.env.SMTP_FROM_WELCOME || process.env.SMTP_FROM
     });
 
     console.log('✅ Email sent successfully:', result.messageId);
@@ -156,7 +156,7 @@ node test-email.js
 - Try using a different port (25, 465, or 587)
 
 #### 3. "From Address Rejected"
-- Make sure SMTP_FROM_EMAIL matches your authenticated email domain
+- Make sure SMTP_FROM matches your authenticated email domain
 - Some providers require you to verify sender addresses
 
 #### 4. Emails Not Arriving
