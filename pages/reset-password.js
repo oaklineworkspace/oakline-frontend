@@ -1,31 +1,132 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 export default function ResetPassword() {
   const [email, setEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isResetMode, setIsResetMode] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState({ score: 0, feedback: [] });
+  const router = useRouter();
 
-  const handleSubmit = async (e) => {
+  useEffect(() => {
+    // Check if this is a password reset callback
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get('type');
+    const accessToken = hashParams.get('access_token');
+
+    if (type === 'recovery' && accessToken) {
+      setIsResetMode(true);
+    }
+  }, []);
+
+  const checkPasswordStrength = (password) => {
+    const feedback = [];
+    let score = 0;
+
+    if (password.length >= 8) {
+      score += 1;
+      feedback.push('✓ At least 8 characters');
+    } else {
+      feedback.push('✗ At least 8 characters');
+    }
+
+    if (/[A-Z]/.test(password)) {
+      score += 1;
+      feedback.push('✓ Contains uppercase letter');
+    } else {
+      feedback.push('✗ Contains uppercase letter');
+    }
+
+    if (/[a-z]/.test(password)) {
+      score += 1;
+      feedback.push('✓ Contains lowercase letter');
+    } else {
+      feedback.push('✗ Contains lowercase letter');
+    }
+
+    if (/[0-9]/.test(password)) {
+      score += 1;
+      feedback.push('✓ Contains number');
+    } else {
+      feedback.push('✗ Contains number');
+    }
+
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      score += 1;
+      feedback.push('✓ Contains special character');
+    } else {
+      feedback.push('✗ Contains special character');
+    }
+
+    setPasswordStrength({ score, feedback });
+    return score >= 4;
+  };
+
+  const handleRequestReset = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
+    setError('');
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password?mode=reset`,
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) throw error;
 
       setIsSuccess(true);
-      setMessage('Password reset instructions have been sent to your email address.');
+      setMessage('Password reset instructions have been sent to your email address. Please check your inbox and spam folder.');
     } catch (error) {
-      setMessage(`Error: ${error.message}`);
-      setIsSuccess(false);
+      setError(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage('');
+    setError('');
+
+    try {
+      if (!newPassword || !confirmPassword) {
+        throw new Error('Please fill in all fields');
+      }
+
+      if (newPassword !== confirmPassword) {
+        throw new Error('Passwords do not match');
+      }
+
+      if (!checkPasswordStrength(newPassword)) {
+        throw new Error('Password does not meet security requirements');
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      setMessage('✅ Password reset successful! Redirecting to login...');
+      setIsSuccess(true);
+
+      setTimeout(() => {
+        router.push('/sign-in');
+      }, 3000);
+    } catch (error) {
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -40,7 +141,9 @@ export default function ResetPassword() {
             <img src="/images/logo-primary.png" alt="Oakline Bank" style={styles.logo} />
             <div style={styles.brandInfo}>
               <span style={styles.bankName}>Oakline Bank</span>
-              <span style={styles.tagline}>Secure Password Recovery</span>
+              <span style={styles.tagline}>
+                {isResetMode ? 'Create New Password' : 'Secure Password Recovery'}
+              </span>
             </div>
           </Link>
           
@@ -57,26 +160,31 @@ export default function ResetPassword() {
           {/* Hero Section */}
           <div style={styles.heroSection}>
             <div style={styles.heroContent}>
-              <h1 style={styles.heroTitle}>Secure Password Recovery</h1>
+              <h1 style={styles.heroTitle}>
+                {isResetMode ? '🔐 Create New Password' : '🔐 Secure Password Recovery'}
+              </h1>
               <p style={styles.heroSubtitle}>
-                Reset your password securely with our advanced verification system. 
-                Your account security is our top priority.
+                {isResetMode 
+                  ? 'Set a strong, secure password for your Oakline Bank account.'
+                  : 'Reset your password securely with our advanced verification system. Your account security is our top priority.'}
               </p>
               
-              <div style={styles.securityFeatures}>
-                <div style={styles.feature}>
-                  <span style={styles.featureIcon}>🔐</span>
-                  <span>Bank-Level Security</span>
+              {!isResetMode && (
+                <div style={styles.securityFeatures}>
+                  <div style={styles.feature}>
+                    <span style={styles.featureIcon}>🔐</span>
+                    <span>Bank-Level Security</span>
+                  </div>
+                  <div style={styles.feature}>
+                    <span style={styles.featureIcon}>📧</span>
+                    <span>Email Verification</span>
+                  </div>
+                  <div style={styles.feature}>
+                    <span style={styles.featureIcon}>⚡</span>
+                    <span>Instant Reset Link</span>
+                  </div>
                 </div>
-                <div style={styles.feature}>
-                  <span style={styles.featureIcon}>📧</span>
-                  <span>Email Verification</span>
-                </div>
-                <div style={styles.feature}>
-                  <span style={styles.featureIcon}>⚡</span>
-                  <span>Instant Reset Link</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -87,14 +195,133 @@ export default function ResetPassword() {
                 <div style={styles.cardLogo}>
                   <img src="/images/logo-primary.png" alt="Oakline Bank" style={styles.cardLogoImg} />
                 </div>
-                <h2 style={styles.resetTitle}>Reset Your Password</h2>
+                <h2 style={styles.resetTitle}>
+                  {isResetMode ? 'Set Your New Password' : 'Reset Your Password'}
+                </h2>
                 <p style={styles.resetSubtitle}>
-                  Enter your email address and we'll send you a secure link to reset your password
+                  {isResetMode 
+                    ? 'Create a strong password that meets our security requirements'
+                    : 'Enter your email address and we\'ll send you a secure link to reset your password'}
                 </p>
               </div>
 
-              {!isSuccess ? (
-                <form onSubmit={handleSubmit} style={styles.form}>
+              {/* Success Messages */}
+              {message && (
+                <div style={styles.successMessage}>
+                  <div style={styles.successIcon}>✅</div>
+                  <p style={styles.successText}>{message}</p>
+                </div>
+              )}
+
+              {/* Error Messages */}
+              {error && (
+                <div style={styles.errorMessage}>
+                  <span style={styles.errorIcon}>⚠️</span>
+                  {error}
+                </div>
+              )}
+
+              {/* Password Reset Mode */}
+              {isResetMode && !isSuccess ? (
+                <form onSubmit={handleResetPassword} style={styles.form}>
+                  <div style={styles.inputGroup}>
+                    <label style={styles.label}>New Password</label>
+                    <div style={styles.passwordInputWrapper}>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Enter your new password"
+                        required
+                        value={newPassword}
+                        onChange={(e) => {
+                          setNewPassword(e.target.value);
+                          checkPasswordStrength(e.target.value);
+                        }}
+                        style={styles.input}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={styles.togglePassword}
+                      >
+                        {showPassword ? '👁️' : '👁️‍🗨️'}
+                      </button>
+                    </div>
+                    
+                    {/* Password Strength Indicator */}
+                    {newPassword && (
+                      <div style={styles.passwordStrength}>
+                        <div style={styles.strengthBar}>
+                          <div style={{
+                            ...styles.strengthFill,
+                            width: `${(passwordStrength.score / 5) * 100}%`,
+                            backgroundColor: passwordStrength.score < 3 ? '#ef4444' : passwordStrength.score < 4 ? '#f59e0b' : '#10b981'
+                          }}></div>
+                        </div>
+                        <div style={styles.strengthFeedback}>
+                          {passwordStrength.feedback.map((item, index) => (
+                            <div key={index} style={{
+                              ...styles.feedbackItem,
+                              color: item.startsWith('✓') ? '#10b981' : '#ef4444'
+                            }}>
+                              {item}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={styles.inputGroup}>
+                    <label style={styles.label}>Confirm New Password</label>
+                    <div style={styles.passwordInputWrapper}>
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="Confirm your new password"
+                        required
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        style={styles.input}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        style={styles.togglePassword}
+                      >
+                        {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                      </button>
+                    </div>
+                    {confirmPassword && newPassword !== confirmPassword && (
+                      <div style={styles.passwordMismatch}>
+                        ⚠️ Passwords do not match
+                      </div>
+                    )}
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    disabled={loading || passwordStrength.score < 4}
+                    style={{
+                      ...styles.resetButton,
+                      backgroundColor: loading || passwordStrength.score < 4 ? '#9ca3af' : '#1e40af',
+                      cursor: loading || passwordStrength.score < 4 ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {loading ? (
+                      <span style={styles.loadingContent}>
+                        <span style={styles.spinner}></span>
+                        Resetting Password...
+                      </span>
+                    ) : (
+                      <>
+                        <span style={styles.buttonIcon}>🔒</span>
+                        Reset Password
+                      </>
+                    )}
+                  </button>
+                </form>
+              ) : !isSuccess && !isResetMode ? (
+                // Request Reset Mode
+                <form onSubmit={handleRequestReset} style={styles.form}>
                   <div style={styles.inputGroup}>
                     <label style={styles.label}>Email Address</label>
                     <input
@@ -129,26 +356,7 @@ export default function ResetPassword() {
                     )}
                   </button>
                 </form>
-              ) : (
-                <div style={styles.successMessage}>
-                  <div style={styles.successIcon}>✅</div>
-                  <h3 style={styles.successTitle}>Reset Link Sent!</h3>
-                  <p style={styles.successText}>
-                    We've sent password reset instructions to <strong>{email}</strong>
-                  </p>
-                  <p style={styles.successSubtext}>
-                    Please check your email and follow the link to reset your password. 
-                    The link will expire in 24 hours for security.
-                  </p>
-                </div>
-              )}
-
-              {message && !isSuccess && (
-                <div style={styles.errorMessage}>
-                  <span style={styles.errorIcon}>⚠️</span>
-                  {message}
-                </div>
-              )}
+              ) : null}
 
               {/* Help Section */}
               <div style={styles.helpSection}>
@@ -160,15 +368,15 @@ export default function ResetPassword() {
                   <Link href="/faq" style={styles.helpLink}>
                     ❓ View FAQ
                   </Link>
-                  <a href="tel:+1-800-OAKLINE" style={styles.helpLink}>
-                    📞 Call: 1-800-OAKLINE
+                  <a href="tel:+16366356122" style={styles.helpLink}>
+                    📞 Call: (636) 635-6122
                   </a>
                 </div>
               </div>
 
               {/* Back to Login */}
               <div style={styles.backToLogin}>
-                <Link href="/login" style={styles.backLink}>
+                <Link href="/sign-in" style={styles.backLink}>
                   ← Back to Sign In
                 </Link>
               </div>
@@ -386,6 +594,49 @@ const styles = {
     boxSizing: 'border-box',
     outline: 'none'
   },
+  passwordInputWrapper: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center'
+  },
+  togglePassword: {
+    position: 'absolute',
+    right: '10px',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '1.2rem',
+    padding: '0.5rem'
+  },
+  passwordStrength: {
+    marginTop: '0.5rem'
+  },
+  strengthBar: {
+    height: '6px',
+    backgroundColor: '#e2e8f0',
+    borderRadius: '3px',
+    overflow: 'hidden',
+    marginBottom: '0.75rem'
+  },
+  strengthFill: {
+    height: '100%',
+    transition: 'all 0.3s ease',
+    borderRadius: '3px'
+  },
+  strengthFeedback: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '0.5rem',
+    fontSize: '0.8rem'
+  },
+  feedbackItem: {
+    padding: '0.25rem 0'
+  },
+  passwordMismatch: {
+    fontSize: '0.8rem',
+    color: '#ef4444',
+    marginTop: '0.25rem'
+  },
   resetButton: {
     width: '100%',
     padding: '1rem',
@@ -422,34 +673,28 @@ const styles = {
   },
   successMessage: {
     textAlign: 'center',
-    padding: '2rem 1rem'
+    padding: '1.5rem',
+    backgroundColor: '#d1fae5',
+    borderRadius: '12px',
+    border: '2px solid #10b981',
+    marginBottom: '1.5rem'
   },
   successIcon: {
     fontSize: '3rem',
-    marginBottom: '1rem'
-  },
-  successTitle: {
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    color: '#16a34a',
-    marginBottom: '1rem'
+    marginBottom: '0.5rem'
   },
   successText: {
     fontSize: '1rem',
-    color: '#374151',
-    marginBottom: '1rem',
-    lineHeight: '1.6'
-  },
-  successSubtext: {
-    fontSize: '0.9rem',
-    color: '#64748b',
-    lineHeight: '1.5'
+    color: '#065f46',
+    margin: 0,
+    lineHeight: '1.5',
+    fontWeight: '500'
   },
   errorMessage: {
-    marginTop: '1rem',
+    marginBottom: '1rem',
     padding: '0.75rem 1rem',
     backgroundColor: '#fef2f2',
-    border: '1px solid #fecaca',
+    border: '2px solid #fecaca',
     borderRadius: '8px',
     color: '#dc2626',
     fontSize: '0.9rem',

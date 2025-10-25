@@ -564,7 +564,7 @@ export default function Profile() {
         <div style={styles.securityGrid}>
           <button 
             style={styles.securityButton}
-            onClick={() => router.push('/reset-password')}
+            onClick={() => router.push('/security')}
           >
             🔐 Change Password
           </button>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
@@ -95,13 +94,16 @@ export default function Security() {
     setSessions(mockSessions);
   };
 
-  const handlePasswordChange = async (e) => {
-    e.preventDefault();
+  const handlePasswordChange = async () => {
     setPasswordLoading(true);
-    setMessage('');
     setError('');
 
     try {
+      // Validate all fields are filled
+      if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+        throw new Error('All fields are required');
+      }
+
       // Validate passwords match
       if (passwordData.newPassword !== passwordData.confirmPassword) {
         throw new Error('New passwords do not match');
@@ -110,6 +112,21 @@ export default function Security() {
       // Validate password strength
       if (passwordData.newPassword.length < 8) {
         throw new Error('Password must be at least 8 characters long');
+      }
+
+      // Check for at least one uppercase letter
+      if (!/[A-Z]/.test(passwordData.newPassword)) {
+        throw new Error('Password must contain at least one uppercase letter');
+      }
+
+      // Check for at least one number
+      if (!/[0-9]/.test(passwordData.newPassword)) {
+        throw new Error('Password must contain at least one number');
+      }
+
+      // Check for at least one special character
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(passwordData.newPassword)) {
+        throw new Error('Password must contain at least one special character');
       }
 
       // Verify current password by attempting to sign in
@@ -129,15 +146,19 @@ export default function Security() {
 
       if (updateError) throw updateError;
 
-      setMessage('Password updated successfully!');
+      setMessage('✅ Password updated successfully! Please use your new password for future logins.');
       setShowPasswordModal(false);
       setPasswordData({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       });
+
+      // Clear message after 5 seconds
+      setTimeout(() => setMessage(''), 5000);
     } catch (error) {
       setError(error.message);
+      setTimeout(() => setError(''), 5000);
     } finally {
       setPasswordLoading(false);
     }
@@ -254,7 +275,7 @@ export default function Security() {
       {/* Notification Settings */}
       <div style={styles.card}>
         <h2 style={styles.cardTitle}>🔔 Security Alerts</h2>
-        
+
         <div style={styles.securityItem}>
           <div style={styles.securityInfo}>
             <h3 style={styles.securityLabel}>Email Alerts</h3>
@@ -449,7 +470,7 @@ export default function Security() {
         <p style={styles.cardDescription}>
           Manage devices and locations where you're signed in
         </p>
-        
+
         {sessions.map(session => (
           <div key={session.id} style={styles.sessionItem}>
             <div style={styles.sessionInfo}>
@@ -476,7 +497,7 @@ export default function Security() {
       {/* Security Actions */}
       <div style={styles.card}>
         <h2 style={styles.cardTitle}>🛡️ Additional Security</h2>
-        
+
         <div style={styles.actionGrid}>
           <Link href="/reset-password" style={styles.actionButton}>
             <span style={styles.actionIcon}>🔄</span>
@@ -485,7 +506,7 @@ export default function Security() {
               <p style={styles.actionDesc}>Reset via email verification</p>
             </div>
           </Link>
-          
+
           <button style={styles.actionButton} onClick={() => router.push('/profile')}>
             <span style={styles.actionIcon}>👤</span>
             <div>
@@ -493,7 +514,7 @@ export default function Security() {
               <p style={styles.actionDesc}>Update recovery options</p>
             </div>
           </button>
-          
+
           <button style={styles.actionButton}>
             <span style={styles.actionIcon}>📄</span>
             <div>
@@ -501,7 +522,7 @@ export default function Security() {
               <p style={styles.actionDesc}>Download security activity</p>
             </div>
           </button>
-          
+
           <button 
             style={styles.actionButton}
             onClick={async () => {
@@ -531,8 +552,8 @@ export default function Security() {
                 ✕
               </button>
             </div>
-            
-            <form onSubmit={handlePasswordChange}>
+
+            <form onSubmit={(e) => { e.preventDefault(); handlePasswordChange(); }}>
               <div style={styles.formGroup}>
                 <label style={styles.label}>Current Password</label>
                 <input
@@ -544,7 +565,7 @@ export default function Security() {
                   placeholder="Enter your current password"
                 />
               </div>
-              
+
               <div style={styles.formGroup}>
                 <label style={styles.label}>New Password</label>
                 <input
@@ -557,7 +578,7 @@ export default function Security() {
                   placeholder="Enter new password (minimum 8 characters)"
                 />
               </div>
-              
+
               <div style={styles.formGroup}>
                 <label style={styles.label}>Confirm New Password</label>
                 <input
@@ -569,7 +590,7 @@ export default function Security() {
                   placeholder="Confirm your new password"
                 />
               </div>
-              
+
               <div style={styles.modalActions}>
                 <button 
                   type="button"
@@ -596,13 +617,13 @@ export default function Security() {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
-        
+
         .switch input {
           opacity: 0;
           width: 0;
           height: 0;
         }
-        
+
         .slider:before {
           position: absolute;
           content: "";
@@ -614,15 +635,15 @@ export default function Security() {
           transition: 0.4s;
           border-radius: 50%;
         }
-        
+
         input:checked + .slider:before {
           transform: translateX(26px);
         }
-        
+
         .slider.round {
           border-radius: 24px;
         }
-        
+
         .slider.round:before {
           border-radius: 50%;
         }
