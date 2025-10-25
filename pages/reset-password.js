@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
@@ -146,7 +145,7 @@ export default function ResetPassword() {
               </span>
             </div>
           </Link>
-          
+
           <div style={styles.headerActions}>
             <Link href="/sign-in" style={styles.headerButton}>Sign In</Link>
             <Link href="/enroll" style={styles.headerButton}>Enroll Now</Link>
@@ -168,7 +167,7 @@ export default function ResetPassword() {
                   ? 'Set a strong, secure password for your Oakline Bank account.'
                   : 'Reset your password securely with our advanced verification system. Your account security is our top priority.'}
               </p>
-              
+
               {!isResetMode && (
                 <div style={styles.securityFeatures}>
                   <div style={styles.feature}>
@@ -225,12 +224,16 @@ export default function ResetPassword() {
               {isResetMode && !isSuccess ? (
                 <form onSubmit={handleResetPassword} style={styles.form}>
                   <div style={styles.inputGroup}>
-                    <label style={styles.label}>New Password</label>
+                    <label style={styles.label}>New Password *</label>
+                    <p style={styles.passwordRequirements}>
+                      Password must contain: 8+ characters, uppercase, lowercase, number, and special character
+                    </p>
                     <div style={styles.passwordInputWrapper}>
                       <input
                         type={showPassword ? 'text' : 'password'}
                         placeholder="Enter your new password"
                         required
+                        minLength={8}
                         value={newPassword}
                         onChange={(e) => {
                           setNewPassword(e.target.value);
@@ -246,7 +249,7 @@ export default function ResetPassword() {
                         {showPassword ? '👁️' : '👁️‍🗨️'}
                       </button>
                     </div>
-                    
+
                     {/* Password Strength Indicator */}
                     {newPassword && (
                       <div style={styles.passwordStrength}>
@@ -272,7 +275,7 @@ export default function ResetPassword() {
                   </div>
 
                   <div style={styles.inputGroup}>
-                    <label style={styles.label}>Confirm New Password</label>
+                    <label style={styles.label}>Confirm New Password *</label>
                     <div style={styles.passwordInputWrapper}>
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
@@ -323,7 +326,7 @@ export default function ResetPassword() {
                 // Request Reset Mode
                 <form onSubmit={handleRequestReset} style={styles.form}>
                   <div style={styles.inputGroup}>
-                    <label style={styles.label}>Email Address</label>
+                    <label style={styles.label}>Email Address *</label>
                     <input
                       type="email"
                       placeholder="Enter your registered email"
@@ -388,6 +391,12 @@ export default function ResetPassword() {
       {/* Footer */}
       <footer style={styles.footer}>
         <div style={styles.footerContent}>
+          <div style={styles.footerSection}>
+            <h4 style={styles.footerTitle}>Equal Housing Lender</h4>
+            <p style={styles.footerText}>
+              NMLS ID: 234567
+            </p>
+          </div>
           <div style={styles.footerSection}>
             <h4 style={styles.footerTitle}>Security Notice</h4>
             <p style={styles.footerText}>
@@ -583,6 +592,13 @@ const styles = {
     fontSize: '0.9rem',
     fontWeight: '600',
     color: '#374151'
+  },
+  passwordRequirements: {
+    fontSize: '0.8rem',
+    color: '#6b7280',
+    marginTop: '-0.25rem',
+    marginBottom: '0.5rem',
+    fontStyle: 'italic'
   },
   input: {
     width: '100%',

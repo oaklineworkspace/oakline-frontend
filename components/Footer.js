@@ -264,9 +264,9 @@ export default function Footer() {
               <p style={styles.newsletterDesc}>Get the latest financial news, tips, exclusive offers, and market insights delivered to your inbox.</p>
             </div>
             <div style={styles.newsletterForm}>
-              <input 
-                type="email" 
-                placeholder="Enter your email address" 
+              <input
+                type="email"
+                placeholder="Enter your email address"
                 style={styles.newsletterInput}
               />
               <button style={styles.newsletterBtn}>Subscribe</button>
@@ -308,20 +308,20 @@ export default function Footer() {
 
           <div style={styles.legalNotice}>
             <p style={styles.legalText}>
-              <strong>Banking Information:</strong> Oakline Bank is a full-service digital bank offering checking, savings, loans, and investment services. 
+              <strong>Banking Information:</strong> Oakline Bank is a full-service digital bank offering checking, savings, loans, and investment services.
               Member FDIC. All deposit accounts are FDIC-insured up to $250,000 per depositor, per insured bank, for each account ownership category.
             </p>
             <div style={styles.additionalInfo}>
               <p style={styles.legalText}>
-                <strong>Investment Disclaimer:</strong> Investment products are not FDIC insured, may lose value, and are not bank guaranteed. 
+                <strong>Investment Disclaimer:</strong> Investment products are not FDIC insured, may lose value, and are not bank guaranteed.
                 Cryptocurrency trading involves substantial risk of loss and may not be suitable for all investors.
               </p>
               <p style={styles.legalText}>
-                <strong>Regulatory Information:</strong> Securities and investment advisory services offered through Oakline Securities, LLC, 
+                <strong>Regulatory Information:</strong> Securities and investment advisory services offered through Oakline Securities, LLC,
                 member FINRA/SIPC. Insurance products offered through Oakline Insurance Agency. Equal Housing Lender.
               </p>
               <p style={styles.legalText}>
-                <strong>Important Notice:</strong> Oakline Bank products and services are available to U.S. residents only. 
+                <strong>Important Notice:</strong> Oakline Bank products and services are available to U.S. residents only.
                 Credit approval required for loan products. Terms and conditions apply to all accounts and services.
               </p>
             </div>
@@ -699,6 +699,27 @@ const styles = {
     fontSize: '0.9rem',
     color: '#FFD687',
     lineHeight: '1.6'
+  },
+  // Styles for Equal Housing Lender and NMLS ID
+  equalHousing: {
+    fontSize: '0.95rem',
+    color: '#D1D5DB',
+    margin: '0.5rem 0',
+    fontWeight: '500',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem'
+  },
+  equalHousingIcon: {
+    fontSize: '1.1rem'
+  },
+  nmlsId: {
+    fontSize: '0.85rem',
+    color: '#9CA3AF',
+    margin: '0.25rem 0',
+    fontWeight: '400',
+    letterSpacing: '0.5px'
   },
 };
 

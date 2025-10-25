@@ -97,36 +97,45 @@ export default function Security() {
   const handlePasswordChange = async () => {
     setPasswordLoading(true);
     setError('');
+    setMessage('');
 
     try {
       // Validate all fields are filled
       if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-        throw new Error('All fields are required');
+        throw new Error('⚠️ All fields are required');
       }
 
       // Validate passwords match
       if (passwordData.newPassword !== passwordData.confirmPassword) {
-        throw new Error('New passwords do not match');
+        throw new Error('⚠️ New passwords do not match');
+      }
+
+      // Validate password isn't same as current
+      if (passwordData.currentPassword === passwordData.newPassword) {
+        throw new Error('⚠️ New password must be different from current password');
       }
 
       // Validate password strength
       if (passwordData.newPassword.length < 8) {
-        throw new Error('Password must be at least 8 characters long');
+        throw new Error('⚠️ Password must be at least 8 characters long');
       }
 
-      // Check for at least one uppercase letter
       if (!/[A-Z]/.test(passwordData.newPassword)) {
-        throw new Error('Password must contain at least one uppercase letter');
+        throw new Error('⚠️ Password must contain at least one uppercase letter');
       }
 
-      // Check for at least one number
+      if (/[a-z]/.test(passwordData.newPassword)) {
+        // Password contains lowercase - good
+      } else {
+        throw new Error('⚠️ Password must contain at least one lowercase letter');
+      }
+
       if (!/[0-9]/.test(passwordData.newPassword)) {
-        throw new Error('Password must contain at least one number');
+        throw new Error('⚠️ Password must contain at least one number');
       }
 
-      // Check for at least one special character
       if (!/[!@#$%^&*(),.?":{}|<>]/.test(passwordData.newPassword)) {
-        throw new Error('Password must contain at least one special character');
+        throw new Error('⚠️ Password must contain at least one special character (!@#$%^&*(),.?":{}|<>)');
       }
 
       // Verify current password by attempting to sign in
@@ -136,7 +145,8 @@ export default function Security() {
       });
 
       if (verifyError) {
-        throw new Error('Current password is incorrect');
+        console.error('Current password verification failed:', verifyError);
+        throw new Error('❌ Current password is incorrect. Please try again.');
       }
 
       // If verification successful, update password
@@ -144,7 +154,10 @@ export default function Security() {
         password: passwordData.newPassword
       });
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Password update error:', updateError);
+        throw new Error(`❌ Failed to update password: ${updateError.message}`);
+      }
 
       setMessage('✅ Password updated successfully! Please use your new password for future logins.');
       setShowPasswordModal(false);
@@ -157,6 +170,7 @@ export default function Security() {
       // Clear message after 5 seconds
       setTimeout(() => setMessage(''), 5000);
     } catch (error) {
+      console.error('Password change error:', error);
       setError(error.message);
       setTimeout(() => setError(''), 5000);
     } finally {
@@ -169,20 +183,30 @@ export default function Security() {
       const updatedSettings = { ...securitySettings, [setting]: value };
       setSecuritySettings(updatedSettings);
 
-      // Save to database
+      // Save to database with proper error handling
       const { error } = await supabase
         .from('user_security_settings')
         .upsert({
           user_id: user.id,
-          ...updatedSettings
+          ...updatedSettings,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
         });
 
-      if (error) throw error;
-      setMessage('Security setting updated successfully');
+      if (error) {
+        console.error('Security setting update error:', error);
+        throw error;
+      }
+      
+      setMessage('✅ Security setting updated successfully');
+      setTimeout(() => setMessage(''), 3000);
     } catch (error) {
-      setError('Failed to update security setting');
+      console.error('Failed to update security setting:', error);
+      setError(`Failed to update security setting: ${error.message}`);
       // Revert on error
       setSecuritySettings(securitySettings);
+      setTimeout(() => setError(''), 5000);
     }
   };
 
