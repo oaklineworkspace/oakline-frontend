@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -44,7 +43,7 @@ export default function Settings() {
   const checkUserAndFetchData = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session?.user) {
         router.push('/login');
         return;
@@ -91,7 +90,7 @@ export default function Settings() {
 
     try {
       let updateData = {};
-      
+
       switch (settingsType) {
         case 'account':
           updateData = { notification_settings: accountSettings };
@@ -244,10 +243,10 @@ export default function Settings() {
           {activeTab === 'account' && (
             <div style={styles.tabContent}>
               <div style={styles.sectionTitle}>Notification Preferences</div>
-              
+
               <div style={styles.settingGroup}>
                 <h3 style={styles.groupTitle}>General Notifications</h3>
-                
+
                 <div style={styles.settingItem}>
                   <div style={styles.settingInfo}>
                     <div style={styles.settingName}>Email Notifications</div>
@@ -339,10 +338,10 @@ export default function Settings() {
           {activeTab === 'security' && (
             <div style={styles.tabContent}>
               <div style={styles.sectionTitle}>Security Settings</div>
-              
+
               <div style={styles.settingGroup}>
                 <h3 style={styles.groupTitle}>Account Security</h3>
-                
+
                 <div style={styles.settingItem}>
                   <div style={styles.settingInfo}>
                     <div style={styles.settingName}>Two-Factor Authentication</div>
@@ -409,6 +408,31 @@ export default function Settings() {
               >
                 {loading ? '🔄 Saving...' : '🔒 Save Security Settings'}
               </button>
+
+              <div style={styles.settingGroup}>
+                <h3 style={styles.groupTitle}>Account Access</h3>
+                <div style={styles.settingItem}>
+                  <div style={styles.settingInfo}>
+                    <div style={styles.settingName}>Change Password</div>
+                    <div style={styles.settingDesc}>Update your account password</div>
+                  </div>
+                  <button style={styles.securityButton}>Change Password</button>
+                </div>
+                <div style={styles.settingItem}>
+                  <div style={styles.settingInfo}>
+                    <div style={styles.settingName}>Multi-Factor Authentication (MFA)</div>
+                    <div style={styles.settingDesc}>Manage your MFA devices and settings</div>
+                  </div>
+                  <button style={styles.securityButton}>Manage MFA</button>
+                </div>
+              </div>
+
+              <button
+                style={styles.logoutButton}
+                onClick={() => { /* Handle logout */ }}
+              >
+                🚪 Log Out
+              </button>
             </div>
           )}
 
@@ -416,10 +440,10 @@ export default function Settings() {
           {activeTab === 'privacy' && (
             <div style={styles.tabContent}>
               <div style={styles.sectionTitle}>Privacy Settings</div>
-              
+
               <div style={styles.settingGroup}>
                 <h3 style={styles.groupTitle}>Data & Privacy</h3>
-                
+
                 <div style={styles.settingItem}>
                   <div style={styles.settingInfo}>
                     <div style={styles.settingName}>Data Sharing</div>
@@ -473,14 +497,14 @@ export default function Settings() {
           {activeTab === 'linking' && (
             <div style={styles.tabContent}>
               <div style={styles.sectionTitle}>Link External Accounts</div>
-              
+
               <div style={styles.linkingIntro}>
                 <div style={styles.introCard}>
                   <div style={styles.introIcon}>🔗</div>
                   <div>
                     <h3 style={styles.introTitle}>Connect Your Financial Accounts</h3>
                     <p style={styles.introDesc}>
-                      Securely link your external bank accounts, credit cards, and investment accounts 
+                      Securely link your external bank accounts, credit cards, and investment accounts
                       to manage all your finances in one place. We use bank-level security to protect your information.
                     </p>
                   </div>
@@ -604,7 +628,7 @@ export default function Settings() {
           {activeTab === 'services' && (
             <div style={styles.tabContent}>
               <div style={styles.sectionTitle}>Banking Services & Account Management</div>
-              
+
               <div style={styles.serviceCategory}>
                 <h3 style={styles.categoryTitle}>🏦 Account Management</h3>
                 <div style={styles.servicesList}>
@@ -1272,5 +1296,37 @@ const styles = {
     lineHeight: '1.6',
     margin: 0,
     paddingLeft: '1.2rem'
+  },
+  securityButton: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    padding: '1rem',
+    background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '12px',
+    fontSize: '0.95rem',
+    fontWeight: '700',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 6px 20px rgba(26, 62, 111, 0.4)'
+  },
+  logoutButton: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    padding: '1rem',
+    background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '12px',
+    fontSize: '0.95rem',
+    fontWeight: '700',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 6px 20px rgba(220, 38, 38, 0.4)'
   }
 };

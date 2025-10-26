@@ -525,24 +525,11 @@ export default function Home() {
             ...(isVisible.hero ? styles.heroAnimated : {})
           }}>
             <div style={styles.heroButtons}>
-              {user ? (
-                <>
-                  <Link href="/dashboard" style={styles.heroButton}>
-                    <span style={styles.buttonIcon}>📊</span>
-                    Go to Dashboard
-                  </Link>
-                  <Link href="/account-types" style={styles.secondaryButton}>
-                    <span style={styles.buttonIcon}>🔍</span>
-                    Explore All Accounts
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link href="/apply" style={styles.heroButton}>
-                    <span style={styles.buttonIcon}>🚀</span>
-                    Start Banking Today
-                  </Link>
-                  <Link href="/sign-in" style={styles.secondaryButton}>
+              <Link href="/apply" style={styles.heroButton}>
+                <span style={styles.buttonIcon}>🚀</span>
+                Start Banking Today
+              </Link>
+              <Link href="/sign-in" style={styles.secondaryButton}>
                     <span style={styles.buttonIcon}>👤</span>
                     Sign In
                   </Link>
