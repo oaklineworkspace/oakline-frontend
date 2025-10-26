@@ -1304,14 +1304,16 @@ const styles = {
     gap: '0.5rem',
     padding: '1rem',
     background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
-    color: 'white',
+    backgroundColor: '#1e40af',
+    color: '#ffffff',
     border: 'none',
     borderRadius: '12px',
     fontSize: '0.95rem',
     fontWeight: '700',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    boxShadow: '0 6px 20px rgba(26, 62, 111, 0.4)'
+    boxShadow: '0 6px 20px rgba(26, 62, 111, 0.4)',
+    minHeight: '48px'
   },
   logoutButton: {
     display: 'flex',
