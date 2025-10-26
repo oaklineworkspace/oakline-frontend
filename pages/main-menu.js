@@ -11,6 +11,7 @@ export default function MainMenu() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [dropdownOpen, setDropdownOpen] = useState({});
+  const [welcomeMessage, setWelcomeMessage] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -56,6 +57,28 @@ export default function MainMenu() {
     }
     return user?.email?.split('@')[0] || 'User';
   };
+
+  // Scrolling welcome messages
+  useEffect(() => {
+    const userName = getUserDisplayName();
+    const welcomeMessages = [
+      `Welcome back, ${userName}! • Access all your banking services • Oakline Bank - Your Financial Partner`,
+      `Hello ${userName}! • Explore 23 account types • Transfer funds • Pay bills • Investment services available`,
+      `Good day, ${userName}! • Premium banking services • Secure transactions • 24/7 customer support`,
+      `Greetings ${userName}! • Manage your finances • Apply for loans • Investment opportunities • Rewards program`,
+      `${userName}, welcome to Oakline Bank! • Digital banking • Mobile deposit • Cryptocurrency trading • Financial advisory`
+    ];
+
+    let currentIndex = 0;
+    const updateMessage = () => {
+      setWelcomeMessage(welcomeMessages[currentIndex]);
+      currentIndex = (currentIndex + 1) % welcomeMessages.length;
+    };
+
+    updateMessage();
+    const interval = setInterval(updateMessage, 5000);
+    return () => clearInterval(interval);
+  }, [user, userProfile]);
 
   const toggleDropdown = (menu) => {
     setDropdownOpen(prev => ({
@@ -264,10 +287,9 @@ export default function MainMenu() {
           </nav>
 
           <div style={styles.headerRight}>
-            <div style={styles.userSection}>
-              <div style={styles.userInfo}>
-                <span style={styles.welcomeText}>Welcome</span>
-                <span style={styles.userName}>{getUserDisplayName()}</span>
+            <div style={styles.scrollingWelcomeContainer}>
+              <div style={styles.scrollingWelcome}>
+                {welcomeMessage}
               </div>
             </div>
           </div>
@@ -419,6 +441,11 @@ export default function MainMenu() {
       <LiveChat />
 
       <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-5px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
         .navButton:hover {
           background-color: rgba(255,255,255,0.25) !important;
           transform: translateY(-2px);
@@ -584,6 +611,27 @@ const styles = {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
     gap: '1.5rem'
+  },
+  scrollingWelcomeContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    maxWidth: '500px',
+    minWidth: '300px',
+    overflow: 'hidden',
+    padding: '0.6rem 1rem',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: '8px',
+    border: '1px solid rgba(255, 255, 255, 0.2)'
+  },
+  scrollingWelcome: {
+    color: '#bfdbfe',
+    fontSize: '0.85rem',
+    fontWeight: '500',
+    whiteSpace: 'nowrap',
+    animation: 'fadeIn 0.8s ease-in-out',
+    textAlign: 'center',
+    lineHeight: '1.4'
   },
   dropdownColumn: {
     display: 'flex',
@@ -958,32 +1006,38 @@ const styles = {
       width: 'calc(100vw - 1rem)',
       maxWidth: 'calc(100vw - 1rem)',
       maxHeight: 'calc(100vh - 100px)',
-      padding: '1rem',
+      padding: '0.75rem',
       overflowY: 'auto'
     },
     dropdownGrid: {
-      gridTemplateColumns: '1fr',
-      gap: '1rem'
+      gridTemplateColumns: 'repeat(2, 1fr)',
+      gap: '0.75rem'
     },
     dropdownColumn: {
-      gap: '0.4rem'
+      gap: '0.3rem'
     },
     dropdownColumnTitle: {
-      fontSize: '0.75rem',
-      marginBottom: '0.3rem',
-      paddingBottom: '0.3rem'
+      fontSize: '0.65rem',
+      marginBottom: '0.25rem',
+      paddingBottom: '0.25rem'
     },
     dropdownLink: {
-      padding: '0.5rem 0.6rem',
-      fontSize: '0.8rem'
+      padding: '0.4rem 0.5rem',
+      fontSize: '0.7rem'
     },
     userSection: {
       order: 1,
       width: '100%',
       justifyContent: 'center'
     },
-    userInfo: {
-      alignItems: 'center'
+    scrollingWelcomeContainer: {
+      width: '100%',
+      maxWidth: '90%',
+      minWidth: 'auto',
+      padding: '0.5rem 0.75rem'
+    },
+    scrollingWelcome: {
+      fontSize: '0.75rem'
     },
     main: {
       padding: '0.75rem 0.5rem'
@@ -1009,14 +1063,30 @@ const styles = {
       right: '0.25rem',
       width: 'calc(100vw - 0.5rem)',
       maxWidth: 'calc(100vw - 0.5rem)',
-      padding: '0.75rem'
+      padding: '0.6rem'
     },
     dropdownGrid: {
-      gap: '0.75rem'
+      gridTemplateColumns: 'repeat(3, 1fr)',
+      gap: '0.5rem'
+    },
+    dropdownColumn: {
+      gap: '0.25rem'
+    },
+    dropdownColumnTitle: {
+      fontSize: '0.6rem',
+      marginBottom: '0.2rem',
+      paddingBottom: '0.2rem'
     },
     dropdownLink: {
-      padding: '0.4rem 0.5rem',
-      fontSize: '0.75rem'
+      padding: '0.35rem 0.4rem',
+      fontSize: '0.65rem',
+      gap: '0.25rem'
+    },
+    scrollingWelcomeContainer: {
+      padding: '0.4rem 0.6rem'
+    },
+    scrollingWelcome: {
+      fontSize: '0.7rem'
     },
     main: {
       padding: '0.5rem 0.25rem'
@@ -1027,6 +1097,34 @@ const styles = {
     categoryFilter: {
       flexDirection: 'column',
       alignItems: 'center'
+    }
+  },
+  '@media (max-width: 414px) and (orientation: portrait)': {
+    comprehensiveDropdown: {
+      padding: '0.5rem',
+      top: '65px'
+    },
+    dropdownGrid: {
+      gridTemplateColumns: 'repeat(3, 1fr)',
+      gap: '0.4rem'
+    },
+    dropdownColumnTitle: {
+      fontSize: '0.55rem',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis'
+    },
+    dropdownLink: {
+      padding: '0.3rem 0.35rem',
+      fontSize: '0.6rem',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      textAlign: 'center',
+      gap: '0.2rem'
+    },
+    scrollingWelcome: {
+      fontSize: '0.65rem'
     }
   }
 };
