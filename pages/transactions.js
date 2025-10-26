@@ -120,6 +120,89 @@ export default function TransactionsHistory() {
     return '#6b7280'; // Gray for unknown types
   };
 
+  const getTransactionIcon = (type) => {
+    const lowerType = type?.toLowerCase() || '';
+    
+    if (lowerType.includes('interest')) return '💰';
+    if (lowerType.includes('deposit')) return '💵';
+    if (lowerType.includes('withdrawal')) return '🏧';
+    if (lowerType.includes('transfer')) return '🔄';
+    if (lowerType.includes('payment') || lowerType.includes('bill')) return '💳';
+    if (lowerType.includes('refund')) return '↩️';
+    if (lowerType.includes('reversal')) return '⏪';
+    if (lowerType.includes('fee')) return '⚠️';
+    if (lowerType.includes('bonus') || lowerType.includes('reward')) return '🎁';
+    
+    return '📄';
+  };
+
+  const getStatusBadgeStyle = (status) => {
+    const lowerStatus = status?.toLowerCase() || 'completed';
+    
+    if (lowerStatus === 'pending') {
+      return {
+        backgroundColor: '#fef3c7',
+        color: '#f59e0b',
+        text: 'Pending'
+      };
+    } else if (lowerStatus === 'reversal' || lowerStatus === 'reversed') {
+      return {
+        backgroundColor: '#f3e8ff',
+        color: '#7c3aed',
+        text: 'Reversal'
+      };
+    } else if (lowerStatus === 'cancelled' || lowerStatus === 'canceled') {
+      return {
+        backgroundColor: '#f3f4f6',
+        color: '#6b7280',
+        text: 'Cancelled'
+      };
+    } else if (lowerStatus === 'failed') {
+      return {
+        backgroundColor: '#fee2e2',
+        color: '#dc2626',
+        text: 'Failed'
+      };
+    } else {
+      return {
+        backgroundColor: '#d1fae5',
+        color: '#10b981',
+        text: 'Completed'
+      };
+    }
+  };
+
+  const isTransactionCredit = (tx) => {
+    const txType = (tx.transaction_type || '').toLowerCase();
+    const amount = parseFloat(tx.amount) || 0;
+    
+    // Check transaction type for credit indicators
+    if (txType.includes('deposit') || 
+        txType.includes('credit') || 
+        txType.includes('refund') || 
+        txType.includes('transfer_in') || 
+        txType.includes('interest') || 
+        txType.includes('bonus') || 
+        txType.includes('reward') || 
+        txType.includes('cashback')) {
+      return true;
+    }
+    
+    // Check transaction type for debit indicators
+    if (txType.includes('debit') || 
+        txType.includes('withdrawal') || 
+        txType.includes('purchase') || 
+        txType.includes('payment') || 
+        txType.includes('bill_payment') || 
+        txType.includes('fee') || 
+        txType.includes('transfer_out')) {
+      return false;
+    }
+    
+    // Fallback to amount
+    return amount >= 0;
+  };
+
   if (loading) {
     return (
       <div style={styles.container}>
@@ -163,47 +246,61 @@ export default function TransactionsHistory() {
                 </tr>
               </thead>
               <tbody>
-                {transactions.map(tx => (
-                  <tr key={tx.id} style={styles.tableRow}>
-                    <td style={styles.td}>{formatDate(tx.created_at)}</td>
-                    <td style={styles.td}>
-                      {tx.accounts?.account_number ? 
-                        `****${tx.accounts.account_number.slice(-4)}` : 
-                        'N/A'
-                      }
-                      <br />
-                      <span style={styles.accountType}>
-                        {tx.accounts?.account_type?.replace(/_/g, ' ').toUpperCase() || ''}
-                      </span>
-                    </td>
-                    <td style={styles.td}>{tx.description || tx.transaction_type || 'Transaction'}</td>
-                    <td style={styles.td}>
-                      <span style={{
-                        ...styles.typeBadge,
-                        backgroundColor: getTransactionTypeColor(tx.transaction_type) + '20',
-                        color: getTransactionTypeColor(tx.transaction_type)
+                {transactions.map(tx => {
+                  const isCredit = isTransactionCredit(tx);
+                  const typeColor = getTransactionTypeColor(tx.transaction_type);
+                  const statusStyle = getStatusBadgeStyle(tx.status);
+                  const txIcon = getTransactionIcon(tx.transaction_type);
+                  const amount = Math.abs(parseFloat(tx.amount) || 0);
+                  
+                  return (
+                    <tr key={tx.id} style={styles.tableRow}>
+                      <td style={styles.td}>{formatDate(tx.created_at)}</td>
+                      <td style={styles.td}>
+                        {tx.accounts?.account_number ? 
+                          `****${tx.accounts.account_number.slice(-4)}` : 
+                          'N/A'
+                        }
+                        <br />
+                        <span style={styles.accountType}>
+                          {tx.accounts?.account_type?.replace(/_/g, ' ').toUpperCase() || ''}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '16px' }}>{txIcon}</span>
+                          <span>{tx.description || tx.transaction_type || 'Transaction'}</span>
+                        </div>
+                      </td>
+                      <td style={styles.td}>
+                        <span style={{
+                          ...styles.typeBadge,
+                          backgroundColor: typeColor + '20',
+                          color: typeColor
+                        }}>
+                          {tx.transaction_type?.replace(/_/g, ' ').toUpperCase() || 'N/A'}
+                        </span>
+                      </td>
+                      <td style={{
+                        ...styles.td,
+                        ...styles.amount,
+                        color: isCredit ? '#10b981' : '#dc2626'
                       }}>
-                        {tx.transaction_type || 'N/A'}
-                      </span>
-                    </td>
-                    <td style={{
-                      ...styles.td,
-                      ...styles.amount,
-                      color: getTransactionTypeColor(tx.transaction_type)
-                    }}>
-                      {formatCurrency(tx.amount)}
-                    </td>
-                    <td style={styles.td}>
-                      <span style={{
-                        ...styles.statusBadge,
-                        backgroundColor: tx.status === 'completed' ? '#10b98120' : '#f59e0b20',
-                        color: tx.status === 'completed' ? '#10b981' : '#f59e0b'
-                      }}>
-                        {tx.status || 'completed'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                        {isCredit ? '+' : '-'}
+                        {formatCurrency(amount)}
+                      </td>
+                      <td style={styles.td}>
+                        <span style={{
+                          ...styles.statusBadge,
+                          backgroundColor: statusStyle.backgroundColor,
+                          color: statusStyle.color
+                        }}>
+                          {statusStyle.text}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
