@@ -530,11 +530,9 @@ export default function Home() {
                 Start Banking Today
               </Link>
               <Link href="/sign-in" style={styles.secondaryButton}>
-                    <span style={styles.buttonIcon}>👤</span>
-                    Sign In
-                  </Link>
-                </>
-              )}
+                <span style={styles.buttonIcon}>👤</span>
+                Sign In
+              </Link>
             </div>
           </div>
 
