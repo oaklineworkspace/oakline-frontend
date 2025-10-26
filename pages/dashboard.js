@@ -298,7 +298,7 @@ function DashboardContent() {
         div[style*="padding: 2.5rem"] {
           padding: 1.5rem !important;
         }
-        
+
         div[style*="padding: 2rem"] {
           padding: 1.25rem !important;
         }
@@ -692,7 +692,9 @@ function DashboardContent() {
                     }}>
                       <div style={styles.cardHeader}>
                         <span style={styles.bankNameCard}>OAKLINE BANK</span>
-                        <span style={styles.cardTypeLabel}>DEBIT</span>
+                        <span style={styles.cardTypeLabel}>
+                          {card.card_brand ? card.card_brand.toUpperCase() : (card.card_type || 'DEBIT').toUpperCase()}
+                        </span>
                       </div>
 
                       <div style={styles.chipSection}>

@@ -499,6 +499,23 @@ export default function AccountDetails() {
                 </div>
                 <div style={styles.accountNumber}>
                   Account •••• {account.account_number?.slice(-4)}
+                  {account.status && (
+                    <span style={{
+                      marginLeft: '0.5rem',
+                      fontSize: '0.7rem',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: '12px',
+                      fontWeight: '600',
+                      backgroundColor: account.status === 'active' ? '#d1fae5' : 
+                                     account.status === 'pending' ? '#fef3c7' : 
+                                     account.status === 'closed' ? '#fee2e2' : '#f3f4f6',
+                      color: account.status === 'active' ? '#065f46' : 
+                             account.status === 'pending' ? '#92400e' : 
+                             account.status === 'closed' ? '#991b1b' : '#4b5563'
+                    }}>
+                      {account.status.charAt(0).toUpperCase() + account.status.slice(1)}
+                    </span>
+                  )}
                 </div>
                 <div style={styles.accountBalance}>
                   {formatCurrency(account.balance)}
@@ -539,7 +556,14 @@ export default function AccountDetails() {
                 </div>
                 <div style={styles.infoItem}>
                   <div style={styles.infoLabel}>Account Status</div>
-                  <div style={styles.infoValue} style={{ color: '#059669' }}>Active</div>
+                  <div style={{
+                    ...styles.infoValue,
+                    color: selectedAccount.status === 'active' ? '#059669' : 
+                           selectedAccount.status === 'pending' ? '#f59e0b' : 
+                           selectedAccount.status === 'closed' ? '#ef4444' : '#64748b'
+                  }}>
+                    {selectedAccount.status ? selectedAccount.status.charAt(0).toUpperCase() + selectedAccount.status.slice(1) : 'Unknown'}
+                  </div>
                 </div>
                 <div style={styles.infoItem}>
                   <div style={styles.infoLabel}>Opened Date</div>

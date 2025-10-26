@@ -217,7 +217,7 @@ export default async function handler(req, res) {
         <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
           <p style="color: #64748b; font-size: 12px; margin: 0;">
             © ${new Date().getFullYear()} Oakline Bank. All rights reserved.<br>
-            Member FDIC | Routing: ${routingNumber}
+            Member FDIC | Equal Housing Lender | Routing: ${routingNumber}
           </p>
         </div>
       </div>
