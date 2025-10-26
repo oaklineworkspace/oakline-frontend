@@ -671,6 +671,32 @@ export default function Security() {
         .slider.round:before {
           border-radius: 50%;
         }
+
+        button[style*="primaryButton"]:hover,
+        button[style*="enabledButton"]:hover,
+        button[style*="disabledButton"]:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(30, 64, 175, 0.4) !important;
+        }
+
+        button[style*="saveButton"]:hover {
+          background-color: #1e3a8a !important;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(30, 64, 175, 0.5) !important;
+        }
+
+        button[style*="terminateButton"]:hover {
+          background-color: #b91c1c !important;
+          transform: translateY(-2px);
+        }
+
+        a[style*="actionButton"]:hover,
+        button[style*="actionButton"]:hover {
+          background-color: #eff6ff !important;
+          border-color: #1e40af !important;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2) !important;
+        }
       `}</style>
     </div>
   );
@@ -810,27 +836,34 @@ const styles = {
     fontWeight: '600',
     cursor: 'pointer',
     boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)',
-    transition: 'all 0.3s ease'
+    transition: 'all 0.3s ease',
+    minWidth: '140px'
   },
   enabledButton: {
-    padding: '8px 16px',
+    padding: '10px 20px',
     backgroundColor: '#10b981',
     color: 'white',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '8px',
     fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer'
+    fontWeight: '600',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+    transition: 'all 0.3s ease',
+    minWidth: '120px'
   },
   disabledButton: {
-    padding: '8px 16px',
-    backgroundColor: '#f59e0b',
+    padding: '10px 20px',
+    backgroundColor: '#1e40af',
     color: 'white',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '8px',
     fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer'
+    fontWeight: '600',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)',
+    transition: 'all 0.3s ease',
+    minWidth: '120px'
   },
   switch: {
     position: 'relative',
@@ -897,12 +930,19 @@ const styles = {
     gap: '15px',
     padding: '15px',
     backgroundColor: '#f8fafc',
-    border: '1px solid #e2e8f0',
+    border: '2px solid #e2e8f0',
     borderRadius: '8px',
     textDecoration: 'none',
     color: '#1e293b',
     cursor: 'pointer',
-    transition: 'all 0.3s ease'
+    transition: 'all 0.3s ease',
+    outline: 'none'
+  },
+  actionButtonHover: {
+    backgroundColor: '#eff6ff',
+    borderColor: '#1e40af',
+    transform: 'translateY(-2px)',
+    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.2)'
   },
   actionIcon: {
     fontSize: '24px'
@@ -1015,14 +1055,19 @@ const styles = {
   saveButton: {
     padding: '0.875rem 1.75rem',
     backgroundColor: '#1e40af',
-    color: 'white',
+    color: '#ffffff',
     border: 'none',
     borderRadius: '10px',
     cursor: 'pointer',
     fontWeight: '600',
     fontSize: '1rem',
     transition: 'all 0.3s ease',
-    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)',
-    opacity: 1
+    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.4)',
+    minWidth: '160px'
+  },
+  saveButtonHover: {
+    backgroundColor: '#1e3a8a',
+    transform: 'translateY(-2px)',
+    boxShadow: '0 6px 20px rgba(30, 64, 175, 0.5)'
   }
 };

@@ -178,7 +178,7 @@ export default function MainMenu() {
 
   return (
     <div style={styles.container} onClick={closeAllDropdowns}>
-      {/* Professional Banking Header - Same as Dashboard */}
+      {/* Professional Banking Header */}
       <header style={styles.header}>
         <div style={styles.headerContainer}>
           <div style={styles.headerLeft}>
@@ -193,36 +193,71 @@ export default function MainMenu() {
 
           <nav style={styles.mainNav}>
             <div style={styles.navItem}>
-              <button style={styles.navButton} onClick={(e) => { e.stopPropagation(); toggleDropdown('navigation'); }}>
-                <span style={styles.navIcon}>🧭</span>
-                Navigation
-                <span style={styles.navArrow}>▼</span>
+              <button style={styles.navButton} onClick={(e) => { e.stopPropagation(); toggleDropdown('main'); }}>
+                <span style={styles.navIcon}>☰</span>
+                All Services
+                <span style={{...styles.navArrow, transform: dropdownOpen.main ? 'rotate(180deg)' : 'rotate(0deg)'}}▼</span>
               </button>
-              {dropdownOpen.navigation && (
-                <div style={styles.dropdown}>
-                  <Link href="/" style={styles.dropdownLink}>🏠 Home</Link>
-                  <Link href="/dashboard" style={styles.dropdownLink}>📊 Dashboard</Link>
-                  <Link href="/account-details" style={styles.dropdownLink}>🏦 Account Details</Link>
-                  <Link href="/transfer" style={styles.dropdownLink}>💸 Transfer Money</Link>
-                  <Link href="/cards" style={styles.dropdownLink}>💳 Cards</Link>
-                  <Link href="/transactions" style={styles.dropdownLink}>📜 Transactions</Link>
-                  <Link href="/support" style={styles.dropdownLink}>🎧 Support</Link>
-                </div>
-              )}
-            </div>
+              {dropdownOpen.main && (
+                <div style={styles.comprehensiveDropdown}>
+                  <div style={styles.dropdownGrid}>
+                    <div style={styles.dropdownColumn}>
+                      <h4 style={styles.dropdownColumnTitle}>🏦 My Banking</h4>
+                      <Link href="/" style={styles.dropdownLink}>🏠 Home</Link>
+                      <Link href="/dashboard" style={styles.dropdownLink}>📊 Dashboard</Link>
+                      <Link href="/account-details" style={styles.dropdownLink}>🏦 Account Details</Link>
+                      <Link href="/transactions" style={styles.dropdownLink}>📜 Transactions</Link>
+                      <Link href="/statements" style={styles.dropdownLink}>📄 Statements</Link>
+                    </div>
 
-            <div style={styles.navItem}>
-              <button style={styles.navButton} onClick={(e) => { e.stopPropagation(); toggleDropdown('services'); }}>
-                <span style={styles.navIcon}>⚡</span>
-                Quick Access
-                <span style={styles.navArrow}>▼</span>
-              </button>
-              {dropdownOpen.services && (
-                <div style={styles.dropdown}>
-                  <Link href="/transfer" style={styles.dropdownLink}>💸 Transfer Money</Link>
-                  <Link href="/bill-pay" style={styles.dropdownLink}>🧾 Pay Bills</Link>
-                  <Link href="/deposit-real" style={styles.dropdownLink}>📱 Mobile Deposit</Link>
-                  <Link href="/apply" style={styles.dropdownLink}>📋 Apply for Account</Link>
+                    <div style={styles.dropdownColumn}>
+                      <h4 style={styles.dropdownColumnTitle}>💸 Money Movement</h4>
+                      <Link href="/transfer" style={styles.dropdownLink}>💸 Transfer Money</Link>
+                      <Link href="/bill-pay" style={styles.dropdownLink}>🧾 Pay Bills</Link>
+                      <Link href="/deposit-real" style={styles.dropdownLink}>📱 Mobile Deposit</Link>
+                      <Link href="/withdrawal" style={styles.dropdownLink}>📤 Withdraw Funds</Link>
+                      <Link href="/zelle" style={styles.dropdownLink}>⚡ Zelle Transfer</Link>
+                    </div>
+
+                    <div style={styles.dropdownColumn}>
+                      <h4 style={styles.dropdownColumnTitle}>💳 Cards & Digital</h4>
+                      <Link href="/cards" style={styles.dropdownLink}>💳 My Cards</Link>
+                      <Link href="/apply-card" style={styles.dropdownLink}>➕ Apply for Card</Link>
+                      <Link href="/rewards" style={styles.dropdownLink}>🎁 Rewards</Link>
+                    </div>
+
+                    <div style={styles.dropdownColumn}>
+                      <h4 style={styles.dropdownColumnTitle}>🏠 Lending & Credit</h4>
+                      <Link href="/loans" style={styles.dropdownLink}>💰 Apply for Loan</Link>
+                      <Link href="/credit-report" style={styles.dropdownLink}>📊 Credit Report</Link>
+                      <Link href="/apply" style={styles.dropdownLink}>📋 Open Account</Link>
+                    </div>
+
+                    <div style={styles.dropdownColumn}>
+                      <h4 style={styles.dropdownColumnTitle}>📈 Investments</h4>
+                      <Link href="/investments" style={styles.dropdownLink}>📊 Portfolio</Link>
+                      <Link href="/crypto" style={styles.dropdownLink}>₿ Crypto Trading</Link>
+                      <Link href="/market-news" style={styles.dropdownLink}>📰 Market News</Link>
+                      <Link href="/financial-advisory" style={styles.dropdownLink}>👨‍💼 Advisory</Link>
+                    </div>
+
+                    <div style={styles.dropdownColumn}>
+                      <h4 style={styles.dropdownColumnTitle}>👤 Profile & Settings</h4>
+                      <Link href="/profile" style={styles.dropdownLink}>👤 My Profile</Link>
+                      <Link href="/security" style={styles.dropdownLink}>🔒 Security</Link>
+                      <Link href="/notifications" style={styles.dropdownLink}>🔔 Notifications</Link>
+                      <Link href="/messages" style={styles.dropdownLink}>💬 Messages</Link>
+                      <Link href="/privacy" style={styles.dropdownLink}>🛡️ Privacy</Link>
+                    </div>
+
+                    <div style={styles.dropdownColumn}>
+                      <h4 style={styles.dropdownColumnTitle}>🛠️ Support & Help</h4>
+                      <Link href="/support" style={styles.dropdownLink}>🎧 Customer Support</Link>
+                      <Link href="/branch-locator" style={styles.dropdownLink}>📍 Find Branch</Link>
+                      <Link href="/faq" style={styles.dropdownLink}>❓ FAQ</Link>
+                      <Link href="/sitemap" style={styles.dropdownLink}>🗺️ Sitemap</Link>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -235,22 +270,10 @@ export default function MainMenu() {
                 <span style={styles.userName}>{getUserDisplayName()}</span>
               </div>
               <div style={styles.userActions}>
-                <div style={styles.navItem}>
-                  <button style={styles.navButton} onClick={(e) => { e.stopPropagation(); toggleDropdown('profile'); }}>
-                    <span style={styles.navIcon}>👤</span>
-                    Profile
-                    <span style={styles.navArrow}>▼</span>
-                  </button>
-                  {dropdownOpen.profile && (
-                    <div style={styles.dropdown}>
-                      <Link href="/profile" style={styles.dropdownLink}>View Profile</Link>
-                      <Link href="/security" style={styles.dropdownLink}>Security Settings</Link>
-                      <Link href="/notifications" style={styles.dropdownLink}>Notifications</Link>
-                      <Link href="/privacy" style={styles.dropdownLink}>Privacy Settings</Link>
-                      <Link href="/messages" style={styles.dropdownLink}>Messages</Link>
-                    </div>
-                  )}
-                </div>
+                <Link href="/profile" style={styles.profileButton}>
+                  <span style={styles.actionIcon}>👤</span>
+                  Profile
+                </Link>
                 <button onClick={handleLogout} style={styles.logoutButton}>
                   <span style={styles.actionIcon}>🔐</span>
                   Logout
@@ -404,6 +427,31 @@ export default function MainMenu() {
         </section>
       </main>
       <LiveChat />
+
+      <style jsx>{`
+        .navButton:hover {
+          background-color: rgba(255,255,255,0.25) !important;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+        }
+
+        .profileButton:hover {
+          background-color: rgba(255,255,255,0.25) !important;
+          transform: translateY(-2px);
+        }
+
+        .logoutButton:hover {
+          background-color: #b91c1c !important;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4) !important;
+        }
+
+        a[style*="dropdownLink"]:hover {
+          background-color: #eff6ff !important;
+          color: #1e40af !important;
+          transform: translateX(5px);
+        }
+      `}</style>
     </div>
   );
 }
@@ -494,10 +542,10 @@ const styles = {
   },
   mainNav: {
     display: 'flex',
-    gap: '0.25rem',
-    flexWrap: 'wrap',
+    gap: '0.5rem',
     flex: 1,
-    justifyContent: 'center'
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   navItem: {
     position: 'relative'
@@ -505,46 +553,73 @@ const styles = {
   navButton: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.3rem',
-    padding: '0.5rem 0.75rem',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    gap: '0.5rem',
+    padding: '0.75rem 1.5rem',
+    backgroundColor: 'rgba(255,255,255,0.15)',
     color: 'white',
-    border: 'none',
-    borderRadius: '6px',
+    border: '2px solid rgba(255,255,255,0.3)',
+    borderRadius: '8px',
     cursor: 'pointer',
-    fontSize: '0.8rem',
-    fontWeight: '500',
-    transition: 'all 0.2s',
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    transition: 'all 0.3s ease',
     whiteSpace: 'nowrap',
-    minWidth: 'auto'
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
   },
   navIcon: {
-    fontSize: '1rem'
+    fontSize: '1.1rem'
   },
   navArrow: {
     fontSize: '0.7rem',
-    transition: 'transform 0.2s'
+    transition: 'transform 0.3s ease'
   },
-  dropdown: {
+  comprehensiveDropdown: {
     position: 'absolute',
     top: '100%',
-    left: 0,
+    left: '50%',
+    transform: 'translateX(-50%)',
     backgroundColor: 'white',
-    borderRadius: '8px',
-    boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-    padding: '0.5rem',
-    minWidth: '200px',
+    borderRadius: '12px',
+    boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
+    padding: '1.5rem',
     zIndex: 1000,
-    marginTop: '0.5rem'
+    marginTop: '0.75rem',
+    minWidth: '900px',
+    maxWidth: '95vw',
+    border: '1px solid #e2e8f0'
+  },
+  dropdownGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '1.5rem'
+  },
+  dropdownColumn: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem'
+  },
+  dropdownColumnTitle: {
+    fontSize: '0.85rem',
+    fontWeight: '700',
+    color: '#1e40af',
+    margin: '0 0 0.5rem 0',
+    padding: '0 0.5rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    borderBottom: '2px solid #e2e8f0',
+    paddingBottom: '0.5rem'
   },
   dropdownLink: {
-    display: 'block',
-    padding: '0.75rem 1rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.65rem 0.75rem',
     color: '#374151',
     textDecoration: 'none',
     borderRadius: '6px',
-    fontSize: '0.9rem',
-    transition: 'background-color 0.2s'
+    fontSize: '0.85rem',
+    transition: 'all 0.2s',
+    fontWeight: '500'
   },
   headerRight: {
     display: 'flex',
@@ -572,39 +647,42 @@ const styles = {
   },
   userActions: {
     display: 'flex',
-    gap: '0.25rem',
-    flexWrap: 'wrap'
+    gap: '0.5rem',
+    alignItems: 'center'
   },
-  actionButton: {
+  profileButton: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.3rem',
-    padding: '0.4rem 0.6rem',
-    backgroundColor: 'rgba(5, 150, 105, 0.2)',
+    gap: '0.5rem',
+    padding: '0.6rem 1rem',
+    backgroundColor: 'rgba(255,255,255,0.15)',
     color: 'white',
     textDecoration: 'none',
-    borderRadius: '6px',
-    fontSize: '0.75rem',
-    fontWeight: '500',
-    transition: 'all 0.2s',
+    border: '2px solid rgba(255,255,255,0.3)',
+    borderRadius: '8px',
+    fontSize: '0.85rem',
+    fontWeight: '600',
+    transition: 'all 0.3s ease',
     whiteSpace: 'nowrap'
   },
   logoutButton: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    padding: '0.5rem 0.75rem',
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    padding: '0.6rem 1rem',
+    backgroundColor: '#dc2626',
     color: 'white',
-    border: 'none',
-    borderRadius: '6px',
+    border: '2px solid #b91c1c',
+    borderRadius: '8px',
     cursor: 'pointer',
     fontSize: '0.85rem',
-    fontWeight: '500',
-    transition: 'all 0.2s'
+    fontWeight: '600',
+    transition: 'all 0.3s ease',
+    whiteSpace: 'nowrap',
+    boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)'
   },
   actionIcon: {
-    fontSize: '0.9rem'
+    fontSize: '1rem'
   },
   main: {
     maxWidth: '100%',
@@ -852,6 +930,12 @@ const styles = {
   contactHours: {
     fontSize: '0.8rem',
     color: '#64748b'
+  },
+
+  // Add CSS in the component for hover effects
+  '@keyframes fadeIn': {
+    from: { opacity: 0, transform: 'translateY(-10px)' },
+    to: { opacity: 1, transform: 'translateY(0)' }
   },
 
   // Mobile Responsive Styles
