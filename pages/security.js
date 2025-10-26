@@ -532,7 +532,7 @@ const styles = {
   },
   actionButton: {
     padding: '12px 24px',
-    backgroundColor: '#1e40af',
+    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
     color: '#ffffff',
     border: 'none',
     borderRadius: '10px',
@@ -540,7 +540,7 @@ const styles = {
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)',
+    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.4)',
     minWidth: '140px'
   },
   toggleContainer: {
@@ -725,7 +725,7 @@ const styles = {
   },
   submitButton: {
     padding: '12px 24px',
-    backgroundColor: '#1e40af',
+    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
     color: '#ffffff',
     border: 'none',
     borderRadius: '10px',

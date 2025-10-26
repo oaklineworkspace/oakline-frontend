@@ -524,16 +524,7 @@ export default function Home() {
             ...styles.heroContent,
             ...(isVisible.hero ? styles.heroAnimated : {})
           }}>
-            <div style={styles.heroButtons}>
-              <Link href="/apply" style={styles.heroButton}>
-                <span style={styles.buttonIcon}>🚀</span>
-                Start Banking Today
-              </Link>
-              <Link href="/sign-in" style={styles.secondaryButton}>
-                <span style={styles.buttonIcon}>👤</span>
-                Sign In
-              </Link>
-            </div>
+            {/* Hero buttons removed as requested */}
           </div>
 
           <div style={styles.slideIndicators}>
@@ -3362,30 +3353,30 @@ const styles = {
   enrollmentButtonPrimary: {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '0.8rem',
+    gap: '0.75rem',
     padding: 'clamp(1rem, 2.5vw, 1.3rem) clamp(1.5rem, 4vw, 2.5rem)',
     background: 'linear-gradient(135deg, #1e40af 0%, #0ea5e9 100%)',
     color: 'white',
     textDecoration: 'none',
     borderRadius: '12px',
+    fontWeight: '600',
     fontSize: 'clamp(1rem, 2.2vw, 1.1rem)',
-    fontWeight: '800',
-    boxShadow: '0 8px 25px rgba(30, 64, 175, 0.3)',
-    transition: 'all 0.3s ease',
     border: 'none',
-    transform: 'translateY(0)'
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 20px rgba(30, 64, 175, 0.3)'
   },
   enrollmentButtonSecondary: {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '0.8rem',
+    gap: '0.75rem',
     padding: 'clamp(1rem, 2.5vw, 1.3rem) clamp(1.5rem, 4vw, 2.5rem)',
     backgroundColor: 'transparent',
     color: '#1a365d',
     textDecoration: 'none',
     borderRadius: '12px',
+    fontWeight: '600',
     fontSize: 'clamp(1rem, 2.2vw, 1.1rem)',
-    fontWeight: '700',
     border: '2px solid #1a365d',
     transition: 'all 0.3s ease'
   },
@@ -5334,7 +5325,7 @@ const styles = {
     border: 'none',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    boxShadow: '0 4px 20px rgba(30, 64, 175, 0.3)'
+    boxShadow: '0 4px20px rgba(30, 64, 175, 0.3)'
   },
   ctaButtonSecondary: {
     display: 'inline-flex',
@@ -5541,11 +5532,13 @@ if (typeof document !== 'undefined') {
 
     @keyframes slideInFromLeft {
       0% { transform: translateX(-100px); opacity: 0; }
+      60% { transform: translateX(5px); opacity: 0.8; }
       100% { transform: translateX(0); opacity: 1; }
     }
 
     @keyframes slideInFromRight {
       0% { transform: translateX(100px); opacity: 0; }
+      60% { transform: translateX(-5px); opacity: 0.8; }
       100% { transform: translateX(0); opacity: 1; }
     }
 
