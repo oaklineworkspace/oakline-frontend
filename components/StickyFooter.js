@@ -57,16 +57,47 @@ export default function StickyFooter() {
     { name: 'About', href: '/about', icon: 'ℹ️', gradient: 'from-teal-500 to-teal-600' }
   ];
 
-  // Premium income-generating features for dropdown
+  // Premium income-generating features for dropdown - organized by category
   const premiumFeatures = [
-    { name: 'Investment Portfolio', href: '/investments', icon: '📈', desc: 'High-yield investments', color: '#10B981' },
-    { name: 'Premium Loans', href: '/loans', icon: '🏠', desc: 'Competitive rates', color: '#3B82F6' },
-    { name: 'Crypto Trading', href: '/crypto', icon: '₿', desc: 'Digital asset trading', color: '#F59E0B' },
-    { name: 'Wealth Management', href: '/investments', icon: '💎', desc: 'Private banking', color: '#8B5CF6' },
-    { name: 'Business Banking', href: '/account-types', icon: '🏢', desc: 'Commercial services', color: '#EF4444' },
-    { name: 'Financial Advisory', href: '/financial-advisory', icon: '🎯', desc: 'Expert consultation', color: '#06B6D4' },
-    { name: 'International Banking', href: '/internationalization', icon: '🌍', desc: 'Global services', color: '#84CC16' },
-    { name: 'Trust Services', href: '/about', icon: '🛡️', desc: 'Estate planning', color: '#F97316' }
+    // Investment & Wealth
+    { name: 'Investment Portfolio', href: '/investments', icon: '📈', desc: 'High-yield investments', color: '#10B981', category: 'Investment & Wealth' },
+    { name: 'Wealth Management', href: '/investments', icon: '💎', desc: 'Private banking', color: '#8B5CF6', category: 'Investment & Wealth' },
+    { name: 'Crypto Trading', href: '/crypto', icon: '₿', desc: 'Digital asset trading', color: '#F59E0B', category: 'Investment & Wealth' },
+    { name: 'Financial Advisory', href: '/financial-advisory', icon: '🎯', desc: 'Expert consultation', color: '#06B6D4', category: 'Investment & Wealth' },
+    
+    // Lending & Credit
+    { name: 'Premium Loans', href: '/loans', icon: '🏠', desc: 'Competitive rates', color: '#3B82F6', category: 'Lending & Credit' },
+    { name: 'Mortgage Services', href: '/loans', icon: '🏡', desc: 'Home financing', color: '#059669', category: 'Lending & Credit' },
+    { name: 'Auto Loans', href: '/loans', icon: '🚗', desc: 'Vehicle financing', color: '#DC2626', category: 'Lending & Credit' },
+    { name: 'Credit Cards', href: '/cards', icon: '💳', desc: 'Premium rewards', color: '#7C3AED', category: 'Lending & Credit' },
+    
+    // Business Solutions
+    { name: 'Business Banking', href: '/account-types', icon: '🏢', desc: 'Commercial services', color: '#EF4444', category: 'Business Solutions' },
+    { name: 'Merchant Services', href: '/bill-pay', icon: '💼', desc: 'Payment processing', color: '#0EA5E9', category: 'Business Solutions' },
+    { name: 'Business Loans', href: '/loans', icon: '📊', desc: 'Growth financing', color: '#F97316', category: 'Business Solutions' },
+    { name: 'Payroll Services', href: '/account-types', icon: '💰', desc: 'Employee payments', color: '#14B8A6', category: 'Business Solutions' },
+    
+    // Global Banking
+    { name: 'International Banking', href: '/internationalization', icon: '🌍', desc: 'Global services', color: '#84CC16', category: 'Global Banking' },
+    { name: 'Currency Exchange', href: '/internationalization', icon: '💱', desc: 'Forex trading', color: '#06B6D4', category: 'Global Banking' },
+    { name: 'Wire Transfers', href: '/transfer', icon: '🌐', desc: 'Global transfers', color: '#8B5CF6', category: 'Global Banking' },
+    
+    // Premium Services
+    { name: 'Trust Services', href: '/about', icon: '🛡️', desc: 'Estate planning', color: '#F97316', category: 'Premium Services' },
+    { name: 'Concierge Banking', href: '/support', icon: '👔', desc: '24/7 VIP support', color: '#6366F1', category: 'Premium Services' },
+    { name: 'Insurance Products', href: '/about', icon: '🏥', desc: 'Protection plans', color: '#EC4899', category: 'Premium Services' },
+    
+    // Digital Banking
+    { name: 'Mobile Deposit', href: '/deposit-real', icon: '📱', desc: 'Check deposits', color: '#10B981', category: 'Digital Banking' },
+    { name: 'Bill Pay', href: '/bill-pay', icon: '🧾', desc: 'Auto payments', color: '#F59E0B', category: 'Digital Banking' },
+    { name: 'Zelle Transfers', href: '/zelle', icon: '⚡', desc: 'Instant transfers', color: '#8B5CF6', category: 'Digital Banking' },
+    { name: 'Account Alerts', href: '/notifications', icon: '🔔', desc: 'Real-time updates', color: '#EF4444', category: 'Digital Banking' },
+    
+    // Specialized Accounts
+    { name: 'All Account Types', href: '/account-types', icon: '🏦', desc: '23+ account options', color: '#1E40AF', category: 'Specialized Accounts' },
+    { name: 'Retirement Accounts', href: '/investments', icon: '🏖️', desc: 'IRA & 401(k)', color: '#059669', category: 'Specialized Accounts' },
+    { name: 'Student Accounts', href: '/account-types', icon: '🎓', desc: 'Education banking', color: '#0EA5E9', category: 'Specialized Accounts' },
+    { name: 'Senior Banking', href: '/account-types', icon: '👴', desc: 'Age 55+ benefits', color: '#DC2626', category: 'Specialized Accounts' }
   ];
 
   return (
@@ -105,45 +136,80 @@ export default function StickyFooter() {
                   <div style={styles.backdrop} onClick={() => setShowFeatures(false)}></div>
                   <div style={styles.featuresDropdown}>
                     <div style={styles.dropdownHeader}>
-                      <h4 style={styles.dropdownTitle}>Premium Banking Services</h4>
-                      <p style={styles.dropdownSubtitle}>High-income generating banking solutions</p>
+                      <h4 style={styles.dropdownTitle}>Banking+ Premium Services</h4>
+                      <p style={styles.dropdownSubtitle}>Complete suite of professional banking solutions</p>
+                      <div style={styles.statsRow}>
+                        <div style={styles.statItem}>
+                          <span style={styles.statNumber}>26+</span>
+                          <span style={styles.statLabel}>Services</span>
+                        </div>
+                        <div style={styles.statItem}>
+                          <span style={styles.statNumber}>24/7</span>
+                          <span style={styles.statLabel}>Support</span>
+                        </div>
+                        <div style={styles.statItem}>
+                          <span style={styles.statNumber}>500K+</span>
+                          <span style={styles.statLabel}>Customers</span>
+                        </div>
+                      </div>
                     </div>
                     
-                    <div style={styles.featuresGrid}>
-                      {premiumFeatures.map((feature) => (
-                        <button
-                          key={feature.name}
-                          onClick={() => {
-                            setShowFeatures(false);
-                            router.push(feature.href);
-                          }}
-                          style={styles.featureItem}
-                        >
-                          <div style={{
-                            ...styles.featureIcon,
-                            backgroundColor: `${feature.color}15`,
-                            border: `1px solid ${feature.color}30`
-                          }}>
-                            {feature.icon}
+                    <div style={styles.categorizedFeaturesContainer}>
+                      {['Investment & Wealth', 'Lending & Credit', 'Business Solutions', 'Global Banking', 'Premium Services', 'Digital Banking', 'Specialized Accounts'].map((category) => {
+                        const categoryFeatures = premiumFeatures.filter(f => f.category === category);
+                        if (categoryFeatures.length === 0) return null;
+                        
+                        return (
+                          <div key={category} style={styles.featureCategory}>
+                            <h5 style={styles.categoryTitle}>{category}</h5>
+                            <div style={styles.featuresGrid}>
+                              {categoryFeatures.map((feature) => (
+                                <button
+                                  key={feature.name}
+                                  onClick={() => {
+                                    setShowFeatures(false);
+                                    router.push(feature.href);
+                                  }}
+                                  style={styles.featureItem}
+                                >
+                                  <div style={{
+                                    ...styles.featureIcon,
+                                    backgroundColor: `${feature.color}15`,
+                                    border: `1px solid ${feature.color}30`
+                                  }}>
+                                    {feature.icon}
+                                  </div>
+                                  <div style={styles.featureContent}>
+                                    <div style={styles.featureName}>{feature.name}</div>
+                                    <div style={styles.featureDesc}>{feature.desc}</div>
+                                  </div>
+                                  <div style={{ ...styles.featureArrow, color: feature.color }}>→</div>
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                          <div style={styles.featureContent}>
-                            <div style={styles.featureName}>{feature.name}</div>
-                            <div style={styles.featureDesc}>{feature.desc}</div>
-                          </div>
-                          <div style={{ ...styles.featureArrow, color: feature.color }}>→</div>
-                        </button>
-                      ))}
+                        );
+                      })}
                     </div>
                     
                     <div style={styles.dropdownFooter}>
                       <button 
                         onClick={() => {
                           setShowFeatures(false);
-                          router.push("/account-types");
+                          router.push("/main-menu");
                         }}
                         style={styles.viewAllButton}
                       >
-                        Explore All Premium Services
+                        View All Banking Services
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setShowFeatures(false);
+                          router.push("/support");
+                        }}
+                        style={styles.contactSupportButton}
+                      >
+                        Contact Support
                       </button>
                     </div>
                   </div>
@@ -298,11 +364,11 @@ const styles = {
     borderRadius: '20px',
     boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
     border: '1px solid #e2e8f0',
-    padding: '2rem',
-    minWidth: '360px',
-    maxWidth: '90vw',
+    padding: '1.5rem',
+    minWidth: '420px',
+    maxWidth: '92vw',
     zIndex: 999,
-    maxHeight: '60vh',
+    maxHeight: '75vh',
     overflowY: 'auto'
   },
   dropdownHeader: {
@@ -370,24 +436,86 @@ const styles = {
     fontSize: '1rem',
     fontWeight: 'bold'
   },
+  statsRow: {
+    display: 'flex',
+    justifyContent: 'space-around',
+    gap: '1rem',
+    marginTop: '1rem',
+    padding: '1rem',
+    backgroundColor: '#f8fafc',
+    borderRadius: '12px'
+  },
+  statItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '0.25rem'
+  },
+  statNumber: {
+    fontSize: '1.25rem',
+    fontWeight: '700',
+    color: '#1e40af'
+  },
+  statLabel: {
+    fontSize: '0.7rem',
+    color: '#64748b',
+    fontWeight: '500'
+  },
+  categorizedFeaturesContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.5rem',
+    marginBottom: '1.5rem'
+  },
+  featureCategory: {
+    borderBottom: '1px solid #e2e8f0',
+    paddingBottom: '1rem'
+  },
+  categoryTitle: {
+    fontSize: '0.85rem',
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: '0.75rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem'
+  },
   dropdownFooter: {
-    textAlign: 'center',
+    display: 'flex',
+    gap: '0.75rem',
     paddingTop: '1rem',
-    borderTop: '1px solid #e2e8f0'
+    borderTop: '2px solid #e2e8f0'
   },
   viewAllButton: {
-    display: 'inline-block',
-    padding: '0.75rem 2rem',
+    flex: 1,
+    padding: '0.75rem 1.5rem',
     background: 'linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%)',
     color: 'white',
     textDecoration: 'none',
     borderRadius: '12px',
-    fontSize: '0.875rem',
+    fontSize: '0.85rem',
     fontWeight: '600',
     transition: 'all 0.3s ease',
     boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)',
     border: 'none',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    textAlign: 'center'
+  },
+  contactSupportButton: {
+    flex: 1,
+    padding: '0.75rem 1.5rem',
+    background: 'white',
+    color: '#1e40af',
+    textDecoration: 'none',
+    borderRadius: '12px',
+    fontSize: '0.85rem',
+    fontWeight: '600',
+    transition: 'all 0.3s ease',
+    border: '2px solid #1e40af',
+    cursor: 'pointer',
+    textAlign: 'center'
   },
   navIcon: {
     fontSize: '1.25rem',
