@@ -118,36 +118,36 @@ export default function Home() {
 
   const premiumFeatures = [
     // Core Banking Services
-    { name: 'Online Banking', href: '/dashboard', icon: '💻', desc: 'Digital banking platform', color: '#0EA5E9', section: 'core' },
-    { name: 'Mobile Banking', href: '/apply', icon: '📱', desc: 'Banking on the go', color: '#10B981', section: 'core' },
+    { name: 'Online Banking', href: user ? '/dashboard' : '/login', icon: '💻', desc: 'Digital banking platform', color: '#0EA5E9', section: 'core' },
+    { name: 'Mobile Banking', href: user ? '/dashboard' : '/apply', icon: '📱', desc: 'Banking on the go', color: '#10B981', section: 'core' },
     { name: 'Account Types', href: '/account-types', icon: '🏦', desc: '23 account options', color: '#3B82F6', section: 'core' },
-    { name: 'Money Transfer', href: '/transfer', icon: '💸', desc: 'Send & receive funds', color: '#059669', section: 'core' },
-    { name: 'Bill Pay', href: '/bill-pay', icon: '🧾', desc: 'Automated payments', color: '#F59E0B', section: 'core' },
-    { name: 'Zelle Payments', href: '/zelle', icon: '⚡', desc: 'Instant transfers', color: '#6B21A8', section: 'core' },
-    { name: 'Mobile Deposit', href: '/deposit-real', icon: '📸', desc: 'Deposit checks instantly', color: '#14B8A6', section: 'core' },
+    { name: 'Money Transfer', href: user ? '/transfer' : '/login', icon: '💸', desc: 'Send & receive funds', color: '#059669', section: 'core' },
+    { name: 'Bill Pay', href: user ? '/bill-pay' : '/login', icon: '🧾', desc: 'Automated payments', color: '#F59E0B', section: 'core' },
+    { name: 'Zelle Payments', href: user ? '/zelle' : '/login', icon: '⚡', desc: 'Instant transfers', color: '#6B21A8', section: 'core' },
+    { name: 'Mobile Deposit', href: user ? '/deposit' : '/login', icon: '📸', desc: 'Deposit checks instantly', color: '#14B8A6', section: 'core' },
     { name: 'ATM Network', href: '/atm', icon: '🏧', desc: '24/7 cash access', color: '#8B5CF6', section: 'core' },
-    { name: 'Debit & Credit Cards', href: '/cards', icon: '💳', desc: 'Manage your cards', color: '#EC4899', section: 'core' },
-    { name: 'Transaction History', href: '/transactions', icon: '📜', desc: 'View all transactions', color: '#64748B', section: 'core' },
-    { name: 'Statements', href: '/dashboard', icon: '📄', desc: 'Download statements', color: '#0891B2', section: 'core' },
+    { name: 'Debit & Credit Cards', href: user ? '/cards' : '/login', icon: '💳', desc: 'Manage your cards', color: '#EC4899', section: 'core' },
+    { name: 'Transaction History', href: user ? '/transactions' : '/login', icon: '📜', desc: 'View all transactions', color: '#64748B', section: 'core' },
+    { name: 'Statements', href: user ? '/dashboard' : '/login', icon: '📄', desc: 'Download statements', color: '#0891B2', section: 'core' },
     { name: 'Branch Locator', href: '/branch-locator', icon: '📍', desc: 'Find nearest branch', color: '#DC2626', section: 'core' },
 
     // Premium & Advanced Services
-    { name: 'Investment Portfolio', href: '/investments', icon: '📈', desc: 'High-yield investments', color: '#10B981', section: 'premium' },
-    { name: 'Crypto Trading', href: '/crypto', icon: '₿', desc: 'Digital asset trading', color: '#F59E0B', section: 'premium' },
+    { name: 'Investment Portfolio', href: user ? '/investments' : '/login', icon: '📈', desc: 'High-yield investments', color: '#10B981', section: 'premium' },
+    { name: 'Crypto Trading', href: user ? '/crypto' : '/login', icon: '₿', desc: 'Digital asset trading', color: '#F59E0B', section: 'premium' },
     { name: 'Home Loans', href: '/loans', icon: '🏠', desc: 'Mortgage solutions', color: '#3B82F6', section: 'premium' },
     { name: 'Personal Loans', href: '/loans', icon: '💰', desc: 'Competitive rates', color: '#059669', section: 'premium' },
     { name: 'Business Banking', href: '/account-types', icon: '🏢', desc: 'Commercial services', color: '#EF4444', section: 'premium' },
-    { name: 'Wealth Management', href: '/investments', icon: '💎', desc: 'Private banking', color: '#8B5CF6', section: 'premium' },
+    { name: 'Wealth Management', href: user ? '/investments' : '/login', icon: '💎', desc: 'Private banking', color: '#8B5CF6', section: 'premium' },
     { name: 'Financial Advisory', href: '/financial-advisory', icon: '🎯', desc: 'Expert consultation', color: '#06B6D4', section: 'premium' },
     { name: 'International Banking', href: '/internationalization', icon: '🌍', desc: 'Global services', color: '#84CC16', section: 'premium' },
     { name: 'Trust Services', href: '/about', icon: '🛡️', desc: 'Estate planning', color: '#F97316', section: 'premium' },
-    { name: 'Credit Reports', href: '/credit-report', icon: '📊', desc: 'Monitor your credit', color: '#7C3AED', section: 'premium' },
-    { name: 'Rewards Program', href: '/rewards', icon: '🎁', desc: 'Earn & redeem rewards', color: '#F43F5E', section: 'premium' },
+    { name: 'Credit Reports', href: user ? '/credit-report' : '/login', icon: '📊', desc: 'Monitor your credit', color: '#7C3AED', section: 'premium' },
+    { name: 'Rewards Program', href: user ? '/rewards' : '/login', icon: '🎁', desc: 'Earn & redeem rewards', color: '#F43F5E', section: 'premium' },
     { name: 'Market News', href: '/market-news', icon: '📰', desc: 'Financial insights', color: '#0EA5E9', section: 'premium' },
     { name: 'Financial Education', href: '/financial-education', icon: '📚', desc: 'Learning resources', color: '#10B981', section: 'premium' },
     { name: 'Calculators', href: '/calculators', icon: '🧮', desc: 'Financial planning tools', color: '#F59E0B', section: 'premium' },
     { name: 'Current Rates', href: '/current-rates', icon: '📈', desc: 'Interest & exchange rates', color: '#6366F1', section: 'premium' },
-    { name: 'Security Center', href: '/security', icon: '🔒', desc: 'Account protection', color: '#EF4444', section: 'premium' }
+    { name: 'Security Center', href: user ? '/security' : '/login', icon: '🔒', desc: 'Account protection', color: '#EF4444', section: 'premium' }
   ];
 
   const coreFeatures = premiumFeatures.filter(f => f.section === 'core');

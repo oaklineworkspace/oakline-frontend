@@ -2292,11 +2292,11 @@ export default function Apply() {
                   onClick={() => handleInputChange({target: {name: 'agreeToTerms', type: 'checkbox', checked: !formData.agreeToTerms}})}
                 >
                   I agree to the{' '}
-                  <Link href="/terms" style={styles.link}>
+                  <Link href="/terms" target="_blank" rel="noopener noreferrer" style={styles.link}>
                     Terms of Service
                   </Link>{' '}
                   and{' '}
-                  <Link href="/privacy" style={styles.link}>
+                  <Link href="/privacy" target="_blank" rel="noopener noreferrer" style={styles.link}>
                     Privacy Policy
                   </Link>{' '}
                   <span style={styles.required}>*</span>
