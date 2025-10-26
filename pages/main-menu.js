@@ -183,7 +183,7 @@ export default function MainMenu() {
         <div style={styles.headerContainer}>
           <div style={styles.headerLeft}>
             <Link href="/" style={styles.logoContainer}>
-              <img src="/images/logo-primary.png.jpg" alt="Oakline Bank" style={styles.logo} />
+              <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.logo} />
               <div style={styles.brandInfo}>
                 <h1 style={styles.brandName}>Oakline Bank</h1>
                 <span style={styles.brandTagline}>Banking Services Menu</span>
