@@ -195,7 +195,7 @@ export default function MainMenu() {
             <div style={styles.navItem}>
               <button style={styles.navButton} onClick={(e) => { e.stopPropagation(); toggleDropdown('main'); }}>
                 <span style={styles.navIcon}>☰</span>
-                All Services
+                Menu
                 <span style={{...styles.navArrow, transform: dropdownOpen.main ? 'rotate(180deg)' : 'rotate(0deg)'}}>▼</span>
               </button>
               {dropdownOpen.main && (
@@ -268,16 +268,6 @@ export default function MainMenu() {
               <div style={styles.userInfo}>
                 <span style={styles.welcomeText}>Welcome</span>
                 <span style={styles.userName}>{getUserDisplayName()}</span>
-              </div>
-              <div style={styles.userActions}>
-                <Link href="/profile" style={styles.profileButton}>
-                  <span style={styles.actionIcon}>👤</span>
-                  Profile
-                </Link>
-                <button onClick={handleLogout} style={styles.logoutButton}>
-                  <span style={styles.actionIcon}>🔐</span>
-                  Logout
-                </button>
               </div>
             </div>
           </div>
@@ -553,14 +543,14 @@ const styles = {
   navButton: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
-    padding: '0.75rem 1.5rem',
+    gap: '0.4rem',
+    padding: '0.5rem 1rem',
     backgroundColor: 'rgba(255,255,255,0.15)',
     color: 'white',
     border: '2px solid rgba(255,255,255,0.3)',
     borderRadius: '8px',
     cursor: 'pointer',
-    fontSize: '0.95rem',
+    fontSize: '0.85rem',
     fontWeight: '600',
     transition: 'all 0.3s ease',
     whiteSpace: 'nowrap',
@@ -586,6 +576,8 @@ const styles = {
     marginTop: '0.75rem',
     minWidth: '900px',
     maxWidth: '95vw',
+    maxHeight: '70vh',
+    overflowY: 'auto',
     border: '1px solid #e2e8f0'
   },
   dropdownGrid: {
@@ -948,25 +940,50 @@ const styles = {
     },
     mainNav: {
       width: '100%',
-      justifyContent: 'space-around',
+      justifyContent: 'center',
       order: 2
     },
     navButton: {
-      padding: '0.4rem 0.5rem',
-      fontSize: '0.7rem',
-      gap: '0.2rem'
+      padding: '0.5rem 0.8rem',
+      fontSize: '0.8rem',
+      gap: '0.3rem'
+    },
+    comprehensiveDropdown: {
+      position: 'fixed',
+      top: '80px',
+      left: '0.5rem',
+      right: '0.5rem',
+      transform: 'none',
+      minWidth: 'auto',
+      width: 'calc(100vw - 1rem)',
+      maxWidth: 'calc(100vw - 1rem)',
+      maxHeight: 'calc(100vh - 100px)',
+      padding: '1rem',
+      overflowY: 'auto'
+    },
+    dropdownGrid: {
+      gridTemplateColumns: '1fr',
+      gap: '1rem'
+    },
+    dropdownColumn: {
+      gap: '0.4rem'
+    },
+    dropdownColumnTitle: {
+      fontSize: '0.75rem',
+      marginBottom: '0.3rem',
+      paddingBottom: '0.3rem'
+    },
+    dropdownLink: {
+      padding: '0.5rem 0.6rem',
+      fontSize: '0.8rem'
     },
     userSection: {
       order: 1,
       width: '100%',
-      justifyContent: 'space-between'
+      justifyContent: 'center'
     },
-    userActions: {
-      gap: '0.25rem'
-    },
-    actionButton: {
-      padding: '0.3rem 0.5rem',
-      fontSize: '0.7rem'
+    userInfo: {
+      alignItems: 'center'
     },
     main: {
       padding: '0.75rem 0.5rem'
@@ -983,12 +1000,23 @@ const styles = {
   },
   '@media (max-width: 480px)': {
     navButton: {
-      fontSize: '0.65rem',
-      padding: '0.3rem 0.4rem'
+      fontSize: '0.75rem',
+      padding: '0.4rem 0.7rem'
     },
-    actionButton: {
-      fontSize: '0.65rem',
-      padding: '0.25rem 0.4rem'
+    comprehensiveDropdown: {
+      top: '70px',
+      left: '0.25rem',
+      right: '0.25rem',
+      width: 'calc(100vw - 0.5rem)',
+      maxWidth: 'calc(100vw - 0.5rem)',
+      padding: '0.75rem'
+    },
+    dropdownGrid: {
+      gap: '0.75rem'
+    },
+    dropdownLink: {
+      padding: '0.4rem 0.5rem',
+      fontSize: '0.75rem'
     },
     main: {
       padding: '0.5rem 0.25rem'
