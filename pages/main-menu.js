@@ -196,7 +196,7 @@ export default function MainMenu() {
               <button style={styles.navButton} onClick={(e) => { e.stopPropagation(); toggleDropdown('main'); }}>
                 <span style={styles.navIcon}>☰</span>
                 All Services
-                <span style={{...styles.navArrow, transform: dropdownOpen.main ? 'rotate(180deg)' : 'rotate(0deg)'}}▼</span>
+                <span style={{...styles.navArrow, transform: dropdownOpen.main ? 'rotate(180deg)' : 'rotate(0deg)'}}>▼</span>
               </button>
               {dropdownOpen.main && (
                 <div style={styles.comprehensiveDropdown}>
