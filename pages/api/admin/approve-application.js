@@ -9,8 +9,8 @@ export default async function handler(req, res) {
 
   const { application_id, admin_password } = req.body;
 
-  // Simple admin authentication (you should implement proper admin auth)
-  if (admin_password !== process.env.ADMIN_PASSWORD && admin_password !== 'Chrismorgan23$') {
+  // Admin authentication using environment variable only
+  if (!process.env.ADMIN_PASSWORD || admin_password !== process.env.ADMIN_PASSWORD) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
