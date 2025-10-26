@@ -1,0 +1,172 @@
+
+/* Professional Banking Footer Styles */
+.sticky-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #1e293b;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  border-top: 2px solid #e5e7eb;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  animation: slideUpFooter 0.5s ease-out;
+}
+
+@keyframes slideUpFooter {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Professional button hover effects */
+.sticky-footer a,
+.sticky-footer button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+.sticky-footer a:hover,
+.sticky-footer button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+  background-color: #f8fafc !important;
+  border-color: #059669 !important;
+}
+
+.sticky-footer a:active,
+.sticky-footer button:active {
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Features dropdown enhancements */
+.sticky-footer div[style*="featuresDropdown"] {
+  animation: dropdownSlideUp 0.3s ease-out !important;
+}
+
+@keyframes dropdownSlideUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+/* Feature item hover effects */
+.sticky-footer a[style*="featureItem"]:hover {
+  background-color: #f1f5f9 !important;
+  transform: translateX(8px) !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Professional button pulse effect for Banking+ */
+.sticky-footer button[style*="featuresButton"] {
+  animation: pulse 2s infinite !important;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+  }
+  50% {
+    box-shadow: 0 8px 25px rgba(5, 150, 105, 0.6);
+  }
+}
+
+/* Mobile responsive enhancements */
+@media (max-width: 768px) {
+  .sticky-footer {
+    padding: 0.5rem 0.75rem !important;
+    min-height: 65px !important;
+  }
+  
+  .sticky-footer div[style*="navigationSection"] {
+    gap: 0.25rem !important;
+  }
+  
+  .sticky-footer a,
+  .sticky-footer button {
+    padding: 0.5rem 0.25rem !important;
+    min-height: 55px !important;
+    border-radius: 12px !important;
+  }
+  
+  .sticky-footer span[style*="navText"] {
+    font-size: 0.65rem !important;
+  }
+  
+  .sticky-footer span[style*="navIcon"] {
+    font-size: 1.1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .sticky-footer {
+    min-height: 60px !important;
+  }
+  
+  .sticky-footer div[style*="featuresDropdown"] {
+    min-width: 320px !important;
+    padding: 1.5rem !important;
+  }
+}
+
+/* Gradient shimmer effect for premium look */
+.sticky-footer a:before,
+.sticky-footer button:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.sticky-footer a:hover:before,
+.sticky-footer button:hover:before {
+  left: 100%;
+}
+
+/* Ensure footer doesn't overlap content */
+body {
+  padding-bottom: 80px !important;
+}
+
+/* Hide footer on specific admin pages */
+body[data-hide-footer="true"] .sticky-footer {
+  display: none !important;
+}
+
+/* Professional loading state */
+.sticky-footer-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Enhanced accessibility */
+.sticky-footer a:focus,
+.sticky-footer button:focus {
+  outline: 2px solid #3B82F6 !important;
+  outline-offset: 2px !important;
+}

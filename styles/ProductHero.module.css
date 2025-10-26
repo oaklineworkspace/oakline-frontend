@@ -1,0 +1,48 @@
+.productHero {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+  flex-wrap: wrap;
+}
+
+.imageLeft img,
+.imageRight img {
+  width: 300px;
+  border-radius: 8px;
+}
+
+.imageLeft {
+  order: 0;
+}
+
+.imageRight {
+  order: 1;
+}
+
+.content {
+  flex: 1;
+}
+
+.content h2 {
+  margin: 0 0 0.5rem 0;
+}
+
+.content p {
+  margin-bottom: 1rem;
+}
+
+.content ul {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.content a {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #004080;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+}
