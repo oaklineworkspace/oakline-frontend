@@ -33,7 +33,7 @@ export default function About() {
             <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.headerLogo} />
             <div style={styles.brandSection}>
               <span style={styles.bankName}>Oakline Bank</span>
-              <span style={styles.bankTagline}>About Our Institution</span>
+              <span style={styles.bankTagline}>Trusted Banking Since 1995</span>
             </div>
           </Link>
 
@@ -49,7 +49,7 @@ export default function About() {
               </Link>
             ) : (
               <Link href="/apply" style={styles.headerButton}>
-                <span style={styles.buttonIcon}>🚀</span>
+                <span style={styles.buttonIcon}>💼</span>
                 Open Account
               </Link>
             )}
@@ -62,7 +62,7 @@ export default function About() {
         <div style={styles.heroContent}>
           <h1 style={styles.heroTitle}>About Oakline Bank</h1>
           <p style={styles.heroSubtitle}>
-            Your trusted financial partner since 1995, serving over 500,000 customers worldwide
+            A Premier Financial Institution Committed to Excellence, Innovation, and Your Financial Success
           </p>
         </div>
       </section>
@@ -103,14 +103,16 @@ export default function About() {
               <div style={styles.contentGrid}>
                 <div style={styles.textContent}>
                   <p style={styles.paragraph}>
-                    Founded in 1995, Oakline Bank has grown from a small community bank to a leading
-                    financial institution serving customers across the nation. We pride ourselves on
-                    combining traditional banking values with cutting-edge technology.
+                    Established in 1995, Oakline Bank has evolved from a trusted community financial institution 
+                    into a leading national bank recognized for innovation, security, and exceptional customer service. 
+                    Our success is built on a foundation of integrity, cutting-edge technology, and unwavering commitment 
+                    to our customers' financial wellbeing.
                   </p>
                   <p style={styles.paragraph}>
-                    Our commitment to excellence has earned us the trust of over 500,000 customers
-                    who rely on us for their personal and business banking needs. From simple checking
-                    accounts to complex investment portfolios, we provide comprehensive financial solutions.
+                    With over 500,000 satisfied customers nationwide, we offer comprehensive financial solutions 
+                    ranging from personal checking and savings accounts to sophisticated investment portfolios and 
+                    business banking services. Our FDIC-insured accounts provide peace of mind while our digital-first 
+                    approach ensures convenient, secure access to your finances 24/7.
                   </p>
                   <div style={styles.statsList}>
                     <div style={styles.statItem}>
@@ -146,8 +148,9 @@ export default function About() {
                   <div style={styles.valueIcon}>🎯</div>
                   <h3 style={styles.valueTitle}>Our Mission</h3>
                   <p style={styles.valueText}>
-                    To empower individuals and businesses to achieve their financial goals through
-                    innovative banking solutions, exceptional service, and unwavering integrity.
+                    To deliver exceptional financial services that empower individuals and businesses to achieve 
+                    their goals through innovative solutions, personalized guidance, and steadfast commitment to 
+                    integrity and excellence.
                   </p>
                 </div>
                 <div style={styles.valueCard}>
@@ -189,7 +192,8 @@ export default function About() {
                   <h3 style={styles.leaderName}>John Davis</h3>
                   <p style={styles.leaderTitle}>Chief Executive Officer</p>
                   <p style={styles.leaderBio}>
-                    With over 25 years in banking, John leads our strategic vision and growth initiatives.
+                    A seasoned banking executive with over 25 years of industry experience, John provides strategic 
+                    leadership and drives innovation across all banking operations.
                   </p>
                 </div>
                 <div style={styles.leaderCard}>
@@ -199,7 +203,8 @@ export default function About() {
                   <h3 style={styles.leaderName}>Sarah Martinez</h3>
                   <p style={styles.leaderTitle}>Chief Technology Officer</p>
                   <p style={styles.leaderBio}>
-                    Sarah drives our digital transformation and ensures cutting-edge banking technology.
+                    Leading our digital transformation initiatives, Sarah ensures world-class technology infrastructure 
+                    and cybersecurity while delivering innovative banking solutions.
                   </p>
                 </div>
                 <div style={styles.leaderCard}>
@@ -209,7 +214,8 @@ export default function About() {
                   <h3 style={styles.leaderName}>Michael Chen</h3>
                   <p style={styles.leaderTitle}>Chief Financial Officer</p>
                   <p style={styles.leaderBio}>
-                    Michael oversees financial operations and maintains our strong fiscal responsibility.
+                    With expertise in financial management and regulatory compliance, Michael ensures operational 
+                    excellence and maintains our institution's strong fiscal foundation.
                   </p>
                 </div>
               </div>
@@ -253,8 +259,9 @@ export default function About() {
               <h2 style={styles.sectionTitle}>Contact Us</h2>
               <div style={styles.contactSection}>
                 <p style={styles.paragraph}>
-                  We're here to help you with all your banking needs. Visit us, call us, or send us an email –
-                  we're committed to providing exceptional service and support.
+                  Our dedicated team of banking professionals is committed to providing personalized service 
+                  and expert financial guidance. Whether you prefer in-person consultation, phone support, or 
+                  digital communication, we're here to assist you with all your banking needs.
                 </p>
               </div>
               <div style={styles.contactSection}>
@@ -330,18 +337,19 @@ export default function About() {
       <section style={styles.ctaSection}>
         <div style={styles.container}>
           <div style={styles.ctaContent}>
-            <h2 style={styles.ctaTitle}>Ready to Bank with Us?</h2>
+            <h2 style={styles.ctaTitle}>Begin Your Banking Journey with Oakline Bank</h2>
             <p style={styles.ctaSubtitle}>
-              Join thousands of satisfied customers who trust Oakline Bank with their financial future.
+              Join over 500,000 satisfied customers who trust us with their financial success. Experience the 
+              difference of personalized service, innovative technology, and unwavering security.
             </p>
             <div style={styles.ctaButtons}>
               <Link href="/apply" style={styles.ctaButtonPrimary}>
-                <span style={styles.buttonIcon}>🚀</span>
-                Open Account Today
+                <span style={styles.buttonIcon}>💼</span>
+                Open Account
               </Link>
               <Link href="/support" style={styles.ctaButtonSecondary}>
-                <span style={styles.buttonIcon}>💬</span>
-                Contact Us
+                <span style={styles.buttonIcon}>📞</span>
+                Contact Support
               </Link>
             </div>
           </div>
