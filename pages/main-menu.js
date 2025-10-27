@@ -207,7 +207,9 @@ export default function MainMenu() {
                 <span style={{...styles.navArrow, transform: dropdownOpen.main ? 'rotate(180deg)' : 'rotate(0deg)'}}>▼</span>
               </button>
               {dropdownOpen.main && (
-                <div style={styles.comprehensiveDropdown}>
+                <>
+                  <div style={styles.dropdownBackdrop} onClick={closeAllDropdowns}></div>
+                  <div style={styles.comprehensiveDropdown}>
                   <div style={styles.dropdownSection}>
                     <h4 style={styles.dropdownSectionTitle}>🏦 My Banking</h4>
                     <Link href="/" style={styles.dropdownLink}>🏠 Home</Link>
@@ -260,6 +262,7 @@ export default function MainMenu() {
                     </button>
                   </div>
                 </div>
+                </>
               )}
             </div>
           </nav>
@@ -588,9 +591,10 @@ const styles = {
     transition: 'transform 0.3s ease'
   },
   comprehensiveDropdown: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
+    position: 'fixed',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
     backgroundColor: 'white',
     borderRadius: '12px',
     boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
@@ -599,7 +603,6 @@ const styles = {
     maxHeight: '70vh',
     overflowY: 'auto',
     zIndex: 1000,
-    marginTop: '0.5rem',
     border: '1px solid #e2e8f0'
   },
   dropdownSection: {
@@ -642,6 +645,15 @@ const styles = {
     animation: 'scrollText 30s linear infinite',
     paddingLeft: '100%',
     lineHeight: '1.4'
+  },
+  dropdownBackdrop: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 999
   },
   dropdownLink: {
     display: 'block',
