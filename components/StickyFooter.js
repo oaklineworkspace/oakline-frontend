@@ -52,7 +52,7 @@ export default function StickyFooter() {
     { name: 'Menu', href: '/main-menu', icon: '☰', gradient: 'from-gray-500 to-gray-600' }
   ] : [
     { name: 'Home', href: '/', icon: '🏠', gradient: 'from-blue-500 to-blue-600' },
-    { name: 'Apply', href: '/apply', icon: '📝', gradient: 'from-green-500 to-green-600' },
+    { name: 'Open Account', href: '/apply', icon: '📝', gradient: 'from-green-500 to-green-600' },
     { name: 'Sign In', href: '/sign-in', icon: '🔑', gradient: 'from-indigo-500 to-indigo-600' },
     { name: 'About', href: '/about', icon: 'ℹ️', gradient: 'from-teal-500 to-teal-600' }
   ];
