@@ -106,13 +106,25 @@ export default function About() {
                     Established in 1995, Oakline Bank has evolved from a trusted community financial institution 
                     into a leading national bank recognized for innovation, security, and exceptional customer service. 
                     Our success is built on a foundation of integrity, cutting-edge technology, and unwavering commitment 
-                    to our customers' financial wellbeing.
+                    to our customers' financial wellbeing. We've grown to become one of America's most trusted financial 
+                    institutions, maintaining an A+ rating from the Better Business Bureau and consistently ranking among 
+                    the top banks for customer satisfaction.
                   </p>
                   <p style={styles.paragraph}>
                     With over 500,000 satisfied customers nationwide, we offer comprehensive financial solutions 
                     ranging from personal checking and savings accounts to sophisticated investment portfolios and 
                     business banking services. Our FDIC-insured accounts provide peace of mind while our digital-first 
-                    approach ensures convenient, secure access to your finances 24/7.
+                    approach ensures convenient, secure access to your finances 24/7. We leverage state-of-the-art 
+                    encryption and multi-factor authentication to protect your assets, and our mobile app has been 
+                    downloaded over 1 million times with a 4.8-star rating.
+                  </p>
+                  <p style={styles.paragraph}>
+                    Beyond traditional banking, Oakline Bank is deeply invested in the communities we serve. We've 
+                    contributed over $50 million to local charities, educational programs, and small business development 
+                    initiatives. Our financial literacy programs have helped thousands of families achieve their dreams 
+                    of homeownership, and our green banking initiatives support environmental sustainability. When you 
+                    bank with Oakline, you're not just a customer—you're part of a family that cares about making a 
+                    positive impact.
                   </p>
                   <div style={styles.statsList}>
                     <div style={styles.statItem}>
@@ -150,7 +162,9 @@ export default function About() {
                   <p style={styles.valueText}>
                     To deliver exceptional financial services that empower individuals and businesses to achieve 
                     their goals through innovative solutions, personalized guidance, and steadfast commitment to 
-                    integrity and excellence.
+                    integrity and excellence. We strive to be more than just a bank—we aim to be your trusted 
+                    financial partner for life, providing expert advice, competitive rates, and unparalleled 
+                    customer service that helps you build wealth and secure your financial future.
                   </p>
                 </div>
                 <div style={styles.valueCard}>
@@ -261,7 +275,10 @@ export default function About() {
                 <p style={styles.paragraph}>
                   Our dedicated team of banking professionals is committed to providing personalized service 
                   and expert financial guidance. Whether you prefer in-person consultation, phone support, or 
-                  digital communication, we're here to assist you with all your banking needs.
+                  digital communication, we're here to assist you with all your banking needs. We offer extended 
+                  support hours Monday through Saturday, with bilingual staff available to serve you in English 
+                  and Spanish. Our average customer service response time is under 2 minutes, and we pride 
+                  ourselves on resolving 95% of inquiries on the first contact.
                 </p>
               </div>
               <div style={styles.contactSection}>
@@ -445,12 +462,14 @@ const styles = {
     fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
     fontWeight: '900',
     marginBottom: '1rem',
-    letterSpacing: '-0.02em'
+    letterSpacing: '-0.02em',
+    color: 'white'
   },
   heroSubtitle: {
     fontSize: 'clamp(1.1rem, 2.5vw, 1.3rem)',
-    opacity: 0.9,
-    lineHeight: '1.6'
+    opacity: 0.95,
+    lineHeight: '1.6',
+    color: 'white'
   },
   navigationTabs: {
     backgroundColor: 'white',
@@ -732,7 +751,7 @@ const styles = {
   },
   branchValue: {
     fontSize: '1rem',
-    color: '#1A3E6F',
+    color: '#1e293b',
     fontWeight: '500',
     lineHeight: '1.6'
   },
@@ -776,13 +795,15 @@ const styles = {
   ctaTitle: {
     fontSize: 'clamp(2rem, 4vw, 2.5rem)',
     fontWeight: '800',
-    marginBottom: '1rem'
+    marginBottom: '1rem',
+    color: 'white'
   },
   ctaSubtitle: {
     fontSize: '1.2rem',
-    opacity: 0.9,
+    opacity: 0.95,
     marginBottom: '2.5rem',
-    lineHeight: '1.6'
+    lineHeight: '1.6',
+    color: 'white'
   },
   ctaButtons: {
     display: 'flex',
