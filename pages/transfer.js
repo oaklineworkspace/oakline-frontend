@@ -349,37 +349,60 @@ export default function Transfer() {
         return;
       }
 
-      // Create sender transaction record
-      const { error: transactionError } = await supabase
-        .from('transactions')
-        .insert([{
-          user_id: user.id,
-          account_id: parseInt(fromAccount),
-          amount: -transferAmount,
-          type: 'transfer_out',
-          description: `${transferType.toUpperCase()} transfer to ${toAccountNumber} - ${transferDetails.recipient_name} - ${transferDetails.memo || 'Transfer'}`,
-          status: transferType === 'internal' ? 'completed' : 'pending',
-          category: 'transfer',
-          created_at: new Date().toISOString()
-        }]);
+      // For internal transfers, use the API
+      if (transferType === 'internal') {
+        const response = await fetch('/api/internal-transfer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sender_id: user.id,
+            from_account_id: fromAccount,
+            to_account_number: toAccountNumber,
+            amount: transferAmount,
+            memo: transferDetails.memo || 'Internal Transfer'
+          })
+        });
 
-      if (transactionError) throw transactionError;
+        const result = await response.json();
 
-      // Create fee transaction if applicable
-      if (fee > 0) {
-        await supabase.from('transactions').insert([{
-          user_id: user.id,
-          account_id: parseInt(fromAccount),
-          amount: -fee,
-          type: 'fee',
-          description: `${transferType.toUpperCase()} transfer fee`,
-          status: 'completed',
-          category: 'fee',
-          created_at: new Date().toISOString()
-        }]);
+        if (!response.ok) {
+          throw new Error(result.error || 'Transfer failed');
+        }
+
+        setMessage(`✅ ${result.message} (Ref: ${result.reference_number})`);
+      } else {
+        // For external transfers, keep the existing logic
+        const { error: transactionError } = await supabase
+          .from('transactions')
+          .insert([{
+            user_id: user.id,
+            account_id: parseInt(fromAccount),
+            amount: -transferAmount,
+            type: 'transfer_out',
+            description: `${transferType.toUpperCase()} transfer to ${toAccountNumber} - ${transferDetails.recipient_name} - ${transferDetails.memo || 'Transfer'}`,
+            status: 'pending',
+            category: 'transfer',
+            created_at: new Date().toISOString()
+          }]);
+
+        if (transactionError) throw transactionError;
+
+        if (fee > 0) {
+          await supabase.from('transactions').insert([{
+            user_id: user.id,
+            account_id: parseInt(fromAccount),
+            amount: -fee,
+            type: 'fee',
+            description: `${transferType.toUpperCase()} transfer fee`,
+            status: 'completed',
+            category: 'fee',
+            created_at: new Date().toISOString()
+          }]);
+        }
+
+        setMessage(`✅ Transfer of $${transferAmount.toFixed(2)} has been processed successfully!${fee > 0 ? ` Fee: $${fee.toFixed(2)}` : ''}`);
       }
 
-      setMessage(`✅ Transfer of $${transferAmount.toFixed(2)} has been processed successfully!${fee > 0 ? ` Fee: $${fee.toFixed(2)}` : ''}`);
       setAmount('');
       setToAccountNumber('');
       setTransferDetails({
@@ -700,6 +723,31 @@ export default function Transfer() {
             </div>
           )}
 
+          {/* Own Accounts Quick Transfer */}
+          {accounts.length > 1 && (
+            <div style={styles.ownAccountsSection}>
+              <h3 style={styles.sectionTitle}>💳 Transfer Between Your Accounts</h3>
+              <div style={styles.ownAccountsGrid}>
+                {accounts.map(account => (
+                  <div key={account.id} style={styles.ownAccountCard}>
+                    <div style={styles.ownAccountType}>
+                      {account.account_type?.replace('_', ' ')?.toUpperCase()}
+                    </div>
+                    <div style={styles.ownAccountNumber}>
+                      ****{account.account_number?.slice(-4)}
+                    </div>
+                    <div style={styles.ownAccountBalance}>
+                      {formatCurrency(account.balance || 0)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p style={styles.ownAccountsHelper}>
+                Use the form below to transfer between your Oakline accounts (no fees!)
+              </p>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} style={styles.form}>
             <div style={styles.formGroup}>
               <label style={styles.label}>Transfer From Account *</label>
@@ -708,7 +756,7 @@ export default function Transfer() {
                 value={fromAccount}
                 onChange={(e) => setFromAccount(e.target.value)}
                 required
-                disabled={accounts.length === 0} // Disable if no active accounts
+                disabled={accounts.length === 0}
               >
                 <option value="">Choose account</option>
                 {accounts.map(account => (
@@ -1091,5 +1139,49 @@ const styles = {
     textDecoration: 'none',
     borderRadius: '8px',
     fontWeight: '500'
+  },
+  ownAccountsSection: {
+    backgroundColor: 'white',
+    padding: '1.5rem',
+    borderRadius: '16px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+    marginBottom: '1.5rem'
+  },
+  ownAccountsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+    gap: '1rem',
+    marginBottom: '1rem'
+  },
+  ownAccountCard: {
+    backgroundColor: '#f8fafc',
+    border: '2px solid #e2e8f0',
+    borderRadius: '12px',
+    padding: '1rem',
+    textAlign: 'center'
+  },
+  ownAccountType: {
+    fontSize: '0.85rem',
+    fontWeight: '600',
+    color: '#1e40af',
+    marginBottom: '0.5rem'
+  },
+  ownAccountNumber: {
+    fontSize: '0.9rem',
+    color: '#64748b',
+    marginBottom: '0.5rem',
+    fontFamily: 'monospace'
+  },
+  ownAccountBalance: {
+    fontSize: '1.1rem',
+    fontWeight: 'bold',
+    color: '#059669'
+  },
+  ownAccountsHelper: {
+    fontSize: '0.85rem',
+    color: '#64748b',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    margin: 0
   }
 };
