@@ -477,6 +477,9 @@ export default function MainMenu() {
 
           h4[style*="dropdownColumnTitle"] {
             font-size: 0.6rem !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
             padding: 0 0.2rem !important;
             margin-bottom: 0.2rem !important;
             padding-bottom: 0.2rem !important;
@@ -648,24 +651,22 @@ const styles = {
   comprehensiveDropdown: {
     position: 'absolute',
     top: '100%',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    backgroundColor: 'white',
+    left: '0',
+    backgroundColor: '#ffffff',
+    minWidth: '600px',
+    padding: '25px',
+    boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
     borderRadius: '12px',
-    boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
-    padding: '1rem',
-    zIndex: 1000,
-    marginTop: '0.75rem',
-    minWidth: '900px',
-    maxWidth: '95vw',
+    border: '1px solid #e5e7eb',
+    zIndex: 200,
+    marginTop: '0.5rem',
     maxHeight: '70vh',
-    overflowY: 'auto',
-    border: '1px solid #e2e8f0'
+    overflowY: 'auto'
   },
   dropdownGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-    gap: '0.75rem'
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '25px'
   },
   scrollingWelcomeContainer: {
     display: 'flex',
@@ -686,7 +687,7 @@ const styles = {
     fontWeight: '500',
     whiteSpace: 'nowrap',
     display: 'inline-block',
-    animation: 'scrollText 60s linear infinite',
+    animation: 'scrollText 30s linear infinite',
     paddingLeft: '100%',
     lineHeight: '1.4'
   },
