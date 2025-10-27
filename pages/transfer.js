@@ -6,27 +6,16 @@ import Head from 'next/head';
 
 export default function Transfer() {
   const [user, setUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
   const [accounts, setAccounts] = useState([]);
-  const [pendingAccounts, setPendingAccounts] = useState([]); // State for pending accounts
   const [fromAccount, setFromAccount] = useState('');
   const [toAccountNumber, setToAccountNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [transferType, setTransferType] = useState('internal');
-  const [transferDetails, setTransferDetails] = useState({
-    recipient_name: '',
-    recipient_email: '',
-    memo: '',
-    routing_number: '',
-    bank_name: '',
-    swift_code: '',
-    country: '',
-    purpose: '',
-    recipient_address: ''
-  });
+  const [memo, setMemo] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [pageLoading, setPageLoading] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -35,393 +24,29 @@ export default function Transfer() {
 
   const checkUserAndFetchData = async () => {
     try {
-      setPageLoading(true);
-
-      // Get current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        router.push('/login');
-        return;
-      }
-
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
-        console.log('No active session found');
-        router.push('/login');
+        router.push('/sign-in');
         return;
       }
-
-      console.log('User session found:', {
-        id: session.user.id,
-        email: session.user.email,
-        created_at: session.user.created_at
-      });
       setUser(session.user);
 
-      // Fetch user profile with multiple attempts
-      let profile = null;
-
-      // Try by user ID first
-      const { data: profileById, error: profileByIdError } = await supabase
-        .from('profiles')
+      const { data: userAccounts } = await supabase
+        .from('accounts')
         .select('*')
-        .eq('id', session.user.id)
-        .single();
+        .eq('user_id', session.user.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: true });
 
-      if (!profileByIdError && profileById) {
-        profile = profileById;
-        console.log('Profile found by ID:', {
-          id: profile.id,
-          email: profile.email,
-          application_id: profile.application_id
-        });
-      } else {
-        console.error('Profile fetch by ID error:', profileByIdError);
-
-        // Try by email as fallback
-        const { data: profileByEmail, error: profileByEmailError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('email', session.user.email)
-          .single();
-
-        if (!profileByEmailError && profileByEmail) {
-          profile = profileByEmail;
-          console.log('Profile found by email:', {
-            id: profile.id,
-            email: profile.email,
-            application_id: profile.application_id
-          });
-        } else {
-          console.error('Profile fetch by email error:', profileByEmailError);
-        }
+      if (userAccounts && userAccounts.length > 0) {
+        setAccounts(userAccounts);
+        setFromAccount(userAccounts[0].id);
       }
-
-      if (profile) {
-        setUserProfile(profile);
-      } else {
-        console.warn('No profile found, but continuing with account fetch');
-      }
-
-      await fetchAccounts(session.user, profile);
-
     } catch (error) {
-      console.error('Error in checkUserAndFetchData:', error);
-      setMessage('Error loading user data. Please try refreshing the page.');
+      console.error('Error:', error);
+      setMessage('Error loading data. Please refresh.');
     } finally {
       setPageLoading(false);
-    }
-  };
-
-  const fetchAccounts = async (user, profile) => {
-    try {
-      console.log('Fetching accounts for user:', { id: user.id, email: user.email });
-
-      if (!user || !user.id) {
-        console.error('Invalid user object');
-        setMessage('Authentication error. Please log in again.');
-        setAccounts([]);
-        return;
-      }
-
-      let accountsData = [];
-      let pendingAccountsData = [];
-
-      // Try multiple methods to find accounts
-
-      // Method 1: Get accounts through application_id if profile exists
-      if (profile?.application_id) {
-        console.log('Trying application_id method:', profile.application_id);
-        const { data: accounts, error: accountsError } = await supabase
-          .from('accounts')
-          .select('*')
-          .eq('application_id', profile.application_id)
-          .order('created_at', { ascending: true });
-
-        if (!accountsError && accounts && accounts.length > 0) {
-          accountsData = accounts.filter(acc => acc.status === 'active');
-          pendingAccountsData = accounts.filter(acc => acc.status === 'pending');
-          console.log('Found accounts through application_id:', accountsData.length, 'pending:', pendingAccountsData.length);
-        } else if (accountsError) {
-          console.error('Application ID query error:', accountsError);
-        }
-      }
-
-      // Method 2: Try direct user_id lookup if no accounts found or to supplement
-      if (accountsData.length === 0 || pendingAccountsData.length === 0) {
-        console.log('Trying direct user_id lookup');
-        const { data: directAccounts, error: directError } = await supabase
-          .from('accounts')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: true });
-
-        if (!directError && directAccounts && directAccounts.length > 0) {
-          const currentActive = directAccounts.filter(acc => acc.status === 'active');
-          const currentPending = directAccounts.filter(acc => acc.status === 'pending');
-
-          // Merge if new accounts found
-          if (currentActive.length > 0 && !accountsData.some(acc => currentActive.some(ca => ca.id === acc.id))) {
-            accountsData = [...accountsData, ...currentActive];
-          }
-          if (currentPending.length > 0 && !pendingAccountsData.some(acc => currentPending.some(cp => cp.id === acc.id))) {
-            pendingAccountsData = [...pendingAccountsData, ...currentPending];
-          }
-          console.log('Found accounts via direct user_id lookup:', currentActive.length, 'pending:', currentPending.length);
-        } else if (directError) {
-          console.error('Direct user_id query error:', directError);
-        }
-      }
-
-      // Method 3: Try looking up by email if still no accounts found
-      if (accountsData.length === 0 && user.email) {
-        console.log('Trying email-based lookup');
-
-        // First get profile by email
-        const { data: emailProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('application_id')
-          .eq('email', user.email)
-          .single();
-
-        if (!profileError && emailProfile?.application_id) {
-          const { data: emailAccounts, error: emailAccountsError } = await supabase
-            .from('accounts')
-            .select('*')
-            .eq('application_id', emailProfile.application_id)
-            .order('created_at', { ascending: true });
-
-          if (!emailAccountsError && emailAccounts && emailAccounts.length > 0) {
-            const currentActive = emailAccounts.filter(acc => acc.status === 'active');
-            const currentPending = emailAccounts.filter(acc => acc.status === 'pending');
-
-            // Validate these accounts belong to current user and merge
-            const validAccounts = currentActive.filter(account => {
-              return account.email === user.email || account.user_email === user.email;
-            });
-            const validPendingAccounts = currentPending.filter(account => {
-              return account.email === user.email || account.user_email === user.email;
-            });
-
-            if (validAccounts.length > 0 && !accountsData.some(acc => validAccounts.some(va => va.id === acc.id))) {
-              accountsData = [...accountsData, ...validAccounts];
-            }
-            if (validPendingAccounts.length > 0 && !pendingAccountsData.some(acc => validPendingAccounts.some(vp => vp.id === acc.id))) {
-              pendingAccountsData = [...pendingAccountsData, ...validPendingAccounts];
-            }
-            console.log('Found accounts via email lookup:', validAccounts.length, 'pending:', validPendingAccounts.length);
-          }
-        }
-      }
-
-      // Method 4: Last resort - try finding any accounts associated with the user's email
-      if (accountsData.length === 0 && user.email) {
-        console.log('Last resort: checking accounts table for email patterns');
-        const { data: lastResortAccounts, error: lastError } = await supabase
-          .from('accounts')
-          .select('*')
-          .order('created_at', { ascending: true });
-
-        if (!lastError && lastResortAccounts) {
-          // Filter accounts that might belong to this user (this is not ideal but helps debug)
-          console.log('All accounts found:', lastResortAccounts.length);
-          const userSpecificAccounts = lastResortAccounts.filter(account =>
-            account.user_id === user.id ||
-            (account.application_id && profile?.application_id === account.application_id) ||
-            account.email === user.email || account.user_email === user.email
-          );
-          const currentActive = userSpecificAccounts.filter(acc => acc.status === 'active');
-          const currentPending = userSpecificAccounts.filter(acc => acc.status === 'pending');
-
-          if (currentActive.length > 0 && !accountsData.some(acc => currentActive.some(ca => ca.id === acc.id))) {
-            accountsData = [...accountsData, ...currentActive];
-          }
-          if (currentPending.length > 0 && !pendingAccountsData.some(acc => currentPending.some(cp => cp.id === acc.id))) {
-            pendingAccountsData = [...pendingAccountsData, ...currentPending];
-          }
-          console.log('Filtered accounts for user:', userSpecificAccounts.length, 'active:', currentActive.length, 'pending:', currentPending.length);
-        }
-      }
-
-      // Set accounts and select first one
-      if (accountsData.length > 0) {
-        setAccounts(accountsData);
-        setFromAccount(accountsData[0].id.toString());
-        setMessage('');
-        console.log('Successfully loaded user accounts:', accountsData.length);
-        console.log('Account details:', accountsData.map(acc => ({
-          id: acc.id,
-          type: acc.account_type,
-          number: acc.account_number,
-          balance: acc.balance
-        })));
-      } else {
-        setAccounts([]);
-        setMessage('No active accounts found for your profile. Please contact support or apply for an account first.');
-        console.log('No active accounts found for user after all methods');
-      }
-      setPendingAccounts(pendingAccountsData); // Set pending accounts regardless of active accounts
-
-    } catch (error) {
-      console.error('Error fetching accounts:', error);
-      setMessage('Unable to load accounts. Please try again or contact support.');
-      setAccounts([]);
-      setPendingAccounts([]);
-    } finally {
-      setPageLoading(false);
-    }
-  };
-
-  const handleTransferDetailsChange = (field, value) => {
-    setTransferDetails(prev => ({ ...prev, [field]: value }));
-  };
-
-  const validateForm = () => {
-    const selectedAccountData = accounts.find(acc => acc.id.toString() === fromAccount);
-    const transferAmount = parseFloat(amount);
-
-    if (!fromAccount || !toAccountNumber || !amount || transferAmount <= 0) {
-      setMessage('Please select accounts and enter a valid transfer amount.');
-      return false;
-    }
-
-    if (transferAmount > parseFloat(selectedAccountData?.balance || 0)) {
-      setMessage('Insufficient funds. Your current balance is $' + parseFloat(selectedAccountData?.balance || 0).toFixed(2));
-      return false;
-    }
-
-    if (transferAmount > 25000 && transferType !== 'internal') {
-      setMessage('External transfers over $25,000 require additional verification. Please contact support.');
-      return false;
-    }
-
-    switch (transferType) {
-      case 'domestic_external':
-        if (!transferDetails.recipient_name || !transferDetails.routing_number || !transferDetails.bank_name) {
-          setMessage('Please fill in recipient name, routing number, and bank name for domestic transfers.');
-          return false;
-        }
-        break;
-      case 'international':
-        if (!transferDetails.recipient_name || !transferDetails.swift_code ||
-            !transferDetails.country || !transferDetails.purpose) {
-          setMessage('Please fill in all required fields for international transfers.');
-          return false;
-        }
-        break;
-      case 'internal':
-        if (!transferDetails.recipient_name) {
-          setMessage('Please provide the recipient name for reference.');
-          return false;
-        }
-        break;
-    }
-    return true;
-  };
-
-  const calculateFee = () => {
-    const transferAmount = parseFloat(amount) || 0;
-    switch (transferType) {
-      case 'internal': return 0;
-      case 'domestic_external': return transferAmount > 1000 ? 5.00 : 2.00;
-      case 'international': return 30.00;
-      default: return 0;
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-
-    setLoading(true);
-    setMessage('');
-
-    try {
-      const selectedAccountData = accounts.find(acc => acc.id.toString() === fromAccount);
-      const transferAmount = parseFloat(amount);
-      const fee = calculateFee();
-      const totalDeduction = transferAmount + fee;
-
-      if (totalDeduction > parseFloat(selectedAccountData?.balance || 0)) {
-        setMessage(`Insufficient funds including fees. Total needed: $${totalDeduction.toFixed(2)}`);
-        setLoading(false);
-        return;
-      }
-
-      // For internal transfers, use the API
-      if (transferType === 'internal') {
-        const response = await fetch('/api/internal-transfer', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sender_id: user.id,
-            from_account_id: fromAccount,
-            to_account_number: toAccountNumber,
-            amount: transferAmount,
-            memo: transferDetails.memo || 'Internal Transfer'
-          })
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || 'Transfer failed');
-        }
-
-        setMessage(`✅ ${result.message} (Ref: ${result.reference_number})`);
-      } else {
-        // For external transfers, keep the existing logic
-        const { error: transactionError } = await supabase
-          .from('transactions')
-          .insert([{
-            user_id: user.id,
-            account_id: parseInt(fromAccount),
-            amount: -transferAmount,
-            type: 'transfer_out',
-            description: `${transferType.toUpperCase()} transfer to ${toAccountNumber} - ${transferDetails.recipient_name} - ${transferDetails.memo || 'Transfer'}`,
-            status: 'pending',
-            category: 'transfer',
-            created_at: new Date().toISOString()
-          }]);
-
-        if (transactionError) throw transactionError;
-
-        if (fee > 0) {
-          await supabase.from('transactions').insert([{
-            user_id: user.id,
-            account_id: parseInt(fromAccount),
-            amount: -fee,
-            type: 'fee',
-            description: `${transferType.toUpperCase()} transfer fee`,
-            status: 'completed',
-            category: 'fee',
-            created_at: new Date().toISOString()
-          }]);
-        }
-
-        setMessage(`✅ Transfer of $${transferAmount.toFixed(2)} has been processed successfully!${fee > 0 ? ` Fee: $${fee.toFixed(2)}` : ''}`);
-      }
-
-      setAmount('');
-      setToAccountNumber('');
-      setTransferDetails({
-        recipient_name: '', recipient_email: '', memo: '', routing_number: '',
-        bank_name: '', swift_code: '', country: '', purpose: '', recipient_address: ''
-      });
-
-      // Refresh accounts
-      await fetchAccounts(user, userProfile);
-
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 3000);
-
-    } catch (error) {
-      console.error('Transfer error:', error);
-      setMessage(`Error: ${error.message}`);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -432,160 +57,58 @@ export default function Transfer() {
     }).format(amount || 0);
   };
 
-  const renderTransferTypeFields = () => {
-    switch (transferType) {
-      case 'internal':
-        return (
-          <>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Recipient Name *</label>
-              <input
-                type="text"
-                style={styles.input}
-                value={transferDetails.recipient_name}
-                onChange={(e) => handleTransferDetailsChange('recipient_name', e.target.value)}
-                placeholder="Name for reference"
-                required
-              />
-            </div>
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage('');
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Memo (Optional)</label>
-              <input
-                type="text"
-                style={styles.input}
-                value={transferDetails.memo}
-                onChange={(e) => handleTransferDetailsChange('memo', e.target.value)}
-                placeholder="What's this transfer for?"
-              />
-            </div>
-          </>
-        );
+    try {
+      const transferAmount = parseFloat(amount);
+      const selectedAccount = accounts.find(acc => acc.id === fromAccount);
 
-      case 'domestic_external':
-        return (
-          <>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Recipient Name *</label>
-              <input
-                type="text"
-                style={styles.input}
-                value={transferDetails.recipient_name}
-                onChange={(e) => handleTransferDetailsChange('recipient_name', e.target.value)}
-                placeholder="Full name on account"
-                required
-              />
-            </div>
+      if (transferAmount <= 0) {
+        setMessage('Please enter a valid amount');
+        setLoading(false);
+        return;
+      }
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Bank Name *</label>
-              <input
-                type="text"
-                style={styles.input}
-                value={transferDetails.bank_name}
-                onChange={(e) => handleTransferDetailsChange('bank_name', e.target.value)}
-                placeholder="Recipient's bank name"
-                required
-              />
-            </div>
+      if (transferAmount > parseFloat(selectedAccount?.balance || 0)) {
+        setMessage('Insufficient funds');
+        setLoading(false);
+        return;
+      }
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Routing Number *</label>
-              <input
-                type="text"
-                style={styles.input}
-                value={transferDetails.routing_number}
-                onChange={(e) => handleTransferDetailsChange('routing_number', e.target.value)}
-                placeholder="123456789"
-                maxLength="9"
-                required
-              />
-            </div>
+      const response = await fetch('/api/internal-transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender_id: user.id,
+          from_account_id: fromAccount,
+          to_account_number: toAccountNumber,
+          amount: transferAmount,
+          memo: memo || 'Transfer'
+        })
+      });
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Memo (Optional)</label>
-              <input
-                type="text"
-                style={styles.input}
-                value={transferDetails.memo}
-                onChange={(e) => handleTransferDetailsChange('memo', e.target.value)}
-                placeholder="Purpose of transfer"
-              />
-            </div>
-          </>
-        );
+      const result = await response.json();
 
-      case 'international':
-        return (
-          <>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Recipient Name *</label>
-              <input
-                type="text"
-                style={styles.input}
-                value={transferDetails.recipient_name}
-                onChange={(e) => handleTransferDetailsChange('recipient_name', e.target.value)}
-                placeholder="Full name on account"
-                required
-              />
-            </div>
+      if (!response.ok) {
+        throw new Error(result.error || 'Transfer failed');
+      }
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Country *</label>
-              <input
-                type="text"
-                style={styles.input}
-                value={transferDetails.country}
-                onChange={(e) => handleTransferDetailsChange('country', e.target.value)}
-                placeholder="Destination country"
-                required
-              />
-            </div>
+      setShowSuccess(true);
+      setAmount('');
+      setToAccountNumber('');
+      setMemo('');
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>SWIFT Code *</label>
-              <input
-                type="text"
-                style={styles.input}
-                value={transferDetails.swift_code}
-                onChange={(e) => handleTransferDetailsChange('swift_code', e.target.value)}
-                placeholder="ABCDUS33XXX"
-                required
-              />
-            </div>
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 2500);
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Purpose of Transfer *</label>
-              <select
-                style={styles.select}
-                value={transferDetails.purpose}
-                onChange={(e) => handleTransferDetailsChange('purpose', e.target.value)}
-                required
-              >
-                <option value="">Select purpose</option>
-                <option value="family_support">Family Support</option>
-                <option value="education">Education</option>
-                <option value="business">Business</option>
-                <option value="investment">Investment</option>
-                <option value="personal">Personal</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Recipient Address</label>
-              <textarea
-                style={{...styles.input, minHeight: '60px', resize: 'vertical'}}
-                value={transferDetails.recipient_address}
-                onChange={(e) => handleTransferDetailsChange('recipient_address', e.target.value)}
-                placeholder="Complete address of recipient"
-              />
-            </div>
-          </>
-        );
-
-      default:
-        return null;
+    } catch (error) {
+      setMessage(error.message || 'Transfer failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -593,12 +116,12 @@ export default function Transfer() {
     return (
       <div style={styles.loadingContainer}>
         <div style={styles.spinner}></div>
-        <p style={styles.loadingText}>Loading transfer page...</p>
+        <p style={styles.loadingText}>Loading...</p>
       </div>
     );
   }
 
-  if (!user) {
+  if (accounts.length === 0) {
     return (
       <div style={styles.container}>
         <div style={styles.header}>
@@ -606,71 +129,25 @@ export default function Transfer() {
             <div style={styles.logoPlaceholder}>🏦</div>
             <span style={styles.logoText}>Oakline Bank</span>
           </Link>
-          <div style={styles.routingInfo}>Routing Number: 075915826</div>
-        </div>
-        <div style={styles.loginPrompt}>
-          <h1 style={styles.loginTitle}>Please Log In</h1>
-          <p style={styles.loginMessage}>You need to be logged in to make transfers</p>
-          <a href="/login" style={styles.loginButton}>Go to Login</a>
-        </div>
-      </div>
-    );
-  }
-
-  // Conditional rendering based on whether there are active accounts
-  if (accounts.length === 0 && !loading) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <Link href="/" style={styles.logoContainer}>
-            <div style={styles.logoPlaceholder}>🏦</div>
-            <span style={styles.logoText}>Oakline Bank</span>
-          </Link>
-          <div style={styles.headerInfo}>
-            <div style={styles.routingInfo}>Routing Number: 075915826</div>
-            <Link href="/dashboard" style={styles.backButton}>← Dashboard</Link>
-          </div>
+          <Link href="/dashboard" style={styles.backButton}>← Dashboard</Link>
         </div>
         <div style={styles.emptyState}>
-          <h1 style={styles.emptyTitle}>No Accounts Found</h1>
-          <p style={styles.emptyDesc}>You need to have at least one active account to make transfers. If you have applied for an account, it may still be pending approval. Please contact support or apply for an account first.</p>
-          <Link href="/apply" style={styles.emptyButton}>Apply for Account</Link>
-
-          {/* Display pending accounts if any */}
-          {pendingAccounts.length > 0 && (
-            <div style={styles.pendingAccountsDisplay}>
-              <h2 style={styles.pendingTitle}>Your Pending Accounts</h2>
-              <div style={styles.pendingAccountsList}>
-                {pendingAccounts.map((account) => (
-                  <div key={account.id} style={styles.pendingAccountCard}>
-                    <div style={styles.pendingAccountInfo}>
-                      <p><strong>Account Type:</strong> {account.account_type?.replace('_', ' ')?.toUpperCase()}</p>
-                      <p><strong>Account Number:</strong> ****{account.account_number?.slice(-4)}</p>
-                      <p style={styles.pendingStatus}>Status: Pending Approval</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p style={styles.contactInfo}>
-                Your account is pending approval. Please wait for confirmation or contact support if you have questions.
-              </p>
-            </div>
-          )}
+          <div style={styles.emptyIcon}>🏦</div>
+          <h1 style={styles.emptyTitle}>No Active Accounts</h1>
+          <p style={styles.emptyDesc}>You need at least one active account to make transfers.</p>
+          <Link href="/apply" style={styles.emptyButton}>Open an Account</Link>
         </div>
       </div>
     );
   }
 
-  const selectedAccountData = accounts.find(acc => acc.id.toString() === fromAccount);
-  const fee = calculateFee();
-  const totalAmount = (parseFloat(amount) || 0) + fee;
+  const selectedAccount = accounts.find(acc => acc.id === fromAccount);
 
   return (
     <>
       <Head>
         <title>Transfer Funds - Oakline Bank</title>
-        <meta name="description" content="Send money securely with bank-level encryption" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
 
       <div style={styles.container}>
@@ -679,86 +156,59 @@ export default function Transfer() {
             <div style={styles.logoPlaceholder}>🏦</div>
             <span style={styles.logoText}>Oakline Bank</span>
           </Link>
-          <div style={styles.headerInfo}>
-            <div style={styles.routingInfo}>Routing: 075915826</div>
-            <Link href="/dashboard" style={styles.backButton}>← Back</Link>
-          </div>
+          <Link href="/dashboard" style={styles.backButton}>← Dashboard</Link>
         </div>
 
         <div style={styles.content}>
+          {showSuccess && (
+            <div style={styles.successModal}>
+              <div style={styles.successCheck}>✓</div>
+              <h2 style={styles.successTitle}>Transfer Successful!</h2>
+              <p style={styles.successMessage}>Your funds have been transferred</p>
+            </div>
+          )}
+
           <div style={styles.titleSection}>
-            <h1 style={styles.title}>💸 Transfer Funds</h1>
-            <p style={styles.subtitle}>Send money securely</p>
+            <h1 style={styles.title}>💸 Transfer Money</h1>
+            <p style={styles.subtitle}>Send funds securely between accounts</p>
           </div>
 
           {message && (
-            <div style={{
-              ...styles.message,
-              backgroundColor: message.includes('✅') ? '#d4edda' : '#f8d7da',
-              color: message.includes('✅') ? '#155724' : '#721c24',
-              borderColor: message.includes('✅') ? '#c3e6cb' : '#f5c6cb'
-            }}>
-              {message}
-            </div>
+            <div style={styles.errorMessage}>{message}</div>
           )}
 
-          {/* Display pending accounts if user has them but no active accounts */}
-          {accounts.length === 0 && pendingAccounts.length > 0 && (
-            <div style={styles.pendingAccountsDisplay}>
-              <h2 style={styles.pendingTitle}>Your Pending Accounts</h2>
-              <div style={styles.pendingAccountsList}>
-                {pendingAccounts.map((account) => (
-                  <div key={account.id} style={styles.pendingAccountCard}>
-                    <div style={styles.pendingAccountInfo}>
-                      <p><strong>Account Type:</strong> {account.account_type?.replace('_', ' ')?.toUpperCase()}</p>
-                      <p><strong>Account Number:</strong> ****{account.account_number?.slice(-4)}</p>
-                      <p style={styles.pendingStatus}>Status: Pending Approval</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p style={styles.contactInfo}>
-                Your account is pending approval. You cannot make transfers until your account is active. Please contact support if you have questions.
-              </p>
-            </div>
-          )}
-
-          {/* Own Accounts Quick Transfer */}
+          {/* Account Balance Overview */}
           {accounts.length > 1 && (
-            <div style={styles.ownAccountsSection}>
-              <h3 style={styles.sectionTitle}>💳 Transfer Between Your Accounts</h3>
-              <div style={styles.ownAccountsGrid}>
+            <div style={styles.accountsOverview}>
+              <h3 style={styles.overviewTitle}>Your Accounts</h3>
+              <div style={styles.accountsGrid}>
                 {accounts.map(account => (
-                  <div key={account.id} style={styles.ownAccountCard}>
-                    <div style={styles.ownAccountType}>
+                  <div key={account.id} style={styles.accountCard}>
+                    <div style={styles.accountType}>
                       {account.account_type?.replace('_', ' ')?.toUpperCase()}
                     </div>
-                    <div style={styles.ownAccountNumber}>
+                    <div style={styles.accountNumber}>
                       ****{account.account_number?.slice(-4)}
                     </div>
-                    <div style={styles.ownAccountBalance}>
+                    <div style={styles.accountBalance}>
                       {formatCurrency(account.balance || 0)}
                     </div>
                   </div>
                 ))}
               </div>
-              <p style={styles.ownAccountsHelper}>
-                Use the form below to transfer between your Oakline accounts (no fees!)
-              </p>
             </div>
           )}
 
+          {/* Transfer Form */}
           <form onSubmit={handleSubmit} style={styles.form}>
             <div style={styles.formGroup}>
-              <label style={styles.label}>Transfer From Account *</label>
+              <label style={styles.label}>From Account *</label>
               <select
                 style={styles.select}
                 value={fromAccount}
                 onChange={(e) => setFromAccount(e.target.value)}
                 required
-                disabled={accounts.length === 0}
               >
-                <option value="">Choose account</option>
                 {accounts.map(account => (
                   <option key={account.id} value={account.id}>
                     {account.account_type?.replace('_', ' ')?.toUpperCase()} -
@@ -767,20 +217,11 @@ export default function Transfer() {
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Transfer Type *</label>
-              <select
-                style={styles.select}
-                value={transferType}
-                onChange={(e) => setTransferType(e.target.value)}
-                required
-              >
-                <option value="internal">🏦 Internal (Free)</option>
-                <option value="domestic_external">🇺🇸 Domestic ($2-5)</option>
-                <option value="international">🌍 International ($30)</option>
-              </select>
+              {selectedAccount && (
+                <small style={styles.helperText}>
+                  Available Balance: {formatCurrency(selectedAccount.balance || 0)}
+                </small>
+              )}
             </div>
 
             <div style={styles.formGroup}>
@@ -790,7 +231,7 @@ export default function Transfer() {
                 style={styles.input}
                 value={toAccountNumber}
                 onChange={(e) => setToAccountNumber(e.target.value)}
-                placeholder="Recipient account number"
+                placeholder="Enter recipient account number"
                 required
               />
             </div>
@@ -802,26 +243,43 @@ export default function Transfer() {
                 style={styles.input}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter amount"
+                placeholder="0.00"
                 step="0.01"
                 min="0.01"
-                max={selectedAccountData ? parseFloat(selectedAccountData.balance || 0) - fee : 25000}
+                max={selectedAccount ? parseFloat(selectedAccount.balance || 0) : 25000}
                 required
+              />
+              <small style={styles.helperText}>
+                Maximum: {formatCurrency(selectedAccount?.balance || 0)}
+              </small>
+            </div>
+
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Memo (Optional)</label>
+              <input
+                type="text"
+                style={styles.input}
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
+                placeholder="What's this transfer for?"
+                maxLength="100"
               />
             </div>
 
-            <div style={styles.detailsSection}>
-              <h3 style={styles.sectionTitle}>Transfer Details</h3>
-              {renderTransferTypeFields()}
-            </div>
-
-            {fee > 0 && (
-              <div style={styles.feeNotice}>
-                <h4 style={styles.feeTitle}>💰 Fee Notice</h4>
-                <p>This transfer incurs a {formatCurrency(fee)} fee.</p>
-                <p><strong>Total: {formatCurrency(totalAmount)}</strong></p>
+            <div style={styles.transferSummary}>
+              <div style={styles.summaryRow}>
+                <span>Transfer Amount:</span>
+                <span style={styles.summaryValue}>{formatCurrency(parseFloat(amount) || 0)}</span>
               </div>
-            )}
+              <div style={styles.summaryRow}>
+                <span>Fee:</span>
+                <span style={styles.summaryValue}>$0.00</span>
+              </div>
+              <div style={{...styles.summaryRow, ...styles.summaryTotal}}>
+                <span>Total:</span>
+                <span style={styles.summaryValue}>{formatCurrency(parseFloat(amount) || 0)}</span>
+              </div>
+            </div>
 
             <button
               type="submit"
@@ -830,20 +288,39 @@ export default function Transfer() {
                 opacity: loading ? 0.7 : 1,
                 cursor: loading ? 'not-allowed' : 'pointer'
               }}
-              disabled={loading || accounts.length === 0} // Disable if no active accounts
+              disabled={loading}
             >
-              {loading ? '🔄 Processing...' : `Transfer ${formatCurrency(parseFloat(amount) || 0)}`}
+              {loading ? '🔄 Processing...' : `💸 Transfer ${formatCurrency(parseFloat(amount) || 0)}`}
             </button>
           </form>
 
+          {/* Quick Links */}
+          <div style={styles.quickLinks}>
+            <Link href="/zelle-transfer" style={styles.quickLink}>
+              <span style={styles.quickLinkIcon}>⚡</span>
+              <div>
+                <div style={styles.quickLinkTitle}>Zelle Transfer</div>
+                <div style={styles.quickLinkDesc}>Send with email or phone</div>
+              </div>
+            </Link>
+            <Link href="/transactions" style={styles.quickLink}>
+              <span style={styles.quickLinkIcon}>📋</span>
+              <div>
+                <div style={styles.quickLinkTitle}>Transaction History</div>
+                <div style={styles.quickLinkDesc}>View all transfers</div>
+              </div>
+            </Link>
+          </div>
+
+          {/* Info Section */}
           <div style={styles.infoSection}>
             <h4 style={styles.infoTitle}>🔒 Transfer Information</h4>
             <ul style={styles.infoList}>
-              <li><strong>Internal:</strong> Instant transfers between Oakline accounts</li>
-              <li><strong>Domestic:</strong> 1-3 business days to other US banks</li>
-              <li><strong>International:</strong> 3-5 business days worldwide</li>
-              <li>All transfers are secured with bank-level encryption</li>
+              <li>Internal transfers are instant and free</li>
+              <li>Funds are available immediately</li>
+              <li>All transfers are encrypted and secure</li>
               <li>Daily transfer limit: $25,000</li>
+              <li>Transfer history available in your dashboard</li>
             </ul>
           </div>
         </div>
@@ -855,19 +332,18 @@ export default function Transfer() {
 const styles = {
   container: {
     minHeight: '100vh',
-    backgroundColor: '#f8fafc',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    backgroundColor: '#f1f5f9',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    paddingBottom: '100px'
   },
   header: {
-    backgroundColor: '#1e40af',
+    backgroundColor: '#1A3E6F',
     color: 'white',
-    padding: '1rem',
+    padding: '1.25rem',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    flexWrap: 'wrap',
-    gap: '0.5rem'
+    boxShadow: '0 4px 20px rgba(26, 62, 111, 0.25)'
   },
   logoContainer: {
     display: 'flex',
@@ -880,125 +356,232 @@ const styles = {
     fontSize: '1.5rem'
   },
   logoText: {
-    fontSize: 'clamp(1.1rem, 4vw, 1.5rem)',
+    fontSize: '1.25rem',
     fontWeight: 'bold'
   },
-  headerInfo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    flexWrap: 'wrap'
-  },
-  routingInfo: {
-    fontSize: '0.8rem',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    padding: '0.4rem 0.6rem',
-    borderRadius: '6px'
-  },
   backButton: {
-    padding: '0.4rem 0.8rem',
+    padding: '0.5rem 1rem',
     backgroundColor: 'rgba(255,255,255,0.2)',
     color: 'white',
     textDecoration: 'none',
-    borderRadius: '6px',
-    fontSize: '0.8rem',
-    border: '1px solid rgba(255,255,255,0.3)'
+    borderRadius: '8px',
+    fontSize: '0.9rem',
+    transition: 'all 0.2s'
   },
   content: {
-    padding: '1rem',
-    maxWidth: '600px',
+    padding: '1.5rem',
+    maxWidth: '700px',
     margin: '0 auto'
+  },
+  successModal: {
+    backgroundColor: '#d1fae5',
+    border: '2px solid #10b981',
+    borderRadius: '16px',
+    padding: '2rem',
+    textAlign: 'center',
+    marginBottom: '2rem',
+    animation: 'slideDown 0.3s ease'
+  },
+  successCheck: {
+    width: '80px',
+    height: '80px',
+    borderRadius: '50%',
+    backgroundColor: '#10b981',
+    color: 'white',
+    fontSize: '3rem',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: '0 auto 1rem',
+    fontWeight: 'bold'
+  },
+  successTitle: {
+    color: '#065f46',
+    fontSize: '1.5rem',
+    marginBottom: '0.5rem'
+  },
+  successMessage: {
+    color: '#047857',
+    fontSize: '1rem'
   },
   titleSection: {
     textAlign: 'center',
-    marginBottom: '1.5rem'
+    marginBottom: '2rem'
   },
   title: {
-    fontSize: 'clamp(1.5rem, 6vw, 2rem)',
+    fontSize: '2rem',
     fontWeight: 'bold',
     color: '#1e293b',
     marginBottom: '0.5rem'
   },
   subtitle: {
-    fontSize: 'clamp(0.9rem, 3vw, 1rem)',
+    fontSize: '1rem',
     color: '#64748b'
+  },
+  errorMessage: {
+    backgroundColor: '#fee2e2',
+    color: '#dc2626',
+    padding: '1rem',
+    borderRadius: '12px',
+    marginBottom: '1.5rem',
+    border: '2px solid #fca5a5',
+    fontSize: '0.95rem'
+  },
+  accountsOverview: {
+    backgroundColor: 'white',
+    borderRadius: '16px',
+    padding: '1.5rem',
+    marginBottom: '1.5rem',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+  },
+  overviewTitle: {
+    fontSize: '1.1rem',
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: '1rem'
+  },
+  accountsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+    gap: '1rem'
+  },
+  accountCard: {
+    backgroundColor: '#f8fafc',
+    border: '2px solid #e2e8f0',
+    borderRadius: '12px',
+    padding: '1.25rem',
+    textAlign: 'center',
+    transition: 'all 0.3s'
+  },
+  accountType: {
+    fontSize: '0.85rem',
+    fontWeight: '600',
+    color: '#1A3E6F',
+    marginBottom: '0.5rem'
+  },
+  accountNumber: {
+    fontSize: '0.9rem',
+    color: '#64748b',
+    marginBottom: '0.5rem',
+    fontFamily: 'monospace'
+  },
+  accountBalance: {
+    fontSize: '1.25rem',
+    fontWeight: 'bold',
+    color: '#059669'
   },
   form: {
     backgroundColor: 'white',
-    padding: '1.5rem',
     borderRadius: '16px',
+    padding: '2rem',
     boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-    marginBottom: '1rem'
+    marginBottom: '1.5rem'
   },
   formGroup: {
-    marginBottom: '1rem'
+    marginBottom: '1.5rem'
   },
   label: {
     display: 'block',
-    fontSize: '0.9rem',
+    fontSize: '0.95rem',
     fontWeight: '600',
     color: '#374151',
     marginBottom: '0.5rem'
   },
   select: {
     width: '100%',
-    padding: '0.75rem',
+    padding: '0.875rem',
     border: '2px solid #e2e8f0',
-    borderRadius: '8px',
-    fontSize: '0.9rem',
+    borderRadius: '12px',
+    fontSize: '1rem',
+    boxSizing: 'border-box',
     backgroundColor: 'white',
-    boxSizing: 'border-box'
+    transition: 'all 0.2s'
   },
   input: {
     width: '100%',
-    padding: '0.75rem',
+    padding: '0.875rem',
     border: '2px solid #e2e8f0',
-    borderRadius: '8px',
-    fontSize: '0.9rem',
-    boxSizing: 'border-box'
+    borderRadius: '12px',
+    fontSize: '1rem',
+    boxSizing: 'border-box',
+    transition: 'all 0.2s'
   },
-  detailsSection: {
+  helperText: {
+    fontSize: '0.8rem',
+    color: '#64748b',
+    marginTop: '0.25rem',
+    display: 'block'
+  },
+  transferSummary: {
     backgroundColor: '#f8fafc',
-    padding: '1rem',
+    border: '2px solid #e2e8f0',
     borderRadius: '12px',
-    marginBottom: '1rem',
-    border: '2px solid #e2e8f0'
+    padding: '1.25rem',
+    marginBottom: '1.5rem'
   },
-  sectionTitle: {
-    color: '#1e40af',
-    marginBottom: '0.75rem',
-    fontSize: '1rem'
+  summaryRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '0.5rem 0',
+    fontSize: '0.95rem',
+    color: '#64748b'
   },
-  feeNotice: {
-    backgroundColor: '#fff3cd',
-    border: '2px solid #fbbf24',
-    borderRadius: '12px',
-    padding: '1rem',
-    marginBottom: '1rem'
+  summaryTotal: {
+    borderTop: '2px solid #e2e8f0',
+    marginTop: '0.5rem',
+    paddingTop: '0.75rem',
+    fontSize: '1.1rem',
+    fontWeight: '600',
+    color: '#1e293b'
   },
-  feeTitle: {
-    color: '#92400e',
-    marginBottom: '0.5rem',
-    fontSize: '0.9rem'
+  summaryValue: {
+    fontWeight: '600',
+    color: '#1e293b'
   },
   submitButton: {
     width: '100%',
-    padding: '1rem',
-    backgroundColor: '#1e40af',
+    padding: '1.125rem',
+    backgroundColor: '#1A3E6F',
     color: 'white',
     border: 'none',
     borderRadius: '12px',
-    fontSize: '1rem',
-    fontWeight: '600',
+    fontSize: '1.1rem',
+    fontWeight: '700',
     cursor: 'pointer',
-    transition: 'all 0.2s'
+    transition: 'all 0.3s',
+    boxShadow: '0 6px 20px rgba(26, 62, 111, 0.3)'
   },
-  message: {
-    padding: '1rem',
-    borderRadius: '8px',
-    border: '2px solid',
-    marginBottom: '1rem',
-    fontSize: '0.9rem'
+  quickLinks: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gap: '1rem',
+    marginBottom: '1.5rem'
+  },
+  quickLink: {
+    backgroundColor: 'white',
+    padding: '1.25rem',
+    borderRadius: '12px',
+    textDecoration: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    border: '2px solid #e2e8f0',
+    transition: 'all 0.3s',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+  },
+  quickLinkIcon: {
+    fontSize: '2rem',
+    flexShrink: 0
+  },
+  quickLinkTitle: {
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: '0.25rem'
+  },
+  quickLinkDesc: {
+    fontSize: '0.8rem',
+    color: '#64748b'
   },
   infoSection: {
     backgroundColor: 'white',
@@ -1007,88 +590,17 @@ const styles = {
     boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
   },
   infoTitle: {
-    color: '#1e40af',
+    color: '#1A3E6F',
     marginBottom: '0.75rem',
-    fontSize: '1rem'
+    fontSize: '1rem',
+    fontWeight: '600'
   },
   infoList: {
     margin: 0,
     paddingLeft: '1.2rem',
     color: '#374151',
-    lineHeight: '1.6',
-    fontSize: '0.85rem'
-  },
-  emptyState: {
-    textAlign: 'center',
-    padding: '3rem 1rem',
-    maxWidth: '600px',
-    margin: '0 auto'
-  },
-  emptyTitle: {
-    fontSize: 'clamp(1.3rem, 5vw, 1.8rem)',
-    color: '#1e293b',
-    marginBottom: '1rem'
-  },
-  emptyDesc: {
-    fontSize: 'clamp(0.9rem, 3vw, 1rem)',
-    color: '#64748b',
-    marginBottom: '1.5rem'
-  },
-  emptyButton: {
-    display: 'inline-block',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
-    padding: '12px 24px',
-    borderRadius: '8px',
-    textDecoration: 'none',
-    fontWeight: '500',
-    fontSize: '16px',
-    marginTop: '20px'
-  },
-  pendingAccountsDisplay: {
-    marginTop: '2rem',
-    backgroundColor: '#fff',
-    padding: '1.5rem',
-    borderRadius: '12px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-    border: '1px solid #e2e8f0'
-  },
-  pendingTitle: {
-    fontSize: '1.1rem',
-    fontWeight: '600',
-    color: '#1e40af',
-    marginBottom: '1rem',
-    textAlign: 'center'
-  },
-  pendingAccountsList: {
-    margin: '20px 0',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px'
-  },
-  pendingAccountCard: {
-    background: '#fff3cd',
-    border: '1px solid #ffeaa7',
-    borderRadius: '8px',
-    padding: '15px',
-    textAlign: 'left'
-  },
-  pendingAccountInfo: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '5px',
-    fontSize: '14px'
-  },
-  pendingStatus: {
-    color: '#856404',
-    fontWeight: 'bold',
-    fontSize: '12px'
-  },
-  contactInfo: {
-    marginTop: '20px',
-    fontSize: '14px',
-    color: '#666',
-    fontStyle: 'italic'
+    lineHeight: '1.8',
+    fontSize: '0.9rem'
   },
   loadingContainer: {
     display: 'flex',
@@ -1102,7 +614,7 @@ const styles = {
     width: '32px',
     height: '32px',
     border: '3px solid #e2e8f0',
-    borderTop: '3px solid #1e40af',
+    borderTop: '3px solid #1A3E6F',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite'
   },
@@ -1111,77 +623,34 @@ const styles = {
     color: '#64748b',
     fontSize: '1rem'
   },
-  loginPrompt: {
+  emptyState: {
     textAlign: 'center',
-    padding: '2rem 1rem',
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    margin: '2rem auto',
-    maxWidth: '400px'
+    padding: '3rem 1rem',
+    maxWidth: '500px',
+    margin: '0 auto'
   },
-  loginTitle: {
-    fontSize: '1.5rem',
-    fontWeight: '600',
-    color: '#1e293b',
-    margin: '0 0 1rem 0'
-  },
-  loginMessage: {
-    color: '#64748b',
-    margin: '0 0 1.5rem 0',
-    fontSize: '1rem'
-  },
-  loginButton: {
-    display: 'inline-block',
-    padding: '0.75rem 1.5rem',
-    backgroundColor: '#1e40af',
-    color: 'white',
-    textDecoration: 'none',
-    borderRadius: '8px',
-    fontWeight: '500'
-  },
-  ownAccountsSection: {
-    backgroundColor: 'white',
-    padding: '1.5rem',
-    borderRadius: '16px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-    marginBottom: '1.5rem'
-  },
-  ownAccountsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-    gap: '1rem',
+  emptyIcon: {
+    fontSize: '4rem',
     marginBottom: '1rem'
   },
-  ownAccountCard: {
-    backgroundColor: '#f8fafc',
-    border: '2px solid #e2e8f0',
+  emptyTitle: {
+    fontSize: '1.5rem',
+    color: '#1e293b',
+    marginBottom: '1rem'
+  },
+  emptyDesc: {
+    fontSize: '1rem',
+    color: '#64748b',
+    marginBottom: '2rem'
+  },
+  emptyButton: {
+    display: 'inline-block',
+    padding: '0.875rem 2rem',
+    backgroundColor: '#1A3E6F',
+    color: 'white',
+    textDecoration: 'none',
     borderRadius: '12px',
-    padding: '1rem',
-    textAlign: 'center'
-  },
-  ownAccountType: {
-    fontSize: '0.85rem',
     fontWeight: '600',
-    color: '#1e40af',
-    marginBottom: '0.5rem'
-  },
-  ownAccountNumber: {
-    fontSize: '0.9rem',
-    color: '#64748b',
-    marginBottom: '0.5rem',
-    fontFamily: 'monospace'
-  },
-  ownAccountBalance: {
-    fontSize: '1.1rem',
-    fontWeight: 'bold',
-    color: '#059669'
-  },
-  ownAccountsHelper: {
-    fontSize: '0.85rem',
-    color: '#64748b',
-    textAlign: 'center',
-    fontStyle: 'italic',
-    margin: 0
+    fontSize: '1rem'
   }
 };
