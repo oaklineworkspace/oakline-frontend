@@ -15,8 +15,20 @@ export default async function handler(req, res) {
   }
 
   try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized - Missing authentication token' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid authentication' });
+    }
+
     const {
-      user_id,
       from_account,
       beneficiary_name,
       beneficiary_bank,
@@ -27,7 +39,7 @@ export default async function handler(req, res) {
       memo
     } = req.body;
 
-    if (!user_id || !from_account || !beneficiary_name || !beneficiary_bank || 
+    if (!from_account || !beneficiary_name || !beneficiary_bank || 
         !routing_number || !account_number || !amount) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -41,7 +53,7 @@ export default async function handler(req, res) {
       .from('accounts')
       .select('*')
       .eq('id', from_account)
-      .eq('user_id', user_id)
+      .eq('user_id', user.id)
       .eq('status', 'active')
       .single();
 
@@ -58,7 +70,7 @@ export default async function handler(req, res) {
     const { data: transfer, error: transferError } = await supabaseAdmin
       .from('wire_transfers')
       .insert([{
-        user_id,
+        user_id: user.id,
         from_account_id: from_account,
         beneficiary_name,
         beneficiary_bank,
@@ -84,7 +96,7 @@ export default async function handler(req, res) {
     const { error: codeError } = await supabaseAdmin
       .from('verification_codes')
       .insert([{
-        user_id,
+        user_id: user.id,
         code: verificationCode,
         type: 'wire',
         reference_id: transfer.id,
@@ -98,7 +110,7 @@ export default async function handler(req, res) {
     const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('email')
-      .eq('id', user_id)
+      .eq('id', user.id)
       .single();
 
     if (profile?.email) {
@@ -130,7 +142,7 @@ export default async function handler(req, res) {
     }
 
     await supabaseAdmin.from('system_logs').insert([{
-      user_id,
+      user_id: user.id,
       level: 'info',
       type: 'wire_transfer_initiated',
       message: 'Wire transfer initiated',

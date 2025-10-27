@@ -11,10 +11,23 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { sender_id, sender_account_id, recipient_contact, amount, memo, step } = req.body;
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized - Missing authentication token' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid authentication' });
+    }
+
+    const { sender_account_id, recipient_contact, amount, memo, step } = req.body;
 
     if (step === 'initiate') {
-      if (!sender_id || !sender_account_id || !recipient_contact || !amount) {
+      if (!sender_account_id || !recipient_contact || !amount) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
@@ -27,7 +40,7 @@ export default async function handler(req, res) {
         .from('accounts')
         .select('*')
         .eq('id', sender_account_id)
-        .eq('user_id', sender_id)
+        .eq('user_id', user.id)
         .eq('status', 'active')
         .single();
 
@@ -42,7 +55,7 @@ export default async function handler(req, res) {
       const { data: zelleSettings } = await supabaseAdmin
         .from('zelle_settings')
         .select('*')
-        .eq('user_id', sender_id)
+        .eq('user_id', user.id)
         .single();
 
       const dailyLimit = zelleSettings?.daily_limit || 2500;
@@ -59,7 +72,7 @@ export default async function handler(req, res) {
       const { data: transaction, error: transactionError } = await supabaseAdmin
         .from('zelle_transactions')
         .insert([{
-          sender_id,
+          sender_id: user.id,
           sender_account_id,
           recipient_contact,
           recipient_user_id: recipientProfile?.id || null,
@@ -83,7 +96,7 @@ export default async function handler(req, res) {
       const { error: codeError } = await supabaseAdmin
         .from('verification_codes')
         .insert([{
-          user_id: sender_id,
+          user_id: user.id,
           code: verificationCode,
           type: 'zelle',
           reference_id: transaction.id,
@@ -97,7 +110,7 @@ export default async function handler(req, res) {
       const { data: senderProfile } = await supabaseAdmin
         .from('profiles')
         .select('email')
-        .eq('id', sender_id)
+        .eq('id', user.id)
         .single();
 
       if (senderProfile?.email) {
@@ -139,7 +152,7 @@ export default async function handler(req, res) {
       const { data: verificationRecord } = await supabaseAdmin
         .from('verification_codes')
         .select('*')
-        .eq('user_id', sender_id)
+        .eq('user_id', user.id)
         .eq('code', verification_code)
         .eq('type', 'zelle')
         .eq('reference_id', transaction_id)
@@ -211,7 +224,7 @@ export default async function handler(req, res) {
         .eq('id', verificationRecord.id);
 
       await supabaseAdmin.from('transactions').insert([{
-        user_id: sender_id,
+        user_id: user.id,
         account_id: transaction.sender_account_id,
         type: 'debit',
         category: 'zelle',
@@ -231,7 +244,7 @@ export default async function handler(req, res) {
       }
 
       await supabaseAdmin.from('notifications').insert([{
-        user_id: sender_id,
+        user_id: user.id,
         type: 'zelle',
         title: 'Zelle® Transfer Complete',
         message: `Successfully sent $${transaction.amount} to ${transaction.recipient_name}`,

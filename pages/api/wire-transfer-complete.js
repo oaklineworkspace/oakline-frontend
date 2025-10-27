@@ -6,16 +6,29 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { user_id, transfer_id, verification_code } = req.body;
+    const authHeader = req.headers.authorization;
 
-    if (!user_id || !transfer_id || !verification_code) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized - Missing authentication token' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid authentication' });
+    }
+
+    const { transfer_id, verification_code } = req.body;
+
+    if (!transfer_id || !verification_code) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
     const { data: verificationRecord } = await supabaseAdmin
       .from('verification_codes')
       .select('*')
-      .eq('user_id', user_id)
+      .eq('user_id', user.id)
       .eq('code', verification_code)
       .eq('type', 'wire')
       .eq('reference_id', transfer_id)
@@ -31,7 +44,7 @@ export default async function handler(req, res) {
       .from('wire_transfers')
       .select('*')
       .eq('id', transfer_id)
-      .eq('user_id', user_id)
+      .eq('user_id', user.id)
       .single();
 
     if (!transfer) {
@@ -69,7 +82,7 @@ export default async function handler(req, res) {
       .eq('id', verificationRecord.id);
 
     await supabaseAdmin.from('transactions').insert([{
-      user_id,
+      user_id: user.id,
       account_id: transfer.from_account_id,
       type: 'debit',
       category: 'wire_transfer',

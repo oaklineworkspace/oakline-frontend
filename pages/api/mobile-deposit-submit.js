@@ -11,8 +11,20 @@ export default async function handler(req, res) {
   }
 
   try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized - Missing authentication token' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid authentication' });
+    }
+
     const {
-      user_id,
       account_id,
       amount,
       check_front_image,
@@ -20,7 +32,7 @@ export default async function handler(req, res) {
       memo
     } = req.body;
 
-    if (!user_id || !account_id || !amount || !check_front_image || !check_back_image) {
+    if (!account_id || !amount || !check_front_image || !check_back_image) {
       return res.status(400).json({ error: 'Missing required fields. Both check images are required.' });
     }
 
@@ -33,7 +45,7 @@ export default async function handler(req, res) {
       .from('accounts')
       .select('*')
       .eq('id', account_id)
-      .eq('user_id', user_id)
+      .eq('user_id', user.id)
       .eq('status', 'active')
       .single();
 
@@ -46,7 +58,7 @@ export default async function handler(req, res) {
     const { data: deposit, error: depositError } = await supabaseAdmin
       .from('mobile_deposits')
       .insert([{
-        user_id,
+        user_id: user.id,
         account_id,
         amount: depositAmount,
         check_front_image,
@@ -66,7 +78,7 @@ export default async function handler(req, res) {
     const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('email, full_name')
-      .eq('id', user_id)
+      .eq('id', user.id)
       .single();
 
     if (profile?.email) {
@@ -96,7 +108,7 @@ export default async function handler(req, res) {
     }
 
     await supabaseAdmin.from('notifications').insert([{
-      user_id,
+      user_id: user.id,
       type: 'mobile_deposit',
       title: 'Mobile Deposit Submitted',
       message: `Your check deposit of $${depositAmount} is under review`,
@@ -104,7 +116,7 @@ export default async function handler(req, res) {
     }]);
 
     await supabaseAdmin.from('system_logs').insert([{
-      user_id,
+      user_id: user.id,
       level: 'info',
       type: 'mobile_deposit_submitted',
       message: 'Mobile deposit submitted',

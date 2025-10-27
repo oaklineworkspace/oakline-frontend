@@ -6,16 +6,29 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { user_id, code, type, reference_id } = req.body;
+    const authHeader = req.headers.authorization;
 
-    if (!user_id || !code || !type) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized - Missing authentication token' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid authentication' });
+    }
+
+    const { code, type, reference_id } = req.body;
+
+    if (!code || !type) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
     const { data: verificationRecord, error: fetchError } = await supabaseAdmin
       .from('verification_codes')
       .select('*')
-      .eq('user_id', user_id)
+      .eq('user_id', user.id)
       .eq('code', code)
       .eq('type', type)
       .eq('is_used', false)
@@ -25,17 +38,19 @@ export default async function handler(req, res) {
       .single();
 
     if (fetchError || !verificationRecord) {
-      const { error: attemptError } = await supabaseAdmin
+      const { data: existingCode } = await supabaseAdmin
         .from('verification_codes')
-        .update({
-          attempts: supabaseAdmin.raw('attempts + 1')
-        })
-        .eq('user_id', user_id)
+        .select('id, attempts')
+        .eq('user_id', user.id)
         .eq('code', code)
-        .eq('type', type);
+        .eq('type', type)
+        .single();
 
-      if (attemptError) {
-        console.error('Error updating attempts:', attemptError);
+      if (existingCode) {
+        await supabaseAdmin
+          .from('verification_codes')
+          .update({ attempts: existingCode.attempts + 1 })
+          .eq('id', existingCode.id);
       }
 
       return res.status(400).json({
@@ -63,7 +78,7 @@ export default async function handler(req, res) {
     }
 
     await supabaseAdmin.from('system_logs').insert([{
-      user_id,
+      user_id: user.id,
       level: 'info',
       type: `verification_success_${type}`,
       message: `Verification code successfully validated for ${type}`,
