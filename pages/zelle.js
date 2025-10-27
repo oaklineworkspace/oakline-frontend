@@ -1,12 +1,13 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
 import Head from 'next/head';
+import { Html5Qrcode } from 'html5-qrcode';
 
 export default function ZellePage() {
   const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [activeTab, setActiveTab] = useState('send');
   const [accounts, setAccounts] = useState([]);
   const [contacts, setContacts] = useState([]);
@@ -16,10 +17,15 @@ export default function ZellePage() {
   const [message, setMessage] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [sentCode, setSentCode] = useState('');
   const [receiverData, setReceiverData] = useState(null);
+  const [pendingTransactionId, setPendingTransactionId] = useState(null);
+  const [sending, setSending] = useState(false);
   const router = useRouter();
+  const qrScannerRef = useRef(null);
+  const scannerInstanceRef = useRef(null);
 
   const [sendForm, setSendForm] = useState({
     from_account: '',
@@ -28,8 +34,27 @@ export default function ZellePage() {
     memo: ''
   });
 
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    nickname: ''
+  });
+
+  const [settingsForm, setSettingsForm] = useState({
+    daily_limit: 2500,
+    monthly_limit: 20000,
+    notification_enabled: true,
+    require_verification: true
+  });
+
   useEffect(() => {
     checkUserAndLoadData();
+    return () => {
+      if (scannerInstanceRef.current) {
+        scannerInstanceRef.current.stop().catch(console.error);
+      }
+    };
   }, []);
 
   const checkUserAndLoadData = async () => {
@@ -41,7 +66,13 @@ export default function ZellePage() {
       }
       setUser(session.user);
 
-      // Load accounts
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+      setUserProfile(profile);
+
       const { data: userAccounts } = await supabase
         .from('accounts')
         .select('*')
@@ -52,22 +83,38 @@ export default function ZellePage() {
         setSendForm(prev => ({ ...prev, from_account: userAccounts[0].id }));
       }
 
-      // Load Zelle settings
       const { data: settings } = await supabase
         .from('zelle_settings')
         .select('*')
         .eq('user_id', session.user.id)
         .single();
-      setZelleSettings(settings);
+      
+      if (settings) {
+        setZelleSettings(settings);
+        setSettingsForm({
+          daily_limit: settings.daily_limit || 2500,
+          monthly_limit: settings.monthly_limit || 20000,
+          notification_enabled: settings.notification_enabled ?? true,
+          require_verification: settings.require_verification ?? true
+        });
+      } else {
+        await supabase.from('zelle_settings').insert([{
+          user_id: session.user.id,
+          email: profile?.email || session.user.email,
+          daily_limit: 2500,
+          monthly_limit: 20000,
+          is_enrolled: true,
+          enrolled_at: new Date().toISOString()
+        }]);
+      }
 
-      // Load contacts
       const { data: zelleContacts } = await supabase
         .from('zelle_contacts')
         .select('*')
-        .eq('user_id', session.user.id);
+        .eq('user_id', session.user.id)
+        .order('name');
       setContacts(zelleContacts || []);
 
-      // Load transactions
       const { data: zelleTxns } = await supabase
         .from('zelle_transactions')
         .select('*')
@@ -78,123 +125,211 @@ export default function ZellePage() {
 
     } catch (error) {
       console.error('Error loading data:', error);
+      setMessage('Error loading data. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLookupReceiver = async () => {
-    if (!sendForm.receiver_contact) {
-      setMessage('Please enter email or phone number');
+  const handleSendMoneyClick = async () => {
+    if (!sendForm.from_account || !sendForm.receiver_contact || !sendForm.amount) {
+      setMessage('Please fill in all required fields');
       return;
     }
 
-    setLoading(true);
-    try {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const isEmail = emailRegex.test(sendForm.receiver_contact);
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email, phone')
-        .eq(isEmail ? 'email' : 'phone', sendForm.receiver_contact)
-        .single();
-
-      if (!profile) {
-        setMessage('❌ Recipient not found in Oakline Bank');
-        setLoading(false);
-        return;
-      }
-
-      setReceiverData(profile);
-      setShowConfirmModal(true);
-    } catch (error) {
-      setMessage('Error looking up recipient');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const sendVerificationCode = async () => {
-    try {
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      setSentCode(code);
-
-      const response = await fetch('/api/send-verification-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: user.email,
-          code: code,
-          type: 'zelle_transfer'
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to send code');
-
-      setShowConfirmModal(false);
-      setShowVerificationModal(true);
-      setMessage('✅ Verification code sent to your email');
-    } catch (error) {
-      setMessage('❌ Error sending verification code');
-    }
-  };
-
-  const completeTransfer = async () => {
-    if (verificationCode !== sentCode) {
-      setMessage('❌ Invalid verification code');
+    const amount = parseFloat(sendForm.amount);
+    if (amount <= 0 || isNaN(amount)) {
+      setMessage('Please enter a valid amount');
       return;
     }
 
-    setLoading(true);
+    setSending(true);
+    setMessage('');
+
     try {
-      const response = await fetch('/api/zelle-transactions', {
+      const response = await fetch('/api/zelle-send-money', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sender_id: user.id,
           sender_account_id: sendForm.from_account,
           recipient_contact: sendForm.receiver_contact,
-          amount: parseFloat(sendForm.amount),
+          amount: sendForm.amount,
           memo: sendForm.memo,
-          transaction_type: 'send'
+          step: 'initiate'
         })
       });
 
       const result = await response.json();
 
-      if (!response.ok) throw new Error(result.error);
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to initiate transfer');
+      }
 
-      setMessage('✅ Transfer completed successfully!');
-      setShowVerificationModal(false);
-      setSendForm({ from_account: sendForm.from_account, receiver_contact: '', amount: '', memo: '' });
-      setReceiverData(null);
-      setVerificationCode('');
-      setSentCode('');
-      
-      setTimeout(() => {
-        checkUserAndLoadData();
-      }, 1000);
+      setReceiverData({
+        name: result.recipient_name,
+        email: result.recipient_email,
+        amount: sendForm.amount
+      });
+      setPendingTransactionId(result.transaction_id);
+      setShowConfirmModal(false);
+      setShowVerificationModal(true);
 
     } catch (error) {
-      setMessage(`❌ ${error.message}`);
+      console.error('Error initiating transfer:', error);
+      setMessage(error.message);
     } finally {
-      setLoading(false);
+      setSending(false);
     }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount || 0);
+  const handleVerifyAndSend = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      setMessage('Please enter a valid 6-digit code');
+      return;
+    }
+
+    setSending(true);
+    setMessage('');
+
+    try {
+      const response = await fetch('/api/zelle-send-money', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender_id: user.id,
+          transaction_id: pendingTransactionId,
+          verification_code: verificationCode,
+          step: 'complete'
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Verification failed');
+      }
+
+      setShowVerificationModal(false);
+      setVerificationCode('');
+      setSendForm({ from_account: accounts[0]?.id || '', receiver_contact: '', amount: '', memo: '' });
+      setMessage('✅ Transfer completed successfully!');
+      await checkUserAndLoadData();
+
+    } catch (error) {
+      console.error('Error completing transfer:', error);
+      setMessage(error.message);
+    } finally {
+      setSending(false);
+    }
   };
 
-  if (loading && !user) {
+  const startQRScanner = async () => {
+    setShowQRScanner(true);
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    try {
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+      const scanner = new Html5Qrcode("qr-reader");
+      scannerInstanceRef.current = scanner;
+
+      await scanner.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText) => {
+          try {
+            const data = JSON.parse(decodedText);
+            if (data.email || data.phone) {
+              setSendForm(prev => ({ ...prev, receiver_contact: data.email || data.phone }));
+              stopQRScanner();
+            }
+          } catch {
+            setSendForm(prev => ({ ...prev, receiver_contact: decodedText }));
+            stopQRScanner();
+          }
+        },
+        (errorMessage) => {
+          console.log(errorMessage);
+        }
+      );
+    } catch (error) {
+      console.error('Error starting QR scanner:', error);
+      setMessage('Failed to start camera. Please check permissions.');
+      setShowQRScanner(false);
+    }
+  };
+
+  const stopQRScanner = () => {
+    if (scannerInstanceRef.current) {
+      scannerInstanceRef.current.stop().then(() => {
+        setShowQRScanner(false);
+        scannerInstanceRef.current = null;
+      }).catch(console.error);
+    }
+  };
+
+  const handleAddContact = async (e) => {
+    e.preventDefault();
+    if (!contactForm.name || (!contactForm.email && !contactForm.phone)) {
+      setMessage('Please provide name and at least one contact method');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('zelle_contacts')
+        .insert([{
+          user_id: user.id,
+          name: contactForm.name,
+          email: contactForm.email || null,
+          phone: contactForm.phone || null,
+          nickname: contactForm.nickname || null
+        }]);
+
+      if (error) throw error;
+
+      setContactForm({ name: '', email: '', phone: '', nickname: '' });
+      setMessage('✅ Contact added successfully');
+      await checkUserAndLoadData();
+    } catch (error) {
+      console.error('Error adding contact:', error);
+      setMessage('Failed to add contact');
+    }
+  };
+
+  const handleUpdateSettings = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const { error } = await supabase
+        .from('zelle_settings')
+        .update(settingsForm)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setMessage('✅ Settings updated successfully');
+      await checkUserAndLoadData();
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      setMessage('Failed to update settings');
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'completed': return '#10b981';
+      case 'pending': return '#f59e0b';
+      case 'failed': return '#ef4444';
+      default: return '#6b7280';
+    }
+  };
+
+  if (loading) {
     return (
       <div style={styles.loadingContainer}>
         <div style={styles.spinner}></div>
-        <p style={styles.loadingText}>Loading Zelle...</p>
+        <p>Loading Zelle®...</p>
       </div>
     );
   }
@@ -208,76 +343,50 @@ export default function ZellePage() {
 
       <div style={styles.container}>
         <div style={styles.header}>
-          <Link href="/" style={styles.logoContainer}>
-            <div style={styles.logoPlaceholder}>🏦</div>
-            <span style={styles.logoText}>Oakline Bank</span>
-          </Link>
           <Link href="/dashboard" style={styles.backButton}>← Dashboard</Link>
+          <h1 style={styles.headerTitle}>Zelle®</h1>
+          <div style={styles.balanceDisplay}>
+            {zelleSettings && (
+              <div style={styles.limitInfo}>
+                Daily: ${zelleSettings.daily_limit?.toLocaleString()}
+              </div>
+            )}
+          </div>
         </div>
 
         <div style={styles.content}>
-          <div style={styles.titleSection}>
-            <h1 style={styles.title}>Zelle® Dashboard</h1>
-            <p style={styles.subtitle}>Send and receive money instantly</p>
-          </div>
-
-          {/* Balance and Limits Card */}
-          {zelleSettings && (
-            <div style={styles.balanceCard}>
-              <div style={styles.balanceItem}>
-                <span style={styles.balanceLabel}>Daily Limit</span>
-                <span style={styles.balanceValue}>{formatCurrency(zelleSettings.daily_limit)}</span>
-              </div>
-              <div style={styles.balanceItem}>
-                <span style={styles.balanceLabel}>Monthly Limit</span>
-                <span style={styles.balanceValue}>{formatCurrency(zelleSettings.monthly_limit)}</span>
-              </div>
-            </div>
-          )}
-
           {message && (
             <div style={{
               ...styles.message,
-              backgroundColor: message.includes('✅') ? '#d4edda' : '#f8d7da',
-              color: message.includes('✅') ? '#155724' : '#721c24',
-              borderColor: message.includes('✅') ? '#c3e6cb' : '#f5c6cb'
+              backgroundColor: message.includes('✅') ? '#d1fae5' : '#fee2e2',
+              color: message.includes('✅') ? '#065f46' : '#991b1b'
             }}>
               {message}
             </div>
           )}
 
-          {/* Tabs */}
           <div style={styles.tabs}>
-            <button
-              style={{ ...styles.tab, ...(activeTab === 'send' ? styles.activeTab : {}) }}
-              onClick={() => setActiveTab('send')}
-            >
-              💸 Send Money
-            </button>
-            <button
-              style={{ ...styles.tab, ...(activeTab === 'contacts' ? styles.activeTab : {}) }}
-              onClick={() => setActiveTab('contacts')}
-            >
-              👥 Contacts
-            </button>
-            <button
-              style={{ ...styles.tab, ...(activeTab === 'history' ? styles.activeTab : {}) }}
-              onClick={() => setActiveTab('history')}
-            >
-              📋 History
-            </button>
-            <button
-              style={{ ...styles.tab, ...(activeTab === 'settings' ? styles.activeTab : {}) }}
-              onClick={() => setActiveTab('settings')}
-            >
-              ⚙️ Settings
-            </button>
+            {['send', 'contacts', 'transactions', 'settings'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  ...styles.tab,
+                  ...(activeTab === tab ? styles.activeTab : {})
+                }}
+              >
+                {tab === 'send' && '💸 Send Money'}
+                {tab === 'contacts' && '👥 Contacts'}
+                {tab === 'transactions' && '📊 History'}
+                {tab === 'settings' && '⚙️ Settings'}
+              </button>
+            ))}
           </div>
 
-          {/* Send Money Tab */}
+          {/* SEND MONEY TAB */}
           {activeTab === 'send' && (
-            <div style={styles.tabContent}>
-              <h3 style={styles.sectionTitle}>Send Money with Zelle®</h3>
+            <div style={styles.card}>
+              <h2 style={styles.cardTitle}>Send Money with Zelle®</h2>
               
               <div style={styles.formGroup}>
                 <label style={styles.label}>From Account</label>
@@ -288,7 +397,7 @@ export default function ZellePage() {
                 >
                   {accounts.map(acc => (
                     <option key={acc.id} value={acc.id}>
-                      {acc.account_type?.toUpperCase()} - ****{acc.account_number?.slice(-4)} - {formatCurrency(acc.balance)}
+                      {acc.account_type} - {acc.account_number} (${parseFloat(acc.balance).toLocaleString()})
                     </option>
                   ))}
                 </select>
@@ -296,24 +405,47 @@ export default function ZellePage() {
 
               <div style={styles.formGroup}>
                 <label style={styles.label}>Recipient Email or Phone</label>
-                <input
-                  type="text"
-                  style={styles.input}
-                  value={sendForm.receiver_contact}
-                  onChange={(e) => setSendForm(prev => ({ ...prev, receiver_contact: e.target.value }))}
-                  placeholder="email@example.com or (555) 123-4567"
-                />
+                <div style={styles.inputWithButton}>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={sendForm.receiver_contact}
+                    onChange={(e) => setSendForm(prev => ({ ...prev, receiver_contact: e.target.value }))}
+                    placeholder="email@example.com or (555) 123-4567"
+                  />
+                  <button
+                    onClick={startQRScanner}
+                    style={styles.qrButton}
+                    type="button"
+                  >
+                    📷 Scan QR
+                  </button>
+                </div>
+                <small style={styles.helperText}>Or select from contacts below</small>
+                {contacts.length > 0 && (
+                  <div style={styles.contactChips}>
+                    {contacts.slice(0, 5).map(contact => (
+                      <button
+                        key={contact.id}
+                        onClick={() => setSendForm(prev => ({ ...prev, receiver_contact: contact.email || contact.phone }))}
+                        style={styles.contactChip}
+                      >
+                        {contact.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div style={styles.formGroup}>
                 <label style={styles.label}>Amount</label>
                 <input
                   type="number"
+                  step="0.01"
                   style={styles.input}
                   value={sendForm.amount}
                   onChange={(e) => setSendForm(prev => ({ ...prev, amount: e.target.value }))}
                   placeholder="0.00"
-                  step="0.01"
                 />
               </div>
 
@@ -329,145 +461,262 @@ export default function ZellePage() {
               </div>
 
               <button
+                onClick={handleSendMoneyClick}
                 style={styles.primaryButton}
-                onClick={handleLookupReceiver}
-                disabled={loading}
+                disabled={sending}
               >
-                {loading ? 'Processing...' : 'Continue →'}
+                {sending ? '⏳ Processing...' : '💸 Send Money'}
               </button>
             </div>
           )}
 
-          {/* Contacts Tab */}
+          {/* CONTACTS TAB */}
           {activeTab === 'contacts' && (
-            <div style={styles.tabContent}>
-              <h3 style={styles.sectionTitle}>Zelle Contacts</h3>
-              {contacts.length === 0 ? (
-                <p style={styles.emptyText}>No contacts yet</p>
-              ) : (
-                <div style={styles.contactsList}>
-                  {contacts.map(contact => (
-                    <div key={contact.id} style={styles.contactCard}>
-                      <div style={styles.contactAvatar}>{contact.name?.charAt(0)?.toUpperCase()}</div>
-                      <div>
-                        <div style={styles.contactName}>{contact.name}</div>
-                        <div style={styles.contactDetail}>{contact.email || contact.phone}</div>
+            <div style={styles.card}>
+              <h2 style={styles.cardTitle}>Zelle® Contacts</h2>
+              
+              <form onSubmit={handleAddContact} style={styles.form}>
+                <div style={styles.formRow}>
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Name *</label>
+                    <input
+                      type="text"
+                      style={styles.input}
+                      value={contactForm.name}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="John Doe"
+                      required
+                    />
+                  </div>
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Nickname</label>
+                    <input
+                      type="text"
+                      style={styles.input}
+                      value={contactForm.nickname}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, nickname: e.target.value }))}
+                      placeholder="Optional"
+                    />
+                  </div>
+                </div>
+
+                <div style={styles.formRow}>
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Email</label>
+                    <input
+                      type="email"
+                      style={styles.input}
+                      value={contactForm.email}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="email@example.com"
+                    />
+                  </div>
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Phone</label>
+                    <input
+                      type="tel"
+                      style={styles.input}
+                      value={contactForm.phone}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="(555) 123-4567"
+                    />
+                  </div>
+                </div>
+
+                <button type="submit" style={styles.primaryButton}>
+                  ➕ Add Contact
+                </button>
+              </form>
+
+              <div style={styles.contactList}>
+                {contacts.map(contact => (
+                  <div key={contact.id} style={styles.contactItem}>
+                    <div>
+                      <div style={styles.contactName}>{contact.name}</div>
+                      <div style={styles.contactDetail}>
+                        {contact.email || contact.phone}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <button
+                      onClick={() => setSendForm(prev => ({ ...prev, receiver_contact: contact.email || contact.phone }))}
+                      style={styles.sendToButton}
+                    >
+                      Send →
+                    </button>
+                  </div>
+                ))}
+                {contacts.length === 0 && (
+                  <p style={styles.emptyState}>No contacts yet. Add your first contact above!</p>
+                )}
+              </div>
             </div>
           )}
 
-          {/* History Tab */}
-          {activeTab === 'history' && (
-            <div style={styles.tabContent}>
-              <h3 style={styles.sectionTitle}>Recent Zelle Transactions</h3>
-              {transactions.length === 0 ? (
-                <p style={styles.emptyText}>No transactions yet</p>
-              ) : (
-                <div style={styles.transactionsList}>
-                  {transactions.map(txn => (
-                    <div key={txn.id} style={styles.transactionCard}>
-                      <div style={styles.transactionInfo}>
-                        <div style={styles.transactionType}>
-                          {txn.sender_id === user.id ? '↑ Sent' : '↓ Received'}
-                        </div>
-                        <div style={styles.transactionContact}>{txn.recipient_contact}</div>
-                        <div style={styles.transactionDate}>
-                          {new Date(txn.created_at).toLocaleDateString()}
-                        </div>
+          {/* TRANSACTIONS TAB */}
+          {activeTab === 'transactions' && (
+            <div style={styles.card}>
+              <h2 style={styles.cardTitle}>Recent Zelle® Transactions</h2>
+              
+              <div style={styles.transactionList}>
+                {transactions.map(txn => (
+                  <div key={txn.id} style={styles.transactionItem}>
+                    <div style={styles.transactionLeft}>
+                      <div style={styles.transactionType}>
+                        {txn.sender_id === user?.id ? '📤 Sent' : '📥 Received'}
                       </div>
-                      <div style={styles.transactionRight}>
-                        <div style={styles.transactionAmount}>
-                          {txn.sender_id === user.id ? '-' : '+'}{formatCurrency(txn.amount)}
-                        </div>
-                        <div style={{
-                          ...styles.transactionStatus,
-                          color: txn.status === 'completed' ? '#059669' : 
-                                 txn.status === 'pending' ? '#ea580c' : '#dc2626'
-                        }}>
-                          {txn.status}
-                        </div>
+                      <div style={styles.transactionName}>
+                        {txn.sender_id === user?.id 
+                          ? `To: ${txn.recipient_name}` 
+                          : `From: ${txn.sender_id}`}
+                      </div>
+                      <div style={styles.transactionDate}>
+                        {new Date(txn.created_at).toLocaleDateString()}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div style={styles.transactionRight}>
+                      <div style={{
+                        ...styles.transactionAmount,
+                        color: txn.sender_id === user?.id ? '#ef4444' : '#10b981'
+                      }}>
+                        {txn.sender_id === user?.id ? '-' : '+'}${parseFloat(txn.amount).toFixed(2)}
+                      </div>
+                      <div style={{
+                        ...styles.transactionStatus,
+                        backgroundColor: getStatusColor(txn.status) + '20',
+                        color: getStatusColor(txn.status)
+                      }}>
+                        {txn.status}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {transactions.length === 0 && (
+                  <p style={styles.emptyState}>No transactions yet. Start sending money!</p>
+                )}
+              </div>
             </div>
           )}
 
-          {/* Settings Tab */}
+          {/* SETTINGS TAB */}
           {activeTab === 'settings' && (
-            <div style={styles.tabContent}>
-              <h3 style={styles.sectionTitle}>Zelle Settings</h3>
-              <Link href="/zelle-settings" style={styles.settingsLink}>
-                Manage Zelle Settings →
-              </Link>
+            <div style={styles.card}>
+              <h2 style={styles.cardTitle}>Zelle® Settings</h2>
+              
+              <form onSubmit={handleUpdateSettings} style={styles.form}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Daily Transfer Limit</label>
+                  <input
+                    type="number"
+                    style={styles.input}
+                    value={settingsForm.daily_limit}
+                    onChange={(e) => setSettingsForm(prev => ({ ...prev, daily_limit: parseFloat(e.target.value) }))}
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Monthly Transfer Limit</label>
+                  <input
+                    type="number"
+                    style={styles.input}
+                    value={settingsForm.monthly_limit}
+                    onChange={(e) => setSettingsForm(prev => ({ ...prev, monthly_limit: parseFloat(e.target.value) }))}
+                  />
+                </div>
+
+                <div style={styles.checkboxGroup}>
+                  <input
+                    type="checkbox"
+                    id="notifications"
+                    checked={settingsForm.notification_enabled}
+                    onChange={(e) => setSettingsForm(prev => ({ ...prev, notification_enabled: e.target.checked }))}
+                  />
+                  <label htmlFor="notifications" style={styles.checkboxLabel}>
+                    Enable transfer notifications
+                  </label>
+                </div>
+
+                <div style={styles.checkboxGroup}>
+                  <input
+                    type="checkbox"
+                    id="verification"
+                    checked={settingsForm.require_verification}
+                    onChange={(e) => setSettingsForm(prev => ({ ...prev, require_verification: e.target.checked }))}
+                  />
+                  <label htmlFor="verification" style={styles.checkboxLabel}>
+                    Require verification code for transfers
+                  </label>
+                </div>
+
+                <button type="submit" style={styles.primaryButton}>
+                  💾 Save Settings
+                </button>
+              </form>
+
+              <div style={styles.infoBox}>
+                <h3 style={styles.infoTitle}>Your Zelle® Profile</h3>
+                <p><strong>Email:</strong> {zelleSettings?.email}</p>
+                <p><strong>Phone:</strong> {zelleSettings?.phone || 'Not set'}</p>
+                <p><strong>Enrolled:</strong> {zelleSettings?.enrolled_at ? new Date(zelleSettings.enrolled_at).toLocaleDateString() : 'N/A'}</p>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Confirmation Modal */}
-        {showConfirmModal && receiverData && (
-          <div style={styles.modalOverlay} onClick={() => setShowConfirmModal(false)}>
-            <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-              <h2 style={styles.modalTitle}>Confirm Transfer</h2>
-              <div style={styles.modalContent}>
-                <div style={styles.modalRow}>
-                  <span style={styles.modalLabel}>Recipient:</span>
-                  <span style={styles.modalValue}>{receiverData.first_name} {receiverData.last_name}</span>
-                </div>
-                <div style={styles.modalRow}>
-                  <span style={styles.modalLabel}>Email:</span>
-                  <span style={styles.modalValue}>{receiverData.email}</span>
-                </div>
-                <div style={styles.modalRow}>
-                  <span style={styles.modalLabel}>Amount:</span>
-                  <span style={styles.modalValue}>{formatCurrency(sendForm.amount)}</span>
-                </div>
-                {sendForm.memo && (
-                  <div style={styles.modalRow}>
-                    <span style={styles.modalLabel}>Memo:</span>
-                    <span style={styles.modalValue}>{sendForm.memo}</span>
-                  </div>
-                )}
+        {/* VERIFICATION MODAL */}
+        {showVerificationModal && (
+          <div style={styles.modal}>
+            <div style={styles.modalContent}>
+              <h2 style={styles.modalTitle}>Verify Transaction</h2>
+              <p style={styles.modalText}>
+                We've sent a 6-digit code to your email: <strong>{userProfile?.email}</strong>
+              </p>
+              
+              <div style={styles.confirmDetails}>
+                <p><strong>To:</strong> {receiverData?.name}</p>
+                <p><strong>Amount:</strong> ${receiverData?.amount}</p>
               </div>
+
+              <input
+                type="text"
+                maxLength="6"
+                style={styles.verificationInput}
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                placeholder="000000"
+              />
+
               <div style={styles.modalButtons}>
-                <button style={styles.cancelButton} onClick={() => setShowConfirmModal(false)}>
+                <button
+                  onClick={() => {
+                    setShowVerificationModal(false);
+                    setVerificationCode('');
+                  }}
+                  style={styles.cancelButton}
+                  disabled={sending}
+                >
                   Cancel
                 </button>
-                <button style={styles.confirmButton} onClick={sendVerificationCode}>
-                  Send Verification Code
+                <button
+                  onClick={handleVerifyAndSend}
+                  style={styles.confirmButton}
+                  disabled={sending || verificationCode.length !== 6}
+                >
+                  {sending ? 'Verifying...' : 'Verify & Send'}
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Verification Modal */}
-        {showVerificationModal && (
-          <div style={styles.modalOverlay} onClick={() => setShowVerificationModal(false)}>
-            <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-              <h2 style={styles.modalTitle}>Enter Verification Code</h2>
-              <p style={styles.modalText}>We sent a 6-digit code to {user.email}</p>
-              <input
-                type="text"
-                style={styles.verificationInput}
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
-                placeholder="000000"
-                maxLength="6"
-              />
-              <div style={styles.modalButtons}>
-                <button style={styles.cancelButton} onClick={() => setShowVerificationModal(false)}>
-                  Cancel
-                </button>
-                <button style={styles.confirmButton} onClick={completeTransfer} disabled={loading}>
-                  {loading ? 'Processing...' : 'Complete Transfer'}
-                </button>
-              </div>
+        {/* QR SCANNER MODAL */}
+        {showQRScanner && (
+          <div style={styles.modal}>
+            <div style={styles.modalContent}>
+              <h2 style={styles.modalTitle}>Scan Zelle® QR Code</h2>
+              <div id="qr-reader" ref={qrScannerRef} style={styles.qrReader}></div>
+              <button onClick={stopQRScanner} style={styles.cancelButton}>
+                Close Scanner
+              </button>
             </div>
           </div>
         )}
@@ -480,259 +729,258 @@ const styles = {
   container: {
     minHeight: '100vh',
     backgroundColor: '#f1f5f9',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     paddingBottom: '100px'
   },
   header: {
-    backgroundColor: '#0a1a2f',
+    backgroundColor: 'linear-gradient(135deg, #6B21A8 0%, #9333EA 100%)',
+    background: 'linear-gradient(135deg, #6B21A8 0%, #9333EA 100%)',
     color: 'white',
-    padding: '1.25rem',
+    padding: '1.5rem',
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    boxShadow: '0 4px 20px rgba(10, 26, 47, 0.25)'
-  },
-  logoContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    textDecoration: 'none',
-    color: 'white'
-  },
-  logoPlaceholder: {
-    fontSize: '1.5rem'
-  },
-  logoText: {
-    fontSize: '1.25rem',
-    fontWeight: 'bold'
+    alignItems: 'center'
   },
   backButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: 'rgba(255,255,255,0.2)',
     color: 'white',
     textDecoration: 'none',
-    borderRadius: '8px',
-    fontSize: '0.9rem'
+    fontSize: '1rem'
+  },
+  headerTitle: {
+    margin: 0,
+    fontSize: '1.5rem'
+  },
+  balanceDisplay: {
+    textAlign: 'right'
+  },
+  limitInfo: {
+    fontSize: '0.9rem',
+    opacity: 0.9
   },
   content: {
-    padding: '2rem',
-    maxWidth: '900px',
-    margin: '0 auto'
-  },
-  titleSection: {
-    marginBottom: '2rem',
-    textAlign: 'center'
-  },
-  title: {
-    fontSize: '2rem',
-    fontWeight: 'bold',
-    color: '#0a1a2f',
-    marginBottom: '0.5rem'
-  },
-  subtitle: {
-    fontSize: '1rem',
-    color: '#64748b'
-  },
-  balanceCard: {
-    backgroundColor: 'white',
-    borderRadius: '16px',
-    padding: '2rem',
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '2rem',
-    marginBottom: '2rem',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-  },
-  balanceItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.5rem'
-  },
-  balanceLabel: {
-    fontSize: '0.9rem',
-    color: '#64748b',
-    fontWeight: '500'
-  },
-  balanceValue: {
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    color: '#0a1a2f'
+    maxWidth: '1000px',
+    margin: '0 auto',
+    padding: '1.5rem'
   },
   message: {
     padding: '1rem',
-    borderRadius: '12px',
-    marginBottom: '1.5rem',
-    border: '2px solid'
+    borderRadius: '8px',
+    marginBottom: '1rem',
+    fontWeight: '500'
   },
   tabs: {
     display: 'flex',
     gap: '0.5rem',
-    marginBottom: '2rem',
-    backgroundColor: 'white',
-    padding: '0.5rem',
-    borderRadius: '16px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+    marginBottom: '1.5rem',
+    overflowX: 'auto'
   },
   tab: {
-    flex: 1,
-    padding: '0.875rem',
-    backgroundColor: 'transparent',
+    padding: '0.75rem 1.5rem',
     border: 'none',
-    borderRadius: '12px',
-    fontSize: '0.9rem',
-    fontWeight: '600',
+    backgroundColor: 'white',
+    borderRadius: '8px',
     cursor: 'pointer',
-    transition: 'all 0.2s',
-    color: '#64748b'
+    fontSize: '1rem',
+    whiteSpace: 'nowrap',
+    transition: 'all 0.2s'
   },
   activeTab: {
-    backgroundColor: '#0a1a2f',
-    color: 'white'
+    background: 'linear-gradient(135deg, #6B21A8 0%, #9333EA 100%)',
+    color: 'white',
+    fontWeight: '600'
   },
-  tabContent: {
+  card: {
     backgroundColor: 'white',
-    borderRadius: '16px',
+    borderRadius: '12px',
     padding: '2rem',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
   },
-  sectionTitle: {
-    fontSize: '1.25rem',
-    fontWeight: 'bold',
-    color: '#0a1a2f',
-    marginBottom: '1.5rem'
+  cardTitle: {
+    fontSize: '1.5rem',
+    marginBottom: '1.5rem',
+    color: '#1e293b'
   },
   formGroup: {
-    marginBottom: '1.5rem'
+    marginBottom: '1.25rem'
+  },
+  formRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '1rem',
+    marginBottom: '1rem'
   },
   label: {
     display: 'block',
-    fontSize: '0.9rem',
+    marginBottom: '0.5rem',
     fontWeight: '600',
-    color: '#374151',
-    marginBottom: '0.5rem'
-  },
-  select: {
-    width: '100%',
-    padding: '0.875rem',
-    border: '2px solid #e2e8f0',
-    borderRadius: '12px',
-    fontSize: '1rem',
-    backgroundColor: 'white'
+    color: '#374151'
   },
   input: {
     width: '100%',
-    padding: '0.875rem',
+    padding: '0.75rem',
     border: '2px solid #e2e8f0',
-    borderRadius: '12px',
+    borderRadius: '8px',
     fontSize: '1rem',
     boxSizing: 'border-box'
+  },
+  select: {
+    width: '100%',
+    padding: '0.75rem',
+    border: '2px solid #e2e8f0',
+    borderRadius: '8px',
+    fontSize: '1rem',
+    boxSizing: 'border-box',
+    backgroundColor: 'white'
+  },
+  inputWithButton: {
+    display: 'flex',
+    gap: '0.5rem'
+  },
+  qrButton: {
+    padding: '0.75rem 1rem',
+    backgroundColor: '#6B21A8',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap'
+  },
+  helperText: {
+    fontSize: '0.85rem',
+    color: '#64748b',
+    marginTop: '0.25rem',
+    display: 'block'
+  },
+  contactChips: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '0.5rem',
+    marginTop: '0.75rem'
+  },
+  contactChip: {
+    padding: '0.5rem 1rem',
+    backgroundColor: '#f1f5f9',
+    border: '1px solid #cbd5e1',
+    borderRadius: '20px',
+    cursor: 'pointer',
+    fontSize: '0.9rem'
   },
   primaryButton: {
     width: '100%',
     padding: '1rem',
-    backgroundColor: '#0a1a2f',
+    backgroundColor: '#6B21A8',
     color: 'white',
     border: 'none',
-    borderRadius: '12px',
-    fontSize: '1rem',
+    borderRadius: '8px',
+    fontSize: '1.1rem',
     fontWeight: '600',
     cursor: 'pointer',
     marginTop: '1rem'
   },
-  contactsList: {
-    display: 'grid',
-    gap: '1rem'
+  form: {
+    marginBottom: '2rem'
   },
-  contactCard: {
+  contactList: {
+    marginTop: '2rem'
+  },
+  contactItem: {
     display: 'flex',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: '1rem',
     padding: '1rem',
-    backgroundColor: '#f8fafc',
-    borderRadius: '12px',
-    border: '2px solid #e2e8f0'
-  },
-  contactAvatar: {
-    width: '50px',
-    height: '50px',
-    borderRadius: '50%',
-    backgroundColor: '#d4af37',
-    color: 'white',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '1.5rem',
-    fontWeight: 'bold'
+    backgroundColor: '#f9fafb',
+    borderRadius: '8px',
+    marginBottom: '0.75rem'
   },
   contactName: {
-    fontSize: '1rem',
     fontWeight: '600',
-    color: '#0a1a2f'
+    color: '#1e293b',
+    marginBottom: '0.25rem'
   },
   contactDetail: {
-    fontSize: '0.85rem',
+    fontSize: '0.9rem',
     color: '#64748b'
   },
-  transactionsList: {
-    display: 'grid',
-    gap: '1rem'
+  sendToButton: {
+    padding: '0.5rem 1rem',
+    backgroundColor: '#6B21A8',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer'
   },
-  transactionCard: {
+  transactionList: {
+    marginTop: '1rem'
+  },
+  transactionItem: {
     display: 'flex',
     justifyContent: 'space-between',
     padding: '1rem',
-    backgroundColor: '#f8fafc',
-    borderRadius: '12px',
-    border: '2px solid #e2e8f0'
+    backgroundColor: '#f9fafb',
+    borderRadius: '8px',
+    marginBottom: '0.75rem'
   },
-  transactionInfo: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.25rem'
+  transactionLeft: {
+    flex: 1
   },
   transactionType: {
-    fontSize: '0.9rem',
     fontWeight: '600',
-    color: '#0a1a2f'
+    color: '#1e293b',
+    marginBottom: '0.25rem'
   },
-  transactionContact: {
-    fontSize: '0.85rem',
-    color: '#64748b'
+  transactionName: {
+    fontSize: '0.9rem',
+    color: '#64748b',
+    marginBottom: '0.25rem'
   },
   transactionDate: {
-    fontSize: '0.8rem',
+    fontSize: '0.85rem',
     color: '#94a3b8'
   },
   transactionRight: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-    gap: '0.25rem'
+    textAlign: 'right'
   },
   transactionAmount: {
-    fontSize: '1rem',
-    fontWeight: 'bold',
-    color: '#0a1a2f'
+    fontSize: '1.1rem',
+    fontWeight: '700',
+    marginBottom: '0.5rem'
   },
   transactionStatus: {
-    fontSize: '0.8rem',
-    fontWeight: '600'
-  },
-  settingsLink: {
     display: 'inline-block',
-    padding: '1rem 2rem',
-    backgroundColor: '#0a1a2f',
-    color: 'white',
-    textDecoration: 'none',
+    padding: '0.25rem 0.75rem',
     borderRadius: '12px',
-    fontWeight: '600'
+    fontSize: '0.75rem',
+    fontWeight: '600',
+    textTransform: 'capitalize'
   },
-  emptyText: {
+  checkboxGroup: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    marginBottom: '1rem'
+  },
+  checkboxLabel: {
+    fontSize: '0.95rem',
+    color: '#374151'
+  },
+  infoBox: {
+    backgroundColor: '#f0fdf4',
+    padding: '1.5rem',
+    borderRadius: '8px',
+    marginTop: '2rem',
+    borderLeft: '4px solid #10b981'
+  },
+  infoTitle: {
+    fontSize: '1.1rem',
+    marginBottom: '1rem',
+    color: '#065f46'
+  },
+  emptyState: {
     textAlign: 'center',
-    color: '#64748b',
-    padding: '2rem'
+    color: '#94a3b8',
+    padding: '2rem',
+    fontStyle: 'italic'
   },
-  modalOverlay: {
+  modal: {
     position: 'fixed',
     top: 0,
     left: 0,
@@ -740,57 +988,42 @@ const styles = {
     bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.5)',
     display: 'flex',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 1000
   },
-  modal: {
+  modalContent: {
     backgroundColor: 'white',
-    borderRadius: '16px',
     padding: '2rem',
+    borderRadius: '12px',
     maxWidth: '500px',
     width: '90%',
-    boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+    maxHeight: '80vh',
+    overflow: 'auto'
   },
   modalTitle: {
     fontSize: '1.5rem',
-    fontWeight: 'bold',
-    color: '#0a1a2f',
-    marginBottom: '1.5rem'
-  },
-  modalContent: {
-    marginBottom: '2rem'
-  },
-  modalRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '0.75rem 0',
-    borderBottom: '1px solid #e2e8f0'
-  },
-  modalLabel: {
-    fontSize: '0.9rem',
-    color: '#64748b',
-    fontWeight: '500'
-  },
-  modalValue: {
-    fontSize: '0.9rem',
-    color: '#0a1a2f',
-    fontWeight: '600'
+    marginBottom: '1rem',
+    color: '#1e293b'
   },
   modalText: {
-    fontSize: '0.9rem',
-    color: '#64748b',
+    marginBottom: '1.5rem',
+    color: '#64748b'
+  },
+  confirmDetails: {
+    backgroundColor: '#f1f5f9',
+    padding: '1rem',
+    borderRadius: '8px',
     marginBottom: '1.5rem'
   },
   verificationInput: {
     width: '100%',
     padding: '1rem',
-    border: '2px solid #e2e8f0',
-    borderRadius: '12px',
-    fontSize: '1.5rem',
+    fontSize: '2rem',
     textAlign: 'center',
-    letterSpacing: '0.5rem',
-    fontWeight: 'bold',
+    letterSpacing: '1rem',
+    border: '2px solid #e2e8f0',
+    borderRadius: '8px',
     marginBottom: '1.5rem',
     boxSizing: 'border-box'
   },
@@ -801,44 +1034,42 @@ const styles = {
   cancelButton: {
     flex: 1,
     padding: '0.875rem',
-    backgroundColor: '#f1f5f9',
-    color: '#0a1a2f',
+    backgroundColor: '#e2e8f0',
+    color: '#475569',
     border: 'none',
-    borderRadius: '12px',
-    fontSize: '0.9rem',
+    borderRadius: '8px',
+    fontSize: '1rem',
     fontWeight: '600',
     cursor: 'pointer'
   },
   confirmButton: {
     flex: 1,
     padding: '0.875rem',
-    backgroundColor: '#d4af37',
-    color: '#0a1a2f',
+    backgroundColor: '#6B21A8',
+    color: 'white',
     border: 'none',
-    borderRadius: '12px',
-    fontSize: '0.9rem',
+    borderRadius: '8px',
+    fontSize: '1rem',
     fontWeight: '600',
     cursor: 'pointer'
+  },
+  qrReader: {
+    width: '100%',
+    marginBottom: '1rem'
   },
   loadingContainer: {
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
     justifyContent: 'center',
-    minHeight: '100vh',
-    backgroundColor: '#f8fafc'
+    alignItems: 'center',
+    minHeight: '100vh'
   },
   spinner: {
-    width: '32px',
-    height: '32px',
-    border: '3px solid #e2e8f0',
-    borderTop: '3px solid #0a1a2f',
+    border: '4px solid #f3f4f6',
+    borderTop: '4px solid #6B21A8',
     borderRadius: '50%',
+    width: '50px',
+    height: '50px',
     animation: 'spin 1s linear infinite'
-  },
-  loadingText: {
-    marginTop: '1rem',
-    color: '#64748b',
-    fontSize: '1rem'
   }
 };
