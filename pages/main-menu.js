@@ -207,59 +207,362 @@ export default function MainMenu() {
                 <span style={{...styles.navArrow, transform: dropdownOpen.main ? 'rotate(180deg)' : 'rotate(0deg)'}}>▼</span>
               </button>
               {dropdownOpen.main && (
-                <div style={styles.comprehensiveDropdown}>
-                  <div style={styles.dropdownGrid}>
-                    <div style={styles.dropdownColumn}>
-                      <h4 style={styles.dropdownColumnTitle}>🏦 Banking</h4>
-                      <Link href="/" style={styles.dropdownLink}>🏠 Home</Link>
-                      <Link href="/dashboard" style={styles.dropdownLink}>📊 Dashboard</Link>
-                      <Link href="/account-details" style={styles.dropdownLink}>🏦 Accounts</Link>
-                      <Link href="/transactions" style={styles.dropdownLink}>📜 History</Link>
+                <>
+                  <div
+                    style={styles.dropdownBackdrop}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDropdownOpen({});
+                    }}
+                  ></div>
+                  <div style={styles.bankingDropdown} onClick={(e) => e.stopPropagation()}>
+                    <div style={styles.bankingDropdownHeader}>
+                      <h4 style={styles.bankingDropdownTitle}>Complete Banking Solutions</h4>
+                      <p style={styles.bankingDropdownSubtitle}>Access all your banking services in one place</p>
                     </div>
 
-                    <div style={styles.dropdownColumn}>
-                      <h4 style={styles.dropdownColumnTitle}>💸 Transfers</h4>
-                      <Link href="/transfer" style={styles.dropdownLink}>💸 Transfer</Link>
-                      <Link href="/bill-pay" style={styles.dropdownLink}>🧾 Pay Bills</Link>
-                      <Link href="/deposit-real" style={styles.dropdownLink}>📱 Deposit</Link>
-                      <Link href="/zelle" style={styles.dropdownLink}>⚡ Zelle</Link>
+                    <div style={styles.bankingTwoColumnGrid}>
+                      {/* Core Banking Services Section */}
+                      <div style={styles.bankingSection}>
+                        <div style={styles.bankingSectionHeader}>
+                          <span style={styles.bankingSectionIcon}>🏦</span>
+                          <h5 style={styles.bankingSectionTitle}>Core Banking</h5>
+                        </div>
+                        <div style={styles.bankingFeaturesGrid}>
+                          <Link
+                            href="/"
+                            onClick={() => setDropdownOpen({})}
+                            style={styles.bankingFeatureItem}
+                          >
+                            <div style={{
+                              ...styles.bankingFeatureIcon,
+                              backgroundColor: '#0ea5e915',
+                              border: '1px solid #0ea5e930'
+                            }}>
+                              🏠
+                            </div>
+                            <div style={styles.bankingFeatureContent}>
+                              <div style={styles.bankingFeatureName}>Home</div>
+                              <div style={styles.bankingFeatureDesc}>Main landing page</div>
+                            </div>
+                            <div style={{ ...styles.bankingFeatureArrow, color: '#0ea5e9' }}>→</div>
+                          </Link>
+
+                          <Link
+                            href="/dashboard"
+                            onClick={() => setDropdownOpen({})}
+                            style={styles.bankingFeatureItem}
+                          >
+                            <div style={{
+                              ...styles.bankingFeatureIcon,
+                              backgroundColor: '#3b82f615',
+                              border: '1px solid #3b82f630'
+                            }}>
+                              📊
+                            </div>
+                            <div style={styles.bankingFeatureContent}>
+                              <div style={styles.bankingFeatureName}>Dashboard</div>
+                              <div style={styles.bankingFeatureDesc}>Account overview</div>
+                            </div>
+                            <div style={{ ...styles.bankingFeatureArrow, color: '#3b82f6' }}>→</div>
+                          </Link>
+
+                          <Link
+                            href="/account-details"
+                            onClick={() => setDropdownOpen({})}
+                            style={styles.bankingFeatureItem}
+                          >
+                            <div style={{
+                              ...styles.bankingFeatureIcon,
+                              backgroundColor: '#05966915',
+                              border: '1px solid #05966930'
+                            }}>
+                              🏦
+                            </div>
+                            <div style={styles.bankingFeatureContent}>
+                              <div style={styles.bankingFeatureName}>Account Details</div>
+                              <div style={styles.bankingFeatureDesc}>View account info</div>
+                            </div>
+                            <div style={{ ...styles.bankingFeatureArrow, color: '#059669' }}>→</div>
+                          </Link>
+
+                          <Link
+                            href="/transactions"
+                            onClick={() => setDropdownOpen({})}
+                            style={styles.bankingFeatureItem}
+                          >
+                            <div style={{
+                              ...styles.bankingFeatureIcon,
+                              backgroundColor: '#64748b15',
+                              border: '1px solid #64748b30'
+                            }}>
+                              📜
+                            </div>
+                            <div style={styles.bankingFeatureContent}>
+                              <div style={styles.bankingFeatureName}>Transaction History</div>
+                              <div style={styles.bankingFeatureDesc}>View all transactions</div>
+                            </div>
+                            <div style={{ ...styles.bankingFeatureArrow, color: '#64748b' }}>→</div>
+                          </Link>
+
+                          <Link
+                            href="/transfer"
+                            onClick={() => setDropdownOpen({})}
+                            style={styles.bankingFeatureItem}
+                          >
+                            <div style={{
+                              ...styles.bankingFeatureIcon,
+                              backgroundColor: '#10b98115',
+                              border: '1px solid #10b98130'
+                            }}>
+                              💸
+                            </div>
+                            <div style={styles.bankingFeatureContent}>
+                              <div style={styles.bankingFeatureName}>Transfer Money</div>
+                              <div style={styles.bankingFeatureDesc}>Send & receive funds</div>
+                            </div>
+                            <div style={{ ...styles.bankingFeatureArrow, color: '#10b981' }}>→</div>
+                          </Link>
+
+                          <Link
+                            href="/bill-pay"
+                            onClick={() => setDropdownOpen({})}
+                            style={styles.bankingFeatureItem}
+                          >
+                            <div style={{
+                              ...styles.bankingFeatureIcon,
+                              backgroundColor: '#f59e0b15',
+                              border: '1px solid #f59e0b30'
+                            }}>
+                              🧾
+                            </div>
+                            <div style={styles.bankingFeatureContent}>
+                              <div style={styles.bankingFeatureName}>Pay Bills</div>
+                              <div style={styles.bankingFeatureDesc}>Automated payments</div>
+                            </div>
+                            <div style={{ ...styles.bankingFeatureArrow, color: '#f59e0b' }}>→</div>
+                          </Link>
+
+                          <Link
+                            href="/deposit-real"
+                            onClick={() => setDropdownOpen({})}
+                            style={styles.bankingFeatureItem}
+                          >
+                            <div style={{
+                              ...styles.bankingFeatureIcon,
+                              backgroundColor: '#14b8a615',
+                              border: '1px solid #14b8a630'
+                            }}>
+                              📱
+                            </div>
+                            <div style={styles.bankingFeatureContent}>
+                              <div style={styles.bankingFeatureName}>Mobile Deposit</div>
+                              <div style={styles.bankingFeatureDesc}>Deposit checks instantly</div>
+                            </div>
+                            <div style={{ ...styles.bankingFeatureArrow, color: '#14b8a6' }}>→</div>
+                          </Link>
+
+                          <Link
+                            href="/zelle"
+                            onClick={() => setDropdownOpen({})}
+                            style={styles.bankingFeatureItem}
+                          >
+                            <div style={{
+                              ...styles.bankingFeatureIcon,
+                              backgroundColor: '#6b21a815',
+                              border: '1px solid #6b21a830'
+                            }}>
+                              ⚡
+                            </div>
+                            <div style={styles.bankingFeatureContent}>
+                              <div style={styles.bankingFeatureName}>Zelle Payments</div>
+                              <div style={styles.bankingFeatureDesc}>Instant transfers</div>
+                            </div>
+                            <div style={{ ...styles.bankingFeatureArrow, color: '#6b21a8' }}>→</div>
+                          </Link>
+                        </div>
+                      </div>
+
+                      {/* Premium & Advanced Services Section */}
+                      <div style={styles.bankingSection}>
+                        <div style={styles.bankingSectionHeader}>
+                          <span style={styles.bankingSectionIcon}>⭐</span>
+                          <h5 style={styles.bankingSectionTitle}>Premium Services</h5>
+                        </div>
+                        <div style={styles.bankingFeaturesGrid}>
+                          <Link
+                            href="/cards"
+                            onClick={() => setDropdownOpen({})}
+                            style={styles.bankingFeatureItem}
+                          >
+                            <div style={{
+                              ...styles.bankingFeatureIcon,
+                              backgroundColor: '#ec489915',
+                              border: '1px solid #ec489930'
+                            }}>
+                              💳
+                            </div>
+                            <div style={styles.bankingFeatureContent}>
+                              <div style={styles.bankingFeatureName}>My Cards</div>
+                              <div style={styles.bankingFeatureDesc}>Manage your cards</div>
+                            </div>
+                            <div style={{ ...styles.bankingFeatureArrow, color: '#ec4899' }}>→</div>
+                          </Link>
+
+                          <Link
+                            href="/loans"
+                            onClick={() => setDropdownOpen({})}
+                            style={styles.bankingFeatureItem}
+                          >
+                            <div style={{
+                              ...styles.bankingFeatureIcon,
+                              backgroundColor: '#ef444415',
+                              border: '1px solid #ef444430'
+                            }}>
+                              💰
+                            </div>
+                            <div style={styles.bankingFeatureContent}>
+                              <div style={styles.bankingFeatureName}>Apply for Loans</div>
+                              <div style={styles.bankingFeatureDesc}>Personal & business loans</div>
+                            </div>
+                            <div style={{ ...styles.bankingFeatureArrow, color: '#ef4444' }}>→</div>
+                          </Link>
+
+                          <Link
+                            href="/investments"
+                            onClick={() => setDropdownOpen({})}
+                            style={styles.bankingFeatureItem}
+                          >
+                            <div style={{
+                              ...styles.bankingFeatureIcon,
+                              backgroundColor: '#10b98115',
+                              border: '1px solid #10b98130'
+                            }}>
+                              📈
+                            </div>
+                            <div style={styles.bankingFeatureContent}>
+                              <div style={styles.bankingFeatureName}>Investment Portfolio</div>
+                              <div style={styles.bankingFeatureDesc}>Manage investments</div>
+                            </div>
+                            <div style={{ ...styles.bankingFeatureArrow, color: '#10b981' }}>→</div>
+                          </Link>
+
+                          <Link
+                            href="/crypto"
+                            onClick={() => setDropdownOpen({})}
+                            style={styles.bankingFeatureItem}
+                          >
+                            <div style={{
+                              ...styles.bankingFeatureIcon,
+                              backgroundColor: '#f59e0b15',
+                              border: '1px solid #f59e0b30'
+                            }}>
+                              ₿
+                            </div>
+                            <div style={styles.bankingFeatureContent}>
+                              <div style={styles.bankingFeatureName}>Cryptocurrency</div>
+                              <div style={styles.bankingFeatureDesc}>Digital asset trading</div>
+                            </div>
+                            <div style={{ ...styles.bankingFeatureArrow, color: '#f59e0b' }}>→</div>
+                          </Link>
+
+                          <Link
+                            href="/rewards"
+                            onClick={() => setDropdownOpen({})}
+                            style={styles.bankingFeatureItem}
+                          >
+                            <div style={{
+                              ...styles.bankingFeatureIcon,
+                              backgroundColor: '#f43f5e15',
+                              border: '1px solid #f43f5e30'
+                            }}>
+                              🎁
+                            </div>
+                            <div style={styles.bankingFeatureContent}>
+                              <div style={styles.bankingFeatureName}>Rewards Program</div>
+                              <div style={styles.bankingFeatureDesc}>Earn & redeem rewards</div>
+                            </div>
+                            <div style={{ ...styles.bankingFeatureArrow, color: '#f43f5e' }}>→</div>
+                          </Link>
+
+                          <Link
+                            href="/profile"
+                            onClick={() => setDropdownOpen({})}
+                            style={styles.bankingFeatureItem}
+                          >
+                            <div style={{
+                              ...styles.bankingFeatureIcon,
+                              backgroundColor: '#8b5cf615',
+                              border: '1px solid #8b5cf630'
+                            }}>
+                              👤
+                            </div>
+                            <div style={styles.bankingFeatureContent}>
+                              <div style={styles.bankingFeatureName}>Profile</div>
+                              <div style={styles.bankingFeatureDesc}>Account settings</div>
+                            </div>
+                            <div style={{ ...styles.bankingFeatureArrow, color: '#8b5cf6' }}>→</div>
+                          </Link>
+
+                          <Link
+                            href="/security"
+                            onClick={() => setDropdownOpen({})}
+                            style={styles.bankingFeatureItem}
+                          >
+                            <div style={{
+                              ...styles.bankingFeatureIcon,
+                              backgroundColor: '#ef444415',
+                              border: '1px solid #ef444430'
+                            }}>
+                              🔒
+                            </div>
+                            <div style={styles.bankingFeatureContent}>
+                              <div style={styles.bankingFeatureName}>Security Center</div>
+                              <div style={styles.bankingFeatureDesc}>Account protection</div>
+                            </div>
+                            <div style={{ ...styles.bankingFeatureArrow, color: '#ef4444' }}>→</div>
+                          </Link>
+
+                          <Link
+                            href="/support"
+                            onClick={() => setDropdownOpen({})}
+                            style={styles.bankingFeatureItem}
+                          >
+                            <div style={{
+                              ...styles.bankingFeatureIcon,
+                              backgroundColor: '#0891b215',
+                              border: '1px solid #0891b230'
+                            }}>
+                              🎧
+                            </div>
+                            <div style={styles.bankingFeatureContent}>
+                              <div style={styles.bankingFeatureName}>Customer Support</div>
+                              <div style={styles.bankingFeatureDesc}>Get help & assistance</div>
+                            </div>
+                            <div style={{ ...styles.bankingFeatureArrow, color: '#0891b2' }}>→</div>
+                          </Link>
+                        </div>
+                      </div>
                     </div>
 
-                    <div style={styles.dropdownColumn}>
-                      <h4 style={styles.dropdownColumnTitle}>💳 Cards</h4>
-                      <Link href="/cards" style={styles.dropdownLink}>💳 My Cards</Link>
-                      <Link href="/apply-card" style={styles.dropdownLink}>➕ Apply</Link>
-                      <Link href="/rewards" style={styles.dropdownLink}>🎁 Rewards</Link>
-                    </div>
-
-                    <div style={styles.dropdownColumn}>
-                      <h4 style={styles.dropdownColumnTitle}>🏠 Loans</h4>
-                      <Link href="/loans" style={styles.dropdownLink}>💰 Apply</Link>
-                      <Link href="/credit-report" style={styles.dropdownLink}>📊 Credit</Link>
-                    </div>
-
-                    <div style={styles.dropdownColumn}>
-                      <h4 style={styles.dropdownColumnTitle}>📈 Invest</h4>
-                      <Link href="/investments" style={styles.dropdownLink}>📊 Portfolio</Link>
-                      <Link href="/crypto" style={styles.dropdownLink}>₿ Crypto</Link>
-                      <Link href="/market-news" style={styles.dropdownLink}>📰 News</Link>
-                    </div>
-
-                    <div style={styles.dropdownColumn}>
-                      <h4 style={styles.dropdownColumnTitle}>👤 Profile</h4>
-                      <Link href="/profile" style={styles.dropdownLink}>👤 Profile</Link>
-                      <Link href="/security" style={styles.dropdownLink}>🔒 Security</Link>
-                      <Link href="/notifications" style={styles.dropdownLink}>🔔 Alerts</Link>
-                    </div>
-
-                    <div style={styles.dropdownColumn}>
-                      <h4 style={styles.dropdownColumnTitle}>🛠️ Help</h4>
-                      <Link href="/support" style={styles.dropdownLink}>🎧 Support</Link>
-                      <Link href="/branch-locator" style={styles.dropdownLink}>📍 Branch</Link>
-                      <Link href="/faq" style={styles.dropdownLink}>❓ FAQ</Link>
+                    <div style={styles.bankingDropdownFooter}>
+                      <Link
+                        href="/account-types"
+                        onClick={() => setDropdownOpen({})}
+                        style={styles.viewAllServicesButton}
+                      >
+                        Explore All Banking Services
+                      </Link>
+                      <Link
+                        href="/support"
+                        onClick={() => setDropdownOpen({})}
+                        style={styles.viewAllServicesButtonSecondary}
+                      >
+                        Contact Support
+                      </Link>
                     </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
           </nav>
@@ -644,6 +947,191 @@ const styles = {
   navArrow: {
     fontSize: '0.7rem',
     transition: 'transform 0.3s ease'
+  },
+  // Banking+ Dropdown Styles
+  dropdownBackdrop: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 9999
+  },
+  bankingDropdown: {
+    position: 'absolute',
+    top: 'calc(100% + 0.75rem)',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    backgroundColor: 'white',
+    borderRadius: '20px',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    border: '1px solid #e2e8f0',
+    padding: '1.5rem',
+    width: '420px',
+    maxWidth: '90vw',
+    zIndex: 10001,
+    maxHeight: '75vh',
+    overflowY: 'auto',
+    overflowX: 'hidden'
+  },
+  bankingDropdownHeader: {
+    textAlign: 'center',
+    marginBottom: '1.5rem',
+    paddingBottom: '1rem',
+    borderBottom: '2px solid #e2e8f0',
+    position: 'sticky',
+    top: '-1.5rem',
+    backgroundColor: 'white',
+    zIndex: 1,
+    marginTop: '-1.5rem',
+    marginLeft: '-1.5rem',
+    marginRight: '-1.5rem',
+    paddingLeft: '1.5rem',
+    paddingRight: '1.5rem',
+    paddingTop: '1.5rem'
+  },
+  bankingDropdownTitle: {
+    fontSize: '1.25rem',
+    fontWeight: '700',
+    color: '#1e293b',
+    margin: '0 0 0.5rem 0'
+  },
+  bankingDropdownSubtitle: {
+    fontSize: '0.875rem',
+    color: '#64748b',
+    margin: 0
+  },
+  bankingTwoColumnGrid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.5rem',
+    marginBottom: '1.5rem'
+  },
+  bankingSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem'
+  },
+  bankingSectionHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    paddingBottom: '0.75rem',
+    borderBottom: '2px solid #e2e8f0',
+    position: 'sticky',
+    top: '85px',
+    backgroundColor: 'white',
+    zIndex: 1,
+    marginLeft: '-1.5rem',
+    marginRight: '-1.5rem',
+    paddingLeft: '1.5rem',
+    paddingRight: '1.5rem'
+  },
+  bankingSectionIcon: {
+    fontSize: '1.5rem'
+  },
+  bankingSectionTitle: {
+    fontSize: '1rem',
+    fontWeight: '700',
+    color: '#1e293b',
+    margin: 0
+  },
+  bankingFeaturesGrid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem'
+  },
+  bankingFeatureItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '0.875rem',
+    borderRadius: '10px',
+    backgroundColor: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    textDecoration: 'none',
+    color: '#1e293b',
+    transition: 'all 0.3s ease',
+    cursor: 'pointer'
+  },
+  bankingFeatureIcon: {
+    fontSize: '1.1rem',
+    width: '36px',
+    height: '36px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '8px',
+    flexShrink: 0
+  },
+  bankingFeatureContent: {
+    flex: 1,
+    minWidth: 0
+  },
+  bankingFeatureName: {
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: '0.2rem',
+    lineHeight: '1.3'
+  },
+  bankingFeatureDesc: {
+    fontSize: '0.75rem',
+    color: '#64748b',
+    lineHeight: '1.3'
+  },
+  bankingFeatureArrow: {
+    fontSize: '0.875rem',
+    fontWeight: 'bold',
+    flexShrink: 0
+  },
+  bankingDropdownFooter: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem',
+    paddingTop: '1rem',
+    borderTop: '2px solid #e2e8f0',
+    marginTop: '1.5rem',
+    position: 'sticky',
+    bottom: '-1.5rem',
+    backgroundColor: 'white',
+    marginLeft: '-1.5rem',
+    marginRight: '-1.5rem',
+    paddingLeft: '1.5rem',
+    paddingRight: '1.5rem',
+    paddingBottom: '1.5rem',
+    marginBottom: '-1.5rem'
+  },
+  viewAllServicesButton: {
+    display: 'block',
+    width: '100%',
+    padding: '0.875rem 1.5rem',
+    background: 'linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%)',
+    color: 'white',
+    textDecoration: 'none',
+    borderRadius: '12px',
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)',
+    cursor: 'pointer',
+    textAlign: 'center'
+  },
+  viewAllServicesButtonSecondary: {
+    display: 'block',
+    width: '100%',
+    padding: '0.875rem 1.5rem',
+    backgroundColor: 'transparent',
+    color: '#1e40af',
+    textDecoration: 'none',
+    borderRadius: '12px',
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    transition: 'all 0.3s ease',
+    border: '2px solid #1e40af',
+    cursor: 'pointer',
+    textAlign: 'center'
   },
   comprehensiveDropdown: {
     position: 'absolute',
