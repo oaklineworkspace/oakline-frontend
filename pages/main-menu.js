@@ -466,7 +466,7 @@ export default function MainMenu() {
         }
 
         .logoutDropdownButton:hover {
-          background-color: #b91c1c !important;
+          background-color: #1e3a8a !important;
         }
       `}</style>
     </div>
@@ -667,7 +667,7 @@ const styles = {
   logoutDropdownButton: {
     width: '100%',
     padding: '0.75rem 1rem',
-    backgroundColor: '#dc2626',
+    backgroundColor: '#1e40af',
     color: 'white',
     border: 'none',
     borderRadius: '6px',
