@@ -518,7 +518,7 @@ const styles = {
   },
   paragraph: {
     fontSize: '1.1rem',
-    color: '#64748b',
+    color: '#334155',
     lineHeight: '1.7',
     marginBottom: '1.5rem'
   },
@@ -542,7 +542,7 @@ const styles = {
   },
   statLabel: {
     fontSize: '0.9rem',
-    color: '#64748b',
+    color: '#334155',
     fontWeight: '600'
   },
   imageContent: {
@@ -583,7 +583,7 @@ const styles = {
   },
   valueText: {
     fontSize: '1rem',
-    color: '#64748b',
+    color: '#334155',
     lineHeight: '1.6'
   },
   leadershipGrid: {
@@ -628,7 +628,7 @@ const styles = {
   },
   leaderBio: {
     fontSize: '0.9rem',
-    color: '#64748b',
+    color: '#334155',
     lineHeight: '1.5'
   },
   awardsGrid: {
@@ -662,7 +662,7 @@ const styles = {
   },
   awardDescription: {
     fontSize: '0.9rem',
-    color: '#64748b',
+    color: '#334155',
     lineHeight: '1.5'
   },
   contactSection: {
