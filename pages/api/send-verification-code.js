@@ -119,7 +119,7 @@ export default async function handler(req, res) {
 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
                   <p style="color: #999; font-size: 12px; margin: 5px 0;">
-                    © 2024 Oakline Bank. All rights reserved.<br>
+                    © 2025 Oakline Bank. All rights reserved.<br>
                     Member FDIC | Equal Housing Lender
                   </p>
                 </div>
