@@ -1,0 +1,94 @@
+🔹 Zelle (Peer-to-Peer)
+
+Update the Zelle system to work like a real bank Zelle:
+	1.	Zelle Dashboard
+	•	Create a /zelle page with tabs for:
+	•	Send Money
+	•	Zelle Contacts
+	•	Recent Zelle Transactions
+	•	Settings
+	•	Display the user’s Zelle balance and limits.
+	2.	Send Money Flow
+	•	When the user enters a receiver’s email or phone, automatically fetch the receiver’s full name from the profiles table.
+	•	Show a confirmation modal with:
+	•	Receiver Name
+	•	Receiver Email
+	•	Amount
+	•	Memo (optional)
+	•	Verification Code field
+	•	Before sending money, send a 6-digit verification code to the sender’s registered email (via Supabase or Zoho mail API) to confirm identity.
+	•	Only complete the transfer after the code is verified.
+	•	Deduct funds from the sender and credit the receiver using the transactions table.
+	•	Log everything in zelle_transactions and system_logs.
+	3.	Zelle QR Code Scan
+	•	Add a “Scan Zelle QR” button that opens the camera and allows scanning a barcode or QR code linked to another user’s Zelle ID.
+	•	When scanned, auto-fill the receiver’s email and name.
+	•	Use a library like react-qr-reader for the front end.
+	4.	Zelle Transactions History
+	•	Create a section on /zelle showing the 10 most recent Zelle transactions.
+	•	Show details: date, receiver name, amount, status, and type (send/receive).
+	•	Color-code:
+	•	Green for completed
+	•	Orange for pending
+	•	Red for failed
+	5.	Zelle Settings
+	•	Let users set Zelle transfer limits, notification preferences, and linked accounts.
+	•	Store these in zelle_settings.
+
+⸻
+
+🔹 Wire Transfer
+
+Create a professional /wire-transfer page with the following:
+	•	Form fields:
+	•	From Account (dropdown)
+	•	Beneficiary Name
+	•	Beneficiary Bank
+	•	Routing Number
+	•	Account Number
+	•	Swift Code (optional)
+	•	Amount
+	•	Memo (optional)
+	•	Add step-by-step flow:
+	1.	Fill the wire details.
+	2.	Show a summary/confirmation screen.
+	3.	Require a verification code to complete transfer.
+	•	Store data in a new table wire_transfers (if not already existing).
+	•	Add record to transactions table when the wire is completed.
+	•	Show all past wire transfers on the same page (with filters by date and status).
+
+⸻
+
+🔹 Mobile Check Deposit
+
+Build a /mobile-deposit page that looks and feels like a real mobile banking deposit:
+	•	User uploads front and back images of the check.
+	•	Add fields:
+	•	Deposit to (account dropdown)
+	•	Amount
+	•	Memo
+	•	Validate that both check images are uploaded before submission.
+	•	Insert into mobile_deposits table with status = ‘pending’.
+	•	Let admin review and approve/reject deposits in the admin dashboard.
+	•	When approved:
+	•	Update the user’s account balance.
+	•	Create a transactions entry with type = ‘credit’ and description = ‘Mobile Deposit’.
+	•	UI should have:
+	•	Blue and white theme (Oakline Bank style)
+	•	Logo in header
+	•	Professional animations (fade-in transitions)
+
+⸻
+
+🔹 Additional Requirements
+	•	Use Supabase for all data interactions.
+	•	Add email and in-app notifications for every completed Zelle or Wire transfer.
+	•	Secure all transfer routes with Supabase Auth user validation.
+	•	Add modern success/error modals styled like a real bank.
+	•	Follow responsive design for mobile users.
+
+⸻
+
+💡 Design note:
+Use Oakline Bank’s color palette (navy blue #0a1a2f and gold #d4af37) for headers and buttons.
+Keep everything visually consistent with the Oakline web dashboard.
