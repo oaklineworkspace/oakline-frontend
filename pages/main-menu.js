@@ -208,56 +208,56 @@ export default function MainMenu() {
               </button>
               {dropdownOpen.main && (
                 <div style={styles.comprehensiveDropdown}>
-                  <div style={styles.dropdownGrid}>
-                    <div style={styles.dropdownColumn}>
-                      <h4 style={styles.dropdownColumnTitle}>🏦 Banking</h4>
-                      <Link href="/" style={styles.dropdownLink}>🏠 Home</Link>
-                      <Link href="/dashboard" style={styles.dropdownLink}>📊 Dashboard</Link>
-                      <Link href="/account-details" style={styles.dropdownLink}>🏦 Accounts</Link>
-                      <Link href="/transactions" style={styles.dropdownLink}>📜 History</Link>
-                    </div>
-
-                    <div style={styles.dropdownColumn}>
-                      <h4 style={styles.dropdownColumnTitle}>💸 Transfers</h4>
-                      <Link href="/transfer" style={styles.dropdownLink}>💸 Transfer</Link>
-                      <Link href="/bill-pay" style={styles.dropdownLink}>🧾 Pay Bills</Link>
-                      <Link href="/deposit-real" style={styles.dropdownLink}>📱 Deposit</Link>
-                      <Link href="/zelle" style={styles.dropdownLink}>⚡ Zelle</Link>
-                    </div>
-
-                    <div style={styles.dropdownColumn}>
-                      <h4 style={styles.dropdownColumnTitle}>💳 Cards</h4>
-                      <Link href="/cards" style={styles.dropdownLink}>💳 My Cards</Link>
-                      <Link href="/apply-card" style={styles.dropdownLink}>➕ Apply</Link>
-                      <Link href="/rewards" style={styles.dropdownLink}>🎁 Rewards</Link>
-                    </div>
-
-                    <div style={styles.dropdownColumn}>
-                      <h4 style={styles.dropdownColumnTitle}>🏠 Loans</h4>
-                      <Link href="/loans" style={styles.dropdownLink}>💰 Apply</Link>
-                      <Link href="/credit-report" style={styles.dropdownLink}>📊 Credit</Link>
-                    </div>
-
-                    <div style={styles.dropdownColumn}>
-                      <h4 style={styles.dropdownColumnTitle}>📈 Invest</h4>
-                      <Link href="/investments" style={styles.dropdownLink}>📊 Portfolio</Link>
-                      <Link href="/crypto" style={styles.dropdownLink}>₿ Crypto</Link>
-                      <Link href="/market-news" style={styles.dropdownLink}>📰 News</Link>
-                    </div>
-
-                    <div style={styles.dropdownColumn}>
-                      <h4 style={styles.dropdownColumnTitle}>👤 Profile</h4>
-                      <Link href="/profile" style={styles.dropdownLink}>👤 Profile</Link>
-                      <Link href="/security" style={styles.dropdownLink}>🔒 Security</Link>
-                      <Link href="/notifications" style={styles.dropdownLink}>🔔 Alerts</Link>
-                    </div>
-
-                    <div style={styles.dropdownColumn}>
-                      <h4 style={styles.dropdownColumnTitle}>🛠️ Help</h4>
-                      <Link href="/support" style={styles.dropdownLink}>🎧 Support</Link>
-                      <Link href="/branch-locator" style={styles.dropdownLink}>📍 Branch</Link>
-                      <Link href="/faq" style={styles.dropdownLink}>❓ FAQ</Link>
-                    </div>
+                  <div style={styles.dropdownSection}>
+                    <h4 style={styles.dropdownSectionTitle}>🏦 My Banking</h4>
+                    <Link href="/" style={styles.dropdownLink}>🏠 Home</Link>
+                    <Link href="/dashboard" style={styles.dropdownLink}>📊 Dashboard</Link>
+                    <Link href="/account-details" style={styles.dropdownLink}>🏦 Account Details</Link>
+                    <Link href="/transfer" style={styles.dropdownLink}>💸 Transfer Money</Link>
+                    <Link href="/cards" style={styles.dropdownLink}>💳 My Cards</Link>
+                    <Link href="/transactions" style={styles.dropdownLink}>📜 Transaction History</Link>
+                    <Link href="/bill-pay" style={styles.dropdownLink}>🧾 Pay Bills</Link>
+                    <Link href="/deposit-real" style={styles.dropdownLink}>📱 Mobile Deposit</Link>
+                    <Link href="/withdrawal" style={styles.dropdownLink}>📤 Withdraw Funds</Link>
+                    <Link href="/zelle" style={styles.dropdownLink}>💰 Zelle</Link>
+                  </div>
+                  <div style={styles.dropdownDivider}></div>
+                  <div style={styles.dropdownSection}>
+                    <h4 style={styles.dropdownSectionTitle}>💼 Loans & Credit</h4>
+                    <Link href="/loans" style={styles.dropdownLink}>💰 Apply for Loan</Link>
+                    <Link href="/credit-report" style={styles.dropdownLink}>📊 Credit Report</Link>
+                    <Link href="/apply-card" style={styles.dropdownLink}>💳 Apply for Card</Link>
+                  </div>
+                  <div style={styles.dropdownDivider}></div>
+                  <div style={styles.dropdownSection}>
+                    <h4 style={styles.dropdownSectionTitle}>📈 Investments</h4>
+                    <Link href="/investments" style={styles.dropdownLink}>📊 Portfolio</Link>
+                    <Link href="/crypto" style={styles.dropdownLink}>₿ Crypto Trading</Link>
+                    <Link href="/market-news" style={styles.dropdownLink}>📰 Market News</Link>
+                  </div>
+                  <div style={styles.dropdownDivider}></div>
+                  <div style={styles.dropdownSection}>
+                    <h4 style={styles.dropdownSectionTitle}>🛡️ Security & Settings</h4>
+                    <Link href="/security" style={styles.dropdownLink}>🔒 Security Settings</Link>
+                    <Link href="/notifications" style={styles.dropdownLink}>🔔 Notifications</Link>
+                    <Link href="/privacy" style={styles.dropdownLink}>🛡️ Privacy Settings</Link>
+                    <Link href="/profile" style={styles.dropdownLink}>👤 Edit Profile</Link>
+                    <Link href="/messages" style={styles.dropdownLink}>📧 Messages</Link>
+                  </div>
+                  <div style={styles.dropdownDivider}></div>
+                  <div style={styles.dropdownSection}>
+                    <h4 style={styles.dropdownSectionTitle}>❓ Help & Support</h4>
+                    <Link href="/support" style={styles.dropdownLink}>🎧 Customer Support</Link>
+                    <Link href="/faq" style={styles.dropdownLink}>❓ FAQ</Link>
+                    <Link href="/financial-education" style={styles.dropdownLink}>📚 Financial Education</Link>
+                    <Link href="/calculators" style={styles.dropdownLink}>🧮 Financial Calculators</Link>
+                    <Link href="/branch-locator" style={styles.dropdownLink}>📍 Find Branch/ATM</Link>
+                  </div>
+                  <div style={styles.dropdownDivider}></div>
+                  <div style={styles.dropdownSection}>
+                    <button onClick={handleLogout} style={styles.logoutDropdownButton}>
+                      Sign Out
+                    </button>
                   </div>
                 </div>
               )}
@@ -456,75 +456,14 @@ export default function MainMenu() {
           transform: translateX(3px);
         }
 
-        @media (max-width: 414px) and (orientation: portrait) {
-          div[style*="comprehensiveDropdown"] {
-            position: fixed !important;
-            top: 70px !important;
-            left: 0.5rem !important;
-            right: 0.5rem !important;
-            width: calc(100vw - 1rem) !important;
-            min-width: auto !important;
-            max-width: calc(100vw - 1rem) !important;
-            transform: none !important;
-            padding: 0.75rem !important;
-            max-height: calc(100vh - 90px) !important;
-          }
-
-          div[style*="dropdownGrid"] {
-            grid-template-columns: repeat(3, 1fr) !important;
-            gap: 0.5rem !important;
-          }
-
-          h4[style*="dropdownColumnTitle"] {
-            font-size: 0.6rem !important;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            padding: 0 0.2rem !important;
-            margin-bottom: 0.2rem !important;
-            padding-bottom: 0.2rem !important;
-          }
-
-          a[style*="dropdownLink"] {
-            font-size: 0.65rem !important;
-            padding: 0.35rem 0.4rem !important;
-            gap: 0.2rem !important;
-            flex-direction: column !important;
-            text-align: center !important;
-            align-items: center !important;
-          }
-
-          div[style*="dropdownColumn"] {
-            gap: 0.2rem !important;
-          }
+        .dropdown-link:hover {
+          background-color: #f3f4f6 !important;
+          color: #1a365d !important;
+          transform: translateX(4px);
         }
 
-        @media (max-width: 768px) {
-          div[style*="comprehensiveDropdown"] {
-            position: fixed !important;
-            top: 80px !important;
-            left: 1rem !important;
-            right: 1rem !important;
-            width: calc(100vw - 2rem) !important;
-            min-width: auto !important;
-            max-width: calc(100vw - 2rem) !important;
-            transform: none !important;
-            padding: 1rem !important;
-          }
-
-          div[style*="dropdownGrid"] {
-            grid-template-columns: repeat(3, 1fr) !important;
-            gap: 0.75rem !important;
-          }
-
-          h4[style*="dropdownColumnTitle"] {
-            font-size: 0.65rem !important;
-          }
-
-          a[style*="dropdownLink"] {
-            font-size: 0.7rem !important;
-            padding: 0.4rem 0.5rem !important;
-          }
+        .logoutDropdownButton:hover {
+          background-color: #b91c1c !important;
         }
       `}</style>
     </div>
@@ -651,22 +590,35 @@ const styles = {
   comprehensiveDropdown: {
     position: 'absolute',
     top: '100%',
-    left: '0',
-    backgroundColor: '#ffffff',
-    minWidth: '600px',
-    padding: '25px',
-    boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+    left: 0,
+    backgroundColor: 'white',
     borderRadius: '12px',
-    border: '1px solid #e5e7eb',
-    zIndex: 200,
-    marginTop: '0.5rem',
+    boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+    padding: '1rem',
+    minWidth: '280px',
     maxHeight: '70vh',
-    overflowY: 'auto'
+    overflowY: 'auto',
+    zIndex: 1000,
+    marginTop: '0.5rem',
+    border: '1px solid #e2e8f0'
   },
-  dropdownGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '25px'
+  dropdownSection: {
+    marginBottom: '0.5rem'
+  },
+  dropdownSectionTitle: {
+    fontSize: '0.8rem',
+    fontWeight: 'bold',
+    color: '#1A3E6F',
+    margin: '0 0 0.5rem 0',
+    padding: '0 0.5rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
+  },
+  dropdownDivider: {
+    height: '1px',
+    backgroundColor: '#e2e8f0',
+    margin: '0.75rem 0',
+    width: '100%'
   },
   scrollingWelcomeContainer: {
     display: 'flex',
@@ -691,33 +643,27 @@ const styles = {
     paddingLeft: '100%',
     lineHeight: '1.4'
   },
-  dropdownColumn: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.3rem'
-  },
-  dropdownColumnTitle: {
-    fontSize: '0.7rem',
-    fontWeight: '700',
-    color: '#1e40af',
-    margin: '0 0 0.3rem 0',
-    padding: '0 0.3rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.3px',
-    borderBottom: '1px solid #e2e8f0',
-    paddingBottom: '0.3rem'
-  },
   dropdownLink: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.3rem',
-    padding: '0.4rem 0.5rem',
+    display: 'block',
+    padding: '0.75rem 1rem',
     color: '#374151',
     textDecoration: 'none',
-    borderRadius: '4px',
-    fontSize: '0.7rem',
+    borderRadius: '6px',
+    fontSize: '0.9rem',
+    transition: 'all 0.2s'
+  },
+  logoutDropdownButton: {
+    width: '100%',
+    padding: '0.75rem 1rem',
+    backgroundColor: '#dc2626',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    fontSize: '0.9rem',
+    fontWeight: '500',
+    cursor: 'pointer',
     transition: 'all 0.2s',
-    fontWeight: '500'
+    textAlign: 'left'
   },
   headerRight: {
     display: 'flex',
