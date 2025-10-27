@@ -290,10 +290,10 @@ export default function About() {
                       <div>
                         <div style={styles.branchLabel}>Email</div>
                         <a 
-                          href={`mailto:${bankDetails?.email_info || 'info@theoaklinebank.com'}`} 
+                          href={`mailto:${bankDetails?.email_contact || bankDetails?.email_info || 'contact-us@theoaklinebank.com'}`} 
                           style={styles.branchLink}
                         >
-                          {bankDetails?.email_info || 'info@theoaklinebank.com'}
+                          {bankDetails?.email_contact || bankDetails?.email_info || 'contact-us@theoaklinebank.com'}
                         </a>
                       </div>
                     </div>
