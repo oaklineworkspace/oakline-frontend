@@ -1,10 +1,28 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 
 export default function About() {
   const { user } = useAuth();
   const [activeSection, setActiveSection] = useState('company');
+  const [bankDetails, setBankDetails] = useState(null);
+
+  useEffect(() => {
+    const fetchBankDetails = async () => {
+      const { data, error } = await supabase
+        .from('bank_details')
+        .select('*')
+        .limit(1)
+        .single();
+
+      if (!error && data) {
+        setBankDetails(data);
+      }
+    };
+
+    fetchBankDetails();
+  }, []);
 
   return (
     <div style={styles.pageContainer}>
@@ -242,27 +260,41 @@ export default function About() {
               <div style={styles.contactSection}>
                 <h3 style={styles.contactTitle}>Visit Our Branch</h3>
                 <div style={styles.branchCard}>
-                  <h4 style={styles.branchName}>Oakline Bank – Oklahoma City Branch</h4>
+                  <h4 style={styles.branchName}>
+                    {bankDetails?.name || 'Oakline Bank'} – {bankDetails?.branch_name || 'Oklahoma City Branch'}
+                  </h4>
                   <div style={styles.branchDetails}>
                     <div style={styles.branchItem}>
                       <div style={styles.branchIcon}>📍</div>
                       <div>
                         <div style={styles.branchLabel}>Address</div>
-                        <div style={styles.branchValue}>12201 N. May Avenue<br/>Oklahoma City, OK 73120</div>
+                        <div style={styles.branchValue}>
+                          {bankDetails?.address || '12201 N. May Avenue, Oklahoma City, OK 73120'}
+                        </div>
                       </div>
                     </div>
                     <div style={styles.branchItem}>
                       <div style={styles.branchIcon}>📞</div>
                       <div>
                         <div style={styles.branchLabel}>Phone / Text</div>
-                        <a href="tel:+16366356122" style={styles.branchLink}>+1 (636) 635-6122</a>
+                        <a 
+                          href={`tel:${bankDetails?.phone?.replace(/\s/g, '') || '+16366356122'}`} 
+                          style={styles.branchLink}
+                        >
+                          {bankDetails?.phone || '+1 (636) 635-6122'}
+                        </a>
                       </div>
                     </div>
                     <div style={styles.branchItem}>
                       <div style={styles.branchIcon}>✉️</div>
                       <div>
                         <div style={styles.branchLabel}>Email</div>
-                        <a href="mailto:info@theoaklinebank.com" style={styles.branchLink}>info@theoaklinebank.com</a>
+                        <a 
+                          href={`mailto:${bankDetails?.email_info || 'info@theoaklinebank.com'}`} 
+                          style={styles.branchLink}
+                        >
+                          {bankDetails?.email_info || 'info@theoaklinebank.com'}
+                        </a>
                       </div>
                     </div>
                     <div style={styles.branchItem}>
@@ -279,7 +311,7 @@ export default function About() {
                   </div>
                   <div style={styles.mapContainer}>
                     <a
-                      href="https://www.google.com/maps/search/?api=1&query=12201+N.+May+Avenue,+Oklahoma+City,+OK+73120"
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bankDetails?.address || '12201 N. May Avenue, Oklahoma City, OK 73120')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={styles.mapButton}
