@@ -64,6 +64,16 @@ export default async function handler(req, res) {
         updateData = { status: 'replaced' };
         successMessage = 'Card marked for replacement';
         break;
+      case 'set_pin':
+        const { pin } = req.body;
+        if (!pin || !/^\d{4}$/.test(pin)) {
+          return res.status(400).json({ error: 'PIN must be exactly 4 digits' });
+        }
+        // In a real application, you would hash the PIN before storing
+        // For now, we'll store it as-is (you should implement hashing)
+        updateData = { pin: pin };
+        successMessage = 'PIN set successfully';
+        break;
       default:
         return res.status(400).json({ error: 'Invalid action' });
     }

@@ -16,6 +16,10 @@ function CardsContent() {
   const [flippedCards, setFlippedCards] = useState({});
   const [showCardDetails, setShowCardDetails] = useState({});
   const [showBalance, setShowBalance] = useState(true);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [selectedCardForPin, setSelectedCardForPin] = useState(null);
+  const [pinInput, setPinInput] = useState('');
+  const [confirmPinInput, setConfirmPinInput] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -103,6 +107,63 @@ function CardsContent() {
     } catch (err) {
       console.error('Error updating card:', err);
       setError('Failed to update card');
+    }
+  };
+
+  const handleSetupPin = (cardId) => {
+    setSelectedCardForPin(cardId);
+    setShowPinModal(true);
+    setPinInput('');
+    setConfirmPinInput('');
+  };
+
+  const handlePinSubmit = async () => {
+    if (pinInput.length !== 4 || !/^\d{4}$/.test(pinInput)) {
+      setError('PIN must be exactly 4 digits');
+      return;
+    }
+
+    if (pinInput !== confirmPinInput) {
+      setError('PINs do not match');
+      return;
+    }
+
+    try {
+      setError('');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('Please log in to set up PIN');
+        return;
+      }
+
+      const response = await fetch('/api/cards', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          cardId: selectedCardForPin,
+          action: 'set_pin',
+          pin: pinInput
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSuccess('PIN set successfully');
+        setShowPinModal(false);
+        setPinInput('');
+        setConfirmPinInput('');
+        setSelectedCardForPin(null);
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError(data.error || 'Failed to set PIN');
+      }
+    } catch (err) {
+      console.error('Error setting PIN:', err);
+      setError('Failed to set PIN');
     }
   };
 
@@ -372,55 +433,82 @@ function CardsContent() {
                   </div>
 
                   <div style={styles.cardActions}>
-                    {card.is_locked ? (
-                      <button
-                        onClick={() => handleCardAction(card.id, 'unlock')}
-                        style={{ ...styles.actionButton, ...styles.unlockButton }}
-                      >
-                        🔓 Unlock Card
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleCardAction(card.id, 'lock')}
-                        style={{ ...styles.actionButton, ...styles.lockButton }}
-                      >
-                        🔒 Lock Card
-                      </button>
-                    )}
+                    <div style={styles.actionGroup}>
+                      <h4 style={styles.actionGroupTitle}>Security Controls</h4>
+                      <div style={styles.actionButtons}>
+                        {card.is_locked ? (
+                          <button
+                            onClick={() => handleCardAction(card.id, 'unlock')}
+                            style={{ ...styles.actionButton, ...styles.unlockButton }}
+                          >
+                            🔓 Unlock Card
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleCardAction(card.id, 'lock')}
+                            style={{ ...styles.actionButton, ...styles.lockButton }}
+                          >
+                            🔒 Lock Card
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleSetupPin(card.id)}
+                          style={{ ...styles.actionButton, ...styles.pinButton }}
+                        >
+                          🔑 Set PIN
+                        </button>
+                      </div>
+                    </div>
 
-                    {card.status === 'active' && !card.is_locked && (
-                      <button
-                        onClick={() => handleCardAction(card.id, 'deactivate')}
-                        style={{ ...styles.actionButton, ...styles.deactivateButton }}
-                      >
-                        ⏸️ Deactivate
-                      </button>
-                    )}
+                    <div style={styles.actionGroup}>
+                      <h4 style={styles.actionGroupTitle}>Status Management</h4>
+                      <div style={styles.actionButtons}>
+                        {card.status === 'active' && !card.is_locked && (
+                          <button
+                            onClick={() => handleCardAction(card.id, 'deactivate')}
+                            style={{ ...styles.actionButton, ...styles.deactivateButton }}
+                          >
+                            ⏸️ Deactivate
+                          </button>
+                        )}
 
-                    {(card.status === 'inactive' || card.status === 'deactivated') && (
-                      <button
-                        onClick={() => handleCardAction(card.id, 'activate')}
-                        style={{ ...styles.actionButton, ...styles.activateButton }}
-                      >
-                        ✓ Activate
-                      </button>
-                    )}
+                        {(card.status === 'inactive' || card.status === 'deactivated') && (
+                          <button
+                            onClick={() => handleCardAction(card.id, 'activate')}
+                            style={{ ...styles.actionButton, ...styles.activateButton }}
+                          >
+                            ✓ Activate
+                          </button>
+                        )}
 
-                    {card.status === 'active' && (
-                      <button
-                        onClick={() => handleCardAction(card.id, 'block')}
-                        style={{ ...styles.actionButton, ...styles.blockButton }}
-                      >
-                        ⛔ Block Card
-                      </button>
-                    )}
+                        {card.status === 'active' && (
+                          <button
+                            onClick={() => handleCardAction(card.id, 'block')}
+                            style={{ ...styles.actionButton, ...styles.blockButton }}
+                          >
+                            ⛔ Block Card
+                          </button>
+                        )}
+                      </div>
+                    </div>
 
-                    <button
-                      onClick={() => handleCardAction(card.id, 'replace')}
-                      style={{ ...styles.actionButton, ...styles.replaceButton }}
-                    >
-                      🔄 Request Replacement
-                    </button>
+                    <div style={styles.actionGroup}>
+                      <h4 style={styles.actionGroupTitle}>Card Services</h4>
+                      <div style={styles.actionButtons}>
+                        <button
+                          onClick={() => handleCardAction(card.id, 'replace')}
+                          style={{ ...styles.actionButton, ...styles.replaceButton }}
+                        >
+                          🔄 Request Replacement
+                        </button>
+                        <button
+                          onClick={() => router.push('/transactions?card=' + card.id)}
+                          style={{ ...styles.actionButton, ...styles.transactionsButton }}
+                        >
+                          📊 View Transactions
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -428,6 +516,79 @@ function CardsContent() {
           )}
         </section>
       </main>
+
+      {showPinModal && (
+        <div style={styles.modalOverlay} onClick={() => setShowPinModal(false)}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>🔑 Set Card PIN</h2>
+              <button
+                onClick={() => setShowPinModal(false)}
+                style={styles.modalCloseButton}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={styles.modalBody}>
+              <p style={styles.modalDescription}>
+                Create a secure 4-digit PIN for ATM and point-of-sale transactions.
+              </p>
+              
+              <div style={styles.pinInputGroup}>
+                <label style={styles.pinLabel}>Enter PIN (4 digits)</label>
+                <input
+                  type="password"
+                  maxLength="4"
+                  value={pinInput}
+                  onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ''))}
+                  style={styles.pinInputField}
+                  placeholder="••••"
+                />
+              </div>
+
+              <div style={styles.pinInputGroup}>
+                <label style={styles.pinLabel}>Confirm PIN</label>
+                <input
+                  type="password"
+                  maxLength="4"
+                  value={confirmPinInput}
+                  onChange={(e) => setConfirmPinInput(e.target.value.replace(/\D/g, ''))}
+                  style={styles.pinInputField}
+                  placeholder="••••"
+                />
+              </div>
+
+              <div style={styles.pinRequirements}>
+                <p style={styles.requirementsTitle}>PIN Requirements:</p>
+                <ul style={styles.requirementsList}>
+                  <li style={pinInput.length === 4 ? styles.requirementMet : styles.requirementNotMet}>
+                    {pinInput.length === 4 ? '✓' : '○'} Must be exactly 4 digits
+                  </li>
+                  <li style={pinInput === confirmPinInput && pinInput.length === 4 ? styles.requirementMet : styles.requirementNotMet}>
+                    {pinInput === confirmPinInput && pinInput.length === 4 ? '✓' : '○'} PINs must match
+                  </li>
+                </ul>
+              </div>
+
+              <div style={styles.modalActions}>
+                <button
+                  onClick={() => setShowPinModal(false)}
+                  style={{ ...styles.modalButton, ...styles.cancelButton }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePinSubmit}
+                  style={{ ...styles.modalButton, ...styles.submitButton }}
+                  disabled={pinInput.length !== 4 || pinInput !== confirmPinInput}
+                >
+                  Set PIN
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -845,6 +1006,26 @@ const styles = {
     transition: 'all 0.2s'
   },
   cardActions: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.5rem',
+    marginTop: '1rem'
+  },
+  actionGroup: {
+    background: '#f8fafc',
+    padding: '1rem',
+    borderRadius: '12px',
+    border: '1px solid #e2e8f0'
+  },
+  actionGroupTitle: {
+    fontSize: '0.9rem',
+    fontWeight: '700',
+    color: '#1e293b',
+    margin: '0 0 0.75rem 0',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
+  },
+  actionButtons: {
     display: 'grid',
     gridTemplateColumns: 'repeat(2, 1fr)',
     gap: '0.75rem'
@@ -864,26 +1045,170 @@ const styles = {
   },
   lockButton: {
     background: '#fef3c7',
-    color: '#f59e0b'
+    color: '#f59e0b',
+    border: '2px solid #fbbf24'
   },
   unlockButton: {
     background: '#d1fae5',
-    color: '#059669'
+    color: '#059669',
+    border: '2px solid #10b981'
   },
   activateButton: {
     background: '#d1fae5',
-    color: '#059669'
+    color: '#059669',
+    border: '2px solid #10b981'
   },
   deactivateButton: {
     background: '#fee2e2',
-    color: '#dc2626'
+    color: '#dc2626',
+    border: '2px solid #ef4444'
   },
   blockButton: {
     background: '#fee2e2',
-    color: '#dc2626'
+    color: '#dc2626',
+    border: '2px solid #ef4444'
   },
   replaceButton: {
     background: '#e0e7ff',
-    color: '#1e40af'
+    color: '#1e40af',
+    border: '2px solid #3b82f6'
+  },
+  pinButton: {
+    background: '#ddd6fe',
+    color: '#7c3aed',
+    border: '2px solid #8b5cf6'
+  },
+  transactionsButton: {
+    background: '#e0f2fe',
+    color: '#0284c7',
+    border: '2px solid #0ea5e9'
+  },
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0, 0, 0, 0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+    padding: '1rem'
+  },
+  modalContent: {
+    background: 'white',
+    borderRadius: '16px',
+    maxWidth: '500px',
+    width: '100%',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    overflow: 'hidden'
+  },
+  modalHeader: {
+    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+    color: 'white',
+    padding: '1.5rem',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  modalTitle: {
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+    margin: 0
+  },
+  modalCloseButton: {
+    background: 'rgba(255, 255, 255, 0.2)',
+    border: 'none',
+    color: 'white',
+    fontSize: '1.5rem',
+    width: '36px',
+    height: '36px',
+    borderRadius: '50%',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'background 0.2s'
+  },
+  modalBody: {
+    padding: '2rem'
+  },
+  modalDescription: {
+    fontSize: '0.95rem',
+    color: '#64748b',
+    marginBottom: '1.5rem',
+    lineHeight: '1.5'
+  },
+  pinInputGroup: {
+    marginBottom: '1.5rem'
+  },
+  pinLabel: {
+    display: 'block',
+    fontSize: '0.9rem',
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: '0.5rem'
+  },
+  pinInputField: {
+    width: '100%',
+    padding: '1rem',
+    fontSize: '1.5rem',
+    border: '2px solid #e2e8f0',
+    borderRadius: '8px',
+    textAlign: 'center',
+    letterSpacing: '1rem',
+    fontFamily: 'monospace',
+    transition: 'border-color 0.2s'
+  },
+  pinRequirements: {
+    background: '#f8fafc',
+    padding: '1rem',
+    borderRadius: '8px',
+    marginBottom: '1.5rem'
+  },
+  requirementsTitle: {
+    fontSize: '0.85rem',
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: '0.5rem'
+  },
+  requirementsList: {
+    listStyle: 'none',
+    padding: 0,
+    margin: 0
+  },
+  requirementMet: {
+    fontSize: '0.85rem',
+    color: '#059669',
+    padding: '0.25rem 0',
+    fontWeight: '500'
+  },
+  requirementNotMet: {
+    fontSize: '0.85rem',
+    color: '#64748b',
+    padding: '0.25rem 0'
+  },
+  modalActions: {
+    display: 'flex',
+    gap: '1rem'
+  },
+  modalButton: {
+    flex: 1,
+    padding: '0.875rem',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    fontWeight: '600',
+    transition: 'all 0.2s'
+  },
+  cancelButton: {
+    background: '#e2e8f0',
+    color: '#475569'
+  },
+  submitButton: {
+    background: '#1e40af',
+    color: 'white'
   }
 };
