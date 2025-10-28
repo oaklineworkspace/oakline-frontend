@@ -125,6 +125,7 @@ export default function Apply() {
   const [codeSent, setCodeSent] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [verifiedEmailAddress, setVerifiedEmailAddress] = useState('');
+  const [bankDetails, setBankDetails] = useState(null);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -149,6 +150,22 @@ export default function Apply() {
     annualIncome: '',
     agreeToTerms: false
   });
+
+  useEffect(() => {
+    const fetchBankDetails = async () => {
+      const { data, error } = await supabase
+        .from('bank_details')
+        .select('*')
+        .limit(1)
+        .single();
+
+      if (!error && data) {
+        setBankDetails(data);
+      }
+    };
+
+    fetchBankDetails();
+  }, []);
 
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const validatePhone = (phone) => /^[\d\s\-\(\)]{10,}$/.test(phone);
@@ -1907,8 +1924,8 @@ export default function Apply() {
                     style={{
                       height: 'clamp(40px, 10vw, 60px)',
                       width: 'auto',
-                      filter: 'brightness(0) invert(1)',
-                      maxWidth: '100%'
+                      maxWidth: '100%',
+                      objectFit: 'contain'
                     }}
                   />
                   <div style={{
@@ -1916,7 +1933,7 @@ export default function Apply() {
                     fontWeight: '700',
                     letterSpacing: '0.5px'
                   }}>
-                    Oakline Bank
+                    {bankDetails?.name || 'Oakline Bank'}
                   </div>
                 </div>
 
@@ -2158,12 +2175,12 @@ export default function Apply() {
                     lineHeight: '1.6'
                   }}>
                     Need assistance? Contact our support team at{' '}
-                    <a href="tel:1-800-OAKLINE" style={{ color: '#1A3E6F', fontWeight: '600', textDecoration: 'none', wordBreak: 'break-word' }}>
-                      1-800-OAKLINE
+                    <a href={`tel:${bankDetails?.phone || '1-800-OAKLINE'}`} style={{ color: '#1A3E6F', fontWeight: '600', textDecoration: 'none', wordBreak: 'break-word' }}>
+                      {bankDetails?.phone || '1-800-OAKLINE'}
                     </a>
                     {' '}or email{' '}
-                    <a href="mailto:support@theoaklinebank.com" style={{ color: '#1A3E6F', fontWeight: '600', textDecoration: 'none', wordBreak: 'break-word' }}>
-                      support@theoaklinebank.com
+                    <a href={`mailto:${bankDetails?.email_info || 'support@theoaklinebank.com'}`} style={{ color: '#1A3E6F', fontWeight: '600', textDecoration: 'none', wordBreak: 'break-word' }}>
+                      {bankDetails?.email_info || 'support@theoaklinebank.com'}
                     </a>
                   </p>
                 </div>
