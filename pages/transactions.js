@@ -91,52 +91,38 @@ export default function TransactionsHistory() {
     }).format(amount || 0);
   };
 
-  const getTransactionStyle = (type) => {
-    const lowerType = (type || '').toLowerCase();
-    
-    const styles = {
-      // Credits (Green shades)
-      deposit: { color: '#059669', bgColor: '#d1fae5', icon: '💰', label: 'Deposit' },
-      credit: { color: '#10b981', bgColor: '#d1fae5', icon: '💵', label: 'Credit' },
-      transfer_in: { color: '#059669', bgColor: '#d1fae5', icon: '📥', label: 'Transfer In' },
-      refund: { color: '#10b981', bgColor: '#d1fae5', icon: '↩️', label: 'Refund' },
-      interest: { color: '#0891b2', bgColor: '#cffafe', icon: '💎', label: 'Interest' },
-      bonus: { color: '#3b82f6', bgColor: '#dbeafe', icon: '🎁', label: 'Bonus' },
-      reward: { color: '#3b82f6', bgColor: '#dbeafe', icon: '🏆', label: 'Reward' },
-      cashback: { color: '#8b5cf6', bgColor: '#ede9fe', icon: '💳', label: 'Cashback' },
-      
-      // Debits (Red shades)
-      debit: { color: '#dc2626', bgColor: '#fee2e2', icon: '💳', label: 'Debit' },
-      withdrawal: { color: '#ef4444', bgColor: '#fee2e2', icon: '🏧', label: 'Withdrawal' },
-      transfer_out: { color: '#dc2626', bgColor: '#fee2e2', icon: '📤', label: 'Transfer Out' },
-      payment: { color: '#f97316', bgColor: '#ffedd5', icon: '💸', label: 'Payment' },
-      bill_payment: { color: '#f97316', bgColor: '#ffedd5', icon: '📄', label: 'Bill Payment' },
-      purchase: { color: '#ef4444', bgColor: '#fee2e2', icon: '🛒', label: 'Purchase' },
-      fee: { color: '#dc2626', bgColor: '#fee2e2', icon: '⚠️', label: 'Fee' },
-      
-      // Special types
-      reversal: { color: '#6b7280', bgColor: '#f3f4f6', icon: '⏪', label: 'Reversal' },
-      pending: { color: '#f59e0b', bgColor: '#fef3c7', icon: '⏳', label: 'Pending' },
-      zelle_send: { color: '#9333ea', bgColor: '#f3e8ff', icon: 'Z', label: 'Zelle Send' },
-      zelle_receive: { color: '#7c3aed', bgColor: '#f3e8ff', icon: 'Z', label: 'Zelle Receive' },
-      wire_transfer: { color: '#0284c7', bgColor: '#e0f2fe', icon: '🌐', label: 'Wire Transfer' }
-    };
-
-    // Find matching style
-    for (const [key, style] of Object.entries(styles)) {
-      if (lowerType.includes(key)) {
-        return style;
-      }
+  const getTransactionIcon = (type) => {
+    switch (type?.toLowerCase()) {
+      case 'deposit': return '📥';
+      case 'withdrawal': return '📤';
+      case 'transfer_in': return '💸';
+      case 'transfer_out': return '💰';
+      case 'bill_payment': return '🧾';
+      case 'fee': return '💳';
+      case 'debit': return '💳';
+      case 'credit': return '💵';
+      case 'purchase': return '🛒';
+      case 'refund': return '↩️';
+      case 'interest': return '💎';
+      case 'zelle_send': return 'Z';
+      case 'zelle_receive': return 'Z';
+      default: return '💼';
     }
-
-    // Default style
-    return { color: '#6b7280', bgColor: '#f3f4f6', icon: '📄', label: 'Transaction' };
   };
 
   const isTransactionCredit = (tx) => {
-    const txType = (tx.type || '').toLowerCase();
-    const creditTypes = ['deposit', 'credit', 'transfer_in', 'refund', 'interest', 'bonus', 'reward', 'cashback', 'zelle_receive'];
-    return creditTypes.some(type => txType.includes(type));
+    const txType = (tx.type || tx.transaction_type || '').toLowerCase();
+    const amount = parseFloat(tx.amount) || 0;
+    
+    // Determine if it's a credit (money in) or debit (money out)
+    if (txType.includes('deposit') || txType.includes('credit') || txType.includes('transfer_in') || txType.includes('interest') || txType.includes('refund') || txType.includes('bonus') || txType.includes('reward') || txType.includes('cashback') || txType.includes('zelle_receive')) {
+      return true;
+    } else if (txType.includes('debit') || txType.includes('withdrawal') || txType.includes('purchase') || txType.includes('transfer_out') || txType.includes('bill_payment') || txType.includes('fee') || txType.includes('payment') || txType.includes('zelle_send')) {
+      return false;
+    } else {
+      // Fallback: check if amount is positive or negative
+      return amount >= 0;
+    }
   };
 
   const getFilteredTransactions = () => {
@@ -236,33 +222,35 @@ export default function TransactionsHistory() {
         ) : (
           <div style={styles.transactionsList}>
             {filteredTransactions.map(tx => {
+              const txType = tx.type || tx.transaction_type || '';
+              const amount = parseFloat(tx.amount) || 0;
               const isCredit = isTransactionCredit(tx);
-              const txStyle = getTransactionStyle(tx.type);
-              const amount = Math.abs(parseFloat(tx.amount) || 0);
               
               return (
                 <div key={tx.id} style={styles.transactionCard}>
                   <div style={{
                     ...styles.transactionIcon,
-                    backgroundColor: txStyle.bgColor,
-                    color: txStyle.color
+                    backgroundColor: isCredit ? '#d1fae5' : '#fee2e2',
+                    color: isCredit ? '#059669' : '#dc2626'
                   }}>
-                    {txStyle.icon}
+                    {getTransactionIcon(txType)}
                   </div>
                   
                   <div style={styles.transactionDetails}>
                     <div style={styles.transactionHeader}>
-                      <span style={styles.transactionType}>{txStyle.label}</span>
+                      <span style={styles.transactionType}>
+                        {tx.description || txType?.replace(/_/g, ' ').toUpperCase() || 'Transaction'}
+                      </span>
                       <span style={{
                         ...styles.transactionAmount,
                         color: isCredit ? '#059669' : '#dc2626'
                       }}>
-                        {isCredit ? '+' : '-'}{formatCurrency(amount)}
+                        {isCredit ? '+' : '-'}{formatCurrency(Math.abs(amount))}
                       </span>
                     </div>
                     
                     <div style={styles.transactionDescription}>
-                      {tx.description || 'Transaction'}
+                      {txType?.replace(/_/g, ' ').toUpperCase()}
                     </div>
                     
                     <div style={styles.transactionMeta}>
