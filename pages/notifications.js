@@ -72,89 +72,71 @@ export default function Notifications() {
 
   const fetchNotifications = async (user, profile) => {
     try {
+      console.log('Fetching notifications for user:', user.id);
+
+      // Fetch real notifications from database
+      const { data: dbNotifications, error: notifError } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (notifError) {
+        console.error('Error fetching notifications:', notifError);
+      }
+
       let realNotifications = [];
-      const userName = profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'Valued Customer';
 
-      // Always create welcome notification
-      realNotifications.push({
-        id: 'welcome',
-        title: 'Welcome to Oakline Bank',
-        message: `Hello ${userName}! Welcome to your secure banking dashboard. All your notifications will appear here.`,
-        type: 'system',
-        timestamp: new Date().toISOString(),
-        read: false,
-        icon: '🎉',
-        priority: 'high'
-      });
+      // Add database notifications if they exist
+      if (dbNotifications && dbNotifications.length > 0) {
+        console.log('Found database notifications:', dbNotifications.length);
+        realNotifications = dbNotifications.map(notif => ({
+          id: notif.id,
+          title: notif.title,
+          message: notif.message,
+          type: notif.type,
+          timestamp: notif.created_at,
+          read: notif.read,
+          icon: notif.icon || getIconForType(notif.type),
+          priority: notif.priority || 'normal'
+        }));
+      } else {
+        console.log('No database notifications found, creating welcome notification');
+        const userName = profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'Valued Customer';
+        
+        // Create welcome notification in database
+        const { data: welcomeNotif, error: insertError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: user.id,
+            title: 'Welcome to Oakline Bank',
+            message: `Hello ${userName}! Welcome to your secure banking dashboard. All your notifications will appear here.`,
+            type: 'system',
+            icon: '🎉',
+            priority: 'high',
+            read: false
+          })
+          .select()
+          .single();
 
-      if (profile?.application_id) {
-        // Get user accounts
-        const { data: accounts, error: accountsError } = await supabase
-          .from('accounts')
-          .select('*')
-          .eq('application_id', profile.application_id)
-          .eq('status', 'active');
-
-        if (!accountsError && accounts && accounts.length > 0) {
-          console.log('Found accounts:', accounts.length);
-
-          // Add account notifications
-          accounts.forEach((account) => {
-            realNotifications.push({
-              id: `account_${account.id}`,
-              title: 'Account Active',
-              message: `Your ${account.account_type.replace('_', ' ').toUpperCase()} account (****${account.account_number.slice(-4)}) is active with a balance of $${parseFloat(account.balance || 0).toFixed(2)}.`,
-              type: 'account',
-              timestamp: account.created_at,
-              read: true,
-              icon: '🏦',
-              priority: 'normal'
-            });
+        if (!insertError && welcomeNotif) {
+          realNotifications.push({
+            id: welcomeNotif.id,
+            title: welcomeNotif.title,
+            message: welcomeNotif.message,
+            type: welcomeNotif.type,
+            timestamp: welcomeNotif.created_at,
+            read: welcomeNotif.read,
+            icon: welcomeNotif.icon,
+            priority: welcomeNotif.priority
           });
-
-          // Get recent transactions
-          const { data: transactions, error: transError } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(5);
-
-          if (!transError && transactions && transactions.length > 0) {
-            transactions.forEach((transaction, index) => {
-              realNotifications.push({
-                id: `trans_${transaction.id}`,
-                title: `${transaction.type === 'credit' ? 'Deposit' : 'Transaction'} Alert`,
-                message: `${transaction.type === 'credit' ? 'A deposit of' : 'A transaction of'} $${Math.abs(parseFloat(transaction.amount)).toFixed(2)} was processed on your account.`,
-                type: 'transaction',
-                timestamp: transaction.created_at,
-                read: index > 2,
-                icon: transaction.type === 'credit' ? '💰' : '💳',
-                priority: 'normal'
-              });
-            });
-          }
         }
       }
 
-      // Security notification
-      realNotifications.push({
-        id: 'security',
-        title: 'Security Reminder',
-        message: 'Keep your account secure. Never share your login credentials and always log out from public computers.',
-        type: 'security',
-        timestamp: new Date(Date.now() - 86400000).toISOString(),
-        read: true,
-        icon: '🔐',
-        priority: 'high'
-      });
-
-      // Sort notifications by timestamp
-      realNotifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       setNotifications(realNotifications);
 
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error('Error in fetchNotifications:', error);
       
       // Fallback notification
       setNotifications([{
@@ -170,18 +152,80 @@ export default function Notifications() {
     }
   };
 
-  const handleMarkAsRead = (notificationId) => {
-    setNotifications(notifications.map(notif => 
-      notif.id === notificationId ? { ...notif, read: true } : notif
-    ));
+  const getIconForType = (type) => {
+    const icons = {
+      transaction: '💳',
+      security: '🔐',
+      system: '📱',
+      account: '🏦',
+      alert: '⚠️'
+    };
+    return icons[type] || '📌';
   };
 
-  const handleMarkAllAsRead = () => {
-    setNotifications(notifications.map(notif => ({ ...notif, read: true })));
+  const handleMarkAsRead = async (notificationId) => {
+    try {
+      // Update in database
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', notificationId);
+
+      if (error) {
+        console.error('Error marking notification as read:', error);
+        return;
+      }
+
+      // Update local state
+      setNotifications(notifications.map(notif => 
+        notif.id === notificationId ? { ...notif, read: true } : notif
+      ));
+    } catch (error) {
+      console.error('Error in handleMarkAsRead:', error);
+    }
   };
 
-  const handleDeleteNotification = (notificationId) => {
-    setNotifications(notifications.filter(notif => notif.id !== notificationId));
+  const handleMarkAllAsRead = async () => {
+    try {
+      if (!user) return;
+
+      // Update all in database
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
+
+      if (error) {
+        console.error('Error marking all notifications as read:', error);
+        return;
+      }
+
+      // Update local state
+      setNotifications(notifications.map(notif => ({ ...notif, read: true })));
+    } catch (error) {
+      console.error('Error in handleMarkAllAsRead:', error);
+    }
+  };
+
+  const handleDeleteNotification = async (notificationId) => {
+    try {
+      // Delete from database
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', notificationId);
+
+      if (error) {
+        console.error('Error deleting notification:', error);
+        return;
+      }
+
+      // Update local state
+      setNotifications(notifications.filter(notif => notif.id !== notificationId));
+    } catch (error) {
+      console.error('Error in handleDeleteNotification:', error);
+    }
   };
 
   const handleSettingChange = (setting) => {
