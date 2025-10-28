@@ -1,6 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -10,12 +10,12 @@ function CardsContent() {
   const [userProfile, setUserProfile] = useState(null);
   const [cards, setCards] = useState([]);
   const [accounts, setAccounts] = useState([]);
-  const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [flippedCards, setFlippedCards] = useState({});
   const [showCardDetails, setShowCardDetails] = useState({});
+  const [showBalance, setShowBalance] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -27,7 +27,6 @@ function CardsContent() {
   const loadUserData = async () => {
     setLoading(true);
     try {
-      // Fetch user profile
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
@@ -38,7 +37,6 @@ function CardsContent() {
         setUserProfile(profileData);
       }
 
-      // Fetch accounts
       const { data: accountsData } = await supabase
         .from('accounts')
         .select('*')
@@ -47,7 +45,6 @@ function CardsContent() {
 
       setAccounts(accountsData || []);
 
-      // Fetch cards with account info
       const { data: cardsData } = await supabase
         .from('cards')
         .select(`
@@ -63,22 +60,6 @@ function CardsContent() {
         .order('created_at', { ascending: false });
 
       setCards(cardsData || []);
-
-      // Fetch card applications
-      const { data: appsData } = await supabase
-        .from('card_applications')
-        .select(`
-          *,
-          accounts:account_id (
-            id,
-            account_number,
-            account_type
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('requested_at', { ascending: false });
-
-      setApplications(appsData || []);
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Failed to load card data');
@@ -98,55 +79,30 @@ function CardsContent() {
         return;
       }
 
-      let updateData = {};
-      let successMessage = '';
+      const response = await fetch('/api/cards', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          cardId,
+          action
+        })
+      });
 
-      switch (action) {
-        case 'lock':
-          updateData = { is_locked: true };
-          successMessage = 'Card locked successfully';
-          break;
-        case 'unlock':
-          updateData = { is_locked: false };
-          successMessage = 'Card unlocked successfully';
-          break;
-        case 'activate':
-          updateData = { status: 'active', activated_at: new Date().toISOString() };
-          successMessage = 'Card activated successfully';
-          break;
-        case 'deactivate':
-          updateData = { status: 'deactivated' };
-          successMessage = 'Card deactivated successfully';
-          break;
-        case 'block':
-          updateData = { status: 'blocked', is_locked: true };
-          successMessage = 'Card blocked successfully';
-          break;
-        case 'replace':
-          updateData = { status: 'replaced' };
-          successMessage = 'Card marked for replacement';
-          break;
-        default:
-          setError('Invalid action');
-          return;
+      const data = await response.json();
+
+      if (data.success) {
+        setSuccess(data.message);
+        await loadUserData();
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError(data.error || 'Failed to update card');
       }
-
-      const { error: updateError } = await supabase
-        .from('cards')
-        .update({ ...updateData, updated_at: new Date().toISOString() })
-        .eq('id', cardId)
-        .eq('user_id', user.id);
-
-      if (updateError) throw updateError;
-
-      setSuccess(successMessage);
-      await loadUserData();
-
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error('Error updating card:', err);
-      setError(err.message || 'Failed to update card');
+      setError('Failed to update card');
     }
   };
 
@@ -159,7 +115,7 @@ function CardsContent() {
     }).format(Math.abs(amount || 0));
   };
 
-  const getCardholderName = (card) => {
+  const getCardholderName = () => {
     if (userProfile) {
       return `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim().toUpperCase();
     }
@@ -217,17 +173,16 @@ function CardsContent() {
 
   return (
     <div style={styles.container}>
-      {/* Header */}
       <header style={styles.header}>
         <div style={styles.headerContainer}>
           <div style={styles.headerLeft}>
-            <div style={styles.logoContainer}>
+            <Link href="/" style={styles.logoContainer}>
               <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.logo} />
               <div style={styles.brandInfo}>
                 <h1 style={styles.brandName}>Oakline Bank</h1>
                 <span style={styles.brandTagline}>Card Management</span>
               </div>
-            </div>
+            </Link>
           </div>
           <div style={styles.headerRight}>
             <button onClick={() => router.push('/dashboard')} style={styles.backButton}>
@@ -237,9 +192,7 @@ function CardsContent() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main style={styles.main}>
-        {/* Page Title & Actions */}
         <div style={styles.pageHeader}>
           <div>
             <h1 style={styles.pageTitle}>💳 My Cards</h1>
@@ -254,14 +207,13 @@ function CardsContent() {
           </button>
         </div>
 
-        {/* Messages */}
         {error && (
           <div style={styles.errorMessage}>
             <span style={styles.messageIcon}>⚠️</span>
             {error}
           </div>
         )}
-        
+
         {success && (
           <div style={styles.successMessage}>
             <span style={styles.messageIcon}>✓</span>
@@ -269,54 +221,9 @@ function CardsContent() {
           </div>
         )}
 
-        {/* Card Applications Section */}
-        {applications.length > 0 && (
-          <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>📋 Pending Applications</h2>
-            <div style={styles.applicationsGrid}>
-              {applications.map((app) => (
-                <div key={app.id} style={styles.applicationCard}>
-                  <div style={styles.applicationHeader}>
-                    <div>
-                      <h3 style={styles.applicationTitle}>Card Application</h3>
-                      <p style={styles.applicationDate}>
-                        Applied: {new Date(app.requested_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <span style={{
-                      ...styles.statusBadge,
-                      backgroundColor: 
-                        app.application_status === 'approved' ? '#d1fae5' :
-                        app.application_status === 'pending' ? '#fef3c7' : '#fee2e2',
-                      color:
-                        app.application_status === 'approved' ? '#059669' :
-                        app.application_status === 'pending' ? '#f59e0b' : '#dc2626'
-                    }}>
-                      {app.application_status}
-                    </span>
-                  </div>
-                  <div style={styles.applicationDetails}>
-                    <div style={styles.detailRow}>
-                      <span style={styles.detailLabel}>Card Type:</span>
-                      <span style={styles.detailValue}>{app.card_type?.toUpperCase() || 'Debit'}</span>
-                    </div>
-                    <div style={styles.detailRow}>
-                      <span style={styles.detailLabel}>Account:</span>
-                      <span style={styles.detailValue}>
-                        ****{app.accounts?.account_number?.slice(-4)} ({app.accounts?.account_type})
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Active Cards Section */}
         <section style={styles.section}>
           <div style={styles.sectionHeader}>
-            <h2 style={styles.sectionTitle}>💳 My Cards</h2>
+            <h2 style={styles.sectionTitle}>💳 Active Cards</h2>
             <span style={styles.cardCount}>{cards.length} Card{cards.length !== 1 ? 's' : ''}</span>
           </div>
 
@@ -338,7 +245,6 @@ function CardsContent() {
             <div style={styles.cardsGrid}>
               {cards.map((card) => (
                 <div key={card.id} style={styles.cardContainer}>
-                  {/* Card Visual */}
                   <div 
                     style={{
                       ...styles.cardFlipWrapper,
@@ -346,7 +252,6 @@ function CardsContent() {
                     }}
                     onClick={() => setFlippedCards(prev => ({ ...prev, [card.id]: !prev[card.id] }))}
                   >
-                    {/* Front of card */}
                     <div style={{
                       ...styles.cardFace,
                       ...styles.cardFront,
@@ -380,7 +285,7 @@ function CardsContent() {
                       <div style={styles.cardFooterDetails}>
                         <div style={{ flex: 1 }}>
                           <div style={styles.cardLabelSmall}>CARDHOLDER</div>
-                          <div style={styles.cardValueSmall}>{getCardholderName(card)}</div>
+                          <div style={styles.cardValueSmall}>{getCardholderName()}</div>
                         </div>
                         <div style={{ marginRight: '1.5rem' }}>
                           <div style={styles.cardLabelSmall}>EXPIRES</div>
@@ -397,7 +302,6 @@ function CardsContent() {
                       </div>
                     </div>
 
-                    {/* Back of card */}
                     <div style={{
                       ...styles.cardFace,
                       ...styles.cardBack,
@@ -418,7 +322,6 @@ function CardsContent() {
                     </div>
                   </div>
 
-                  {/* Card Information */}
                   <div style={styles.cardInfo}>
                     <div style={styles.cardStatusRow}>
                       <span style={styles.statusLabel}>Status:</span>
@@ -468,7 +371,6 @@ function CardsContent() {
                     </button>
                   </div>
 
-                  {/* Action Buttons */}
                   <div style={styles.cardActions}>
                     {card.is_locked ? (
                       <button
@@ -572,7 +474,7 @@ const styles = {
     boxShadow: '0 4px 12px rgba(26, 54, 93, 0.2)'
   },
   headerContainer: {
-    maxWidth: '1400px',
+    maxWidth: '100%',
     margin: '0 auto',
     padding: '1rem 2rem',
     display: 'flex',
@@ -586,7 +488,9 @@ const styles = {
   logoContainer: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1rem'
+    gap: '1rem',
+    textDecoration: 'none',
+    color: 'white'
   },
   logo: {
     height: '50px',
@@ -623,7 +527,7 @@ const styles = {
     transition: 'all 0.2s'
   },
   main: {
-    maxWidth: '1400px',
+    maxWidth: '100%',
     margin: '0 auto',
     padding: '2rem'
   },
@@ -712,61 +616,6 @@ const styles = {
     fontSize: '0.9rem',
     color: '#64748b',
     fontWeight: '600'
-  },
-  applicationsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-    gap: '1.5rem'
-  },
-  applicationCard: {
-    background: 'white',
-    borderRadius: '12px',
-    padding: '1.5rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-    border: '1px solid #e2e8f0'
-  },
-  applicationHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '1rem'
-  },
-  applicationTitle: {
-    fontSize: '1.1rem',
-    fontWeight: '600',
-    color: '#1e293b',
-    margin: '0 0 0.25rem 0'
-  },
-  applicationDate: {
-    fontSize: '0.85rem',
-    color: '#64748b',
-    margin: 0
-  },
-  statusBadge: {
-    padding: '0.4rem 0.8rem',
-    borderRadius: '20px',
-    fontSize: '0.8rem',
-    fontWeight: '600',
-    textTransform: 'capitalize'
-  },
-  applicationDetails: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.75rem'
-  },
-  detailRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
-  detailLabel: {
-    fontSize: '0.9rem',
-    color: '#64748b'
-  },
-  detailValue: {
-    fontSize: '0.9rem',
-    fontWeight: '600',
-    color: '#1e293b'
   },
   emptyState: {
     background: 'white',
