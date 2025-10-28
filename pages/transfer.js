@@ -113,6 +113,7 @@ export default function Transfer() {
       }
 
       const referenceNumber = generateReferenceNumber();
+      const transferGroupId = crypto.randomUUID();
 
       // Deduct from source account
       const newFromBalance = parseFloat(selectedFromAccount.balance) - transferAmount;
@@ -128,27 +129,31 @@ export default function Transfer() {
         .update({ balance: newToBalance, updated_at: new Date().toISOString() })
         .eq('id', toAccount);
 
-      // Create debit transaction
-      await supabase.from('transactions').insert([{
-        user_id: user.id,
-        account_id: fromAccount,
-        type: 'transfer_out',
-        amount: transferAmount,
-        description: `Transfer to ****${selectedToAccount.account_number?.slice(-4)} - ${memo || 'Internal Transfer'}`,
-        status: 'completed',
-        reference: referenceNumber
-      }]);
-
-      // Create credit transaction
-      await supabase.from('transactions').insert([{
-        user_id: user.id,
-        account_id: toAccount,
-        type: 'transfer_in',
-        amount: transferAmount,
-        description: `Transfer from ****${selectedFromAccount.account_number?.slice(-4)} - ${memo || 'Internal Transfer'}`,
-        status: 'completed',
-        reference: referenceNumber
-      }]);
+      // Create both debit and credit transactions with transfer_group_id
+      await supabase.from('transactions').insert([
+        {
+          user_id: user.id,
+          account_id: fromAccount,
+          type: 'transfer_out',
+          amount: transferAmount,
+          description: `Transfer to ${selectedToAccount.account_type?.toUpperCase()} - ${memo || 'Internal Transfer'}`,
+          status: 'completed',
+          reference: referenceNumber,
+          transfer_group_id: transferGroupId,
+          transfer_type: 'internal'
+        },
+        {
+          user_id: user.id,
+          account_id: toAccount,
+          type: 'transfer_in',
+          amount: transferAmount,
+          description: `Transfer from ${selectedFromAccount.account_type?.toUpperCase()} - ${memo || 'Internal Transfer'}`,
+          status: 'completed',
+          reference: referenceNumber,
+          transfer_group_id: transferGroupId,
+          transfer_type: 'internal'
+        }
+      ]);
 
       // Generate receipt data
       const receipt = {

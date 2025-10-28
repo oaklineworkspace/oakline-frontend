@@ -106,6 +106,8 @@ export default async function handler(req, res) {
       console.error('Code update error:', codeUpdateError);
     }
 
+    const transferGroupId = crypto.randomUUID();
+    
     const { error: transactionError } = await supabaseAdmin.from('transactions').insert([{
       user_id: user.id,
       account_id: transfer.from_account_id,
@@ -113,7 +115,9 @@ export default async function handler(req, res) {
       amount: transfer.amount,
       description: `Wire transfer to ${transfer.beneficiary_name} - ${transfer.beneficiary_bank}`,
       status: 'completed',
-      reference: transfer.reference_number
+      reference: transfer.reference_number,
+      transfer_group_id: transferGroupId,
+      transfer_type: 'wire'
     }]);
 
     if (transactionError) {

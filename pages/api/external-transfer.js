@@ -104,6 +104,8 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to process transfer' });
     }
 
+    const transferGroupId = crypto.randomUUID();
+    
     const { error: transactionError } = await supabaseAdmin
       .from('transactions')
       .insert([{
@@ -113,7 +115,9 @@ export default async function handler(req, res) {
         amount: transferAmount,
         description: `External transfer to ${beneficiary_name} at ${beneficiary_bank} - ${description || 'ACH Transfer'}`,
         status: 'completed',
-        reference: referenceNumber
+        reference: referenceNumber,
+        transfer_group_id: transferGroupId,
+        transfer_type: 'external'
       }]);
 
     if (transactionError) {

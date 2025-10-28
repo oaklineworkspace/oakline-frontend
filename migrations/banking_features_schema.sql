@@ -1,5 +1,21 @@
 -- ============================================================================
 -- OAKLINE BANK - ENHANCED BANKING FEATURES SCHEMA
+-- Features: Zelle, Wire Transfers, Mobile Check Deposits, Transfer Grouping
+-- ============================================================================
+
+-- ============================================================================
+-- 0. TRANSACTIONS TABLE ENHANCEMENT (Transfer Grouping)
+-- ============================================================================
+
+-- Add transfer_group_id to existing transactions table if not exists
+ALTER TABLE transactions 
+ADD COLUMN IF NOT EXISTS transfer_group_id UUID,
+ADD COLUMN IF NOT EXISTS transfer_type TEXT CHECK (transfer_type IN ('internal', 'external', 'wire', 'zelle'));
+
+CREATE INDEX IF NOT EXISTS idx_transactions_transfer_group ON transactions(transfer_group_id);
+
+-- ============================================================================
+-- OAKLINE BANK - ENHANCED BANKING FEATURES SCHEMA
 -- Features: Zelle, Wire Transfers, Mobile Check Deposits
 -- ============================================================================
 

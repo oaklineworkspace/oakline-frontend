@@ -107,10 +107,33 @@ function DashboardContent() {
           `)
           .in('account_id', accountIds)
           .order('created_at', { ascending: false })
-          .limit(10);
+          .limit(50);
 
-        if (!txError) {
-          transactionsData = txData || [];
+        if (!txError && txData) {
+          // Filter to show only one transaction per transfer group
+          const seenTransferGroups = new Set();
+          const filteredTransactions = [];
+          
+          for (const tx of txData) {
+            if (tx.transfer_group_id) {
+              // For grouped transfers, only show the 'out' transaction for the current user
+              if (!seenTransferGroups.has(tx.transfer_group_id)) {
+                seenTransferGroups.add(tx.transfer_group_id);
+                // Show the outgoing transaction (transfer_out, zelle_send, etc.)
+                if (tx.type === 'transfer_out' || tx.type === 'zelle_send' || tx.type === 'wire_transfer') {
+                  filteredTransactions.push(tx);
+                } else if (tx.type === 'transfer_in' || tx.type === 'zelle_receive') {
+                  // Only show incoming if we haven't seen the group yet (recipient side)
+                  filteredTransactions.push(tx);
+                }
+              }
+            } else {
+              // Non-grouped transactions show normally
+              filteredTransactions.push(tx);
+            }
+          }
+          
+          transactionsData = filteredTransactions.slice(0, 10);
         }
       }
 

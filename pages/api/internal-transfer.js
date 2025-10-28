@@ -1,3 +1,4 @@
+
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 
 export default async function handler(req, res) {
@@ -67,6 +68,7 @@ export default async function handler(req, res) {
     }
 
     const referenceNumber = `INT-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    const transferGroupId = crypto.randomUUID();
     const newFromBalance = parseFloat(fromAccount.balance) - transferAmount;
     const newToBalance = parseFloat(toAccount.balance) + transferAmount;
 
@@ -94,24 +96,50 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to credit recipient account' });
     }
 
+    // Get recipient profile info
+    const { data: recipientProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('first_name, last_name')
+      .eq('id', toAccount.user_id)
+      .single();
+
+    const recipientName = recipientProfile 
+      ? `${recipientProfile.first_name} ${recipientProfile.last_name}`.trim()
+      : 'Oakline User';
+
+    // Get sender profile info
+    const { data: senderProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('first_name, last_name')
+      .eq('id', user.id)
+      .single();
+
+    const senderName = senderProfile 
+      ? `${senderProfile.first_name} ${senderProfile.last_name}`.trim()
+      : 'Oakline User';
+
     const { error: transactionError } = await supabaseAdmin.from('transactions').insert([
       {
         user_id: user.id,
         account_id: from_account_id,
         type: 'transfer_out',
         amount: transferAmount,
-        description: `Transfer to account ****${to_account_number.slice(-4)} - ${memo || 'Internal Transfer'}`,
+        description: `Transfer to ${recipientName} - ${memo || 'Internal Transfer'}`,
         status: 'completed',
-        reference: referenceNumber
+        reference: referenceNumber,
+        transfer_group_id: transferGroupId,
+        transfer_type: 'internal'
       },
       {
         user_id: toAccount.user_id,
         account_id: toAccount.id,
         type: 'transfer_in',
         amount: transferAmount,
-        description: `Transfer from account ****${fromAccount.account_number.slice(-4)} - ${memo || 'Internal Transfer'}`,
+        description: `Transfer from ${senderName} - ${memo || 'Internal Transfer'}`,
         status: 'completed',
-        reference: referenceNumber
+        reference: referenceNumber,
+        transfer_group_id: transferGroupId,
+        transfer_type: 'internal'
       }
     ]);
 
@@ -133,13 +161,13 @@ export default async function handler(req, res) {
         user_id: user.id,
         type: 'transfer',
         title: 'Transfer Sent',
-        message: `You transferred $${transferAmount.toFixed(2)} to account ****${to_account_number.slice(-4)}`
+        message: `You transferred $${transferAmount.toFixed(2)} to ${recipientName}`
       },
       {
         user_id: toAccount.user_id,
         type: 'transfer',
         title: 'Transfer Received',
-        message: `You received $${transferAmount.toFixed(2)} from account ****${fromAccount.account_number.slice(-4)}`
+        message: `You received $${transferAmount.toFixed(2)} from ${senderName}`
       }
     ]);
 
@@ -160,7 +188,8 @@ export default async function handler(req, res) {
           from_balance: newFromBalance,
           to_balance: newToBalance,
           amount: transferAmount,
-          reference: referenceNumber
+          reference: referenceNumber,
+          transfer_group_id: transferGroupId
         }
       }
     ]);
@@ -177,7 +206,8 @@ export default async function handler(req, res) {
         from_account: fromAccount.account_number,
         to_account: to_account_number,
         amount: transferAmount,
-        reference: referenceNumber
+        reference: referenceNumber,
+        transfer_group_id: transferGroupId
       },
       user_id: user.id
     }]);
@@ -190,6 +220,7 @@ export default async function handler(req, res) {
       success: true,
       message: 'Transfer completed successfully',
       reference_number: referenceNumber,
+      transfer_group_id: transferGroupId,
       new_balance: newFromBalance
     });
 
