@@ -1,7 +1,17 @@
 # Oakline Bank Frontend
 
 ## Overview
-Oakline Bank is a comprehensive Next.js/React-based banking web application providing a complete digital banking experience. It serves retail and business clients with features like account management, transactions, card services, loan applications, cryptocurrency trading, and investment services. The platform emphasizes security, user experience, and real-time data synchronization. The project includes a professional internationalization page and robust administrative features.
+Oakline Bank is a comprehensive Next.js/React-based banking web application providing a complete digital banking experience. It serves retail and business clients with features like account management, transactions, card services, loan applications, cryptocurrency trading, bill payments, and investment services. The platform emphasizes security, user experience, and real-time data synchronization. The project includes a professional internationalization page and robust administrative features.
+
+## Recent Updates (October 2025)
+**New Features Added:**
+- **Bill Pay System** (`/pages/bill-pay.js`): Full-featured bill payment page with beneficiary management, scheduled payments, payment history tracking, and automatic transaction recording in both `bill_payments` and `transactions` tables.
+- **Investment Portfolio** (`/pages/investment.js`): Comprehensive investment management with product listings, portfolio tracking, transaction history, and real-time portfolio value calculations.
+
+**Security Enhancements:**
+- All account balance updates now include `user_id` verification to prevent unauthorized account access.
+- Implemented rollback logic for multi-step financial operations to maintain data integrity.
+- All bill payments (immediate and scheduled) create transaction records with appropriate status flags.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
