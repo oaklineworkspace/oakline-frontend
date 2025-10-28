@@ -510,126 +510,53 @@ function DashboardContent() {
 
           <div style={styles.transactionsList}>
             {transactions.length > 0 ? (
-              transactions.map(transaction => {
-                const txType = (transaction.transaction_type || transaction.type || '').toLowerCase();
-                const txDescription = (transaction.description || '').toLowerCase();
-                const amount = parseFloat(transaction.amount) || 0;
-                const status = (transaction.status || 'completed').toLowerCase();
-
-                // Determine if credit or debit based on type
-                let isCredit = false;
-                let transactionIcon = '📄';
-                let txLabel = 'Transaction';
+              transactions.map(tx => {
+                const txType = tx.transaction_type?.toLowerCase() || '';
+                const amount = parseFloat(tx.amount) || 0;
                 
-                // Credit types (money coming in)
-                if (txType.includes('deposit') || txType.includes('credit') || txType.includes('transfer_in') || 
-                    txType.includes('refund') || txType.includes('interest') || txType.includes('bonus') || 
-                    txType.includes('reward') || txType.includes('cashback') || txType.includes('receive')) {
+                // Determine if it's a credit (money in) or debit (money out)
+                let isCredit = false;
+                if (txType.includes('deposit') || txType.includes('credit') || txType.includes('transfer_in') || txType.includes('interest')) {
                   isCredit = true;
-                  transactionIcon = '💰';
-                  if (txType.includes('deposit')) txLabel = 'Deposit';
-                  else if (txType.includes('interest')) txLabel = 'Interest';
-                  else if (txType.includes('refund')) txLabel = 'Refund';
-                  else if (txType.includes('bonus')) txLabel = 'Bonus';
-                  else if (txType.includes('receive')) txLabel = 'Received';
-                  else txLabel = 'Credit';
-                }
-                // Debit types (money going out)
-                else if (txType.includes('debit') || txType.includes('withdrawal') || txType.includes('purchase') || 
-                         txType.includes('payment') || txType.includes('bill') || txType.includes('fee') || 
-                         txType.includes('transfer_out') || txType.includes('send')) {
+                } else if (txType.includes('debit') || txType.includes('withdrawal') || txType.includes('purchase') || txType.includes('transfer_out') || txType.includes('bill_payment') || txType.includes('fee')) {
                   isCredit = false;
-                  transactionIcon = '💳';
-                  if (txType.includes('withdrawal')) txLabel = 'Withdrawal';
-                  else if (txType.includes('purchase')) txLabel = 'Purchase';
-                  else if (txType.includes('payment') || txType.includes('bill')) txLabel = 'Payment';
-                  else if (txType.includes('fee')) txLabel = 'Fee';
-                  else if (txType.includes('send')) txLabel = 'Sent';
-                  else txLabel = 'Debit';
-                }
-                // Transfer (check amount sign)
-                else if (txType.includes('transfer')) {
+                } else {
+                  // Fallback: check if amount is positive or negative
                   isCredit = amount >= 0;
-                  transactionIcon = '🔄';
-                  txLabel = isCredit ? 'Transfer In' : 'Transfer Out';
-                }
-                // Fallback to amount sign
-                else {
-                  isCredit = amount >= 0;
-                  transactionIcon = isCredit ? '💰' : '💳';
-                  txLabel = isCredit ? 'Credit' : 'Debit';
                 }
 
-                // Standard banking colors
-                let amountColor = isCredit ? '#2ECC71' : '#E74C3C';
-                let iconBg = isCredit ? '#d4f4e2' : '#fde8e8';
-                let iconColor = isCredit ? '#2ECC71' : '#E74C3C';
-
-                // Status colors
-                let statusColor = '#2ECC71';
-                let statusBg = '#d4f4e2';
-                let statusText = 'Completed';
-
-                if (status === 'pending') {
-                  statusColor = '#F1C40F';
-                  statusBg = '#fef5d4';
-                  statusText = 'Pending';
-                } else if (status === 'cancelled') {
-                  statusColor = '#7F8C8D';
-                  statusBg = '#e8e9ea';
-                  statusText = 'Cancelled';
-                } else if (status === 'failed') {
-                  statusColor = '#E74C3C';
-                  statusBg = '#fde8e8';
-                  statusText = 'Failed';
-                } else if (txType.includes('reversal') || txDescription.includes('reversal')) {
-                  statusColor = '#3498DB';
-                  statusBg = '#dbeafe';
-                  statusText = 'Reversal';
-                  transactionIcon = '↩️';
-                }
-
+                const getTransactionIcon = (type) => {
+                  switch (type?.toLowerCase()) {
+                    case 'deposit': return '📥';
+                    case 'withdrawal': return '📤';
+                    case 'transfer_in': return '💸';
+                    case 'transfer_out': return '💰';
+                    case 'bill_payment': return '🧾';
+                    case 'fee': return '💳';
+                    default: return '💼';
+                  }
+                };
+                
                 return (
-                  <div key={transaction.id} style={styles.transactionItem}>
-                    <div style={{ 
-                      ...styles.transactionIcon, 
-                      backgroundColor: iconBg,
-                      color: iconColor
-                    }}>
-                      {transactionIcon}
-                    </div>
-                    <div style={styles.transactionDetails}>
-                      <div style={styles.transactionDescription}>
-                        {transaction.description || transaction.transaction_type?.replace(/_/g, ' ').toUpperCase() || 'Transaction'}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={styles.transactionDate}>
-                          {formatDate(transaction.created_at)}
-                        </span>
-                        {transaction.accounts?.account_number && (
-                          <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>
-                            • ****{transaction.accounts.account_number.slice(-4)}
-                          </span>
-                        )}
-                        <span style={{ 
-                          fontSize: '0.7rem',
-                          fontWeight: '600',
-                          padding: '0.15rem 0.5rem',
-                          borderRadius: '12px',
-                          backgroundColor: statusBg,
-                          color: statusColor,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px'
-                        }}>
-                          {statusText}
-                        </span>
+                  <div key={tx.id} style={styles.transactionItem}>
+                    <div style={styles.transactionLeft}>
+                      <span style={styles.transactionIcon}>
+                        {getTransactionIcon(tx.transaction_type)}
+                      </span>
+                      <div style={styles.transactionInfo}>
+                        <div style={styles.transactionDescription}>
+                          {tx.description || tx.transaction_type?.replace(/_/g, ' ').toUpperCase()}
+                        </div>
+                        <div style={styles.transactionDate}>
+                          {formatDate(tx.created_at)}
+                        </div>
                       </div>
                     </div>
                     <div style={{
                       ...styles.transactionAmount,
-                      color: amountColor
+                      color: isCredit ? '#059669' : '#dc2626'
                     }}>
-                      {isCredit ? '+' : '−'}
+                      {isCredit ? '+' : '-'}
                       {formatCurrency(Math.abs(amount))}
                     </div>
                   </div>
@@ -1440,51 +1367,41 @@ const styles = {
   },
   transactionItem: {
     display: 'flex',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: '1rem',
-    padding: '1.25rem',
-    background: 'white',
+    padding: '1rem',
+    backgroundColor: '#f8fafc',
     borderRadius: '12px',
-    border: '1px solid #e5e7eb',
-    transition: 'all 0.2s ease',
-    cursor: 'pointer',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+    marginBottom: '0.75rem',
+    border: '1px solid #e2e8f0',
+    transition: 'all 0.3s ease',
+    cursor: 'pointer'
+  },
+  transactionLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    flex: 1
   },
   transactionIcon: {
-    fontSize: '1.5rem',
-    padding: '0.75rem',
-    borderRadius: '10px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '48px',
-    height: '48px',
-    flexShrink: 0,
-    fontWeight: '600'
+    fontSize: '1.5rem'
   },
-  transactionDetails: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.25rem'
+  transactionInfo: {
+    flex: 1
   },
   transactionDescription: {
     fontSize: '0.95rem',
     fontWeight: '600',
-    color: '#111827',
-    marginBottom: '0.125rem',
-    lineHeight: '1.4'
+    color: '#1e293b',
+    marginBottom: '0.25rem'
   },
   transactionDate: {
     fontSize: '0.8rem',
-    color: '#6b7280',
-    fontWeight: '500'
+    color: '#64748b'
   },
   transactionAmount: {
-    fontSize: '1.1rem',
-    fontWeight: '700',
-    textAlign: 'right',
-    letterSpacing: '-0.02em'
+    fontSize: '1.05rem',
+    fontWeight: '700'
   },
   emptyState: {
     textAlign: 'center',
