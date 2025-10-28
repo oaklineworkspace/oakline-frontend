@@ -21,14 +21,16 @@ const useMediaQuery = (query) => {
   return matches;
 };
 
-export default function Transfer() {
+export default function InternalTransfer() {
   const [user, setUser] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [fromAccount, setFromAccount] = useState('');
-  const [toAccount, setToAccount] = useState('');
+  const [recipientAccountNumber, setRecipientAccountNumber] = useState('');
+  const [recipientInfo, setRecipientInfo] = useState(null);
   const [amount, setAmount] = useState('');
   const [memo, setMemo] = useState('');
   const [loading, setLoading] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [message, setMessage] = useState('');
   const [pageLoading, setPageLoading] = useState(true);
   const [showReceipt, setShowReceipt] = useState(false);
@@ -75,31 +77,70 @@ export default function Transfer() {
     }).format(amount || 0);
   };
 
-  const generateReferenceNumber = () => {
-    return `TXN${Date.now()}${Math.floor(Math.random() * 10000)}`;
+  const verifyRecipient = async () => {
+    if (!recipientAccountNumber || recipientAccountNumber.length < 10) {
+      setMessage('Please enter a valid account number');
+      return;
+    }
+
+    setVerifying(true);
+    setMessage('');
+    setRecipientInfo(null);
+
+    try {
+      // Check if trying to send to own account
+      const ownAccount = accounts.find(acc => acc.account_number === recipientAccountNumber);
+      if (ownAccount) {
+        setMessage('You cannot transfer to your own account. Use "Transfer Between My Accounts" instead.');
+        setVerifying(false);
+        return;
+      }
+
+      // Find recipient account
+      const { data: recipientAccount, error } = await supabase
+        .from('accounts')
+        .select('*, profiles!inner(first_name, last_name, email)')
+        .eq('account_number', recipientAccountNumber)
+        .eq('status', 'active')
+        .single();
+
+      if (error || !recipientAccount) {
+        setMessage('Account not found or inactive. Please verify the account number.');
+        setVerifying(false);
+        return;
+      }
+
+      setRecipientInfo({
+        accountId: recipientAccount.id,
+        accountNumber: recipientAccount.account_number,
+        accountType: recipientAccount.account_type,
+        ownerName: `${recipientAccount.profiles.first_name} ${recipientAccount.profiles.last_name}`,
+        userId: recipientAccount.user_id
+      });
+
+      setMessage('');
+    } catch (error) {
+      console.error('Error verifying recipient:', error);
+      setMessage('Error verifying account. Please try again.');
+    } finally {
+      setVerifying(false);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!recipientInfo) {
+      setMessage('Please verify the recipient account first');
+      return;
+    }
+
     setLoading(true);
     setMessage('');
 
     try {
       const transferAmount = parseFloat(amount);
       const selectedFromAccount = accounts.find(acc => acc.id === fromAccount);
-      const selectedToAccount = accounts.find(acc => acc.id === toAccount);
-
-      if (!selectedToAccount) {
-        setMessage('Please select a destination account');
-        setLoading(false);
-        return;
-      }
-
-      if (fromAccount === toAccount) {
-        setMessage('Cannot transfer to the same account');
-        setLoading(false);
-        return;
-      }
 
       if (transferAmount <= 0) {
         setMessage('Please enter a valid amount');
@@ -113,37 +154,44 @@ export default function Transfer() {
         return;
       }
 
-      const referenceNumber = generateReferenceNumber();
+      const referenceNumber = `INT${Date.now()}${Math.floor(Math.random() * 10000)}`;
 
-      // Deduct from source account
+      // Deduct from sender account
       const newFromBalance = parseFloat(selectedFromAccount.balance) - transferAmount;
       await supabase
         .from('accounts')
         .update({ balance: newFromBalance, updated_at: new Date().toISOString() })
         .eq('id', fromAccount);
 
-      // Add to destination account
-      const newToBalance = parseFloat(selectedToAccount.balance) + transferAmount;
+      // Get recipient current balance
+      const { data: recipientAccount } = await supabase
+        .from('accounts')
+        .select('balance')
+        .eq('id', recipientInfo.accountId)
+        .single();
+
+      // Add to recipient account
+      const newToBalance = parseFloat(recipientAccount.balance) + transferAmount;
       await supabase
         .from('accounts')
         .update({ balance: newToBalance, updated_at: new Date().toISOString() })
-        .eq('id', toAccount);
+        .eq('id', recipientInfo.accountId);
 
-      // Create debit transaction
+      // Create sender transaction (debit)
       await supabase.from('transactions').insert([{
         user_id: user.id,
         account_id: fromAccount,
         type: 'transfer_out',
         amount: transferAmount,
-        description: `Transfer to ****${selectedToAccount.account_number?.slice(-4)} - ${memo || 'Internal Transfer'}`,
+        description: `Transfer to ${recipientInfo.ownerName} - ${memo || 'Internal Transfer'}`,
         status: 'completed',
         reference: referenceNumber
       }]);
 
-      // Create credit transaction
+      // Create recipient transaction (credit)
       await supabase.from('transactions').insert([{
-        user_id: user.id,
-        account_id: toAccount,
+        user_id: recipientInfo.userId,
+        account_id: recipientInfo.accountId,
         type: 'transfer_in',
         amount: transferAmount,
         description: `Transfer from ****${selectedFromAccount.account_number?.slice(-4)} - ${memo || 'Internal Transfer'}`,
@@ -151,7 +199,23 @@ export default function Transfer() {
         reference: referenceNumber
       }]);
 
-      // Generate receipt data
+      // Create notifications
+      await supabase.from('notifications').insert([
+        {
+          user_id: user.id,
+          type: 'transfer',
+          title: 'Transfer Sent',
+          message: `You transferred ${formatCurrency(transferAmount)} to ${recipientInfo.ownerName}`
+        },
+        {
+          user_id: recipientInfo.userId,
+          type: 'transfer',
+          title: 'Money Received',
+          message: `You received ${formatCurrency(transferAmount)} from ****${selectedFromAccount.account_number?.slice(-4)}`
+        }
+      ]);
+
+      // Generate receipt
       const receipt = {
         referenceNumber,
         date: new Date().toLocaleString(),
@@ -161,9 +225,9 @@ export default function Transfer() {
           balance: newFromBalance
         },
         toAccount: {
-          type: selectedToAccount.account_type,
-          number: selectedToAccount.account_number,
-          balance: newToBalance
+          type: recipientInfo.accountType,
+          number: recipientInfo.accountNumber,
+          ownerName: recipientInfo.ownerName
         },
         amount: transferAmount,
         memo: memo || 'Internal Transfer'
@@ -171,13 +235,18 @@ export default function Transfer() {
 
       setReceiptData(receipt);
       setShowReceipt(true);
+      
+      // Reset form
       setAmount('');
       setMemo('');
+      setRecipientAccountNumber('');
+      setRecipientInfo(null);
       
       // Refresh accounts
       await checkUserAndFetchData();
 
     } catch (error) {
+      console.error('Transfer error:', error);
       setMessage(error.message || 'Transfer failed. Please try again.');
     } finally {
       setLoading(false);
@@ -248,7 +317,7 @@ export default function Transfer() {
       transition: 'all 0.3s ease'
     },
     main: {
-      maxWidth: '1400px',
+      maxWidth: '800px',
       margin: '0 auto',
       padding: isMobile ? '1.5rem 1rem' : '2.5rem 2rem'
     },
@@ -265,69 +334,33 @@ export default function Transfer() {
       fontSize: isMobile ? '0.95rem' : '1.1rem',
       color: '#64748b'
     },
-    transferOptions: {
-      display: 'grid',
-      gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-      gap: '1.5rem',
-      marginBottom: '2rem'
-    },
-    transferCard: {
-      backgroundColor: 'white',
-      borderRadius: '16px',
-      padding: isMobile ? '1.5rem' : '2rem',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      border: '2px solid transparent',
-      textDecoration: 'none',
-      color: 'inherit'
-    },
-    transferCardIcon: {
-      fontSize: '3rem',
-      marginBottom: '1rem'
-    },
-    transferCardTitle: {
-      fontSize: isMobile ? '1.2rem' : '1.4rem',
-      fontWeight: '700',
-      color: '#1e293b',
-      marginBottom: '0.5rem'
-    },
-    transferCardDesc: {
-      fontSize: '0.95rem',
-      color: '#64748b',
-      lineHeight: '1.6'
-    },
     contentSection: {
       backgroundColor: 'white',
       borderRadius: '16px',
       padding: isMobile ? '1.5rem' : '2rem',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+      marginBottom: '1.5rem'
     },
     sectionTitle: {
-      fontSize: isMobile ? '1.3rem' : '1.5rem',
+      fontSize: isMobile ? '1.2rem' : '1.3rem',
       fontWeight: '700',
       color: '#1e293b',
       marginBottom: '1.5rem',
       paddingBottom: '1rem',
       borderBottom: '2px solid #f1f5f9'
     },
-    formGrid: {
-      display: 'grid',
-      gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-      gap: '1.5rem',
+    formGroup: {
       marginBottom: '1.5rem'
     },
-    formGroup: {
-      display: 'flex',
-      flexDirection: 'column'
-    },
     label: {
+      display: 'block',
       fontSize: '0.9rem',
       fontWeight: '600',
       color: '#374151',
       marginBottom: '0.5rem'
     },
     select: {
+      width: '100%',
       padding: '0.875rem',
       border: '2px solid #e2e8f0',
       borderRadius: '12px',
@@ -336,11 +369,55 @@ export default function Transfer() {
       transition: 'border-color 0.3s'
     },
     input: {
+      width: '100%',
       padding: '0.875rem',
       border: '2px solid #e2e8f0',
       borderRadius: '12px',
       fontSize: '1rem',
-      transition: 'border-color 0.3s'
+      transition: 'border-color 0.3s',
+      boxSizing: 'border-box'
+    },
+    inputGroup: {
+      display: 'flex',
+      gap: '0.75rem'
+    },
+    verifyButton: {
+      padding: '0.875rem 1.5rem',
+      backgroundColor: '#059669',
+      color: 'white',
+      border: 'none',
+      borderRadius: '12px',
+      fontSize: '0.95rem',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.3s',
+      whiteSpace: 'nowrap'
+    },
+    recipientCard: {
+      backgroundColor: '#ecfdf5',
+      border: '2px solid #10b981',
+      borderRadius: '12px',
+      padding: '1.25rem',
+      marginBottom: '1.5rem'
+    },
+    recipientTitle: {
+      fontSize: '0.85rem',
+      color: '#065f46',
+      fontWeight: '600',
+      marginBottom: '0.75rem',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem'
+    },
+    recipientName: {
+      fontSize: '1.1rem',
+      fontWeight: '700',
+      color: '#064e3b',
+      marginBottom: '0.5rem'
+    },
+    recipientDetails: {
+      fontSize: '0.9rem',
+      color: '#065f46'
     },
     accountInfo: {
       backgroundColor: '#f8fafc',
@@ -379,6 +456,29 @@ export default function Transfer() {
       borderRadius: '12px',
       marginBottom: '1.5rem',
       border: '2px solid #fca5a5'
+    },
+    infoBox: {
+      backgroundColor: '#f0f9ff',
+      border: '1px solid #bae6fd',
+      borderRadius: '12px',
+      padding: '1.25rem',
+      marginTop: '1.5rem'
+    },
+    infoTitle: {
+      fontSize: '0.95rem',
+      fontWeight: '600',
+      color: '#0c4a6e',
+      marginBottom: '0.75rem',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem'
+    },
+    infoList: {
+      fontSize: '0.9rem',
+      color: '#0369a1',
+      lineHeight: '1.8',
+      paddingLeft: '1.2rem',
+      margin: 0
     },
     receiptModal: {
       position: 'fixed',
@@ -509,36 +609,6 @@ export default function Transfer() {
       marginTop: '1rem',
       color: '#64748b',
       fontSize: '1rem'
-    },
-    emptyState: {
-      textAlign: 'center',
-      padding: '3rem 1rem',
-      maxWidth: '500px',
-      margin: '0 auto'
-    },
-    emptyIcon: {
-      fontSize: '4rem',
-      marginBottom: '1rem'
-    },
-    emptyTitle: {
-      fontSize: '1.5rem',
-      color: '#1e293b',
-      marginBottom: '1rem'
-    },
-    emptyDesc: {
-      fontSize: '1rem',
-      color: '#64748b',
-      marginBottom: '2rem'
-    },
-    emptyButton: {
-      display: 'inline-block',
-      padding: '0.875rem 2rem',
-      backgroundColor: '#1e40af',
-      color: 'white',
-      textDecoration: 'none',
-      borderRadius: '12px',
-      fontWeight: '600',
-      fontSize: '1rem'
     }
   };
 
@@ -553,97 +623,10 @@ export default function Transfer() {
     );
   }
 
-  if (accounts.length === 0) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <div style={styles.headerContent}>
-            <Link href="/" style={styles.logoContainer}>
-              <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.logo} />
-              <span style={styles.logoText}>Oakline Bank</span>
-            </Link>
-            <Link href="/dashboard" style={styles.backButton}>
-              ← Back to Dashboard
-            </Link>
-          </div>
-        </div>
-        <div style={styles.emptyState}>
-          <div style={styles.emptyIcon}>🏦</div>
-          <h1 style={styles.emptyTitle}>No Accounts Found</h1>
-          <p style={styles.emptyDesc}>You need at least one active account to make transfers.</p>
-          <Link href="/apply" style={styles.emptyButton}>Open an Account</Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (accounts.length < 2) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <div style={styles.headerContent}>
-            <Link href="/" style={styles.logoContainer}>
-              <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.logo} />
-              <span style={styles.logoText}>Oakline Bank</span>
-            </Link>
-            <Link href="/dashboard" style={styles.backButton}>
-              ← Back to Dashboard
-            </Link>
-          </div>
-        </div>
-        <main style={styles.main}>
-          <div style={styles.welcomeSection}>
-            <h1 style={styles.welcomeTitle}>Transfer Funds</h1>
-            <p style={styles.welcomeSubtitle}>Move money between accounts or send to others</p>
-          </div>
-
-          <div style={styles.transferOptions}>
-            <Link 
-              href="/internal-transfer" 
-              style={{
-                ...styles.transferCard,
-                ':hover': { borderColor: '#1e40af', transform: 'translateY(-4px)' }
-              }}
-            >
-              <div style={styles.transferCardIcon}>👤</div>
-              <h2 style={styles.transferCardTitle}>Send to Oakline User</h2>
-              <p style={styles.transferCardDesc}>
-                Transfer money to another Oakline Bank customer using their account number
-              </p>
-            </Link>
-
-            <Link 
-              href="/wire-transfer" 
-              style={{
-                ...styles.transferCard,
-                ':hover': { borderColor: '#1e40af', transform: 'translateY(-4px)' }
-              }}
-            >
-              <div style={styles.transferCardIcon}>🌐</div>
-              <h2 style={styles.transferCardTitle}>Wire Transfer</h2>
-              <p style={styles.transferCardDesc}>
-                Send money domestically or internationally to external banks
-              </p>
-            </Link>
-          </div>
-
-          <div style={styles.emptyState}>
-            <div style={styles.emptyIcon}>🏦</div>
-            <h2 style={styles.emptyTitle}>Need Multiple Accounts?</h2>
-            <p style={styles.emptyDesc}>
-              You need at least two active accounts to transfer between your own accounts.
-            </p>
-            <Link href="/apply" style={styles.emptyButton}>Open Another Account</Link>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
     <>
       <Head>
-        <title>Transfer Funds - Oakline Bank</title>
+        <title>Internal Transfer - Oakline Bank</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
 
@@ -672,7 +655,7 @@ export default function Transfer() {
 
                 <div style={styles.receiptBody}>
                   <div style={styles.receiptSection}>
-                    <h3>From Account</h3>
+                    <h3>From Your Account</h3>
                     <p><strong>Type:</strong> {receiptData.fromAccount.type?.toUpperCase()}</p>
                     <p><strong>Account:</strong> ****{receiptData.fromAccount.number?.slice(-4)}</p>
                     <p><strong>New Balance:</strong> {formatCurrency(receiptData.fromAccount.balance)}</p>
@@ -681,10 +664,10 @@ export default function Transfer() {
                   <div style={styles.receiptArrow}>↓</div>
 
                   <div style={styles.receiptSection}>
-                    <h3>To Account</h3>
+                    <h3>To Recipient</h3>
+                    <p><strong>Name:</strong> {receiptData.toAccount.ownerName}</p>
                     <p><strong>Type:</strong> {receiptData.toAccount.type?.toUpperCase()}</p>
                     <p><strong>Account:</strong> ****{receiptData.toAccount.number?.slice(-4)}</p>
-                    <p><strong>New Balance:</strong> {formatCurrency(receiptData.toAccount.balance)}</p>
                   </div>
 
                   <div style={styles.receiptTotal}>
@@ -713,32 +696,8 @@ export default function Transfer() {
           )}
 
           <div style={styles.welcomeSection}>
-            <h1 style={styles.welcomeTitle}>Transfer Between Your Accounts</h1>
-            <p style={styles.welcomeSubtitle}>Move money instantly between your Oakline accounts</p>
-          </div>
-
-          <div style={styles.transferOptions}>
-            <Link 
-              href="/internal-transfer" 
-              style={styles.transferCard}
-            >
-              <div style={styles.transferCardIcon}>👤</div>
-              <h2 style={styles.transferCardTitle}>Send to Oakline User</h2>
-              <p style={styles.transferCardDesc}>
-                Transfer money to another Oakline Bank customer using their account number
-              </p>
-            </Link>
-
-            <Link 
-              href="/wire-transfer" 
-              style={styles.transferCard}
-            >
-              <div style={styles.transferCardIcon}>🌐</div>
-              <h2 style={styles.transferCardTitle}>Wire Transfer</h2>
-              <p style={styles.transferCardDesc}>
-                Send money domestically or internationally to external banks
-              </p>
-            </Link>
+            <h1 style={styles.welcomeTitle}>Send Money to Oakline User</h1>
+            <p style={styles.welcomeSubtitle}>Transfer funds to another Oakline Bank customer</p>
           </div>
 
           {message && (
@@ -746,72 +705,89 @@ export default function Transfer() {
           )}
 
           <div style={styles.contentSection}>
-            <h2 style={styles.sectionTitle}>Transfer Between My Accounts</h2>
+            <h2 style={styles.sectionTitle}>Transfer Details</h2>
 
             <form onSubmit={handleSubmit}>
-              <div style={styles.formGrid}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>From Account *</label>
-                  <select
-                    style={styles.select}
-                    value={fromAccount}
-                    onChange={(e) => setFromAccount(e.target.value)}
-                    required
-                  >
-                    {accounts.map(account => (
-                      <option key={account.id} value={account.id}>
-                        {getAccountTypeIcon(account.account_type)} {account.account_type?.replace('_', ' ')?.toUpperCase()} - ****{account.account_number?.slice(-4)} - {formatCurrency(account.balance || 0)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>From Account *</label>
+                <select
+                  style={styles.select}
+                  value={fromAccount}
+                  onChange={(e) => setFromAccount(e.target.value)}
+                  required
+                >
+                  {accounts.map(account => (
+                    <option key={account.id} value={account.id}>
+                      {getAccountTypeIcon(account.account_type)} {account.account_type?.replace('_', ' ')?.toUpperCase()} - ****{account.account_number?.slice(-4)} - {formatCurrency(account.balance || 0)}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>To Account *</label>
-                  <select
-                    style={styles.select}
-                    value={toAccount}
-                    onChange={(e) => setToAccount(e.target.value)}
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Recipient Account Number *</label>
+                <div style={styles.inputGroup}>
+                  <input
+                    type="text"
+                    style={{ ...styles.input, flex: 1 }}
+                    value={recipientAccountNumber}
+                    onChange={(e) => setRecipientAccountNumber(e.target.value)}
+                    placeholder="Enter Oakline Bank account number"
                     required
+                  />
+                  <button
+                    type="button"
+                    onClick={verifyRecipient}
+                    style={{
+                      ...styles.verifyButton,
+                      opacity: verifying ? 0.7 : 1,
+                      cursor: verifying ? 'not-allowed' : 'pointer'
+                    }}
+                    disabled={verifying}
                   >
-                    <option value="">Select destination account</option>
-                    {accounts
-                      .filter(acc => acc.id !== fromAccount)
-                      .map(account => (
-                        <option key={account.id} value={account.id}>
-                          {getAccountTypeIcon(account.account_type)} {account.account_type?.replace('_', ' ')?.toUpperCase()} - ****{account.account_number?.slice(-4)} - {formatCurrency(account.balance || 0)}
-                        </option>
-                      ))}
-                  </select>
+                    {verifying ? '🔄 Verifying...' : '✓ Verify'}
+                  </button>
                 </div>
               </div>
 
-              <div style={styles.formGrid}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Amount ($) *</label>
-                  <input
-                    type="number"
-                    style={styles.input}
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
-                    step="0.01"
-                    min="0.01"
-                    required
-                  />
+              {recipientInfo && (
+                <div style={styles.recipientCard}>
+                  <div style={styles.recipientTitle}>
+                    ✓ Recipient Verified
+                  </div>
+                  <div style={styles.recipientName}>{recipientInfo.ownerName}</div>
+                  <div style={styles.recipientDetails}>
+                    {getAccountTypeIcon(recipientInfo.accountType)} {recipientInfo.accountType?.replace('_', ' ')?.toUpperCase()} Account - ****{recipientInfo.accountNumber?.slice(-4)}
+                  </div>
                 </div>
+              )}
 
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Memo (Optional)</label>
-                  <input
-                    type="text"
-                    style={styles.input}
-                    value={memo}
-                    onChange={(e) => setMemo(e.target.value)}
-                    placeholder="What's this transfer for?"
-                    maxLength="100"
-                  />
-                </div>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Amount ($) *</label>
+                <input
+                  type="number"
+                  style={styles.input}
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  disabled={!recipientInfo}
+                />
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Memo (Optional)</label>
+                <input
+                  type="text"
+                  style={styles.input}
+                  value={memo}
+                  onChange={(e) => setMemo(e.target.value)}
+                  placeholder="What's this transfer for?"
+                  maxLength="100"
+                  disabled={!recipientInfo}
+                />
               </div>
 
               {fromAccount && (
@@ -827,14 +803,27 @@ export default function Transfer() {
                 type="submit"
                 style={{
                   ...styles.submitButton,
-                  opacity: loading ? 0.7 : 1,
-                  cursor: loading ? 'not-allowed' : 'pointer'
+                  opacity: (loading || !recipientInfo) ? 0.7 : 1,
+                  cursor: (loading || !recipientInfo) ? 'not-allowed' : 'pointer'
                 }}
-                disabled={loading}
+                disabled={loading || !recipientInfo}
               >
-                {loading ? '🔄 Processing...' : `💸 Transfer ${formatCurrency(parseFloat(amount) || 0)}`}
+                {loading ? '🔄 Processing...' : `💸 Send ${formatCurrency(parseFloat(amount) || 0)}`}
               </button>
             </form>
+          </div>
+
+          <div style={styles.infoBox}>
+            <h3 style={styles.infoTitle}>
+              🔒 Transfer Information
+            </h3>
+            <ul style={styles.infoList}>
+              <li>Internal transfers are instant and free</li>
+              <li>Funds are available immediately to the recipient</li>
+              <li>Verify the account number before sending</li>
+              <li>All transfers are encrypted and secure</li>
+              <li>You'll receive a confirmation receipt</li>
+            </ul>
           </div>
         </main>
       </div>
