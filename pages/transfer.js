@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -8,14 +9,14 @@ export default function Transfer() {
   const [user, setUser] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [fromAccount, setFromAccount] = useState('');
-  const [toAccountNumber, setToAccountNumber] = useState('');
+  const [toAccount, setToAccount] = useState('');
   const [amount, setAmount] = useState('');
-  const [transferType, setTransferType] = useState('internal');
   const [memo, setMemo] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [pageLoading, setPageLoading] = useState(true);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [receiptData, setReceiptData] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -57,6 +58,10 @@ export default function Transfer() {
     }).format(amount || 0);
   };
 
+  const generateReferenceNumber = () => {
+    return `TXN${Date.now()}${Math.floor(Math.random() * 10000)}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -64,7 +69,20 @@ export default function Transfer() {
 
     try {
       const transferAmount = parseFloat(amount);
-      const selectedAccount = accounts.find(acc => acc.id === fromAccount);
+      const selectedFromAccount = accounts.find(acc => acc.id === fromAccount);
+      const selectedToAccount = accounts.find(acc => acc.id === toAccount);
+
+      if (!selectedToAccount) {
+        setMessage('Please select a destination account');
+        setLoading(false);
+        return;
+      }
+
+      if (fromAccount === toAccount) {
+        setMessage('Cannot transfer to the same account');
+        setLoading(false);
+        return;
+      }
 
       if (transferAmount <= 0) {
         setMessage('Please enter a valid amount');
@@ -72,44 +90,82 @@ export default function Transfer() {
         return;
       }
 
-      if (transferAmount > parseFloat(selectedAccount?.balance || 0)) {
+      if (transferAmount > parseFloat(selectedFromAccount?.balance || 0)) {
         setMessage('Insufficient funds');
         setLoading(false);
         return;
       }
 
-      const response = await fetch('/api/internal-transfer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sender_id: user.id,
-          from_account_id: fromAccount,
-          to_account_number: toAccountNumber,
-          amount: transferAmount,
-          memo: memo || 'Transfer'
-        })
-      });
+      const referenceNumber = generateReferenceNumber();
 
-      const result = await response.json();
+      // Deduct from source account
+      const newFromBalance = parseFloat(selectedFromAccount.balance) - transferAmount;
+      await supabase
+        .from('accounts')
+        .update({ balance: newFromBalance, updated_at: new Date().toISOString() })
+        .eq('id', fromAccount);
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Transfer failed');
-      }
+      // Add to destination account
+      const newToBalance = parseFloat(selectedToAccount.balance) + transferAmount;
+      await supabase
+        .from('accounts')
+        .update({ balance: newToBalance, updated_at: new Date().toISOString() })
+        .eq('id', toAccount);
 
-      setShowSuccess(true);
+      // Create debit transaction
+      await supabase.from('transactions').insert([{
+        user_id: user.id,
+        account_id: fromAccount,
+        type: 'transfer_out',
+        amount: transferAmount,
+        description: `Transfer to ****${selectedToAccount.account_number?.slice(-4)} - ${memo || 'Internal Transfer'}`,
+        status: 'completed',
+        reference: referenceNumber
+      }]);
+
+      // Create credit transaction
+      await supabase.from('transactions').insert([{
+        user_id: user.id,
+        account_id: toAccount,
+        type: 'transfer_in',
+        amount: transferAmount,
+        description: `Transfer from ****${selectedFromAccount.account_number?.slice(-4)} - ${memo || 'Internal Transfer'}`,
+        status: 'completed',
+        reference: referenceNumber
+      }]);
+
+      // Generate receipt data
+      const receipt = {
+        referenceNumber,
+        date: new Date().toLocaleString(),
+        fromAccount: {
+          type: selectedFromAccount.account_type,
+          number: selectedFromAccount.account_number,
+          balance: newFromBalance
+        },
+        toAccount: {
+          type: selectedToAccount.account_type,
+          number: selectedToAccount.account_number,
+          balance: newToBalance
+        },
+        amount: transferAmount,
+        memo: memo || 'Internal Transfer'
+      };
+
+      setReceiptData(receipt);
+      setShowReceipt(true);
       setAmount('');
-      setToAccountNumber('');
       setMemo('');
-
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 2500);
 
     } catch (error) {
       setMessage(error.message || 'Transfer failed. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const printReceipt = () => {
+    window.print();
   };
 
   if (pageLoading) {
@@ -121,7 +177,7 @@ export default function Transfer() {
     );
   }
 
-  if (accounts.length === 0) {
+  if (accounts.length < 2) {
     return (
       <div style={styles.container}>
         <div style={styles.header}>
@@ -133,15 +189,13 @@ export default function Transfer() {
         </div>
         <div style={styles.emptyState}>
           <div style={styles.emptyIcon}>🏦</div>
-          <h1 style={styles.emptyTitle}>No Active Accounts</h1>
-          <p style={styles.emptyDesc}>You need at least one active account to make transfers.</p>
-          <Link href="/apply" style={styles.emptyButton}>Open an Account</Link>
+          <h1 style={styles.emptyTitle}>Need Multiple Accounts</h1>
+          <p style={styles.emptyDesc}>You need at least two active accounts to make internal transfers.</p>
+          <Link href="/apply" style={styles.emptyButton}>Open Another Account</Link>
         </div>
       </div>
     );
   }
-
-  const selectedAccount = accounts.find(acc => acc.id === fromAccount);
 
   return (
     <>
@@ -160,43 +214,74 @@ export default function Transfer() {
         </div>
 
         <div style={styles.content}>
-          {showSuccess && (
-            <div style={styles.successModal}>
-              <div style={styles.successCheck}>✓</div>
-              <h2 style={styles.successTitle}>Transfer Successful!</h2>
-              <p style={styles.successMessage}>Your funds have been transferred</p>
+          {showReceipt && receiptData && (
+            <div style={styles.receiptModal}>
+              <div style={styles.receipt}>
+                <div style={styles.receiptHeader}>
+                  <h2>🏦 Transfer Receipt</h2>
+                  <p style={styles.receiptRef}>Reference: {receiptData.referenceNumber}</p>
+                  <p style={styles.receiptDate}>{receiptData.date}</p>
+                </div>
+
+                <div style={styles.receiptBody}>
+                  <div style={styles.receiptSection}>
+                    <h3>From Account</h3>
+                    <p><strong>Type:</strong> {receiptData.fromAccount.type?.toUpperCase()}</p>
+                    <p><strong>Account:</strong> ****{receiptData.fromAccount.number?.slice(-4)}</p>
+                    <p><strong>New Balance:</strong> {formatCurrency(receiptData.fromAccount.balance)}</p>
+                  </div>
+
+                  <div style={styles.receiptArrow}>↓</div>
+
+                  <div style={styles.receiptSection}>
+                    <h3>To Account</h3>
+                    <p><strong>Type:</strong> {receiptData.toAccount.type?.toUpperCase()}</p>
+                    <p><strong>Account:</strong> ****{receiptData.toAccount.number?.slice(-4)}</p>
+                    <p><strong>New Balance:</strong> {formatCurrency(receiptData.toAccount.balance)}</p>
+                  </div>
+
+                  <div style={styles.receiptTotal}>
+                    <h3>Transfer Amount</h3>
+                    <p style={styles.receiptAmount}>{formatCurrency(receiptData.amount)}</p>
+                  </div>
+
+                  {receiptData.memo && (
+                    <div style={styles.receiptMemo}>
+                      <p><strong>Memo:</strong> {receiptData.memo}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div style={styles.receiptFooter}>
+                  <p>✅ Transfer Completed Successfully</p>
+                  <p style={styles.receiptDisclaimer}>This is an official transaction receipt from Oakline Bank</p>
+                </div>
+
+                <div style={styles.receiptButtons}>
+                  <button onClick={printReceipt} style={styles.printButton}>🖨️ Print</button>
+                  <button onClick={() => setShowReceipt(false)} style={styles.closeButton}>Close</button>
+                </div>
+              </div>
             </div>
           )}
 
           <div style={styles.titleSection}>
             <h1 style={styles.title}>💸 Transfer Money</h1>
-            <p style={styles.subtitle}>Send funds securely between accounts</p>
+            <p style={styles.subtitle}>Move funds between your accounts or send via wire</p>
           </div>
+
+          {/* Wire Transfer Button */}
+          <Link href="/wire-transfer" style={styles.wireTransferBanner}>
+            <div style={styles.wireBannerIcon}>🌐</div>
+            <div style={styles.wireBannerContent}>
+              <h3 style={styles.wireBannerTitle}>Need to send a Wire Transfer?</h3>
+              <p style={styles.wireBannerText}>Send money domestically or internationally</p>
+            </div>
+            <div style={styles.wireBannerArrow}>→</div>
+          </Link>
 
           {message && (
             <div style={styles.errorMessage}>{message}</div>
-          )}
-
-          {/* Account Balance Overview */}
-          {accounts.length > 1 && (
-            <div style={styles.accountsOverview}>
-              <h3 style={styles.overviewTitle}>Your Accounts</h3>
-              <div style={styles.accountsGrid}>
-                {accounts.map(account => (
-                  <div key={account.id} style={styles.accountCard}>
-                    <div style={styles.accountType}>
-                      {account.account_type?.replace('_', ' ')?.toUpperCase()}
-                    </div>
-                    <div style={styles.accountNumber}>
-                      ****{account.account_number?.slice(-4)}
-                    </div>
-                    <div style={styles.accountBalance}>
-                      {formatCurrency(account.balance || 0)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           )}
 
           {/* Transfer Form */}
@@ -217,23 +302,27 @@ export default function Transfer() {
                   </option>
                 ))}
               </select>
-              {selectedAccount && (
-                <small style={styles.helperText}>
-                  Available Balance: {formatCurrency(selectedAccount.balance || 0)}
-                </small>
-              )}
             </div>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>To Account Number *</label>
-              <input
-                type="text"
-                style={styles.input}
-                value={toAccountNumber}
-                onChange={(e) => setToAccountNumber(e.target.value)}
-                placeholder="Enter recipient account number"
+              <label style={styles.label}>To Account *</label>
+              <select
+                style={styles.select}
+                value={toAccount}
+                onChange={(e) => setToAccount(e.target.value)}
                 required
-              />
+              >
+                <option value="">Select destination account</option>
+                {accounts
+                  .filter(acc => acc.id !== fromAccount)
+                  .map(account => (
+                    <option key={account.id} value={account.id}>
+                      {account.account_type?.replace('_', ' ')?.toUpperCase()} -
+                      ****{account.account_number?.slice(-4)} -
+                      {formatCurrency(account.balance || 0)}
+                    </option>
+                  ))}
+              </select>
             </div>
 
             <div style={styles.formGroup}>
@@ -246,12 +335,8 @@ export default function Transfer() {
                 placeholder="0.00"
                 step="0.01"
                 min="0.01"
-                max={selectedAccount ? parseFloat(selectedAccount.balance || 0) : 25000}
                 required
               />
-              <small style={styles.helperText}>
-                Maximum: {formatCurrency(selectedAccount?.balance || 0)}
-              </small>
             </div>
 
             <div style={styles.formGroup}>
@@ -264,21 +349,6 @@ export default function Transfer() {
                 placeholder="What's this transfer for?"
                 maxLength="100"
               />
-            </div>
-
-            <div style={styles.transferSummary}>
-              <div style={styles.summaryRow}>
-                <span>Transfer Amount:</span>
-                <span style={styles.summaryValue}>{formatCurrency(parseFloat(amount) || 0)}</span>
-              </div>
-              <div style={styles.summaryRow}>
-                <span>Fee:</span>
-                <span style={styles.summaryValue}>$0.00</span>
-              </div>
-              <div style={{...styles.summaryRow, ...styles.summaryTotal}}>
-                <span>Total:</span>
-                <span style={styles.summaryValue}>{formatCurrency(parseFloat(amount) || 0)}</span>
-              </div>
             </div>
 
             <button
@@ -294,33 +364,15 @@ export default function Transfer() {
             </button>
           </form>
 
-          {/* Quick Links */}
-          <div style={styles.quickLinks}>
-            <Link href="/zelle-transfer" style={styles.quickLink}>
-              <span style={styles.quickLinkIcon}>⚡</span>
-              <div>
-                <div style={styles.quickLinkTitle}>Zelle Transfer</div>
-                <div style={styles.quickLinkDesc}>Send with email or phone</div>
-              </div>
-            </Link>
-            <Link href="/transactions" style={styles.quickLink}>
-              <span style={styles.quickLinkIcon}>📋</span>
-              <div>
-                <div style={styles.quickLinkTitle}>Transaction History</div>
-                <div style={styles.quickLinkDesc}>View all transfers</div>
-              </div>
-            </Link>
-          </div>
-
           {/* Info Section */}
           <div style={styles.infoSection}>
             <h4 style={styles.infoTitle}>🔒 Transfer Information</h4>
             <ul style={styles.infoList}>
-              <li>Internal transfers are instant and free</li>
+              <li>Internal transfers between your accounts are instant and free</li>
               <li>Funds are available immediately</li>
               <li>All transfers are encrypted and secure</li>
-              <li>Daily transfer limit: $25,000</li>
-              <li>Transfer history available in your dashboard</li>
+              <li>You'll receive a receipt for every transfer</li>
+              <li>Transfer history available in your transactions</li>
             </ul>
           </div>
         </div>
@@ -365,44 +417,12 @@ const styles = {
     color: 'white',
     textDecoration: 'none',
     borderRadius: '8px',
-    fontSize: '0.9rem',
-    transition: 'all 0.2s'
+    fontSize: '0.9rem'
   },
   content: {
     padding: '1.5rem',
     maxWidth: '700px',
     margin: '0 auto'
-  },
-  successModal: {
-    backgroundColor: '#d1fae5',
-    border: '2px solid #10b981',
-    borderRadius: '16px',
-    padding: '2rem',
-    textAlign: 'center',
-    marginBottom: '2rem',
-    animation: 'slideDown 0.3s ease'
-  },
-  successCheck: {
-    width: '80px',
-    height: '80px',
-    borderRadius: '50%',
-    backgroundColor: '#10b981',
-    color: 'white',
-    fontSize: '3rem',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: '0 auto 1rem',
-    fontWeight: 'bold'
-  },
-  successTitle: {
-    color: '#065f46',
-    fontSize: '1.5rem',
-    marginBottom: '0.5rem'
-  },
-  successMessage: {
-    color: '#047857',
-    fontSize: '1rem'
   },
   titleSection: {
     textAlign: 'center',
@@ -418,57 +438,46 @@ const styles = {
     fontSize: '1rem',
     color: '#64748b'
   },
+  wireTransferBanner: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    padding: '1.5rem',
+    backgroundColor: '#0a1a2f',
+    color: 'white',
+    borderRadius: '12px',
+    marginBottom: '1.5rem',
+    textDecoration: 'none',
+    transition: 'transform 0.3s',
+    cursor: 'pointer'
+  },
+  wireBannerIcon: {
+    fontSize: '2.5rem'
+  },
+  wireBannerContent: {
+    flex: 1
+  },
+  wireBannerTitle: {
+    fontSize: '1.1rem',
+    fontWeight: '600',
+    margin: 0,
+    marginBottom: '0.25rem'
+  },
+  wireBannerText: {
+    fontSize: '0.9rem',
+    margin: 0,
+    opacity: 0.9
+  },
+  wireBannerArrow: {
+    fontSize: '1.5rem'
+  },
   errorMessage: {
     backgroundColor: '#fee2e2',
     color: '#dc2626',
     padding: '1rem',
     borderRadius: '12px',
     marginBottom: '1.5rem',
-    border: '2px solid #fca5a5',
-    fontSize: '0.95rem'
-  },
-  accountsOverview: {
-    backgroundColor: 'white',
-    borderRadius: '16px',
-    padding: '1.5rem',
-    marginBottom: '1.5rem',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-  },
-  overviewTitle: {
-    fontSize: '1.1rem',
-    fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: '1rem'
-  },
-  accountsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-    gap: '1rem'
-  },
-  accountCard: {
-    backgroundColor: '#f8fafc',
-    border: '2px solid #e2e8f0',
-    borderRadius: '12px',
-    padding: '1.25rem',
-    textAlign: 'center',
-    transition: 'all 0.3s'
-  },
-  accountType: {
-    fontSize: '0.85rem',
-    fontWeight: '600',
-    color: '#1A3E6F',
-    marginBottom: '0.5rem'
-  },
-  accountNumber: {
-    fontSize: '0.9rem',
-    color: '#64748b',
-    marginBottom: '0.5rem',
-    fontFamily: 'monospace'
-  },
-  accountBalance: {
-    fontSize: '1.25rem',
-    fontWeight: 'bold',
-    color: '#059669'
+    border: '2px solid #fca5a5'
   },
   form: {
     backgroundColor: 'white',
@@ -494,8 +503,7 @@ const styles = {
     borderRadius: '12px',
     fontSize: '1rem',
     boxSizing: 'border-box',
-    backgroundColor: 'white',
-    transition: 'all 0.2s'
+    backgroundColor: 'white'
   },
   input: {
     width: '100%',
@@ -503,40 +511,7 @@ const styles = {
     border: '2px solid #e2e8f0',
     borderRadius: '12px',
     fontSize: '1rem',
-    boxSizing: 'border-box',
-    transition: 'all 0.2s'
-  },
-  helperText: {
-    fontSize: '0.8rem',
-    color: '#64748b',
-    marginTop: '0.25rem',
-    display: 'block'
-  },
-  transferSummary: {
-    backgroundColor: '#f8fafc',
-    border: '2px solid #e2e8f0',
-    borderRadius: '12px',
-    padding: '1.25rem',
-    marginBottom: '1.5rem'
-  },
-  summaryRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '0.5rem 0',
-    fontSize: '0.95rem',
-    color: '#64748b'
-  },
-  summaryTotal: {
-    borderTop: '2px solid #e2e8f0',
-    marginTop: '0.5rem',
-    paddingTop: '0.75rem',
-    fontSize: '1.1rem',
-    fontWeight: '600',
-    color: '#1e293b'
-  },
-  summaryValue: {
-    fontWeight: '600',
-    color: '#1e293b'
+    boxSizing: 'border-box'
   },
   submitButton: {
     width: '100%',
@@ -550,38 +525,6 @@ const styles = {
     cursor: 'pointer',
     transition: 'all 0.3s',
     boxShadow: '0 6px 20px rgba(26, 62, 111, 0.3)'
-  },
-  quickLinks: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-    gap: '1rem',
-    marginBottom: '1.5rem'
-  },
-  quickLink: {
-    backgroundColor: 'white',
-    padding: '1.25rem',
-    borderRadius: '12px',
-    textDecoration: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-    border: '2px solid #e2e8f0',
-    transition: 'all 0.3s',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-  },
-  quickLinkIcon: {
-    fontSize: '2rem',
-    flexShrink: 0
-  },
-  quickLinkTitle: {
-    fontSize: '0.95rem',
-    fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: '0.25rem'
-  },
-  quickLinkDesc: {
-    fontSize: '0.8rem',
-    color: '#64748b'
   },
   infoSection: {
     backgroundColor: 'white',
@@ -601,6 +544,115 @@ const styles = {
     color: '#374151',
     lineHeight: '1.8',
     fontSize: '0.9rem'
+  },
+  receiptModal: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+    padding: '1rem'
+  },
+  receipt: {
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    padding: '2rem',
+    maxWidth: '500px',
+    width: '100%',
+    maxHeight: '90vh',
+    overflowY: 'auto'
+  },
+  receiptHeader: {
+    textAlign: 'center',
+    borderBottom: '2px solid #e2e8f0',
+    paddingBottom: '1rem',
+    marginBottom: '1.5rem'
+  },
+  receiptRef: {
+    fontSize: '0.9rem',
+    color: '#64748b',
+    fontFamily: 'monospace'
+  },
+  receiptDate: {
+    fontSize: '0.85rem',
+    color: '#94a3b8'
+  },
+  receiptBody: {
+    marginBottom: '1.5rem'
+  },
+  receiptSection: {
+    backgroundColor: '#f8fafc',
+    padding: '1rem',
+    borderRadius: '8px',
+    marginBottom: '1rem'
+  },
+  receiptArrow: {
+    textAlign: 'center',
+    fontSize: '2rem',
+    color: '#1A3E6F',
+    margin: '0.5rem 0'
+  },
+  receiptTotal: {
+    backgroundColor: '#d1fae5',
+    padding: '1rem',
+    borderRadius: '8px',
+    textAlign: 'center',
+    marginTop: '1rem'
+  },
+  receiptAmount: {
+    fontSize: '2rem',
+    fontWeight: 'bold',
+    color: '#059669',
+    margin: '0.5rem 0'
+  },
+  receiptMemo: {
+    marginTop: '1rem',
+    padding: '0.75rem',
+    backgroundColor: '#fef3c7',
+    borderRadius: '6px'
+  },
+  receiptFooter: {
+    textAlign: 'center',
+    borderTop: '2px solid #e2e8f0',
+    paddingTop: '1rem',
+    marginTop: '1.5rem'
+  },
+  receiptDisclaimer: {
+    fontSize: '0.75rem',
+    color: '#94a3b8',
+    marginTop: '0.5rem'
+  },
+  receiptButtons: {
+    display: 'flex',
+    gap: '1rem',
+    marginTop: '1.5rem'
+  },
+  printButton: {
+    flex: 1,
+    padding: '0.875rem',
+    backgroundColor: '#1A3E6F',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    fontWeight: '600'
+  },
+  closeButton: {
+    flex: 1,
+    padding: '0.875rem',
+    backgroundColor: '#e2e8f0',
+    color: '#1e293b',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    fontWeight: '600'
   },
   loadingContainer: {
     display: 'flex',

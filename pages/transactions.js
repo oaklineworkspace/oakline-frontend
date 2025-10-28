@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -8,6 +9,8 @@ export default function TransactionsHistory() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
+  const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -32,7 +35,6 @@ export default function TransactionsHistory() {
 
   const fetchTransactions = async (user) => {
     try {
-      // First, get user's accounts
       const { data: accounts, error: accountsError } = await supabase
         .from('accounts')
         .select('id')
@@ -48,7 +50,6 @@ export default function TransactionsHistory() {
 
       const accountIds = accounts.map(acc => acc.id);
 
-      // Then get transactions for those accounts
       const { data: txs, error: txError } = await supabase
         .from('transactions')
         .select(`
@@ -90,118 +91,80 @@ export default function TransactionsHistory() {
     }).format(amount || 0);
   };
 
-  const getTransactionTypeColor = (type) => {
-    const lowerType = type?.toLowerCase() || '';
+  const getTransactionStyle = (type) => {
+    const lowerType = (type || '').toLowerCase();
     
-    if (lowerType.includes('deposit')) {
-      return '#2e7d32'; // Dark green for deposits
-    } else if (lowerType.includes('credit')) {
-      return '#10b981'; // Emerald for credits
-    } else if (lowerType.includes('debit')) {
-      return '#d32f2f'; // Red for debits
-    } else if (lowerType.includes('withdrawal')) {
-      return '#dc2626'; // Bright red for withdrawals
-    } else if (lowerType.includes('pending')) {
-      return '#f59e0b'; // Amber for pending
-    } else if (lowerType.includes('reversal')) {
-      return '#7c3aed'; // Purple for reversals
-    } else if (lowerType.includes('interest')) {
-      return '#059669'; // Teal for interest
-    } else if (lowerType.includes('fee')) {
-      return '#dc2626'; // Bright red for fees
-    } else if (lowerType.includes('refund')) {
-      return '#10b981'; // Emerald for refunds
-    } else if (lowerType.includes('payment')) {
-      return '#ef4444'; // Orange-red for payments
-    } else if (lowerType.includes('transfer')) {
-      return '#3b82f6'; // Blue for transfers
-    }
-    
-    return '#6b7280'; // Gray for unknown types
-  };
+    const styles = {
+      // Credits (Green shades)
+      deposit: { color: '#059669', bgColor: '#d1fae5', icon: '💰', label: 'Deposit' },
+      credit: { color: '#10b981', bgColor: '#d1fae5', icon: '💵', label: 'Credit' },
+      transfer_in: { color: '#059669', bgColor: '#d1fae5', icon: '📥', label: 'Transfer In' },
+      refund: { color: '#10b981', bgColor: '#d1fae5', icon: '↩️', label: 'Refund' },
+      interest: { color: '#0891b2', bgColor: '#cffafe', icon: '💎', label: 'Interest' },
+      bonus: { color: '#3b82f6', bgColor: '#dbeafe', icon: '🎁', label: 'Bonus' },
+      reward: { color: '#3b82f6', bgColor: '#dbeafe', icon: '🏆', label: 'Reward' },
+      cashback: { color: '#8b5cf6', bgColor: '#ede9fe', icon: '💳', label: 'Cashback' },
+      
+      // Debits (Red shades)
+      debit: { color: '#dc2626', bgColor: '#fee2e2', icon: '💳', label: 'Debit' },
+      withdrawal: { color: '#ef4444', bgColor: '#fee2e2', icon: '🏧', label: 'Withdrawal' },
+      transfer_out: { color: '#dc2626', bgColor: '#fee2e2', icon: '📤', label: 'Transfer Out' },
+      payment: { color: '#f97316', bgColor: '#ffedd5', icon: '💸', label: 'Payment' },
+      bill_payment: { color: '#f97316', bgColor: '#ffedd5', icon: '📄', label: 'Bill Payment' },
+      purchase: { color: '#ef4444', bgColor: '#fee2e2', icon: '🛒', label: 'Purchase' },
+      fee: { color: '#dc2626', bgColor: '#fee2e2', icon: '⚠️', label: 'Fee' },
+      
+      // Special types
+      reversal: { color: '#6b7280', bgColor: '#f3f4f6', icon: '⏪', label: 'Reversal' },
+      pending: { color: '#f59e0b', bgColor: '#fef3c7', icon: '⏳', label: 'Pending' },
+      zelle_send: { color: '#9333ea', bgColor: '#f3e8ff', icon: 'Z', label: 'Zelle Send' },
+      zelle_receive: { color: '#7c3aed', bgColor: '#f3e8ff', icon: 'Z', label: 'Zelle Receive' },
+      wire_transfer: { color: '#0284c7', bgColor: '#e0f2fe', icon: '🌐', label: 'Wire Transfer' }
+    };
 
-  const getTransactionIcon = (type) => {
-    const lowerType = type?.toLowerCase() || '';
-    
-    if (lowerType.includes('interest')) return '💰';
-    if (lowerType.includes('deposit')) return '💵';
-    if (lowerType.includes('withdrawal')) return '🏧';
-    if (lowerType.includes('transfer')) return '🔄';
-    if (lowerType.includes('payment') || lowerType.includes('bill')) return '💳';
-    if (lowerType.includes('refund')) return '↩️';
-    if (lowerType.includes('reversal')) return '⏪';
-    if (lowerType.includes('fee')) return '⚠️';
-    if (lowerType.includes('bonus') || lowerType.includes('reward')) return '🎁';
-    
-    return '📄';
-  };
-
-  const getStatusBadgeStyle = (status) => {
-    const lowerStatus = status?.toLowerCase() || 'completed';
-    
-    if (lowerStatus === 'pending') {
-      return {
-        backgroundColor: '#fef3c7',
-        color: '#f59e0b',
-        text: 'Pending'
-      };
-    } else if (lowerStatus === 'reversal' || lowerStatus === 'reversed') {
-      return {
-        backgroundColor: '#f3e8ff',
-        color: '#7c3aed',
-        text: 'Reversal'
-      };
-    } else if (lowerStatus === 'cancelled' || lowerStatus === 'canceled') {
-      return {
-        backgroundColor: '#f3f4f6',
-        color: '#6b7280',
-        text: 'Cancelled'
-      };
-    } else if (lowerStatus === 'failed') {
-      return {
-        backgroundColor: '#fee2e2',
-        color: '#dc2626',
-        text: 'Failed'
-      };
-    } else {
-      return {
-        backgroundColor: '#d1fae5',
-        color: '#10b981',
-        text: 'Completed'
-      };
+    // Find matching style
+    for (const [key, style] of Object.entries(styles)) {
+      if (lowerType.includes(key)) {
+        return style;
+      }
     }
+
+    // Default style
+    return { color: '#6b7280', bgColor: '#f3f4f6', icon: '📄', label: 'Transaction' };
   };
 
   const isTransactionCredit = (tx) => {
-    const txType = (tx.transaction_type || '').toLowerCase();
-    const amount = parseFloat(tx.amount) || 0;
-    
-    // Check transaction type for credit indicators
-    if (txType.includes('deposit') || 
-        txType.includes('credit') || 
-        txType.includes('refund') || 
-        txType.includes('transfer_in') || 
-        txType.includes('interest') || 
-        txType.includes('bonus') || 
-        txType.includes('reward') || 
-        txType.includes('cashback')) {
-      return true;
-    }
-    
-    // Check transaction type for debit indicators
-    if (txType.includes('debit') || 
-        txType.includes('withdrawal') || 
-        txType.includes('purchase') || 
-        txType.includes('payment') || 
-        txType.includes('bill_payment') || 
-        txType.includes('fee') || 
-        txType.includes('transfer_out')) {
-      return false;
-    }
-    
-    // Fallback to amount
-    return amount >= 0;
+    const txType = (tx.type || '').toLowerCase();
+    const creditTypes = ['deposit', 'credit', 'transfer_in', 'refund', 'interest', 'bonus', 'reward', 'cashback', 'zelle_receive'];
+    return creditTypes.some(type => txType.includes(type));
   };
+
+  const getFilteredTransactions = () => {
+    let filtered = transactions;
+
+    // Apply type filter
+    if (filter !== 'all') {
+      filtered = filtered.filter(tx => {
+        const isCredit = isTransactionCredit(tx);
+        if (filter === 'credits') return isCredit;
+        if (filter === 'debits') return !isCredit;
+        return true;
+      });
+    }
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(tx => 
+        (tx.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (tx.type || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (tx.reference || '').toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    return filtered;
+  };
+
+  const filteredTransactions = getFilteredTransactions();
 
   if (loading) {
     return (
@@ -223,86 +186,110 @@ export default function TransactionsHistory() {
       {error && <div style={styles.error}>{error}</div>}
 
       <div style={styles.content}>
-        {transactions.length === 0 ? (
+        {/* Filters and Search */}
+        <div style={styles.controls}>
+          <div style={styles.filters}>
+            <button
+              onClick={() => setFilter('all')}
+              style={{
+                ...styles.filterButton,
+                ...(filter === 'all' ? styles.filterButtonActive : {})
+              }}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setFilter('credits')}
+              style={{
+                ...styles.filterButton,
+                ...(filter === 'credits' ? styles.filterButtonActive : {})
+              }}
+            >
+              ✅ Credits
+            </button>
+            <button
+              onClick={() => setFilter('debits')}
+              style={{
+                ...styles.filterButton,
+                ...(filter === 'debits' ? styles.filterButtonActive : {})
+              }}
+            >
+              ❌ Debits
+            </button>
+          </div>
+          
+          <input
+            type="text"
+            placeholder="🔍 Search transactions..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={styles.searchInput}
+          />
+        </div>
+
+        {filteredTransactions.length === 0 ? (
           <div style={styles.emptyState}>
             <div style={styles.emptyIcon}>📊</div>
             <h3>No transactions found</h3>
-            <p>You haven't made any transactions yet.</p>
-            <Link href="/dashboard" style={styles.primaryButton}>
-              Go to Dashboard
-            </Link>
+            <p>{searchTerm ? 'Try a different search term' : "You haven't made any transactions yet."}</p>
           </div>
         ) : (
-          <div style={styles.tableContainer}>
-            <table style={styles.table}>
-              <thead>
-                <tr style={styles.tableHeader}>
-                  <th style={styles.th}>Date</th>
-                  <th style={styles.th}>Account</th>
-                  <th style={styles.th}>Description</th>
-                  <th style={styles.th}>Type</th>
-                  <th style={styles.th}>Amount</th>
-                  <th style={styles.th}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map(tx => {
-                  const isCredit = isTransactionCredit(tx);
-                  const typeColor = getTransactionTypeColor(tx.transaction_type);
-                  const statusStyle = getStatusBadgeStyle(tx.status);
-                  const txIcon = getTransactionIcon(tx.transaction_type);
-                  const amount = Math.abs(parseFloat(tx.amount) || 0);
+          <div style={styles.transactionsList}>
+            {filteredTransactions.map(tx => {
+              const isCredit = isTransactionCredit(tx);
+              const txStyle = getTransactionStyle(tx.type);
+              const amount = Math.abs(parseFloat(tx.amount) || 0);
+              
+              return (
+                <div key={tx.id} style={styles.transactionCard}>
+                  <div style={{
+                    ...styles.transactionIcon,
+                    backgroundColor: txStyle.bgColor,
+                    color: txStyle.color
+                  }}>
+                    {txStyle.icon}
+                  </div>
                   
-                  return (
-                    <tr key={tx.id} style={styles.tableRow}>
-                      <td style={styles.td}>{formatDate(tx.created_at)}</td>
-                      <td style={styles.td}>
-                        {tx.accounts?.account_number ? 
-                          `****${tx.accounts.account_number.slice(-4)}` : 
-                          'N/A'
-                        }
-                        <br />
-                        <span style={styles.accountType}>
-                          {tx.accounts?.account_type?.replace(/_/g, ' ').toUpperCase() || ''}
-                        </span>
-                      </td>
-                      <td style={styles.td}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '16px' }}>{txIcon}</span>
-                          <span>{tx.description || tx.transaction_type || 'Transaction'}</span>
-                        </div>
-                      </td>
-                      <td style={styles.td}>
-                        <span style={{
-                          ...styles.typeBadge,
-                          backgroundColor: typeColor + '20',
-                          color: typeColor
-                        }}>
-                          {tx.transaction_type?.replace(/_/g, ' ').toUpperCase() || 'N/A'}
-                        </span>
-                      </td>
-                      <td style={{
-                        ...styles.td,
-                        ...styles.amount,
-                        color: isCredit ? '#10b981' : '#dc2626'
+                  <div style={styles.transactionDetails}>
+                    <div style={styles.transactionHeader}>
+                      <span style={styles.transactionType}>{txStyle.label}</span>
+                      <span style={{
+                        ...styles.transactionAmount,
+                        color: isCredit ? '#059669' : '#dc2626'
                       }}>
-                        {isCredit ? '+' : '-'}
-                        {formatCurrency(amount)}
-                      </td>
-                      <td style={styles.td}>
-                        <span style={{
-                          ...styles.statusBadge,
-                          backgroundColor: statusStyle.backgroundColor,
-                          color: statusStyle.color
-                        }}>
-                          {statusStyle.text}
+                        {isCredit ? '+' : '-'}{formatCurrency(amount)}
+                      </span>
+                    </div>
+                    
+                    <div style={styles.transactionDescription}>
+                      {tx.description || 'Transaction'}
+                    </div>
+                    
+                    <div style={styles.transactionMeta}>
+                      <span style={styles.transactionDate}>{formatDate(tx.created_at)}</span>
+                      {tx.accounts?.account_number && (
+                        <span style={styles.transactionAccount}>
+                          ****{tx.accounts.account_number.slice(-4)}
                         </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      )}
+                      {tx.reference && (
+                        <span style={styles.transactionRef}>Ref: {tx.reference}</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div style={{
+                    ...styles.statusBadge,
+                    backgroundColor: tx.status === 'completed' ? '#d1fae5' : 
+                                   tx.status === 'pending' ? '#fef3c7' : '#fee2e2',
+                    color: tx.status === 'completed' ? '#059669' : 
+                          tx.status === 'pending' ? '#f59e0b' : '#dc2626'
+                  }}>
+                    {tx.status}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -366,6 +353,39 @@ const styles = {
     padding: '20px',
     boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
   },
+  controls: {
+    display: 'flex',
+    gap: '1rem',
+    marginBottom: '1.5rem',
+    flexWrap: 'wrap'
+  },
+  filters: {
+    display: 'flex',
+    gap: '0.5rem'
+  },
+  filterButton: {
+    padding: '0.5rem 1rem',
+    border: '2px solid #e2e8f0',
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '0.9rem',
+    fontWeight: '500',
+    transition: 'all 0.2s'
+  },
+  filterButtonActive: {
+    backgroundColor: '#1e40af',
+    color: 'white',
+    borderColor: '#1e40af'
+  },
+  searchInput: {
+    flex: 1,
+    padding: '0.5rem 1rem',
+    border: '2px solid #e2e8f0',
+    borderRadius: '8px',
+    fontSize: '0.9rem',
+    minWidth: '200px'
+  },
   emptyState: {
     textAlign: 'center',
     padding: '60px 20px'
@@ -374,67 +394,73 @@ const styles = {
     fontSize: '64px',
     marginBottom: '20px'
   },
-  primaryButton: {
-    background: '#1e40af',
-    color: 'white',
-    border: 'none',
-    padding: '12px 24px',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    fontWeight: '500',
-    marginTop: '20px',
-    display: 'inline-block',
-    textDecoration: 'none'
+  transactionsList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem'
   },
-  tableContainer: {
-    overflowX: 'auto'
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse'
-  },
-  tableHeader: {
+  transactionCard: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    padding: '1rem',
     backgroundColor: '#f8fafc',
-    borderBottom: '2px solid #e2e8f0'
+    borderRadius: '12px',
+    border: '2px solid #e2e8f0',
+    transition: 'all 0.2s'
   },
-  th: {
-    padding: '12px',
-    textAlign: 'left',
+  transactionIcon: {
+    width: '50px',
+    height: '50px',
+    borderRadius: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+    flexShrink: 0
+  },
+  transactionDetails: {
+    flex: 1,
+    minWidth: 0
+  },
+  transactionHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '0.5rem'
+  },
+  transactionType: {
+    fontSize: '1rem',
     fontWeight: '600',
-    color: '#475569',
-    fontSize: '14px'
-  },
-  tableRow: {
-    borderBottom: '1px solid #e2e8f0',
-    transition: 'background-color 0.2s'
-  },
-  td: {
-    padding: '12px',
-    fontSize: '14px',
     color: '#1e293b'
   },
-  accountType: {
-    fontSize: '12px',
-    color: '#64748b'
+  transactionAmount: {
+    fontSize: '1.1rem',
+    fontWeight: '700'
   },
-  amount: {
-    fontWeight: '600',
-    fontSize: '15px'
+  transactionDescription: {
+    fontSize: '0.9rem',
+    color: '#64748b',
+    marginBottom: '0.5rem'
   },
-  typeBadge: {
-    padding: '4px 8px',
-    borderRadius: '4px',
-    fontSize: '12px',
-    fontWeight: '500',
-    display: 'inline-block'
+  transactionMeta: {
+    display: 'flex',
+    gap: '1rem',
+    fontSize: '0.8rem',
+    color: '#94a3b8'
+  },
+  transactionDate: {},
+  transactionAccount: {},
+  transactionRef: {
+    fontFamily: 'monospace'
   },
   statusBadge: {
-    padding: '4px 8px',
-    borderRadius: '4px',
-    fontSize: '12px',
-    fontWeight: '500',
-    display: 'inline-block',
-    textTransform: 'capitalize'
+    padding: '0.5rem 1rem',
+    borderRadius: '20px',
+    fontSize: '0.75rem',
+    fontWeight: '600',
+    textTransform: 'capitalize',
+    flexShrink: 0
   }
 };
