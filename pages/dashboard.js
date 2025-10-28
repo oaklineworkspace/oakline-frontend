@@ -120,14 +120,12 @@ function DashboardContent() {
               if (!seenTransferGroups.has(tx.transfer_group_id)) {
                 seenTransferGroups.add(tx.transfer_group_id);
                 
-                // For internal transfers (same user), show the debit side
-                if (tx.transfer_type === 'internal') {
-                  if (tx.type === 'transfer_out') {
-                    filteredTransactions.push(tx);
-                  }
+                // For internal transfers (same user), always show the debit (transfer_out) side
+                if (tx.transfer_type === 'internal' && tx.type === 'transfer_out') {
+                  filteredTransactions.push(tx);
                 }
-                // For external transfers, show the transaction for this account
-                else {
+                // For external transfers (between different users), show whichever side belongs to this user
+                else if (tx.transfer_type !== 'internal') {
                   filteredTransactions.push(tx);
                 }
               }
@@ -1252,15 +1250,16 @@ const styles = {
     flex: 1
   },
   balanceCardLabel: {
-    fontSize: '1rem',
-    fontWeight: '600',
-    margin: '0 0 0.25rem 0',
+    fontSize: '0.9rem',
+    fontWeight: '500',
+    margin: '0 0 0.5rem 0',
     color: 'white',
     opacity: 0.9
   },
   balanceCardSubtext: {
     fontSize: '0.85rem',
-    color: 'rgba(255, 255, 255, 0.8)'
+    color: 'rgba(255, 255, 255, 0.8)',
+    opacity: 0.8
   },
   balanceToggleButton: {
     background: 'rgba(255, 255, 255, 0.2)',
@@ -1283,14 +1282,14 @@ const styles = {
     overflow: 'visible'
   },
   balanceAmount: {
-    fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)',
-    fontWeight: 'bold',
+    fontSize: 'clamp(2rem, 3.5vw, 2.5rem)',
+    fontWeight: '700',
     marginBottom: '0.5rem',
     letterSpacing: '0.5px',
     wordBreak: 'keep-all',
     whiteSpace: 'nowrap',
     overflow: 'visible',
-    fontFamily: '"Courier New", Courier, monospace',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     display: 'block',
     color: 'white'
   },
