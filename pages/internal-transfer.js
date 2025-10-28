@@ -32,6 +32,7 @@ export default function InternalTransfer() {
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState(''); // 'success' or 'error'
   const [pageLoading, setPageLoading] = useState(true);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
@@ -65,6 +66,7 @@ export default function InternalTransfer() {
     } catch (error) {
       console.error('Error:', error);
       setMessage('Error loading data. Please refresh.');
+      setMessageType('error');
     } finally {
       setPageLoading(false);
     }
@@ -80,17 +82,20 @@ export default function InternalTransfer() {
   const verifyRecipient = async () => {
     if (!recipientAccountNumber || recipientAccountNumber.length < 10) {
       setMessage('Please enter a valid account number (at least 10 digits)');
+      setMessageType('error');
       return;
     }
 
     setVerifying(true);
     setMessage('');
+    setMessageType('');
     setRecipientInfo(null);
 
     try {
       const ownAccount = accounts.find(acc => acc.account_number === recipientAccountNumber);
       if (ownAccount) {
         setMessage('You cannot transfer to your own account. Use "Transfer Between My Accounts" instead.');
+        setMessageType('error');
         setVerifying(false);
         return;
       }
@@ -104,6 +109,7 @@ export default function InternalTransfer() {
 
       if (error || !recipientAccount) {
         setMessage('Account not found or inactive. Please verify the account number.');
+        setMessageType('error');
         setVerifying(false);
         return;
       }
@@ -116,10 +122,12 @@ export default function InternalTransfer() {
         userId: recipientAccount.user_id
       });
 
-      setMessage('');
+      setMessage('✓ Recipient verified successfully');
+      setMessageType('success');
     } catch (error) {
       console.error('Error verifying recipient:', error);
       setMessage('Error verifying account. Please try again.');
+      setMessageType('error');
     } finally {
       setVerifying(false);
     }
@@ -130,11 +138,13 @@ export default function InternalTransfer() {
     
     if (!recipientInfo) {
       setMessage('Please verify the recipient account first');
+      setMessageType('error');
       return;
     }
 
     setLoading(true);
     setMessage('');
+    setMessageType('');
 
     try {
       const transferAmount = parseFloat(amount);
@@ -142,12 +152,14 @@ export default function InternalTransfer() {
 
       if (transferAmount <= 0) {
         setMessage('Please enter a valid amount');
+        setMessageType('error');
         setLoading(false);
         return;
       }
 
       if (transferAmount > parseFloat(selectedFromAccount?.balance || 0)) {
         setMessage('Insufficient funds');
+        setMessageType('error');
         setLoading(false);
         return;
       }
@@ -234,12 +246,15 @@ export default function InternalTransfer() {
       setMemo('');
       setRecipientAccountNumber('');
       setRecipientInfo(null);
+      setMessage('');
+      setMessageType('');
       
       await checkUserAndFetchData();
 
     } catch (error) {
       console.error('Transfer error:', error);
       setMessage(error.message || 'Transfer failed. Please try again.');
+      setMessageType('error');
     } finally {
       setLoading(false);
     }
@@ -319,13 +334,13 @@ export default function InternalTransfer() {
       textAlign: 'center'
     },
     welcomeTitle: {
-      fontSize: isMobile ? '1.4rem' : '2rem',
+      fontSize: isMobile ? '1.25rem' : '1.5rem',
       fontWeight: '700',
       color: '#ffffff',
       marginBottom: '0.5rem'
     },
     welcomeSubtitle: {
-      fontSize: isMobile ? '0.9rem' : '1.1rem',
+      fontSize: isMobile ? '0.85rem' : '0.95rem',
       color: '#cbd5e1'
     },
     contentSection: {
@@ -337,7 +352,7 @@ export default function InternalTransfer() {
       border: '1px solid #e2e8f0'
     },
     sectionTitle: {
-      fontSize: isMobile ? '1.1rem' : '1.3rem',
+      fontSize: isMobile ? '1rem' : '1.1rem',
       fontWeight: '700',
       color: '#1a365d',
       marginBottom: isMobile ? '1rem' : '1.5rem',
@@ -349,27 +364,27 @@ export default function InternalTransfer() {
     },
     label: {
       display: 'block',
-      fontSize: isMobile ? '0.85rem' : '0.9rem',
+      fontSize: isMobile ? '0.75rem' : '0.8rem',
       fontWeight: '600',
       color: '#374151',
       marginBottom: '0.5rem'
     },
     select: {
       width: '100%',
-      padding: isMobile ? '0.75rem' : '0.875rem',
+      padding: isMobile ? '0.65rem' : '0.75rem',
       border: '2px solid #e2e8f0',
       borderRadius: '12px',
-      fontSize: isMobile ? '0.9rem' : '1rem',
+      fontSize: isMobile ? '0.8rem' : '0.875rem',
       backgroundColor: 'white',
       transition: 'border-color 0.3s',
       boxSizing: 'border-box'
     },
     input: {
       width: '100%',
-      padding: isMobile ? '0.75rem' : '0.875rem',
+      padding: isMobile ? '0.65rem' : '0.75rem',
       border: '2px solid #e2e8f0',
       borderRadius: '12px',
-      fontSize: isMobile ? '0.9rem' : '1rem',
+      fontSize: isMobile ? '0.8rem' : '0.875rem',
       transition: 'border-color 0.3s',
       boxSizing: 'border-box'
     },
@@ -379,12 +394,12 @@ export default function InternalTransfer() {
       flexDirection: isMobile ? 'column' : 'row'
     },
     verifyButton: {
-      padding: isMobile ? '0.75rem 1rem' : '0.875rem 1.5rem',
+      padding: isMobile ? '0.65rem 1rem' : '0.75rem 1.5rem',
       backgroundColor: '#059669',
       color: 'white',
       border: 'none',
       borderRadius: '12px',
-      fontSize: isMobile ? '0.85rem' : '0.95rem',
+      fontSize: isMobile ? '0.8rem' : '0.875rem',
       fontWeight: '600',
       cursor: 'pointer',
       transition: 'all 0.3s',
@@ -399,7 +414,7 @@ export default function InternalTransfer() {
       marginBottom: isMobile ? '1rem' : '1.5rem'
     },
     recipientTitle: {
-      fontSize: '0.85rem',
+      fontSize: isMobile ? '0.75rem' : '0.85rem',
       color: '#065f46',
       fontWeight: '600',
       marginBottom: '0.75rem',
@@ -408,13 +423,13 @@ export default function InternalTransfer() {
       gap: '0.5rem'
     },
     recipientName: {
-      fontSize: isMobile ? '1rem' : '1.1rem',
+      fontSize: isMobile ? '0.9rem' : '1rem',
       fontWeight: '700',
       color: '#064e3b',
       marginBottom: '0.5rem'
     },
     recipientDetails: {
-      fontSize: isMobile ? '0.85rem' : '0.9rem',
+      fontSize: isMobile ? '0.75rem' : '0.85rem',
       color: '#065f46'
     },
     accountInfo: {
@@ -425,36 +440,44 @@ export default function InternalTransfer() {
       border: '1px solid #e2e8f0'
     },
     accountInfoLabel: {
-      fontSize: '0.85rem',
+      fontSize: isMobile ? '0.7rem' : '0.75rem',
       color: '#64748b',
       marginBottom: '0.5rem'
     },
     accountInfoValue: {
-      fontSize: isMobile ? '1rem' : '1.1rem',
+      fontSize: isMobile ? '0.875rem' : '0.95rem',
       fontWeight: '700',
       color: '#1e293b'
     },
     submitButton: {
       width: '100%',
-      padding: isMobile ? '1rem' : '1.125rem',
+      padding: isMobile ? '0.875rem' : '1rem',
       backgroundColor: '#1e40af',
       color: 'white',
       border: 'none',
       borderRadius: '12px',
-      fontSize: isMobile ? '0.95rem' : '1.1rem',
+      fontSize: isMobile ? '0.875rem' : '0.95rem',
       fontWeight: '700',
       cursor: 'pointer',
       transition: 'all 0.3s',
       boxShadow: '0 6px 20px rgba(30, 64, 175, 0.3)'
     },
-    errorMessage: {
-      backgroundColor: '#fee2e2',
-      color: '#dc2626',
+    messageBox: {
       padding: isMobile ? '0.875rem' : '1rem',
       borderRadius: '12px',
       marginBottom: isMobile ? '1rem' : '1.5rem',
-      border: '2px solid #fca5a5',
-      fontSize: isMobile ? '0.85rem' : '0.9rem'
+      fontSize: isMobile ? '0.8rem' : '0.875rem',
+      fontWeight: '500'
+    },
+    errorMessage: {
+      backgroundColor: '#fee2e2',
+      color: '#dc2626',
+      border: '2px solid #fca5a5'
+    },
+    successMessage: {
+      backgroundColor: '#d1fae5',
+      color: '#065f46',
+      border: '2px solid #6ee7b7'
     },
     infoBox: {
       backgroundColor: '#f0f9ff',
@@ -464,7 +487,7 @@ export default function InternalTransfer() {
       marginTop: isMobile ? '1rem' : '1.5rem'
     },
     infoTitle: {
-      fontSize: isMobile ? '0.9rem' : '0.95rem',
+      fontSize: isMobile ? '0.8rem' : '0.875rem',
       fontWeight: '600',
       color: '#0c4a6e',
       marginBottom: '0.75rem',
@@ -473,7 +496,7 @@ export default function InternalTransfer() {
       gap: '0.5rem'
     },
     infoList: {
-      fontSize: isMobile ? '0.8rem' : '0.9rem',
+      fontSize: isMobile ? '0.75rem' : '0.8rem',
       color: '#0369a1',
       lineHeight: '1.8',
       paddingLeft: isMobile ? '1rem' : '1.2rem',
@@ -568,7 +591,7 @@ export default function InternalTransfer() {
       border: 'none',
       borderRadius: '10px',
       cursor: 'pointer',
-      fontSize: isMobile ? '0.9rem' : '1rem',
+      fontSize: isMobile ? '0.85rem' : '0.95rem',
       fontWeight: '600',
       transition: 'all 0.3s',
       boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)'
@@ -581,7 +604,7 @@ export default function InternalTransfer() {
       border: 'none',
       borderRadius: '10px',
       cursor: 'pointer',
-      fontSize: isMobile ? '0.9rem' : '1rem',
+      fontSize: isMobile ? '0.85rem' : '0.95rem',
       fontWeight: '600',
       transition: 'all 0.3s',
       boxShadow: '0 4px 12px rgba(26, 54, 93, 0.3)'
@@ -616,6 +639,12 @@ export default function InternalTransfer() {
           <div style={styles.spinner}></div>
           <p style={styles.loadingText}>Loading...</p>
         </div>
+        <style jsx>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
@@ -703,7 +732,12 @@ export default function InternalTransfer() {
           </div>
 
           {message && (
-            <div style={styles.errorMessage}>{message}</div>
+            <div style={{
+              ...styles.messageBox,
+              ...(messageType === 'error' ? styles.errorMessage : styles.successMessage)
+            }}>
+              {message}
+            </div>
           )}
 
           <div style={styles.contentSection}>
@@ -828,6 +862,13 @@ export default function InternalTransfer() {
             </ul>
           </div>
         </main>
+
+        <style jsx>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     </>
   );

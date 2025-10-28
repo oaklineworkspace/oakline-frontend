@@ -258,13 +258,13 @@ export default function Transfer() {
       textAlign: 'center'
     },
     welcomeTitle: {
-      fontSize: isMobile ? '1.5rem' : '2rem',
+      fontSize: isMobile ? '1.25rem' : '1.5rem',
       fontWeight: '700',
       color: '#ffffff',
       marginBottom: '0.5rem'
     },
     welcomeSubtitle: {
-      fontSize: isMobile ? '0.95rem' : '1.1rem',
+      fontSize: isMobile ? '0.85rem' : '0.95rem',
       color: '#cbd5e1'
     },
     transferOptions: {
@@ -289,13 +289,13 @@ export default function Transfer() {
       marginBottom: '1rem'
     },
     transferCardTitle: {
-      fontSize: isMobile ? '1.2rem' : '1.4rem',
+      fontSize: isMobile ? '1rem' : '1.1rem',
       fontWeight: '700',
       color: '#1e293b',
       marginBottom: '0.5rem'
     },
     transferCardDesc: {
-      fontSize: '0.95rem',
+      fontSize: isMobile ? '0.8rem' : '0.85rem',
       color: '#64748b',
       lineHeight: '1.6'
     },
@@ -307,7 +307,7 @@ export default function Transfer() {
       border: '1px solid #059669'
     },
     sectionTitle: {
-      fontSize: isMobile ? '1.3rem' : '1.5rem',
+      fontSize: isMobile ? '1.1rem' : '1.25rem',
       fontWeight: '700',
       color: '#1a365d',
       marginBottom: '1.5rem',
@@ -325,24 +325,24 @@ export default function Transfer() {
       flexDirection: 'column'
     },
     label: {
-      fontSize: '0.9rem',
+      fontSize: '0.8rem',
       fontWeight: '600',
       color: '#374151',
       marginBottom: '0.5rem'
     },
     select: {
-      padding: '0.875rem',
+      padding: '0.75rem',
       border: '2px solid #e2e8f0',
       borderRadius: '12px',
-      fontSize: '1rem',
+      fontSize: '0.875rem',
       backgroundColor: 'white',
       transition: 'border-color 0.3s'
     },
     input: {
-      padding: '0.875rem',
+      padding: '0.75rem',
       border: '2px solid #e2e8f0',
       borderRadius: '12px',
-      fontSize: '1rem',
+      fontSize: '0.875rem',
       transition: 'border-color 0.3s'
     },
     accountInfo: {
@@ -353,23 +353,23 @@ export default function Transfer() {
       border: '1px solid #e2e8f0'
     },
     accountInfoLabel: {
-      fontSize: '0.85rem',
+      fontSize: '0.75rem',
       color: '#64748b',
       marginBottom: '0.5rem'
     },
     accountInfoValue: {
-      fontSize: '1.1rem',
+      fontSize: '0.95rem',
       fontWeight: '700',
       color: '#1e293b'
     },
     submitButton: {
       width: '100%',
-      padding: '1.125rem',
+      padding: '1rem',
       backgroundColor: '#1e40af',
       color: 'white',
       border: 'none',
       borderRadius: '12px',
-      fontSize: isMobile ? '0.95rem' : '1.1rem',
+      fontSize: isMobile ? '0.875rem' : '0.95rem',
       fontWeight: '700',
       cursor: 'pointer',
       transition: 'all 0.3s',
