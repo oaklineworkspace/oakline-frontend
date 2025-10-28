@@ -10,6 +10,7 @@ export default function TransactionsHistory() {
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const router = useRouter();
 
@@ -113,7 +114,6 @@ export default function TransactionsHistory() {
   const isTransactionCredit = (tx) => {
     const txType = (tx.type || tx.transaction_type || '').toLowerCase();
     
-    // Credit transactions (money IN) - these should be GREEN/POSITIVE
     if (txType.includes('deposit') || 
         txType.includes('credit') || 
         txType.includes('transfer_in') || 
@@ -126,7 +126,6 @@ export default function TransactionsHistory() {
       return true;
     }
     
-    // Debit transactions (money OUT) - these should be RED/NEGATIVE
     if (txType.includes('debit') || 
         txType.includes('withdrawal') || 
         txType.includes('purchase') || 
@@ -138,15 +137,28 @@ export default function TransactionsHistory() {
       return false;
     }
     
-    // Fallback: check if amount is positive or negative
     const amount = parseFloat(tx.amount) || 0;
     return amount >= 0;
+  };
+
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+        return { bg: '#d1fae5', color: '#059669' };
+      case 'pending':
+        return { bg: '#fef3c7', color: '#f59e0b' };
+      case 'failed':
+        return { bg: '#fee2e2', color: '#dc2626' };
+      case 'cancelled':
+        return { bg: '#f3f4f6', color: '#6b7280' };
+      default:
+        return { bg: '#e0e7ff', color: '#4f46e5' };
+    }
   };
 
   const getFilteredTransactions = () => {
     let filtered = transactions;
 
-    // Apply type filter
     if (filter !== 'all') {
       filtered = filtered.filter(tx => {
         const isCredit = isTransactionCredit(tx);
@@ -156,7 +168,12 @@ export default function TransactionsHistory() {
       });
     }
 
-    // Apply search filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(tx => 
+        (tx.status || 'completed').toLowerCase() === statusFilter.toLowerCase()
+      );
+    }
+
     if (searchTerm) {
       filtered = filtered.filter(tx => 
         (tx.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -184,14 +201,13 @@ export default function TransactionsHistory() {
       <div style={styles.header}>
         <h1 style={styles.title}>Transaction History</h1>
         <Link href="/dashboard" style={styles.backButton}>
-          ← Back to Dashboard
+          ← Back
         </Link>
       </div>
 
       {error && <div style={styles.error}>{error}</div>}
 
       <div style={styles.content}>
-        {/* Filters and Search */}
         <div style={styles.controls}>
           <div style={styles.filters}>
             <button
@@ -222,6 +238,54 @@ export default function TransactionsHistory() {
               ❤️ Debits
             </button>
           </div>
+
+          <div style={styles.filters}>
+            <button
+              onClick={() => setStatusFilter('all')}
+              style={{
+                ...styles.filterButton,
+                ...(statusFilter === 'all' ? styles.filterButtonActive : {})
+              }}
+            >
+              All Status
+            </button>
+            <button
+              onClick={() => setStatusFilter('completed')}
+              style={{
+                ...styles.filterButton,
+                ...(statusFilter === 'completed' ? styles.filterButtonActive : {})
+              }}
+            >
+              ✓ Completed
+            </button>
+            <button
+              onClick={() => setStatusFilter('pending')}
+              style={{
+                ...styles.filterButton,
+                ...(statusFilter === 'pending' ? styles.filterButtonActive : {})
+              }}
+            >
+              ⏳ Pending
+            </button>
+            <button
+              onClick={() => setStatusFilter('failed')}
+              style={{
+                ...styles.filterButton,
+                ...(statusFilter === 'failed' ? styles.filterButtonActive : {})
+              }}
+            >
+              ✗ Failed
+            </button>
+            <button
+              onClick={() => setStatusFilter('cancelled')}
+              style={{
+                ...styles.filterButton,
+                ...(statusFilter === 'cancelled' ? styles.filterButtonActive : {})
+              }}
+            >
+              ⊘ Cancelled
+            </button>
+          </div>
           
           <input
             type="text"
@@ -244,6 +308,8 @@ export default function TransactionsHistory() {
               const txType = tx.type || tx.transaction_type || '';
               const amount = parseFloat(tx.amount) || 0;
               const isCredit = isTransactionCredit(tx);
+              const status = tx.status || 'completed';
+              const statusColors = getStatusColor(status);
               
               return (
                 <div key={tx.id} style={styles.transactionItem}>
@@ -272,17 +338,13 @@ export default function TransactionsHistory() {
                     }}>
                       {isCredit ? '+' : '-'}{formatCurrency(Math.abs(amount))}
                     </div>
-                    {tx.status && (
-                      <div style={{
-                        ...styles.statusBadge,
-                        backgroundColor: tx.status === 'completed' ? '#d1fae5' : 
-                                       tx.status === 'pending' ? '#fef3c7' : '#fee2e2',
-                        color: tx.status === 'completed' ? '#059669' : 
-                              tx.status === 'pending' ? '#f59e0b' : '#dc2626'
-                      }}>
-                        {tx.status}
-                      </div>
-                    )}
+                    <div style={{
+                      ...styles.statusBadge,
+                      backgroundColor: statusColors.bg,
+                      color: statusColors.color
+                    }}>
+                      {status}
+                    </div>
                   </div>
                 </div>
               );
@@ -303,27 +365,27 @@ const styles = {
   header: {
     backgroundColor: '#1e40af',
     color: 'white',
-    padding: '1.5rem 2rem',
+    padding: '1rem 1.5rem',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
   },
   title: {
-    fontSize: '1.8rem',
+    fontSize: '1.3rem',
     fontWeight: '700',
     margin: 0
   },
   backButton: {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '0.5rem',
-    padding: '0.6rem 1.2rem',
+    gap: '0.3rem',
+    padding: '0.5rem 1rem',
     backgroundColor: 'rgba(255,255,255,0.2)',
     color: 'white',
     textDecoration: 'none',
     borderRadius: '8px',
-    fontSize: '0.95rem',
+    fontSize: '0.85rem',
     border: '1px solid rgba(255,255,255,0.3)',
     transition: 'all 0.3s ease'
   },
@@ -332,42 +394,44 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     height: '50vh',
-    fontSize: '1.2rem',
+    fontSize: '1rem',
     color: '#64748b'
   },
   error: {
     color: '#dc3545',
     backgroundColor: '#f8d7da',
-    padding: '15px',
+    padding: '12px',
     borderRadius: '8px',
-    margin: '20px',
-    textAlign: 'center'
+    margin: '15px',
+    textAlign: 'center',
+    fontSize: '0.85rem'
   },
   content: {
     maxWidth: '1200px',
     margin: '0 auto',
-    padding: '2rem'
+    padding: '1rem'
   },
   controls: {
     display: 'flex',
-    gap: '1rem',
-    marginBottom: '1.5rem',
-    flexWrap: 'wrap',
-    alignItems: 'center'
+    flexDirection: 'column',
+    gap: '0.75rem',
+    marginBottom: '1rem'
   },
   filters: {
     display: 'flex',
-    gap: '0.5rem'
+    gap: '0.4rem',
+    flexWrap: 'wrap'
   },
   filterButton: {
-    padding: '0.6rem 1.2rem',
+    padding: '0.5rem 0.8rem',
     border: '2px solid #e2e8f0',
     backgroundColor: 'white',
     borderRadius: '8px',
     cursor: 'pointer',
-    fontSize: '0.95rem',
+    fontSize: '0.75rem',
     fontWeight: '500',
-    transition: 'all 0.2s'
+    transition: 'all 0.2s',
+    whiteSpace: 'nowrap'
   },
   filterButtonActive: {
     backgroundColor: '#1e40af',
@@ -375,34 +439,33 @@ const styles = {
     borderColor: '#1e40af'
   },
   searchInput: {
-    flex: 1,
-    minWidth: '250px',
+    width: '100%',
     padding: '0.6rem 1rem',
     border: '2px solid #e2e8f0',
     borderRadius: '8px',
-    fontSize: '0.95rem'
+    fontSize: '0.85rem'
   },
   emptyState: {
     textAlign: 'center',
-    padding: '4rem 2rem',
+    padding: '3rem 1.5rem',
     backgroundColor: 'white',
     borderRadius: '12px',
     boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
   },
   emptyIcon: {
-    fontSize: '4rem',
+    fontSize: '3rem',
     marginBottom: '1rem'
   },
   transactionsList: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.75rem'
+    gap: '0.6rem'
   },
   transactionItem: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '1rem',
+    padding: '0.8rem',
     backgroundColor: '#f8fafc',
     borderRadius: '12px',
     border: '1px solid #e2e8f0',
@@ -411,45 +474,54 @@ const styles = {
   transactionLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.75rem',
-    flex: 1
+    gap: '0.6rem',
+    flex: 1,
+    minWidth: 0
   },
   transactionIcon: {
-    fontSize: '1.5rem'
+    fontSize: '1.2rem',
+    flexShrink: 0
   },
   transactionInfo: {
-    flex: 1
+    flex: 1,
+    minWidth: 0
   },
   transactionDescription: {
-    fontSize: '0.95rem',
+    fontSize: '0.8rem',
     fontWeight: '600',
     color: '#1e293b',
-    marginBottom: '0.25rem'
+    marginBottom: '0.2rem',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap'
   },
   transactionDate: {
-    fontSize: '0.8rem',
+    fontSize: '0.7rem',
     color: '#64748b'
   },
   transactionAccount: {
-    fontSize: '0.75rem',
+    fontSize: '0.65rem',
     color: '#94a3b8',
-    marginTop: '0.25rem'
+    marginTop: '0.2rem'
   },
   transactionRight: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-end',
-    gap: '0.5rem'
+    gap: '0.3rem',
+    flexShrink: 0
   },
   transactionAmount: {
-    fontSize: '1.05rem',
-    fontWeight: '700'
+    fontSize: '0.85rem',
+    fontWeight: '700',
+    whiteSpace: 'nowrap'
   },
   statusBadge: {
-    padding: '0.25rem 0.75rem',
+    padding: '0.2rem 0.6rem',
     borderRadius: '12px',
-    fontSize: '0.7rem',
+    fontSize: '0.65rem',
     fontWeight: '600',
-    textTransform: 'capitalize'
+    textTransform: 'capitalize',
+    whiteSpace: 'nowrap'
   }
 };

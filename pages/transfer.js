@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -173,7 +172,7 @@ export default function Transfer() {
       setShowReceipt(true);
       setAmount('');
       setMemo('');
-      
+
       // Refresh accounts
       await checkUserAndFetchData();
 
@@ -539,6 +538,100 @@ export default function Transfer() {
       borderRadius: '12px',
       fontWeight: '600',
       fontSize: '1rem'
+    },
+    sectionHeaderRow: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '1.5rem',
+      flexWrap: 'wrap',
+      gap: '1rem'
+    },
+    historyButton: {
+      padding: '0.6rem 1.2rem',
+      backgroundColor: '#f1f5f9',
+      color: '#1e40af',
+      border: '2px solid #e2e8f0',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      fontSize: '0.9rem',
+      fontWeight: '600',
+      transition: 'all 0.2s'
+    },
+    historySection: {
+      backgroundColor: '#f8fafc',
+      padding: '1.5rem',
+      borderRadius: '12px',
+      marginBottom: '2rem',
+      border: '1px solid #e2e8f0'
+    },
+    historyTitle: {
+      fontSize: '1.1rem',
+      fontWeight: '600',
+      color: '#1e293b',
+      marginBottom: '1rem'
+    },
+    historyList: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0.75rem'
+    },
+    historyItem: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '0.75rem',
+      backgroundColor: 'white',
+      borderRadius: '8px',
+      border: '1px solid #e2e8f0'
+    },
+    historyInfo: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0.25rem',
+      flex: 1
+    },
+    historyDesc: {
+      fontSize: '0.9rem',
+      fontWeight: '500',
+      color: '#1e293b'
+    },
+    historyDate: {
+      fontSize: '0.75rem',
+      color: '#64748b'
+    },
+    historyAmount: {
+      fontSize: '1rem',
+      fontWeight: '700'
+    },
+    quickAmounts: {
+      display: 'flex',
+      gap: '0.5rem',
+      marginTop: '0.75rem',
+      flexWrap: 'wrap',
+      alignItems: 'center'
+    },
+    quickAmountsLabel: {
+      fontSize: '0.85rem',
+      color: '#64748b',
+      fontWeight: '500'
+    },
+    quickAmountButton: {
+      padding: '0.4rem 0.8rem',
+      backgroundColor: '#eff6ff',
+      color: '#1e40af',
+      border: '1px solid #bfdbfe',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      fontSize: '0.8rem',
+      fontWeight: '600',
+      transition: 'all 0.2s'
+    },
+    balanceAfter: {
+      marginTop: '0.75rem',
+      fontSize: '0.9rem',
+      color: '#64748b',
+      fontWeight: '500'
     }
   };
 
@@ -746,8 +839,11 @@ export default function Transfer() {
           )}
 
           <div style={styles.contentSection}>
-            <h2 style={styles.sectionTitle}>Transfer Between My Accounts</h2>
-
+            <div style={styles.sectionHeaderRow}>
+              <h2 style={styles.sectionTitle}>Transfer Between My Accounts</h2>
+              <Link href="/transactions" style={styles.historyButton}>View Transaction History</Link>
+            </div>
+            
             <form onSubmit={handleSubmit}>
               <div style={styles.formGrid}>
                 <div style={styles.formGroup}>
@@ -799,6 +895,24 @@ export default function Transfer() {
                     min="0.01"
                     required
                   />
+                  <div style={styles.quickAmounts}>
+                    <span style={styles.quickAmountsLabel}>Quick amounts:</span>
+                    {[10, 20, 50, 100].map(val => (
+                      <button
+                        key={val}
+                        type="button"
+                        style={styles.quickAmountButton}
+                        onClick={() => setAmount(val.toString())}
+                      >
+                        ${val}
+                      </button>
+                    ))}
+                  </div>
+                  {fromAccount && (
+                    <div style={styles.balanceAfter}>
+                      Balance after: {formatCurrency(parseFloat(accounts.find(a => a.id === fromAccount)?.balance || 0) - parseFloat(amount || 0))}
+                    </div>
+                  )}
                 </div>
 
                 <div style={styles.formGroup}>

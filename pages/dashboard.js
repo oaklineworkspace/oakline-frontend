@@ -516,9 +516,9 @@ function DashboardContent() {
                 
                 // Determine if it's a credit (money in) or debit (money out)
                 let isCredit = false;
-                if (txType.includes('deposit') || txType.includes('credit') || txType.includes('transfer_in') || txType.includes('interest')) {
+                if (txType.includes('deposit') || txType.includes('credit') || txType.includes('transfer_in') || txType.includes('interest') || txType.includes('refund') || txType.includes('zelle_receive')) {
                   isCredit = true;
-                } else if (txType.includes('debit') || txType.includes('withdrawal') || txType.includes('purchase') || txType.includes('transfer_out') || txType.includes('bill_payment') || txType.includes('fee')) {
+                } else if (txType.includes('debit') || txType.includes('withdrawal') || txType.includes('purchase') || txType.includes('transfer_out') || txType.includes('bill_payment') || txType.includes('fee') || txType.includes('zelle_send')) {
                   isCredit = false;
                 } else {
                   // Fallback: check if amount is positive or negative
@@ -533,9 +533,29 @@ function DashboardContent() {
                     case 'transfer_out': return '💰';
                     case 'bill_payment': return '🧾';
                     case 'fee': return '💳';
+                    case 'zelle_send': return 'Z';
+                    case 'zelle_receive': return 'Z';
                     default: return '💼';
                   }
                 };
+
+                const getStatusColor = (status) => {
+                  switch (status?.toLowerCase()) {
+                    case 'completed':
+                      return { bg: '#d1fae5', color: '#059669' };
+                    case 'pending':
+                      return { bg: '#fef3c7', color: '#f59e0b' };
+                    case 'failed':
+                      return { bg: '#fee2e2', color: '#dc2626' };
+                    case 'cancelled':
+                      return { bg: '#f3f4f6', color: '#6b7280' };
+                    default:
+                      return { bg: '#e0e7ff', color: '#4f46e5' };
+                  }
+                };
+
+                const status = tx.status || 'completed';
+                const statusColors = getStatusColor(status);
                 
                 return (
                   <div key={tx.id} style={styles.transactionItem}>
@@ -552,12 +572,21 @@ function DashboardContent() {
                         </div>
                       </div>
                     </div>
-                    <div style={{
-                      ...styles.transactionAmount,
-                      color: isCredit ? '#059669' : '#dc2626'
-                    }}>
-                      {isCredit ? '+' : '-'}
-                      {formatCurrency(Math.abs(amount))}
+                    <div style={styles.transactionRight}>
+                      <div style={{
+                        ...styles.transactionAmount,
+                        color: isCredit ? '#059669' : '#dc2626'
+                      }}>
+                        {isCredit ? '+' : '-'}
+                        {formatCurrency(Math.abs(amount))}
+                      </div>
+                      <div style={{
+                        ...styles.statusBadge,
+                        backgroundColor: statusColors.bg,
+                        color: statusColors.color
+                      }}>
+                        {status}
+                      </div>
                     </div>
                   </div>
                 );
@@ -1399,9 +1428,22 @@ const styles = {
     fontSize: '0.8rem',
     color: '#64748b'
   },
+  transactionRight: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: '0.3rem'
+  },
   transactionAmount: {
     fontSize: '1.05rem',
     fontWeight: '700'
+  },
+  statusBadge: {
+    padding: '0.2rem 0.6rem',
+    borderRadius: '12px',
+    fontSize: '0.7rem',
+    fontWeight: '600',
+    textTransform: 'capitalize'
   },
   emptyState: {
     textAlign: 'center',
