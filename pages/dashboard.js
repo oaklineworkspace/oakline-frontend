@@ -1334,7 +1334,7 @@ const styles = {
     alignItems: 'center',
     gap: '0.5rem',
     padding: '1.5rem 1rem',
-    backgroundColor: '#1a365d',
+    background: '#1a365d',
     color: 'white',
     borderRadius: '10px',
     border: 'none',
