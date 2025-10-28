@@ -10,24 +10,42 @@ export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
-  const [settings, setSettings] = useState({
-    emailNotifications: true,
-    smsNotifications: false,
-    pushNotifications: true,
-    transactionAlerts: true,
-    securityAlerts: true,
-    promotionalOffers: false
-  });
+  const [bankDetails, setBankDetails] = useState(null);
 
   useEffect(() => {
     checkUserAndFetchData();
+    fetchBankDetails();
   }, []);
+
+  const fetchBankDetails = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) {
+        return;
+      }
+
+      const response = await fetch('/api/bank-details', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.bankDetails) {
+          setBankDetails(data.bankDetails);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching bank details:', error);
+    }
+  };
 
   const checkUserAndFetchData = async () => {
     try {
       setLoading(true);
       
-      // Get current session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
@@ -45,7 +63,6 @@ export default function Notifications() {
       console.log('User session found:', session.user.email);
       setUser(session.user);
 
-      // Fetch user profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -74,7 +91,6 @@ export default function Notifications() {
     try {
       console.log('Fetching notifications for user:', user.id);
 
-      // Fetch real notifications from database
       const { data: dbNotifications, error: notifError } = await supabase
         .from('notifications')
         .select('*')
@@ -87,7 +103,6 @@ export default function Notifications() {
 
       let realNotifications = [];
 
-      // Add database notifications if they exist
       if (dbNotifications && dbNotifications.length > 0) {
         console.log('Found database notifications:', dbNotifications.length);
         realNotifications = dbNotifications.map(notif => ({
@@ -104,7 +119,6 @@ export default function Notifications() {
         console.log('No database notifications found, creating welcome notification');
         const userName = profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'Valued Customer';
         
-        // Create welcome notification in database
         const { data: welcomeNotif, error: insertError } = await supabase
           .from('notifications')
           .insert({
@@ -138,7 +152,6 @@ export default function Notifications() {
     } catch (error) {
       console.error('Error in fetchNotifications:', error);
       
-      // Fallback notification
       setNotifications([{
         id: 'fallback',
         title: 'Welcome to Oakline Bank',
@@ -165,7 +178,6 @@ export default function Notifications() {
 
   const handleMarkAsRead = async (notificationId) => {
     try {
-      // Update in database
       const { error } = await supabase
         .from('notifications')
         .update({ read: true })
@@ -176,7 +188,6 @@ export default function Notifications() {
         return;
       }
 
-      // Update local state
       setNotifications(notifications.map(notif => 
         notif.id === notificationId ? { ...notif, read: true } : notif
       ));
@@ -189,7 +200,6 @@ export default function Notifications() {
     try {
       if (!user) return;
 
-      // Update all in database
       const { error } = await supabase
         .from('notifications')
         .update({ read: true })
@@ -201,7 +211,6 @@ export default function Notifications() {
         return;
       }
 
-      // Update local state
       setNotifications(notifications.map(notif => ({ ...notif, read: true })));
     } catch (error) {
       console.error('Error in handleMarkAllAsRead:', error);
@@ -210,7 +219,6 @@ export default function Notifications() {
 
   const handleDeleteNotification = async (notificationId) => {
     try {
-      // Delete from database
       const { error } = await supabase
         .from('notifications')
         .delete()
@@ -221,18 +229,10 @@ export default function Notifications() {
         return;
       }
 
-      // Update local state
       setNotifications(notifications.filter(notif => notif.id !== notificationId));
     } catch (error) {
       console.error('Error in handleDeleteNotification:', error);
     }
-  };
-
-  const handleSettingChange = (setting) => {
-    setSettings(prev => ({
-      ...prev,
-      [setting]: !prev[setting]
-    }));
   };
 
   const filteredNotifications = notifications.filter(notif => {
@@ -267,10 +267,14 @@ export default function Notifications() {
     );
   }
 
+  const userName = userProfile 
+    ? `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() || userProfile.email?.split('@')[0] || 'Valued Customer'
+    : user.email?.split('@')[0] || 'Valued Customer';
+
   return (
     <>
       <Head>
-        <title>Notifications - Oakline Bank</title>
+        <title>Notifications - {bankDetails?.name || 'Oakline Bank'}</title>
         <meta name="description" content="View and manage your banking notifications" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       </Head>
@@ -279,28 +283,59 @@ export default function Notifications() {
         <Header />
         
         <main style={styles.main}>
-          <div style={styles.header}>
-            <div style={styles.titleSection}>
-              <h1 style={styles.title}>Notifications</h1>
+          {/* Professional Header Section */}
+          <div style={styles.pageHeader}>
+            <div style={styles.headerContent}>
+              <div style={styles.headerLeft}>
+                <div style={styles.iconWrapper}>
+                  <span style={styles.headerIcon}>🔔</span>
+                  {unreadCount > 0 && (
+                    <span style={styles.headerBadge}>{unreadCount}</span>
+                  )}
+                </div>
+                <div style={styles.headerText}>
+                  <h1 style={styles.pageTitle}>Notifications Center</h1>
+                  <p style={styles.pageSubtitle}>
+                    Welcome back, {userName} • {bankDetails?.name || 'Oakline Bank'}
+                  </p>
+                </div>
+              </div>
               {unreadCount > 0 && (
-                <span style={styles.unreadBadge}>{unreadCount}</span>
+                <button onClick={handleMarkAllAsRead} style={styles.markAllButton}>
+                  <span style={styles.buttonIcon}>✓</span>
+                  Mark All Read
+                </button>
               )}
             </div>
-            {unreadCount > 0 && (
-              <button onClick={handleMarkAllAsRead} style={styles.markAllButton}>
-                Mark All Read
-              </button>
-            )}
           </div>
 
+          {/* Bank Info Banner */}
+          {bankDetails && (
+            <div style={styles.bankInfoBanner}>
+              <div style={styles.bankInfoItem}>
+                <span style={styles.bankInfoIcon}>📞</span>
+                <span style={styles.bankInfoText}>Support: {bankDetails.phone || '+1 (636) 635-6122'}</span>
+              </div>
+              <div style={styles.bankInfoItem}>
+                <span style={styles.bankInfoIcon}>✉️</span>
+                <span style={styles.bankInfoText}>{bankDetails.email_info || 'contact-us@theoaklinebank.com'}</span>
+              </div>
+              <div style={styles.bankInfoItem}>
+                <span style={styles.bankInfoIcon}>🕒</span>
+                <span style={styles.bankInfoText}>{bankDetails.hours || 'Mon-Fri 9AM-5PM'}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Filter Section */}
           <div style={styles.filterSection}>
             <div style={styles.filterScroll}>
               {[
-                { key: 'all', label: 'All', count: notifications.length },
-                { key: 'unread', label: 'Unread', count: unreadCount },
-                { key: 'transaction', label: 'Transactions', count: notifications.filter(n => n.type === 'transaction').length },
-                { key: 'security', label: 'Security', count: notifications.filter(n => n.type === 'security').length },
-                { key: 'system', label: 'System', count: notifications.filter(n => n.type === 'system').length }
+                { key: 'all', label: 'All', count: notifications.length, icon: '📋' },
+                { key: 'unread', label: 'Unread', count: unreadCount, icon: '🔴' },
+                { key: 'transaction', label: 'Transactions', count: notifications.filter(n => n.type === 'transaction').length, icon: '💳' },
+                { key: 'security', label: 'Security', count: notifications.filter(n => n.type === 'security').length, icon: '🔐' },
+                { key: 'system', label: 'System', count: notifications.filter(n => n.type === 'system').length, icon: '📱' }
               ].map(option => (
                 <button
                   key={option.key}
@@ -310,12 +345,14 @@ export default function Notifications() {
                     ...(filter === option.key ? styles.activeFilter : {})
                   }}
                 >
+                  <span style={styles.filterIcon}>{option.icon}</span>
                   {option.label} ({option.count})
                 </button>
               ))}
             </div>
           </div>
 
+          {/* Notifications List */}
           <div style={styles.notificationsList}>
             {filteredNotifications.length > 0 ? (
               filteredNotifications.map((notification) => (
@@ -337,6 +374,7 @@ export default function Notifications() {
                           <button 
                             onClick={() => handleMarkAsRead(notification.id)}
                             style={styles.markReadButton}
+                            title="Mark as read"
                           >
                             ✓
                           </button>
@@ -344,6 +382,7 @@ export default function Notifications() {
                         <button 
                           onClick={() => handleDeleteNotification(notification.id)}
                           style={styles.deleteButton}
+                          title="Delete notification"
                         >
                           ×
                         </button>
@@ -352,7 +391,13 @@ export default function Notifications() {
                     <p style={styles.notificationMessage}>{notification.message}</p>
                     <div style={styles.notificationMeta}>
                       <span style={styles.timestamp}>
-                        {new Date(notification.timestamp).toLocaleDateString()}
+                        {new Date(notification.timestamp).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                       </span>
                       <span style={styles.notificationType}>
                         {notification.type.charAt(0).toUpperCase() + notification.type.slice(1)}
@@ -363,9 +408,14 @@ export default function Notifications() {
               ))
             ) : (
               <div style={styles.emptyState}>
-                <div style={styles.emptyIcon}>📱</div>
+                <div style={styles.emptyIcon}>📭</div>
                 <h3 style={styles.emptyTitle}>All Caught Up!</h3>
-                <p style={styles.emptyMessage}>You have no {filter === 'all' ? '' : filter} notifications.</p>
+                <p style={styles.emptyMessage}>
+                  You have no {filter === 'all' ? '' : filter} notifications.
+                </p>
+                <p style={styles.emptyHint}>
+                  We'll notify you when there's important account activity.
+                </p>
               </div>
             )}
           </div>
@@ -382,101 +432,180 @@ const styles = {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
   },
   main: {
-    padding: '1rem',
+    padding: '0',
     maxWidth: '100%',
     margin: '0 auto'
   },
-  header: {
+  pageHeader: {
+    background: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)',
+    padding: '2rem 1.5rem',
+    borderBottom: '4px solid #1e3a8a',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+  },
+  headerContent: {
+    maxWidth: '1200px',
+    margin: '0 auto',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '1rem',
     flexWrap: 'wrap',
-    gap: '0.5rem'
+    gap: '1rem'
   },
-  titleSection: {
+  headerLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem'
+    gap: '1rem',
+    flex: 1
   },
-  title: {
-    fontSize: 'clamp(1.5rem, 6vw, 2rem)',
-    color: '#1e293b',
-    margin: 0,
-    fontWeight: '700'
+  iconWrapper: {
+    position: 'relative',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: '16px',
+    padding: '1rem',
+    backdropFilter: 'blur(10px)'
   },
-  unreadBadge: {
+  headerIcon: {
+    fontSize: '2.5rem',
+    display: 'block'
+  },
+  headerBadge: {
+    position: 'absolute',
+    top: '-4px',
+    right: '-4px',
     backgroundColor: '#dc2626',
     color: 'white',
-    padding: '0.25rem 0.5rem',
     borderRadius: '12px',
-    fontSize: '0.8rem',
-    fontWeight: '600',
+    padding: '0.25rem 0.5rem',
+    fontSize: '0.7rem',
+    fontWeight: '700',
     minWidth: '20px',
-    textAlign: 'center'
+    textAlign: 'center',
+    border: '2px solid white'
+  },
+  headerText: {
+    color: 'white'
+  },
+  pageTitle: {
+    fontSize: 'clamp(1.5rem, 5vw, 2rem)',
+    fontWeight: '700',
+    margin: '0 0 0.25rem 0',
+    color: 'white'
+  },
+  pageSubtitle: {
+    fontSize: 'clamp(0.85rem, 3vw, 1rem)',
+    margin: 0,
+    opacity: 0.95,
+    fontWeight: '400'
   },
   markAllButton: {
-    backgroundColor: '#1e40af',
-    color: 'white',
+    background: 'white',
+    color: '#1e40af',
     border: 'none',
-    padding: '0.5rem 1rem',
+    padding: '0.75rem 1.5rem',
     borderRadius: '8px',
     cursor: 'pointer',
-    fontSize: '0.85rem',
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    transition: 'all 0.2s',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  },
+  buttonIcon: {
+    fontSize: '1.1rem'
+  },
+  bankInfoBanner: {
+    backgroundColor: '#f1f5f9',
+    padding: '1rem 1.5rem',
+    borderBottom: '1px solid #e2e8f0',
+    display: 'flex',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: '2rem'
+  },
+  bankInfoItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    color: '#475569'
+  },
+  bankInfoIcon: {
+    fontSize: '1.2rem'
+  },
+  bankInfoText: {
+    fontSize: '0.9rem',
     fontWeight: '500'
   },
   filterSection: {
-    marginBottom: '1rem'
+    padding: '1.5rem 1.5rem 0.5rem',
+    maxWidth: '1200px',
+    margin: '0 auto'
   },
   filterScroll: {
     display: 'flex',
-    gap: '0.5rem',
+    gap: '0.75rem',
     overflowX: 'auto',
     paddingBottom: '0.5rem'
   },
   filterButton: {
-    padding: '0.5rem 0.75rem',
+    padding: '0.75rem 1.25rem',
     background: 'white',
-    border: '1px solid #e2e8f0',
-    borderRadius: '20px',
+    border: '2px solid #e2e8f0',
+    borderRadius: '12px',
     cursor: 'pointer',
-    fontSize: '0.8rem',
+    fontSize: '0.9rem',
+    fontWeight: '500',
     whiteSpace: 'nowrap',
-    flexShrink: 0
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    transition: 'all 0.2s',
+    color: '#475569'
+  },
+  filterIcon: {
+    fontSize: '1.1rem'
   },
   activeFilter: {
     backgroundColor: '#1e40af',
     color: 'white',
-    borderColor: '#1e40af'
+    borderColor: '#1e40af',
+    boxShadow: '0 2px 8px rgba(30, 64, 175, 0.3)'
   },
   notificationsList: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.75rem'
+    gap: '1rem',
+    padding: '1.5rem',
+    maxWidth: '1200px',
+    margin: '0 auto'
   },
   notificationItem: {
     backgroundColor: 'white',
-    padding: '1rem',
+    padding: '1.25rem',
     borderRadius: '12px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
     border: '1px solid #e2e8f0',
     display: 'flex',
-    gap: '0.75rem'
+    gap: '1rem',
+    transition: 'all 0.2s'
   },
   unreadNotification: {
     borderLeft: '4px solid #dc2626',
-    backgroundColor: '#fffbeb'
+    backgroundColor: '#fffbeb',
+    boxShadow: '0 2px 8px rgba(220, 38, 38, 0.1)'
   },
   notificationIcon: {
-    fontSize: '1.5rem',
+    fontSize: '1.75rem',
     flexShrink: 0,
-    width: '40px',
-    height: '40px',
+    width: '48px',
+    height: '48px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#f1f5f9',
-    borderRadius: '50%'
+    borderRadius: '12px'
   },
   notificationContent: {
     flex: 1,
@@ -487,44 +616,48 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: '0.5rem',
-    gap: '0.5rem'
+    gap: '0.75rem'
   },
   notificationTitle: {
     margin: 0,
     color: '#1e293b',
-    fontSize: '1rem',
+    fontSize: '1.05rem',
     fontWeight: '600',
-    lineHeight: '1.3',
+    lineHeight: '1.4',
     flex: 1
   },
   notificationActions: {
     display: 'flex',
-    gap: '0.25rem',
+    gap: '0.5rem',
     flexShrink: 0
   },
   markReadButton: {
     backgroundColor: '#059669',
     color: 'white',
     border: 'none',
-    padding: '0.25rem 0.5rem',
-    borderRadius: '4px',
+    padding: '0.4rem 0.75rem',
+    borderRadius: '6px',
     cursor: 'pointer',
-    fontSize: '0.7rem'
+    fontSize: '0.9rem',
+    fontWeight: '600',
+    transition: 'all 0.2s'
   },
   deleteButton: {
-    background: 'none',
+    background: '#ef4444',
+    color: 'white',
     border: 'none',
-    color: '#64748b',
     cursor: 'pointer',
-    fontSize: '1.2rem',
-    padding: '0.25rem',
-    borderRadius: '4px'
+    fontSize: '1.4rem',
+    padding: '0.2rem 0.6rem',
+    borderRadius: '6px',
+    lineHeight: 1,
+    transition: 'all 0.2s'
   },
   notificationMessage: {
     margin: '0 0 0.75rem 0',
     color: '#374151',
-    lineHeight: '1.4',
-    fontSize: '0.9rem'
+    lineHeight: '1.5',
+    fontSize: '0.95rem'
   },
   notificationMeta: {
     display: 'flex',
@@ -535,34 +668,44 @@ const styles = {
   },
   timestamp: {
     color: '#64748b',
-    fontSize: '0.8rem'
+    fontSize: '0.85rem',
+    fontWeight: '500'
   },
   notificationType: {
     backgroundColor: '#f1f5f9',
     color: '#475569',
-    padding: '0.2rem 0.5rem',
-    borderRadius: '4px',
-    fontSize: '0.7rem',
-    fontWeight: '500'
+    padding: '0.3rem 0.75rem',
+    borderRadius: '6px',
+    fontSize: '0.75rem',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
   },
   emptyState: {
     textAlign: 'center',
-    padding: '3rem 1rem',
+    padding: '4rem 1.5rem',
     color: '#64748b'
   },
   emptyIcon: {
-    fontSize: '3rem',
-    marginBottom: '1rem'
+    fontSize: '4rem',
+    marginBottom: '1rem',
+    opacity: 0.6
   },
   emptyTitle: {
-    fontSize: '1.3rem',
+    fontSize: '1.5rem',
     fontWeight: '600',
     color: '#1e293b',
     margin: '0 0 0.5rem 0'
   },
   emptyMessage: {
+    margin: '0 0 0.5rem 0',
+    fontSize: '1.05rem'
+  },
+  emptyHint: {
     margin: 0,
-    fontSize: '1rem'
+    fontSize: '0.9rem',
+    fontStyle: 'italic',
+    opacity: 0.8
   },
   loadingContainer: {
     display: 'flex',
@@ -573,45 +716,48 @@ const styles = {
     backgroundColor: '#f8fafc'
   },
   spinner: {
-    width: '32px',
-    height: '32px',
-    border: '3px solid #e2e8f0',
-    borderTop: '3px solid #1e40af',
+    width: '48px',
+    height: '48px',
+    border: '4px solid #e2e8f0',
+    borderTop: '4px solid #1e40af',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite'
   },
   loadingText: {
-    marginTop: '1rem',
+    marginTop: '1.5rem',
     color: '#64748b',
-    fontSize: '1rem'
+    fontSize: '1.05rem',
+    fontWeight: '500'
   },
   loginPrompt: {
     textAlign: 'center',
-    padding: '2rem 1rem',
+    padding: '3rem 1.5rem',
     backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    margin: '2rem auto',
-    maxWidth: '400px'
+    borderRadius: '16px',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+    margin: '3rem auto',
+    maxWidth: '500px'
   },
   loginTitle: {
-    fontSize: '1.5rem',
-    fontWeight: '600',
+    fontSize: '2rem',
+    fontWeight: '700',
     color: '#1e293b',
     margin: '0 0 1rem 0'
   },
   loginMessage: {
     color: '#64748b',
-    margin: '0 0 1.5rem 0',
-    fontSize: '1rem'
+    margin: '0 0 2rem 0',
+    fontSize: '1.1rem'
   },
   loginButton: {
     display: 'inline-block',
-    padding: '0.75rem 1.5rem',
+    padding: '1rem 2rem',
     backgroundColor: '#1e40af',
     color: 'white',
     textDecoration: 'none',
-    borderRadius: '8px',
-    fontWeight: '500'
+    borderRadius: '10px',
+    fontWeight: '600',
+    fontSize: '1.05rem',
+    transition: 'all 0.2s'
   }
 };
