@@ -511,7 +511,7 @@ function DashboardContent() {
           <div style={styles.transactionsList}>
             {transactions.length > 0 ? (
               transactions.map(tx => {
-                const txType = tx.transaction_type?.toLowerCase() || '';
+                const txType = (tx.type || tx.transaction_type || '').toLowerCase();
                 const amount = parseFloat(tx.amount) || 0;
                 
                 // Determine if it's a credit (money in) or debit (money out)

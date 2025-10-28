@@ -154,6 +154,7 @@ export default function Transfer() {
       const receipt = {
         referenceNumber,
         date: new Date().toLocaleString(),
+        senderName: user?.email?.split('@')[0] || 'Account Holder',
         fromAccount: {
           type: selectedFromAccount.account_type,
           number: selectedFromAccount.account_number,
@@ -200,14 +201,15 @@ export default function Transfer() {
   const styles = {
     container: {
       minHeight: '100vh',
-      backgroundColor: '#f8fafc',
+      backgroundColor: '#0a1f44',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     },
     header: {
-      backgroundColor: '#1e40af',
+      backgroundColor: '#1a365d',
       color: 'white',
       padding: isMobile ? '1rem' : '1.5rem 2rem',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      borderBottom: '3px solid #059669'
     },
     headerContent: {
       maxWidth: '1400px',
@@ -252,17 +254,18 @@ export default function Transfer() {
       padding: isMobile ? '1.5rem 1rem' : '2.5rem 2rem'
     },
     welcomeSection: {
-      marginBottom: '2rem'
+      marginBottom: '2rem',
+      textAlign: 'center'
     },
     welcomeTitle: {
       fontSize: isMobile ? '1.5rem' : '2rem',
       fontWeight: '700',
-      color: '#1e293b',
+      color: '#ffffff',
       marginBottom: '0.5rem'
     },
     welcomeSubtitle: {
       fontSize: isMobile ? '0.95rem' : '1.1rem',
-      color: '#64748b'
+      color: '#cbd5e1'
     },
     transferOptions: {
       display: 'grid',
@@ -271,13 +274,13 @@ export default function Transfer() {
       marginBottom: '2rem'
     },
     transferCard: {
-      backgroundColor: 'white',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
       borderRadius: '16px',
       padding: isMobile ? '1.5rem' : '2rem',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
       cursor: 'pointer',
       transition: 'all 0.3s ease',
-      border: '2px solid transparent',
+      border: '2px solid #059669',
       textDecoration: 'none',
       color: 'inherit'
     },
@@ -297,18 +300,19 @@ export default function Transfer() {
       lineHeight: '1.6'
     },
     contentSection: {
-      backgroundColor: 'white',
+      backgroundColor: 'rgba(255, 255, 255, 0.98)',
       borderRadius: '16px',
       padding: isMobile ? '1.5rem' : '2rem',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+      border: '1px solid #059669'
     },
     sectionTitle: {
       fontSize: isMobile ? '1.3rem' : '1.5rem',
       fontWeight: '700',
-      color: '#1e293b',
+      color: '#1a365d',
       marginBottom: '1.5rem',
       paddingBottom: '1rem',
-      borderBottom: '2px solid #f1f5f9'
+      borderBottom: '2px solid #059669'
     },
     formGrid: {
       display: 'grid',
@@ -361,7 +365,7 @@ export default function Transfer() {
     submitButton: {
       width: '100%',
       padding: '1.125rem',
-      backgroundColor: '#1e40af',
+      backgroundColor: '#059669',
       color: 'white',
       border: 'none',
       borderRadius: '12px',
@@ -369,7 +373,7 @@ export default function Transfer() {
       fontWeight: '700',
       cursor: 'pointer',
       transition: 'all 0.3s',
-      boxShadow: '0 6px 20px rgba(30, 64, 175, 0.3)'
+      boxShadow: '0 6px 20px rgba(5, 150, 105, 0.4)'
     },
     errorMessage: {
       backgroundColor: '#fee2e2',
@@ -385,27 +389,35 @@ export default function Transfer() {
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.7)',
+      backgroundColor: 'rgba(10, 31, 68, 0.95)',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       zIndex: 1000,
-      padding: '1rem'
+      padding: '1rem',
+      backdropFilter: 'blur(8px)'
     },
     receipt: {
       backgroundColor: 'white',
-      borderRadius: '16px',
-      padding: '2rem',
-      maxWidth: '500px',
+      borderRadius: '20px',
+      padding: '2.5rem',
+      maxWidth: '550px',
       width: '100%',
       maxHeight: '90vh',
-      overflowY: 'auto'
+      overflowY: 'auto',
+      boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+      border: '2px solid #059669'
     },
     receiptHeader: {
       textAlign: 'center',
-      borderBottom: '2px solid #e2e8f0',
-      paddingBottom: '1rem',
-      marginBottom: '1.5rem'
+      borderBottom: '3px solid #059669',
+      paddingBottom: '1.5rem',
+      marginBottom: '2rem',
+      background: 'linear-gradient(135deg, #1a365d 0%, #059669 100%)',
+      margin: '-2.5rem -2.5rem 2rem -2.5rem',
+      padding: '2rem 2.5rem',
+      borderRadius: '18px 18px 0 0',
+      color: 'white'
     },
     receiptRef: {
       fontSize: '0.9rem',
@@ -421,28 +433,32 @@ export default function Transfer() {
     },
     receiptSection: {
       backgroundColor: '#f8fafc',
-      padding: '1rem',
-      borderRadius: '8px',
-      marginBottom: '1rem'
+      padding: '1.25rem',
+      borderRadius: '12px',
+      marginBottom: '1rem',
+      border: '2px solid #e2e8f0'
     },
     receiptArrow: {
       textAlign: 'center',
-      fontSize: '2rem',
-      color: '#1e40af',
-      margin: '0.5rem 0'
+      fontSize: '2.5rem',
+      color: '#059669',
+      margin: '1rem 0',
+      fontWeight: 'bold'
     },
     receiptTotal: {
-      backgroundColor: '#d1fae5',
-      padding: '1rem',
-      borderRadius: '8px',
+      background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
+      padding: '1.5rem',
+      borderRadius: '12px',
       textAlign: 'center',
-      marginTop: '1rem'
+      marginTop: '1.5rem',
+      border: '2px solid #059669'
     },
     receiptAmount: {
-      fontSize: '2rem',
+      fontSize: '2.5rem',
       fontWeight: 'bold',
-      color: '#059669',
-      margin: '0.5rem 0'
+      color: '#047857',
+      margin: '0.5rem 0',
+      textShadow: '0 2px 4px rgba(0,0,0,0.1)'
     },
     receiptMemo: {
       marginTop: '1rem',
@@ -464,29 +480,33 @@ export default function Transfer() {
     receiptButtons: {
       display: 'flex',
       gap: '1rem',
-      marginTop: '1.5rem'
+      marginTop: '2rem'
     },
     printButton: {
       flex: 1,
-      padding: '0.875rem',
-      backgroundColor: '#1e40af',
+      padding: '1rem',
+      backgroundColor: '#059669',
       color: 'white',
       border: 'none',
-      borderRadius: '8px',
+      borderRadius: '10px',
       cursor: 'pointer',
       fontSize: '1rem',
-      fontWeight: '600'
+      fontWeight: '600',
+      transition: 'all 0.3s',
+      boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)'
     },
     closeButton: {
       flex: 1,
-      padding: '0.875rem',
-      backgroundColor: '#e2e8f0',
-      color: '#1e293b',
+      padding: '1rem',
+      backgroundColor: '#1a365d',
+      color: 'white',
       border: 'none',
-      borderRadius: '8px',
+      borderRadius: '10px',
       cursor: 'pointer',
       fontSize: '1rem',
-      fontWeight: '600'
+      fontWeight: '600',
+      transition: 'all 0.3s',
+      boxShadow: '0 4px 12px rgba(26, 54, 93, 0.3)'
     },
     loadingContainer: {
       display: 'flex',
@@ -758,48 +778,53 @@ export default function Transfer() {
             <div style={styles.receiptModal}>
               <div style={styles.receipt}>
                 <div style={styles.receiptHeader}>
-                  <h2>🏦 Transfer Receipt</h2>
-                  <p style={styles.receiptRef}>Reference: {receiptData.referenceNumber}</p>
-                  <p style={styles.receiptDate}>{receiptData.date}</p>
+                  <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.8rem' }}>✓ Transfer Complete</h2>
+                  <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', opacity: 0.9 }}>Reference: {receiptData.referenceNumber}</p>
+                  <p style={{ margin: '0.25rem 0', fontSize: '0.85rem', opacity: 0.8 }}>{receiptData.date}</p>
                 </div>
 
                 <div style={styles.receiptBody}>
-                  <div style={styles.receiptSection}>
-                    <h3>From Account</h3>
-                    <p><strong>Type:</strong> {receiptData.fromAccount.type?.toUpperCase()}</p>
-                    <p><strong>Account:</strong> ****{receiptData.fromAccount.number?.slice(-4)}</p>
-                    <p><strong>New Balance:</strong> {formatCurrency(receiptData.fromAccount.balance)}</p>
+                  <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                    <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '0.5rem' }}>Sent by</p>
+                    <p style={{ fontSize: '1.2rem', fontWeight: '700', color: '#1a365d' }}>{receiptData.senderName}</p>
                   </div>
 
-                  <div style={styles.receiptArrow}>↓</div>
+                  <div style={styles.receiptSection}>
+                    <h3 style={{ fontSize: '1rem', color: '#1a365d', marginBottom: '0.75rem' }}>From Account</h3>
+                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>Type:</strong> {receiptData.fromAccount.type?.toUpperCase()}</p>
+                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>Account:</strong> ••••{receiptData.fromAccount.number?.slice(-4)}</p>
+                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>New Balance:</strong> {formatCurrency(receiptData.fromAccount.balance)}</p>
+                  </div>
+
+                  <div style={styles.receiptArrow}>→</div>
 
                   <div style={styles.receiptSection}>
-                    <h3>To Account</h3>
-                    <p><strong>Type:</strong> {receiptData.toAccount.type?.toUpperCase()}</p>
-                    <p><strong>Account:</strong> ****{receiptData.toAccount.number?.slice(-4)}</p>
-                    <p><strong>New Balance:</strong> {formatCurrency(receiptData.toAccount.balance)}</p>
+                    <h3 style={{ fontSize: '1rem', color: '#1a365d', marginBottom: '0.75rem' }}>To Account</h3>
+                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>Type:</strong> {receiptData.toAccount.type?.toUpperCase()}</p>
+                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>Account:</strong> ••••{receiptData.toAccount.number?.slice(-4)}</p>
+                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>New Balance:</strong> {formatCurrency(receiptData.toAccount.balance)}</p>
                   </div>
 
                   <div style={styles.receiptTotal}>
-                    <h3>Transfer Amount</h3>
+                    <h3 style={{ fontSize: '1.1rem', color: '#047857', margin: '0 0 0.5rem 0' }}>Amount Transferred</h3>
                     <p style={styles.receiptAmount}>{formatCurrency(receiptData.amount)}</p>
                   </div>
 
                   {receiptData.memo && (
-                    <div style={styles.receiptMemo}>
-                      <p><strong>Memo:</strong> {receiptData.memo}</p>
+                    <div style={{ ...styles.receiptMemo, backgroundColor: '#fef3c7', border: '1px solid #fbbf24', marginTop: '1rem' }}>
+                      <p style={{ margin: '0', fontSize: '0.9rem', color: '#92400e' }}><strong>📝 Memo:</strong> {receiptData.memo}</p>
                     </div>
                   )}
                 </div>
 
-                <div style={styles.receiptFooter}>
-                  <p>✅ Transfer Completed Successfully</p>
-                  <p style={styles.receiptDisclaimer}>This is an official transaction receipt from Oakline Bank</p>
+                <div style={{ textAlign: 'center', borderTop: '2px solid #e2e8f0', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
+                  <p style={{ fontSize: '1.1rem', fontWeight: '600', color: '#059669', margin: '0 0 0.5rem 0' }}>✅ Transfer Completed Successfully</p>
+                  <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0' }}>Official transaction receipt from Oakline Bank</p>
                 </div>
 
                 <div style={styles.receiptButtons}>
-                  <button onClick={printReceipt} style={styles.printButton}>🖨️ Print</button>
-                  <button onClick={() => setShowReceipt(false)} style={styles.closeButton}>Close</button>
+                  <button onClick={printReceipt} style={styles.printButton}>🖨️ Print Receipt</button>
+                  <button onClick={() => setShowReceipt(false)} style={styles.closeButton}>Done</button>
                 </div>
               </div>
             </div>
