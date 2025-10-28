@@ -11,11 +11,29 @@ export default function ApplyCard() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [bankDetails, setBankDetails] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
     checkAuth();
+    fetchBankDetails();
   }, []);
+
+  const fetchBankDetails = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bank_details')
+        .select('*')
+        .limit(1)
+        .single();
+
+      if (!error && data) {
+        setBankDetails(data);
+      }
+    } catch (err) {
+      console.error('Error fetching bank details:', err);
+    }
+  };
 
   const checkAuth = async () => {
     try {
@@ -139,7 +157,7 @@ export default function ApplyCard() {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h1 style={styles.title}>💳 Apply for Debit Card</h1>
+        <h1 style={styles.title}>💳 Apply for {bankDetails?.name || 'Oakline Bank'} Debit Card</h1>
         <button 
           onClick={() => router.push('/cards')}
           style={styles.backButton}
@@ -222,7 +240,7 @@ export default function ApplyCard() {
               )}
 
               <div style={styles.cardFeatures}>
-                <h4>Your Debit Card Will Include:</h4>
+                <h4>Your {bankDetails?.name || 'Oakline Bank'} Debit Card Will Include:</h4>
                 <ul style={styles.featuresList}>
                   <li>🛡️ Secure chip technology</li>
                   <li>💰 Daily spending limit: $2,000</li>
