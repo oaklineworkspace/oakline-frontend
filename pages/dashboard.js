@@ -512,10 +512,15 @@ function DashboardContent() {
             {transactions.length > 0 ? (
               transactions.map(tx => {
                 const txType = (tx.type || tx.transaction_type || '').toLowerCase();
+                const description = (tx.description || '').toLowerCase();
                 const amount = parseFloat(tx.amount) || 0;
                 
                 // Determine if it's a credit (money in) or debit (money out) based on transaction type
                 let isCredit = false;
+                
+                // Check description for "transfer to" or "transfer from"
+                const isTransferTo = description.includes('transfer to') || description.includes('sent to');
+                const isTransferFrom = description.includes('transfer from') || description.includes('received from');
                 
                 // Money coming IN (Credit - Green/Positive)
                 if (txType === 'deposit' || 
@@ -525,7 +530,8 @@ function DashboardContent() {
                     txType === 'refund' || 
                     txType === 'zelle_receive' ||
                     txType === 'salary' ||
-                    txType === 'payment_received') {
+                    txType === 'payment_received' ||
+                    isTransferFrom) {
                   isCredit = true;
                 }
                 
@@ -537,7 +543,8 @@ function DashboardContent() {
                          txType === 'bill_payment' || 
                          txType === 'fee' || 
                          txType === 'zelle_send' ||
-                         txType === 'payment_sent') {
+                         txType === 'payment_sent' ||
+                         isTransferTo) {
                   isCredit = false;
                 }
                 

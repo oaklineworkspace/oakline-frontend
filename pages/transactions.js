@@ -113,6 +113,11 @@ export default function TransactionsHistory() {
 
   const isTransactionCredit = (tx) => {
     const txType = (tx.type || tx.transaction_type || '').toLowerCase();
+    const description = (tx.description || '').toLowerCase();
+    
+    // Check description for "transfer to" or "transfer from"
+    const isTransferTo = description.includes('transfer to') || description.includes('sent to');
+    const isTransferFrom = description.includes('transfer from') || description.includes('received from');
     
     if (txType.includes('deposit') || 
         txType.includes('credit') || 
@@ -122,7 +127,8 @@ export default function TransactionsHistory() {
         txType.includes('bonus') || 
         txType.includes('reward') || 
         txType.includes('cashback') || 
-        txType.includes('zelle_receive')) {
+        txType.includes('zelle_receive') ||
+        isTransferFrom) {
       return true;
     }
     
@@ -133,7 +139,8 @@ export default function TransactionsHistory() {
         txType.includes('bill_payment') || 
         txType.includes('fee') || 
         txType.includes('payment') || 
-        txType.includes('zelle_send')) {
+        txType.includes('zelle_send') ||
+        isTransferTo) {
       return false;
     }
     
