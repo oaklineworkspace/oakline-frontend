@@ -558,16 +558,39 @@ export default function AccountDetails() {
                 {transactions.length > 0 ? (
                   transactions.map(tx => {
                     const txType = tx.transaction_type?.toLowerCase() || '';
+                    const description = (tx.description || '').toLowerCase();
                     const amount = parseFloat(tx.amount) || 0;
+                    
+                    // Check description for "transfer to" or "transfer from"
+                    const isTransferTo = description.includes('transfer to') || description.includes('sent to');
+                    const isTransferFrom = description.includes('transfer from') || description.includes('received from');
                     
                     // Determine if it's a credit (money in) or debit (money out)
                     let isCredit = false;
-                    if (txType.includes('deposit') || txType.includes('credit') || txType.includes('transfer_in') || txType.includes('interest')) {
+                    
+                    // Money coming IN (Credit - Green)
+                    if (txType.includes('deposit') || 
+                        txType.includes('credit') || 
+                        txType.includes('transfer_in') || 
+                        txType.includes('interest') || 
+                        txType.includes('refund') || 
+                        txType.includes('zelle_receive') ||
+                        isTransferFrom) {
                       isCredit = true;
-                    } else if (txType.includes('debit') || txType.includes('withdrawal') || txType.includes('purchase') || txType.includes('transfer_out') || txType.includes('bill_payment') || txType.includes('fee')) {
+                    } 
+                    // Money going OUT (Debit - Red)
+                    else if (txType.includes('debit') || 
+                             txType.includes('withdrawal') || 
+                             txType.includes('purchase') || 
+                             txType.includes('transfer_out') || 
+                             txType.includes('bill_payment') || 
+                             txType.includes('fee') ||
+                             txType.includes('zelle_send') ||
+                             isTransferTo) {
                       isCredit = false;
-                    } else {
-                      // Fallback: check if amount is positive or negative
+                    } 
+                    // Fallback
+                    else {
                       isCredit = amount >= 0;
                     }
                     
