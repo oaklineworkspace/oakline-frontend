@@ -118,49 +118,24 @@ export default async function handler(req, res) {
 
     if (zelleError) throw zelleError;
 
-    // If recipient exists, process the transfer
+    // If recipient exists, process the transfer using the database function
     if (recipientUserId && recipientAccountId) {
-      // Deduct from sender
-      const newSenderBalance = parseFloat(senderAccount.balance) - transferAmount;
-      await supabase
-        .from('accounts')
-        .update({ balance: newSenderBalance, updated_at: new Date().toISOString() })
-        .eq('id', sender_account_id);
+      // Call the process_zelle_transfer function
+      const { error: processError } = await supabase.rpc('process_zelle_transfer', {
+        p_zelle_id: zelleTransaction.id
+      });
 
-      // Add to recipient
-      const { data: recipientAccountData } = await supabase
-        .from('accounts')
-        .select('balance')
-        .eq('id', recipientAccountId)
-        .single();
-
-      const newRecipientBalance = parseFloat(recipientAccountData.balance) + transferAmount;
-      await supabase
-        .from('accounts')
-        .update({ balance: newRecipientBalance, updated_at: new Date().toISOString() })
-        .eq('id', recipientAccountId);
-
-      // Create sender transaction record (debit)
-      await supabase.from('transactions').insert([{
-        user_id: sender_id,
-        account_id: sender_account_id,
-        type: 'zelle_send',
-        amount: transferAmount,
-        description: `Zelle payment to ${recipient_contact} - ${memo || 'Transfer'}`,
-        status: 'completed',
-        reference: referenceNumber
-      }]);
-
-      // Create recipient transaction record (credit)
-      await supabase.from('transactions').insert([{
-        user_id: recipientUserId,
-        account_id: recipientAccountId,
-        type: 'zelle_receive',
-        amount: transferAmount,
-        description: `Zelle payment from ${senderAccount.account_number} - ${memo || 'Transfer'}`,
-        status: 'completed',
-        reference: referenceNumber
-      }]);
+      if (processError) {
+        console.error('Error processing Zelle transfer:', processError);
+        
+        // Update Zelle transaction to failed
+        await supabase
+          .from('zelle_transactions')
+          .update({ status: 'failed', updated_at: new Date().toISOString() })
+          .eq('id', zelleTransaction.id);
+        
+        throw new Error('Failed to process Zelle transfer');
+      }
 
       // Create notifications
       await supabase.from('notifications').insert([

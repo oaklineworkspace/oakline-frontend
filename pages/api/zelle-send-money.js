@@ -174,64 +174,65 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: 'Transaction not found' });
       }
 
-      const { data: senderAccount } = await supabaseAdmin
-        .from('accounts')
-        .select('balance')
-        .eq('id', transaction.sender_account_id)
-        .single();
+      // Check if recipient exists for processing
+      const hasRecipient = transaction.recipient_user_id !== null;
 
-      const newSenderBalance = parseFloat(senderAccount.balance) - parseFloat(transaction.amount);
+      if (hasRecipient) {
+        // Use the database function to process the transfer
+        const { error: processError } = await supabaseAdmin.rpc('process_zelle_transfer', {
+          p_zelle_id: transaction_id
+        });
 
-      const { error: debitError } = await supabaseAdmin
-        .from('accounts')
-        .update({ balance: newSenderBalance })
-        .eq('id', transaction.sender_account_id);
-
-      if (debitError) {
-        return res.status(500).json({ error: 'Failed to debit sender account' });
-      }
-
-      if (transaction.recipient_user_id) {
-        const { data: recipientAccount } = await supabaseAdmin
+        if (processError) {
+          console.error('Error processing Zelle transfer:', processError);
+          
+          // Update transaction to failed
+          await supabaseAdmin
+            .from('zelle_transactions')
+            .update({ status: 'failed', updated_at: new Date().toISOString() })
+            .eq('id', transaction_id);
+          
+          return res.status(500).json({ error: 'Failed to process Zelle transfer' });
+        }
+      } else {
+        // Recipient doesn't exist - manual balance deduction for pending transfer
+        const { data: senderAccount } = await supabaseAdmin
           .from('accounts')
-          .select('id, balance')
-          .eq('user_id', transaction.recipient_user_id)
-          .eq('status', 'active')
-          .limit(1)
+          .select('balance')
+          .eq('id', transaction.sender_account_id)
           .single();
 
-        if (recipientAccount) {
-          const newRecipientBalance = parseFloat(recipientAccount.balance) + parseFloat(transaction.amount);
-          await supabaseAdmin
-            .from('accounts')
-            .update({ balance: newRecipientBalance })
-            .eq('id', recipientAccount.id);
-        }
+        const newSenderBalance = parseFloat(senderAccount.balance) - parseFloat(transaction.amount);
+
+        await supabaseAdmin
+          .from('accounts')
+          .update({ balance: newSenderBalance })
+          .eq('id', transaction.sender_account_id);
+
+        await supabaseAdmin
+          .from('zelle_transactions')
+          .update({
+            status: 'pending',
+            verified_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', transaction_id);
+
+        await supabaseAdmin.from('transactions').insert([{
+          user_id: user.id,
+          account_id: transaction.sender_account_id,
+          type: 'ZELLE_TRANSFER_SENT',
+          amount: transaction.amount,
+          description: `Zelle® transfer to ${transaction.recipient_name} (pending)`,
+          status: 'pending'
+        }]);
       }
 
-      await supabaseAdmin
-        .from('zelle_transactions')
-        .update({
-          status: 'completed',
-          verified_at: new Date().toISOString(),
-          completed_at: new Date().toISOString()
-        })
-        .eq('id', transaction_id);
-
+      // Mark verification code as used
       await supabaseAdmin
         .from('verification_codes')
         .update({ is_used: true, used_at: new Date().toISOString() })
         .eq('id', verificationRecord.id);
-
-      await supabaseAdmin.from('transactions').insert([{
-        user_id: user.id,
-        account_id: transaction.sender_account_id,
-        type: 'debit',
-        category: 'zelle',
-        amount: transaction.amount,
-        description: `Zelle® transfer to ${transaction.recipient_name}`,
-        status: 'completed'
-      }]);
 
       if (transaction.recipient_user_id) {
         await supabaseAdmin.from('notifications').insert([{
