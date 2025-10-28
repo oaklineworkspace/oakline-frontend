@@ -400,7 +400,7 @@ function DashboardContent() {
                   <div style={styles.dropdownDivider}></div>
                   <div style={styles.dropdownSection}>
                     <h4 style={styles.dropdownSectionTitle}>📈 Investments</h4>
-                    <Link href="/investments" style={styles.dropdownLink}>📊 Portfolio</Link>
+                    <Link href="/investment" style={styles.dropdownLink}>📊 Portfolio</Link>
                     <Link href="/crypto" style={styles.dropdownLink}>₿ Crypto Trading</Link>
                     <Link href="/market-news" style={styles.dropdownLink}>📰 Market News</Link>
                   </div>
@@ -697,7 +697,7 @@ function DashboardContent() {
               <span style={styles.quickActionIcon}>💰</span>
               <span style={styles.quickActionText}>Apply for Loan</span>
             </Link>
-            <Link href="/investments" style={styles.standardActionButton}>
+            <Link href="/investment" style={styles.standardActionButton}>
               <span style={styles.quickActionIcon}>📈</span>
               <span style={styles.quickActionText}>Invest</span>
             </Link>

@@ -71,19 +71,19 @@ export default function MainMenu({ user }) {
         {
           category: 'Investment Services',
           items: [
-            { name: 'Investment Accounts', href: '/investments', icon: '📈' },
-            { name: 'Retirement Planning', href: '/investments', icon: '🏖️' },
+            { name: 'Investment Accounts', href: '/investment', icon: '📈' },
+            { name: 'Retirement Planning', href: '/investment', icon: '🏖️' },
             { name: 'Financial Advisory', href: '/financial-advisory', icon: '👨‍💼' },
-            { name: 'Wealth Management', href: '/investments', icon: '💎' }
+            { name: 'Wealth Management', href: '/investment', icon: '💎' }
           ]
         },
         {
           category: 'Trading & Markets',
           items: [
-            { name: 'Stock Trading', href: '/investments', icon: '📊' },
+            { name: 'Stock Trading', href: '/investment', icon: '📊' },
             { name: 'Cryptocurrency', href: '/crypto', icon: '₿' },
             { name: 'Market Research', href: '/market-news', icon: '📰' },
-            { name: 'Portfolio Analysis', href: '/investments', icon: '📋' }
+            { name: 'Portfolio Analysis', href: '/investment', icon: '📋' }
           ]
         }
       ]
@@ -188,7 +188,7 @@ export default function MainMenu({ user }) {
               <span style={styles.menuIcon}>💰</span>
               Loans
             </Link>
-            <Link href="/investments" style={styles.navLink}>
+            <Link href="/investment" style={styles.navLink}>
               <span style={styles.menuIcon}>📈</span>
               Investments
             </Link>
