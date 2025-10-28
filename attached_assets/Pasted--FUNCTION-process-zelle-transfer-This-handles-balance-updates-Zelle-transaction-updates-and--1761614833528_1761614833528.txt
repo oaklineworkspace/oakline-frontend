@@ -1,0 +1,95 @@
+-- FUNCTION: process_zelle_transfer
+-- This handles balance updates, Zelle transaction updates, and transaction logs
+
+CREATE OR REPLACE FUNCTION public.process_zelle_transfer(
+  p_zelle_id uuid
+)
+RETURNS void AS $$
+DECLARE
+  sender_balance numeric;
+  sender_id uuid;
+  sender_account_id uuid;
+  recipient_user_id uuid;
+  recipient_account_id uuid;
+  amount numeric;
+  sender_name text;
+  recipient_name text;
+BEGIN
+  -- Fetch transfer details
+  SELECT 
+    z.sender_id,
+    z.sender_account_id,
+    z.recipient_user_id,
+    z.amount
+  INTO 
+    sender_id,
+    sender_account_id,
+    recipient_user_id,
+    amount
+  FROM public.zelle_transactions z
+  WHERE z.id = p_zelle_id;
+
+  -- Validate data
+  IF sender_id IS NULL OR recipient_user_id IS NULL THEN
+    RAISE EXCEPTION 'Invalid Zelle transaction data';
+  END IF;
+
+  -- Ensure sender has enough balance
+  SELECT balance INTO sender_balance FROM public.accounts WHERE id = sender_account_id;
+  IF sender_balance < amount THEN
+    RAISE EXCEPTION 'Insufficient balance for Zelle transfer';
+  END IF;
+
+  -- Get account IDs
+  SELECT id INTO recipient_account_id FROM public.accounts WHERE user_id = recipient_user_id LIMIT 1;
+
+  -- Get names for transaction description
+  SELECT first_name || ' ' || last_name INTO sender_name FROM public.profiles WHERE id = sender_id;
+  SELECT first_name || ' ' || last_name INTO recipient_name FROM public.profiles WHERE id = recipient_user_id;
+
+  -- 1️⃣ Deduct from sender balance
+  UPDATE public.accounts
+  SET balance = balance - amount
+  WHERE id = sender_account_id;
+
+  -- 2️⃣ Add to recipient balance
+  UPDATE public.accounts
+  SET balance = balance + amount
+  WHERE id = recipient_account_id;
+
+  -- 3️⃣ Mark Zelle transaction as completed
+  UPDATE public.zelle_transactions
+  SET 
+    status = 'completed',
+    processed_at = now(),
+    updated_at = now()
+  WHERE id = p_zelle_id;
+
+  -- 4️⃣ Insert transaction for sender
+  INSERT INTO public.transactions (
+    user_id, account_id, type, amount, description, status
+  )
+  VALUES (
+    sender_id,
+    sender_account_id,
+    'ZELLE_TRANSFER_SENT',
+    amount,
+    'Zelle transfer to ' || recipient_name,
+    'completed'
+  );
+
+  -- 5️⃣ Insert transaction for receiver
+  INSERT INTO public.transactions (
+    user_id, account_id, type, amount, description, status
+  )
+  VALUES (
+    recipient_user_id,
+    recipient_account_id,
+    'ZELLE_TRANSFER_RECEIVED',
+    amount,
+    'Zelle transfer from ' || sender_name,
+    'completed'
+  );
+
+END;
+$$ LANGUAGE plpgsql;
