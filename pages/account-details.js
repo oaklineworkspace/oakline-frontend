@@ -561,32 +561,37 @@ export default function AccountDetails() {
                     const description = (tx.description || '').toLowerCase();
                     const amount = parseFloat(tx.amount) || 0;
                     
-                    // Check description for "transfer to" or "transfer from"
+                    // Check description for "transfer to" or "transfer from" - PRIORITY CHECK
                     const isTransferTo = description.includes('transfer to') || description.includes('sent to');
                     const isTransferFrom = description.includes('transfer from') || description.includes('received from');
                     
                     // Determine if it's a credit (money in) or debit (money out)
                     let isCredit = false;
                     
-                    // Money coming IN (Credit - Green)
-                    if (txType.includes('deposit') || 
-                        txType.includes('credit') || 
-                        txType.includes('transfer_in') || 
-                        txType.includes('interest') || 
-                        txType.includes('refund') || 
-                        txType.includes('zelle_receive') ||
-                        isTransferFrom) {
+                    // PRIORITY: Check description first for transfer direction
+                    if (isTransferTo) {
+                      // Money going OUT - always RED for "transfer to"
+                      isCredit = false;
+                    } else if (isTransferFrom) {
+                      // Money coming IN - always GREEN for "transfer from"
+                      isCredit = true;
+                    }
+                    // Then check transaction type
+                    else if (txType.includes('deposit') || 
+                             txType.includes('credit') || 
+                             txType.includes('transfer_in') || 
+                             txType.includes('interest') || 
+                             txType.includes('refund') || 
+                             txType.includes('zelle_receive')) {
                       isCredit = true;
                     } 
-                    // Money going OUT (Debit - Red)
                     else if (txType.includes('debit') || 
                              txType.includes('withdrawal') || 
                              txType.includes('purchase') || 
                              txType.includes('transfer_out') || 
                              txType.includes('bill_payment') || 
                              txType.includes('fee') ||
-                             txType.includes('zelle_send') ||
-                             isTransferTo) {
+                             txType.includes('zelle_send')) {
                       isCredit = false;
                     } 
                     // Fallback

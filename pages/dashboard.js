@@ -19,6 +19,7 @@ function DashboardContent() {
   const [cardApplicationStatus, setCardApplicationStatus] = useState(null);
   const [flippedCards, setFlippedCards] = useState({});
   const [showCardDetails, setShowCardDetails] = useState({});
+  const [showBalance, setShowBalance] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -448,15 +449,25 @@ function DashboardContent() {
                   <h3 style={styles.balanceCardLabel}>Total Available Balance</h3>
                   <span style={styles.balanceCardSubtext}>Across {accounts.length} account{accounts.length !== 1 ? 's' : ''}</span>
                 </div>
+                <button
+                  onClick={() => setShowBalance(!showBalance)}
+                  style={styles.balanceToggleButton}
+                  aria-label={showBalance ? 'Hide balance' : 'Show balance'}
+                >
+                  {showBalance ? '👁️' : '👁️‍🗨️'}
+                </button>
               </div>
               <div style={styles.balanceAmountContainer}>
                 <div style={styles.balanceAmount}>
-                  {new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: 'USD',
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  }).format(getTotalBalance())}
+                  {showBalance 
+                    ? new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: 'USD',
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      }).format(getTotalBalance())
+                    : '••••••'
+                  }
                 </div>
                 <div style={styles.balanceSubInfo}>
                   Available Balance • Updated {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
@@ -1185,12 +1196,12 @@ const styles = {
   },
   primaryBalanceCard: {
     gridColumn: 'span 1',
-    background: 'white',
+    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
     borderRadius: '16px',
     padding: '2rem',
-    color: '#1a365d',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-    border: '1px solid #e2e8f0',
+    color: 'white',
+    boxShadow: '0 8px 24px rgba(30, 64, 175, 0.3)',
+    border: 'none',
     position: 'relative',
     overflow: 'hidden',
     minWidth: '320px',
@@ -1198,7 +1209,8 @@ const styles = {
   },
   balanceCardHeader: {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
     gap: '1rem',
     marginBottom: '1.5rem'
   },
@@ -1216,11 +1228,27 @@ const styles = {
     fontSize: '1rem',
     fontWeight: '600',
     margin: '0 0 0.25rem 0',
-    color: '#1a365d'
+    color: 'white',
+    opacity: 0.9
   },
   balanceCardSubtext: {
     fontSize: '0.85rem',
-    color: '#64748b'
+    color: 'rgba(255, 255, 255, 0.8)'
+  },
+  balanceToggleButton: {
+    background: 'rgba(255, 255, 255, 0.2)',
+    border: 'none',
+    borderRadius: '8px',
+    padding: '0.5rem 0.75rem',
+    cursor: 'pointer',
+    fontSize: '1.2rem',
+    transition: 'all 0.2s',
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '40px',
+    minHeight: '40px'
   },
   balanceAmountContainer: {
     margin: '1.5rem 0',
@@ -1237,11 +1265,11 @@ const styles = {
     overflow: 'visible',
     fontFamily: '"Courier New", Courier, monospace',
     display: 'block',
-    color: '#1a365d'
+    color: 'white'
   },
   balanceSubInfo: {
     fontSize: '0.85rem',
-    color: '#64748b',
+    color: 'rgba(255, 255, 255, 0.8)',
     fontWeight: '500',
     marginTop: '0.5rem'
   },
@@ -1269,7 +1297,7 @@ const styles = {
     gap: '1.5rem',
     marginTop: '1.5rem',
     paddingTop: '1.5rem',
-    borderTop: '1px solid #e2e8f0',
+    borderTop: '1px solid rgba(255, 255, 255, 0.2)',
     justifyContent: 'center'
   },
   balanceFooterItem: {
@@ -1282,7 +1310,7 @@ const styles = {
   },
   footerText: {
     fontSize: '0.85rem',
-    color: '#64748b',
+    color: 'rgba(255, 255, 255, 0.9)',
     fontWeight: '500'
   },
   quickActionsSection: {
