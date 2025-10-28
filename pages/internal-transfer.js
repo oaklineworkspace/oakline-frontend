@@ -79,7 +79,7 @@ export default function InternalTransfer() {
 
   const verifyRecipient = async () => {
     if (!recipientAccountNumber || recipientAccountNumber.length < 10) {
-      setMessage('Please enter a valid account number');
+      setMessage('Please enter a valid account number (at least 10 digits)');
       return;
     }
 
@@ -88,7 +88,6 @@ export default function InternalTransfer() {
     setRecipientInfo(null);
 
     try {
-      // Check if trying to send to own account
       const ownAccount = accounts.find(acc => acc.account_number === recipientAccountNumber);
       if (ownAccount) {
         setMessage('You cannot transfer to your own account. Use "Transfer Between My Accounts" instead.');
@@ -96,7 +95,6 @@ export default function InternalTransfer() {
         return;
       }
 
-      // Find recipient account
       const { data: recipientAccount, error } = await supabase
         .from('accounts')
         .select('*, profiles!inner(first_name, last_name, email)')
@@ -156,50 +154,46 @@ export default function InternalTransfer() {
 
       const referenceNumber = `INT${Date.now()}${Math.floor(Math.random() * 10000)}`;
 
-      // Deduct from sender account
       const newFromBalance = parseFloat(selectedFromAccount.balance) - transferAmount;
       await supabase
         .from('accounts')
         .update({ balance: newFromBalance, updated_at: new Date().toISOString() })
         .eq('id', fromAccount);
 
-      // Get recipient current balance
       const { data: recipientAccount } = await supabase
         .from('accounts')
         .select('balance')
         .eq('id', recipientInfo.accountId)
         .single();
 
-      // Add to recipient account
       const newToBalance = parseFloat(recipientAccount.balance) + transferAmount;
       await supabase
         .from('accounts')
         .update({ balance: newToBalance, updated_at: new Date().toISOString() })
         .eq('id', recipientInfo.accountId);
 
-      // Create sender transaction (debit)
       await supabase.from('transactions').insert([{
         user_id: user.id,
         account_id: fromAccount,
         type: 'transfer_out',
+        transaction_type: 'transfer_out',
         amount: transferAmount,
         description: `Transfer to ${recipientInfo.ownerName} - ${memo || 'Internal Transfer'}`,
         status: 'completed',
         reference: referenceNumber
       }]);
 
-      // Create recipient transaction (credit)
       await supabase.from('transactions').insert([{
         user_id: recipientInfo.userId,
         account_id: recipientInfo.accountId,
         type: 'transfer_in',
+        transaction_type: 'transfer_in',
         amount: transferAmount,
         description: `Transfer from ****${selectedFromAccount.account_number?.slice(-4)} - ${memo || 'Internal Transfer'}`,
         status: 'completed',
         reference: referenceNumber
       }]);
 
-      // Create notifications
       await supabase.from('notifications').insert([
         {
           user_id: user.id,
@@ -215,10 +209,10 @@ export default function InternalTransfer() {
         }
       ]);
 
-      // Generate receipt
       const receipt = {
         referenceNumber,
         date: new Date().toLocaleString(),
+        senderName: user?.email?.split('@')[0] || 'Account Holder',
         fromAccount: {
           type: selectedFromAccount.account_type,
           number: selectedFromAccount.account_number,
@@ -236,13 +230,11 @@ export default function InternalTransfer() {
       setReceiptData(receipt);
       setShowReceipt(true);
       
-      // Reset form
       setAmount('');
       setMemo('');
       setRecipientAccountNumber('');
       setRecipientInfo(null);
       
-      // Refresh accounts
       await checkUserAndFetchData();
 
     } catch (error) {
@@ -270,17 +262,18 @@ export default function InternalTransfer() {
   const styles = {
     container: {
       minHeight: '100vh',
-      backgroundColor: '#f8fafc',
+      backgroundColor: '#0a1f44',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     },
     header: {
-      backgroundColor: '#1e40af',
+      backgroundColor: '#1a365d',
       color: 'white',
-      padding: isMobile ? '1rem' : '1.5rem 2rem',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+      padding: isMobile ? '0.75rem 1rem' : '1.5rem 2rem',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      borderBottom: '3px solid #059669'
     },
     headerContent: {
-      maxWidth: '1400px',
+      maxWidth: '1200px',
       margin: '0 auto',
       display: 'flex',
       justifyContent: 'space-between',
@@ -300,105 +293,110 @@ export default function InternalTransfer() {
       width: 'auto'
     },
     logoText: {
-      fontSize: isMobile ? '1.2rem' : '1.6rem',
+      fontSize: isMobile ? '1.1rem' : '1.6rem',
       fontWeight: '700'
     },
     backButton: {
       display: 'inline-flex',
       alignItems: 'center',
       gap: '0.5rem',
-      padding: isMobile ? '0.5rem 1rem' : '0.6rem 1.2rem',
+      padding: isMobile ? '0.5rem 0.875rem' : '0.6rem 1.2rem',
       backgroundColor: 'rgba(255,255,255,0.2)',
       color: 'white',
       textDecoration: 'none',
       borderRadius: '8px',
-      fontSize: isMobile ? '0.85rem' : '0.95rem',
+      fontSize: isMobile ? '0.8rem' : '0.95rem',
       border: '1px solid rgba(255,255,255,0.3)',
       transition: 'all 0.3s ease'
     },
     main: {
-      maxWidth: '800px',
+      maxWidth: '900px',
       margin: '0 auto',
-      padding: isMobile ? '1.5rem 1rem' : '2.5rem 2rem'
+      padding: isMobile ? '1rem 0.75rem' : '2rem 1.5rem'
     },
     welcomeSection: {
-      marginBottom: '2rem'
+      marginBottom: isMobile ? '1.5rem' : '2rem',
+      textAlign: 'center'
     },
     welcomeTitle: {
-      fontSize: isMobile ? '1.5rem' : '2rem',
+      fontSize: isMobile ? '1.4rem' : '2rem',
       fontWeight: '700',
-      color: '#1e293b',
+      color: '#ffffff',
       marginBottom: '0.5rem'
     },
     welcomeSubtitle: {
-      fontSize: isMobile ? '0.95rem' : '1.1rem',
-      color: '#64748b'
+      fontSize: isMobile ? '0.9rem' : '1.1rem',
+      color: '#cbd5e1'
     },
     contentSection: {
       backgroundColor: 'white',
       borderRadius: '16px',
-      padding: isMobile ? '1.5rem' : '2rem',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-      marginBottom: '1.5rem'
+      padding: isMobile ? '1.25rem' : '2rem',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+      marginBottom: '1.5rem',
+      border: '1px solid #e2e8f0'
     },
     sectionTitle: {
-      fontSize: isMobile ? '1.2rem' : '1.3rem',
+      fontSize: isMobile ? '1.1rem' : '1.3rem',
       fontWeight: '700',
-      color: '#1e293b',
-      marginBottom: '1.5rem',
-      paddingBottom: '1rem',
-      borderBottom: '2px solid #f1f5f9'
+      color: '#1a365d',
+      marginBottom: isMobile ? '1rem' : '1.5rem',
+      paddingBottom: '0.75rem',
+      borderBottom: '2px solid #059669'
     },
     formGroup: {
-      marginBottom: '1.5rem'
+      marginBottom: isMobile ? '1rem' : '1.5rem'
     },
     label: {
       display: 'block',
-      fontSize: '0.9rem',
+      fontSize: isMobile ? '0.85rem' : '0.9rem',
       fontWeight: '600',
       color: '#374151',
       marginBottom: '0.5rem'
     },
     select: {
       width: '100%',
-      padding: '0.875rem',
+      padding: isMobile ? '0.75rem' : '0.875rem',
       border: '2px solid #e2e8f0',
       borderRadius: '12px',
-      fontSize: '1rem',
+      fontSize: isMobile ? '0.9rem' : '1rem',
       backgroundColor: 'white',
-      transition: 'border-color 0.3s'
+      transition: 'border-color 0.3s',
+      boxSizing: 'border-box'
     },
     input: {
       width: '100%',
-      padding: '0.875rem',
+      padding: isMobile ? '0.75rem' : '0.875rem',
       border: '2px solid #e2e8f0',
       borderRadius: '12px',
-      fontSize: '1rem',
+      fontSize: isMobile ? '0.9rem' : '1rem',
       transition: 'border-color 0.3s',
       boxSizing: 'border-box'
     },
     inputGroup: {
       display: 'flex',
-      gap: '0.75rem'
+      gap: '0.5rem',
+      flexDirection: isMobile ? 'column' : 'row'
     },
     verifyButton: {
-      padding: '0.875rem 1.5rem',
+      padding: isMobile ? '0.75rem 1rem' : '0.875rem 1.5rem',
       backgroundColor: '#059669',
       color: 'white',
       border: 'none',
       borderRadius: '12px',
-      fontSize: '0.95rem',
+      fontSize: isMobile ? '0.85rem' : '0.95rem',
       fontWeight: '600',
       cursor: 'pointer',
       transition: 'all 0.3s',
-      whiteSpace: 'nowrap'
+      whiteSpace: 'nowrap',
+      width: isMobile ? '100%' : 'auto'
     },
     recipientCard: {
       backgroundColor: '#ecfdf5',
       border: '2px solid #10b981',
       borderRadius: '12px',
-      padding: '1.25rem',
-      marginBottom: '1.5rem'
+      padding: isMobile ? '1rem' : '1.25rem',
+      marginBottom: isMobile ? '1rem' : '1.5rem'
     },
     recipientTitle: {
       fontSize: '0.85rem',
@@ -410,20 +408,20 @@ export default function InternalTransfer() {
       gap: '0.5rem'
     },
     recipientName: {
-      fontSize: '1.1rem',
+      fontSize: isMobile ? '1rem' : '1.1rem',
       fontWeight: '700',
       color: '#064e3b',
       marginBottom: '0.5rem'
     },
     recipientDetails: {
-      fontSize: '0.9rem',
+      fontSize: isMobile ? '0.85rem' : '0.9rem',
       color: '#065f46'
     },
     accountInfo: {
       backgroundColor: '#f8fafc',
-      padding: '1rem',
+      padding: isMobile ? '0.875rem' : '1rem',
       borderRadius: '12px',
-      marginBottom: '1.5rem',
+      marginBottom: isMobile ? '1rem' : '1.5rem',
       border: '1px solid #e2e8f0'
     },
     accountInfoLabel: {
@@ -432,18 +430,18 @@ export default function InternalTransfer() {
       marginBottom: '0.5rem'
     },
     accountInfoValue: {
-      fontSize: '1.1rem',
+      fontSize: isMobile ? '1rem' : '1.1rem',
       fontWeight: '700',
       color: '#1e293b'
     },
     submitButton: {
       width: '100%',
-      padding: '1.125rem',
+      padding: isMobile ? '1rem' : '1.125rem',
       backgroundColor: '#1e40af',
       color: 'white',
       border: 'none',
       borderRadius: '12px',
-      fontSize: '1.1rem',
+      fontSize: isMobile ? '0.95rem' : '1.1rem',
       fontWeight: '700',
       cursor: 'pointer',
       transition: 'all 0.3s',
@@ -452,20 +450,21 @@ export default function InternalTransfer() {
     errorMessage: {
       backgroundColor: '#fee2e2',
       color: '#dc2626',
-      padding: '1rem',
+      padding: isMobile ? '0.875rem' : '1rem',
       borderRadius: '12px',
-      marginBottom: '1.5rem',
-      border: '2px solid #fca5a5'
+      marginBottom: isMobile ? '1rem' : '1.5rem',
+      border: '2px solid #fca5a5',
+      fontSize: isMobile ? '0.85rem' : '0.9rem'
     },
     infoBox: {
       backgroundColor: '#f0f9ff',
       border: '1px solid #bae6fd',
       borderRadius: '12px',
-      padding: '1.25rem',
-      marginTop: '1.5rem'
+      padding: isMobile ? '1rem' : '1.25rem',
+      marginTop: isMobile ? '1rem' : '1.5rem'
     },
     infoTitle: {
-      fontSize: '0.95rem',
+      fontSize: isMobile ? '0.9rem' : '0.95rem',
       fontWeight: '600',
       color: '#0c4a6e',
       marginBottom: '0.75rem',
@@ -474,10 +473,10 @@ export default function InternalTransfer() {
       gap: '0.5rem'
     },
     infoList: {
-      fontSize: '0.9rem',
+      fontSize: isMobile ? '0.8rem' : '0.9rem',
       color: '#0369a1',
       lineHeight: '1.8',
-      paddingLeft: '1.2rem',
+      paddingLeft: isMobile ? '1rem' : '1.2rem',
       margin: 0
     },
     receiptModal: {
@@ -486,108 +485,106 @@ export default function InternalTransfer() {
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.7)',
+      backgroundColor: 'rgba(10, 31, 68, 0.95)',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       zIndex: 1000,
-      padding: '1rem'
+      padding: isMobile ? '0.5rem' : '1rem',
+      backdropFilter: 'blur(8px)'
     },
     receipt: {
       backgroundColor: 'white',
-      borderRadius: '16px',
-      padding: '2rem',
-      maxWidth: '500px',
+      borderRadius: '20px',
+      padding: isMobile ? '1.5rem' : '2.5rem',
+      maxWidth: '550px',
       width: '100%',
       maxHeight: '90vh',
-      overflowY: 'auto'
+      overflowY: 'auto',
+      boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+      border: '2px solid #059669'
     },
     receiptHeader: {
       textAlign: 'center',
-      borderBottom: '2px solid #e2e8f0',
-      paddingBottom: '1rem',
-      marginBottom: '1.5rem'
-    },
-    receiptRef: {
-      fontSize: '0.9rem',
-      color: '#64748b',
-      fontFamily: 'monospace'
-    },
-    receiptDate: {
-      fontSize: '0.85rem',
-      color: '#94a3b8'
+      borderBottom: '3px solid #059669',
+      paddingBottom: '1.5rem',
+      marginBottom: '2rem',
+      background: 'linear-gradient(135deg, #1a365d 0%, #059669 100%)',
+      margin: isMobile ? '-1.5rem -1.5rem 1.5rem -1.5rem' : '-2.5rem -2.5rem 2rem -2.5rem',
+      padding: isMobile ? '1.5rem' : '2rem 2.5rem',
+      borderRadius: '18px 18px 0 0',
+      color: 'white'
     },
     receiptBody: {
       marginBottom: '1.5rem'
     },
     receiptSection: {
       backgroundColor: '#f8fafc',
-      padding: '1rem',
-      borderRadius: '8px',
-      marginBottom: '1rem'
+      padding: isMobile ? '1rem' : '1.25rem',
+      borderRadius: '12px',
+      marginBottom: '1rem',
+      border: '2px solid #e2e8f0'
     },
     receiptArrow: {
       textAlign: 'center',
-      fontSize: '2rem',
-      color: '#1e40af',
-      margin: '0.5rem 0'
+      fontSize: '2.5rem',
+      color: '#059669',
+      margin: '1rem 0',
+      fontWeight: 'bold'
     },
     receiptTotal: {
-      backgroundColor: '#d1fae5',
-      padding: '1rem',
-      borderRadius: '8px',
+      background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
+      padding: '1.5rem',
+      borderRadius: '12px',
       textAlign: 'center',
-      marginTop: '1rem'
+      marginTop: '1.5rem',
+      border: '2px solid #059669'
     },
     receiptAmount: {
-      fontSize: '2rem',
+      fontSize: isMobile ? '2rem' : '2.5rem',
       fontWeight: 'bold',
-      color: '#059669',
-      margin: '0.5rem 0'
+      color: '#047857',
+      margin: '0.5rem 0',
+      textShadow: '0 2px 4px rgba(0,0,0,0.1)'
     },
     receiptMemo: {
       marginTop: '1rem',
       padding: '0.75rem',
       backgroundColor: '#fef3c7',
-      borderRadius: '6px'
-    },
-    receiptFooter: {
-      textAlign: 'center',
-      borderTop: '2px solid #e2e8f0',
-      paddingTop: '1rem',
-      marginTop: '1.5rem'
-    },
-    receiptDisclaimer: {
-      fontSize: '0.75rem',
-      color: '#94a3b8',
-      marginTop: '0.5rem'
+      borderRadius: '6px',
+      border: '1px solid #fbbf24'
     },
     receiptButtons: {
       display: 'flex',
-      gap: '1rem',
-      marginTop: '1.5rem'
+      gap: isMobile ? '0.5rem' : '1rem',
+      marginTop: '1.5rem',
+      flexDirection: isMobile ? 'column' : 'row'
     },
     printButton: {
       flex: 1,
-      padding: '0.875rem',
-      backgroundColor: '#1e40af',
+      padding: isMobile ? '0.875rem' : '1rem',
+      backgroundColor: '#059669',
       color: 'white',
       border: 'none',
-      borderRadius: '8px',
+      borderRadius: '10px',
       cursor: 'pointer',
-      fontSize: '1rem',
-      fontWeight: '600'
+      fontSize: isMobile ? '0.9rem' : '1rem',
+      fontWeight: '600',
+      transition: 'all 0.3s',
+      boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)'
     },
     closeButton: {
       flex: 1,
-      padding: '0.875rem',
-      backgroundColor: '#e2e8f0',
-      color: '#1e293b',
+      padding: isMobile ? '0.875rem' : '1rem',
+      backgroundColor: '#1a365d',
+      color: 'white',
       border: 'none',
-      borderRadius: '8px',
+      borderRadius: '10px',
       cursor: 'pointer',
-      fontSize: '1rem',
-      fontWeight: '600'
+      fontSize: isMobile ? '0.9rem' : '1rem',
+      fontWeight: '600',
+      transition: 'all 0.3s',
+      boxShadow: '0 4px 12px rgba(26, 54, 93, 0.3)'
     },
     loadingContainer: {
       display: 'flex',
@@ -595,19 +592,19 @@ export default function InternalTransfer() {
       alignItems: 'center',
       justifyContent: 'center',
       minHeight: '100vh',
-      backgroundColor: '#f8fafc'
+      backgroundColor: '#0a1f44'
     },
     spinner: {
       width: '40px',
       height: '40px',
-      border: '4px solid #e2e8f0',
-      borderTop: '4px solid #1e40af',
+      border: '4px solid rgba(255,255,255,0.2)',
+      borderTop: '4px solid #059669',
       borderRadius: '50%',
       animation: 'spin 1s linear infinite'
     },
     loadingText: {
       marginTop: '1rem',
-      color: '#64748b',
+      color: '#cbd5e1',
       fontSize: '1rem'
     }
   };
@@ -626,7 +623,7 @@ export default function InternalTransfer() {
   return (
     <>
       <Head>
-        <title>Internal Transfer - Oakline Bank</title>
+        <title>Send to Oakline User - Oakline Bank</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
 
@@ -648,48 +645,53 @@ export default function InternalTransfer() {
             <div style={styles.receiptModal}>
               <div style={styles.receipt}>
                 <div style={styles.receiptHeader}>
-                  <h2>🏦 Transfer Receipt</h2>
-                  <p style={styles.receiptRef}>Reference: {receiptData.referenceNumber}</p>
-                  <p style={styles.receiptDate}>{receiptData.date}</p>
+                  <h2 style={{ margin: '0 0 0.5rem 0', fontSize: isMobile ? '1.5rem' : '1.8rem' }}>✓ Transfer Complete</h2>
+                  <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', opacity: 0.9 }}>Reference: {receiptData.referenceNumber}</p>
+                  <p style={{ margin: '0.25rem 0', fontSize: '0.85rem', opacity: 0.8 }}>{receiptData.date}</p>
                 </div>
 
                 <div style={styles.receiptBody}>
-                  <div style={styles.receiptSection}>
-                    <h3>From Your Account</h3>
-                    <p><strong>Type:</strong> {receiptData.fromAccount.type?.toUpperCase()}</p>
-                    <p><strong>Account:</strong> ****{receiptData.fromAccount.number?.slice(-4)}</p>
-                    <p><strong>New Balance:</strong> {formatCurrency(receiptData.fromAccount.balance)}</p>
+                  <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                    <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '0.5rem' }}>Sent by</p>
+                    <p style={{ fontSize: '1.2rem', fontWeight: '700', color: '#1a365d' }}>{receiptData.senderName}</p>
                   </div>
 
-                  <div style={styles.receiptArrow}>↓</div>
+                  <div style={styles.receiptSection}>
+                    <h3 style={{ fontSize: '1rem', color: '#1a365d', marginBottom: '0.75rem' }}>From Account</h3>
+                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>Type:</strong> {receiptData.fromAccount.type?.toUpperCase()}</p>
+                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>Account:</strong> ••••{receiptData.fromAccount.number?.slice(-4)}</p>
+                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>New Balance:</strong> {formatCurrency(receiptData.fromAccount.balance)}</p>
+                  </div>
+
+                  <div style={styles.receiptArrow}>→</div>
 
                   <div style={styles.receiptSection}>
-                    <h3>To Recipient</h3>
-                    <p><strong>Name:</strong> {receiptData.toAccount.ownerName}</p>
-                    <p><strong>Type:</strong> {receiptData.toAccount.type?.toUpperCase()}</p>
-                    <p><strong>Account:</strong> ****{receiptData.toAccount.number?.slice(-4)}</p>
+                    <h3 style={{ fontSize: '1rem', color: '#1a365d', marginBottom: '0.75rem' }}>To Recipient</h3>
+                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>Name:</strong> {receiptData.toAccount.ownerName}</p>
+                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>Type:</strong> {receiptData.toAccount.type?.toUpperCase()}</p>
+                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>Account:</strong> ••••{receiptData.toAccount.number?.slice(-4)}</p>
                   </div>
 
                   <div style={styles.receiptTotal}>
-                    <h3>Transfer Amount</h3>
+                    <h3 style={{ fontSize: '1.1rem', color: '#047857', margin: '0 0 0.5rem 0' }}>Amount Transferred</h3>
                     <p style={styles.receiptAmount}>{formatCurrency(receiptData.amount)}</p>
                   </div>
 
                   {receiptData.memo && (
                     <div style={styles.receiptMemo}>
-                      <p><strong>Memo:</strong> {receiptData.memo}</p>
+                      <p style={{ margin: '0', fontSize: '0.9rem', color: '#92400e' }}><strong>📝 Memo:</strong> {receiptData.memo}</p>
                     </div>
                   )}
                 </div>
 
-                <div style={styles.receiptFooter}>
-                  <p>✅ Transfer Completed Successfully</p>
-                  <p style={styles.receiptDisclaimer}>This is an official transaction receipt from Oakline Bank</p>
+                <div style={{ textAlign: 'center', borderTop: '2px solid #e2e8f0', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
+                  <p style={{ fontSize: '1.1rem', fontWeight: '600', color: '#059669', margin: '0 0 0.5rem 0' }}>✅ Transfer Completed Successfully</p>
+                  <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0' }}>Official transaction receipt from Oakline Bank</p>
                 </div>
 
                 <div style={styles.receiptButtons}>
-                  <button onClick={printReceipt} style={styles.printButton}>🖨️ Print</button>
-                  <button onClick={() => setShowReceipt(false)} style={styles.closeButton}>Close</button>
+                  <button onClick={printReceipt} style={styles.printButton}>🖨️ Print Receipt</button>
+                  <button onClick={() => setShowReceipt(false)} style={styles.closeButton}>Done</button>
                 </div>
               </div>
             </div>
@@ -697,7 +699,7 @@ export default function InternalTransfer() {
 
           <div style={styles.welcomeSection}>
             <h1 style={styles.welcomeTitle}>Send Money to Oakline User</h1>
-            <p style={styles.welcomeSubtitle}>Transfer funds to another Oakline Bank customer</p>
+            <p style={styles.welcomeSubtitle}>Transfer funds to another Oakline Bank customer instantly</p>
           </div>
 
           {message && (
@@ -818,11 +820,11 @@ export default function InternalTransfer() {
               🔒 Transfer Information
             </h3>
             <ul style={styles.infoList}>
-              <li>Internal transfers are instant and free</li>
+              <li>Internal transfers are instant and free of charge</li>
               <li>Funds are available immediately to the recipient</li>
-              <li>Verify the account number before sending</li>
+              <li>Always verify the account number before sending</li>
               <li>All transfers are encrypted and secure</li>
-              <li>You'll receive a confirmation receipt</li>
+              <li>You'll receive a detailed confirmation receipt</li>
             </ul>
           </div>
         </main>

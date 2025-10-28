@@ -514,14 +514,35 @@ function DashboardContent() {
                 const txType = (tx.type || tx.transaction_type || '').toLowerCase();
                 const amount = parseFloat(tx.amount) || 0;
                 
-                // Determine if it's a credit (money in) or debit (money out)
+                // Determine if it's a credit (money in) or debit (money out) based on transaction type
                 let isCredit = false;
-                if (txType.includes('deposit') || txType.includes('credit') || txType.includes('transfer_in') || txType.includes('interest') || txType.includes('refund') || txType.includes('zelle_receive')) {
+                
+                // Money coming IN (Credit - Green/Positive)
+                if (txType === 'deposit' || 
+                    txType === 'credit' || 
+                    txType === 'transfer_in' || 
+                    txType === 'interest' || 
+                    txType === 'refund' || 
+                    txType === 'zelle_receive' ||
+                    txType === 'salary' ||
+                    txType === 'payment_received') {
                   isCredit = true;
-                } else if (txType.includes('debit') || txType.includes('withdrawal') || txType.includes('purchase') || txType.includes('transfer_out') || txType.includes('bill_payment') || txType.includes('fee') || txType.includes('zelle_send')) {
+                }
+                
+                // Money going OUT (Debit - Red/Negative)
+                else if (txType === 'debit' || 
+                         txType === 'withdrawal' || 
+                         txType === 'purchase' || 
+                         txType === 'transfer_out' || 
+                         txType === 'bill_payment' || 
+                         txType === 'fee' || 
+                         txType === 'zelle_send' ||
+                         txType === 'payment_sent') {
                   isCredit = false;
-                } else {
-                  // Fallback: check if amount is positive or negative
+                }
+                
+                // Default fallback
+                else {
                   isCredit = amount >= 0;
                 }
 
@@ -1413,19 +1434,21 @@ const styles = {
     flex: 1
   },
   transactionIcon: {
-    fontSize: '1.5rem'
+    fontSize: '1.2rem'
   },
   transactionInfo: {
     flex: 1
   },
   transactionDescription: {
-    fontSize: '0.95rem',
+    fontSize: '0.8rem',
     fontWeight: '600',
     color: '#1e293b',
-    marginBottom: '0.25rem'
+    marginBottom: '0.25rem',
+    lineHeight: '1.3',
+    wordBreak: 'break-word'
   },
   transactionDate: {
-    fontSize: '0.8rem',
+    fontSize: '0.7rem',
     color: '#64748b'
   },
   transactionRight: {
@@ -1435,7 +1458,7 @@ const styles = {
     gap: '0.3rem'
   },
   transactionAmount: {
-    fontSize: '1.05rem',
+    fontSize: '0.9rem',
     fontWeight: '700'
   },
   statusBadge: {

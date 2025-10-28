@@ -251,7 +251,7 @@ export default function Transfer() {
     main: {
       maxWidth: '1400px',
       margin: '0 auto',
-      padding: isMobile ? '1.5rem 1rem' : '2.5rem 2rem'
+      padding: isMobile ? '1rem 0.75rem' : '2.5rem 2rem'
     },
     welcomeSection: {
       marginBottom: '2rem',
@@ -302,7 +302,7 @@ export default function Transfer() {
     contentSection: {
       backgroundColor: 'rgba(255, 255, 255, 0.98)',
       borderRadius: '16px',
-      padding: isMobile ? '1.5rem' : '2rem',
+      padding: isMobile ? '1rem' : '2rem',
       boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
       border: '1px solid #059669'
     },
@@ -316,9 +316,9 @@ export default function Transfer() {
     },
     formGrid: {
       display: 'grid',
-      gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-      gap: '1.5rem',
-      marginBottom: '1.5rem'
+      gridTemplateColumns: '1fr',
+      gap: isMobile ? '1rem' : '1.5rem',
+      marginBottom: isMobile ? '1rem' : '1.5rem'
     },
     formGroup: {
       display: 'flex',
@@ -365,15 +365,15 @@ export default function Transfer() {
     submitButton: {
       width: '100%',
       padding: '1.125rem',
-      backgroundColor: '#059669',
+      backgroundColor: '#1e40af',
       color: 'white',
       border: 'none',
       borderRadius: '12px',
-      fontSize: '1.1rem',
+      fontSize: isMobile ? '0.95rem' : '1.1rem',
       fontWeight: '700',
       cursor: 'pointer',
       transition: 'all 0.3s',
-      boxShadow: '0 6px 20px rgba(5, 150, 105, 0.4)'
+      boxShadow: '0 6px 20px rgba(30, 64, 175, 0.4)'
     },
     errorMessage: {
       backgroundColor: '#fee2e2',
