@@ -1,5 +1,4 @@
-
-import { supabase } from '../../lib/supabaseClient';
+import { supabaseAdmin } from '../../lib/supabaseAdmin';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -7,30 +6,40 @@ export default async function handler(req, res) {
   }
 
   try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized - Missing authentication token' });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid authentication' });
+    }
+
     const {
-      sender_id,
       from_account_id,
       to_account_number,
       amount,
       memo
     } = req.body;
 
-    // Validate inputs
-    if (!sender_id || !from_account_id || !to_account_number || !amount) {
+    if (!from_account_id || !to_account_number || !amount) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
     const transferAmount = parseFloat(amount);
-    if (transferAmount <= 0) {
+    if (transferAmount <= 0 || isNaN(transferAmount)) {
       return res.status(400).json({ error: 'Invalid amount' });
     }
 
-    // Get sender's account
-    const { data: fromAccount, error: fromAccountError } = await supabase
+    const { data: fromAccount, error: fromAccountError } = await supabaseAdmin
       .from('accounts')
       .select('*')
       .eq('id', from_account_id)
-      .eq('user_id', sender_id)
+      .eq('user_id', user.id)
       .eq('status', 'active')
       .single();
 
@@ -38,13 +47,11 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Source account not found or inactive' });
     }
 
-    // Check balance
     if (parseFloat(fromAccount.balance) < transferAmount) {
       return res.status(400).json({ error: 'Insufficient funds' });
     }
 
-    // Find recipient account
-    const { data: toAccount, error: toAccountError } = await supabase
+    const { data: toAccount, error: toAccountError } = await supabaseAdmin
       .from('accounts')
       .select('*')
       .eq('account_number', to_account_number)
@@ -55,79 +62,129 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Recipient account not found or inactive' });
     }
 
-    // Check if transferring to same account
     if (from_account_id === toAccount.id) {
       return res.status(400).json({ error: 'Cannot transfer to the same account' });
     }
 
-    // Generate reference number
-    const referenceNumber = `INT${Date.now()}${Math.floor(Math.random() * 10000)}`;
-
-    // Deduct from sender
+    const referenceNumber = `INT-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     const newFromBalance = parseFloat(fromAccount.balance) - transferAmount;
-    await supabase
+    const newToBalance = parseFloat(toAccount.balance) + transferAmount;
+
+    const { error: debitError } = await supabaseAdmin
       .from('accounts')
       .update({ balance: newFromBalance, updated_at: new Date().toISOString() })
       .eq('id', from_account_id);
 
-    // Add to recipient
-    const newToBalance = parseFloat(toAccount.balance) + transferAmount;
-    await supabase
+    if (debitError) {
+      console.error('Error debiting account:', debitError);
+      return res.status(500).json({ error: 'Failed to debit sender account' });
+    }
+
+    const { error: creditError } = await supabaseAdmin
       .from('accounts')
       .update({ balance: newToBalance, updated_at: new Date().toISOString() })
       .eq('id', toAccount.id);
 
-    // Create sender transaction record (debit)
-    await supabase.from('transactions').insert([{
-      user_id: sender_id,
-      account_id: from_account_id,
-      type: 'transfer_out',
-      amount: transferAmount,
-      description: `Transfer to account ${to_account_number} - ${memo || 'Internal Transfer'}`,
-      status: 'completed',
-      reference: referenceNumber
-    }]);
+    if (creditError) {
+      console.error('Error crediting account:', creditError);
+      await supabaseAdmin
+        .from('accounts')
+        .update({ balance: parseFloat(fromAccount.balance) })
+        .eq('id', from_account_id);
+      return res.status(500).json({ error: 'Failed to credit recipient account' });
+    }
 
-    // Create recipient transaction record (credit)
-    await supabase.from('transactions').insert([{
-      user_id: toAccount.user_id,
-      account_id: toAccount.id,
-      type: 'transfer_in',
-      amount: transferAmount,
-      description: `Transfer from account ${fromAccount.account_number} - ${memo || 'Internal Transfer'}`,
-      status: 'completed',
-      reference: referenceNumber
-    }]);
-
-    // Create notifications
-    await supabase.from('notifications').insert([
+    const { error: transactionError } = await supabaseAdmin.from('transactions').insert([
       {
-        user_id: sender_id,
+        user_id: user.id,
+        account_id: from_account_id,
+        type: 'transfer_out',
+        amount: transferAmount,
+        description: `Transfer to account ****${to_account_number.slice(-4)} - ${memo || 'Internal Transfer'}`,
+        status: 'completed',
+        reference: referenceNumber
+      },
+      {
+        user_id: toAccount.user_id,
+        account_id: toAccount.id,
+        type: 'transfer_in',
+        amount: transferAmount,
+        description: `Transfer from account ****${fromAccount.account_number.slice(-4)} - ${memo || 'Internal Transfer'}`,
+        status: 'completed',
+        reference: referenceNumber
+      }
+    ]);
+
+    if (transactionError) {
+      console.error('Transaction insert error:', transactionError);
+      await supabaseAdmin
+        .from('accounts')
+        .update({ balance: parseFloat(fromAccount.balance) })
+        .eq('id', from_account_id);
+      await supabaseAdmin
+        .from('accounts')
+        .update({ balance: parseFloat(toAccount.balance) })
+        .eq('id', toAccount.id);
+      return res.status(500).json({ error: 'Failed to create transaction records' });
+    }
+
+    const { error: notificationError } = await supabaseAdmin.from('notifications').insert([
+      {
+        user_id: user.id,
         type: 'transfer',
         title: 'Transfer Sent',
-        message: `You transferred $${transferAmount.toFixed(2)} to account ${to_account_number}`
+        message: `You transferred $${transferAmount.toFixed(2)} to account ****${to_account_number.slice(-4)}`
       },
       {
         user_id: toAccount.user_id,
         type: 'transfer',
         title: 'Transfer Received',
-        message: `You received $${transferAmount.toFixed(2)} from account ${fromAccount.account_number}`
+        message: `You received $${transferAmount.toFixed(2)} from account ****${fromAccount.account_number.slice(-4)}`
       }
     ]);
 
-    // Log transaction
-    await supabase.from('system_logs').insert([{
+    if (notificationError) {
+      console.error('Notification error:', notificationError);
+    }
+
+    const { error: auditError } = await supabaseAdmin.from('audit_logs').insert([
+      {
+        user_id: user.id,
+        action: 'internal_transfer',
+        table_name: 'accounts',
+        old_data: {
+          from_balance: parseFloat(fromAccount.balance),
+          to_balance: parseFloat(toAccount.balance)
+        },
+        new_data: {
+          from_balance: newFromBalance,
+          to_balance: newToBalance,
+          amount: transferAmount,
+          reference: referenceNumber
+        }
+      }
+    ]);
+
+    if (auditError) {
+      console.error('Audit log error:', auditError);
+    }
+
+    const { error: systemLogError } = await supabaseAdmin.from('system_logs').insert([{
       level: 'info',
       type: 'transaction',
-      message: 'Internal transfer completed',
+      message: `Internal transfer completed: ${referenceNumber}`,
       details: {
         from_account: fromAccount.account_number,
         to_account: to_account_number,
         amount: transferAmount,
         reference: referenceNumber
       },
-      user_id: sender_id
+      user_id: user.id
     }]);
+
+    if (systemLogError) {
+      console.error('System log error:', systemLogError);
+    }
 
     return res.status(200).json({
       success: true,

@@ -40,24 +40,35 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid or expired verification code' });
     }
 
-    const { data: transfer } = await supabaseAdmin
+    const { data: transfer, error: transferFetchError } = await supabaseAdmin
       .from('wire_transfers')
       .select('*')
       .eq('id', transfer_id)
       .eq('user_id', user.id)
       .single();
 
-    if (!transfer) {
+    if (transferFetchError || !transfer) {
       return res.status(404).json({ error: 'Wire transfer not found' });
     }
 
-    const { data: account } = await supabaseAdmin
+    const { data: account, error: accountFetchError } = await supabaseAdmin
       .from('accounts')
       .select('balance')
       .eq('id', transfer.from_account_id)
       .single();
 
-    const newBalance = parseFloat(account.balance) - parseFloat(transfer.amount);
+    if (accountFetchError || !account) {
+      return res.status(404).json({ error: 'Account not found' });
+    }
+
+    const currentBalance = parseFloat(account.balance);
+    const transferAmount = parseFloat(transfer.amount);
+
+    if (currentBalance < transferAmount) {
+      return res.status(400).json({ error: 'Insufficient funds' });
+    }
+
+    const newBalance = currentBalance - transferAmount;
 
     const { error: debitError } = await supabaseAdmin
       .from('accounts')
@@ -65,10 +76,11 @@ export default async function handler(req, res) {
       .eq('id', transfer.from_account_id);
 
     if (debitError) {
+      console.error('Debit error:', debitError);
       return res.status(500).json({ error: 'Failed to debit account' });
     }
 
-    await supabaseAdmin
+    const { error: transferUpdateError } = await supabaseAdmin
       .from('wire_transfers')
       .update({
         status: 'processing',
@@ -76,36 +88,93 @@ export default async function handler(req, res) {
       })
       .eq('id', transfer_id);
 
-    await supabaseAdmin
+    if (transferUpdateError) {
+      console.error('Transfer update error:', transferUpdateError);
+      await supabaseAdmin
+        .from('accounts')
+        .update({ balance: currentBalance })
+        .eq('id', transfer.from_account_id);
+      return res.status(500).json({ error: 'Failed to update transfer status' });
+    }
+
+    const { error: codeUpdateError } = await supabaseAdmin
       .from('verification_codes')
       .update({ is_used: true, used_at: new Date().toISOString() })
       .eq('id', verificationRecord.id);
 
-    await supabaseAdmin.from('transactions').insert([{
+    if (codeUpdateError) {
+      console.error('Code update error:', codeUpdateError);
+    }
+
+    const { error: transactionError } = await supabaseAdmin.from('transactions').insert([{
       user_id: user.id,
       account_id: transfer.from_account_id,
-      type: 'debit',
-      category: 'wire_transfer',
+      type: 'wire_transfer',
       amount: transfer.amount,
-      description: `Wire transfer to ${transfer.beneficiary_name}`,
-      status: 'completed'
+      description: `Wire transfer to ${transfer.beneficiary_name} - ${transfer.beneficiary_bank}`,
+      status: 'completed',
+      reference: transfer.reference_number
     }]);
 
-    await supabaseAdmin.from('notifications').insert([{
-      user_id,
-      type: 'wire',
+    if (transactionError) {
+      console.error('Transaction insert error:', transactionError);
+      await supabaseAdmin
+        .from('accounts')
+        .update({ balance: currentBalance })
+        .eq('id', transfer.from_account_id);
+      await supabaseAdmin
+        .from('wire_transfers')
+        .update({ status: 'pending' })
+        .eq('id', transfer_id);
+      return res.status(500).json({ error: 'Failed to create transaction record' });
+    }
+
+    const { error: notificationError } = await supabaseAdmin.from('notifications').insert([{
+      user_id: user.id,
+      type: 'wire_transfer',
       title: 'Wire Transfer Processing',
-      message: `Your wire transfer of $${transfer.amount} to ${transfer.beneficiary_name} is now processing`,
-      priority: 'high'
+      message: `Your wire transfer of $${transfer.amount} to ${transfer.beneficiary_name} is now processing`
     }]);
 
-    await supabaseAdmin.from('system_logs').insert([{
-      user_id,
-      level: 'info',
-      type: 'wire_transfer_completed',
-      message: 'Wire transfer completed',
-      details: { reference_number: transfer.reference_number, amount: transfer.amount }
+    if (notificationError) {
+      console.error('Notification error:', notificationError);
+    }
+
+    const { error: auditError } = await supabaseAdmin.from('audit_logs').insert([{
+      user_id: user.id,
+      action: 'wire_transfer_complete',
+      table_name: 'wire_transfers',
+      old_data: {
+        status: 'pending',
+        balance: currentBalance
+      },
+      new_data: {
+        status: 'processing',
+        balance: newBalance,
+        amount: transfer.amount,
+        reference: transfer.reference_number
+      }
     }]);
+
+    if (auditError) {
+      console.error('Audit log error:', auditError);
+    }
+
+    const { error: systemLogError } = await supabaseAdmin.from('system_logs').insert([{
+      user_id: user.id,
+      level: 'info',
+      type: 'transaction',
+      message: `Wire transfer completed: ${transfer.reference_number}`,
+      details: {
+        reference_number: transfer.reference_number,
+        amount: transfer.amount,
+        beneficiary: transfer.beneficiary_name
+      }
+    }]);
+
+    if (systemLogError) {
+      console.error('System log error:', systemLogError);
+    }
 
     return res.status(200).json({
       success: true,

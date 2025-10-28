@@ -164,62 +164,29 @@ export default function InternalTransfer() {
         return;
       }
 
-      const referenceNumber = `INT${Date.now()}${Math.floor(Math.random() * 10000)}`;
-
-      const newFromBalance = parseFloat(selectedFromAccount.balance) - transferAmount;
-      await supabase
-        .from('accounts')
-        .update({ balance: newFromBalance, updated_at: new Date().toISOString() })
-        .eq('id', fromAccount);
-
-      const { data: recipientAccount } = await supabase
-        .from('accounts')
-        .select('balance')
-        .eq('id', recipientInfo.accountId)
-        .single();
-
-      const newToBalance = parseFloat(recipientAccount.balance) + transferAmount;
-      await supabase
-        .from('accounts')
-        .update({ balance: newToBalance, updated_at: new Date().toISOString() })
-        .eq('id', recipientInfo.accountId);
-
-      await supabase.from('transactions').insert([{
-        user_id: user.id,
-        account_id: fromAccount,
-        type: 'transfer_out',
-        transaction_type: 'transfer_out',
-        amount: transferAmount,
-        description: `Transfer to ${recipientInfo.ownerName} - ${memo || 'Internal Transfer'}`,
-        status: 'completed',
-        reference: referenceNumber
-      }]);
-
-      await supabase.from('transactions').insert([{
-        user_id: recipientInfo.userId,
-        account_id: recipientInfo.accountId,
-        type: 'transfer_in',
-        transaction_type: 'transfer_in',
-        amount: transferAmount,
-        description: `Transfer from ****${selectedFromAccount.account_number?.slice(-4)} - ${memo || 'Internal Transfer'}`,
-        status: 'completed',
-        reference: referenceNumber
-      }]);
-
-      await supabase.from('notifications').insert([
-        {
-          user_id: user.id,
-          type: 'transfer',
-          title: 'Transfer Sent',
-          message: `You transferred ${formatCurrency(transferAmount)} to ${recipientInfo.ownerName}`
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch('/api/internal-transfer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
         },
-        {
-          user_id: recipientInfo.userId,
-          type: 'transfer',
-          title: 'Money Received',
-          message: `You received ${formatCurrency(transferAmount)} from ****${selectedFromAccount.account_number?.slice(-4)}`
-        }
-      ]);
+        body: JSON.stringify({
+          from_account_id: fromAccount,
+          to_account_number: recipientAccountNumber,
+          amount: transferAmount,
+          memo: memo || 'Internal Transfer'
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Transfer failed');
+      }
+
+      const referenceNumber = result.reference_number;
+      const newFromBalance = result.new_balance;
 
       const receipt = {
         referenceNumber,
