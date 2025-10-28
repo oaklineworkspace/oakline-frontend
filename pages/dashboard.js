@@ -116,14 +116,18 @@ function DashboardContent() {
           
           for (const tx of txData) {
             if (tx.transfer_group_id) {
-              // For grouped transfers, only show the 'out' transaction for the current user
+              // For grouped transfers, only show once per group
               if (!seenTransferGroups.has(tx.transfer_group_id)) {
                 seenTransferGroups.add(tx.transfer_group_id);
-                // Show the outgoing transaction (transfer_out, zelle_send, etc.)
-                if (tx.type === 'transfer_out' || tx.type === 'zelle_send' || tx.type === 'wire_transfer') {
-                  filteredTransactions.push(tx);
-                } else if (tx.type === 'transfer_in' || tx.type === 'zelle_receive') {
-                  // Only show incoming if we haven't seen the group yet (recipient side)
+                
+                // For internal transfers (same user), show the debit side
+                if (tx.transfer_type === 'internal') {
+                  if (tx.type === 'transfer_out') {
+                    filteredTransactions.push(tx);
+                  }
+                }
+                // For external transfers, show the transaction for this account
+                else {
                   filteredTransactions.push(tx);
                 }
               }

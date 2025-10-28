@@ -95,12 +95,13 @@ export default function AccountDetails() {
         .select('*')
         .eq('account_id', accountId)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(50);
 
       if (transactionsError) {
         console.error('Error fetching transactions:', transactionsError);
         setTransactions([]);
       } else {
+        // Show all transactions for this specific account, including both sides of internal transfers
         setTransactions(transactionsData || []);
       }
     } catch (error) {
