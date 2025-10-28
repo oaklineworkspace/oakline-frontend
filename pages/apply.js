@@ -1883,28 +1883,36 @@ export default function Apply() {
               background: 'white',
               borderRadius: '20px',
               overflow: 'hidden',
-              animation: 'fadeInUp 0.6s ease'
+              animation: 'fadeInUp 0.6s ease',
+              maxWidth: '100%',
+              margin: '0 auto'
             }}>
               {/* Header Section with Oakline Branding */}
               <div style={{
                 background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
-                padding: '3rem 2rem',
+                padding: 'clamp(2rem, 5vw, 3rem) clamp(1rem, 3vw, 2rem)',
                 color: 'white'
               }}>
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '1rem',
-                  marginBottom: '1.5rem'
+                  gap: 'clamp(0.5rem, 2vw, 1rem)',
+                  marginBottom: 'clamp(1rem, 3vw, 1.5rem)',
+                  flexWrap: 'wrap'
                 }}>
-                  <img src="/images/logo-primary.png" alt="Oakline Bank" style={{
-                    height: '60px',
-                    width: 'auto',
-                    filter: 'brightness(0) invert(1)'
-                  }} />
+                  <img 
+                    src="/images/Oakline_Bank_logo_design_c1b04ae0.png" 
+                    alt="Oakline Bank" 
+                    style={{
+                      height: 'clamp(40px, 10vw, 60px)',
+                      width: 'auto',
+                      filter: 'brightness(0) invert(1)',
+                      maxWidth: '100%'
+                    }} 
+                  />
                   <div style={{
-                    fontSize: '2rem',
+                    fontSize: 'clamp(1.25rem, 4vw, 2rem)',
                     fontWeight: '700',
                     letterSpacing: '0.5px'
                   }}>
@@ -1913,21 +1921,22 @@ export default function Apply() {
                 </div>
 
                 <div style={{
-                  fontSize: '80px',
-                  marginBottom: '1rem',
+                  fontSize: 'clamp(50px, 15vw, 80px)',
+                  marginBottom: 'clamp(0.5rem, 2vw, 1rem)',
                   animation: 'bounce 1s ease'
                 }}>✅</div>
 
                 <h2 style={{
-                  fontSize: 'clamp(28px, 5vw, 36px)',
-                  marginBottom: '1rem',
-                  fontWeight: '700'
+                  fontSize: 'clamp(1.5rem, 5vw, 2.25rem)',
+                  marginBottom: 'clamp(0.75rem, 2vw, 1rem)',
+                  fontWeight: '700',
+                  lineHeight: '1.2'
                 }}>
                   Application Submitted Successfully!
                 </h2>
 
                 <p style={{
-                  fontSize: 'clamp(16px, 3vw, 18px)',
+                  fontSize: 'clamp(0.9rem, 3vw, 1.125rem)',
                   marginBottom: '0',
                   lineHeight: '1.6',
                   opacity: 0.95
@@ -1937,18 +1946,18 @@ export default function Apply() {
               </div>
 
               {/* Content Section */}
-              <div style={{ padding: '3rem 2rem' }}>
+              <div style={{ padding: 'clamp(1.5rem, 5vw, 3rem) clamp(1rem, 3vw, 2rem)' }}>
                 <div style={{
                   backgroundColor: '#f8fafc',
-                  padding: '2rem',
+                  padding: 'clamp(1rem, 4vw, 2rem)',
                   borderRadius: '15px',
-                  marginBottom: '2rem',
+                  marginBottom: 'clamp(1rem, 3vw, 2rem)',
                   border: '2px solid #e2e8f0'
                 }}>
                   <h3 style={{
-                    fontSize: 'clamp(20px, 4vw, 24px)',
+                    fontSize: 'clamp(1.125rem, 4vw, 1.5rem)',
                     color: '#1A3E6F',
-                    marginBottom: '1.5rem',
+                    marginBottom: 'clamp(1rem, 3vw, 1.5rem)',
                     fontWeight: '700'
                   }}>📧 What Happens Next?</h3>
 
@@ -1960,27 +1969,28 @@ export default function Apply() {
                     <div style={{
                       display: 'flex',
                       alignItems: 'flex-start',
-                      marginBottom: '1.5rem',
-                      gap: '1rem',
-                      padding: '1rem',
+                      marginBottom: 'clamp(1rem, 3vw, 1.5rem)',
+                      gap: 'clamp(0.5rem, 2vw, 1rem)',
+                      padding: 'clamp(0.75rem, 3vw, 1rem)',
                       backgroundColor: 'white',
                       borderRadius: '12px',
                       boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
                     }}>
                       <div style={{
-                        fontSize: '32px',
+                        fontSize: 'clamp(20px, 6vw, 32px)',
                         backgroundColor: '#FFC857',
                         borderRadius: '50%',
-                        width: '50px',
-                        height: '50px',
+                        width: 'clamp(35px, 10vw, 50px)',
+                        height: 'clamp(35px, 10vw, 50px)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        flexShrink: 0
+                        flexShrink: 0,
+                        fontWeight: '700'
                       }}>1</div>
-                      <div>
-                        <strong style={{ color: '#1A3E6F', fontSize: '18px' }}>Application Review</strong>
-                        <p style={{ margin: '0.5rem 0 0 0', color: '#64748b', fontSize: '15px', lineHeight: '1.6' }}>
+                      <div style={{ flex: 1 }}>
+                        <strong style={{ color: '#1A3E6F', fontSize: 'clamp(0.9rem, 3vw, 1.125rem)', display: 'block' }}>Application Review</strong>
+                        <p style={{ margin: '0.5rem 0 0 0', color: '#64748b', fontSize: 'clamp(0.8rem, 2.5vw, 0.9375rem)', lineHeight: '1.6' }}>
                           Our team will review your application within 24-48 hours
                         </p>
                       </div>
@@ -1989,27 +1999,28 @@ export default function Apply() {
                     <div style={{
                       display: 'flex',
                       alignItems: 'flex-start',
-                      marginBottom: '1.5rem',
-                      gap: '1rem',
-                      padding: '1rem',
+                      marginBottom: 'clamp(1rem, 3vw, 1.5rem)',
+                      gap: 'clamp(0.5rem, 2vw, 1rem)',
+                      padding: 'clamp(0.75rem, 3vw, 1rem)',
                       backgroundColor: 'white',
                       borderRadius: '12px',
                       boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
                     }}>
                       <div style={{
-                        fontSize: '32px',
+                        fontSize: 'clamp(20px, 6vw, 32px)',
                         backgroundColor: '#FFC857',
                         borderRadius: '50%',
-                        width: '50px',
-                        height: '50px',
+                        width: 'clamp(35px, 10vw, 50px)',
+                        height: 'clamp(35px, 10vw, 50px)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        flexShrink: 0
+                        flexShrink: 0,
+                        fontWeight: '700'
                       }}>2</div>
-                      <div>
-                        <strong style={{ color: '#1A3E6F', fontSize: '18px' }}>Approval Email</strong>
-                        <p style={{ margin: '0.5rem 0 0 0', color: '#64748b', fontSize: '15px', lineHeight: '1.6' }}>
+                      <div style={{ flex: 1 }}>
+                        <strong style={{ color: '#1A3E6F', fontSize: 'clamp(0.9rem, 3vw, 1.125rem)', display: 'block' }}>Approval Email</strong>
+                        <p style={{ margin: '0.5rem 0 0 0', color: '#64748b', fontSize: 'clamp(0.8rem, 2.5vw, 0.9375rem)', lineHeight: '1.6', wordBreak: 'break-word' }}>
                           Once approved, you'll receive an email at <strong style={{ color: '#1A3E6F' }}>{formData.email}</strong> with your login credentials
                         </p>
                       </div>
@@ -2018,26 +2029,27 @@ export default function Apply() {
                     <div style={{
                       display: 'flex',
                       alignItems: 'flex-start',
-                      gap: '1rem',
-                      padding: '1rem',
+                      gap: 'clamp(0.5rem, 2vw, 1rem)',
+                      padding: 'clamp(0.75rem, 3vw, 1rem)',
                       backgroundColor: 'white',
                       borderRadius: '12px',
                       boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
                     }}>
                       <div style={{
-                        fontSize: '32px',
+                        fontSize: 'clamp(20px, 6vw, 32px)',
                         backgroundColor: '#FFC857',
                         borderRadius: '50%',
-                        width: '50px',
-                        height: '50px',
+                        width: 'clamp(35px, 10vw, 50px)',
+                        height: 'clamp(35px, 10vw, 50px)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        flexShrink: 0
+                        flexShrink: 0,
+                        fontWeight: '700'
                       }}>3</div>
-                      <div>
-                        <strong style={{ color: '#1A3E6F', fontSize: '18px' }}>Start Banking</strong>
-                        <p style={{ margin: '0.5rem 0 0 0', color: '#64748b', fontSize: '15px', lineHeight: '1.6' }}>
+                      <div style={{ flex: 1 }}>
+                        <strong style={{ color: '#1A3E6F', fontSize: 'clamp(0.9rem, 3vw, 1.125rem)', display: 'block' }}>Start Banking</strong>
+                        <p style={{ margin: '0.5rem 0 0 0', color: '#64748b', fontSize: 'clamp(0.8rem, 2.5vw, 0.9375rem)', lineHeight: '1.6' }}>
                           Log in with your credentials and start enjoying your new banking accounts
                         </p>
                       </div>
@@ -2047,16 +2059,16 @@ export default function Apply() {
 
                 <div style={{
                   backgroundColor: '#fff7ed',
-                  padding: '1.5rem',
+                  padding: 'clamp(1rem, 3vw, 1.5rem)',
                   borderRadius: '12px',
-                  marginBottom: '2rem',
+                  marginBottom: 'clamp(1rem, 3vw, 2rem)',
                   border: '2px solid #FFC857',
                   textAlign: 'left'
                 }}>
                   <p style={{
                     margin: 0,
                     color: '#92400e',
-                    fontSize: '15px',
+                    fontSize: 'clamp(0.8rem, 2.5vw, 0.9375rem)',
                     lineHeight: '1.6'
                   }}>
                     <strong>⏰ Important:</strong> Please allow 24-48 hours for application review. You will receive an email notification once your application has been processed.
@@ -2065,23 +2077,27 @@ export default function Apply() {
 
                 <div style={{
                   display: 'flex',
-                  gap: '1rem',
+                  gap: 'clamp(0.5rem, 2vw, 1rem)',
                   justifyContent: 'center',
-                  flexWrap: 'wrap'
+                  flexWrap: 'wrap',
+                  marginBottom: 'clamp(1rem, 3vw, 2rem)'
                 }}>
                   <button
                     onClick={() => router.push('/')}
                     style={{
-                      padding: '16px 32px',
+                      padding: 'clamp(12px, 3vw, 16px) clamp(20px, 5vw, 32px)',
                       background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '12px',
-                      fontSize: '16px',
+                      fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
                       fontWeight: '700',
                       cursor: 'pointer',
                       boxShadow: '0 6px 20px rgba(26, 62, 111, 0.4)',
-                      transition: 'all 0.3s ease'
+                      transition: 'all 0.3s ease',
+                      flex: '1 1 auto',
+                      minWidth: '140px',
+                      maxWidth: '200px'
                     }}
                     onMouseOver={(e) => {
                       e.target.style.transform = 'translateY(-2px)';
@@ -2098,15 +2114,18 @@ export default function Apply() {
                   <button
                     onClick={() => router.push('/login')}
                     style={{
-                      padding: '16px 32px',
+                      padding: 'clamp(12px, 3vw, 16px) clamp(20px, 5vw, 32px)',
                       backgroundColor: 'transparent',
                       color: '#1A3E6F',
                       border: '2px solid #1A3E6F',
                       borderRadius: '12px',
-                      fontSize: '16px',
+                      fontSize: 'clamp(0.875rem, 2.5vw, 1rem)',
                       fontWeight: '700',
                       cursor: 'pointer',
-                      transition: 'all 0.3s ease'
+                      transition: 'all 0.3s ease',
+                      flex: '1 1 auto',
+                      minWidth: '140px',
+                      maxWidth: '200px'
                     }}
                     onMouseOver={(e) => {
                       e.target.style.backgroundColor = '#1A3E6F';
@@ -2124,8 +2143,7 @@ export default function Apply() {
                 </div>
 
                 <div style={{
-                  marginTop: '2rem',
-                  padding: '1.5rem',
+                  padding: 'clamp(1rem, 3vw, 1.5rem)',
                   backgroundColor: '#f8fafc',
                   borderRadius: '12px',
                   border: '1px solid #e2e8f0'
@@ -2133,14 +2151,15 @@ export default function Apply() {
                   <p style={{
                     margin: 0,
                     color: '#64748b',
-                    fontSize: '14px'
+                    fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
+                    lineHeight: '1.6'
                   }}>
                     Need assistance? Contact our support team at{' '}
-                    <a href="tel:1-800-OAKLINE" style={{ color: '#1A3E6F', fontWeight: '600', textDecoration: 'none' }}>
+                    <a href="tel:1-800-OAKLINE" style={{ color: '#1A3E6F', fontWeight: '600', textDecoration: 'none', wordBreak: 'break-word' }}>
                       1-800-OAKLINE
                     </a>
                     {' '}or email{' '}
-                    <a href="mailto:support@theoaklinebank.com" style={{ color: '#1A3E6F', fontWeight: '600', textDecoration: 'none' }}>
+                    <a href="mailto:support@theoaklinebank.com" style={{ color: '#1A3E6F', fontWeight: '600', textDecoration: 'none', wordBreak: 'break-word' }}>
                       support@theoaklinebank.com
                     </a>
                   </p>
