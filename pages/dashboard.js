@@ -263,9 +263,9 @@ function DashboardContent() {
         }
 
         div[style*="transactionItem"]:hover {
-          transform: translateX(4px) !important;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.12) !important;
-          background: #ffffff !important;
+          transform: translateY(-2px) !important;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
+          border-color: #cbd5e1 !important;
         }
 
         div[style*="primaryBalanceCard"]:hover {
@@ -511,105 +511,125 @@ function DashboardContent() {
           <div style={styles.transactionsList}>
             {transactions.length > 0 ? (
               transactions.map(transaction => {
-                const txType = (transaction.transaction_type || '').toLowerCase();
+                const txType = (transaction.transaction_type || transaction.type || '').toLowerCase();
                 const txDescription = (transaction.description || '').toLowerCase();
                 const amount = parseFloat(transaction.amount) || 0;
+                const status = (transaction.status || 'completed').toLowerCase();
 
-                // Determine transaction category and colors
-                // Always use the actual amount to determine the sign
-                const isCredit = amount >= 0;
-                let transactionColor = '#6b7280';
-                let bgColor = '#f3f4f6';
+                // Determine if credit or debit based on type
+                let isCredit = false;
                 let transactionIcon = '📄';
                 let txLabel = 'Transaction';
-
-                // REVERSAL - Gray
-                if (txType.includes('reversal') || txDescription.includes('reversal') || txDescription.includes('reversed')) {
-                  transactionColor = '#6b7280';
-                  bgColor = '#f3f4f6';
-                  transactionIcon = '↩️';
-                  txLabel = 'Reversal';
-                }
-                // BONUS / INTEREST - Blue/Gold
-                else if (txType.includes('bonus') || txType.includes('reward') || txType.includes('interest') || txType.includes('cashback') || txDescription.includes('bonus') || txDescription.includes('reward')) {
-                  transactionColor = '#3b82f6';
-                  bgColor = '#dbeafe';
-                  transactionIcon = '🎁';
-                  txLabel = txType.includes('interest') ? 'Interest' : txType.includes('cashback') ? 'Cashback' : txType.includes('reward') ? 'Reward' : 'Bonus';
-                }
-                // PENDING - Orange/Yellow
-                else if (txType.includes('pending') || txDescription.includes('pending') || transaction.status === 'pending') {
-                  transactionColor = '#f59e0b';
-                  bgColor = '#fef3c7';
-                  transactionIcon = '⏳';
-                  txLabel = 'Pending';
-                }
-                // DEBIT (outgoing) - Red - Check specific debit keywords BEFORE generic "credit" check
-                else if (txType.includes('debit') || txType.includes('withdrawal') || txType.includes('purchase') || txType.includes('payment') || txType.includes('bill_payment') || txType.includes('fee') || txType.includes('transfer_out')) {
-                  transactionColor = '#ef4444';
-                  bgColor = '#fee2e2';
-                  transactionIcon = '💳';
-                  txLabel = txType.includes('withdrawal') ? 'Withdrawal' : txType.includes('purchase') ? 'Purchase' : txType.includes('payment') || txType.includes('bill_payment') ? 'Payment' : txType.includes('fee') ? 'Fee' : 'Debit';
-                }
-                // CREDIT (incoming) - Green - Check after debit keywords
-                else if (txType.includes('deposit') || txType.includes('credit') || txType.includes('refund') || txType.includes('transfer_in')) {
-                  transactionColor = '#10b981';
-                  bgColor = '#d1fae5';
+                
+                // Credit types (money coming in)
+                if (txType.includes('deposit') || txType.includes('credit') || txType.includes('transfer_in') || 
+                    txType.includes('refund') || txType.includes('interest') || txType.includes('bonus') || 
+                    txType.includes('reward') || txType.includes('cashback') || txType.includes('receive')) {
+                  isCredit = true;
                   transactionIcon = '💰';
-                  txLabel = txType.includes('deposit') ? 'Deposit' : txType.includes('refund') ? 'Refund' : txType.includes('transfer_in') ? 'Transfer In' : 'Credit';
+                  if (txType.includes('deposit')) txLabel = 'Deposit';
+                  else if (txType.includes('interest')) txLabel = 'Interest';
+                  else if (txType.includes('refund')) txLabel = 'Refund';
+                  else if (txType.includes('bonus')) txLabel = 'Bonus';
+                  else if (txType.includes('receive')) txLabel = 'Received';
+                  else txLabel = 'Credit';
                 }
-                // TRANSFER (could be either)
+                // Debit types (money going out)
+                else if (txType.includes('debit') || txType.includes('withdrawal') || txType.includes('purchase') || 
+                         txType.includes('payment') || txType.includes('bill') || txType.includes('fee') || 
+                         txType.includes('transfer_out') || txType.includes('send')) {
+                  isCredit = false;
+                  transactionIcon = '💳';
+                  if (txType.includes('withdrawal')) txLabel = 'Withdrawal';
+                  else if (txType.includes('purchase')) txLabel = 'Purchase';
+                  else if (txType.includes('payment') || txType.includes('bill')) txLabel = 'Payment';
+                  else if (txType.includes('fee')) txLabel = 'Fee';
+                  else if (txType.includes('send')) txLabel = 'Sent';
+                  else txLabel = 'Debit';
+                }
+                // Transfer (check amount sign)
                 else if (txType.includes('transfer')) {
-                  transactionColor = isCredit ? '#10b981' : '#ef4444';
-                  bgColor = isCredit ? '#d1fae5' : '#fee2e2';
+                  isCredit = amount >= 0;
                   transactionIcon = '🔄';
                   txLabel = isCredit ? 'Transfer In' : 'Transfer Out';
                 }
-                // Default - use amount to determine color
+                // Fallback to amount sign
                 else {
-                  transactionColor = isCredit ? '#10b981' : '#ef4444';
-                  bgColor = isCredit ? '#d1fae5' : '#fee2e2';
+                  isCredit = amount >= 0;
                   transactionIcon = isCredit ? '💰' : '💳';
                   txLabel = isCredit ? 'Credit' : 'Debit';
+                }
+
+                // Standard banking colors
+                let amountColor = isCredit ? '#2ECC71' : '#E74C3C';
+                let iconBg = isCredit ? '#d4f4e2' : '#fde8e8';
+                let iconColor = isCredit ? '#2ECC71' : '#E74C3C';
+
+                // Status colors
+                let statusColor = '#2ECC71';
+                let statusBg = '#d4f4e2';
+                let statusText = 'Completed';
+
+                if (status === 'pending') {
+                  statusColor = '#F1C40F';
+                  statusBg = '#fef5d4';
+                  statusText = 'Pending';
+                } else if (status === 'cancelled') {
+                  statusColor = '#7F8C8D';
+                  statusBg = '#e8e9ea';
+                  statusText = 'Cancelled';
+                } else if (status === 'failed') {
+                  statusColor = '#E74C3C';
+                  statusBg = '#fde8e8';
+                  statusText = 'Failed';
+                } else if (txType.includes('reversal') || txDescription.includes('reversal')) {
+                  statusColor = '#3498DB';
+                  statusBg = '#dbeafe';
+                  statusText = 'Reversal';
+                  transactionIcon = '↩️';
                 }
 
                 return (
                   <div key={transaction.id} style={styles.transactionItem}>
                     <div style={{ 
                       ...styles.transactionIcon, 
-                      backgroundColor: bgColor,
-                      color: transactionColor,
-                      border: `2px solid ${transactionColor}`
+                      backgroundColor: iconBg,
+                      color: iconColor
                     }}>
                       {transactionIcon}
                     </div>
                     <div style={styles.transactionDetails}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                        <span style={styles.transactionDescription}>
-                          {transaction.description || transaction.transaction_type?.replace(/_/g, ' ').toUpperCase() || 'Transaction'}
+                      <div style={styles.transactionDescription}>
+                        {transaction.description || transaction.transaction_type?.replace(/_/g, ' ').toUpperCase() || 'Transaction'}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={styles.transactionDate}>
+                          {formatDate(transaction.created_at)}
                         </span>
+                        {transaction.accounts?.account_number && (
+                          <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>
+                            • ****{transaction.accounts.account_number.slice(-4)}
+                          </span>
+                        )}
                         <span style={{ 
-                          ...styles.transactionTypeBadge,
-                          backgroundColor: bgColor,
-                          color: transactionColor,
-                          border: `1px solid ${transactionColor}`
+                          fontSize: '0.7rem',
+                          fontWeight: '600',
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '12px',
+                          backgroundColor: statusBg,
+                          color: statusColor,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
                         }}>
-                          {txLabel}
+                          {statusText}
                         </span>
                       </div>
-                      <span style={styles.transactionDate}>
-                        {formatDate(transaction.created_at)}
-                        {transaction.accounts?.account_number && 
-                          ` • ****${transaction.accounts.account_number.slice(-4)}`
-                        }
-                      </span>
                     </div>
                     <div style={{
                       ...styles.transactionAmount,
-                      color: transactionColor,
-                      fontWeight: 'bold'
+                      color: amountColor
                     }}>
-                      {isCredit ? '+' : '-'}
+                      {isCredit ? '+' : '−'}
                       {formatCurrency(Math.abs(amount))}
                     </div>
                   </div>
@@ -795,7 +815,7 @@ export default function Dashboard() {
 const styles = {
   container: {
     minHeight: '100vh',
-    background: '#f8fafc',
+    background: '#f7f9fc',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     width: '100%',
     overflowX: 'hidden'
@@ -1416,51 +1436,55 @@ const styles = {
   transactionsList: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.75rem'
+    gap: '0.5rem'
   },
   transactionItem: {
     display: 'flex',
     alignItems: 'center',
     gap: '1rem',
-    padding: '1rem',
-    background: '#f8fafc',
-    borderRadius: '8px',
-    border: '1px solid #e2e8f0',
-    transition: 'all 0.3s ease',
+    padding: '1.25rem',
+    background: 'white',
+    borderRadius: '12px',
+    border: '1px solid #e5e7eb',
+    transition: 'all 0.2s ease',
     cursor: 'pointer',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
   },
   transactionIcon: {
-    fontSize: '1.2rem',
-    padding: '0.5rem',
-    borderRadius: '6px',
-    color: 'white',
+    fontSize: '1.5rem',
+    padding: '0.75rem',
+    borderRadius: '10px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '40px',
-    height: '40px',
-    flexShrink: 0
+    width: '48px',
+    height: '48px',
+    flexShrink: 0,
+    fontWeight: '600'
   },
   transactionDetails: {
     flex: 1,
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    gap: '0.25rem'
   },
   transactionDescription: {
     fontSize: '0.95rem',
     fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: '0.25rem'
+    color: '#111827',
+    marginBottom: '0.125rem',
+    lineHeight: '1.4'
   },
   transactionDate: {
     fontSize: '0.8rem',
-    color: '#64748b'
+    color: '#6b7280',
+    fontWeight: '500'
   },
   transactionAmount: {
-    fontSize: '1rem',
-    fontWeight: 'bold',
-    textAlign: 'right'
+    fontSize: '1.1rem',
+    fontWeight: '700',
+    textAlign: 'right',
+    letterSpacing: '-0.02em'
   },
   emptyState: {
     textAlign: 'center',
@@ -1664,13 +1688,5 @@ const styles = {
     justifyContent: 'center',
     width: '100%',
     maxWidth: '200px'
-  },
-  transactionTypeBadge: {
-    fontSize: '0.7rem',
-    fontWeight: '700',
-    padding: '0.15rem 0.5rem',
-    borderRadius: '12px',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px'
   }
 };
