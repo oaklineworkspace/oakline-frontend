@@ -411,7 +411,7 @@ export default function Apply() {
 
     try {
       const normalizedEmail = formData.email.trim().toLowerCase();
-      
+
       // CRITICAL: Double-check email verification status in database BEFORE attempting insert
       console.log('Checking email verification status before submission...');
       const verifyResponse = await fetch('/api/check-email-verification', {
@@ -1225,17 +1225,17 @@ export default function Apply() {
             <div style={styles.progressSteps}>
               <div style={{...styles.progressStep, ...(currentStep >= 0 ? styles.progressStepActive : {})}}>
                 <div style={{
-                  width: '40px',
-                  height: '40px',
+                  width: 'clamp(35px, 10vw, 50px)',
+                  height: 'clamp(35px, 10vw, 50px)',
                   borderRadius: '50%',
-                  backgroundColor: currentStep >= 0 ? '#FFC857' : 'rgba(255, 200, 87, 0.3)',
+                  backgroundColor: '#0066CC',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  flexShrink: 0,
                   fontWeight: '700',
-                  fontSize: '18px',
-                  color: currentStep >= 0 ? '#1A3E6F' : 'rgba(255, 255, 255, 0.7)',
-                  border: currentStep >= 0 ? '3px solid #FFC857' : '3px solid rgba(255, 200, 87, 0.3)',
+                  color: 'white',
+                  border: currentStep >= 0 ? '3px solid #0066CC' : '3px solid rgba(0, 102, 204, 0.3)',
                   transition: 'all 0.3s ease'
                 }}>✉</div>
                 <span style={{fontWeight: currentStep === 0 ? '700' : '500'}}>Verify Email</span>
@@ -1245,14 +1245,14 @@ export default function Apply() {
                   width: '40px',
                   height: '40px',
                   borderRadius: '50%',
-                  backgroundColor: currentStep >= 1 ? '#FFC857' : 'rgba(255, 200, 87, 0.3)',
+                  backgroundColor: currentStep >= 1 ? '#0066CC' : 'rgba(0, 102, 204, 0.3)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: '700',
                   fontSize: '18px',
-                  color: currentStep >= 1 ? '#1A3E6F' : 'rgba(255, 255, 255, 0.7)',
-                  border: currentStep >= 1 ? '3px solid #FFC857' : '3px solid rgba(255, 200, 87, 0.3)',
+                  color: currentStep >= 1 ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+                  border: currentStep >= 1 ? '3px solid #0066CC' : '3px solid rgba(0, 102, 204, 0.3)',
                   transition: 'all 0.3s ease'
                 }}>👤</div>
                 <span style={{fontWeight: currentStep === 1 ? '700' : '500'}}>Personal Info</span>
@@ -1262,14 +1262,14 @@ export default function Apply() {
                   width: '40px',
                   height: '40px',
                   borderRadius: '50%',
-                  backgroundColor: currentStep >= 2 ? '#FFC857' : 'rgba(255, 200, 87, 0.3)',
+                  backgroundColor: currentStep >= 2 ? '#0066CC' : 'rgba(0, 102, 204, 0.3)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: '700',
                   fontSize: '18px',
-                  color: currentStep >= 2 ? '#1A3E6F' : 'rgba(255, 255, 255, 0.7)',
-                  border: currentStep >= 2 ? '3px solid #FFC857' : '3px solid rgba(255, 200, 87, 0.3)',
+                  color: currentStep >= 2 ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+                  border: currentStep >= 2 ? '3px solid #0066CC' : '3px solid rgba(0, 102, 204, 0.3)',
                   transition: 'all 0.3s ease'
                 }}>🏠</div>
                 <span style={{fontWeight: currentStep === 2 ? '700' : '500'}}>Address</span>
@@ -1279,14 +1279,14 @@ export default function Apply() {
                   width: '40px',
                   height: '40px',
                   borderRadius: '50%',
-                  backgroundColor: currentStep >= 3 ? '#FFC857' : 'rgba(255, 200, 87, 0.3)',
+                  backgroundColor: currentStep >= 3 ? '#0066CC' : 'rgba(0, 102, 204, 0.3)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: '700',
                   fontSize: '18px',
-                  color: currentStep >= 3 ? '#1A3E6F' : 'rgba(255, 255, 255, 0.7)',
-                  border: currentStep >= 3 ? '3px solid #FFC857' : '3px solid rgba(255, 200, 87, 0.3)',
+                  color: currentStep >= 3 ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+                  border: currentStep >= 3 ? '3px solid #0066CC' : '3px solid rgba(0, 102, 204, 0.3)',
                   transition: 'all 0.3s ease'
                 }}>💼</div>
                 <span style={{fontWeight: currentStep === 3 ? '700' : '500'}}>Review</span>
@@ -1901,15 +1901,15 @@ export default function Apply() {
                   marginBottom: 'clamp(1rem, 3vw, 1.5rem)',
                   flexWrap: 'wrap'
                 }}>
-                  <img 
-                    src="/images/Oakline_Bank_logo_design_c1b04ae0.png" 
-                    alt="Oakline Bank" 
+                  <img
+                    src="/images/Oakline_Bank_logo_design_c1b04ae0.png"
+                    alt="Oakline Bank"
                     style={{
                       height: 'clamp(40px, 10vw, 60px)',
                       width: 'auto',
                       filter: 'brightness(0) invert(1)',
                       maxWidth: '100%'
-                    }} 
+                    }}
                   />
                   <div style={{
                     fontSize: 'clamp(1.25rem, 4vw, 2rem)',
@@ -1978,7 +1978,7 @@ export default function Apply() {
                     }}>
                       <div style={{
                         fontSize: 'clamp(20px, 6vw, 32px)',
-                        backgroundColor: '#FFC857',
+                        backgroundColor: '#0066CC',
                         borderRadius: '50%',
                         width: 'clamp(35px, 10vw, 50px)',
                         height: 'clamp(35px, 10vw, 50px)',
@@ -1986,7 +1986,8 @@ export default function Apply() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0,
-                        fontWeight: '700'
+                        fontWeight: '700',
+                        color: 'white'
                       }}>1</div>
                       <div style={{ flex: 1 }}>
                         <strong style={{ color: '#1A3E6F', fontSize: 'clamp(0.9rem, 3vw, 1.125rem)', display: 'block' }}>Application Review</strong>
@@ -2008,7 +2009,7 @@ export default function Apply() {
                     }}>
                       <div style={{
                         fontSize: 'clamp(20px, 6vw, 32px)',
-                        backgroundColor: '#FFC857',
+                        backgroundColor: '#0066CC',
                         borderRadius: '50%',
                         width: 'clamp(35px, 10vw, 50px)',
                         height: 'clamp(35px, 10vw, 50px)',
@@ -2016,7 +2017,8 @@ export default function Apply() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0,
-                        fontWeight: '700'
+                        fontWeight: '700',
+                        color: 'white'
                       }}>2</div>
                       <div style={{ flex: 1 }}>
                         <strong style={{ color: '#1A3E6F', fontSize: 'clamp(0.9rem, 3vw, 1.125rem)', display: 'block' }}>Approval Email</strong>
@@ -2037,7 +2039,7 @@ export default function Apply() {
                     }}>
                       <div style={{
                         fontSize: 'clamp(20px, 6vw, 32px)',
-                        backgroundColor: '#FFC857',
+                        backgroundColor: '#0066CC',
                         borderRadius: '50%',
                         width: 'clamp(35px, 10vw, 50px)',
                         height: 'clamp(35px, 10vw, 50px)',
@@ -2045,7 +2047,8 @@ export default function Apply() {
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0,
-                        fontWeight: '700'
+                        fontWeight: '700',
+                        color: 'white'
                       }}>3</div>
                       <div style={{ flex: 1 }}>
                         <strong style={{ color: '#1A3E6F', fontSize: 'clamp(0.9rem, 3vw, 1.125rem)', display: 'block' }}>Start Banking</strong>
@@ -2203,7 +2206,7 @@ export default function Apply() {
                       <div style={styles.accountHeader}>
                         <div style={{
                           ...styles.accountIcon,
-                          backgroundColor: formData.accountTypes.includes(account.id) ? '#3b82f6' : '#f1f5f9',
+                          backgroundColor: formData.accountTypes.includes(account.id) ? '#0066CC' : '#f1f5f9',
                           color: formData.accountTypes.includes(account.id) ? 'white' : 'inherit'
                         }}>
                           {account.icon}
@@ -2217,7 +2220,7 @@ export default function Apply() {
                           position: 'absolute',
                           top: '12px',
                           right: '12px',
-                          backgroundColor: '#1A3E6F',
+                          backgroundColor: '#0066CC',
                           color: 'white',
                           borderRadius: '50%',
                           width: '24px',
@@ -2291,8 +2294,8 @@ export default function Apply() {
 
               <div style={{
                 ...styles.checkboxContainer,
-                borderColor: formData.agreeToTerms ? '#1A3E6F' : '#e2e8f0',
-                backgroundColor: formData.agreeToTerms ? '#f0fdf4' : '#f8fafc'
+                borderColor: formData.agreeToTerms ? '#0066CC' : '#e2e8f0',
+                backgroundColor: formData.agreeToTerms ? '#e6f2ff' : '#f8fafc'
               }}>
                 <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
                   <input
@@ -2303,7 +2306,7 @@ export default function Apply() {
                     style={styles.checkbox}
                   />
                   {formData.agreeToTerms && (
-                    <span style={{color: '#1A3E6F', fontSize: '16px', fontWeight: 'bold'}}>✓</span>
+                    <span style={{color: '#0066CC', fontSize: '16px', fontWeight: 'bold'}}>✓</span>
                   )}
                 </div>
                 <label
