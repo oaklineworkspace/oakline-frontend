@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
-import { sendPasswordResetEmail } from '../../lib/email';
+import { sendPasswordResetLink } from '../../lib/email';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -14,9 +14,18 @@ export default async function handler(req, res) {
     }
 
     // Check if user exists
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+    const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers();
+    
+    if (userError) {
+      console.error('Error listing users:', userError);
+      return res.status(200).json({
+        message: 'If an account exists with this email, you will receive a password reset link shortly.'
+      });
+    }
 
-    if (userError || !userData) {
+    const userData = users?.find(user => user.email === email);
+
+    if (!userData) {
       // For security, don't reveal if email exists
       return res.status(200).json({
         message: 'If an account exists with this email, you will receive a password reset link shortly.'
@@ -43,7 +52,7 @@ export default async function handler(req, res) {
 
     // Send email with reset link
     try {
-      await sendPasswordResetEmail(email, data.properties.action_link);
+      await sendPasswordResetLink(email, data.properties.action_link);
 
       res.status(200).json({
         message: 'Password reset instructions have been sent to your email address.'
