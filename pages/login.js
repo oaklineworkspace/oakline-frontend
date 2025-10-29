@@ -233,9 +233,12 @@ export default function SignInPage() {
                 fontSize: '0.85rem',
                 fontWeight: '500',
                 alignSelf: 'flex-end',
-                marginTop: '0.5rem'
-              }}>
-                Forgot your password?
+                marginTop: '0.5rem',
+                transition: 'color 0.3s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.color = '#2A5490'}
+              onMouseLeave={(e) => e.target.style.color = '#1A3E6F'}>
+                🔐 Forgot your password?
               </Link>
             </div>
 

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
@@ -15,16 +16,24 @@ export default function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({ score: 0, feedback: [] });
+  const [accessToken, setAccessToken] = useState('');
   const router = useRouter();
 
   useEffect(() => {
     // Check if this is a password reset callback
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const type = hashParams.get('type');
-    const accessToken = hashParams.get('access_token');
+    const token = hashParams.get('access_token');
 
-    if (type === 'recovery' && accessToken) {
+    if (type === 'recovery' && token) {
       setIsResetMode(true);
+      setAccessToken(token);
+      
+      // Verify the session
+      supabase.auth.setSession({
+        access_token: token,
+        refresh_token: hashParams.get('refresh_token') || ''
+      });
     }
   }, []);
 
@@ -68,7 +77,7 @@ export default function ResetPassword() {
     }
 
     setPasswordStrength({ score, feedback });
-    return score >= 4;
+    return score >= 5;
   };
 
   const handleRequestReset = async (e) => {
@@ -78,16 +87,22 @@ export default function ResetPassword() {
     setError('');
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const response = await fetch('/api/request-password-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
       });
 
-      if (error) throw error;
+      const data = await response.json();
 
-      setIsSuccess(true);
-      setMessage('Password reset instructions have been sent to your email address. Please check your inbox and spam folder.');
+      if (response.ok) {
+        setIsSuccess(true);
+        setMessage(data.message || 'Password reset instructions have been sent to your email address. Please check your inbox and spam folder.');
+      } else {
+        setError(data.error || 'Failed to send reset email');
+      }
     } catch (error) {
-      setError(`Error: ${error.message}`);
+      setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -137,7 +152,7 @@ export default function ResetPassword() {
       <header style={styles.header}>
         <div style={styles.headerContent}>
           <Link href="/" style={styles.logoContainer}>
-            <img src="/images/logo-primary.png" alt="Oakline Bank" style={styles.logo} />
+            <div style={styles.logoIcon}>🏦</div>
             <div style={styles.brandInfo}>
               <span style={styles.bankName}>Oakline Bank</span>
               <span style={styles.tagline}>
@@ -148,7 +163,7 @@ export default function ResetPassword() {
 
           <div style={styles.headerActions}>
             <Link href="/sign-in" style={styles.headerButton}>Sign In</Link>
-            <Link href="/enroll" style={styles.headerButton}>Enroll Now</Link>
+            <Link href="/apply" style={styles.headerButton}>Open Account</Link>
           </div>
         </div>
       </header>
@@ -191,9 +206,7 @@ export default function ResetPassword() {
           <div style={styles.resetSection}>
             <div style={styles.resetCard}>
               <div style={styles.resetHeader}>
-                <div style={styles.cardLogo}>
-                  <img src="/images/logo-primary.png" alt="Oakline Bank" style={styles.cardLogoImg} />
-                </div>
+                <div style={styles.cardLogo}>🏦</div>
                 <h2 style={styles.resetTitle}>
                   {isResetMode ? 'Set Your New Password' : 'Reset Your Password'}
                 </h2>
@@ -257,7 +270,7 @@ export default function ResetPassword() {
                           <div style={{
                             ...styles.strengthFill,
                             width: `${(passwordStrength.score / 5) * 100}%`,
-                            backgroundColor: passwordStrength.score < 3 ? '#ef4444' : passwordStrength.score < 4 ? '#f59e0b' : '#10b981'
+                            backgroundColor: passwordStrength.score < 3 ? '#ef4444' : passwordStrength.score < 5 ? '#f59e0b' : '#10b981'
                           }}></div>
                         </div>
                         <div style={styles.strengthFeedback}>
@@ -302,11 +315,11 @@ export default function ResetPassword() {
 
                   <button 
                     type="submit" 
-                    disabled={loading || passwordStrength.score < 4}
+                    disabled={loading || passwordStrength.score < 5}
                     style={{
                       ...styles.resetButton,
-                      backgroundColor: loading || passwordStrength.score < 4 ? '#9ca3af' : '#1e40af',
-                      cursor: loading || passwordStrength.score < 4 ? 'not-allowed' : 'pointer'
+                      backgroundColor: loading || passwordStrength.score < 5 ? '#9ca3af' : '#1e40af',
+                      cursor: loading || passwordStrength.score < 5 ? 'not-allowed' : 'pointer'
                     }}
                   >
                     {loading ? (
@@ -394,7 +407,7 @@ export default function ResetPassword() {
           <div style={styles.footerSection}>
             <h4 style={styles.footerTitle}>Equal Housing Lender</h4>
             <p style={styles.footerText}>
-              NMLS ID: 1847293
+              NMLS ID: 574160
             </p>
           </div>
           <div style={styles.footerSection}>
@@ -452,9 +465,8 @@ const styles = {
     textDecoration: 'none',
     color: 'white'
   },
-  logo: {
-    height: '50px',
-    width: 'auto'
+  logoIcon: {
+    fontSize: '2.5rem'
   },
   brandInfo: {
     display: 'flex',
@@ -560,11 +572,8 @@ const styles = {
     marginBottom: '2rem'
   },
   cardLogo: {
+    fontSize: '3rem',
     marginBottom: '1rem'
-  },
-  cardLogoImg: {
-    height: '40px',
-    width: 'auto'
   },
   resetTitle: {
     fontSize: '1.8rem',
