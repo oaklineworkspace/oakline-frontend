@@ -19,8 +19,18 @@ export default function ResetPassword() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if this is a password reset callback
+    // Check for error in URL (expired or invalid link)
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const errorParam = hashParams.get('error');
+    const errorDescription = hashParams.get('error_description');
+
+    if (errorParam) {
+      setError(decodeURIComponent(errorDescription || 'The reset link is invalid or has expired. Please request a new one.'));
+      setIsResetMode(false);
+      return;
+    }
+
+    // Check if this is a password reset callback
     const type = hashParams.get('type');
     const token = hashParams.get('access_token');
 
@@ -32,6 +42,11 @@ export default function ResetPassword() {
       supabase.auth.setSession({
         access_token: token,
         refresh_token: hashParams.get('refresh_token') || ''
+      }).then(({ error }) => {
+        if (error) {
+          setError('Failed to verify reset link. Please request a new one.');
+          setIsResetMode(false);
+        }
       });
     }
   }, []);

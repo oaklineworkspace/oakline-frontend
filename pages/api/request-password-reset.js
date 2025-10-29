@@ -45,6 +45,9 @@ export default async function handler(req, res) {
       }
     });
 
+    console.log('Generated reset link for:', email);
+    console.log('Redirect URL:', `${siteUrl}/reset-password`);
+
     if (error) {
       console.error('Error generating reset link:', error);
       return res.status(500).json({ error: 'Failed to generate reset link' });
