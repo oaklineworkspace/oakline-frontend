@@ -345,7 +345,16 @@ export default function ResetPassword() {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      style={styles.input}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem 1rem',
+                        border: '2px solid #e2e8f0',
+                        borderRadius: '10px',
+                        fontSize: '1rem',
+                        transition: 'all 0.3s ease',
+                        boxSizing: 'border-box',
+                        outline: 'none'
+                      }}
                     />
                   </div>
 
@@ -353,20 +362,45 @@ export default function ResetPassword() {
                     type="submit"
                     disabled={loading}
                     style={{
-                      ...styles.resetButton,
+                      width: '100%',
+                      padding: '1rem',
                       backgroundColor: loading ? '#9ca3af' : '#1e40af',
-                      cursor: loading ? 'not-allowed' : 'pointer'
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '10px',
+                      fontSize: '1rem',
+                      fontWeight: '700',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      marginTop: '0.5rem',
+                      transition: 'all 0.3s ease',
+                      boxShadow: loading ? 'none' : '0 4px 12px rgba(30, 64, 175, 0.3)'
                     }}
                   >
                     {loading ? (
-                      <span style={styles.loadingContent}>
-                        <span style={styles.spinner}></span>
+                      <span style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        <span style={{
+                          width: '16px',
+                          height: '16px',
+                          border: '2px solid transparent',
+                          borderTop: '2px solid white',
+                          borderRadius: '50%',
+                          animation: 'spin 1s linear infinite'
+                        }}></span>
                         Sending Reset Link...
                       </span>
                     ) : (
                       <>
-                        <span style={styles.buttonIcon}>📧</span>
-                        Send Reset Link
+                        <span style={{ fontSize: '1.2rem' }}>📧</span>
+                        <span>Send Reset Link</span>
                       </>
                     )}
                   </button>

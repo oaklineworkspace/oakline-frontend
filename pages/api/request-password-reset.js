@@ -33,9 +33,9 @@ export default async function handler(req, res) {
     }
 
     // Generate password reset link using Supabase Auth
-    const protocol = req.headers['x-forwarded-proto'] || 'https';
-    const host = req.headers['x-forwarded-host'] || req.headers.host;
-    const siteUrl = `${protocol}://${host}`;
+    // Use NEXT_PUBLIC_SITE_URL from environment or fallback to dynamic detection
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+                    `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers['x-forwarded-host'] || req.headers.host}`;
 
     const { data, error } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
