@@ -1,5 +1,10 @@
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 import { sendPasswordResetCode } from '../../lib/email';
+import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
+
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const MAX_REQUESTS_PER_WINDOW = 3;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -12,6 +17,67 @@ export default async function handler(req, res) {
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
     }
+
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+                     req.headers['x-real-ip'] || 
+                     req.connection.remoteAddress || 
+                     'unknown';
+
+    const now = new Date();
+    const windowStart = new Date(now.getTime() - RATE_LIMIT_WINDOW_MS);
+
+    const { data: rateLimit, error: rateLimitError } = await supabaseAdmin
+      .from('password_reset_rate_limits')
+      .select('*')
+      .eq('email', email)
+      .eq('ip_address', clientIp)
+      .single();
+
+    if (rateLimit) {
+      const rateLimitWindowStart = new Date(rateLimit.window_start);
+      
+      if (now.getTime() - rateLimitWindowStart.getTime() < RATE_LIMIT_WINDOW_MS) {
+        if (rateLimit.request_count >= MAX_REQUESTS_PER_WINDOW) {
+          const remainingMinutes = Math.ceil((RATE_LIMIT_WINDOW_MS - (now.getTime() - rateLimitWindowStart.getTime())) / 60000);
+          return res.status(429).json({ 
+            error: `Too many password reset requests. Please try again in ${remainingMinutes} minutes.` 
+          });
+        }
+
+        await supabaseAdmin
+          .from('password_reset_rate_limits')
+          .update({ 
+            request_count: rateLimit.request_count + 1,
+            updated_at: now.toISOString()
+          })
+          .eq('email', email)
+          .eq('ip_address', clientIp);
+      } else {
+        await supabaseAdmin
+          .from('password_reset_rate_limits')
+          .update({ 
+            request_count: 1,
+            window_start: now.toISOString(),
+            updated_at: now.toISOString()
+          })
+          .eq('email', email)
+          .eq('ip_address', clientIp);
+      }
+    } else {
+      await supabaseAdmin
+        .from('password_reset_rate_limits')
+        .insert({
+          email,
+          ip_address: clientIp,
+          request_count: 1,
+          window_start: now.toISOString()
+        });
+    }
+
+    await supabaseAdmin
+      .from('password_reset_rate_limits')
+      .delete()
+      .lt('window_start', windowStart.toISOString());
 
     const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers();
     
@@ -30,10 +96,11 @@ export default async function handler(req, res) {
       });
     }
 
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const otpCode = crypto.randomInt(100000, 1000000).toString();
+    const hashedOtp = await bcrypt.hash(otpCode, 12);
+    const expiresAt = new Date(now.getTime() + 10 * 60 * 1000);
 
-    const { data: existingOTP, error: checkError } = await supabaseAdmin
+    const { data: existingOTP } = await supabaseAdmin
       .from('password_reset_otps')
       .select('*')
       .eq('email', email)
@@ -43,10 +110,10 @@ export default async function handler(req, res) {
       const { error: updateError } = await supabaseAdmin
         .from('password_reset_otps')
         .update({
-          otp: otpCode,
+          otp: hashedOtp,
           expires_at: expiresAt.toISOString(),
           used: false,
-          created_at: new Date().toISOString()
+          created_at: now.toISOString()
         })
         .eq('email', email);
 
@@ -59,7 +126,7 @@ export default async function handler(req, res) {
         .from('password_reset_otps')
         .insert({
           email,
-          otp: otpCode,
+          otp: hashedOtp,
           expires_at: expiresAt.toISOString(),
           used: false
         });
@@ -69,6 +136,12 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Failed to generate reset code' });
       }
     }
+
+    await supabaseAdmin
+      .from('password_reset_attempts')
+      .delete()
+      .eq('email', email)
+      .eq('ip_address', clientIp);
 
     try {
       await sendPasswordResetCode(email, otpCode);
