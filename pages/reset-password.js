@@ -186,7 +186,7 @@ export default function ResetPassword() {
       <header style={styles.header}>
         <div style={styles.headerContent}>
           <Link href="/" style={styles.logoContainer}>
-            <div style={styles.logoIcon}>🏦</div>
+            <img src="/path/to/your/bank-logo.png" alt="Oakline Bank Logo" style={styles.logoImage} />
             <div style={styles.brandInfo}>
               <span style={styles.bankName}>Oakline Bank</span>
               <span style={styles.tagline}>
@@ -399,7 +399,7 @@ export default function ResetPassword() {
                     style={{
                       width: '100%',
                       padding: '1rem',
-                      backgroundColor: loading ? '#9ca3af' : '#1e40af',
+                      backgroundColor: loading ? '#9ca3af' : '#2563eb',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '10px',
@@ -412,7 +412,7 @@ export default function ResetPassword() {
                       gap: '0.5rem',
                       marginTop: '0.5rem',
                       transition: 'all 0.3s ease',
-                      boxShadow: loading ? 'none' : '0 4px 12px rgba(30, 64, 175, 0.3)'
+                      boxShadow: loading ? 'none' : '0 4px 12px rgba(37, 99, 235, 0.3)'
                     }}
                   >
                     {loading ? (
@@ -532,6 +532,11 @@ const styles = {
     gap: '1rem',
     textDecoration: 'none',
     color: 'white'
+  },
+  logoImage: {
+    height: '50px',
+    width: 'auto',
+    objectFit: 'contain'
   },
   logoIcon: {
     fontSize: '2.5rem'
