@@ -41,7 +41,9 @@ export default async function handler(req, res) {
       type: 'recovery',
       email: email,
       options: {
-        redirectTo: `${siteUrl}/reset-password`
+        redirectTo: `${siteUrl}/reset-password`,
+        // Set token to expire in 1 hour (3600 seconds)
+        expiresIn: 3600
       }
     });
 

@@ -19,36 +19,56 @@ export default function ResetPassword() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check for error in URL (expired or invalid link)
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const errorParam = hashParams.get('error');
-    const errorDescription = hashParams.get('error_description');
+    const handlePasswordReset = async () => {
+      // Check for error in URL (expired or invalid link)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const errorParam = hashParams.get('error');
+      const errorDescription = hashParams.get('error_description');
 
-    if (errorParam) {
-      setError(decodeURIComponent(errorDescription || 'The reset link is invalid or has expired. Please request a new one.'));
-      setIsResetMode(false);
-      return;
-    }
+      if (errorParam) {
+        setError(decodeURIComponent(errorDescription || 'The reset link is invalid or has expired. Please request a new one.'));
+        setIsResetMode(false);
+        return;
+      }
 
-    // Check if this is a password reset callback
-    const type = hashParams.get('type');
-    const token = hashParams.get('access_token');
+      // Check if this is a password reset callback
+      const type = hashParams.get('type');
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
 
-    if (type === 'recovery' && token) {
-      setIsResetMode(true);
-      setAccessToken(token);
+      if (type === 'recovery' && accessToken) {
+        try {
+          // Set the session with the tokens from the URL
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
 
-      // Verify the session
-      supabase.auth.setSession({
-        access_token: token,
-        refresh_token: hashParams.get('refresh_token') || ''
-      }).then(({ error }) => {
-        if (error) {
-          setError('Failed to verify reset link. Please request a new one.');
+          if (error) {
+            console.error('Session error:', error);
+            setError('Failed to verify reset link. Please request a new one.');
+            setIsResetMode(false);
+            return;
+          }
+
+          if (data.session) {
+            setIsResetMode(true);
+            setAccessToken(accessToken);
+            // Clear the hash from URL for security
+            window.history.replaceState(null, '', window.location.pathname);
+          } else {
+            setError('Unable to establish session. Please request a new reset link.');
+            setIsResetMode(false);
+          }
+        } catch (err) {
+          console.error('Error setting session:', err);
+          setError('An error occurred. Please request a new reset link.');
           setIsResetMode(false);
         }
-      });
-    }
+      }
+    };
+
+    handlePasswordReset();
   }, []);
 
   const checkPasswordStrength = (password) => {
