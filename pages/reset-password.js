@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
@@ -28,7 +27,7 @@ export default function ResetPassword() {
     if (type === 'recovery' && token) {
       setIsResetMode(true);
       setAccessToken(token);
-      
+
       // Verify the session
       supabase.auth.setSession({
         access_token: token,
@@ -178,7 +177,7 @@ export default function ResetPassword() {
                 {isResetMode ? '🔐 Create New Password' : '🔐 Secure Password Recovery'}
               </h1>
               <p style={styles.heroSubtitle}>
-                {isResetMode 
+                {isResetMode
                   ? 'Set a strong, secure password for your Oakline Bank account.'
                   : 'Reset your password securely with our advanced verification system. Your account security is our top priority.'}
               </p>
@@ -211,7 +210,7 @@ export default function ResetPassword() {
                   {isResetMode ? 'Set Your New Password' : 'Reset Your Password'}
                 </h2>
                 <p style={styles.resetSubtitle}>
-                  {isResetMode 
+                  {isResetMode
                     ? 'Create a strong password that meets our security requirements'
                     : 'Enter your email address and we\'ll send you a secure link to reset your password'}
                 </p>
@@ -313,8 +312,8 @@ export default function ResetPassword() {
                     )}
                   </div>
 
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     disabled={loading || passwordStrength.score < 5}
                     style={{
                       ...styles.resetButton,
@@ -350,8 +349,8 @@ export default function ResetPassword() {
                     />
                   </div>
 
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     disabled={loading}
                     style={{
                       ...styles.resetButton,
@@ -413,14 +412,14 @@ export default function ResetPassword() {
           <div style={styles.footerSection}>
             <h4 style={styles.footerTitle}>Security Notice</h4>
             <p style={styles.footerText}>
-              Oakline Bank will never ask for your password via email or phone. 
+              Oakline Bank will never ask for your password via email or phone.
               Always access your account through our official website.
             </p>
           </div>
         </div>
         <div style={styles.footerBottom}>
           <p style={styles.copyright}>
-            © 2024 Oakline Bank. All rights reserved. Member FDIC. Routing: 075915826
+            © 2025 Oakline Bank. All rights reserved. Member FDIC. Routing: 075915826
           </p>
         </div>
       </footer>
