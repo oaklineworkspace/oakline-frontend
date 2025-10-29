@@ -1,75 +1,21 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
 export default function ResetPassword() {
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
-  const [isResetMode, setIsResetMode] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({ score: 0, feedback: [] });
-  const [accessToken, setAccessToken] = useState('');
   const router = useRouter();
-
-  useEffect(() => {
-    const handlePasswordReset = async () => {
-      // Check for error in URL (expired or invalid link)
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const errorParam = hashParams.get('error');
-      const errorDescription = hashParams.get('error_description');
-
-      if (errorParam) {
-        setError(decodeURIComponent(errorDescription || 'The reset link is invalid or has expired. Please request a new one.'));
-        setIsResetMode(false);
-        return;
-      }
-
-      // Check if this is a password reset callback
-      const type = hashParams.get('type');
-      const accessToken = hashParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token');
-
-      if (type === 'recovery' && accessToken) {
-        try {
-          // Set the session with the tokens from the URL
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          });
-
-          if (error) {
-            console.error('Session error:', error);
-            setError('Failed to verify reset link. Please request a new one.');
-            setIsResetMode(false);
-            return;
-          }
-
-          if (data.session) {
-            setIsResetMode(true);
-            setAccessToken(accessToken);
-            // Clear the hash from URL for security
-            window.history.replaceState(null, '', window.location.pathname);
-          } else {
-            setError('Unable to establish session. Please request a new reset link.');
-            setIsResetMode(false);
-          }
-        } catch (err) {
-          console.error('Error setting session:', err);
-          setError('An error occurred. Please request a new reset link.');
-          setIsResetMode(false);
-        }
-      }
-    };
-
-    handlePasswordReset();
-  }, []);
 
   const checkPasswordStrength = (password) => {
     const feedback = [];
@@ -114,14 +60,14 @@ export default function ResetPassword() {
     return score >= 5;
   };
 
-  const handleRequestReset = async (e) => {
+  const handleRequestCode = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
     setError('');
 
     try {
-      const response = await fetch('/api/request-password-reset', {
+      const response = await fetch('/api/request-password-reset-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
@@ -130,10 +76,10 @@ export default function ResetPassword() {
       const data = await response.json();
 
       if (response.ok) {
-        setIsSuccess(true);
-        setMessage(data.message || 'Password reset instructions have been sent to your email address. Please check your inbox and spam folder.');
+        setStep(2);
+        setMessage(data.message || 'A 6-digit verification code has been sent to your email address.');
       } else {
-        setError(data.error || 'Failed to send reset email');
+        setError(data.error || 'Failed to send verification code');
       }
     } catch (error) {
       setError('An error occurred. Please try again.');
@@ -149,7 +95,7 @@ export default function ResetPassword() {
     setError('');
 
     try {
-      if (!newPassword || !confirmPassword) {
+      if (!email || !code || !newPassword || !confirmPassword) {
         throw new Error('Please fill in all fields');
       }
 
@@ -161,18 +107,24 @@ export default function ResetPassword() {
         throw new Error('Password does not meet security requirements');
       }
 
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
+      const response = await fetch('/api/verify-reset-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code, newPassword })
       });
 
-      if (error) throw error;
+      const data = await response.json();
 
-      setMessage('✅ Password reset successful! Redirecting to login...');
-      setIsSuccess(true);
+      if (response.ok) {
+        setMessage('✅ Password reset successful! Redirecting to login...');
+        setIsSuccess(true);
 
-      setTimeout(() => {
-        router.push('/sign-in');
-      }, 3000);
+        setTimeout(() => {
+          router.push('/sign-in');
+        }, 3000);
+      } else {
+        setError(data.error || 'Failed to reset password');
+      }
     } catch (error) {
       setError(error.message);
     } finally {
@@ -182,16 +134,13 @@ export default function ResetPassword() {
 
   return (
     <div style={styles.container}>
-      {/* Oakline Bank Header */}
       <header style={styles.header}>
         <div style={styles.headerContent}>
           <Link href="/" style={styles.logoContainer}>
-            <img src="/path/to/your/bank-logo.png" alt="Oakline Bank Logo" style={styles.logoImage} />
+            <span style={styles.logoIcon}>🏦</span>
             <div style={styles.brandInfo}>
               <span style={styles.bankName}>Oakline Bank</span>
-              <span style={styles.tagline}>
-                {isResetMode ? 'Create New Password' : 'Secure Password Recovery'}
-              </span>
+              <span style={styles.tagline}>Secure Password Recovery</span>
             </div>
           </Link>
 
@@ -202,56 +151,46 @@ export default function ResetPassword() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main style={styles.main}>
         <div style={styles.contentWrapper}>
-          {/* Hero Section */}
           <div style={styles.heroSection}>
             <div style={styles.heroContent}>
-              <h1 style={styles.heroTitle}>
-                {isResetMode ? '🔐 Create New Password' : '🔐 Secure Password Recovery'}
-              </h1>
+              <h1 style={styles.heroTitle}>🔐 Secure Password Recovery</h1>
               <p style={styles.heroSubtitle}>
-                {isResetMode
-                  ? 'Set a strong, secure password for your Oakline Bank account.'
-                  : 'Reset your password securely with our advanced verification system. Your account security is our top priority.'}
+                Reset your password securely with our 6-digit verification code system. Your account security is our top priority.
               </p>
 
-              {!isResetMode && (
-                <div style={styles.securityFeatures}>
-                  <div style={styles.feature}>
-                    <span style={styles.featureIcon}>🔐</span>
-                    <span>Bank-Level Security</span>
-                  </div>
-                  <div style={styles.feature}>
-                    <span style={styles.featureIcon}>📧</span>
-                    <span>Email Verification</span>
-                  </div>
-                  <div style={styles.feature}>
-                    <span style={styles.featureIcon}>⚡</span>
-                    <span>Instant Reset Link</span>
-                  </div>
+              <div style={styles.securityFeatures}>
+                <div style={styles.feature}>
+                  <span style={styles.featureIcon}>🔐</span>
+                  <span>Bank-Level Security</span>
                 </div>
-              )}
+                <div style={styles.feature}>
+                  <span style={styles.featureIcon}>📧</span>
+                  <span>Email Verification</span>
+                </div>
+                <div style={styles.feature}>
+                  <span style={styles.featureIcon}>⚡</span>
+                  <span>10-Minute Code</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Reset Form Section */}
           <div style={styles.resetSection}>
             <div style={styles.resetCard}>
               <div style={styles.resetHeader}>
                 <div style={styles.cardLogo}>🏦</div>
                 <h2 style={styles.resetTitle}>
-                  {isResetMode ? 'Set Your New Password' : 'Reset Your Password'}
+                  {step === 1 ? 'Request Verification Code' : 'Reset Your Password'}
                 </h2>
                 <p style={styles.resetSubtitle}>
-                  {isResetMode
-                    ? 'Create a strong password that meets our security requirements'
-                    : 'Enter your email address and we\'ll send you a secure link to reset your password'}
+                  {step === 1 
+                    ? 'Enter your email address and we\'ll send you a 6-digit verification code'
+                    : 'Enter the code from your email and create a new password'}
                 </p>
               </div>
 
-              {/* Success Messages */}
               {message && (
                 <div style={styles.successMessage}>
                   <div style={styles.successIcon}>✅</div>
@@ -259,7 +198,6 @@ export default function ResetPassword() {
                 </div>
               )}
 
-              {/* Error Messages */}
               {error && (
                 <div style={styles.errorMessage}>
                   <span style={styles.errorIcon}>⚠️</span>
@@ -267,9 +205,86 @@ export default function ResetPassword() {
                 </div>
               )}
 
-              {/* Password Reset Mode */}
-              {isResetMode && !isSuccess ? (
+              {step === 1 && !isSuccess ? (
+                <form onSubmit={handleRequestCode} style={styles.form}>
+                  <div style={styles.inputGroup}>
+                    <label style={styles.label}>Email Address *</label>
+                    <input
+                      type="email"
+                      placeholder="Enter your registered email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      style={styles.input}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    style={{
+                      ...styles.resetButton,
+                      backgroundColor: loading ? '#9ca3af' : '#2563eb',
+                      cursor: loading ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {loading ? (
+                      <span style={styles.loadingContent}>
+                        <span style={styles.spinner}></span>
+                        Sending Code...
+                      </span>
+                    ) : (
+                      <>
+                        <span style={styles.buttonIcon}>📧</span>
+                        Send Verification Code
+                      </>
+                    )}
+                  </button>
+                </form>
+              ) : step === 2 && !isSuccess ? (
                 <form onSubmit={handleResetPassword} style={styles.form}>
+                  <div style={styles.inputGroup}>
+                    <label style={styles.label}>Email Address *</label>
+                    <input
+                      type="email"
+                      placeholder="Enter your email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      style={styles.input}
+                    />
+                  </div>
+
+                  <div style={styles.inputGroup}>
+                    <label style={styles.label}>Verification Code *</label>
+                    <p style={styles.codeHint}>
+                      Enter the 6-digit code sent to your email
+                    </p>
+                    <input
+                      type="text"
+                      placeholder="000000"
+                      required
+                      maxLength={6}
+                      pattern="[0-9]{6}"
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                      style={{
+                        ...styles.input,
+                        fontSize: '1.5rem',
+                        letterSpacing: '0.5rem',
+                        textAlign: 'center',
+                        fontFamily: 'monospace'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setStep(1)}
+                      style={styles.resendLink}
+                    >
+                      Didn't receive code? Request new code
+                    </button>
+                  </div>
+
                   <div style={styles.inputGroup}>
                     <label style={styles.label}>New Password *</label>
                     <p style={styles.passwordRequirements}>
@@ -297,7 +312,6 @@ export default function ResetPassword() {
                       </button>
                     </div>
 
-                    {/* Password Strength Indicator */}
                     {newPassword && (
                       <div style={styles.passwordStrength}>
                         <div style={styles.strengthBar}>
@@ -369,80 +383,8 @@ export default function ResetPassword() {
                     )}
                   </button>
                 </form>
-              ) : !isSuccess && !isResetMode ? (
-                // Request Reset Mode
-                <form onSubmit={handleRequestReset} style={styles.form}>
-                  <div style={styles.inputGroup}>
-                    <label style={styles.label}>Email Address *</label>
-                    <input
-                      type="email"
-                      placeholder="Enter your registered email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem 1rem',
-                        border: '2px solid #e2e8f0',
-                        borderRadius: '10px',
-                        fontSize: '1rem',
-                        transition: 'all 0.3s ease',
-                        boxSizing: 'border-box',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    style={{
-                      width: '100%',
-                      padding: '1rem',
-                      backgroundColor: loading ? '#9ca3af' : '#2563eb',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '10px',
-                      fontSize: '1rem',
-                      fontWeight: '700',
-                      cursor: loading ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem',
-                      marginTop: '0.5rem',
-                      transition: 'all 0.3s ease',
-                      boxShadow: loading ? 'none' : '0 4px 12px rgba(37, 99, 235, 0.3)'
-                    }}
-                  >
-                    {loading ? (
-                      <span style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.5rem'
-                      }}>
-                        <span style={{
-                          width: '16px',
-                          height: '16px',
-                          border: '2px solid transparent',
-                          borderTop: '2px solid white',
-                          borderRadius: '50%',
-                          animation: 'spin 1s linear infinite'
-                        }}></span>
-                        Sending Reset Link...
-                      </span>
-                    ) : (
-                      <>
-                        <span style={{ fontSize: '1.2rem' }}>📧</span>
-                        <span>Send Reset Link</span>
-                      </>
-                    )}
-                  </button>
-                </form>
               ) : null}
 
-              {/* Help Section */}
               <div style={styles.helpSection}>
                 <h3 style={styles.helpTitle}>Need Additional Help?</h3>
                 <div style={styles.helpOptions}>
@@ -458,7 +400,6 @@ export default function ResetPassword() {
                 </div>
               </div>
 
-              {/* Back to Login */}
               <div style={styles.backToLogin}>
                 <Link href="/sign-in" style={styles.backLink}>
                   ← Back to Sign In
@@ -469,19 +410,16 @@ export default function ResetPassword() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer style={styles.footer}>
         <div style={styles.footerContent}>
           <div style={styles.footerSection}>
             <h4 style={styles.footerTitle}>Equal Housing Lender</h4>
-            <p style={styles.footerText}>
-              NMLS ID: 574160
-            </p>
+            <p style={styles.footerText}>NMLS ID: 574160</p>
           </div>
           <div style={styles.footerSection}>
             <h4 style={styles.footerTitle}>Security Notice</h4>
             <p style={styles.footerText}>
-              Oakline Bank will never ask for your password via email or phone.
+              Oakline Bank will never ask for your password or verification code via phone.
               Always access your account through our official website.
             </p>
           </div>
@@ -532,11 +470,6 @@ const styles = {
     gap: '1rem',
     textDecoration: 'none',
     color: 'white'
-  },
-  logoImage: {
-    height: '50px',
-    width: 'auto',
-    objectFit: 'contain'
   },
   logoIcon: {
     fontSize: '2.5rem'
@@ -624,21 +557,20 @@ const styles = {
     fontSize: '1.2rem'
   },
   resetSection: {
-    backgroundColor: 'white',
-    padding: '2rem 1rem',
+    flex: 1,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1
+    padding: '2rem 1rem'
   },
   resetCard: {
-    width: '100%',
-    maxWidth: '500px',
     backgroundColor: 'white',
-    borderRadius: '20px',
-    boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+    borderRadius: '16px',
+    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+    maxWidth: '550px',
+    width: '100%',
     padding: '2.5rem',
-    border: '2px solid #e2e8f0'
+    margin: '2rem auto'
   },
   resetHeader: {
     textAlign: 'center',
@@ -651,14 +583,47 @@ const styles = {
   resetTitle: {
     fontSize: '1.8rem',
     fontWeight: 'bold',
-    color: '#1e40af',
+    color: '#1e293b',
     marginBottom: '0.5rem'
   },
   resetSubtitle: {
-    fontSize: '1rem',
+    fontSize: '0.95rem',
     color: '#64748b',
-    margin: 0,
-    lineHeight: '1.5'
+    lineHeight: '1.6'
+  },
+  successMessage: {
+    backgroundColor: '#f0fdf4',
+    border: '2px solid #22c55e',
+    borderRadius: '12px',
+    padding: '1rem',
+    marginBottom: '1.5rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem'
+  },
+  successIcon: {
+    fontSize: '1.5rem'
+  },
+  successText: {
+    color: '#166534',
+    fontSize: '0.95rem',
+    fontWeight: '500',
+    margin: 0
+  },
+  errorMessage: {
+    backgroundColor: '#fef2f2',
+    border: '2px solid #ef4444',
+    borderRadius: '12px',
+    padding: '1rem',
+    marginBottom: '1.5rem',
+    color: '#991b1b',
+    fontSize: '0.95rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem'
+  },
+  errorIcon: {
+    fontSize: '1.2rem'
   },
   form: {
     display: 'flex',
@@ -673,14 +638,8 @@ const styles = {
   label: {
     fontSize: '0.9rem',
     fontWeight: '600',
-    color: '#374151'
-  },
-  passwordRequirements: {
-    fontSize: '0.8rem',
-    color: '#6b7280',
-    marginTop: '-0.25rem',
-    marginBottom: '0.5rem',
-    fontStyle: 'italic'
+    color: '#1e293b',
+    marginBottom: '0.25rem'
   },
   input: {
     width: '100%',
@@ -692,65 +651,90 @@ const styles = {
     boxSizing: 'border-box',
     outline: 'none'
   },
+  codeHint: {
+    fontSize: '0.85rem',
+    color: '#64748b',
+    margin: '0 0 0.25rem 0'
+  },
+  resendLink: {
+    marginTop: '0.5rem',
+    padding: 0,
+    background: 'none',
+    border: 'none',
+    color: '#2563eb',
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+    textAlign: 'left',
+    textDecoration: 'underline'
+  },
+  passwordRequirements: {
+    fontSize: '0.8rem',
+    color: '#64748b',
+    margin: '0 0 0.25rem 0'
+  },
   passwordInputWrapper: {
     position: 'relative',
-    display: 'flex',
-    alignItems: 'center'
+    width: '100%'
   },
   togglePassword: {
     position: 'absolute',
-    right: '10px',
+    right: '1rem',
+    top: '50%',
+    transform: 'translateY(-50%)',
     background: 'none',
     border: 'none',
     cursor: 'pointer',
     fontSize: '1.2rem',
-    padding: '0.5rem'
+    padding: '0.25rem',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   passwordStrength: {
-    marginTop: '0.5rem'
+    marginTop: '0.75rem'
   },
   strengthBar: {
-    height: '6px',
+    width: '100%',
+    height: '4px',
     backgroundColor: '#e2e8f0',
-    borderRadius: '3px',
+    borderRadius: '2px',
     overflow: 'hidden',
     marginBottom: '0.75rem'
   },
   strengthFill: {
     height: '100%',
     transition: 'all 0.3s ease',
-    borderRadius: '3px'
+    borderRadius: '2px'
   },
   strengthFeedback: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '0.5rem',
-    fontSize: '0.8rem'
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '0.5rem'
   },
   feedbackItem: {
-    padding: '0.25rem 0'
+    fontSize: '0.8rem',
+    fontWeight: '500'
   },
   passwordMismatch: {
-    fontSize: '0.8rem',
     color: '#ef4444',
-    marginTop: '0.25rem'
+    fontSize: '0.85rem',
+    marginTop: '0.5rem',
+    fontWeight: '500'
   },
   resetButton: {
     width: '100%',
     padding: '1rem',
-    backgroundColor: '#1e40af',
-    color: 'white',
+    color: '#ffffff',
     border: 'none',
     borderRadius: '10px',
     fontSize: '1rem',
     fontWeight: '700',
-    transition: 'all 0.3s ease',
-    cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '0.5rem',
-    marginTop: '0.5rem'
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
   },
   loadingContent: {
     display: 'flex',
@@ -767,116 +751,89 @@ const styles = {
     animation: 'spin 1s linear infinite'
   },
   buttonIcon: {
-    fontSize: '1rem'
-  },
-  successMessage: {
-    textAlign: 'center',
-    padding: '1.5rem',
-    backgroundColor: '#d1fae5',
-    borderRadius: '12px',
-    border: '2px solid #10b981',
-    marginBottom: '1.5rem'
-  },
-  successIcon: {
-    fontSize: '3rem',
-    marginBottom: '0.5rem'
-  },
-  successText: {
-    fontSize: '1rem',
-    color: '#065f46',
-    margin: 0,
-    lineHeight: '1.5',
-    fontWeight: '500'
-  },
-  errorMessage: {
-    marginBottom: '1rem',
-    padding: '0.75rem 1rem',
-    backgroundColor: '#fef2f2',
-    border: '2px solid #fecaca',
-    borderRadius: '8px',
-    color: '#dc2626',
-    fontSize: '0.9rem',
-    fontWeight: '500',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem'
-  },
-  errorIcon: {
-    fontSize: '1rem'
+    fontSize: '1.2rem'
   },
   helpSection: {
     marginTop: '2rem',
-    padding: '1.5rem',
-    backgroundColor: '#f8fafc',
-    borderRadius: '12px',
-    border: '1px solid #e2e8f0'
+    paddingTop: '2rem',
+    borderTop: '1px solid #e2e8f0'
   },
   helpTitle: {
-    fontSize: '1.1rem',
-    fontWeight: 'bold',
-    color: '#1e40af',
+    fontSize: '1rem',
+    fontWeight: '600',
+    color: '#1e293b',
     marginBottom: '1rem',
     textAlign: 'center'
   },
   helpOptions: {
     display: 'flex',
-    flexDirection: 'column',
-    gap: '0.75rem'
+    flexWrap: 'wrap',
+    gap: '1rem',
+    justifyContent: 'center'
   },
   helpLink: {
-    color: '#64748b',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.5rem 1rem',
+    backgroundColor: '#f1f5f9',
+    color: '#475569',
     textDecoration: 'none',
+    borderRadius: '8px',
     fontSize: '0.9rem',
     fontWeight: '500',
-    textAlign: 'center',
-    padding: '0.5rem',
-    transition: 'color 0.3s ease'
+    transition: 'all 0.2s ease'
   },
   backToLogin: {
     marginTop: '1.5rem',
-    textAlign: 'center',
-    paddingTop: '1rem',
-    borderTop: '1px solid #e2e8f0'
+    textAlign: 'center'
   },
   backLink: {
-    color: '#1e40af',
+    color: '#2563eb',
     textDecoration: 'none',
     fontSize: '0.95rem',
-    fontWeight: '600',
-    transition: 'color 0.3s ease'
+    fontWeight: '500',
+    transition: 'all 0.2s ease'
   },
   footer: {
-    backgroundColor: '#1f2937',
-    color: 'white',
-    padding: '2rem 1.5rem 1rem'
+    backgroundColor: '#1e293b',
+    color: '#e2e8f0',
+    padding: '2rem 1.5rem 1rem',
+    marginTop: 'auto'
   },
   footerContent: {
     maxWidth: '1400px',
     margin: '0 auto',
-    textAlign: 'center'
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gap: '2rem',
+    marginBottom: '2rem'
   },
   footerSection: {
-    marginBottom: '1rem'
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem'
   },
   footerTitle: {
-    fontSize: '1.1rem',
+    fontSize: '1rem',
     fontWeight: '600',
-    color: '#f9fafb',
-    marginBottom: '0.5rem'
+    color: '#ffffff',
+    margin: 0
   },
   footerText: {
-    fontSize: '0.9rem',
-    lineHeight: '1.5',
-    color: '#d1d5db'
+    fontSize: '0.85rem',
+    color: '#cbd5e1',
+    margin: 0,
+    lineHeight: '1.6'
   },
   footerBottom: {
-    borderTop: '1px solid #374151',
+    borderTop: '1px solid #334155',
     paddingTop: '1rem',
     textAlign: 'center'
   },
   copyright: {
     fontSize: '0.8rem',
-    color: '#9ca3af',
+    color: '#94a3b8',
     margin: 0
   }
 };
