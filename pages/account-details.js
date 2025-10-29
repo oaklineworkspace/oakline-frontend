@@ -540,7 +540,15 @@ export default function AccountDetails() {
                 </div>
                 <div style={styles.infoItem}>
                   <div style={styles.infoLabel}>Account Status</div>
-                  <div style={styles.infoValue} style={{ color: '#059669' }}>Active</div>
+                  <div style={{
+                    ...styles.infoValue,
+                    color: selectedAccount.status === 'active' ? '#059669' : 
+                           selectedAccount.status === 'suspended' ? '#ef4444' :
+                           selectedAccount.status === 'closed' ? '#6b7280' : '#f59e0b',
+                    textTransform: 'capitalize'
+                  }}>
+                    {selectedAccount.status || 'Pending'}
+                  </div>
                 </div>
                 <div style={styles.infoItem}>
                   <div style={styles.infoLabel}>Opened Date</div>
