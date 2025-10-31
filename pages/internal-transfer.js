@@ -21,10 +21,9 @@ const useMediaQuery = (query) => {
   return matches;
 };
 
-function RecentTransfers({ user }) {
+function RecentTransfers({ user, isMobile }) {
   const [transfers, setTransfers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const isMobile = useMediaQuery('(max-width: 768px)');
 
   useEffect(() => {
     if (user) {
@@ -575,7 +574,11 @@ export default function InternalTransfer() {
       transition: 'all 0.3s',
       whiteSpace: 'nowrap',
       width: isMobile ? '100%' : 'auto',
-      boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)'
+      boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.5rem'
     },
     recipientCard: {
       backgroundColor: '#ecfdf5',
@@ -632,7 +635,11 @@ export default function InternalTransfer() {
       fontWeight: '700',
       cursor: 'pointer',
       transition: 'all 0.3s',
-      boxShadow: '0 4px 12px rgba(30, 64, 175, 0.4)'
+      boxShadow: '0 4px 12px rgba(30, 64, 175, 0.4)',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.5rem'
     },
     messageBox: {
       padding: isMobile ? '1rem' : '1.25rem',
@@ -800,7 +807,11 @@ export default function InternalTransfer() {
       fontSize: isMobile ? '0.95rem' : '1.05rem',
       fontWeight: '700',
       transition: 'all 0.3s',
-      boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)'
+      boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.5rem'
     },
     closeButton: {
       flex: 1,
@@ -813,7 +824,11 @@ export default function InternalTransfer() {
       fontSize: isMobile ? '0.95rem' : '1.05rem',
       fontWeight: '700',
       transition: 'all 0.3s',
-      boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)'
+      boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.5rem'
     },
     loadingContainer: {
       display: 'flex',
@@ -953,10 +968,20 @@ export default function InternalTransfer() {
                 </div>
 
                 <div style={styles.receiptButtons}>
-                  <button onClick={printReceipt} style={styles.printButton}>
+                  <button 
+                    onClick={printReceipt} 
+                    style={styles.printButton}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#047857'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#059669'}
+                  >
                     🖨️ Print Receipt
                   </button>
-                  <button onClick={() => setShowReceipt(false)} style={styles.closeButton}>
+                  <button 
+                    onClick={() => setShowReceipt(false)} 
+                    style={styles.closeButton}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#1e3a8a'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#1e40af'}
+                  >
                     ✓ Done
                   </button>
                 </div>
@@ -1095,12 +1120,12 @@ export default function InternalTransfer() {
                 onMouseEnter={(e) => !loading && recipientInfo && (e.target.style.backgroundColor = '#1e3a8a')}
                 onMouseLeave={(e) => !loading && recipientInfo && (e.target.style.backgroundColor = '#1e40af')}
               >
-                {loading ? '🔄 Processing Transfer...' : `💸 Send Money ${formatCurrency(parseFloat(amount) || 0)}`}
+                {loading ? '🔄 Processing Transfer...' : `💸 Send Money`}
               </button>
             </form>
           </div>
 
-          <RecentTransfers user={user} />
+          <RecentTransfers user={user} isMobile={isMobile} />
 
           <div style={styles.infoBox}>
             <h3 style={styles.infoTitle}>
