@@ -564,8 +564,9 @@ export default function InternalTransfer() {
     },
     verifyButton: {
       padding: isMobile ? '0.75rem 1.25rem' : '0.875rem 2rem',
-      backgroundColor: '#059669',
-      color: 'white',
+      background: '#1e40af',
+      backgroundColor: '#1e40af',
+      color: '#ffffff',
       border: 'none',
       borderRadius: '10px',
       fontSize: isMobile ? '0.875rem' : '1rem',
@@ -574,7 +575,7 @@ export default function InternalTransfer() {
       transition: 'all 0.3s',
       whiteSpace: 'nowrap',
       width: isMobile ? '100%' : 'auto',
-      boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)',
+      boxShadow: '0 2px 8px rgba(30, 64, 175, 0.3)',
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -627,8 +628,9 @@ export default function InternalTransfer() {
     submitButton: {
       width: '100%',
       padding: isMobile ? '1rem' : '1.25rem',
+      background: '#1e40af',
       backgroundColor: '#1e40af',
-      color: 'white',
+      color: '#ffffff',
       border: 'none',
       borderRadius: '12px',
       fontSize: isMobile ? '1rem' : '1.1rem',
@@ -1050,8 +1052,8 @@ export default function InternalTransfer() {
                       cursor: verifying ? 'not-allowed' : 'pointer'
                     }}
                     disabled={verifying}
-                    onMouseEnter={(e) => !verifying && (e.target.style.backgroundColor = '#047857')}
-                    onMouseLeave={(e) => !verifying && (e.target.style.backgroundColor = '#059669')}
+                    onMouseEnter={(e) => !verifying && (e.target.style.backgroundColor = '#1e3a8a')}
+                    onMouseLeave={(e) => !verifying && (e.target.style.backgroundColor = '#1e40af')}
                   >
                     {verifying ? '🔄 Verifying...' : '✓ Verify Account'}
                   </button>
