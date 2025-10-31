@@ -114,35 +114,35 @@ export default function TransactionsHistory() {
     const txType = (tx.type || tx.transaction_type || '').toLowerCase();
     const description = (tx.description || '').toLowerCase();
 
-    // Check description for "transfer to" or "transfer from"
-    const isTransferTo = description.includes('transfer to') || description.includes('sent to');
-    const isTransferFrom = description.includes('transfer from') || description.includes('received from');
-
-    if (txType.includes('deposit') || 
-        txType.includes('credit') || 
-        txType.includes('transfer_in') || 
-        txType.includes('interest') || 
-        txType.includes('refund') || 
-        txType.includes('bonus') || 
-        txType.includes('reward') || 
-        txType.includes('cashback') || 
-        txType.includes('zelle_receive') ||
-        isTransferFrom) {
+    // Check transaction type first for exact matches
+    if (txType === 'transfer_in' || 
+        txType === 'deposit' || 
+        txType === 'credit' || 
+        txType === 'interest' || 
+        txType === 'refund' || 
+        txType === 'bonus' || 
+        txType === 'reward' || 
+        txType === 'cashback' || 
+        txType === 'zelle_receive' ||
+        description.includes('received from') ||
+        description.includes('transfer from')) {
       return true;
     }
 
-    if (txType.includes('debit') || 
-        txType.includes('withdrawal') || 
-        txType.includes('purchase') || 
-        txType.includes('transfer_out') || 
-        txType.includes('bill_payment') || 
-        txType.includes('fee') || 
-        txType.includes('payment') || 
-        txType.includes('zelle_send') ||
-        isTransferTo) {
+    if (txType === 'transfer_out' || 
+        txType === 'withdrawal' || 
+        txType === 'debit' || 
+        txType === 'purchase' || 
+        txType === 'bill_payment' || 
+        txType === 'fee' || 
+        txType === 'payment' || 
+        txType === 'zelle_send' ||
+        description.includes('transfer to') ||
+        description.includes('sent to')) {
       return false;
     }
 
+    // Fallback
     const amount = parseFloat(tx.amount) || 0;
     return amount >= 0;
   };

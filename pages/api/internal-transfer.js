@@ -128,7 +128,9 @@ export default async function handler(req, res) {
         status: 'completed',
         reference: referenceNumber,
         transfer_group_id: transferGroupId,
-        transfer_type: 'internal'
+        transfer_type: 'internal',
+        balance_before: parseFloat(fromAccount.balance),
+        balance_after: newFromBalance
       },
       {
         user_id: toAccount.user_id,
@@ -139,7 +141,9 @@ export default async function handler(req, res) {
         status: 'completed',
         reference: referenceNumber,
         transfer_group_id: transferGroupId,
-        transfer_type: 'internal'
+        transfer_type: 'internal',
+        balance_before: parseFloat(toAccount.balance),
+        balance_after: newToBalance
       }
     ]);
 

@@ -566,45 +566,37 @@ export default function AccountDetails() {
                 <h3 style={styles.transactionsTitle}>Recent Transactions</h3>
                 {transactions.length > 0 ? (
                   transactions.map(tx => {
-                    const txType = tx.transaction_type?.toLowerCase() || '';
+                    const txType = (tx.type || tx.transaction_type || '').toLowerCase();
                     const description = (tx.description || '').toLowerCase();
                     const amount = parseFloat(tx.amount) || 0;
-
-                    // Check description for "transfer to" or "transfer from" - PRIORITY CHECK
-                    const isTransferTo = description.includes('transfer to') || description.includes('sent to');
-                    const isTransferFrom = description.includes('transfer from') || description.includes('received from');
 
                     // Determine if it's a credit (money in) or debit (money out)
                     let isCredit = false;
 
-                    // PRIORITY: Check description first for transfer direction
-                    if (isTransferTo) {
-                      // Money going OUT - always RED for "transfer to"
-                      isCredit = false;
-                    } else if (isTransferFrom) {
-                      // Money coming IN - always GREEN for "transfer from"
-                      isCredit = true;
-                    }
-                    // Then check transaction type
-                    else if (txType.includes('deposit') || 
-                             txType.includes('credit') || 
-                             txType.includes('transfer_in') || 
-                             txType.includes('interest') || 
-                             txType.includes('refund') || 
-                             txType.includes('zelle_receive')) {
+                    // Check transaction type first
+                    if (txType === 'transfer_in' || 
+                        txType === 'deposit' || 
+                        txType === 'credit' || 
+                        txType === 'interest' || 
+                        txType === 'refund' ||
+                        txType === 'zelle_receive' ||
+                        description.includes('received from') ||
+                        description.includes('transfer from')) {
                       isCredit = true;
                     } 
-                    else if (txType.includes('debit') || 
-                             txType.includes('withdrawal') || 
-                             txType.includes('purchase') || 
-                             txType.includes('transfer_out') || 
-                             txType.includes('bill_payment') || 
-                             txType.includes('fee') ||
-                             txType.includes('zelle_send')) {
+                    else if (txType === 'transfer_out' || 
+                             txType === 'withdrawal' || 
+                             txType === 'debit' || 
+                             txType === 'purchase' || 
+                             txType === 'bill_payment' || 
+                             txType === 'fee' ||
+                             txType === 'zelle_send' ||
+                             description.includes('transfer to') ||
+                             description.includes('sent to')) {
                       isCredit = false;
                     } 
-                    // Fallback
                     else {
+                      // Fallback
                       isCredit = amount >= 0;
                     }
 
