@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -218,7 +219,10 @@ function LoanDashboardContent() {
   if (loading) {
     return (
       <div style={styles.container}>
-        <div style={styles.loading}>Loading your loans...</div>
+        <div style={styles.loadingContainer}>
+          <div style={styles.loadingSpinner}></div>
+          <div style={styles.loadingText}>Loading your loans...</div>
+        </div>
       </div>
     );
   }
@@ -226,13 +230,15 @@ function LoanDashboardContent() {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <div>
-          <h1 style={styles.title}>My Loans</h1>
-          <p style={styles.subtitle}>Comprehensive loan management and tracking</p>
+        <div style={styles.headerContent}>
+          <div style={styles.headerLeft}>
+            <h1 style={styles.title}>My Loans</h1>
+            <p style={styles.subtitle}>Manage your loan portfolio</p>
+          </div>
+          <Link href="/loan/apply" style={styles.applyButton}>
+            + Apply for Loan
+          </Link>
         </div>
-        <Link href="/loan/apply" style={styles.applyButton}>
-          Apply for New Loan
-        </Link>
       </div>
 
       {error && (
@@ -247,237 +253,281 @@ function LoanDashboardContent() {
         </div>
       )}
 
-      {loans.length === 0 ? (
-        <div style={styles.emptyState}>
-          <div style={styles.emptyIcon}>💼</div>
-          <h3 style={styles.emptyTitle}>No Loans Yet</h3>
-          <p style={styles.emptyText}>You haven't applied for any loans. Get started by applying for a loan.</p>
-          <Link href="/loan/apply" style={styles.emptyButton}>
-            Apply for a Loan
-          </Link>
-        </div>
-      ) : (
-        <div style={styles.dashboardLayout}>
-          <div style={styles.loansList}>
-            <h2 style={styles.sectionTitle}>Your Loans</h2>
-            {loans.map(loan => {
-              const monthlyPayment = calculateMonthlyPayment(loan);
-              const remainingBalance = loan.remaining_balance || 0;
-              const isSelected = selectedLoan?.id === loan.id;
+      <div style={styles.main}>
+        {loans.length === 0 ? (
+          <div style={styles.emptyState}>
+            <div style={styles.emptyIcon}>💼</div>
+            <h3 style={styles.emptyTitle}>No Loans Yet</h3>
+            <p style={styles.emptyText}>You haven't applied for any loans. Get started by applying for a loan.</p>
+            <Link href="/loan/apply" style={styles.emptyButton}>
+              Apply for a Loan
+            </Link>
+          </div>
+        ) : (
+          <>
+            {/* Loan Summary Cards */}
+            <div style={styles.summarySection}>
+              <h2 style={styles.sectionTitle}>Loan Summary</h2>
+              <div style={styles.summaryCards}>
+                {loans.map(loan => {
+                  const monthlyPayment = calculateMonthlyPayment(loan);
+                  const remainingBalance = loan.remaining_balance || 0;
 
-              return (
-                <div 
-                  key={loan.id} 
-                  style={{
-                    ...styles.loanCard,
-                    border: isSelected ? '2px solid #10b981' : '1px solid #e5e7eb',
-                    backgroundColor: isSelected ? '#f0fdf4' : '#fff'
-                  }}
-                  onClick={() => {
-                    setSelectedLoan(loan);
-                    setActiveTab('overview');
-                  }}
-                >
-                  <div style={styles.loanCardHeader}>
-                    <h3 style={styles.loanType}>
-                      {loan.loan_type?.replace('_', ' ').toUpperCase()}
-                    </h3>
-                    <div
-                      style={{
-                        ...styles.statusBadge,
-                        backgroundColor: getStatusColor(loan.status)
+                  return (
+                    <div 
+                      key={loan.id} 
+                      style={styles.loanSummaryCard}
+                      onClick={() => {
+                        setSelectedLoan(loan);
+                        setActiveTab('overview');
                       }}
                     >
-                      {getStatusLabel(loan.status)}
-                    </div>
-                  </div>
-                  <div style={styles.loanCardDetails}>
-                    <div style={styles.loanCardRow}>
-                      <span>Principal:</span>
-                      <strong>${parseFloat(loan.principal).toLocaleString()}</strong>
-                    </div>
-                    {loan.status === 'active' && (
-                      <div style={styles.loanCardRow}>
-                        <span>Remaining:</span>
-                        <strong style={{color: '#10b981'}}>${parseFloat(remainingBalance).toLocaleString()}</strong>
+                      <div style={styles.loanCardHeader}>
+                        <div style={styles.loanTypeSection}>
+                          <span style={styles.loanIcon}>
+                            {loan.loan_type === 'personal' ? '👤' : 
+                             loan.loan_type === 'auto' ? '🚗' : 
+                             loan.loan_type === 'home' ? '🏠' : 
+                             loan.loan_type === 'business' ? '💼' : '💰'}
+                          </span>
+                          <div>
+                            <h3 style={styles.loanTypeName}>
+                              {loan.loan_type?.replace('_', ' ').toUpperCase()} Loan
+                            </h3>
+                            <p style={styles.loanDate}>
+                              Applied: {new Date(loan.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            ...styles.statusBadge,
+                            backgroundColor: getStatusColor(loan.status)
+                          }}
+                        >
+                          {getStatusLabel(loan.status)}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
 
-          {selectedLoan && (
-            <div style={styles.loanDetails}>
-              <div style={styles.loanDetailHeader}>
-                <div>
-                  <h2 style={styles.loanDetailTitle}>
-                    {selectedLoan.loan_type?.replace('_', ' ').toUpperCase()} Loan
+                      <div style={styles.loanCardBody}>
+                        <div style={styles.loanDetailRow}>
+                          <span style={styles.detailLabel}>Principal Amount</span>
+                          <span style={styles.detailValue}>${parseFloat(loan.principal).toLocaleString()}</span>
+                        </div>
+                        
+                        {loan.status === 'active' && (
+                          <>
+                            <div style={styles.loanDetailRow}>
+                              <span style={styles.detailLabel}>Remaining Balance</span>
+                              <span style={{...styles.detailValue, color: '#10b981'}}>
+                                ${parseFloat(remainingBalance).toLocaleString()}
+                              </span>
+                            </div>
+                            <div style={styles.loanDetailRow}>
+                              <span style={styles.detailLabel}>Monthly Payment</span>
+                              <span style={styles.detailValue}>${monthlyPayment.toFixed(2)}</span>
+                            </div>
+                            <div style={styles.loanDetailRow}>
+                              <span style={styles.detailLabel}>Next Payment</span>
+                              <span style={styles.detailValue}>
+                                {loan.next_payment_date ? new Date(loan.next_payment_date).toLocaleDateString() : 'N/A'}
+                              </span>
+                            </div>
+                          </>
+                        )}
+
+                        {loan.is_late && (
+                          <div style={styles.warningBadge}>
+                            ⚠️ Payment Overdue
+                          </div>
+                        )}
+                      </div>
+
+                      {loan.status === 'active' && (
+                        <div style={styles.loanCardActions}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPaymentModal(loan);
+                            }}
+                            style={styles.primaryActionButton}
+                          >
+                            Make Payment
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedLoan(loan);
+                              setActiveTab('overview');
+                            }}
+                            style={styles.secondaryActionButton}
+                          >
+                            View Details
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Detailed Loan View */}
+            {selectedLoan && (
+              <div style={styles.detailsSection}>
+                <div style={styles.detailsHeader}>
+                  <h2 style={styles.sectionTitle}>
+                    {selectedLoan.loan_type?.replace('_', ' ').toUpperCase()} Loan Details
                   </h2>
-                  <p style={styles.loanDetailSubtitle}>
-                    Applied: {new Date(selectedLoan.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                {selectedLoan.status === 'active' && (
-                  <div style={styles.actionButtons}>
-                    <button
-                      onClick={() => setPaymentModal(selectedLoan)}
-                      style={{...styles.actionButton, backgroundColor: '#10b981'}}
-                    >
-                      Make Payment
-                    </button>
+                  {selectedLoan.status === 'active' && (
                     <button
                       onClick={() => {
                         setEarlyPayoffModal(selectedLoan);
                         fetchEarlyPayoffData(selectedLoan.id);
                       }}
-                      style={{...styles.actionButton, backgroundColor: '#3b82f6'}}
+                      style={styles.earlyPayoffButton}
                     >
                       Early Payoff
                     </button>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
 
-              <div style={styles.tabs}>
-                <button
-                  onClick={() => setActiveTab('overview')}
-                  style={{
-                    ...styles.tab,
-                    borderBottom: activeTab === 'overview' ? '3px solid #10b981' : 'none',
-                    color: activeTab === 'overview' ? '#10b981' : '#6b7280'
-                  }}
-                >
-                  Overview
-                </button>
-                {selectedLoan.status === 'active' && (
-                  <>
-                    <button
-                      onClick={() => setActiveTab('amortization')}
-                      style={{
-                        ...styles.tab,
-                        borderBottom: activeTab === 'amortization' ? '3px solid #10b981' : 'none',
-                        color: activeTab === 'amortization' ? '#10b981' : '#6b7280'
-                      }}
-                    >
-                      Payment Schedule
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('history')}
-                      style={{
-                        ...styles.tab,
-                        borderBottom: activeTab === 'history' ? '3px solid #10b981' : 'none',
-                        color: activeTab === 'history' ? '#10b981' : '#6b7280'
-                      }}
-                    >
-                      Payment History
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('autopay')}
-                      style={{
-                        ...styles.tab,
-                        borderBottom: activeTab === 'autopay' ? '3px solid #10b981' : 'none',
-                        color: activeTab === 'autopay' ? '#10b981' : '#6b7280'
-                      }}
-                    >
-                      Auto-Payment
-                    </button>
-                  </>
-                )}
-              </div>
+                <div style={styles.tabs}>
+                  <button
+                    onClick={() => setActiveTab('overview')}
+                    style={{
+                      ...styles.tab,
+                      ...(activeTab === 'overview' ? styles.tabActive : {})
+                    }}
+                  >
+                    Overview
+                  </button>
+                  {selectedLoan.status === 'active' && (
+                    <>
+                      <button
+                        onClick={() => setActiveTab('amortization')}
+                        style={{
+                          ...styles.tab,
+                          ...(activeTab === 'amortization' ? styles.tabActive : {})
+                        }}
+                      >
+                        Schedule
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('history')}
+                        style={{
+                          ...styles.tab,
+                          ...(activeTab === 'history' ? styles.tabActive : {})
+                        }}
+                      >
+                        History
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('autopay')}
+                        style={{
+                          ...styles.tab,
+                          ...(activeTab === 'autopay' ? styles.tabActive : {})
+                        }}
+                      >
+                        Auto-Pay
+                      </button>
+                    </>
+                  )}
+                </div>
 
-              <div style={styles.tabContent}>
-                {activeTab === 'overview' && (
-                  <div style={styles.overviewGrid}>
-                    <div style={styles.infoCard}>
-                      <div style={styles.infoLabel}>Principal Amount</div>
-                      <div style={styles.infoValue}>${parseFloat(selectedLoan.principal).toLocaleString()}</div>
-                    </div>
-                    <div style={styles.infoCard}>
-                      <div style={styles.infoLabel}>Interest Rate</div>
-                      <div style={styles.infoValue}>{selectedLoan.interest_rate}% APR</div>
-                    </div>
-                    <div style={styles.infoCard}>
-                      <div style={styles.infoLabel}>Loan Term</div>
-                      <div style={styles.infoValue}>{selectedLoan.term_months} months</div>
-                    </div>
-                    <div style={styles.infoCard}>
-                      <div style={styles.infoLabel}>Monthly Payment</div>
-                      <div style={styles.infoValue}>${calculateMonthlyPayment(selectedLoan).toFixed(2)}</div>
-                    </div>
-                    
-                    {selectedLoan.status === 'active' && (
-                      <>
-                        <div style={styles.infoCard}>
-                          <div style={styles.infoLabel}>Remaining Balance</div>
-                          <div style={{...styles.infoValue, color: '#10b981'}}>
-                            ${parseFloat(selectedLoan.remaining_balance || 0).toLocaleString()}
+                <div style={styles.tabContent}>
+                  {activeTab === 'overview' && (
+                    <div style={styles.overviewGrid}>
+                      <div style={styles.infoCard}>
+                        <div style={styles.infoLabel}>Principal Amount</div>
+                        <div style={styles.infoValue}>${parseFloat(selectedLoan.principal).toLocaleString()}</div>
+                      </div>
+                      <div style={styles.infoCard}>
+                        <div style={styles.infoLabel}>Interest Rate</div>
+                        <div style={styles.infoValue}>{selectedLoan.interest_rate}% APR</div>
+                      </div>
+                      <div style={styles.infoCard}>
+                        <div style={styles.infoLabel}>Loan Term</div>
+                        <div style={styles.infoValue}>{selectedLoan.term_months} months</div>
+                      </div>
+                      <div style={styles.infoCard}>
+                        <div style={styles.infoLabel}>Monthly Payment</div>
+                        <div style={styles.infoValue}>${calculateMonthlyPayment(selectedLoan).toFixed(2)}</div>
+                      </div>
+                      
+                      {selectedLoan.status === 'active' && (
+                        <>
+                          <div style={styles.infoCard}>
+                            <div style={styles.infoLabel}>Remaining Balance</div>
+                            <div style={{...styles.infoValue, color: '#10b981'}}>
+                              ${parseFloat(selectedLoan.remaining_balance || 0).toLocaleString()}
+                            </div>
                           </div>
-                        </div>
-                        <div style={styles.infoCard}>
-                          <div style={styles.infoLabel}>Next Payment Date</div>
-                          <div style={styles.infoValue}>
-                            {selectedLoan.next_payment_date ? new Date(selectedLoan.next_payment_date).toLocaleDateString() : 'N/A'}
+                          <div style={styles.infoCard}>
+                            <div style={styles.infoLabel}>Next Payment Date</div>
+                            <div style={styles.infoValue}>
+                              {selectedLoan.next_payment_date ? new Date(selectedLoan.next_payment_date).toLocaleDateString() : 'N/A'}
+                            </div>
                           </div>
-                        </div>
-                        <div style={styles.infoCard}>
-                          <div style={styles.infoLabel}>Payments Made</div>
-                          <div style={styles.infoValue}>
-                            {selectedLoan.payments_made || 0} of {selectedLoan.term_months}
+                          <div style={styles.infoCard}>
+                            <div style={styles.infoLabel}>Payments Made</div>
+                            <div style={styles.infoValue}>
+                              {selectedLoan.payments_made || 0} of {selectedLoan.term_months}
+                            </div>
                           </div>
+                          <div style={styles.infoCard}>
+                            <div style={styles.infoLabel}>Auto-Payment</div>
+                            <div style={styles.infoValue}>
+                              {selectedLoan.auto_payment_enabled ? (
+                                <span style={{color: '#10b981'}}>✓ Enabled</span>
+                              ) : (
+                                <span style={{color: '#6b7280'}}>Disabled</span>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {selectedLoan.purpose && (
+                        <div style={{...styles.infoCard, gridColumn: '1 / -1'}}>
+                          <div style={styles.infoLabel}>Loan Purpose</div>
+                          <div style={styles.purposeText}>{selectedLoan.purpose}</div>
                         </div>
-                        <div style={styles.infoCard}>
-                          <div style={styles.infoLabel}>Auto-Payment</div>
-                          <div style={styles.infoValue}>
-                            {selectedLoan.auto_payment_enabled ? (
-                              <span style={{color: '#10b981'}}>✓ Enabled</span>
-                            ) : (
-                              <span style={{color: '#6b7280'}}>Disabled</span>
+                      )}
+
+                      {selectedLoan.is_late && (
+                        <div style={{...styles.warningCard, gridColumn: '1 / -1'}}>
+                          <span style={styles.warningIcon}>⚠️</span>
+                          <div>
+                            <strong>Late Payment Notice:</strong> Your loan payment is overdue. 
+                            {selectedLoan.late_fee_amount > 0 && (
+                              <span> A late fee of ${parseFloat(selectedLoan.late_fee_amount).toFixed(2)} has been applied.</span>
                             )}
                           </div>
                         </div>
-                      </>
-                    )}
+                      )}
+                    </div>
+                  )}
 
-                    {selectedLoan.purpose && (
-                      <div style={{...styles.infoCard, gridColumn: '1 / -1'}}>
-                        <div style={styles.infoLabel}>Loan Purpose</div>
-                        <div style={styles.purposeText}>{selectedLoan.purpose}</div>
-                      </div>
-                    )}
+                  {activeTab === 'amortization' && selectedLoan.status === 'active' && (
+                    <AmortizationSchedule loanId={selectedLoan.id} />
+                  )}
 
-                    {selectedLoan.is_late && (
-                      <div style={{...styles.warningCard, gridColumn: '1 / -1'}}>
-                        <span style={styles.warningIcon}>⚠️</span>
-                        <div>
-                          <strong>Late Payment Notice:</strong> Your loan payment is overdue. 
-                          {selectedLoan.late_fee_amount > 0 && (
-                            <span> A late fee of ${parseFloat(selectedLoan.late_fee_amount).toFixed(2)} has been applied.</span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                  {activeTab === 'history' && selectedLoan.status === 'active' && (
+                    <PaymentHistory loanId={selectedLoan.id} />
+                  )}
 
-                {activeTab === 'amortization' && selectedLoan.status === 'active' && (
-                  <AmortizationSchedule loanId={selectedLoan.id} />
-                )}
-
-                {activeTab === 'history' && selectedLoan.status === 'active' && (
-                  <PaymentHistory loanId={selectedLoan.id} />
-                )}
-
-                {activeTab === 'autopay' && selectedLoan.status === 'active' && (
-                  <AutoPaymentManager loan={selectedLoan} />
-                )}
+                  {activeTab === 'autopay' && selectedLoan.status === 'active' && (
+                    <AutoPaymentManager loan={selectedLoan} />
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </>
+        )}
+      </div>
 
+      {/* Payment Modal */}
       {paymentModal && (
         <div style={styles.modalOverlay} onClick={() => setPaymentModal(null)}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -542,6 +592,7 @@ function LoanDashboardContent() {
         </div>
       )}
 
+      {/* Early Payoff Modal */}
       {earlyPayoffModal && (
         <div style={styles.modalOverlay} onClick={() => {
           setEarlyPayoffModal(null);
@@ -568,8 +619,8 @@ function LoanDashboardContent() {
                     </div>
                     <div style={styles.divider}></div>
                     <div style={styles.payoffRow}>
-                      <span style={{fontSize: '18px', fontWeight: '700'}}>Early Payoff Amount:</span>
-                      <strong style={{fontSize: '24px', color: '#10b981'}}>
+                      <span style={{fontSize: '1.1rem', fontWeight: '700'}}>Early Payoff Amount:</span>
+                      <strong style={{fontSize: '1.5rem', color: '#10b981'}}>
                         ${earlyPayoffData.early_payoff.early_payoff_amount.toLocaleString()}
                       </strong>
                     </div>
@@ -603,7 +654,7 @@ function LoanDashboardContent() {
                 </div>
               </>
             ) : (
-              <div style={styles.loading}>Loading early payoff details...</div>
+              <div style={styles.loadingText}>Loading early payoff details...</div>
             )}
           </div>
         </div>
@@ -614,253 +665,341 @@ function LoanDashboardContent() {
 
 const styles = {
   container: {
-    maxWidth: '1400px',
-    margin: '0 auto',
-    padding: '40px 20px',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    minHeight: '100vh',
+    background: '#f7f9fc',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    paddingBottom: '2rem'
+  },
+  loadingContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '60vh',
+    gap: '1rem'
+  },
+  loadingSpinner: {
+    width: '50px',
+    height: '50px',
+    border: '4px solid #f3f4f6',
+    borderTop: '4px solid #1a365d',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite'
+  },
+  loadingText: {
+    fontSize: '1rem',
+    color: '#64748b',
+    textAlign: 'center'
   },
   header: {
+    background: '#1a365d',
+    color: 'white',
+    padding: '1.5rem 1rem',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+  },
+  headerContent: {
+    maxWidth: '1200px',
+    margin: '0 auto',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '40px',
-    flexWrap: 'wrap',
-    gap: '20px'
+    gap: '1rem',
+    flexWrap: 'wrap'
+  },
+  headerLeft: {
+    flex: 1
   },
   title: {
-    fontSize: '32px',
+    fontSize: 'clamp(1.5rem, 4vw, 2rem)',
     fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: '5px'
+    margin: '0 0 0.25rem 0'
   },
   subtitle: {
-    fontSize: '16px',
-    color: '#6b7280',
-    marginTop: '5px'
+    fontSize: 'clamp(0.875rem, 2vw, 1rem)',
+    color: '#bfdbfe',
+    margin: 0
   },
   applyButton: {
-    padding: '12px 24px',
-    fontSize: '16px',
+    padding: '0.75rem 1.5rem',
+    fontSize: '0.95rem',
     fontWeight: '600',
     color: '#fff',
-    backgroundColor: '#10b981',
+    background: '#10b981',
     border: 'none',
     borderRadius: '8px',
     textDecoration: 'none',
     cursor: 'pointer',
-    transition: 'background-color 0.3s',
-    display: 'inline-block'
+    transition: 'all 0.2s',
+    whiteSpace: 'nowrap'
   },
-  loading: {
-    textAlign: 'center',
-    padding: '40px',
-    fontSize: '18px',
-    color: '#6b7280'
+  main: {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '1.5rem 1rem'
   },
   errorAlert: {
+    maxWidth: '1200px',
+    margin: '1rem auto',
+    padding: '1rem',
     backgroundColor: '#fef2f2',
     border: '1px solid #fee2e2',
     borderRadius: '8px',
-    padding: '15px',
-    marginBottom: '20px',
-    color: '#ef4444'
+    color: '#ef4444',
+    fontSize: '0.9rem'
   },
   successAlert: {
+    maxWidth: '1200px',
+    margin: '1rem auto',
+    padding: '1rem',
     backgroundColor: '#f0fdf4',
-    border: '1px solid #dcfce7',
+    border: '1px solid '#dcfce7',
     borderRadius: '8px',
-    padding: '15px',
-    marginBottom: '20px',
-    color: '#10b981'
+    color: '#10b981',
+    fontSize: '0.9rem'
   },
   emptyState: {
     textAlign: 'center',
-    padding: '60px 20px',
+    padding: 'clamp(2rem, 5vw, 4rem) 1rem',
     backgroundColor: '#fff',
     borderRadius: '12px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
   },
   emptyIcon: {
-    fontSize: '64px',
-    marginBottom: '20px'
+    fontSize: 'clamp(3rem, 8vw, 4rem)',
+    marginBottom: '1rem'
   },
   emptyTitle: {
-    fontSize: '24px',
+    fontSize: 'clamp(1.25rem, 3vw, 1.5rem)',
     fontWeight: '700',
     color: '#1f2937',
-    marginBottom: '10px'
+    marginBottom: '0.5rem'
   },
   emptyText: {
-    fontSize: '16px',
+    fontSize: 'clamp(0.875rem, 2vw, 1rem)',
     color: '#6b7280',
-    marginBottom: '30px'
+    marginBottom: '1.5rem'
   },
   emptyButton: {
     display: 'inline-block',
-    padding: '12px 32px',
-    fontSize: '16px',
+    padding: '0.75rem 2rem',
+    fontSize: '1rem',
     fontWeight: '600',
     color: '#fff',
     backgroundColor: '#10b981',
     borderRadius: '8px',
     textDecoration: 'none'
   },
-  dashboardLayout: {
-    display: 'grid',
-    gridTemplateColumns: '350px 1fr',
-    gap: '30px',
-    '@media (max-width: 1024px)': {
-      gridTemplateColumns: '1fr'
-    }
-  },
-  loansList: {
-    backgroundColor: '#fff',
-    borderRadius: '12px',
-    padding: '24px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    height: 'fit-content'
+  summarySection: {
+    marginBottom: '2rem'
   },
   sectionTitle: {
-    fontSize: '20px',
+    fontSize: 'clamp(1.25rem, 3vw, 1.5rem)',
     fontWeight: '700',
     color: '#1f2937',
-    marginBottom: '20px'
+    marginBottom: '1rem'
   },
-  loanCard: {
-    padding: '16px',
-    marginBottom: '12px',
-    borderRadius: '8px',
+  summaryCards: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
+    gap: '1rem'
+  },
+  loanSummaryCard: {
+    backgroundColor: '#fff',
+    borderRadius: '12px',
+    padding: '1.25rem',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    border: '1px solid #e5e7eb',
     cursor: 'pointer',
     transition: 'all 0.2s'
   },
   loanCardHeader: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '12px'
-  },
-  loanType: {
-    fontSize: '16px',
-    fontWeight: '600',
-    color: '#1f2937',
-    margin: 0
-  },
-  statusBadge: {
-    padding: '4px 12px',
-    borderRadius: '12px',
-    fontSize: '12px',
-    fontWeight: '600',
-    color: '#fff'
-  },
-  loanCardDetails: {
-    fontSize: '14px'
-  },
-  loanCardRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '4px 0',
-    color: '#6b7280'
-  },
-  loanDetails: {
-    backgroundColor: '#fff',
-    borderRadius: '12px',
-    padding: '24px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-  },
-  loanDetailHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: '24px',
-    flexWrap: 'wrap',
-    gap: '16px'
+    marginBottom: '1rem',
+    gap: '0.75rem',
+    flexWrap: 'wrap'
   },
-  loanDetailTitle: {
-    fontSize: '24px',
+  loanTypeSection: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    flex: 1
+  },
+  loanIcon: {
+    fontSize: '1.75rem'
+  },
+  loanTypeName: {
+    fontSize: '1rem',
     fontWeight: '700',
     color: '#1f2937',
     margin: 0
   },
-  loanDetailSubtitle: {
-    fontSize: '14px',
+  loanDate: {
+    fontSize: '0.75rem',
     color: '#6b7280',
-    marginTop: '4px'
+    margin: '0.25rem 0 0 0'
   },
-  actionButtons: {
-    display: 'flex',
-    gap: '12px',
-    flexWrap: 'wrap'
-  },
-  actionButton: {
-    padding: '10px 20px',
-    fontSize: '14px',
+  statusBadge: {
+    padding: '0.375rem 0.75rem',
+    borderRadius: '12px',
+    fontSize: '0.75rem',
     fontWeight: '600',
     color: '#fff',
+    whiteSpace: 'nowrap'
+  },
+  loanCardBody: {
+    marginBottom: '1rem'
+  },
+  loanDetailRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '0.5rem 0',
+    fontSize: '0.875rem',
+    borderBottom: '1px solid #f3f4f6'
+  },
+  detailLabel: {
+    color: '#6b7280',
+    fontWeight: '500'
+  },
+  detailValue: {
+    color: '#1f2937',
+    fontWeight: '600'
+  },
+  warningBadge: {
+    marginTop: '0.75rem',
+    padding: '0.5rem',
+    backgroundColor: '#fef2f2',
+    border: '1px solid #fee2e2',
+    borderRadius: '6px',
+    color: '#ef4444',
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    textAlign: 'center'
+  },
+  loanCardActions: {
+    display: 'flex',
+    gap: '0.5rem',
+    marginTop: '1rem'
+  },
+  primaryActionButton: {
+    flex: 1,
+    padding: '0.625rem 1rem',
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    color: '#fff',
+    backgroundColor: '#10b981',
     border: 'none',
     borderRadius: '6px',
     cursor: 'pointer',
-    transition: 'opacity 0.2s'
+    transition: 'all 0.2s'
   },
-  tabs: {
-    display: 'flex',
-    borderBottom: '1px solid #e5e7eb',
-    marginBottom: '24px',
-    gap: '24px',
-    flexWrap: 'wrap'
-  },
-  tab: {
-    padding: '12px 0',
-    fontSize: '15px',
+  secondaryActionButton: {
+    flex: 1,
+    padding: '0.625rem 1rem',
+    fontSize: '0.875rem',
     fontWeight: '600',
-    background: 'none',
+    color: '#1a365d',
+    backgroundColor: '#f3f4f6',
     border: 'none',
+    borderRadius: '6px',
     cursor: 'pointer',
     transition: 'all 0.2s'
   },
+  detailsSection: {
+    backgroundColor: '#fff',
+    borderRadius: '12px',
+    padding: '1.5rem',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+  },
+  detailsHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '1.5rem',
+    gap: '1rem',
+    flexWrap: 'wrap'
+  },
+  earlyPayoffButton: {
+    padding: '0.625rem 1.25rem',
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    color: '#fff',
+    backgroundColor: '#3b82f6',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
+  },
+  tabs: {
+    display: 'flex',
+    borderBottom: '2px solid #e5e7eb',
+    marginBottom: '1.5rem',
+    gap: '0.5rem',
+    overflowX: 'auto',
+    WebkitOverflowScrolling: 'touch'
+  },
+  tab: {
+    padding: '0.75rem 1rem',
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    color: '#6b7280',
+    background: 'none',
+    border: 'none',
+    borderBottom: '2px solid transparent',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    whiteSpace: 'nowrap'
+  },
+  tabActive: {
+    color: '#10b981',
+    borderBottomColor: '#10b981'
+  },
   tabContent: {
-    minHeight: '300px'
+    minHeight: '200px'
   },
   overviewGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-    gap: '20px'
+    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))',
+    gap: '1rem'
   },
   infoCard: {
     backgroundColor: '#f9fafb',
-    padding: '20px',
+    padding: '1rem',
     borderRadius: '8px',
     border: '1px solid #e5e7eb'
   },
   infoLabel: {
-    fontSize: '13px',
+    fontSize: '0.75rem',
     color: '#6b7280',
-    marginBottom: '8px',
+    marginBottom: '0.5rem',
     textTransform: 'uppercase',
     fontWeight: '600'
   },
   infoValue: {
-    fontSize: '24px',
+    fontSize: 'clamp(1.25rem, 3vw, 1.5rem)',
     fontWeight: '700',
     color: '#1f2937'
   },
   purposeText: {
-    fontSize: '14px',
+    fontSize: '0.875rem',
     color: '#374151',
     lineHeight: '1.6',
-    marginTop: '8px'
+    marginTop: '0.5rem'
   },
   warningCard: {
     backgroundColor: '#fef2f2',
     border: '1px solid #fee2e2',
     borderRadius: '8px',
-    padding: '16px',
+    padding: '1rem',
     display: 'flex',
-    gap: '12px',
+    gap: '0.75rem',
     alignItems: 'flex-start',
-    color: '#ef4444'
+    color: '#ef4444',
+    fontSize: '0.875rem'
   },
   warningIcon: {
-    fontSize: '20px',
+    fontSize: '1.25rem',
     flexShrink: 0
   },
   modalOverlay: {
@@ -874,57 +1013,60 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
-    padding: '20px'
+    padding: '1rem'
   },
   modalContent: {
     backgroundColor: '#fff',
     borderRadius: '12px',
-    padding: '32px',
+    padding: 'clamp(1.5rem, 4vw, 2rem)',
     maxWidth: '500px',
     width: '100%',
     maxHeight: '90vh',
     overflowY: 'auto'
   },
   modalTitle: {
-    fontSize: '24px',
+    fontSize: 'clamp(1.25rem, 3vw, 1.5rem)',
     fontWeight: '700',
     color: '#1f2937',
-    marginBottom: '20px'
+    marginBottom: '1rem'
   },
   modalLoanInfo: {
     backgroundColor: '#f9fafb',
-    padding: '16px',
+    padding: '1rem',
     borderRadius: '8px',
-    marginBottom: '24px',
-    fontSize: '14px',
+    marginBottom: '1.5rem',
+    fontSize: '0.875rem',
     lineHeight: '1.8'
   },
   formGroup: {
-    marginBottom: '24px'
+    marginBottom: '1.5rem'
   },
   label: {
     display: 'block',
-    fontSize: '14px',
+    fontSize: '0.875rem',
     fontWeight: '600',
     color: '#374151',
-    marginBottom: '8px'
+    marginBottom: '0.5rem'
   },
   input: {
     width: '100%',
-    padding: '12px',
-    fontSize: '16px',
+    padding: '0.75rem',
+    fontSize: '1rem',
     border: '1px solid #d1d5db',
     borderRadius: '6px',
     boxSizing: 'border-box'
   },
   quickActions: {
     display: 'flex',
-    gap: '8px',
-    marginTop: '12px'
+    gap: '0.5rem',
+    marginTop: '0.75rem',
+    flexWrap: 'wrap'
   },
   quickButton: {
-    padding: '8px 16px',
-    fontSize: '13px',
+    flex: 1,
+    minWidth: '120px',
+    padding: '0.5rem 1rem',
+    fontSize: '0.875rem',
     fontWeight: '600',
     color: '#10b981',
     backgroundColor: '#f0fdf4',
@@ -934,12 +1076,13 @@ const styles = {
   },
   modalButtons: {
     display: 'flex',
-    gap: '12px',
-    justifyContent: 'flex-end'
+    gap: '0.75rem',
+    justifyContent: 'flex-end',
+    flexWrap: 'wrap'
   },
   cancelButton: {
-    padding: '12px 24px',
-    fontSize: '16px',
+    padding: '0.75rem 1.5rem',
+    fontSize: '0.95rem',
     fontWeight: '600',
     color: '#374151',
     backgroundColor: '#f3f4f6',
@@ -948,8 +1091,8 @@ const styles = {
     cursor: 'pointer'
   },
   submitButton: {
-    padding: '12px 24px',
-    fontSize: '16px',
+    padding: '0.75rem 1.5rem',
+    fontSize: '0.95rem',
     fontWeight: '600',
     color: '#fff',
     backgroundColor: '#10b981',
@@ -962,46 +1105,48 @@ const styles = {
     cursor: 'not-allowed'
   },
   earlyPayoffInfo: {
-    marginBottom: '24px'
+    marginBottom: '1.5rem'
   },
   earlyPayoffDesc: {
-    fontSize: '14px',
+    fontSize: '0.875rem',
     color: '#6b7280',
-    marginBottom: '20px',
+    marginBottom: '1rem',
     lineHeight: '1.5'
   },
   earlyPayoffGrid: {
     backgroundColor: '#f9fafb',
-    padding: '20px',
+    padding: '1rem',
     borderRadius: '8px',
     border: '1px solid #e5e7eb'
   },
   payoffRow: {
     display: 'flex',
     justifyContent: 'space-between',
-    padding: '12px 0',
-    fontSize: '15px',
-    color: '#374151'
+    padding: '0.75rem 0',
+    fontSize: '0.875rem',
+    color: '#374151',
+    gap: '1rem'
   },
   divider: {
     height: '1px',
     backgroundColor: '#e5e7eb',
-    margin: '12px 0'
+    margin: '0.75rem 0'
   },
   savingsBox: {
     backgroundColor: '#f0fdf4',
     border: '1px solid #dcfce7',
     borderRadius: '6px',
-    padding: '12px',
-    marginTop: '12px',
+    padding: '0.75rem',
+    marginTop: '0.75rem',
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
+    gap: '0.5rem',
     color: '#10b981',
-    fontWeight: '600'
+    fontWeight: '600',
+    fontSize: '0.875rem'
   },
   savingsIcon: {
-    fontSize: '20px'
+    fontSize: '1.25rem'
   }
 };
 
