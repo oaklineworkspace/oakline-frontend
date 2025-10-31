@@ -7,6 +7,7 @@ Oakline Bank is a comprehensive Next.js/React-based banking web application prov
 **New Features Added:**
 - **Bill Pay System** (`/pages/bill-pay.js`): Full-featured bill payment page with beneficiary management, scheduled payments, payment history tracking, and automatic transaction recording in both `bill_payments` and `transactions` tables.
 - **Investment Portfolio** (`/pages/investment.js`): Comprehensive investment management with product listings, portfolio tracking, transaction history, and real-time portfolio value calculations.
+- **Crypto Deposit System** (`/pages/deposit-crypto.js`): Complete cryptocurrency deposit functionality with account selection, multi-crypto support (BTC, USDT, ETH, BNB), admin-assigned wallet address display with QR codes (using `react-qr-code`), and deposit submission to `crypto_deposits` table. Integrates with `user_crypto_wallets` table for wallet assignments.
 
 **Security Enhancements:**
 - All account balance updates now include `user_id` verification to prevent unauthorized account access.
@@ -29,7 +30,7 @@ The application uses **Next.js 14.2.3** with React 18.2.0, leveraging SSR/SSG, c
 - **Navigation**: Context-aware navigation redirects users based on authentication state, ensuring protected features require login while public pages remain accessible. Application form agreement links open in new tabs to prevent data loss.
 - **Internationalization**: A dedicated page offers multi-language selection (8 languages), an interactive currency converter with real-time exchange rate calculations (demonstrative rates), international banking services showcase, global presence display, and transparent fee structures.
 - **Security**: Hardcoded admin passwords have been removed, replaced by environment variable validation. Role-based access control is implemented using Supabase `admin_profiles` table, with server-side and client-side verification. Sensitive bank information (routing numbers, SWIFT codes) is protected and only visible to authenticated users. All admin pages require server-side JWT token verification.
-- **Database Schema**: Key tables include `accounts`, `applications`, `admin_profiles`, `enrollments`, `transactions`, `cards`, `card_applications`, `user_profiles`, and `bills`, integrated with Supabase Auth.
+- **Database Schema**: Key tables include `accounts`, `applications`, `admin_profiles`, `enrollments`, `transactions`, `cards`, `card_applications`, `user_profiles`, `bills`, `crypto_deposits`, and `user_crypto_wallets`, integrated with Supabase Auth.
 - **Data Flow**: User enrollment involves KYC, account creation, email notification with magic link, password setup, and account activation. Transaction processing includes real-time balance updates, validation, fraud monitoring, instant notifications, and history synchronization. The system supports multi-account management for 23 account types.
 
 ## External Dependencies
