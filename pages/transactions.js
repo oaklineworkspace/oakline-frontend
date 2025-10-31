@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -114,11 +113,11 @@ export default function TransactionsHistory() {
   const isTransactionCredit = (tx) => {
     const txType = (tx.type || tx.transaction_type || '').toLowerCase();
     const description = (tx.description || '').toLowerCase();
-    
+
     // Check description for "transfer to" or "transfer from"
     const isTransferTo = description.includes('transfer to') || description.includes('sent to');
     const isTransferFrom = description.includes('transfer from') || description.includes('received from');
-    
+
     if (txType.includes('deposit') || 
         txType.includes('credit') || 
         txType.includes('transfer_in') || 
@@ -131,7 +130,7 @@ export default function TransactionsHistory() {
         isTransferFrom) {
       return true;
     }
-    
+
     if (txType.includes('debit') || 
         txType.includes('withdrawal') || 
         txType.includes('purchase') || 
@@ -143,7 +142,7 @@ export default function TransactionsHistory() {
         isTransferTo) {
       return false;
     }
-    
+
     const amount = parseFloat(tx.amount) || 0;
     return amount >= 0;
   };
@@ -293,7 +292,7 @@ export default function TransactionsHistory() {
               ⊘ Cancelled
             </button>
           </div>
-          
+
           <input
             type="text"
             placeholder="🔍 Search transactions..."
@@ -317,17 +316,16 @@ export default function TransactionsHistory() {
               const isCredit = isTransactionCredit(tx);
               const status = tx.status || 'completed';
               const statusColors = getStatusColor(status);
-              
+
               return (
                 <div key={tx.id} style={styles.transactionItem}>
                   <div style={styles.transactionLeft}>
                     <span style={styles.transactionIcon}>
-                      {getTransactionIcon(txType)}
+                      {getTransactionIcon(tx.type || tx.transaction_type)}
                     </span>
                     <div style={styles.transactionInfo}>
                       <div style={styles.transactionDescription}>
-                        {tx.description || txType?.replace(/_/g, ' ').toUpperCase()}
-                      </div>
+                        {tx.description || (tx.type || tx.transaction_type)?.replace(/_/g, ' ').toUpperCase()}</div>
                       <div style={styles.transactionDate}>
                         {formatDate(tx.created_at)}
                       </div>

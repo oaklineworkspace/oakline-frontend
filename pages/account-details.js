@@ -569,14 +569,14 @@ export default function AccountDetails() {
                     const txType = tx.transaction_type?.toLowerCase() || '';
                     const description = (tx.description || '').toLowerCase();
                     const amount = parseFloat(tx.amount) || 0;
-                    
+
                     // Check description for "transfer to" or "transfer from" - PRIORITY CHECK
                     const isTransferTo = description.includes('transfer to') || description.includes('sent to');
                     const isTransferFrom = description.includes('transfer from') || description.includes('received from');
-                    
+
                     // Determine if it's a credit (money in) or debit (money out)
                     let isCredit = false;
-                    
+
                     // PRIORITY: Check description first for transfer direction
                     if (isTransferTo) {
                       // Money going OUT - always RED for "transfer to"
@@ -607,17 +607,16 @@ export default function AccountDetails() {
                     else {
                       isCredit = amount >= 0;
                     }
-                    
+
                     return (
                       <div key={tx.id} style={styles.transactionItem}>
                         <div style={styles.transactionLeft}>
                           <span style={styles.transactionIcon}>
-                            {getTransactionIcon(tx.transaction_type)}
+                            {getTransactionIcon(tx.type || tx.transaction_type)}
                           </span>
                           <div style={styles.transactionInfo}>
                             <div style={styles.transactionDescription}>
-                              {tx.description || tx.transaction_type?.replace(/_/g, ' ').toUpperCase()}
-                            </div>
+                              {tx.description || (tx.type || tx.transaction_type)?.replace(/_/g, ' ').toUpperCase()}</div>
                             <div style={styles.transactionDate}>
                               {formatDate(tx.created_at)}
                             </div>
