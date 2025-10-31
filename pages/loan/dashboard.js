@@ -216,6 +216,11 @@ function LoanDashboardContent() {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
+  const getLoanProgress = (loan) => {
+    if (!loan.term_months || !loan.payments_made) return 0;
+    return Math.min(100, (loan.payments_made / loan.term_months) * 100);
+  };
+
   if (loading) {
     return (
       <div style={styles.container}>
@@ -232,24 +237,24 @@ function LoanDashboardContent() {
       <div style={styles.header}>
         <div style={styles.headerContent}>
           <div style={styles.headerLeft}>
-            <h1 style={styles.title}>My Loans</h1>
-            <p style={styles.subtitle}>Manage your loan portfolio</p>
+            <h1 style={styles.title}>Loan Management Center</h1>
+            <p style={styles.subtitle}>View, manage, and make payments on all your loans</p>
           </div>
           <Link href="/loan/apply" style={styles.applyButton}>
-            + Apply for Loan
+            + Apply for New Loan
           </Link>
         </div>
       </div>
 
       {error && (
         <div style={styles.errorAlert}>
-          <strong>Error:</strong> {error}
+          <strong>⚠️ Error:</strong> {error}
         </div>
       )}
 
       {success && (
         <div style={styles.successAlert}>
-          <strong>Success!</strong> {success}
+          <strong>✓ Success!</strong> {success}
         </div>
       )}
 
@@ -257,44 +262,82 @@ function LoanDashboardContent() {
         {loans.length === 0 ? (
           <div style={styles.emptyState}>
             <div style={styles.emptyIcon}>💼</div>
-            <h3 style={styles.emptyTitle}>No Loans Yet</h3>
-            <p style={styles.emptyText}>You haven't applied for any loans. Get started by applying for a loan.</p>
+            <h3 style={styles.emptyTitle}>No Active Loans</h3>
+            <p style={styles.emptyText}>You haven't applied for any loans yet. Start your journey toward your financial goals today.</p>
             <Link href="/loan/apply" style={styles.emptyButton}>
               Apply for a Loan
             </Link>
           </div>
         ) : (
           <>
-            {/* Loan Summary Cards */}
-            <div style={styles.summarySection}>
-              <h2 style={styles.sectionTitle}>Loan Summary</h2>
-              <div style={styles.summaryCards}>
+            {/* Portfolio Overview */}
+            <div style={styles.portfolioSection}>
+              <h2 style={styles.sectionTitle}>Portfolio Overview</h2>
+              <div style={styles.portfolioCards}>
+                <div style={styles.portfolioCard}>
+                  <div style={styles.portfolioIcon}>💰</div>
+                  <div style={styles.portfolioLabel}>Total Borrowed</div>
+                  <div style={styles.portfolioValue}>
+                    ${loans.reduce((sum, l) => sum + parseFloat(l.principal || 0), 0).toLocaleString()}
+                  </div>
+                </div>
+                <div style={styles.portfolioCard}>
+                  <div style={styles.portfolioIcon}>📊</div>
+                  <div style={styles.portfolioLabel}>Total Remaining</div>
+                  <div style={styles.portfolioValue}>
+                    ${loans.filter(l => l.status === 'active').reduce((sum, l) => sum + parseFloat(l.remaining_balance || 0), 0).toLocaleString()}
+                  </div>
+                </div>
+                <div style={styles.portfolioCard}>
+                  <div style={styles.portfolioIcon}>🔢</div>
+                  <div style={styles.portfolioLabel}>Active Loans</div>
+                  <div style={styles.portfolioValue}>
+                    {loans.filter(l => l.status === 'active').length}
+                  </div>
+                </div>
+                <div style={styles.portfolioCard}>
+                  <div style={styles.portfolioIcon}>💳</div>
+                  <div style={styles.portfolioLabel}>Monthly Payments</div>
+                  <div style={styles.portfolioValue}>
+                    ${loans.filter(l => l.status === 'active').reduce((sum, l) => sum + calculateMonthlyPayment(l), 0).toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Loan Cards */}
+            <div style={styles.loansSection}>
+              <h2 style={styles.sectionTitle}>My Loans</h2>
+              <div style={styles.loanCards}>
                 {loans.map(loan => {
                   const monthlyPayment = calculateMonthlyPayment(loan);
                   const remainingBalance = loan.remaining_balance || 0;
+                  const progress = getLoanProgress(loan);
 
                   return (
                     <div 
                       key={loan.id} 
-                      style={styles.loanSummaryCard}
+                      style={styles.loanCard}
                       onClick={() => {
                         setSelectedLoan(loan);
                         setActiveTab('overview');
                       }}
                     >
                       <div style={styles.loanCardHeader}>
-                        <div style={styles.loanTypeSection}>
+                        <div style={styles.loanCardHeaderLeft}>
                           <span style={styles.loanIcon}>
                             {loan.loan_type === 'personal' ? '👤' : 
-                             loan.loan_type === 'auto' ? '🚗' : 
-                             loan.loan_type === 'home' ? '🏠' : 
-                             loan.loan_type === 'business' ? '💼' : '💰'}
+                             loan.loan_type === 'auto_loan' ? '🚗' : 
+                             loan.loan_type === 'home_mortgage' ? '🏠' : 
+                             loan.loan_type === 'business' ? '💼' : 
+                             loan.loan_type === 'student' ? '🎓' : 
+                             loan.loan_type === 'home_equity' ? '🏡' : '💰'}
                           </span>
                           <div>
-                            <h3 style={styles.loanTypeName}>
+                            <h3 style={styles.loanCardTitle}>
                               {loan.loan_type?.replace('_', ' ').toUpperCase()} Loan
                             </h3>
-                            <p style={styles.loanDate}>
+                            <p style={styles.loanCardDate}>
                               Applied: {new Date(loan.created_at).toLocaleDateString()}
                             </p>
                           </div>
@@ -310,35 +353,69 @@ function LoanDashboardContent() {
                       </div>
 
                       <div style={styles.loanCardBody}>
-                        <div style={styles.loanDetailRow}>
-                          <span style={styles.detailLabel}>Principal Amount</span>
-                          <span style={styles.detailValue}>${parseFloat(loan.principal).toLocaleString()}</span>
+                        <div style={styles.loanRow}>
+                          <span style={styles.loanLabel}>Loan Amount</span>
+                          <span style={styles.loanValue}>${parseFloat(loan.principal).toLocaleString()}</span>
                         </div>
                         
                         {loan.status === 'active' && (
                           <>
-                            <div style={styles.loanDetailRow}>
-                              <span style={styles.detailLabel}>Remaining Balance</span>
-                              <span style={{...styles.detailValue, color: '#10b981'}}>
+                            <div style={styles.loanRow}>
+                              <span style={styles.loanLabel}>Remaining Balance</span>
+                              <span style={{...styles.loanValue, color: '#10b981', fontWeight: '700'}}>
                                 ${parseFloat(remainingBalance).toLocaleString()}
                               </span>
                             </div>
-                            <div style={styles.loanDetailRow}>
-                              <span style={styles.detailLabel}>Monthly Payment</span>
-                              <span style={styles.detailValue}>${monthlyPayment.toFixed(2)}</span>
+                            <div style={styles.loanRow}>
+                              <span style={styles.loanLabel}>Monthly Payment</span>
+                              <span style={styles.loanValue}>${monthlyPayment.toFixed(2)}</span>
                             </div>
-                            <div style={styles.loanDetailRow}>
-                              <span style={styles.detailLabel}>Next Payment</span>
-                              <span style={styles.detailValue}>
+                            <div style={styles.loanRow}>
+                              <span style={styles.loanLabel}>Interest Rate</span>
+                              <span style={styles.loanValue}>{loan.interest_rate}% APR</span>
+                            </div>
+                            <div style={styles.loanRow}>
+                              <span style={styles.loanLabel}>Next Payment</span>
+                              <span style={styles.loanValue}>
                                 {loan.next_payment_date ? new Date(loan.next_payment_date).toLocaleDateString() : 'N/A'}
                               </span>
+                            </div>
+
+                            {/* Progress Bar */}
+                            <div style={styles.progressSection}>
+                              <div style={styles.progressHeader}>
+                                <span style={styles.progressLabel}>Payment Progress</span>
+                                <span style={styles.progressText}>{loan.payments_made || 0}/{loan.term_months}</span>
+                              </div>
+                              <div style={styles.progressBar}>
+                                <div style={{...styles.progressFill, width: `${progress}%`}}></div>
+                              </div>
+                              <span style={styles.progressPercent}>{progress.toFixed(1)}% Complete</span>
                             </div>
                           </>
                         )}
 
+                        {loan.status === 'pending' && (
+                          <div style={styles.pendingNotice}>
+                            ⏳ Your application is being reviewed. You'll receive a notification once approved.
+                          </div>
+                        )}
+
+                        {loan.status === 'rejected' && loan.rejection_reason && (
+                          <div style={styles.rejectedNotice}>
+                            ❌ Application was not approved: {loan.rejection_reason}
+                          </div>
+                        )}
+
                         {loan.is_late && (
                           <div style={styles.warningBadge}>
-                            ⚠️ Payment Overdue
+                            ⚠️ Payment Overdue - Late fee applied
+                          </div>
+                        )}
+
+                        {loan.auto_payment_enabled && (
+                          <div style={styles.autoPayBadge}>
+                            ✓ Auto-Pay Enabled
                           </div>
                         )}
                       </div>
@@ -379,17 +456,19 @@ function LoanDashboardContent() {
                   <h2 style={styles.sectionTitle}>
                     {selectedLoan.loan_type?.replace('_', ' ').toUpperCase()} Loan Details
                   </h2>
-                  {selectedLoan.status === 'active' && (
-                    <button
-                      onClick={() => {
-                        setEarlyPayoffModal(selectedLoan);
-                        fetchEarlyPayoffData(selectedLoan.id);
-                      }}
-                      style={styles.earlyPayoffButton}
-                    >
-                      Early Payoff
-                    </button>
-                  )}
+                  <div style={styles.detailsActions}>
+                    {selectedLoan.status === 'active' && (
+                      <button
+                        onClick={() => {
+                          setEarlyPayoffModal(selectedLoan);
+                          fetchEarlyPayoffData(selectedLoan.id);
+                        }}
+                        style={styles.earlyPayoffButton}
+                      >
+                        💰 Early Payoff
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div style={styles.tabs}>
@@ -400,7 +479,7 @@ function LoanDashboardContent() {
                       ...(activeTab === 'overview' ? styles.tabActive : {})
                     }}
                   >
-                    Overview
+                    📋 Overview
                   </button>
                   {selectedLoan.status === 'active' && (
                     <>
@@ -411,7 +490,7 @@ function LoanDashboardContent() {
                           ...(activeTab === 'amortization' ? styles.tabActive : {})
                         }}
                       >
-                        Schedule
+                        📊 Payment Schedule
                       </button>
                       <button
                         onClick={() => setActiveTab('history')}
@@ -420,7 +499,7 @@ function LoanDashboardContent() {
                           ...(activeTab === 'history' ? styles.tabActive : {})
                         }}
                       >
-                        History
+                        📜 Payment History
                       </button>
                       <button
                         onClick={() => setActiveTab('autopay')}
@@ -429,7 +508,7 @@ function LoanDashboardContent() {
                           ...(activeTab === 'autopay' ? styles.tabActive : {})
                         }}
                       >
-                        Auto-Pay
+                        ⚙️ Auto-Pay Settings
                       </button>
                     </>
                   )}
@@ -437,73 +516,97 @@ function LoanDashboardContent() {
 
                 <div style={styles.tabContent}>
                   {activeTab === 'overview' && (
-                    <div style={styles.overviewGrid}>
-                      <div style={styles.infoCard}>
-                        <div style={styles.infoLabel}>Principal Amount</div>
-                        <div style={styles.infoValue}>${parseFloat(selectedLoan.principal).toLocaleString()}</div>
-                      </div>
-                      <div style={styles.infoCard}>
-                        <div style={styles.infoLabel}>Interest Rate</div>
-                        <div style={styles.infoValue}>{selectedLoan.interest_rate}% APR</div>
-                      </div>
-                      <div style={styles.infoCard}>
-                        <div style={styles.infoLabel}>Loan Term</div>
-                        <div style={styles.infoValue}>{selectedLoan.term_months} months</div>
-                      </div>
-                      <div style={styles.infoCard}>
-                        <div style={styles.infoLabel}>Monthly Payment</div>
-                        <div style={styles.infoValue}>${calculateMonthlyPayment(selectedLoan).toFixed(2)}</div>
-                      </div>
-                      
-                      {selectedLoan.status === 'active' && (
-                        <>
-                          <div style={styles.infoCard}>
-                            <div style={styles.infoLabel}>Remaining Balance</div>
-                            <div style={{...styles.infoValue, color: '#10b981'}}>
-                              ${parseFloat(selectedLoan.remaining_balance || 0).toLocaleString()}
+                    <div style={styles.overviewSection}>
+                      <div style={styles.overviewGrid}>
+                        <div style={styles.infoCard}>
+                          <div style={styles.infoLabel}>Principal Amount</div>
+                          <div style={styles.infoValue}>${parseFloat(selectedLoan.principal).toLocaleString()}</div>
+                        </div>
+                        <div style={styles.infoCard}>
+                          <div style={styles.infoLabel}>Interest Rate</div>
+                          <div style={styles.infoValue}>{selectedLoan.interest_rate}% APR</div>
+                        </div>
+                        <div style={styles.infoCard}>
+                          <div style={styles.infoLabel}>Loan Term</div>
+                          <div style={styles.infoValue}>{selectedLoan.term_months} months</div>
+                        </div>
+                        <div style={styles.infoCard}>
+                          <div style={styles.infoLabel}>Monthly Payment</div>
+                          <div style={styles.infoValue}>${calculateMonthlyPayment(selectedLoan).toFixed(2)}</div>
+                        </div>
+                        
+                        {selectedLoan.status === 'active' && (
+                          <>
+                            <div style={styles.infoCard}>
+                              <div style={styles.infoLabel}>Remaining Balance</div>
+                              <div style={{...styles.infoValue, color: '#10b981'}}>
+                                ${parseFloat(selectedLoan.remaining_balance || 0).toLocaleString()}
+                              </div>
                             </div>
-                          </div>
-                          <div style={styles.infoCard}>
-                            <div style={styles.infoLabel}>Next Payment Date</div>
-                            <div style={styles.infoValue}>
-                              {selectedLoan.next_payment_date ? new Date(selectedLoan.next_payment_date).toLocaleDateString() : 'N/A'}
+                            <div style={styles.infoCard}>
+                              <div style={styles.infoLabel}>Total Paid</div>
+                              <div style={styles.infoValue}>
+                                ${(parseFloat(selectedLoan.principal) - parseFloat(selectedLoan.remaining_balance || selectedLoan.principal)).toLocaleString()}
+                              </div>
                             </div>
-                          </div>
-                          <div style={styles.infoCard}>
-                            <div style={styles.infoLabel}>Payments Made</div>
-                            <div style={styles.infoValue}>
-                              {selectedLoan.payments_made || 0} of {selectedLoan.term_months}
+                            <div style={styles.infoCard}>
+                              <div style={styles.infoLabel}>Next Payment Date</div>
+                              <div style={styles.infoValue}>
+                                {selectedLoan.next_payment_date ? new Date(selectedLoan.next_payment_date).toLocaleDateString() : 'N/A'}
+                              </div>
                             </div>
-                          </div>
-                          <div style={styles.infoCard}>
-                            <div style={styles.infoLabel}>Auto-Payment</div>
-                            <div style={styles.infoValue}>
-                              {selectedLoan.auto_payment_enabled ? (
-                                <span style={{color: '#10b981'}}>✓ Enabled</span>
-                              ) : (
-                                <span style={{color: '#6b7280'}}>Disabled</span>
-                              )}
+                            <div style={styles.infoCard}>
+                              <div style={styles.infoLabel}>Payments Made</div>
+                              <div style={styles.infoValue}>
+                                {selectedLoan.payments_made || 0} of {selectedLoan.term_months}
+                              </div>
                             </div>
-                          </div>
-                        </>
-                      )}
+                            <div style={styles.infoCard}>
+                              <div style={styles.infoLabel}>Auto-Payment Status</div>
+                              <div style={styles.infoValue}>
+                                {selectedLoan.auto_payment_enabled ? (
+                                  <span style={{color: '#10b981'}}>✓ Enabled</span>
+                                ) : (
+                                  <span style={{color: '#6b7280'}}>Disabled</span>
+                                )}
+                              </div>
+                            </div>
+                            {selectedLoan.disbursed_at && (
+                              <div style={styles.infoCard}>
+                                <div style={styles.infoLabel}>Disbursement Date</div>
+                                <div style={styles.infoValue}>
+                                  {new Date(selectedLoan.disbursed_at).toLocaleDateString()}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
 
                       {selectedLoan.purpose && (
-                        <div style={{...styles.infoCard, gridColumn: '1 / -1'}}>
-                          <div style={styles.infoLabel}>Loan Purpose</div>
+                        <div style={styles.purposeSection}>
+                          <div style={styles.purposeLabel}>Loan Purpose</div>
                           <div style={styles.purposeText}>{selectedLoan.purpose}</div>
                         </div>
                       )}
 
                       {selectedLoan.is_late && (
-                        <div style={{...styles.warningCard, gridColumn: '1 / -1'}}>
+                        <div style={styles.warningCard}>
                           <span style={styles.warningIcon}>⚠️</span>
                           <div>
                             <strong>Late Payment Notice:</strong> Your loan payment is overdue. 
                             {selectedLoan.late_fee_amount > 0 && (
                               <span> A late fee of ${parseFloat(selectedLoan.late_fee_amount).toFixed(2)} has been applied.</span>
                             )}
+                            <p style={{marginTop: '8px', marginBottom: 0}}>Please make a payment as soon as possible to avoid additional fees.</p>
                           </div>
+                        </div>
+                      )}
+
+                      {selectedLoan.approval_notes && (
+                        <div style={styles.infoSection}>
+                          <div style={styles.infoSectionLabel}>Approval Notes</div>
+                          <div style={styles.infoSectionText}>{selectedLoan.approval_notes}</div>
                         </div>
                       )}
                     </div>
@@ -666,9 +769,9 @@ function LoanDashboardContent() {
 const styles = {
   container: {
     minHeight: '100vh',
-    background: '#f7f9fc',
+    background: 'linear-gradient(to bottom, #f0f9ff 0%, #f7f9fc 100%)',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    paddingBottom: '2rem'
+    paddingBottom: '3rem'
   },
   loadingContainer: {
     display: 'flex',
@@ -692,13 +795,13 @@ const styles = {
     textAlign: 'center'
   },
   header: {
-    background: '#1a365d',
+    background: 'linear-gradient(135deg, #1a365d 0%, #0f172a 100%)',
     color: 'white',
-    padding: '1.5rem 1rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+    padding: '2rem 1rem',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
   },
   headerContent: {
-    maxWidth: '1200px',
+    maxWidth: '1400px',
     margin: '0 auto',
     display: 'flex',
     justifyContent: 'space-between',
@@ -707,246 +810,373 @@ const styles = {
     flexWrap: 'wrap'
   },
   headerLeft: {
-    flex: 1
+    flex: 1,
+    minWidth: '250px'
   },
   title: {
-    fontSize: 'clamp(1.5rem, 4vw, 2rem)',
-    fontWeight: '700',
-    margin: '0 0 0.25rem 0'
+    fontSize: 'clamp(1.75rem, 4vw, 2.25rem)',
+    fontWeight: '800',
+    margin: '0 0 0.5rem 0',
+    letterSpacing: '-0.02em'
   },
   subtitle: {
-    fontSize: 'clamp(0.875rem, 2vw, 1rem)',
+    fontSize: 'clamp(0.9rem, 2vw, 1.05rem)',
     color: '#bfdbfe',
-    margin: 0
+    margin: 0,
+    fontWeight: '400'
   },
   applyButton: {
-    padding: '0.75rem 1.5rem',
-    fontSize: '0.95rem',
-    fontWeight: '600',
+    padding: '0.875rem 1.75rem',
+    fontSize: '1rem',
+    fontWeight: '700',
     color: '#fff',
-    background: '#10b981',
+    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '10px',
     textDecoration: 'none',
     cursor: 'pointer',
-    transition: 'all 0.2s',
+    transition: 'all 0.3s',
+    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
     whiteSpace: 'nowrap'
   },
   main: {
-    maxWidth: '1200px',
+    maxWidth: '1400px',
     margin: '0 auto',
-    padding: '1.5rem 1rem'
+    padding: '2rem 1rem'
   },
   errorAlert: {
-    maxWidth: '1200px',
-    margin: '1rem auto',
-    padding: '1rem',
+    maxWidth: '1400px',
+    margin: '1.5rem auto',
+    padding: '1rem 1.25rem',
     backgroundColor: '#fef2f2',
     border: '1px solid #fee2e2',
-    borderRadius: '8px',
-    color: '#ef4444',
-    fontSize: '0.9rem'
+    borderLeft: '4px solid #ef4444',
+    borderRadius: '10px',
+    color: '#dc2626',
+    fontSize: '0.95rem'
   },
   successAlert: {
-    maxWidth: '1200px',
-    margin: '1rem auto',
-    padding: '1rem',
+    maxWidth: '1400px',
+    margin: '1.5rem auto',
+    padding: '1rem 1.25rem',
     backgroundColor: '#f0fdf4',
     border: '1px solid #dcfce7',
-    borderRadius: '8px',
-    color: '#10b981',
-    fontSize: '0.9rem'
+    borderLeft: '4px solid #10b981',
+    borderRadius: '10px',
+    color: '#059669',
+    fontSize: '0.95rem'
   },
   emptyState: {
     textAlign: 'center',
-    padding: 'clamp(2rem, 5vw, 4rem) 1rem',
+    padding: 'clamp(3rem, 6vw, 5rem) 1.5rem',
     backgroundColor: '#fff',
-    borderRadius: '12px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    borderRadius: '16px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
   },
   emptyIcon: {
-    fontSize: 'clamp(3rem, 8vw, 4rem)',
-    marginBottom: '1rem'
+    fontSize: 'clamp(3.5rem, 10vw, 5rem)',
+    marginBottom: '1.5rem'
   },
   emptyTitle: {
-    fontSize: 'clamp(1.25rem, 3vw, 1.5rem)',
-    fontWeight: '700',
+    fontSize: 'clamp(1.5rem, 3.5vw, 1.875rem)',
+    fontWeight: '800',
     color: '#1f2937',
-    marginBottom: '0.5rem'
+    marginBottom: '0.75rem'
   },
   emptyText: {
-    fontSize: 'clamp(0.875rem, 2vw, 1rem)',
+    fontSize: 'clamp(0.95rem, 2vw, 1.05rem)',
     color: '#6b7280',
-    marginBottom: '1.5rem'
+    marginBottom: '2rem',
+    maxWidth: '500px',
+    margin: '0 auto 2rem'
   },
   emptyButton: {
     display: 'inline-block',
-    padding: '0.75rem 2rem',
-    fontSize: '1rem',
-    fontWeight: '600',
+    padding: '1rem 2.5rem',
+    fontSize: '1.05rem',
+    fontWeight: '700',
     color: '#fff',
-    backgroundColor: '#10b981',
-    borderRadius: '8px',
-    textDecoration: 'none'
+    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    borderRadius: '10px',
+    textDecoration: 'none',
+    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
   },
-  summarySection: {
-    marginBottom: '2rem'
+  portfolioSection: {
+    marginBottom: '2.5rem'
   },
   sectionTitle: {
-    fontSize: 'clamp(1.25rem, 3vw, 1.5rem)',
-    fontWeight: '700',
+    fontSize: 'clamp(1.35rem, 3vw, 1.625rem)',
+    fontWeight: '800',
     color: '#1f2937',
-    marginBottom: '1rem'
+    marginBottom: '1.25rem'
   },
-  summaryCards: {
+  portfolioCards: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
-    gap: '1rem'
+    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
+    gap: '1.25rem'
   },
-  loanSummaryCard: {
+  portfolioCard: {
     backgroundColor: '#fff',
-    borderRadius: '12px',
-    padding: '1.25rem',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    borderRadius: '14px',
+    padding: '1.75rem',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    border: '1px solid #e5e7eb',
+    textAlign: 'center',
+    transition: 'transform 0.2s, box-shadow 0.2s'
+  },
+  portfolioIcon: {
+    fontSize: '2.5rem',
+    marginBottom: '0.75rem'
+  },
+  portfolioLabel: {
+    fontSize: '0.85rem',
+    color: '#6b7280',
+    marginBottom: '0.5rem',
+    textTransform: 'uppercase',
+    fontWeight: '600',
+    letterSpacing: '0.5px'
+  },
+  portfolioValue: {
+    fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+    fontWeight: '800',
+    color: '#1f2937'
+  },
+  loansSection: {
+    marginBottom: '2.5rem'
+  },
+  loanCards: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 360px), 1fr))',
+    gap: '1.5rem'
+  },
+  loanCard: {
+    backgroundColor: '#fff',
+    borderRadius: '14px',
+    padding: '1.5rem',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
     border: '1px solid #e5e7eb',
     cursor: 'pointer',
-    transition: 'all 0.2s'
+    transition: 'all 0.3s'
   },
   loanCardHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: '1rem',
-    gap: '0.75rem',
+    marginBottom: '1.25rem',
+    gap: '1rem',
     flexWrap: 'wrap'
   },
-  loanTypeSection: {
+  loanCardHeaderLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.75rem',
-    flex: 1
+    gap: '1rem',
+    flex: 1,
+    minWidth: '0'
   },
   loanIcon: {
-    fontSize: '1.75rem'
+    fontSize: '2rem',
+    flexShrink: 0
   },
-  loanTypeName: {
-    fontSize: '1rem',
+  loanCardTitle: {
+    fontSize: '1.1rem',
     fontWeight: '700',
     color: '#1f2937',
-    margin: 0
+    margin: 0,
+    lineHeight: '1.3'
   },
-  loanDate: {
-    fontSize: '0.75rem',
+  loanCardDate: {
+    fontSize: '0.8rem',
     color: '#6b7280',
     margin: '0.25rem 0 0 0'
   },
   statusBadge: {
-    padding: '0.375rem 0.75rem',
-    borderRadius: '12px',
+    padding: '0.4rem 0.875rem',
+    borderRadius: '14px',
     fontSize: '0.75rem',
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#fff',
-    whiteSpace: 'nowrap'
+    whiteSpace: 'nowrap',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
   },
   loanCardBody: {
-    marginBottom: '1rem'
+    marginBottom: '1.25rem'
   },
-  loanDetailRow: {
+  loanRow: {
     display: 'flex',
     justifyContent: 'space-between',
-    padding: '0.5rem 0',
-    fontSize: '0.875rem',
-    borderBottom: '1px solid #f3f4f6'
+    padding: '0.625rem 0',
+    fontSize: '0.9rem',
+    borderBottom: '1px solid #f3f4f6',
+    gap: '1rem'
   },
-  detailLabel: {
+  loanLabel: {
     color: '#6b7280',
     fontWeight: '500'
   },
-  detailValue: {
+  loanValue: {
     color: '#1f2937',
+    fontWeight: '700',
+    textAlign: 'right'
+  },
+  progressSection: {
+    marginTop: '1rem',
+    padding: '1rem',
+    backgroundColor: '#f9fafb',
+    borderRadius: '8px'
+  },
+  progressHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginBottom: '0.5rem'
+  },
+  progressLabel: {
+    fontSize: '0.8rem',
+    fontWeight: '600',
+    color: '#374151'
+  },
+  progressText: {
+    fontSize: '0.8rem',
+    fontWeight: '700',
+    color: '#1f2937'
+  },
+  progressBar: {
+    width: '100%',
+    height: '10px',
+    backgroundColor: '#e5e7eb',
+    borderRadius: '6px',
+    overflow: 'hidden',
+    marginBottom: '0.4rem'
+  },
+  progressFill: {
+    height: '100%',
+    background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)',
+    borderRadius: '6px',
+    transition: 'width 0.5s ease'
+  },
+  progressPercent: {
+    fontSize: '0.75rem',
+    color: '#6b7280',
+    fontWeight: '600'
+  },
+  pendingNotice: {
+    marginTop: '1rem',
+    padding: '0.875rem',
+    backgroundColor: '#fef3c7',
+    border: '1px solid #fde68a',
+    borderRadius: '8px',
+    color: '#92400e',
+    fontSize: '0.85rem',
+    fontWeight: '600'
+  },
+  rejectedNotice: {
+    marginTop: '1rem',
+    padding: '0.875rem',
+    backgroundColor: '#fef2f2',
+    border: '1px solid #fee2e2',
+    borderRadius: '8px',
+    color: '#991b1b',
+    fontSize: '0.85rem',
     fontWeight: '600'
   },
   warningBadge: {
-    marginTop: '0.75rem',
-    padding: '0.5rem',
+    marginTop: '1rem',
+    padding: '0.75rem',
     backgroundColor: '#fef2f2',
     border: '1px solid #fee2e2',
-    borderRadius: '6px',
-    color: '#ef4444',
-    fontSize: '0.875rem',
-    fontWeight: '600',
+    borderRadius: '8px',
+    color: '#dc2626',
+    fontSize: '0.85rem',
+    fontWeight: '700',
+    textAlign: 'center'
+  },
+  autoPayBadge: {
+    marginTop: '0.75rem',
+    padding: '0.625rem',
+    backgroundColor: '#f0fdf4',
+    border: '1px solid #dcfce7',
+    borderRadius: '8px',
+    color: '#059669',
+    fontSize: '0.8rem',
+    fontWeight: '700',
     textAlign: 'center'
   },
   loanCardActions: {
     display: 'flex',
-    gap: '0.5rem',
-    marginTop: '1rem'
+    gap: '0.75rem',
+    marginTop: '1.25rem'
   },
   primaryActionButton: {
     flex: 1,
-    padding: '0.625rem 1rem',
-    fontSize: '0.875rem',
-    fontWeight: '600',
+    padding: '0.75rem 1rem',
+    fontSize: '0.9rem',
+    fontWeight: '700',
     color: '#fff',
-    backgroundColor: '#10b981',
+    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '8px',
     cursor: 'pointer',
     transition: 'all 0.2s'
   },
   secondaryActionButton: {
     flex: 1,
-    padding: '0.625rem 1rem',
-    fontSize: '0.875rem',
-    fontWeight: '600',
+    padding: '0.75rem 1rem',
+    fontSize: '0.9rem',
+    fontWeight: '700',
     color: '#1a365d',
     backgroundColor: '#f3f4f6',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '8px',
     cursor: 'pointer',
     transition: 'all 0.2s'
   },
   detailsSection: {
     backgroundColor: '#fff',
-    borderRadius: '12px',
-    padding: '1.5rem',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    borderRadius: '14px',
+    padding: '2rem',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    border: '1px solid #e5e7eb'
   },
   detailsHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '1.5rem',
+    marginBottom: '1.75rem',
     gap: '1rem',
     flexWrap: 'wrap'
   },
+  detailsActions: {
+    display: 'flex',
+    gap: '0.75rem',
+    flexWrap: 'wrap'
+  },
   earlyPayoffButton: {
-    padding: '0.625rem 1.25rem',
-    fontSize: '0.875rem',
-    fontWeight: '600',
+    padding: '0.75rem 1.5rem',
+    fontSize: '0.9rem',
+    fontWeight: '700',
     color: '#fff',
-    backgroundColor: '#3b82f6',
+    background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '8px',
     cursor: 'pointer',
     transition: 'all 0.2s'
   },
   tabs: {
     display: 'flex',
     borderBottom: '2px solid #e5e7eb',
-    marginBottom: '1.5rem',
+    marginBottom: '2rem',
     gap: '0.5rem',
     overflowX: 'auto',
     WebkitOverflowScrolling: 'touch'
   },
   tab: {
-    padding: '0.75rem 1rem',
-    fontSize: '0.875rem',
-    fontWeight: '600',
+    padding: '0.875rem 1.25rem',
+    fontSize: '0.9rem',
+    fontWeight: '700',
     color: '#6b7280',
     background: 'none',
     border: 'none',
-    borderBottom: '2px solid transparent',
+    borderBottom: '3px solid transparent',
     cursor: 'pointer',
     transition: 'all 0.2s',
     whiteSpace: 'nowrap'
@@ -956,51 +1186,90 @@ const styles = {
     borderBottomColor: '#10b981'
   },
   tabContent: {
-    minHeight: '200px'
+    minHeight: '300px'
+  },
+  overviewSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2rem'
   },
   overviewGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))',
-    gap: '1rem'
+    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))',
+    gap: '1.25rem'
   },
   infoCard: {
     backgroundColor: '#f9fafb',
-    padding: '1rem',
-    borderRadius: '8px',
+    padding: '1.25rem',
+    borderRadius: '10px',
     border: '1px solid #e5e7eb'
   },
   infoLabel: {
     fontSize: '0.75rem',
     color: '#6b7280',
-    marginBottom: '0.5rem',
+    marginBottom: '0.625rem',
     textTransform: 'uppercase',
-    fontWeight: '600'
+    fontWeight: '700',
+    letterSpacing: '0.5px'
   },
   infoValue: {
-    fontSize: 'clamp(1.25rem, 3vw, 1.5rem)',
-    fontWeight: '700',
+    fontSize: 'clamp(1.5rem, 3vw, 1.75rem)',
+    fontWeight: '800',
     color: '#1f2937'
   },
+  purposeSection: {
+    backgroundColor: '#f9fafb',
+    padding: '1.5rem',
+    borderRadius: '10px',
+    border: '1px solid #e5e7eb'
+  },
+  purposeLabel: {
+    fontSize: '0.75rem',
+    color: '#6b7280',
+    marginBottom: '0.75rem',
+    textTransform: 'uppercase',
+    fontWeight: '700',
+    letterSpacing: '0.5px'
+  },
   purposeText: {
-    fontSize: '0.875rem',
+    fontSize: '0.95rem',
     color: '#374151',
-    lineHeight: '1.6',
-    marginTop: '0.5rem'
+    lineHeight: '1.7'
   },
   warningCard: {
     backgroundColor: '#fef2f2',
     border: '1px solid #fee2e2',
-    borderRadius: '8px',
-    padding: '1rem',
+    borderRadius: '10px',
+    padding: '1.25rem',
     display: 'flex',
-    gap: '0.75rem',
+    gap: '1rem',
     alignItems: 'flex-start',
-    color: '#ef4444',
-    fontSize: '0.875rem'
+    color: '#dc2626',
+    fontSize: '0.9rem',
+    lineHeight: '1.6'
   },
   warningIcon: {
-    fontSize: '1.25rem',
+    fontSize: '1.5rem',
     flexShrink: 0
+  },
+  infoSection: {
+    backgroundColor: '#eff6ff',
+    border: '1px solid #bfdbfe',
+    borderRadius: '10px',
+    padding: '1.25rem'
+  },
+  infoSectionLabel: {
+    fontSize: '0.75rem',
+    color: '#1e40af',
+    marginBottom: '0.75rem',
+    textTransform: 'uppercase',
+    fontWeight: '700',
+    letterSpacing: '0.5px'
+  },
+  infoSectionText: {
+    fontSize: '0.95rem',
+    color: '#1e3a8a',
+    lineHeight: '1.7'
   },
   modalOverlay: {
     position: 'fixed',
@@ -1008,7 +1277,7 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1017,87 +1286,88 @@ const styles = {
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderRadius: '12px',
-    padding: 'clamp(1.5rem, 4vw, 2rem)',
-    maxWidth: '500px',
+    borderRadius: '14px',
+    padding: 'clamp(1.75rem, 4vw, 2.5rem)',
+    maxWidth: '550px',
     width: '100%',
     maxHeight: '90vh',
     overflowY: 'auto'
   },
   modalTitle: {
-    fontSize: 'clamp(1.25rem, 3vw, 1.5rem)',
-    fontWeight: '700',
+    fontSize: 'clamp(1.5rem, 3vw, 1.75rem)',
+    fontWeight: '800',
     color: '#1f2937',
-    marginBottom: '1rem'
+    marginBottom: '1.25rem'
   },
   modalLoanInfo: {
     backgroundColor: '#f9fafb',
-    padding: '1rem',
-    borderRadius: '8px',
-    marginBottom: '1.5rem',
-    fontSize: '0.875rem',
+    padding: '1.25rem',
+    borderRadius: '10px',
+    marginBottom: '1.75rem',
+    fontSize: '0.9rem',
     lineHeight: '1.8'
   },
   formGroup: {
-    marginBottom: '1.5rem'
+    marginBottom: '1.75rem'
   },
   label: {
     display: 'block',
-    fontSize: '0.875rem',
-    fontWeight: '600',
+    fontSize: '0.9rem',
+    fontWeight: '700',
     color: '#374151',
-    marginBottom: '0.5rem'
+    marginBottom: '0.625rem'
   },
   input: {
     width: '100%',
-    padding: '0.75rem',
+    padding: '0.875rem',
     fontSize: '1rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '6px',
-    boxSizing: 'border-box'
+    border: '2px solid #d1d5db',
+    borderRadius: '8px',
+    boxSizing: 'border-box',
+    transition: 'border-color 0.2s'
   },
   quickActions: {
     display: 'flex',
-    gap: '0.5rem',
-    marginTop: '0.75rem',
+    gap: '0.75rem',
+    marginTop: '1rem',
     flexWrap: 'wrap'
   },
   quickButton: {
     flex: 1,
-    minWidth: '120px',
-    padding: '0.5rem 1rem',
-    fontSize: '0.875rem',
-    fontWeight: '600',
+    minWidth: '140px',
+    padding: '0.625rem 1rem',
+    fontSize: '0.85rem',
+    fontWeight: '700',
     color: '#10b981',
     backgroundColor: '#f0fdf4',
     border: '1px solid #dcfce7',
-    borderRadius: '6px',
+    borderRadius: '8px',
     cursor: 'pointer'
   },
   modalButtons: {
     display: 'flex',
-    gap: '0.75rem',
+    gap: '1rem',
     justifyContent: 'flex-end',
     flexWrap: 'wrap'
   },
   cancelButton: {
-    padding: '0.75rem 1.5rem',
-    fontSize: '0.95rem',
-    fontWeight: '600',
+    padding: '0.875rem 1.75rem',
+    fontSize: '1rem',
+    fontWeight: '700',
     color: '#374151',
     backgroundColor: '#f3f4f6',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '8px',
     cursor: 'pointer'
   },
   submitButton: {
-    padding: '0.75rem 1.5rem',
-    fontSize: '0.95rem',
-    fontWeight: '600',
+    padding: '0.875rem 1.75rem',
+    fontSize: '1rem',
+    fontWeight: '700',
     color: '#fff',
-    backgroundColor: '#10b981',
+    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '8px',
     cursor: 'pointer'
   },
   submitButtonDisabled: {
@@ -1105,48 +1375,48 @@ const styles = {
     cursor: 'not-allowed'
   },
   earlyPayoffInfo: {
-    marginBottom: '1.5rem'
+    marginBottom: '1.75rem'
   },
   earlyPayoffDesc: {
-    fontSize: '0.875rem',
+    fontSize: '0.9rem',
     color: '#6b7280',
-    marginBottom: '1rem',
-    lineHeight: '1.5'
+    marginBottom: '1.25rem',
+    lineHeight: '1.6'
   },
   earlyPayoffGrid: {
     backgroundColor: '#f9fafb',
-    padding: '1rem',
-    borderRadius: '8px',
+    padding: '1.5rem',
+    borderRadius: '10px',
     border: '1px solid #e5e7eb'
   },
   payoffRow: {
     display: 'flex',
     justifyContent: 'space-between',
-    padding: '0.75rem 0',
-    fontSize: '0.875rem',
+    padding: '0.875rem 0',
+    fontSize: '0.9rem',
     color: '#374151',
     gap: '1rem'
   },
   divider: {
     height: '1px',
     backgroundColor: '#e5e7eb',
-    margin: '0.75rem 0'
+    margin: '1rem 0'
   },
   savingsBox: {
     backgroundColor: '#f0fdf4',
     border: '1px solid #dcfce7',
-    borderRadius: '6px',
-    padding: '0.75rem',
-    marginTop: '0.75rem',
+    borderRadius: '8px',
+    padding: '1rem',
+    marginTop: '1rem',
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
-    color: '#10b981',
-    fontWeight: '600',
-    fontSize: '0.875rem'
+    gap: '0.75rem',
+    color: '#059669',
+    fontWeight: '700',
+    fontSize: '0.9rem'
   },
   savingsIcon: {
-    fontSize: '1.25rem'
+    fontSize: '1.5rem'
   }
 };
 
