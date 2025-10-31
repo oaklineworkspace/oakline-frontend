@@ -358,7 +358,12 @@ export default function WireTransferPage() {
                 />
               </div>
 
-              <button style={styles.primaryButton} onClick={handleNext}>
+              <button 
+                style={styles.primaryButton} 
+                onClick={handleNext}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#1e3a8a'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#1e40af'}
+              >
                 Continue to Review →
               </button>
             </div>
@@ -422,7 +427,12 @@ export default function WireTransferPage() {
                 <button style={styles.backButton} onClick={() => setStep(1)}>
                   ← Back
                 </button>
-                <button style={styles.primaryButton} onClick={sendVerificationCode}>
+                <button 
+                  style={styles.primaryButton} 
+                  onClick={sendVerificationCode}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#1e3a8a'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#1e40af'}
+                >
                   Send Verification Code
                 </button>
               </div>
@@ -480,7 +490,13 @@ export default function WireTransferPage() {
                 <button style={styles.cancelButton} onClick={() => setShowVerificationModal(false)}>
                   Cancel
                 </button>
-                <button style={styles.confirmButton} onClick={completeWireTransfer} disabled={loading}>
+                <button 
+                  style={styles.confirmButton} 
+                  onClick={completeWireTransfer} 
+                  disabled={loading}
+                  onMouseEnter={(e) => !loading && (e.target.style.backgroundColor = '#1e3a8a')}
+                  onMouseLeave={(e) => !loading && (e.target.style.backgroundColor = '#1e40af')}
+                >
                   {loading ? 'Processing...' : 'Complete Transfer'}
                 </button>
               </div>
@@ -524,13 +540,15 @@ const styles = {
   },
   backButton: {
     padding: '0.5rem 1rem',
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#1e40af',
     color: 'white',
     textDecoration: 'none',
     borderRadius: '8px',
     fontSize: '0.9rem',
     border: 'none',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    transition: 'all 0.3s',
+    boxShadow: '0 2px 8px rgba(30, 64, 175, 0.3)'
   },
   content: {
     padding: '2rem',
@@ -647,13 +665,15 @@ const styles = {
   primaryButton: {
     width: '100%',
     padding: '1rem',
-    backgroundColor: '#d4af37',
-    color: '#0a1a2f',
+    backgroundColor: '#1e40af',
+    color: '#ffffff',
     border: 'none',
     borderRadius: '12px',
     fontSize: '1rem',
     fontWeight: '600',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    transition: 'all 0.3s',
+    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.4)'
   },
   buttonRow: {
     display: 'flex',
@@ -795,13 +815,15 @@ const styles = {
   confirmButton: {
     flex: 1,
     padding: '0.875rem',
-    backgroundColor: '#d4af37',
-    color: '#0a1a2f',
+    backgroundColor: '#1e40af',
+    color: '#ffffff',
     border: 'none',
     borderRadius: '12px',
     fontSize: '0.9rem',
     fontWeight: '600',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    transition: 'all 0.3s',
+    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.4)'
   },
   loadingContainer: {
     display: 'flex',

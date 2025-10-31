@@ -1,14 +1,11 @@
+
 import { useState, useEffect } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Head from 'next/head';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
-
-function DepositForm() {
+export default function DepositReal() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [accounts, setAccounts] = useState([]);
@@ -21,11 +18,17 @@ function DepositForm() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const [formData, setFormData] = useState({
-    accountId: '',
-    amount: '',
-    description: ''
-  });
+  const [pageLoading, setPageLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     checkUser();
@@ -33,22 +36,21 @@ function DepositForm() {
 
   const checkUser = async () => {
     try {
-      setLoading(true);
+      setPageLoading(true);
       setError('');
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        router.push('/sign-in');
         return;
       }
-      setUser(user);
-      await fetchAccounts(user);
+      setUser(session.user);
+      await fetchAccounts(session.user);
     } catch (err) {
       console.error('Error checking user:', err);
       setError('Failed to load user data. Please log in again.');
-      setMessage('Failed to load user data. Please log in again.');
-      router.push('/login');
+      router.push('/sign-in');
     } finally {
-      setLoading(false);
+      setPageLoading(false);
     }
   };
 
@@ -56,55 +58,24 @@ function DepositForm() {
     try {
       setError('');
 
-      // First try direct user_id match (most reliable)
-      let accountsData = [];
-
-      const { data: accountsByUserId, error: userIdError } = await supabase
+      const { data: accountsData, error: accountsError } = await supabase
         .from('accounts')
         .select('*')
         .eq('user_id', user.id)
         .eq('status', 'active')
         .order('created_at', { ascending: true });
 
-      if (accountsByUserId && accountsByUserId.length > 0) {
-        accountsData = accountsByUserId;
-      } else {
-        // Try to get user's application to find linked accounts
-        const { data: userApplication, error: appError } = await supabase
-          .from('applications')
-          .select('id')
-          .eq('email', user.email)
-          .single();
+      if (accountsError) throw accountsError;
 
-        if (userApplication && !appError) {
-          // Try to find accounts linked to the application
-          const { data: accountsByAppId, error: error1 } = await supabase
-            .from('accounts')
-            .select('*')
-            .eq('application_id', userApplication.id)
-            .eq('status', 'active')
-            .order('created_at', { ascending: true });
-
-          if (accountsByAppId && accountsByAppId.length > 0) {
-            // Validate these accounts belong to current user
-            const validAccounts = accountsByAppId.filter(account => {
-              return account.email === user.email || account.user_email === user.email;
-            });
-            accountsData = validAccounts;
-          }
-        }
-      }
-
-      setAccounts(accountsData);
+      setAccounts(accountsData || []);
       if (accountsData && accountsData.length > 0) {
         setSelectedAccount(accountsData[0].id);
       } else {
-        setMessage('No accounts found. Please contact support or apply for an account first.');
+        setMessage('No active accounts found. Please apply for an account first.');
       }
     } catch (error) {
       console.error('Error fetching accounts:', error);
       setError('Unable to load accounts. Please try again.');
-      setMessage('Unable to load accounts. Please try again.');
     }
   };
 
@@ -122,7 +93,7 @@ function DepositForm() {
   };
 
   const uploadFile = async (file, userId, accountId) => {
-    const filename = `${userId}/${accountId}/${file.name}`;
+    const filename = `${userId}/${accountId}/${Date.now()}_${file.name}`;
     const filePath = `checks/${filename}`;
 
     const { error } = await supabase.storage.from('check-images').upload(filePath, file, {
@@ -170,11 +141,9 @@ function DepositForm() {
         throw new Error('Selected account not found.');
       }
 
-      // Upload check images
       const frontPath = await uploadFile(checkFront, user.id, selectedAccount);
       const backPath = await uploadFile(checkBack, user.id, selectedAccount);
 
-      // Submit check deposit for review
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch('/api/check-deposit-submit', {
         method: 'POST',
@@ -198,7 +167,6 @@ function DepositForm() {
 
       setMessage(`✓ Check deposit submitted successfully! Reference: ${result.reference_number}. Your deposit will be reviewed within 1-2 business days.`);
 
-      // Clear form
       setSelectedAccount(accounts[0]?.id || '');
       setAmount('');
       setCheckFront(null);
@@ -206,7 +174,6 @@ function DepositForm() {
       setFrontPreview('');
       setBackPreview('');
 
-      // Refresh accounts
       setTimeout(() => {
         fetchAccounts(user);
       }, 2000);
@@ -219,322 +186,393 @@ function DepositForm() {
     }
   };
 
-  if (loading) {
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount || 0);
+  };
+
+  const styles = {
+    container: {
+      minHeight: '100vh',
+      backgroundColor: '#f8fafc',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    },
+    header: {
+      backgroundColor: '#ffffff',
+      color: '#1e293b',
+      padding: isMobile ? '1rem 1.5rem' : '1.5rem 3rem',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      borderBottom: '1px solid #e2e8f0'
+    },
+    headerContent: {
+      maxWidth: '1400px',
+      margin: '0 auto',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: '1rem'
+    },
+    logoContainer: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem',
+      textDecoration: 'none',
+      color: '#1e293b'
+    },
+    logo: {
+      height: isMobile ? '40px' : '50px',
+      width: 'auto'
+    },
+    logoText: {
+      fontSize: isMobile ? '1.25rem' : '1.75rem',
+      fontWeight: '700',
+      background: 'linear-gradient(135deg, #1e40af 0%, #059669 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent'
+    },
+    backButton: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+      padding: isMobile ? '0.625rem 1rem' : '0.75rem 1.5rem',
+      backgroundColor: '#1e40af',
+      color: 'white',
+      textDecoration: 'none',
+      borderRadius: '10px',
+      fontSize: isMobile ? '0.875rem' : '0.95rem',
+      fontWeight: '600',
+      border: 'none',
+      transition: 'all 0.3s ease',
+      boxShadow: '0 2px 8px rgba(30, 64, 175, 0.3)'
+    },
+    main: {
+      maxWidth: '800px',
+      margin: '0 auto',
+      padding: isMobile ? '1.5rem 1rem' : '3rem 2rem'
+    },
+    card: {
+      backgroundColor: 'white',
+      borderRadius: '20px',
+      padding: isMobile ? '1.5rem' : '2.5rem',
+      boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
+      border: '1px solid #e2e8f0'
+    },
+    titleSection: {
+      textAlign: 'center',
+      marginBottom: isMobile ? '1.5rem' : '2rem'
+    },
+    title: {
+      fontSize: isMobile ? '1.75rem' : '2.5rem',
+      fontWeight: '800',
+      color: '#1e293b',
+      marginBottom: '0.75rem',
+      letterSpacing: '-0.02em'
+    },
+    subtitle: {
+      fontSize: isMobile ? '1rem' : '1.15rem',
+      color: '#64748b',
+      fontWeight: '400'
+    },
+    form: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: isMobile ? '1.25rem' : '1.75rem'
+    },
+    formGroup: {
+      marginBottom: '0'
+    },
+    label: {
+      display: 'block',
+      fontSize: isMobile ? '0.875rem' : '0.95rem',
+      fontWeight: '600',
+      color: '#374151',
+      marginBottom: '0.5rem'
+    },
+    select: {
+      width: '100%',
+      padding: isMobile ? '0.75rem' : '0.875rem',
+      border: '2px solid #e2e8f0',
+      borderRadius: '10px',
+      fontSize: isMobile ? '0.875rem' : '1rem',
+      backgroundColor: 'white',
+      transition: 'all 0.3s',
+      boxSizing: 'border-box',
+      outline: 'none'
+    },
+    input: {
+      width: '100%',
+      padding: isMobile ? '0.75rem' : '0.875rem',
+      border: '2px solid #e2e8f0',
+      borderRadius: '10px',
+      fontSize: isMobile ? '0.875rem' : '1rem',
+      transition: 'all 0.3s',
+      boxSizing: 'border-box',
+      outline: 'none',
+      backgroundColor: 'white'
+    },
+    fileInput: {
+      width: '100%',
+      padding: isMobile ? '0.75rem' : '0.875rem',
+      border: '2px solid #e2e8f0',
+      borderRadius: '10px',
+      fontSize: isMobile ? '0.875rem' : '1rem',
+      outline: 'none',
+      cursor: 'pointer',
+      backgroundColor: 'white'
+    },
+    previewImage: {
+      maxWidth: '100%',
+      height: 'auto',
+      maxHeight: '200px',
+      objectFit: 'contain',
+      marginTop: '1rem',
+      borderRadius: '10px',
+      border: '2px solid #e5e7eb'
+    },
+    submitButton: {
+      width: '100%',
+      padding: isMobile ? '1rem' : '1.25rem',
+      backgroundColor: '#1e40af',
+      color: '#ffffff',
+      border: 'none',
+      borderRadius: '12px',
+      fontSize: isMobile ? '1rem' : '1.1rem',
+      fontWeight: '700',
+      cursor: 'pointer',
+      transition: 'all 0.3s',
+      boxShadow: '0 4px 12px rgba(30, 64, 175, 0.4)',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.5rem'
+    },
+    message: {
+      padding: isMobile ? '1rem' : '1.25rem',
+      borderRadius: '12px',
+      marginTop: isMobile ? '1.25rem' : '1.75rem',
+      fontSize: isMobile ? '0.875rem' : '1rem',
+      fontWeight: '500',
+      border: '2px solid'
+    },
+    securityNote: {
+      marginTop: isMobile ? '1.5rem' : '2rem',
+      padding: isMobile ? '1.25rem' : '1.5rem',
+      backgroundColor: '#eff6ff',
+      borderRadius: '12px',
+      fontSize: isMobile ? '0.85rem' : '0.95rem',
+      color: '#1e40af',
+      border: '2px solid #bfdbfe',
+      lineHeight: '1.6'
+    },
+    loadingContainer: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+      backgroundColor: '#f8fafc'
+    },
+    spinner: {
+      width: '50px',
+      height: '50px',
+      border: '5px solid #e2e8f0',
+      borderTop: '5px solid #1e40af',
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite'
+    },
+    loadingText: {
+      marginTop: '1.5rem',
+      color: '#64748b',
+      fontSize: '1.1rem',
+      fontWeight: '500'
+    }
+  };
+
+  if (pageLoading) {
     return (
       <div style={styles.container}>
-        <div style={styles.loading}>Loading your information...</div>
+        <div style={styles.loadingContainer}>
+          <div style={styles.spinner}></div>
+          <p style={styles.loadingText}>Loading your accounts...</p>
+        </div>
+        <style jsx>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.pageHeader}>
-        <div style={styles.headerContent}>
-          <Link href="/" style={styles.logoContainer}>
-            <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.logoImage} />
-            <span style={styles.logoText}>Oakline Bank</span>
-          </Link>
-          <Link href="/dashboard" style={styles.backButton}>
-            ← Back to Dashboard
-          </Link>
-        </div>
-      </div>
-
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>📸 Mobile Check Deposit</h1>
-          <p style={styles.subtitle}>Deposit your check securely and conveniently</p>
-        </div>
-
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.field}>
-            <label style={styles.label}>Select Account</label>
-            <select
-              value={selectedAccount}
-              onChange={(e) => {
-                setSelectedAccount(e.target.value);
-                setError(''); // Clear error when account changes
-              }}
-              required
-              style={styles.select}
-            >
-              <option value="">Choose an account...</option>
-              {accounts.map(account => (
-                <option key={account.id} value={account.id}>
-                  {account.account_name || account.account_type?.replace('_', ' ')?.toUpperCase()} - ****{account.account_number?.slice(-4)} (Balance: ${parseFloat(account.balance || 0).toFixed(2)})
-                </option>
-              ))}
-            </select>
-            {!accounts.length && !loading && <p style={styles.noAccountsMessage}>No accounts found. Please apply for an account first.</p>}
-          </div>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Deposit Amount ($)</label>
-            <input
-              type="number"
-              step="0.01"
-              min="1.00"
-              value={amount}
-              onChange={(e) => {
-                setAmount(e.target.value);
-                setError(''); // Clear error when amount changes
-              }}
-              required
-              style={styles.input}
-              placeholder="0.00"
-            />
-          </div>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Upload Check Front</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleFileChange(e, 'front')}
-              style={styles.fileInput}
-            />
-            {frontPreview && (
-              <img src={frontPreview} alt="Check Front Preview" style={styles.previewImage} />
-            )}
-          </div>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Upload Check Back</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleFileChange(e, 'back')}
-              style={styles.fileInput}
-            />
-            {backPreview && (
-              <img src={backPreview} alt="Check Back Preview" style={styles.previewImage} />
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading || !selectedAccount || !amount || !checkFront || !checkBack}
-            style={{
-              ...styles.button,
-              opacity: (loading || !selectedAccount || !amount || !checkFront || !checkBack) ? 0.6 : 1,
-              cursor: (loading || !selectedAccount || !amount || !checkFront || !checkBack) ? 'not-allowed' : 'pointer'
-            }}
-            onMouseEnter={(e) => {
-              if (!loading && selectedAccount && amount && checkFront && checkBack) {
-                e.target.style.backgroundColor = '#1e3a8a';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!loading && selectedAccount && amount && checkFront && checkBack) {
-                e.target.style.backgroundColor = '#3b82f6';
-              }
-            }}
-          >
-            {loading ? '🔄 Processing Deposit...' : `📥 Submit Check Deposit $${amount || '0.00'}`}
-          </button>
-        </form>
-
-        {message && (
-          <div style={{
-            ...styles.message,
-            backgroundColor: message.includes('successful') ? '#d1fae5' : '#fee2e2',
-            color: message.includes('successful') ? '#059669' : '#dc2626'
-          }}>
-            {message}
-          </div>
-        )}
-        {error && (
-          <div style={{
-            ...styles.message,
-            backgroundColor: '#fee2e2',
-            color: '#dc2626'
-          }}>
-            {error}
-          </div>
-        )}
-
-        <div style={styles.securityNote}>
-          <p>🔒 Your check images are encrypted and securely stored. All deposits are reviewed for your protection.</p>
-          <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>✓ Deposits typically available within 1-2 business days</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function DepositReal() {
-  return (
     <>
       <Head>
-        <title>Check Deposit - Oakline Bank</title>
+        <title>Mobile Check Deposit - Oakline Bank</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
-      <DepositForm />
+
+      <div style={styles.container}>
+        <div style={styles.header}>
+          <div style={styles.headerContent}>
+            <Link href="/" style={styles.logoContainer}>
+              <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.logo} />
+              <span style={styles.logoText}>Oakline Bank</span>
+            </Link>
+            <Link href="/dashboard" style={styles.backButton}>
+              ← Back to Dashboard
+            </Link>
+          </div>
+        </div>
+
+        <main style={styles.main}>
+          <div style={styles.card}>
+            <div style={styles.titleSection}>
+              <h1 style={styles.title}>📸 Mobile Check Deposit</h1>
+              <p style={styles.subtitle}>Deposit checks securely and conveniently</p>
+            </div>
+
+            {message && (
+              <div style={{
+                ...styles.message,
+                backgroundColor: message.includes('successful') ? '#d1fae5' : '#fee2e2',
+                color: message.includes('successful') ? '#059669' : '#dc2626',
+                borderColor: message.includes('successful') ? '#6ee7b7' : '#fca5a5'
+              }}>
+                {message}
+              </div>
+            )}
+
+            {error && (
+              <div style={{
+                ...styles.message,
+                backgroundColor: '#fee2e2',
+                color: '#dc2626',
+                borderColor: '#fca5a5'
+              }}>
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} style={styles.form}>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Select Account *</label>
+                <select
+                  value={selectedAccount}
+                  onChange={(e) => {
+                    setSelectedAccount(e.target.value);
+                    setError('');
+                  }}
+                  required
+                  style={styles.select}
+                  onFocus={(e) => e.target.style.borderColor = '#1e40af'}
+                  onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                >
+                  <option value="">Choose an account...</option>
+                  {accounts.map(account => (
+                    <option key={account.id} value={account.id}>
+                      {account.account_type?.replace('_', ' ')?.toUpperCase()} - ****{account.account_number?.slice(-4)} (Balance: {formatCurrency(account.balance)})
+                    </option>
+                  ))}
+                </select>
+                {!accounts.length && !pageLoading && (
+                  <p style={{ fontSize: '0.85rem', color: '#dc2626', marginTop: '0.5rem' }}>
+                    No accounts found. Please apply for an account first.
+                  </p>
+                )}
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Deposit Amount ($) *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="1.00"
+                  max="5000.00"
+                  value={amount}
+                  onChange={(e) => {
+                    setAmount(e.target.value);
+                    setError('');
+                  }}
+                  required
+                  style={styles.input}
+                  placeholder="0.00"
+                  onFocus={(e) => e.target.style.borderColor = '#1e40af'}
+                  onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                />
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Upload Check Front *</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e, 'front')}
+                  style={styles.fileInput}
+                  required
+                />
+                {frontPreview && (
+                  <img src={frontPreview} alt="Check Front Preview" style={styles.previewImage} />
+                )}
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Upload Check Back *</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e, 'back')}
+                  style={styles.fileInput}
+                  required
+                />
+                {backPreview && (
+                  <img src={backPreview} alt="Check Back Preview" style={styles.previewImage} />
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || !selectedAccount || !amount || !checkFront || !checkBack}
+                style={{
+                  ...styles.submitButton,
+                  opacity: (loading || !selectedAccount || !amount || !checkFront || !checkBack) ? 0.6 : 1,
+                  cursor: (loading || !selectedAccount || !amount || !checkFront || !checkBack) ? 'not-allowed' : 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  if (!loading && selectedAccount && amount && checkFront && checkBack) {
+                    e.target.style.backgroundColor = '#1e3a8a';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!loading && selectedAccount && amount && checkFront && checkBack) {
+                    e.target.style.backgroundColor = '#1e40af';
+                  }
+                }}
+              >
+                {loading ? '🔄 Processing Deposit...' : `📥 Submit Check Deposit ${amount ? formatCurrency(amount) : ''}`}
+              </button>
+            </form>
+
+            <div style={styles.securityNote}>
+              <p style={{ margin: '0 0 0.5rem 0', fontWeight: '600' }}>🔒 Secure & Encrypted</p>
+              <p style={{ margin: '0' }}>Your check images are encrypted and securely stored. All deposits are reviewed for your protection.</p>
+              <p style={{ marginTop: '0.75rem', fontSize: isMobile ? '0.8rem' : '0.9rem', margin: '0.75rem 0 0 0' }}>
+                ✓ Deposits typically available within 1-2 business days
+              </p>
+            </div>
+          </div>
+        </main>
+
+        <style jsx>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
     </>
   );
 }
-
-const styles = {
-  container: {
-    minHeight: '100vh',
-    backgroundColor: '#f8fafc',
-    padding: '20px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center'
-  },
-  pageHeader: {
-    width: '100%',
-    padding: '20px 40px',
-    backgroundColor: '#ffffff',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-    display: 'flex',
-    justifyContent: 'center',
-    marginBottom: '30px',
-    borderBottom: '1px solid #e0e0e0',
-  },
-  headerContent: {
-    maxWidth: '1100px',
-    width: '100%',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  logoContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    textDecoration: 'none',
-    color: '#1e293b',
-  },
-  logoImage: {
-    height: '40px',
-    marginRight: '10px',
-  },
-  logoText: {
-    fontSize: '24px',
-    fontWeight: 'bold',
-  },
-  backButton: {
-    fontSize: '16px',
-    fontWeight: '500',
-    color: '#3b82f6',
-    textDecoration: 'none',
-    padding: '10px 15px',
-    borderRadius: '8px',
-    transition: 'background-color 0.2s',
-  },
-  card: {
-    backgroundColor: 'white',
-    padding: '40px',
-    borderRadius: '12px',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-    maxWidth: '500px',
-    width: '100%'
-  },
-  header: {
-    textAlign: 'center',
-    marginBottom: '30px'
-  },
-  title: {
-    fontSize: '28px',
-    fontWeight: 'bold',
-    color: '#1e293b',
-    margin: '0 0 8px 0'
-  },
-  subtitle: {
-    color: '#64748b',
-    fontSize: '16px',
-    margin: 0
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '20px'
-  },
-  field: {
-    display: 'flex',
-    flexDirection: 'column'
-  },
-  label: {
-    fontSize: '14px',
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: '6px'
-  },
-  input: {
-    padding: '12px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    fontSize: '16px',
-    outline: 'none'
-  },
-  select: {
-    padding: '12px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    fontSize: '16px',
-    outline: 'none',
-    backgroundColor: 'white'
-  },
-  cardElement: {
-    padding: '12px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    backgroundColor: 'white'
-  },
-  button: {
-    padding: '16px',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '18px',
-    fontWeight: '600',
-    marginTop: '10px',
-    transition: 'background-color 0.2s ease'
-  },
-  message: {
-    padding: '12px',
-    borderRadius: '6px',
-    marginTop: '20px',
-    fontSize: '14px',
-    textAlign: 'center'
-  },
-  loading: {
-    textAlign: 'center',
-    padding: '40px',
-    fontSize: '18px',
-    color: '#64748b'
-  },
-  securityNote: {
-    marginTop: '20px',
-    padding: '12px',
-    backgroundColor: '#f1f5f9',
-    borderRadius: '6px',
-    fontSize: '14px',
-    color: '#475569',
-    textAlign: 'center'
-  },
-  fileInput: {
-    padding: '12px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
-    fontSize: '16px',
-    outline: 'none',
-    cursor: 'pointer'
-  },
-  previewImage: {
-    maxWidth: '100%',
-    height: '100px',
-    objectFit: 'cover',
-    marginTop: '10px',
-    borderRadius: '4px',
-    border: '1px solid #e5e7eb'
-  },
-  noAccountsMessage: {
-    fontSize: '13px',
-    color: '#dc2626',
-    marginTop: '5px'
-  }
-};
