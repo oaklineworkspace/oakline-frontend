@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import Header from '../components/Header';
@@ -20,7 +19,7 @@ export default function Notifications() {
   const fetchBankDetails = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session?.user) {
         return;
       }
@@ -45,9 +44,9 @@ export default function Notifications() {
   const checkUserAndFetchData = async () => {
     try {
       setLoading(true);
-      
+
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
       if (sessionError) {
         console.error('Session error:', sessionError);
         setLoading(false);
@@ -118,7 +117,7 @@ export default function Notifications() {
       } else {
         console.log('No database notifications found, creating welcome notification');
         const userName = profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'Valued Customer';
-        
+
         const { data: welcomeNotif, error: insertError } = await supabase
           .from('notifications')
           .insert({
@@ -151,7 +150,7 @@ export default function Notifications() {
 
     } catch (error) {
       console.error('Error in fetchNotifications:', error);
-      
+
       setNotifications([{
         id: 'fallback',
         title: 'Welcome to Oakline Bank',
@@ -281,7 +280,7 @@ export default function Notifications() {
 
       <div style={styles.container}>
         <Header />
-        
+
         <main style={styles.main}>
           {/* Professional Header Section */}
           <div style={styles.pageHeader}>
@@ -314,16 +313,16 @@ export default function Notifications() {
             <div style={styles.bankInfoBanner}>
               <div style={styles.bankInfoItem}>
                 <span style={styles.bankInfoIcon}>📞</span>
-                <span style={styles.bankInfoText}>Support: {bankDetails.phone || '+1 (636) 635-6122'}</span>
+                <span style={styles.bankInfoText}>Support: {bankDetails.phone}</span>
               </div>
               <div style={styles.bankInfoItem}>
                 <span style={styles.bankInfoIcon}>✉️</span>
-                <span style={styles.bankInfoText}>{bankDetails.email_info || 'contact-us@theoaklinebank.com'}</span>
+                <span style={styles.bankInfoText}>{bankDetails.email_contact}</span>
               </div>
               <div style={styles.bankInfoItem}>
                 <span style={styles.bankInfoIcon}>🕒</span>
-                <span style={styles.bankInfoText}>{bankDetails.hours || 'Mon-Fri 9AM-5PM'}</span>
-              </div>
+                <span style={styles.bankInfoText}>Mon-Fri 9AM-5PM, Sat 9AM-1PM</span>
+          </div>
             </div>
           )}
 

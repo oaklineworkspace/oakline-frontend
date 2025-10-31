@@ -2,19 +2,41 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
+import { supabase } from '../lib/supabaseClient';
 
 export default function BranchLocator() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedState, setSelectedState] = useState('all');
   const [branches, setBranches] = useState([]);
   const [filteredBranches, setFilteredBranches] = useState([]);
+  const [bankDetails, setBankDetails] = useState(null);
+
+  useEffect(() => {
+    fetchBankDetails();
+  }, []);
+
+  const fetchBankDetails = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bank_details')
+        .select('*')
+        .limit(1)
+        .single();
+
+      if (!error && data) {
+        setBankDetails(data);
+      }
+    } catch (error) {
+      console.error('Error fetching bank details:', error);
+    }
+  };
 
   const branchData = [
     {
       id: 1,
-      name: 'Oakline Bank – Oklahoma City Branch',
-      address: '12201 N. May Avenue, Oklahoma City, OK 73120',
-      phone: '+1 (636) 635-6122',
+      name: bankDetails?.name ? `${bankDetails.name} – ${bankDetails.branch_name}` : 'Oakline Bank – Oklahoma City Branch',
+      address: bankDetails?.address || '12201 N. May Avenue, Oklahoma City, OK 73120',
+      phone: bankDetails?.phone || '+1 (636) 635-6122',
       hours: {
         monday: '9:00 AM - 5:00 PM',
         tuesday: '9:00 AM - 5:00 PM',
@@ -69,8 +91,8 @@ export default function BranchLocator() {
         <header style={styles.header}>
           <div style={styles.headerContent}>
             <Link href="/" style={styles.logoContainer}>
-              <img src="/images/logo-primary.png" alt="Oakline Bank" style={styles.logo} />
-              <span style={styles.brandName}>Oakline Bank</span>
+              <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt={bankDetails?.name || "Oakline Bank"} style={styles.logo} />
+              <span style={styles.brandName}>{bankDetails?.name || 'Oakline Bank'}</span>
             </Link>
             <Link href="/" style={styles.backButton}>← Back to Home</Link>
           </div>
@@ -81,7 +103,7 @@ export default function BranchLocator() {
           <div style={styles.heroContent}>
             <h1 style={styles.heroTitle}>Find a Branch or ATM</h1>
             <p style={styles.heroSubtitle}>
-              Locate the nearest Oakline Bank branch or ATM with our convenient branch locator.
+              Locate the nearest {bankDetails?.name || 'Oakline Bank'} branch or ATM with our convenient branch locator.
             </p>
           </div>
         </section>
@@ -234,7 +256,7 @@ export default function BranchLocator() {
           <div style={styles.atmContainer}>
             <h2 style={styles.atmTitle}>Access Over 55,000 Fee-Free ATMs</h2>
             <p style={styles.atmSubtitle}>
-              Use our extensive ATM network across the country without paying fees.
+              Use {bankDetails?.name || 'our'} extensive ATM network across the country without paying fees.
             </p>
             <div style={styles.atmFeatures}>
               <div style={styles.atmFeature}>
@@ -268,7 +290,7 @@ export default function BranchLocator() {
                 <div style={styles.contactIcon}>📞</div>
                 <div>
                   <h3 style={styles.contactOptionTitle}>Call Customer Service</h3>
-                  <p style={styles.contactOptionDesc}>1-800-OAKLINE</p>
+                  <p style={styles.contactOptionDesc}>{bankDetails?.phone || '+1 (636) 635-6122'}</p>
                 </div>
               </div>
               <div style={styles.contactOption}>
@@ -286,7 +308,7 @@ export default function BranchLocator() {
         <footer style={styles.footer}>
           <div style={styles.footerContent}>
             <p style={styles.footerText}>
-              © 2024 Oakline Bank. All rights reserved. Member FDIC. Equal Housing Lender.
+              © {new Date().getFullYear()} {bankDetails?.name || 'Oakline Bank'}. All rights reserved. Member FDIC. Equal Housing Lender.
             </p>
           </div>
         </footer>

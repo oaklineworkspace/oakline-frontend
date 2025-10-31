@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabaseClient';
@@ -19,12 +18,32 @@ function LoanApplicationContent() {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [bankDetails, setBankDetails] = useState(null);
 
   useEffect(() => {
+    fetchBankDetails();
     if (user) {
       fetchUserAccounts();
     }
   }, [user]);
+
+  const fetchBankDetails = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bank_details')
+        .select('*')
+        .limit(1)
+        .single();
+
+      if (!error && data) {
+        setBankDetails(data);
+      } else if (error) {
+        console.error('Error fetching bank details:', error);
+      }
+    } catch (err) {
+      console.error('Error fetching bank details:', err);
+    }
+  };
 
   const fetchUserAccounts = async () => {
     try {
@@ -143,10 +162,20 @@ function LoanApplicationContent() {
       return (principal / numPayments).toFixed(2);
     }
 
-    const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
+    const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) /
                           (Math.pow(1 + monthlyRate, numPayments) - 1);
 
     return monthlyPayment.toFixed(2);
+  };
+
+  const calculateTotalInterest = () => {
+    if (!formData.principal || !formData.interest_rate || !formData.term_months) {
+      return 0;
+    }
+    const monthlyPayment = parseFloat(calculateMonthlyPayment());
+    const totalRepayment = monthlyPayment * parseInt(formData.term_months);
+    const totalInterest = totalRepayment - parseFloat(formData.principal);
+    return totalInterest.toFixed(2);
   };
 
   const selectedLoanType = loanTypes.find(lt => lt.value === formData.loan_type);
@@ -209,7 +238,7 @@ function LoanApplicationContent() {
           <div style={styles.section}>
             <h2 style={styles.sectionTitle}>Select Loan Type</h2>
             <p style={styles.sectionDesc}>Choose the loan product that best fits your needs</p>
-            
+
             <div style={styles.loanTypeGrid}>
               {loanTypes.map(type => (
                 <div
@@ -240,7 +269,7 @@ function LoanApplicationContent() {
             <div style={styles.section}>
               <h2 style={styles.sectionTitle}>Loan Details</h2>
               <p style={styles.sectionDesc}>Specify the amount and term for your {selectedLoanType?.label}</p>
-              
+
               <div style={styles.formGrid}>
                 <div style={styles.formGroup}>
                   <label style={styles.label}>
@@ -337,24 +366,24 @@ function LoanApplicationContent() {
                 <h3 style={styles.calculatorTitle}>📊 Payment Estimate</h3>
                 <p style={styles.calculatorDesc}>Based on the information provided</p>
               </div>
-              
+
               <div style={styles.calculatorGrid}>
                 <div style={styles.calculatorCard}>
                   <div style={styles.calculatorLabel}>Monthly Payment</div>
                   <div style={styles.calculatorValue}>${calculateMonthlyPayment()}</div>
                 </div>
-                
+
                 <div style={styles.calculatorCard}>
                   <div style={styles.calculatorLabel}>Total to Repay</div>
                   <div style={styles.calculatorValue}>
-                    ${(calculateMonthlyPayment() * formData.term_months).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${(parseFloat(calculateMonthlyPayment()) * parseInt(formData.term_months)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
-                
+
                 <div style={styles.calculatorCard}>
                   <div style={styles.calculatorLabel}>Total Interest</div>
                   <div style={styles.calculatorValue}>
-                    ${((calculateMonthlyPayment() * formData.term_months) - formData.principal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${calculateTotalInterest()}
                   </div>
                 </div>
               </div>
@@ -429,12 +458,18 @@ function LoanApplicationContent() {
               </div>
             </div>
           </div>
-          
+
           <div style={styles.supportNote}>
             <span style={styles.supportIcon}>💬</span>
             <div>
-              <strong>Need Help?</strong>
-              <p>Contact our loan specialists at <a href="mailto:loans@theoaklinebank.com" style={styles.link}>loans@theoaklinebank.com</a> or call <a href="tel:+16366356122" style={styles.link}>(636) 635-6122</a></p>
+              Need assistance? Contact our support team at{' '}
+              <a href={`tel:${bankDetails?.phone || '+1 (636) 635-6122'}`} style={{ color: '#1A3E6F', fontWeight: '600', textDecoration: 'none', wordBreak: 'break-word' }}>
+                {bankDetails?.phone || '+1 (636) 635-6122'}
+              </a>{' '}
+              or email{' '}
+              <a href={`mailto:${bankDetails?.email_contact || 'contact-us@theoaklinebank.com'}`} style={{ color: '#1A3E6F', fontWeight: '600', textDecoration: 'none', wordBreak: 'break-word' }}>
+                {bankDetails?.email_contact || 'contact-us@theoaklinebank.com'}
+              </a>
             </div>
           </div>
         </div>
@@ -901,7 +936,7 @@ if (typeof document !== 'undefined') {
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
-    
+
     input[type="number"]::-webkit-inner-spin-button,
     input[type="number"]::-webkit-outer-spin-button {
       opacity: 1;

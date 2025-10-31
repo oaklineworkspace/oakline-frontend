@@ -15,10 +15,28 @@ export default function ATM() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [transactionHistory, setTransactionHistory] = useState([]);
+  const [bankDetails, setBankDetails] = useState(null);
 
   useEffect(() => {
     checkUser();
+    fetchBankDetails();
   }, []);
+
+  const fetchBankDetails = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bank_details')
+        .select('*')
+        .limit(1)
+        .single();
+
+      if (!error && data) {
+        setBankDetails(data);
+      }
+    } catch (error) {
+      console.error('Error fetching bank details:', error);
+    }
+  };
 
   const checkUser = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -233,8 +251,8 @@ export default function ATM() {
   const renderWelcomeScreen = () => (
     <div style={styles.screenContent}>
       <div style={styles.welcomeContainer}>
-        <img src="/images/logo-primary.png" alt="Oakline Bank" style={styles.atmLogo} />
-        <h1 style={styles.welcomeTitle}>Welcome to Oakline Bank ATM</h1>
+        <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt={bankDetails?.name || "Oakline Bank"} style={styles.atmLogo} />
+        <h1 style={styles.welcomeTitle}>Welcome to {bankDetails?.name || 'Oakline Bank'} ATM</h1>
         <p style={styles.welcomeText}>Please insert your card or enter your PIN to begin</p>
         {user ? (
           <button 
@@ -532,7 +550,7 @@ export default function ATM() {
       {/* Professional ATM Gallery Section */}
       <section style={styles.atmGallerySection}>
         <div style={styles.galleryContainer}>
-          <h2 style={styles.galleryTitle}>Oakline Bank ATM Network</h2>
+          <h2 style={styles.galleryTitle}>{bankDetails?.name || 'Oakline Bank'} ATM Network</h2>
           <p style={styles.gallerySubtitle}>
             Access your accounts 24/7 at our modern, secure ATM locations nationwide
           </p>
@@ -540,7 +558,7 @@ export default function ATM() {
             <div style={styles.galleryImageContainer} className="gallery-image-container">
               <img 
                 src="https://images.unsplash.com/photo-1556740749-887f6717d7e4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                alt="People using Oakline Bank ATM" 
+                alt={`People using ${bankDetails?.name || 'Oakline Bank'} ATM`} 
                 style={styles.galleryImage}
                 onError={(e) => {
                   e.target.src = '/images/atm-with-people.png';
@@ -586,7 +604,7 @@ export default function ATM() {
       <div style={styles.container}>
         <div style={styles.atmMachine}>
           <div style={styles.atmHeader}>
-            <div style={styles.atmBrand}>OAKLINE BANK ATM</div>
+            <div style={styles.atmBrand}>{(bankDetails?.name || 'OAKLINE BANK').toUpperCase()} ATM</div>
             <div style={styles.atmStatus}>● ONLINE</div>
           </div>
           
