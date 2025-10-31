@@ -2,15 +2,16 @@
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 
 // This should be called by a cron job daily
+// Set up a cron job in your environment to call this endpoint
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Verify this is a cron job (add your cron secret here)
+  // Verify this is a cron job (add your cron secret in .env as CRON_SECRET)
   const cronSecret = req.headers['x-cron-secret'];
-  if (cronSecret !== process.env.CRON_SECRET) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized - Invalid or missing cron secret' });
   }
 
   try {
