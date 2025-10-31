@@ -21,6 +21,189 @@ const useMediaQuery = (query) => {
   return matches;
 };
 
+function RecentTransfers({ user }) {
+  const [transfers, setTransfers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const isMobile = useMediaQuery('(max-width: 768px)');
+
+  useEffect(() => {
+    if (user) {
+      fetchRecentTransfers();
+    }
+  }, [user]);
+
+  const fetchRecentTransfers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('type', ['transfer_out', 'transfer_in'])
+        .eq('transfer_type', 'internal')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (!error && data) {
+        setTransfers(data);
+      }
+    } catch (error) {
+      console.error('Error fetching transfers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount || 0);
+  };
+
+  const transferStyles = {
+    section: {
+      backgroundColor: 'white',
+      borderRadius: '20px',
+      padding: isMobile ? '1.5rem' : '2.5rem',
+      boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
+      marginBottom: '2rem',
+      border: '1px solid #e2e8f0'
+    },
+    title: {
+      fontSize: isMobile ? '1.25rem' : '1.5rem',
+      fontWeight: '700',
+      color: '#1e293b',
+      marginBottom: isMobile ? '1.5rem' : '2rem',
+      paddingBottom: '1rem',
+      borderBottom: '3px solid #1e40af',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem'
+    },
+    transferItem: {
+      padding: isMobile ? '1rem' : '1.25rem',
+      borderRadius: '12px',
+      backgroundColor: '#f8fafc',
+      marginBottom: '1rem',
+      border: '2px solid #e2e8f0',
+      transition: 'all 0.3s'
+    },
+    transferHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '0.75rem',
+      flexWrap: 'wrap',
+      gap: '0.5rem'
+    },
+    transferType: {
+      fontSize: isMobile ? '1rem' : '1.1rem',
+      fontWeight: '700',
+      color: '#1e293b'
+    },
+    transferAmount: {
+      fontSize: isMobile ? '1.1rem' : '1.25rem',
+      fontWeight: '700'
+    },
+    transferDetails: {
+      fontSize: isMobile ? '0.85rem' : '0.95rem',
+      color: '#64748b',
+      lineHeight: '1.6'
+    },
+    transferDate: {
+      fontSize: isMobile ? '0.75rem' : '0.85rem',
+      color: '#94a3b8',
+      marginTop: '0.5rem'
+    },
+    emptyState: {
+      textAlign: 'center',
+      padding: '3rem 1rem',
+      color: '#94a3b8'
+    },
+    emptyIcon: {
+      fontSize: '3rem',
+      marginBottom: '1rem'
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={transferStyles.section}>
+        <h2 style={transferStyles.title}>
+          <span style={{ fontSize: '1.5rem' }}>📋</span>
+          Recent Transfers
+        </h2>
+        <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+          Loading transfers...
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={transferStyles.section}>
+      <h2 style={transferStyles.title}>
+        <span style={{ fontSize: '1.5rem' }}>📋</span>
+        Recent Transfers
+      </h2>
+      {transfers.length === 0 ? (
+        <div style={transferStyles.emptyState}>
+          <div style={transferStyles.emptyIcon}>💸</div>
+          <p style={{ fontSize: isMobile ? '1rem' : '1.1rem', margin: 0 }}>No recent transfers</p>
+        </div>
+      ) : (
+        <div>
+          {transfers.map(transfer => (
+            <div
+              key={transfer.id}
+              style={transferStyles.transferItem}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#1e40af';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#e2e8f0';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <div style={transferStyles.transferHeader}>
+                <div style={transferStyles.transferType}>
+                  {transfer.type === 'transfer_out' ? '📤 Sent' : '📥 Received'}
+                </div>
+                <div
+                  style={{
+                    ...transferStyles.transferAmount,
+                    color: transfer.type === 'transfer_out' ? '#dc2626' : '#059669'
+                  }}
+                >
+                  {transfer.type === 'transfer_out' ? '-' : '+'}{formatCurrency(transfer.amount)}
+                </div>
+              </div>
+              <div style={transferStyles.transferDetails}>
+                {transfer.description}
+              </div>
+              {transfer.reference && (
+                <div style={{ ...transferStyles.transferDetails, marginTop: '0.25rem' }}>
+                  Ref: {transfer.reference}
+                </div>
+              )}
+              <div style={transferStyles.transferDate}>
+                {new Date(transfer.created_at).toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function InternalTransfer() {
   const [user, setUser] = useState(null);
   const [accounts, setAccounts] = useState([]);
@@ -912,10 +1095,12 @@ export default function InternalTransfer() {
                 onMouseEnter={(e) => !loading && recipientInfo && (e.target.style.backgroundColor = '#1e3a8a')}
                 onMouseLeave={(e) => !loading && recipientInfo && (e.target.style.backgroundColor = '#1e40af')}
               >
-                {loading ? '🔄 Processing Transfer...' : `💸 Send ${formatCurrency(parseFloat(amount) || 0)}`}
+                {loading ? '🔄 Processing Transfer...' : `💸 Send Money ${formatCurrency(parseFloat(amount) || 0)}`}
               </button>
             </form>
           </div>
+
+          <RecentTransfers user={user} />
 
           <div style={styles.infoBox}>
             <h3 style={styles.infoTitle}>

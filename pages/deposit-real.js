@@ -3,12 +3,12 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
+import Head from 'next/head';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 function DepositForm() {
-  const stripe = useStripe();
-  const elements = useElements();
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [accounts, setAccounts] = useState([]);
@@ -58,7 +58,7 @@ function DepositForm() {
 
       // First try direct user_id match (most reliable)
       let accountsData = [];
-      
+
       const { data: accountsByUserId, error: userIdError } = await supabase
         .from('accounts')
         .select('*')
@@ -139,11 +139,6 @@ function DepositForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!stripe || !elements) {
-      setMessage('Stripe not loaded. Please wait.');
-      return;
-    }
-
     if (!selectedAccount) {
       setError('Please select an account.');
       return;
@@ -152,6 +147,11 @@ function DepositForm() {
     const depositAmount = parseFloat(amount);
     if (isNaN(depositAmount) || depositAmount < 1) {
       setError('Please enter a valid deposit amount greater than $1.00.');
+      return;
+    }
+
+    if (depositAmount > 5000) {
+      setError('Check deposits over $5,000 require manual review. Please visit a branch or contact support.');
       return;
     }
 
@@ -170,62 +170,50 @@ function DepositForm() {
         throw new Error('Selected account not found.');
       }
 
-      // Upload checks first
+      // Upload check images
       const frontPath = await uploadFile(checkFront, user.id, selectedAccount);
       const backPath = await uploadFile(checkBack, user.id, selectedAccount);
 
-      // Create Stripe payment intent
-      const response = await fetch('/api/stripe/create-payment-intent', {
+      // Submit check deposit for review
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch('/api/check-deposit-submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({
-          amount: Math.round(depositAmount * 100), // Stripe expects amount in cents
-          accountId: selectedAccount,
-          userId: user.id,
-          userEmail: user.email,
-          description: `Mobile deposit for ${account.account_name || selectedAccount}`,
-          frontImagePath: frontPath,
-          backImagePath: backPath,
+          account_id: selectedAccount,
+          amount: depositAmount,
+          check_front_image: frontPath,
+          check_back_image: backPath
         })
       });
 
-      const { clientSecret, error: stripeError } = await response.json();
+      const result = await response.json();
 
-      if (stripeError) {
-        throw new Error(stripeError);
+      if (!response.ok) {
+        throw new Error(result.error || 'Deposit submission failed');
       }
 
-      // Confirm payment with Stripe
-      const { error: stripeConfirmError } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: elements.getElement(CardElement),
-          billing_details: {
-            email: user.email,
-          },
-        }
-      });
+      setMessage(`✓ Check deposit submitted successfully! Reference: ${result.reference_number}. Your deposit will be reviewed within 1-2 business days.`);
 
-      if (stripeConfirmError) {
-        throw stripeConfirmError;
-      }
-
-      setMessage('Deposit successful! Your account will be updated shortly.');
-      setAccounts([]); // Clear accounts to force refetch
-      setSelectedAccount('');
+      // Clear form
+      setSelectedAccount(accounts[0]?.id || '');
       setAmount('');
       setCheckFront(null);
       setCheckBack(null);
       setFrontPreview('');
       setBackPreview('');
-      // Refresh accounts after successful deposit
+
+      // Refresh accounts
       setTimeout(() => {
         fetchAccounts(user);
       }, 2000);
 
     } catch (err) {
       console.error('Error processing deposit:', err);
-      setError(err.message || 'Failed to process deposit. Please check your details and try again.');
-      setMessage('Failed to process deposit. Please check your details and try again.');
+      setError(err.message || 'Failed to submit deposit. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -241,10 +229,22 @@ function DepositForm() {
 
   return (
     <div style={styles.container}>
+      <div style={styles.pageHeader}>
+        <div style={styles.headerContent}>
+          <Link href="/" style={styles.logoContainer}>
+            <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.logoImage} />
+            <span style={styles.logoText}>Oakline Bank</span>
+          </Link>
+          <Link href="/dashboard" style={styles.backButton}>
+            ← Back to Dashboard
+          </Link>
+        </div>
+      </div>
+
       <div style={styles.card}>
         <div style={styles.header}>
-          <h1 style={styles.title}>Make a Mobile Deposit</h1>
-          <p style={styles.subtitle}>Deposit your check securely</p>
+          <h1 style={styles.title}>📸 Mobile Check Deposit</h1>
+          <p style={styles.subtitle}>Deposit your check securely and conveniently</p>
         </div>
 
         <form onSubmit={handleSubmit} style={styles.form}>
@@ -312,35 +312,26 @@ function DepositForm() {
             )}
           </div>
 
-          <div style={styles.field}>
-            <label style={styles.label}>Payment Information</label>
-            <div style={styles.cardElement}>
-              <CardElement
-                options={{
-                  style: {
-                    base: {
-                      fontSize: '16px',
-                      color: '#424770',
-                      '::placeholder': {
-                        color: '#aab7c4',
-                      },
-                    },
-                  },
-                }}
-              />
-            </div>
-          </div>
-
           <button
             type="submit"
-            disabled={!stripe || loading || !selectedAccount || !amount || !checkFront || !checkBack}
+            disabled={loading || !selectedAccount || !amount || !checkFront || !checkBack}
             style={{
               ...styles.button,
-              opacity: (!stripe || loading || !selectedAccount || !amount || !checkFront || !checkBack) ? 0.6 : 1,
-              cursor: (!stripe || loading || !selectedAccount || !amount || !checkFront || !checkBack) ? 'not-allowed' : 'pointer'
+              opacity: (loading || !selectedAccount || !amount || !checkFront || !checkBack) ? 0.6 : 1,
+              cursor: (loading || !selectedAccount || !amount || !checkFront || !checkBack) ? 'not-allowed' : 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              if (!loading && selectedAccount && amount && checkFront && checkBack) {
+                e.target.style.backgroundColor = '#1e3a8a';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!loading && selectedAccount && amount && checkFront && checkBack) {
+                e.target.style.backgroundColor = '#3b82f6';
+              }
             }}
           >
-            {loading ? 'Processing...' : `Deposit $${amount || '0.00'}`}
+            {loading ? '🔄 Processing Deposit...' : `📥 Submit Check Deposit $${amount || '0.00'}`}
           </button>
         </form>
 
@@ -364,7 +355,8 @@ function DepositForm() {
         )}
 
         <div style={styles.securityNote}>
-          <p>🔒 Your payment information is secured by Stripe and never stored on our servers.</p>
+          <p>🔒 Your check images are encrypted and securely stored. All deposits are reviewed for your protection.</p>
+          <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>✓ Deposits typically available within 1-2 business days</p>
         </div>
       </div>
     </div>
@@ -373,9 +365,13 @@ function DepositForm() {
 
 export default function DepositReal() {
   return (
-    <Elements stripe={stripePromise}>
+    <>
+      <Head>
+        <title>Check Deposit - Oakline Bank</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      </Head>
       <DepositForm />
-    </Elements>
+    </>
   );
 }
 
@@ -385,8 +381,48 @@ const styles = {
     backgroundColor: '#f8fafc',
     padding: '20px',
     display: 'flex',
-    justifyContent: 'center',
+    flexDirection: 'column',
     alignItems: 'center'
+  },
+  pageHeader: {
+    width: '100%',
+    padding: '20px 40px',
+    backgroundColor: '#ffffff',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+    display: 'flex',
+    justifyContent: 'center',
+    marginBottom: '30px',
+    borderBottom: '1px solid #e0e0e0',
+  },
+  headerContent: {
+    maxWidth: '1100px',
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  logoContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    textDecoration: 'none',
+    color: '#1e293b',
+  },
+  logoImage: {
+    height: '40px',
+    marginRight: '10px',
+  },
+  logoText: {
+    fontSize: '24px',
+    fontWeight: 'bold',
+  },
+  backButton: {
+    fontSize: '16px',
+    fontWeight: '500',
+    color: '#3b82f6',
+    textDecoration: 'none',
+    padding: '10px 15px',
+    borderRadius: '8px',
+    transition: 'background-color 0.2s',
   },
   card: {
     backgroundColor: 'white',
@@ -455,7 +491,8 @@ const styles = {
     borderRadius: '8px',
     fontSize: '18px',
     fontWeight: '600',
-    marginTop: '10px'
+    marginTop: '10px',
+    transition: 'background-color 0.2s ease'
   },
   message: {
     padding: '12px',
