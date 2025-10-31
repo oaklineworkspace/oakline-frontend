@@ -4,13 +4,20 @@ import Link from 'next/link';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import ProtectedRoute from '../../components/ProtectedRoute';
+import AmortizationSchedule from '../../components/loan/AmortizationSchedule';
+import AutoPaymentManager from '../../components/loan/AutoPaymentManager';
+import PaymentHistory from '../../components/loan/PaymentHistory';
 
 function LoanDashboardContent() {
   const { user } = useAuth();
   const router = useRouter();
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedLoan, setSelectedLoan] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
   const [paymentModal, setPaymentModal] = useState(null);
+  const [earlyPayoffModal, setEarlyPayoffModal] = useState(null);
+  const [earlyPayoffData, setEarlyPayoffData] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [error, setError] = useState('');
@@ -41,6 +48,9 @@ function LoanDashboardContent() {
 
       if (response.ok) {
         setLoans(data.loans || []);
+        if (data.loans && data.loans.length > 0 && !selectedLoan) {
+          setSelectedLoan(data.loans[0]);
+        }
       } else {
         setError(data.error || 'Failed to fetch loans');
       }
@@ -52,20 +62,11 @@ function LoanDashboardContent() {
     }
   };
 
-  const calculateTotalDue = (loan) => {
-    const monthlyRate = loan.interest_rate / 100 / 12;
-    const numPayments = loan.term_months;
-
-    if (monthlyRate === 0) {
-      return loan.principal;
+  const calculateMonthlyPayment = (loan) => {
+    if (loan.monthly_payment_amount) {
+      return parseFloat(loan.monthly_payment_amount);
     }
 
-    const monthlyPayment = loan.principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
-                          (Math.pow(1 + monthlyRate, numPayments) - 1);
-    return monthlyPayment * numPayments;
-  };
-
-  const calculateMonthlyPayment = (loan) => {
     const monthlyRate = loan.interest_rate / 100 / 12;
     const numPayments = loan.term_months;
 
@@ -76,6 +77,69 @@ function LoanDashboardContent() {
     const monthlyPayment = loan.principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
                           (Math.pow(1 + monthlyRate, numPayments) - 1);
     return monthlyPayment;
+  };
+
+  const fetchEarlyPayoffData = async (loanId) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch(`/api/loan/early-payoff?loan_id=${loanId}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setEarlyPayoffData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching early payoff data:', err);
+    }
+  };
+
+  const handleEarlyPayoff = async () => {
+    if (!earlyPayoffModal) return;
+
+    setPaymentLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('Session expired. Please log in again.');
+        return;
+      }
+
+      const response = await fetch('/api/loan/early-payoff', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          loan_id: earlyPayoffModal.id,
+          execute: true
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess(`Loan paid off successfully! You saved $${data.payoff_details.discount_received.toLocaleString()} with early payoff.`);
+        setEarlyPayoffModal(null);
+        setEarlyPayoffData(null);
+        await fetchUserLoans();
+      } else {
+        setError(data.error || 'Failed to process early payoff');
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred while processing early payoff');
+    } finally {
+      setPaymentLoading(false);
+    }
   };
 
   const handlePayment = async () => {
@@ -164,7 +228,7 @@ function LoanDashboardContent() {
       <div style={styles.header}>
         <div>
           <h1 style={styles.title}>My Loans</h1>
-          <p style={styles.subtitle}>Manage and track your loan applications</p>
+          <p style={styles.subtitle}>Comprehensive loan management and tracking</p>
         </div>
         <Link href="/loan/apply" style={styles.applyButton}>
           Apply for New Loan
@@ -193,90 +257,224 @@ function LoanDashboardContent() {
           </Link>
         </div>
       ) : (
-        <div style={styles.loansGrid}>
-          {loans.map(loan => {
-            const totalDue = calculateTotalDue(loan);
-            const monthlyPayment = calculateMonthlyPayment(loan);
-            const remainingBalance = loan.remaining_balance || totalDue;
+        <div style={styles.dashboardLayout}>
+          <div style={styles.loansList}>
+            <h2 style={styles.sectionTitle}>Your Loans</h2>
+            {loans.map(loan => {
+              const monthlyPayment = calculateMonthlyPayment(loan);
+              const remainingBalance = loan.remaining_balance || 0;
+              const isSelected = selectedLoan?.id === loan.id;
 
-            return (
-              <div key={loan.id} style={styles.loanCard}>
-                <div style={styles.loanHeader}>
-                  <div>
+              return (
+                <div 
+                  key={loan.id} 
+                  style={{
+                    ...styles.loanCard,
+                    border: isSelected ? '2px solid #10b981' : '1px solid #e5e7eb',
+                    backgroundColor: isSelected ? '#f0fdf4' : '#fff'
+                  }}
+                  onClick={() => {
+                    setSelectedLoan(loan);
+                    setActiveTab('overview');
+                  }}
+                >
+                  <div style={styles.loanCardHeader}>
                     <h3 style={styles.loanType}>
                       {loan.loan_type?.replace('_', ' ').toUpperCase()}
                     </h3>
-                    <p style={styles.loanDate}>
-                      Applied: {new Date(loan.created_at).toLocaleDateString()}
-                    </p>
+                    <div
+                      style={{
+                        ...styles.statusBadge,
+                        backgroundColor: getStatusColor(loan.status)
+                      }}
+                    >
+                      {getStatusLabel(loan.status)}
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      ...styles.statusBadge,
-                      backgroundColor: getStatusColor(loan.status) + '20',
-                      color: getStatusColor(loan.status)
-                    }}
-                  >
-                    {getStatusLabel(loan.status)}
+                  <div style={styles.loanCardDetails}>
+                    <div style={styles.loanCardRow}>
+                      <span>Principal:</span>
+                      <strong>${parseFloat(loan.principal).toLocaleString()}</strong>
+                    </div>
+                    {loan.status === 'active' && (
+                      <div style={styles.loanCardRow}>
+                        <span>Remaining:</span>
+                        <strong style={{color: '#10b981'}}>${parseFloat(remainingBalance).toLocaleString()}</strong>
+                      </div>
+                    )}
                   </div>
                 </div>
+              );
+            })}
+          </div>
 
-                <div style={styles.loanDetails}>
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Principal Amount:</span>
-                    <span style={styles.detailValue}>${loan.principal.toLocaleString()}</span>
-                  </div>
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Interest Rate:</span>
-                    <span style={styles.detailValue}>{loan.interest_rate}% APR</span>
-                  </div>
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Term:</span>
-                    <span style={styles.detailValue}>{loan.term_months} months</span>
-                  </div>
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Monthly Payment:</span>
-                    <span style={styles.detailValue}>${monthlyPayment.toFixed(2)}</span>
-                  </div>
-
-                  {loan.status === 'active' && (
-                    <>
-                      <div style={styles.divider}></div>
-                      <div style={styles.detailRow}>
-                        <span style={styles.detailLabel}>Total Due:</span>
-                        <span style={styles.detailValueBold}>${totalDue.toFixed(2)}</span>
-                      </div>
-                      <div style={styles.detailRow}>
-                        <span style={styles.detailLabel}>Remaining Balance:</span>
-                        <span style={{...styles.detailValueBold, color: '#10b981'}}>
-                          ${remainingBalance.toFixed(2)}
-                        </span>
-                      </div>
-                    </>
-                  )}
-
-                  {loan.purpose && (
-                    <>
-                      <div style={styles.divider}></div>
-                      <div style={styles.purposeSection}>
-                        <span style={styles.detailLabel}>Purpose:</span>
-                        <p style={styles.purposeText}>{loan.purpose}</p>
-                      </div>
-                    </>
-                  )}
+          {selectedLoan && (
+            <div style={styles.loanDetails}>
+              <div style={styles.loanDetailHeader}>
+                <div>
+                  <h2 style={styles.loanDetailTitle}>
+                    {selectedLoan.loan_type?.replace('_', ' ').toUpperCase()} Loan
+                  </h2>
+                  <p style={styles.loanDetailSubtitle}>
+                    Applied: {new Date(selectedLoan.created_at).toLocaleDateString()}
+                  </p>
                 </div>
-
-                {loan.status === 'active' && (
-                  <button
-                    onClick={() => setPaymentModal(loan)}
-                    style={styles.paymentButton}
-                  >
-                    Make Payment
-                  </button>
+                {selectedLoan.status === 'active' && (
+                  <div style={styles.actionButtons}>
+                    <button
+                      onClick={() => setPaymentModal(selectedLoan)}
+                      style={{...styles.actionButton, backgroundColor: '#10b981'}}
+                    >
+                      Make Payment
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEarlyPayoffModal(selectedLoan);
+                        fetchEarlyPayoffData(selectedLoan.id);
+                      }}
+                      style={{...styles.actionButton, backgroundColor: '#3b82f6'}}
+                    >
+                      Early Payoff
+                    </button>
+                  </div>
                 )}
               </div>
-            );
-          })}
+
+              <div style={styles.tabs}>
+                <button
+                  onClick={() => setActiveTab('overview')}
+                  style={{
+                    ...styles.tab,
+                    borderBottom: activeTab === 'overview' ? '3px solid #10b981' : 'none',
+                    color: activeTab === 'overview' ? '#10b981' : '#6b7280'
+                  }}
+                >
+                  Overview
+                </button>
+                {selectedLoan.status === 'active' && (
+                  <>
+                    <button
+                      onClick={() => setActiveTab('amortization')}
+                      style={{
+                        ...styles.tab,
+                        borderBottom: activeTab === 'amortization' ? '3px solid #10b981' : 'none',
+                        color: activeTab === 'amortization' ? '#10b981' : '#6b7280'
+                      }}
+                    >
+                      Payment Schedule
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('history')}
+                      style={{
+                        ...styles.tab,
+                        borderBottom: activeTab === 'history' ? '3px solid #10b981' : 'none',
+                        color: activeTab === 'history' ? '#10b981' : '#6b7280'
+                      }}
+                    >
+                      Payment History
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('autopay')}
+                      style={{
+                        ...styles.tab,
+                        borderBottom: activeTab === 'autopay' ? '3px solid #10b981' : 'none',
+                        color: activeTab === 'autopay' ? '#10b981' : '#6b7280'
+                      }}
+                    >
+                      Auto-Payment
+                    </button>
+                  </>
+                )}
+              </div>
+
+              <div style={styles.tabContent}>
+                {activeTab === 'overview' && (
+                  <div style={styles.overviewGrid}>
+                    <div style={styles.infoCard}>
+                      <div style={styles.infoLabel}>Principal Amount</div>
+                      <div style={styles.infoValue}>${parseFloat(selectedLoan.principal).toLocaleString()}</div>
+                    </div>
+                    <div style={styles.infoCard}>
+                      <div style={styles.infoLabel}>Interest Rate</div>
+                      <div style={styles.infoValue}>{selectedLoan.interest_rate}% APR</div>
+                    </div>
+                    <div style={styles.infoCard}>
+                      <div style={styles.infoLabel}>Loan Term</div>
+                      <div style={styles.infoValue}>{selectedLoan.term_months} months</div>
+                    </div>
+                    <div style={styles.infoCard}>
+                      <div style={styles.infoLabel}>Monthly Payment</div>
+                      <div style={styles.infoValue}>${calculateMonthlyPayment(selectedLoan).toFixed(2)}</div>
+                    </div>
+                    
+                    {selectedLoan.status === 'active' && (
+                      <>
+                        <div style={styles.infoCard}>
+                          <div style={styles.infoLabel}>Remaining Balance</div>
+                          <div style={{...styles.infoValue, color: '#10b981'}}>
+                            ${parseFloat(selectedLoan.remaining_balance || 0).toLocaleString()}
+                          </div>
+                        </div>
+                        <div style={styles.infoCard}>
+                          <div style={styles.infoLabel}>Next Payment Date</div>
+                          <div style={styles.infoValue}>
+                            {selectedLoan.next_payment_date ? new Date(selectedLoan.next_payment_date).toLocaleDateString() : 'N/A'}
+                          </div>
+                        </div>
+                        <div style={styles.infoCard}>
+                          <div style={styles.infoLabel}>Payments Made</div>
+                          <div style={styles.infoValue}>
+                            {selectedLoan.payments_made || 0} of {selectedLoan.term_months}
+                          </div>
+                        </div>
+                        <div style={styles.infoCard}>
+                          <div style={styles.infoLabel}>Auto-Payment</div>
+                          <div style={styles.infoValue}>
+                            {selectedLoan.auto_payment_enabled ? (
+                              <span style={{color: '#10b981'}}>✓ Enabled</span>
+                            ) : (
+                              <span style={{color: '#6b7280'}}>Disabled</span>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {selectedLoan.purpose && (
+                      <div style={{...styles.infoCard, gridColumn: '1 / -1'}}>
+                        <div style={styles.infoLabel}>Loan Purpose</div>
+                        <div style={styles.purposeText}>{selectedLoan.purpose}</div>
+                      </div>
+                    )}
+
+                    {selectedLoan.is_late && (
+                      <div style={{...styles.warningCard, gridColumn: '1 / -1'}}>
+                        <span style={styles.warningIcon}>⚠️</span>
+                        <div>
+                          <strong>Late Payment Notice:</strong> Your loan payment is overdue. 
+                          {selectedLoan.late_fee_amount > 0 && (
+                            <span> A late fee of ${parseFloat(selectedLoan.late_fee_amount).toFixed(2)} has been applied.</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'amortization' && selectedLoan.status === 'active' && (
+                  <AmortizationSchedule loanId={selectedLoan.id} />
+                )}
+
+                {activeTab === 'history' && selectedLoan.status === 'active' && (
+                  <PaymentHistory loanId={selectedLoan.id} />
+                )}
+
+                {activeTab === 'autopay' && selectedLoan.status === 'active' && (
+                  <AutoPaymentManager loan={selectedLoan} />
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -286,7 +484,8 @@ function LoanDashboardContent() {
             <h2 style={styles.modalTitle}>Make Loan Payment</h2>
             <div style={styles.modalLoanInfo}>
               <p><strong>Loan Type:</strong> {paymentModal.loan_type?.replace('_', ' ').toUpperCase()}</p>
-              <p><strong>Remaining Balance:</strong> ${paymentModal.remaining_balance?.toFixed(2)}</p>
+              <p><strong>Monthly Payment:</strong> ${calculateMonthlyPayment(paymentModal).toFixed(2)}</p>
+              <p><strong>Remaining Balance:</strong> ${parseFloat(paymentModal.remaining_balance || 0).toFixed(2)}</p>
             </div>
 
             <div style={styles.formGroup}>
@@ -301,6 +500,20 @@ function LoanDashboardContent() {
                 step="0.01"
                 style={styles.input}
               />
+              <div style={styles.quickActions}>
+                <button
+                  onClick={() => setPaymentAmount(calculateMonthlyPayment(paymentModal).toFixed(2))}
+                  style={styles.quickButton}
+                >
+                  Monthly Payment
+                </button>
+                <button
+                  onClick={() => setPaymentAmount(parseFloat(paymentModal.remaining_balance).toFixed(2))}
+                  style={styles.quickButton}
+                >
+                  Full Balance
+                </button>
+              </div>
             </div>
 
             <div style={styles.modalButtons}>
@@ -328,13 +541,80 @@ function LoanDashboardContent() {
           </div>
         </div>
       )}
+
+      {earlyPayoffModal && (
+        <div style={styles.modalOverlay} onClick={() => {
+          setEarlyPayoffModal(null);
+          setEarlyPayoffData(null);
+        }}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <h2 style={styles.modalTitle}>Early Loan Payoff</h2>
+            
+            {earlyPayoffData ? (
+              <>
+                <div style={styles.earlyPayoffInfo}>
+                  <p style={styles.earlyPayoffDesc}>
+                    Pay off your loan early and save on interest! Get a 2% discount on your remaining balance.
+                  </p>
+                  
+                  <div style={styles.earlyPayoffGrid}>
+                    <div style={styles.payoffRow}>
+                      <span>Current Balance:</span>
+                      <strong>${earlyPayoffData.early_payoff.current_balance.toLocaleString()}</strong>
+                    </div>
+                    <div style={styles.payoffRow}>
+                      <span>Early Payoff Discount (2%):</span>
+                      <strong style={{color: '#10b981'}}>-${earlyPayoffData.early_payoff.discount_amount.toLocaleString()}</strong>
+                    </div>
+                    <div style={styles.divider}></div>
+                    <div style={styles.payoffRow}>
+                      <span style={{fontSize: '18px', fontWeight: '700'}}>Early Payoff Amount:</span>
+                      <strong style={{fontSize: '24px', color: '#10b981'}}>
+                        ${earlyPayoffData.early_payoff.early_payoff_amount.toLocaleString()}
+                      </strong>
+                    </div>
+                    <div style={styles.savingsBox}>
+                      <span style={styles.savingsIcon}>💰</span>
+                      <span>You'll save ${earlyPayoffData.early_payoff.interest_saved.toLocaleString()} in interest!</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={styles.modalButtons}>
+                  <button
+                    onClick={() => {
+                      setEarlyPayoffModal(null);
+                      setEarlyPayoffData(null);
+                    }}
+                    style={styles.cancelButton}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleEarlyPayoff}
+                    disabled={paymentLoading}
+                    style={{
+                      ...styles.submitButton,
+                      ...(paymentLoading ? styles.submitButtonDisabled : {})
+                    }}
+                  >
+                    {paymentLoading ? 'Processing...' : 'Pay Off Loan'}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div style={styles.loading}>Loading early payoff details...</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 const styles = {
   container: {
-    maxWidth: '1200px',
+    maxWidth: '1400px',
     margin: '0 auto',
     padding: '40px 20px',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
@@ -350,12 +630,12 @@ const styles = {
   title: {
     fontSize: '32px',
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1f2937',
     marginBottom: '5px'
   },
   subtitle: {
     fontSize: '16px',
-    color: '#666',
+    color: '#6b7280',
     marginTop: '5px'
   },
   applyButton: {
@@ -375,30 +655,30 @@ const styles = {
     textAlign: 'center',
     padding: '40px',
     fontSize: '18px',
-    color: '#666'
+    color: '#6b7280'
   },
   errorAlert: {
-    backgroundColor: '#fee2e2',
-    border: '1px solid #ef4444',
+    backgroundColor: '#fef2f2',
+    border: '1px solid #fee2e2',
     borderRadius: '8px',
     padding: '15px',
     marginBottom: '20px',
-    color: '#dc2626'
+    color: '#ef4444'
   },
   successAlert: {
-    backgroundColor: '#d1fae5',
-    border: '1px solid #10b981',
+    backgroundColor: '#f0fdf4',
+    border: '1px solid #dcfce7',
     borderRadius: '8px',
     padding: '15px',
     marginBottom: '20px',
-    color: '#059669'
+    color: '#10b981'
   },
   emptyState: {
     textAlign: 'center',
     padding: '60px 20px',
     backgroundColor: '#fff',
     borderRadius: '12px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
   },
   emptyIcon: {
     fontSize: '64px',
@@ -406,111 +686,182 @@ const styles = {
   },
   emptyTitle: {
     fontSize: '24px',
-    fontWeight: '600',
-    color: '#1a1a1a',
+    fontWeight: '700',
+    color: '#1f2937',
     marginBottom: '10px'
   },
   emptyText: {
     fontSize: '16px',
-    color: '#666',
+    color: '#6b7280',
     marginBottom: '30px'
   },
   emptyButton: {
-    padding: '12px 24px',
+    display: 'inline-block',
+    padding: '12px 32px',
     fontSize: '16px',
     fontWeight: '600',
     color: '#fff',
     backgroundColor: '#10b981',
-    border: 'none',
     borderRadius: '8px',
-    textDecoration: 'none',
-    display: 'inline-block',
-    cursor: 'pointer'
+    textDecoration: 'none'
   },
-  loansGrid: {
+  dashboardLayout: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-    gap: '24px'
+    gridTemplateColumns: '350px 1fr',
+    gap: '30px',
+    '@media (max-width: 1024px)': {
+      gridTemplateColumns: '1fr'
+    }
   },
-  loanCard: {
+  loansList: {
     backgroundColor: '#fff',
     borderRadius: '12px',
     padding: '24px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    transition: 'transform 0.3s, box-shadow 0.3s'
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    height: 'fit-content'
   },
-  loanHeader: {
+  sectionTitle: {
+    fontSize: '20px',
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: '20px'
+  },
+  loanCard: {
+    padding: '16px',
+    marginBottom: '12px',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
+  },
+  loanCardHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '12px'
+  },
+  loanType: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#1f2937',
+    margin: 0
+  },
+  statusBadge: {
+    padding: '4px 12px',
+    borderRadius: '12px',
+    fontSize: '12px',
+    fontWeight: '600',
+    color: '#fff'
+  },
+  loanCardDetails: {
+    fontSize: '14px'
+  },
+  loanCardRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '4px 0',
+    color: '#6b7280'
+  },
+  loanDetails: {
+    backgroundColor: '#fff',
+    borderRadius: '12px',
+    padding: '24px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+  },
+  loanDetailHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: '20px'
+    marginBottom: '24px',
+    flexWrap: 'wrap',
+    gap: '16px'
   },
-  loanType: {
-    fontSize: '18px',
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: '5px'
+  loanDetailTitle: {
+    fontSize: '24px',
+    fontWeight: '700',
+    color: '#1f2937',
+    margin: 0
   },
-  loanDate: {
-    fontSize: '13px',
-    color: '#999',
-    marginTop: '5px'
-  },
-  statusBadge: {
-    padding: '6px 12px',
-    borderRadius: '20px',
-    fontSize: '13px',
-    fontWeight: '600'
-  },
-  loanDetails: {
-    marginBottom: '20px'
-  },
-  detailRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '10px 0',
-    borderBottom: '1px solid #f3f4f6'
-  },
-  detailLabel: {
+  loanDetailSubtitle: {
     fontSize: '14px',
     color: '#6b7280',
-    fontWeight: '500'
+    marginTop: '4px'
   },
-  detailValue: {
+  actionButtons: {
+    display: 'flex',
+    gap: '12px',
+    flexWrap: 'wrap'
+  },
+  actionButton: {
+    padding: '10px 20px',
     fontSize: '14px',
-    color: '#1a1a1a',
+    fontWeight: '600',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    transition: 'opacity 0.2s'
+  },
+  tabs: {
+    display: 'flex',
+    borderBottom: '1px solid #e5e7eb',
+    marginBottom: '24px',
+    gap: '24px',
+    flexWrap: 'wrap'
+  },
+  tab: {
+    padding: '12px 0',
+    fontSize: '15px',
+    fontWeight: '600',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
+  },
+  tabContent: {
+    minHeight: '300px'
+  },
+  overviewGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gap: '20px'
+  },
+  infoCard: {
+    backgroundColor: '#f9fafb',
+    padding: '20px',
+    borderRadius: '8px',
+    border: '1px solid #e5e7eb'
+  },
+  infoLabel: {
+    fontSize: '13px',
+    color: '#6b7280',
+    marginBottom: '8px',
+    textTransform: 'uppercase',
     fontWeight: '600'
   },
-  detailValueBold: {
-    fontSize: '16px',
-    color: '#1a1a1a',
-    fontWeight: '700'
-  },
-  divider: {
-    height: '1px',
-    backgroundColor: '#e5e7eb',
-    margin: '15px 0'
-  },
-  purposeSection: {
-    marginTop: '10px'
+  infoValue: {
+    fontSize: '24px',
+    fontWeight: '700',
+    color: '#1f2937'
   },
   purposeText: {
     fontSize: '14px',
-    color: '#4b5563',
-    marginTop: '5px',
-    lineHeight: '1.6'
+    color: '#374151',
+    lineHeight: '1.6',
+    marginTop: '8px'
   },
-  paymentButton: {
-    width: '100%',
-    padding: '12px',
-    fontSize: '16px',
-    fontWeight: '600',
-    color: '#fff',
-    backgroundColor: '#10b981',
-    border: 'none',
+  warningCard: {
+    backgroundColor: '#fef2f2',
+    border: '1px solid #fee2e2',
     borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'background-color 0.3s'
+    padding: '16px',
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'flex-start',
+    color: '#ef4444'
+  },
+  warningIcon: {
+    fontSize: '20px',
+    flexShrink: 0
   },
   modalOverlay: {
     position: 'fixed',
@@ -518,81 +869,139 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000
+    zIndex: 1000,
+    padding: '20px'
   },
   modalContent: {
     backgroundColor: '#fff',
     borderRadius: '12px',
-    padding: '30px',
+    padding: '32px',
     maxWidth: '500px',
-    width: '90%',
+    width: '100%',
     maxHeight: '90vh',
     overflowY: 'auto'
   },
   modalTitle: {
     fontSize: '24px',
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1f2937',
     marginBottom: '20px'
   },
   modalLoanInfo: {
     backgroundColor: '#f9fafb',
-    padding: '15px',
+    padding: '16px',
     borderRadius: '8px',
-    marginBottom: '20px'
+    marginBottom: '24px',
+    fontSize: '14px',
+    lineHeight: '1.8'
   },
   formGroup: {
-    marginBottom: '20px'
+    marginBottom: '24px'
   },
   label: {
     display: 'block',
     fontSize: '14px',
     fontWeight: '600',
-    color: '#333',
+    color: '#374151',
     marginBottom: '8px'
   },
   input: {
     width: '100%',
     padding: '12px',
-    fontSize: '14px',
-    border: '1px solid #ddd',
+    fontSize: '16px',
+    border: '1px solid #d1d5db',
     borderRadius: '6px',
     boxSizing: 'border-box'
   },
+  quickActions: {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '12px'
+  },
+  quickButton: {
+    padding: '8px 16px',
+    fontSize: '13px',
+    fontWeight: '600',
+    color: '#10b981',
+    backgroundColor: '#f0fdf4',
+    border: '1px solid #dcfce7',
+    borderRadius: '6px',
+    cursor: 'pointer'
+  },
   modalButtons: {
     display: 'flex',
-    gap: '15px',
-    marginTop: '20px'
+    gap: '12px',
+    justifyContent: 'flex-end'
   },
   cancelButton: {
-    flex: 1,
-    padding: '12px',
+    padding: '12px 24px',
     fontSize: '16px',
     fontWeight: '600',
-    color: '#666',
-    backgroundColor: '#fff',
-    border: '2px solid #ddd',
-    borderRadius: '8px',
+    color: '#374151',
+    backgroundColor: '#f3f4f6',
+    border: 'none',
+    borderRadius: '6px',
     cursor: 'pointer'
   },
   submitButton: {
-    flex: 1,
-    padding: '12px',
+    padding: '12px 24px',
     fontSize: '16px',
     fontWeight: '600',
     color: '#fff',
     backgroundColor: '#10b981',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '6px',
     cursor: 'pointer'
   },
   submitButtonDisabled: {
-    backgroundColor: '#9ca3af',
+    opacity: 0.5,
     cursor: 'not-allowed'
+  },
+  earlyPayoffInfo: {
+    marginBottom: '24px'
+  },
+  earlyPayoffDesc: {
+    fontSize: '14px',
+    color: '#6b7280',
+    marginBottom: '20px',
+    lineHeight: '1.5'
+  },
+  earlyPayoffGrid: {
+    backgroundColor: '#f9fafb',
+    padding: '20px',
+    borderRadius: '8px',
+    border: '1px solid #e5e7eb'
+  },
+  payoffRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '12px 0',
+    fontSize: '15px',
+    color: '#374151'
+  },
+  divider: {
+    height: '1px',
+    backgroundColor: '#e5e7eb',
+    margin: '12px 0'
+  },
+  savingsBox: {
+    backgroundColor: '#f0fdf4',
+    border: '1px solid #dcfce7',
+    borderRadius: '6px',
+    padding: '12px',
+    marginTop: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    color: '#10b981',
+    fontWeight: '600'
+  },
+  savingsIcon: {
+    fontSize: '20px'
   }
 };
 

@@ -47,14 +47,20 @@ export default async function handler(req, res) {
     const monthlyRate = interest_rate / 100 / 12;
     const numPayments = term_months;
     let totalDue;
+    let monthlyPayment;
 
     if (monthlyRate === 0) {
       totalDue = principal;
+      monthlyPayment = principal / numPayments;
     } else {
-      const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
+      monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
                             (Math.pow(1 + monthlyRate, numPayments) - 1);
       totalDue = monthlyPayment * numPayments;
     }
+
+    const firstPaymentDate = new Date();
+    firstPaymentDate.setMonth(firstPaymentDate.getMonth() + 1);
+    firstPaymentDate.setDate(1);
 
     const { data: loan, error: loanError } = await supabaseAdmin
       .from('loans')
@@ -67,6 +73,10 @@ export default async function handler(req, res) {
         term_months,
         purpose,
         remaining_balance: totalDue,
+        monthly_payment_amount: monthlyPayment,
+        total_amount: totalDue,
+        next_payment_date: firstPaymentDate.toISOString().split('T')[0],
+        payments_made: 0,
         status: 'pending'
       }])
       .select()
