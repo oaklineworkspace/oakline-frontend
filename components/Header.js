@@ -132,11 +132,13 @@ export default function Header() {
                   </div>
                   <div style={styles.dropdownSection}>
                     <h4 style={styles.dropdownHeading}>🏠 Loans & Credit</h4>
-                    <Link href="/loans" style={styles.dropdownLink}>Home Mortgage</Link>
-                    <Link href="/loans" style={styles.dropdownLink}>Personal Loan</Link>
-                    <Link href="/loans" style={styles.dropdownLink}>Auto Loan</Link>
-                    <Link href="/loans" style={styles.dropdownLink}>Business Loan</Link>
-                    <Link href="/loans" style={styles.dropdownLink}>Credit Cards</Link>
+                    <Link href="/loan/dashboard" style={styles.dropdownLink}>My Loan Dashboard</Link>
+                    <Link href="/loan/apply" style={styles.dropdownLink}>Apply for New Loan</Link>
+                    <Link href="/loan/apply" style={styles.dropdownLink}>Home Mortgage</Link>
+                    <Link href="/loan/apply" style={styles.dropdownLink}>Personal Loan</Link>
+                    <Link href="/loan/apply" style={styles.dropdownLink}>Auto Loan</Link>
+                    <Link href="/loan/apply" style={styles.dropdownLink}>Business Loan</Link>
+                    <Link href="/cards" style={styles.dropdownLink}>Credit Cards</Link>
                   </div>
                   <div style={styles.dropdownSection}>
                     <h4 style={styles.dropdownHeading}>💰 Investment</h4>

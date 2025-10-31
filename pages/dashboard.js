@@ -393,7 +393,8 @@ function DashboardContent() {
                   <div style={styles.dropdownDivider}></div>
                   <div style={styles.dropdownSection}>
                     <h4 style={styles.dropdownSectionTitle}>💼 Loans & Credit</h4>
-                    <Link href="/loans" style={styles.dropdownLink}>💰 Apply for Loan</Link>
+                    <Link href="/loan/dashboard" style={styles.dropdownLink}>💼 My Loan Dashboard</Link>
+                    <Link href="/loan/apply" style={styles.dropdownLink}>💰 Apply for New Loan</Link>
                     <Link href="/credit-report" style={styles.dropdownLink}>📊 Credit Report</Link>
                     <Link href="/apply-card" style={styles.dropdownLink}>💳 Apply for Card</Link>
                   </div>
@@ -693,7 +694,11 @@ function DashboardContent() {
               <span style={styles.quickActionIcon}>⚡</span>
               <span style={styles.quickActionText}>Send with Zelle</span>
             </Link>
-            <Link href="/loans" style={styles.standardActionButton}>
+            <Link href="/loan/dashboard" style={styles.standardActionButton}>
+              <span style={styles.quickActionIcon}>💼</span>
+              <span style={styles.quickActionText}>My Loans</span>
+            </Link>
+            <Link href="/loan/apply" style={styles.standardActionButton}>
               <span style={styles.quickActionIcon}>💰</span>
               <span style={styles.quickActionText}>Apply for Loan</span>
             </Link>

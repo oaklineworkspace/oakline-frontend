@@ -178,16 +178,16 @@ export default function Footer() {
           <div style={styles.footerSection}>
             <h4 style={styles.sectionTitle}>Loans & Credit</h4>
             <ul style={styles.linkList}>
-              <li><Link href="/loans" style={styles.footerLink}>Personal Loans</Link></li>
-              <li><Link href="/loans" style={styles.footerLink}>Auto Loans</Link></li>
-              <li><Link href="/loans" style={styles.footerLink}>Home Mortgages</Link></li>
-              <li><Link href="/loans" style={styles.footerLink}>Refinancing</Link></li>
-              <li><Link href="/loans" style={styles.footerLink}>Business Loans</Link></li>
+              <li><Link href="/loan/dashboard" style={styles.footerLink}>My Loan Dashboard</Link></li>
+              <li><Link href="/loan/apply" style={styles.footerLink}>Apply for Loan</Link></li>
+              <li><Link href="/loan/apply" style={styles.footerLink}>Personal Loans</Link></li>
+              <li><Link href="/loan/apply" style={styles.footerLink}>Auto Loans</Link></li>
+              <li><Link href="/loan/apply" style={styles.footerLink}>Home Mortgages</Link></li>
+              <li><Link href="/loan/apply" style={styles.footerLink}>Refinancing</Link></li>
+              <li><Link href="/loan/apply" style={styles.footerLink}>Business Loans</Link></li>
               <li><Link href="/cards" style={styles.footerLink}>Credit Cards</Link></li>
-              <li><Link href="/loans" style={styles.footerLink}>Home Equity</Link></li>
-              <li><Link href="/loans" style={styles.footerLink}>Student Loans</Link></li>
-              <li><Link href="/loans" style={styles.footerLink}>Construction Loans</Link></li>
-              <li><Link href="/loans" style={styles.footerLink}>Agricultural Loans</Link></li>
+              <li><Link href="/loan/apply" style={styles.footerLink}>Home Equity</Link></li>
+              <li><Link href="/loan/apply" style={styles.footerLink}>Student Loans</Link></li>
             </ul>
           </div>
 

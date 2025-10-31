@@ -162,7 +162,7 @@ export default function MainMenu() {
     }
   ];
 
-  const allServices = bankingServices.flatMap(category => 
+  const allServices = bankingServices.flatMap(category =>
     category.services.map(service => ({ ...service, category: category.category }))
   );
 
@@ -226,7 +226,8 @@ export default function MainMenu() {
                   <div style={styles.dropdownDivider}></div>
                   <div style={styles.dropdownSection}>
                     <h4 style={styles.dropdownSectionTitle}>💼 Loans & Credit</h4>
-                    <Link href="/loans" style={styles.dropdownLink}>💰 Apply for Loan</Link>
+                    <Link href="/loan/dashboard" style={styles.dropdownLink}>💼 My Loan Dashboard</Link>
+                    <Link href="/loan/apply" style={styles.dropdownLink}>💰 Apply for New Loan</Link>
                     <Link href="/credit-report" style={styles.dropdownLink}>📊 Credit Report</Link>
                     <Link href="/apply-card" style={styles.dropdownLink}>💳 Apply for Card</Link>
                   </div>

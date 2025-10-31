@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
@@ -137,7 +136,7 @@ export default function MainMenu({ user }) {
 
     document.addEventListener('click', handleClickOutside);
     document.addEventListener('keydown', handleEscape);
-    
+
     return () => {
       document.removeEventListener('click', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
@@ -219,7 +218,7 @@ export default function MainMenu({ user }) {
                 </button>
 
                 {activeDropdown === item.name && (
-                  <div 
+                  <div
                     style={styles.megaDropdown}
                     onMouseLeave={closeDropdowns}
                   >
@@ -242,6 +241,17 @@ export default function MainMenu({ user }) {
                           </div>
                         </div>
                       ))}
+                      {/* Updated More dropdown to include loan dashboard link */}
+                      <div style={styles.dropdownSection}>
+                        <h4 style={styles.dropdownHeading}>💼 Loans & Credit</h4>
+                        <Link href="/loan/dashboard" style={styles.dropdownLink}>My Loan Dashboard</Link>
+                        <Link href="/loan/apply" style={styles.dropdownLink}>Apply for New Loan</Link>
+                        <Link href="/loan/apply" style={styles.dropdownLink}>Home Mortgage</Link>
+                        <Link href="/loan/apply" style={styles.dropdownLink}>Personal Loan</Link>
+                        <Link href="/loan/apply" style={styles.dropdownLink}>Auto Loan</Link>
+                        <Link href="/loan/apply" style={styles.dropdownLink}>Business Loan</Link>
+                        <Link href="/cards" style={styles.dropdownLink}>Credit Cards</Link>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -325,7 +335,7 @@ export default function MainMenu({ user }) {
                   </Link>
                 </div>
               )}
-              
+
               {menuItems.map((item) => (
                 <div key={item.name} style={styles.mobileMenuItem}>
                   <button
@@ -341,7 +351,7 @@ export default function MainMenu({ user }) {
                       ▼
                     </span>
                   </button>
-                  
+
                   {activeDropdown === item.name && (
                     <div style={styles.mobileDropdown}>
                       {item.dropdown.map((category) => (
@@ -580,6 +590,29 @@ const styles = {
     fontSize: '0.9rem',
     fontWeight: '500'
   },
+  dropdownSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem'
+  },
+  dropdownHeading: {
+    fontSize: '0.9rem',
+    fontWeight: 'bold',
+    color: '#1e40af',
+    marginBottom: '0.75rem',
+    borderBottom: '1px solid #e5e7eb',
+    paddingBottom: '0.5rem'
+  },
+  dropdownLink: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '0.75rem',
+    textDecoration: 'none',
+    color: '#374151',
+    borderRadius: '8px',
+    transition: 'all 0.2s'
+  },
 
   // User Actions
   userActions: {
@@ -783,87 +816,87 @@ if (typeof document !== 'undefined') {
       0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
       100% { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
-    
+
     @keyframes mobileDropdownSlideIn {
       0% { opacity: 0; max-height: 0; }
       100% { opacity: 1; max-height: 500px; }
     }
-    
+
     /* Hover Effects */
     .menuButton:hover {
       background-color: #eff6ff;
       color: #1e40af;
       transform: translateY(-1px);
     }
-    
+
     .dropdownItem:hover {
       background-color: #f8fafc;
       color: #1e40af;
       transform: translateX(5px);
     }
-    
+
     .actionButton:hover, .applyButton:hover, .loginButton:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
-    
+
     .mobileDropdownItem:hover {
       background-color: #eff6ff;
       border-color: #3b82f6;
       transform: translateX(5px);
     }
-    
+
     .topBarLink:hover {
       color: #fbbf24;
     }
-    
+
     .announcementLink:hover {
       color: #ffffff;
     }
-    
+
     /* Mobile Responsive */
     @media (max-width: 1024px) {
       .desktopMenu {
         display: none;
       }
-      
+
       .mobileMenuButton {
         display: flex;
       }
-      
+
       .userActions {
         display: none;
       }
-      
+
       .topBarContent {
         flex-direction: column;
         text-align: center;
       }
-      
+
       .megaDropdown {
         min-width: 300px;
         left: 0;
         transform: none;
       }
-      
+
       .dropdownContent {
         grid-template-columns: 1fr;
       }
     }
-    
+
     @media (max-width: 768px) {
       .announcement {
         font-size: 0.8rem;
       }
-      
+
       .brandName {
         font-size: 1.2rem;
       }
-      
+
       .brandTagline {
         font-size: 0.7rem;
       }
-      
+
       .logo {
         height: 35px;
       }
