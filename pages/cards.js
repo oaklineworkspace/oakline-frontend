@@ -20,6 +20,9 @@ function CardsContent() {
   const [selectedCardForPin, setSelectedCardForPin] = useState(null);
   const [pinInput, setPinInput] = useState('');
   const [confirmPinInput, setConfirmPinInput] = useState('');
+  const [cardTransactions, setCardTransactions] = useState({});
+  const [showTransactionsModal, setShowTransactionsModal] = useState(false);
+  const [selectedCardTransactions, setSelectedCardTransactions] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -64,6 +67,22 @@ function CardsContent() {
         .order('created_at', { ascending: false });
 
       setCards(cardsData || []);
+
+      // Fetch card transactions for each card
+      if (cardsData && cardsData.length > 0) {
+        const transactionsMap = {};
+        for (const card of cardsData) {
+          const { data: txData } = await supabase
+            .from('card_transactions')
+            .select('*')
+            .eq('card_id', card.id)
+            .order('created_at', { ascending: false })
+            .limit(10);
+          
+          transactionsMap[card.id] = txData || [];
+        }
+        setCardTransactions(transactionsMap);
+      }
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Failed to load card data');
@@ -115,6 +134,12 @@ function CardsContent() {
     setShowPinModal(true);
     setPinInput('');
     setConfirmPinInput('');
+  };
+
+  const handleViewTransactions = (cardId) => {
+    const transactions = cardTransactions[cardId] || [];
+    setSelectedCardTransactions(transactions);
+    setShowTransactionsModal(true);
   };
 
   const handlePinSubmit = async () => {
@@ -502,10 +527,10 @@ function CardsContent() {
                           🔄 Request Replacement
                         </button>
                         <button
-                          onClick={() => router.push('/transactions?card=' + card.id)}
+                          onClick={() => handleViewTransactions(card.id)}
                           style={{ ...styles.actionButton, ...styles.transactionsButton }}
                         >
-                          📊 View Transactions
+                          📊 View Transactions ({cardTransactions[card.id]?.length || 0})
                         </button>
                       </div>
                     </div>
@@ -516,6 +541,62 @@ function CardsContent() {
           )}
         </section>
       </main>
+
+      {showTransactionsModal && (
+        <div style={styles.modalOverlay} onClick={() => setShowTransactionsModal(false)}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>💳 Card Transactions</h2>
+              <button
+                onClick={() => setShowTransactionsModal(false)}
+                style={styles.modalCloseButton}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={styles.modalBody}>
+              {selectedCardTransactions.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                  <p style={{ fontSize: '2rem', marginBottom: '1rem' }}>📝</p>
+                  <p>No transactions found for this card</p>
+                </div>
+              ) : (
+                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                  {selectedCardTransactions.map((tx) => (
+                    <div key={tx.id} style={{
+                      padding: '1rem',
+                      borderBottom: '1px solid #e2e8f0',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#1e293b', marginBottom: '0.25rem' }}>
+                          {tx.merchant || 'Unknown Merchant'}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                          {tx.transaction_type?.toUpperCase() || 'PURCHASE'}
+                        </div>
+                        {tx.location && (
+                          <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                            📍 {tx.location}
+                          </div>
+                        )}
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                          {new Date(tx.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: '1rem', fontWeight: '700', color: '#dc2626' }}>
+                        -{formatCurrency(tx.amount)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {showPinModal && (
         <div style={styles.modalOverlay} onClick={() => setShowPinModal(false)}>

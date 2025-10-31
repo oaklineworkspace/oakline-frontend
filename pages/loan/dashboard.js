@@ -752,7 +752,7 @@ const styles = {
     margin: '1rem auto',
     padding: '1rem',
     backgroundColor: '#f0fdf4',
-    border: '1px solid '#dcfce7',
+    border: '1px solid #dcfce7',
     borderRadius: '8px',
     color: '#10b981',
     fontSize: '0.9rem'
