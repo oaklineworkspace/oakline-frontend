@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
 import Head from 'next/head';
-import { QRCodeSVG } from 'react-qr-code';
+import QRCode from 'react-qr-code';
 
 export default function CryptoDeposit() {
   const [user, setUser] = useState(null);
@@ -13,7 +13,6 @@ export default function CryptoDeposit() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
-  const [showSuccess, setShowSuccess] = useState(false);
   const [walletAddress, setWalletAddress] = useState('');
   const [loadingWallet, setLoadingWallet] = useState(false);
   const router = useRouter();
@@ -144,7 +143,6 @@ export default function CryptoDeposit() {
         throw new Error(error.message || 'Deposit submission failed');
       }
 
-      setShowSuccess(true);
       setMessage('✅ Deposit submitted successfully and is pending admin confirmation.');
       setMessageType('success');
       
@@ -389,7 +387,7 @@ export default function CryptoDeposit() {
                   borderRadius: '8px',
                   border: '1px solid #e0e0e0'
                 }}>
-                  <QRCodeSVG value={walletAddress} size={200} />
+                  <QRCode value={walletAddress} size={200} />
                 </div>
 
                 <p style={{
