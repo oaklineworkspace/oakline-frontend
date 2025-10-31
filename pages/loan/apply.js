@@ -283,12 +283,12 @@ function LoanApplicationContent() {
                       name="principal"
                       value={formData.principal}
                       onChange={handleInputChange}
-                      placeholder="0.00"
+                      placeholder="10,000"
                       min="1000"
                       max="5000000"
                       step="100"
                       required
-                      style={styles.input}
+                      style={{...styles.input, paddingLeft: '36px'}}
                     />
                   </div>
                   <span style={styles.hint}>Minimum: $1,000 | Maximum: $5,000,000</span>
@@ -305,11 +305,11 @@ function LoanApplicationContent() {
                       name="term_months"
                       value={formData.term_months}
                       onChange={handleInputChange}
-                      placeholder="12"
+                      placeholder="36"
                       min="1"
                       max="360"
                       required
-                      style={styles.input}
+                      style={{...styles.input, paddingRight: '80px'}}
                     />
                     <span style={styles.inputSuffix}>months</span>
                   </div>
@@ -318,25 +318,19 @@ function LoanApplicationContent() {
 
                 <div style={styles.formGroup}>
                   <label style={styles.label}>
-                    <span style={styles.labelText}>Interest Rate</span>
+                    <span style={styles.labelText}>Interest Rate (APR)</span>
                   </label>
                   <div style={styles.inputWrapper}>
                     <input
-                      type="number"
+                      type="text"
                       name="interest_rate"
-                      value={formData.interest_rate}
-                      onChange={handleInputChange}
-                      placeholder="0.00"
-                      min="0"
-                      max="30"
-                      step="0.01"
-                      required
+                      value={formData.interest_rate ? `${formData.interest_rate}%` : ''}
                       readOnly
-                      style={{...styles.input, backgroundColor: '#f9fafb'}}
+                      placeholder="Rate will be set automatically"
+                      style={{...styles.input, backgroundColor: '#f9fafb', cursor: 'not-allowed', color: '#10b981', fontWeight: '600'}}
                     />
-                    <span style={styles.inputSuffix}>% APR</span>
                   </div>
-                  <span style={styles.hint}>Rate automatically set based on loan type</span>
+                  <span style={styles.hint}>Competitive rate automatically assigned based on loan type</span>
                 </div>
               </div>
 
@@ -349,12 +343,12 @@ function LoanApplicationContent() {
                   name="purpose"
                   value={formData.purpose}
                   onChange={handleInputChange}
-                  placeholder="Please provide a detailed description of how you plan to use the loan funds..."
+                  placeholder="Please describe in detail how you plan to use the loan funds. For example: 'Consolidating credit card debt totaling $15,000' or 'Purchasing equipment for my consulting business'..."
                   required
                   rows="5"
                   style={styles.textarea}
                 />
-                <span style={styles.hint}>Be specific about your intended use of the funds</span>
+                <span style={styles.hint}>Provide specific details to help us process your application faster</span>
               </div>
             </div>
           )}
@@ -740,11 +734,7 @@ const styles = {
     outline: 'none',
     transition: 'all 0.3s',
     fontFamily: 'inherit',
-    backgroundColor: '#fff',
-    ':focus': {
-      borderColor: '#10b981',
-      boxShadow: '0 0 0 3px rgba(16, 185, 129, 0.1)'
-    }
+    backgroundColor: '#fff'
   },
   textarea: {
     width: '100%',
@@ -756,7 +746,8 @@ const styles = {
     transition: 'all 0.3s',
     fontFamily: 'inherit',
     resize: 'vertical',
-    lineHeight: '1.6'
+    lineHeight: '1.6',
+    backgroundColor: '#fff'
   },
   hint: {
     fontSize: '13px',
@@ -929,7 +920,7 @@ const styles = {
   }
 };
 
-// Add CSS animation for spinner
+// Add CSS animation for spinner and input styles
 if (typeof document !== 'undefined') {
   const style = document.createElement('style');
   style.textContent = `
@@ -940,6 +931,18 @@ if (typeof document !== 'undefined') {
     input[type="number"]::-webkit-inner-spin-button,
     input[type="number"]::-webkit-outer-spin-button {
       opacity: 1;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #10b981 !important;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #9ca3af;
+      font-weight: 400;
     }
   `;
   document.head.appendChild(style);
