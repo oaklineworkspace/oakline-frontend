@@ -7,7 +7,7 @@ Oakline Bank is a comprehensive Next.js/React-based banking web application prov
 **New Features Added:**
 - **Bill Pay System** (`/pages/bill-pay.js`): Full-featured bill payment page with beneficiary management, scheduled payments, payment history tracking, and automatic transaction recording in both `bill_payments` and `transactions` tables.
 - **Investment Portfolio** (`/pages/investment.js`): Comprehensive investment management with product listings, portfolio tracking, transaction history, and real-time portfolio value calculations.
-- **Crypto Deposit System** (`/pages/deposit-crypto.js`): Complete cryptocurrency deposit functionality with account selection, multi-crypto support (BTC, USDT, ETH, BNB), admin-assigned wallet address display with QR codes (using `react-qr-code`), and deposit submission to `crypto_deposits` table. Integrates with `user_crypto_wallets` table for wallet assignments.
+- **Crypto Deposit System** (`/pages/deposit-crypto.js`): Professional 3-step cryptocurrency deposit flow with account selection, multi-crypto support (BTC, USDT, ETH, BNB with color-coded icons), admin-assigned wallet address display with QR codes (using `react-qr-code`), payment instructions, user payment confirmation, and deposit submission to `crypto_deposits` table with `pending` status. Features include: progress stepper UI, professional gradient header, wallet address copy-to-clipboard, comprehensive validation, and deposit history table. Integrates with `user_crypto_wallets` table for wallet assignments.
 
 **Security Enhancements:**
 - All account balance updates now include `user_id` verification to prevent unauthorized account access.
