@@ -8,10 +8,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Verify this is a cron job (add your cron secret in .env as CRON_SECRET)
+  // Verify this is a cron job using CRON_SECRET from Replit Secrets
   const cronSecret = req.headers['x-cron-secret'];
-  if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
-    return res.status(401).json({ error: 'Unauthorized - Invalid or missing cron secret' });
+  
+  if (!cronSecret) {
+    return res.status(401).json({ error: 'Unauthorized - Missing cron secret header' });
+  }
+  
+  if (cronSecret !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized - Invalid cron secret' });
   }
 
   try {
