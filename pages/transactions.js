@@ -163,7 +163,7 @@ export default function TransactionsHistory() {
   };
 
   const getFilteredTransactions = () => {
-    let filtered = transactions;
+    let filtered = [...transactions]; // Create a copy to avoid mutation
 
     if (filter !== 'all') {
       filtered = filtered.filter(tx => {

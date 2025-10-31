@@ -101,7 +101,7 @@ export default function AccountDetails() {
         console.error('Error fetching transactions:', transactionsError);
         setTransactions([]);
       } else {
-        // Show all transactions for this specific account, including both sides of internal transfers
+        // Show all transactions for this specific account
         setTransactions(transactionsData || []);
       }
     } catch (error) {

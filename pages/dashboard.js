@@ -110,32 +110,9 @@ function DashboardContent() {
           .limit(50);
 
         if (!txError && txData) {
-          // Filter to show only one transaction per transfer group
-          const seenTransferGroups = new Set();
-          const filteredTransactions = [];
-          
-          for (const tx of txData) {
-            if (tx.transfer_group_id) {
-              // For grouped transfers, only show once per group
-              if (!seenTransferGroups.has(tx.transfer_group_id)) {
-                seenTransferGroups.add(tx.transfer_group_id);
-                
-                // For internal transfers (same user), always show the debit (transfer_out) side
-                if (tx.transfer_type === 'internal' && tx.type === 'transfer_out') {
-                  filteredTransactions.push(tx);
-                }
-                // For external transfers (between different users), show whichever side belongs to this user
-                else if (tx.transfer_type !== 'internal') {
-                  filteredTransactions.push(tx);
-                }
-              }
-            } else {
-              // Non-grouped transactions show normally
-              filteredTransactions.push(tx);
-            }
-          }
-          
-          transactionsData = filteredTransactions.slice(0, 10);
+          // Show all transactions for the user's accounts
+          // Each account will show its own side of the transfer
+          transactionsData = txData.slice(0, 10);
         }
       }
 
