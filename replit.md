@@ -14,6 +14,16 @@ Oakline Bank is a comprehensive Next.js/React-based banking web application prov
   - Transaction icons now properly mapped for all types: deposit, withdrawal, credit, debit, bill_payment, purchase, refund, interest, crypto_deposit, zelle_send/receive
   - All legacy transaction type references removed from codebase
 - **Platform Migration**: Successfully migrated from Vercel to Replit with proper port configuration (5000), environment variable setup, and workflow configuration.
+  - Removed all admin pages (`pages/admin/` and `pages/api/admin/`) as they belong in separate admin repository
+  - Confirmed all Supabase environment variables configured in Replit Secrets
+  - Development server running on port 5000 with host 0.0.0.0 for Replit compatibility
+- **Zelle Payment System**: Comprehensive Zelle® integration with real-time Supabase data synchronization:
+  - **Main Features** (`/pages/zelle.js`): Send money, manage contacts, view transaction history with tabbed interface
+  - **Zelle Settings** (`/pages/zelle-settings.js`): Contact management, spending limit tracking (daily $2,500, monthly $20,000), security settings
+  - **API Endpoints**: `/api/zelle-transactions.js` for transaction processing, `/api/zelle-send-money.js` for verified transfers
+  - **Database Tables**: `zelle_transactions`, `zelle_contacts`, `zelle_settings`, with integration to `accounts`, `profiles`, `transactions`, `notifications`, `verification_codes`, `system_logs`
+  - **Features**: QR code generation for receiving money, contact quick-select, real-time balance updates, email verification codes, transaction notifications, automatic account debits/credits via `process_zelle_transfer` RPC function
+  - **Security**: Two-factor verification for all transfers, daily/monthly spending limits, transaction audit logging
 - **Button Styling Fix**: Resolved global button styling issue where `styles/button-fixes.css` contained a `button { background: none !important; }` rule that was removing all button backgrounds across the app. This was causing buttons on deposit-crypto and other pages to appear white with invisible text. The fix removed the global override while preserving specific `.serviceCard` styling.
 - **Crypto Wallet Verification**: Verified and confirmed that `/pages/deposit-crypto.js` correctly fetches crypto wallets from **both** `user_crypto_wallets` AND `admin_assigned_wallets` tables. The implementation:
   - First queries `user_crypto_wallets` for user-specific wallet assignments
