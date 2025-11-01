@@ -1774,10 +1774,12 @@ const styles = {
   },
   cardFront: {
     zIndex: 2,
-    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #1e3a8a 100%)',
+    background: '#1a365d',
+    border: '3px solid #059669'
   },
   cardBack: {
-    background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%)'
+    background: '#1a365d',
+    border: '3px solid #059669'
   },
   cardHeader: {
     display: 'flex',
@@ -1803,7 +1805,7 @@ const styles = {
   chip: {
     width: '50px',
     height: '40px',
-    background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)',
+    background: '#ffd700',
     borderRadius: '8px'
   },
   contactless: {
