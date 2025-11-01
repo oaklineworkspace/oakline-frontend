@@ -33,6 +33,8 @@ export default function CryptoDeposit() {
   const [walletAddress, setWalletAddress] = useState('');
   const [loadingWallet, setLoadingWallet] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [receiptData, setReceiptData] = useState(null);
   const router = useRouter();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -250,12 +252,31 @@ export default function CryptoDeposit() {
         throw new Error(error.message || 'Deposit submission failed');
       }
 
-      setMessage('Your deposit is now being processed. You will receive a notification once it has been confirmed.');
-      setMessageType('success');
-      
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 3000);
+      // Create receipt data
+      const receipt = {
+        referenceNumber: data.id.substring(0, 8).toUpperCase(),
+        date: new Date().toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true
+        }),
+        accountNumber: depositForm.account_number,
+        cryptoType: getSelectedCrypto().label,
+        cryptoSymbol: depositForm.crypto_type,
+        network: getSelectedNetwork()?.label,
+        amount: formatCurrency(depositForm.amount),
+        walletAddress: walletAddress,
+        confirmations: getSelectedNetwork()?.confirmations,
+        status: 'Pending Confirmation',
+        transactionId: data.id
+      };
+
+      setReceiptData(receipt);
+      setShowReceipt(true);
 
     } catch (error) {
       console.error('Deposit error:', error);
@@ -285,7 +306,7 @@ export default function CryptoDeposit() {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    setMessage('Wallet address copied to clipboard!');
+    setMessage('Copied to clipboard!');
     setMessageType('info');
     setTimeout(() => {
       if (messageType === 'info') {
@@ -305,6 +326,10 @@ export default function CryptoDeposit() {
 
   const getSelectedNetwork = () => {
     return getAvailableNetworks().find(n => n.value === depositForm.network_type);
+  };
+
+  const printReceipt = () => {
+    window.print();
   };
 
   const styles = {
@@ -684,6 +709,98 @@ export default function CryptoDeposit() {
       borderRadius: '50%',
       animation: 'spin 1s linear infinite',
       marginBottom: '1rem'
+    },
+    receiptOverlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000,
+      padding: '1rem'
+    },
+    receipt: {
+      backgroundColor: 'white',
+      borderRadius: '16px',
+      padding: '2rem',
+      maxWidth: '600px',
+      width: '100%',
+      maxHeight: '90vh',
+      overflowY: 'auto',
+      boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+    },
+    receiptHeader: {
+      textAlign: 'center',
+      borderBottom: '2px solid #e5e7eb',
+      paddingBottom: '1.5rem',
+      marginBottom: '1.5rem'
+    },
+    receiptTitle: {
+      fontSize: '1.75rem',
+      fontWeight: '700',
+      color: '#1e40af',
+      marginBottom: '0.5rem'
+    },
+    receiptSubtitle: {
+      fontSize: '0.95rem',
+      color: '#64748b'
+    },
+    receiptSuccessBadge: {
+      backgroundColor: '#ecfdf5',
+      color: '#059669',
+      padding: '0.75rem 1.5rem',
+      borderRadius: '8px',
+      fontSize: '0.9rem',
+      fontWeight: '600',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+      marginTop: '1rem'
+    },
+    receiptRow: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      padding: '0.875rem 0',
+      borderBottom: '1px solid #f1f5f9'
+    },
+    receiptLabel: {
+      fontSize: '0.9rem',
+      color: '#64748b',
+      fontWeight: '500'
+    },
+    receiptValue: {
+      fontSize: '0.9rem',
+      color: '#1e293b',
+      fontWeight: '600',
+      textAlign: 'right',
+      maxWidth: '60%',
+      wordBreak: 'break-word'
+    },
+    receiptHighlight: {
+      backgroundColor: '#eff6ff',
+      padding: '1rem',
+      borderRadius: '8px',
+      margin: '1rem 0',
+      border: '1px solid #bfdbfe'
+    },
+    receiptButtons: {
+      display: 'flex',
+      gap: '1rem',
+      marginTop: '2rem'
+    },
+    receiptButton: {
+      flex: 1,
+      padding: '0.875rem',
+      borderRadius: '8px',
+      fontSize: '0.95rem',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.3s',
+      border: 'none'
     }
   };
 
@@ -715,6 +832,19 @@ export default function CryptoDeposit() {
           @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+          }
+          @media print {
+            body * {
+              visibility: hidden;
+            }
+            .receipt-print, .receipt-print * {
+              visibility: visible;
+            }
+            .receipt-print {
+              position: absolute;
+              left: 0;
+              top: 0;
+            }
           }
         `}</style>
       </Head>
@@ -1098,8 +1228,8 @@ export default function CryptoDeposit() {
                 disabled={submitting}
                 style={{
                   ...styles.button,
-                  ...styles.primaryButton,
                   backgroundColor: submitting ? '#9ca3af' : '#10b981',
+                  color: 'white',
                   opacity: submitting ? 0.7 : 1,
                   cursor: submitting ? 'not-allowed' : 'pointer'
                 }}
@@ -1168,6 +1298,152 @@ export default function CryptoDeposit() {
           </div>
         )}
       </main>
+
+      {/* Comprehensive Receipt Modal */}
+      {showReceipt && receiptData && (
+        <div style={styles.receiptOverlay}>
+          <div style={styles.receipt} className="receipt-print">
+            <div style={styles.receiptHeader}>
+              <h2 style={styles.receiptTitle}>Cryptocurrency Deposit Receipt</h2>
+              <p style={styles.receiptSubtitle}>Oakline Bank - Digital Asset Services</p>
+              <div style={styles.receiptSuccessBadge}>
+                ✓ Transaction Submitted Successfully
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Reference Number</span>
+                <span style={{ ...styles.receiptValue, fontFamily: 'monospace', fontWeight: '700' }}>
+                  {receiptData.referenceNumber}
+                </span>
+              </div>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Transaction ID</span>
+                <span style={{ ...styles.receiptValue, fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                  {receiptData.transactionId}
+                </span>
+              </div>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Date & Time</span>
+                <span style={styles.receiptValue}>{receiptData.date}</span>
+              </div>
+            </div>
+
+            <div style={styles.receiptHighlight}>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Account Number</span>
+                <span style={{ ...styles.receiptValue, fontFamily: 'monospace' }}>
+                  {receiptData.accountNumber}
+                </span>
+              </div>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Cryptocurrency</span>
+                <span style={styles.receiptValue}>
+                  {receiptData.cryptoType} ({receiptData.cryptoSymbol})
+                </span>
+              </div>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Network</span>
+                <span style={styles.receiptValue}>{receiptData.network}</span>
+              </div>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Amount (USD)</span>
+                <span style={{ ...styles.receiptValue, fontSize: '1.25rem', color: '#059669' }}>
+                  {receiptData.amount}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Deposit Address</span>
+                <span style={{ ...styles.receiptValue, fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                  {receiptData.walletAddress}
+                </span>
+              </div>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Required Confirmations</span>
+                <span style={styles.receiptValue}>{receiptData.confirmations}</span>
+              </div>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Status</span>
+                <span style={{ 
+                  ...styles.receiptValue, 
+                  color: '#f59e0b',
+                  backgroundColor: '#fef3c7',
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '6px'
+                }}>
+                  {receiptData.status}
+                </span>
+              </div>
+            </div>
+
+            <div style={{
+              backgroundColor: '#fef3c7',
+              padding: '1rem',
+              borderRadius: '8px',
+              marginBottom: '1.5rem',
+              border: '1px solid #fbbf24'
+            }}>
+              <p style={{ fontSize: '0.85rem', color: '#92400e', margin: 0, lineHeight: '1.6' }}>
+                <strong>⏱️ Processing Time:</strong> Your deposit will be credited to your account after {receiptData.confirmations} network confirmations. This typically takes 15-60 minutes depending on network congestion.
+              </p>
+            </div>
+
+            <div style={{
+              backgroundColor: '#eff6ff',
+              padding: '1rem',
+              borderRadius: '8px',
+              marginBottom: '1.5rem',
+              border: '1px solid #bfdbfe'
+            }}>
+              <p style={{ fontSize: '0.85rem', color: '#1e40af', margin: 0, lineHeight: '1.6' }}>
+                <strong>📧 Email Confirmation:</strong> You will receive an email notification once your deposit has been confirmed and credited to your account.
+              </p>
+            </div>
+
+            <div style={styles.receiptButtons}>
+              <button
+                onClick={printReceipt}
+                style={{
+                  ...styles.receiptButton,
+                  backgroundColor: '#1e40af',
+                  color: 'white'
+                }}
+              >
+                🖨️ Print Receipt
+              </button>
+              <button
+                onClick={() => {
+                  setShowReceipt(false);
+                  router.push('/dashboard');
+                }}
+                style={{
+                  ...styles.receiptButton,
+                  backgroundColor: '#10b981',
+                  color: 'white'
+                }}
+              >
+                ✓ Done
+              </button>
+            </div>
+
+            <div style={{
+              marginTop: '1.5rem',
+              paddingTop: '1.5rem',
+              borderTop: '1px solid #e5e7eb',
+              textAlign: 'center'
+            }}>
+              <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: 0 }}>
+                This is an official receipt from Oakline Bank.<br />
+                For support, contact us at support@theoaklinebank.com
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
