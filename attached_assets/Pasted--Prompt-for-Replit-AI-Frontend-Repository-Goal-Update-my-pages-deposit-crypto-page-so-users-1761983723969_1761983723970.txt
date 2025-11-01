@@ -1,0 +1,77 @@
+🧠 Prompt for Replit AI (Frontend Repository)
+
+🪙 Goal:
+Update my pages/deposit-crypto page so users can see and use their assigned crypto wallets from both user_crypto_wallets and admin_assigned_wallets tables.
+
+Right now, it only checks one table and shows “no wallet assigned.”
+I want it to correctly fetch, merge, and display wallets from both tables, showing crypto type, network type, wallet address, and a QR code for each wallet.
+
+⚙️ Backend / Data Fetch Logic
+	•	In the API or server function that loads the wallets for the logged-in user:
+	•	Fetch from both tables and combine results:
+
+SELECT 
+  'user_wallet' AS source,
+  ucw.id::text AS id,
+  ucw.crypto_type,
+  ucw.network_type,
+  ucw.wallet_address,
+  ucw.created_at,
+  ucw.updated_at
+FROM public.user_crypto_wallets ucw
+WHERE ucw.user_id = :user_id
+
+UNION ALL
+
+SELECT 
+  'admin_wallet' AS source,
+  aaw.id::text AS id,
+  aaw.crypto_type,
+  aaw.network_type,
+  aaw.wallet_address,
+  aaw.created_at,
+  aaw.updated_at
+FROM public.admin_assigned_wallets aaw
+WHERE aaw.user_id = :user_id;
+
+Return the combined array of wallets to the frontend
+
+🎨 Frontend Design Requirements
+
+When the user opens /deposit-crypto:
+	1.	Display all available wallets (grouped by crypto type).
+	•	Example:
+
+USDT (Tether)
+├─ Network: BSC (BEP20)
+├─ Wallet: 0xABCD...1234
+├─ [Copy Address] [Show QR Code]
+├─ Note: Make sure you send USDT using BEP20 network.
+
+•	Repeat for BTC, ETH, BNB, etc.
+
+	2.	Show QR Code:
+	•	Use any existing React QR code library (react-qr-code or similar).
+	•	The QR should display the wallet address.
+	•	Label it “Scan to Deposit.”
+	3.	Copy Button:
+	•	Add a small button beside the address to copy it.
+	•	Show toast message: “Wallet address copied!”
+	4.	Empty State:
+	•	If no wallets exist in both tables:
+⚠️ “No wallet assigned yet. Please contact support.”
+	5.	Deposit Form Logic:
+	•	When a user selects a wallet and enters an amount,
+	•	Submit the deposit as pending in the crypto_deposits table.
+	•	Include fields: user_id, crypto_type, network_type, wallet_address, amount, status = 'pending', created_at.
+
+🧩 UI Behavior Example
+
+User Flow:
+	1.	User selects Crypto Type (dropdown) → e.g., USDT
+	2.	User selects Network Type (dropdown) → e.g., BEP20
+	3.	The assigned wallet address appears automatically.
+	4.	User can copy or scan QR code to deposit.
+	5.	User enters amount deposited and clicks Submit.
+	6.	System shows “Deposit Submitted — Pending Confirmation.”
+
