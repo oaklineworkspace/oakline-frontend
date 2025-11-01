@@ -373,7 +373,7 @@ export default function InternalTransfer() {
       }
 
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
       if (sessionError || !session?.access_token) {
         setMessage('Authentication error. Please sign in again.');
         setMessageType('error');
@@ -1030,8 +1030,6 @@ export default function InternalTransfer() {
             <p style={styles.welcomeSubtitle}>Transfer funds securely to another Oakline Bank customer</p>
           </div>
 
-          <RecentTransfers user={user} isMobile={isMobile} />
-
           {message && (
             <div style={{
               ...styles.messageBox,
@@ -1238,7 +1236,7 @@ export default function InternalTransfer() {
               <div style={styles.formGroup}>
                 <label style={styles.label}>Transfer Amount ($) *</label>
                 <input
-                  type="number"
+                  type="text" // Changed type to text to accept any format
                   style={styles.input}
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
@@ -1290,32 +1288,8 @@ export default function InternalTransfer() {
             </form>
           </div>
 
-          <div style={styles.infoBox}>
-            <h3 style={styles.infoTitle}>
-              🔒 Important Information
-            </h3>
-            <ul style={styles.infoList}>
-              <li>Internal transfers between Oakline Bank accounts are instant and free</li>
-              <li>Funds are available immediately to the recipient</li>
-              <li>Please verify the account number before confirming the transfer</li>
-              <li>All transfers are secured with bank-level encryption</li>
-              <li>You'll receive a detailed receipt upon successful transfer</li>
-              <li>For assistance, contact our support team 24/7</li>
-            </ul>
-          </div>
+          <RecentTransfers user={user} isMobile={isMobile} />
         </main>
-
-        <style jsx>{`
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-          @media print {
-            .no-print {
-              display: none !important;
-            }
-          }
-        `}</style>
       </div>
     </>
   );

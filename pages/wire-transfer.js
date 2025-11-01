@@ -1,9 +1,75 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
 import Head from 'next/head';
+
+// Dummy RecentTransfers component for demonstration purposes
+const RecentTransfers = ({ user, isMobile }) => {
+  const [transfers, setTransfers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTransfers = async () => {
+      if (!user) return;
+      setLoading(true);
+      try {
+        const { data } = await supabase
+          .from('wire_transfers') // Assuming this is the correct table for transfers
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5); // Limiting to recent ones
+        setTransfers(data || []);
+      } catch (error) {
+        console.error('Error fetching recent transfers:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTransfers();
+  }, [user]);
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount || 0);
+  };
+
+  if (loading) return <div style={styles.historyCard}><p style={styles.emptyText}>Loading recent transfers...</p></div>;
+  if (transfers.length === 0) return <div style={styles.historyCard}><p style={styles.emptyText}>No recent transfers found.</p></div>;
+
+  return (
+    <div style={styles.historyCard}>
+      <h3 style={styles.sectionTitle}>Recent Transfers</h3>
+      <div style={styles.historyList}>
+        {transfers.map(wire => (
+          <div key={wire.id} style={styles.historyItem}>
+            <div style={styles.historyInfo}>
+              <div style={styles.historyName}>{wire.beneficiary_name}</div>
+              <div style={styles.historyBank}>{wire.beneficiary_bank}</div>
+              <div style={styles.historyDate}>
+                {new Date(wire.created_at).toLocaleDateString()}
+              </div>
+            </div>
+            <div style={styles.historyRight}>
+              <div style={styles.historyAmount}>{formatCurrency(wire.amount)}</div>
+              <div style={{
+                ...styles.historyStatus,
+                color: wire.status === 'completed' ? '#059669' :
+                       wire.status === 'pending' ? '#ea580c' : '#dc2626'
+              }}>
+                {wire.status}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 
 export default function WireTransferPage() {
   const [user, setUser] = useState(null);
@@ -25,8 +91,12 @@ export default function WireTransferPage() {
     account_number: '',
     swift_code: '',
     amount: '',
-    memo: ''
+    memo: '',
+    phone_number: '' // Added for apply.js related change
   });
+
+  // Check for isMobile based on screen width or user agent if needed
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   useEffect(() => {
     checkUserAndLoadData();
@@ -176,7 +246,8 @@ export default function WireTransferPage() {
         account_number: '',
         swift_code: '',
         amount: '',
-        memo: ''
+        memo: '',
+        phone_number: '' // Reset phone number
       });
       setVerificationCode('');
       setSentCode('');
@@ -340,7 +411,7 @@ export default function WireTransferPage() {
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Amount *</label>
                   <input
-                    type="number"
+                    type="text" // Changed to text to accept any number format
                     style={styles.input}
                     value={wireForm.amount}
                     onChange={(e) => setWireForm(prev => ({ ...prev, amount: e.target.value }))}
@@ -361,8 +432,20 @@ export default function WireTransferPage() {
                 />
               </div>
 
-              <button 
-                style={styles.primaryButton} 
+              {/* Phone Number Input for apply.js related change (assuming it's relevant here) */}
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Phone Number (for verification)</label>
+                <input
+                  type="text" // Changed to text to accept any number format
+                  style={styles.input}
+                  value={wireForm.phone_number}
+                  onChange={(e) => setWireForm(prev => ({ ...prev, phone_number: e.target.value }))}
+                  placeholder="+1 (555) 123-4567"
+                />
+              </div>
+
+              <button
+                style={styles.primaryButton}
                 onClick={handleNext}
                 onMouseEnter={(e) => e.target.style.backgroundColor = '#1e3a8a'}
                 onMouseLeave={(e) => e.target.style.backgroundColor = '#1e40af'}
@@ -381,7 +464,7 @@ export default function WireTransferPage() {
                 <div style={styles.reviewRow}>
                   <span style={styles.reviewLabel}>From Account:</span>
                   <span style={styles.reviewValue}>
-                    {accounts.find(acc => acc.id === wireForm.from_account)?.account_type?.toUpperCase()} - 
+                    {accounts.find(acc => acc.id === wireForm.from_account)?.account_type?.toUpperCase()} -
                     ****{accounts.find(acc => acc.id === wireForm.from_account)?.account_number?.slice(-4)}
                   </span>
                 </div>
@@ -430,8 +513,8 @@ export default function WireTransferPage() {
                 <button style={styles.backButton} onClick={() => setStep(1)}>
                   ← Back
                 </button>
-                <button 
-                  style={styles.primaryButton} 
+                <button
+                  style={styles.primaryButton}
                   onClick={sendVerificationCode}
                   onMouseEnter={(e) => e.target.style.backgroundColor = '#1e3a8a'}
                   onMouseLeave={(e) => e.target.style.backgroundColor = '#1e40af'}
@@ -442,7 +525,7 @@ export default function WireTransferPage() {
             </div>
           )}
 
-          {/* Wire Transfer History */}
+          {/* Wire Transfer History - This section will now be below RecentTransfers */}
           <div style={styles.historyCard}>
             <h3 style={styles.sectionTitle}>Wire Transfer History</h3>
             {wireTransfers.length === 0 ? (
@@ -475,6 +558,9 @@ export default function WireTransferPage() {
           </div>
         </div>
 
+        {/* Recent Transfers Component - Moved to the bottom */}
+        <RecentTransfers user={user} isMobile={isMobile} />
+
         {/* Verification Modal */}
         {showVerificationModal && (
           <div style={styles.modalOverlay} onClick={() => setShowVerificationModal(false)}>
@@ -493,9 +579,9 @@ export default function WireTransferPage() {
                 <button style={styles.cancelButton} onClick={() => setShowVerificationModal(false)}>
                   Cancel
                 </button>
-                <button 
-                  style={styles.confirmButton} 
-                  onClick={completeWireTransfer} 
+                <button
+                  style={styles.confirmButton}
+                  onClick={completeWireTransfer}
                   disabled={loading}
                   onMouseEnter={(e) => !loading && (e.target.style.backgroundColor = '#1e3a8a')}
                   onMouseLeave={(e) => !loading && (e.target.style.backgroundColor = '#1e40af')}
@@ -705,7 +791,8 @@ const styles = {
     backgroundColor: 'white',
     borderRadius: '16px',
     padding: '2rem',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+    marginTop: '2rem' // Add margin to separate from form card
   },
   historyList: {
     display: 'grid',
