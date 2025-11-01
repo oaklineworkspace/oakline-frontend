@@ -52,11 +52,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Insufficient funds' });
     }
 
-    // Try to find the recipient account (case-insensitive and trimmed)
+    // Try to find the recipient account (exact match after trimming)
     const { data: toAccount, error: toAccountError } = await supabaseAdmin
       .from('accounts')
       .select('*, profiles!inner(first_name, last_name, email)')
-      .ilike('account_number', to_account_number.trim())
+      .eq('account_number', to_account_number.trim())
       .eq('status', 'active')
       .single();
 
