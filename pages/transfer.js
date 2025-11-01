@@ -20,6 +20,187 @@ const useMediaQuery = (query) => {
   return matches;
 };
 
+function RecentTransfers({ user, isMobile }) {
+  const [transfers, setTransfers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchRecentTransfers();
+    }
+  }, [user]);
+
+  const fetchRecentTransfers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('type', ['debit', 'credit'])
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (!error && data) {
+        setTransfers(data);
+      }
+    } catch (error) {
+      console.error('Error fetching transfers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount || 0);
+  };
+
+  const transferStyles = {
+    section: {
+      backgroundColor: 'rgba(255, 255, 255, 0.98)',
+      borderRadius: '16px',
+      padding: isMobile ? '1rem' : '2rem',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+      border: '1px solid #059669',
+      marginBottom: '2rem'
+    },
+    title: {
+      fontSize: isMobile ? '1.1rem' : '1.25rem',
+      fontWeight: '700',
+      color: '#1a365d',
+      marginBottom: isMobile ? '1.5rem' : '2rem',
+      paddingBottom: '1rem',
+      borderBottom: '2px solid #059669',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem'
+    },
+    transferItem: {
+      padding: isMobile ? '1rem' : '1.25rem',
+      borderRadius: '12px',
+      backgroundColor: '#f8fafc',
+      marginBottom: '1rem',
+      border: '2px solid #e2e8f0',
+      transition: 'all 0.3s'
+    },
+    transferHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '0.75rem',
+      flexWrap: 'wrap',
+      gap: '0.5rem'
+    },
+    transferType: {
+      fontSize: isMobile ? '1rem' : '1.1rem',
+      fontWeight: '700',
+      color: '#1e293b'
+    },
+    transferAmount: {
+      fontSize: isMobile ? '1.1rem' : '1.25rem',
+      fontWeight: '700'
+    },
+    transferDetails: {
+      fontSize: isMobile ? '0.85rem' : '0.95rem',
+      color: '#64748b',
+      lineHeight: '1.6'
+    },
+    transferDate: {
+      fontSize: isMobile ? '0.75rem' : '0.85rem',
+      color: '#94a3b8',
+      marginTop: '0.5rem'
+    },
+    emptyState: {
+      textAlign: 'center',
+      padding: '3rem 1rem',
+      color: '#94a3b8'
+    },
+    emptyIcon: {
+      fontSize: '3rem',
+      marginBottom: '1rem'
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={transferStyles.section}>
+        <h2 style={transferStyles.title}>
+          <span style={{ fontSize: '1.5rem' }}>📋</span>
+          Recent Transfers
+        </h2>
+        <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+          Loading transfers...
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={transferStyles.section}>
+      <h2 style={transferStyles.title}>
+        <span style={{ fontSize: '1.5rem' }}>📋</span>
+        Recent Transfers
+      </h2>
+      {transfers.length === 0 ? (
+        <div style={transferStyles.emptyState}>
+          <div style={transferStyles.emptyIcon}>💸</div>
+          <p style={{ fontSize: isMobile ? '1rem' : '1.1rem', margin: 0 }}>No recent transfers</p>
+        </div>
+      ) : (
+        <div>
+          {transfers.map(transfer => (
+            <div
+              key={transfer.id}
+              style={transferStyles.transferItem}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#1e40af';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#e2e8f0';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <div style={transferStyles.transferHeader}>
+                <div style={transferStyles.transferType}>
+                  {transfer.type === 'debit' ? '📤 Sent' : '📥 Received'}
+                </div>
+                <div
+                  style={{
+                    ...transferStyles.transferAmount,
+                    color: transfer.type === 'debit' ? '#dc2626' : '#059669'
+                  }}
+                >
+                  {transfer.type === 'debit' ? '-' : '+'}{formatCurrency(transfer.amount)}
+                </div>
+              </div>
+              <div style={transferStyles.transferDetails}>
+                {transfer.description}
+              </div>
+              {transfer.reference && (
+                <div style={{ ...transferStyles.transferDetails, marginTop: '0.25rem' }}>
+                  Ref: {transfer.reference}
+                </div>
+              )}
+              <div style={transferStyles.transferDate}>
+                {new Date(transfer.created_at).toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Transfer() {
   const [user, setUser] = useState(null);
   const [accounts, setAccounts] = useState([]);
@@ -1017,6 +1198,8 @@ export default function Transfer() {
               </p>
             </Link>
           </div>
+
+          <RecentTransfers user={user} isMobile={isMobile} />
 
           {message && (
             <div style={styles.errorMessage}>{message}</div>

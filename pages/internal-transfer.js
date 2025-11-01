@@ -733,60 +733,60 @@ export default function InternalTransfer() {
     },
     receipt: {
       backgroundColor: 'white',
-      borderRadius: '20px',
-      padding: isMobile ? '2rem' : '3rem',
-      maxWidth: '600px',
+      borderRadius: '16px',
+      padding: isMobile ? '1.25rem' : '1.75rem',
+      maxWidth: '500px',
       width: '100%',
-      maxHeight: '90vh',
+      maxHeight: '85vh',
       overflowY: 'auto',
-      boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-      border: '3px solid #059669'
+      boxShadow: '0 15px 40px rgba(0,0,0,0.25)',
+      border: '2px solid #059669'
     },
     receiptHeader: {
       textAlign: 'center',
-      borderBottom: '3px solid #059669',
-      paddingBottom: '2rem',
-      marginBottom: '2rem'
+      borderBottom: '2px solid #059669',
+      paddingBottom: '1.25rem',
+      marginBottom: '1.25rem'
     },
     receiptTitle: {
-      fontSize: isMobile ? '1.75rem' : '2.25rem',
+      fontSize: isMobile ? '1.35rem' : '1.65rem',
       fontWeight: '800',
       color: '#059669',
-      marginBottom: '1rem',
+      marginBottom: '0.75rem',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: '0.75rem'
+      gap: '0.5rem'
     },
     receiptSubtitle: {
-      fontSize: isMobile ? '0.95rem' : '1.05rem',
+      fontSize: isMobile ? '0.8rem' : '0.9rem',
       color: '#64748b',
-      marginBottom: '0.5rem'
+      marginBottom: '0.4rem'
     },
     receiptBody: {
-      marginBottom: '2rem'
+      marginBottom: '1.25rem'
     },
     receiptSection: {
       backgroundColor: '#f8fafc',
-      padding: isMobile ? '1.25rem' : '1.5rem',
-      borderRadius: '12px',
-      marginBottom: '1.25rem',
+      padding: isMobile ? '0.875rem' : '1rem',
+      borderRadius: '10px',
+      marginBottom: '0.875rem',
       border: '2px solid #e2e8f0'
     },
     receiptSectionTitle: {
-      fontSize: isMobile ? '1rem' : '1.15rem',
+      fontSize: isMobile ? '0.875rem' : '0.95rem',
       fontWeight: '700',
       color: '#1e293b',
-      marginBottom: '1rem',
+      marginBottom: '0.75rem',
       display: 'flex',
       alignItems: 'center',
-      gap: '0.5rem'
+      gap: '0.4rem'
     },
     receiptRow: {
       display: 'flex',
       justifyContent: 'space-between',
-      marginBottom: '0.75rem',
-      fontSize: isMobile ? '0.9rem' : '1rem'
+      marginBottom: '0.5rem',
+      fontSize: isMobile ? '0.8rem' : '0.875rem'
     },
     receiptLabel: {
       color: '#64748b',
@@ -806,65 +806,65 @@ export default function InternalTransfer() {
     },
     receiptTotal: {
       background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
-      padding: '2rem',
-      borderRadius: '12px',
+      padding: '1.25rem',
+      borderRadius: '10px',
       textAlign: 'center',
-      marginTop: '2rem',
-      border: '3px solid #059669'
+      marginTop: '1.25rem',
+      border: '2px solid #059669'
     },
     receiptAmount: {
-      fontSize: isMobile ? '2.5rem' : '3rem',
+      fontSize: isMobile ? '1.75rem' : '2rem',
       fontWeight: 'bold',
       color: '#047857',
-      margin: '1rem 0',
+      margin: '0.5rem 0',
       textShadow: '0 2px 4px rgba(0,0,0,0.1)'
     },
     receiptMemo: {
-      marginTop: '1.25rem',
-      padding: '1rem',
+      marginTop: '0.875rem',
+      padding: '0.75rem',
       backgroundColor: '#fef3c7',
-      borderRadius: '8px',
+      borderRadius: '6px',
       border: '2px solid #fbbf24'
     },
     receiptButtons: {
       display: 'flex',
-      gap: isMobile ? '0.75rem' : '1rem',
-      marginTop: '2rem',
+      gap: isMobile ? '0.5rem' : '0.75rem',
+      marginTop: '1.25rem',
       flexDirection: isMobile ? 'column' : 'row'
     },
     printButton: {
       flex: 1,
-      padding: isMobile ? '1rem' : '1.25rem',
+      padding: isMobile ? '0.75rem' : '0.875rem',
       backgroundColor: '#059669',
       color: 'white',
       border: 'none',
-      borderRadius: '10px',
+      borderRadius: '8px',
       cursor: 'pointer',
-      fontSize: isMobile ? '0.95rem' : '1.05rem',
+      fontSize: isMobile ? '0.85rem' : '0.9rem',
       fontWeight: '700',
       transition: 'all 0.3s',
-      boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)',
+      boxShadow: '0 3px 8px rgba(5, 150, 105, 0.3)',
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: '0.5rem'
+      gap: '0.4rem'
     },
     closeButton: {
       flex: 1,
-      padding: isMobile ? '1rem' : '1.25rem',
+      padding: isMobile ? '0.75rem' : '0.875rem',
       backgroundColor: '#1e40af',
       color: 'white',
       border: 'none',
-      borderRadius: '10px',
+      borderRadius: '8px',
       cursor: 'pointer',
-      fontSize: isMobile ? '0.95rem' : '1.05rem',
+      fontSize: isMobile ? '0.85rem' : '0.9rem',
       fontWeight: '700',
       transition: 'all 0.3s',
-      boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)',
+      boxShadow: '0 3px 8px rgba(30, 64, 175, 0.3)',
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: '0.5rem'
+      gap: '0.4rem'
     },
     loadingContainer: {
       display: 'flex',
