@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -22,8 +23,33 @@ export default function CryptoDeposit() {
     account_id: '',
     account_number: '',
     crypto_type: 'BTC',
+    network_type: '',
     amount: ''
   });
+
+  // Network configurations per crypto
+  const networkConfigs = {
+    USDT: [
+      { value: 'BEP20', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.005, icon: '🟡' },
+      { value: 'TRC20', label: 'TRON (TRC20)', confirmations: 20, minDeposit: 0.005, icon: '🔴' },
+      { value: 'ERC20', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.005, icon: '⚪' },
+      { value: 'SOL', label: 'Solana (SOL)', confirmations: 200, minDeposit: 0.005, icon: '🟣' },
+      { value: 'TON', label: 'TON (The Open Network)', confirmations: 1, minDeposit: 0.005, icon: '🔵' }
+    ],
+    ETH: [
+      { value: 'ERC20', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.00005, icon: '⚪' },
+      { value: 'BEP20', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.00005, icon: '🟡' },
+      { value: 'ARBITRUM', label: 'Arbitrum One', confirmations: 120, minDeposit: 0.000001, icon: '🔵' },
+      { value: 'BASE', label: 'Base Mainnet', confirmations: 30, minDeposit: 0.000001, icon: '🔷' }
+    ],
+    BNB: [
+      { value: 'BEP20', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.0005, icon: '🟡' }
+    ],
+    BTC: [
+      { value: 'BITCOIN', label: 'Bitcoin Mainnet', confirmations: 1, minDeposit: 0.0001, icon: '🟠' },
+      { value: 'BEP20', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.0001, icon: '🟡' }
+    ]
+  };
 
   const cryptoTypes = [
     { value: 'BTC', label: 'Bitcoin', icon: '₿', color: '#F7931A' },
@@ -37,10 +63,10 @@ export default function CryptoDeposit() {
   }, []);
 
   useEffect(() => {
-    if (user && depositForm.crypto_type && currentStep >= 2) {
+    if (user && depositForm.crypto_type && depositForm.network_type && currentStep >= 2) {
       fetchWalletAddress();
     }
-  }, [depositForm.crypto_type, user, currentStep]);
+  }, [depositForm.crypto_type, depositForm.network_type, user, currentStep]);
 
   const checkUserAndLoadData = async () => {
     try {
@@ -97,6 +123,7 @@ export default function CryptoDeposit() {
         .select('wallet_address')
         .eq('user_id', user.id)
         .eq('crypto_type', depositForm.crypto_type)
+        .eq('network_type', depositForm.network_type)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
@@ -122,6 +149,23 @@ export default function CryptoDeposit() {
     }
   };
 
+  const handleCryptoChange = (crypto) => {
+    setDepositForm({
+      ...depositForm,
+      crypto_type: crypto,
+      network_type: '' // Reset network when crypto changes
+    });
+    setWalletAddress('');
+  };
+
+  const handleNetworkChange = (network) => {
+    setDepositForm({
+      ...depositForm,
+      network_type: network
+    });
+    setWalletAddress('');
+  };
+
   const handleNextStep = () => {
     setMessage('');
     setMessageType('');
@@ -132,11 +176,29 @@ export default function CryptoDeposit() {
         setMessageType('error');
         return;
       }
+      if (!depositForm.crypto_type) {
+        setMessage('Please select a cryptocurrency');
+        setMessageType('error');
+        return;
+      }
+      if (!depositForm.network_type) {
+        setMessage('Please select a network');
+        setMessageType('error');
+        return;
+      }
       if (!depositForm.amount || parseFloat(depositForm.amount) <= 0) {
         setMessage('Please enter a valid amount');
         setMessageType('error');
         return;
       }
+      
+      const selectedNetwork = getAvailableNetworks().find(n => n.value === depositForm.network_type);
+      if (selectedNetwork && parseFloat(depositForm.amount) < selectedNetwork.minDeposit) {
+        setMessage(`Minimum deposit amount is ${selectedNetwork.minDeposit} ${depositForm.crypto_type}`);
+        setMessageType('error');
+        return;
+      }
+      
       setCurrentStep(2);
     } else if (currentStep === 2) {
       if (!walletAddress) {
@@ -160,6 +222,7 @@ export default function CryptoDeposit() {
           user_id: user.id,
           account_number: depositForm.account_number,
           crypto_type: depositForm.crypto_type,
+          network_type: depositForm.network_type,
           wallet_address: walletAddress,
           amount: parseFloat(depositForm.amount),
           status: 'pending'
@@ -218,6 +281,14 @@ export default function CryptoDeposit() {
 
   const getSelectedCrypto = () => {
     return cryptoTypes.find(c => c.value === depositForm.crypto_type);
+  };
+
+  const getAvailableNetworks = () => {
+    return networkConfigs[depositForm.crypto_type] || [];
+  };
+
+  const getSelectedNetwork = () => {
+    return getAvailableNetworks().find(n => n.value === depositForm.network_type);
   };
 
   if (loading) {
@@ -393,7 +464,7 @@ export default function CryptoDeposit() {
             <div style={{ padding: '40px' }}>
               {/* Step 1: Deposit Details */}
               {currentStep === 1 && (
-                <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+                <div style={{ maxWidth: '700px', margin: '0 auto' }}>
                   <h2 style={{ 
                     fontSize: '22px', 
                     marginBottom: '30px', 
@@ -427,8 +498,6 @@ export default function CryptoDeposit() {
                         outline: 'none',
                         transition: 'border-color 0.2s'
                       }}
-                      onFocus={(e) => e.target.style.borderColor = '#0066cc'}
-                      onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                       required
                     >
                       {accounts.length === 0 && (
@@ -440,16 +509,6 @@ export default function CryptoDeposit() {
                         </option>
                       ))}
                     </select>
-                    {accounts.length === 0 && (
-                      <p style={{ 
-                        fontSize: '13px', 
-                        color: '#dc2626', 
-                        marginTop: '8px',
-                        marginBottom: 0
-                      }}>
-                        You need at least one active account to make a deposit.
-                      </p>
-                    )}
                   </div>
 
                   <div style={{ marginBottom: '24px' }}>
@@ -470,7 +529,7 @@ export default function CryptoDeposit() {
                       {cryptoTypes.map(crypto => (
                         <div
                           key={crypto.value}
-                          onClick={() => setDepositForm({ ...depositForm, crypto_type: crypto.value })}
+                          onClick={() => handleCryptoChange(crypto.value)}
                           style={{
                             padding: '16px',
                             borderRadius: '8px',
@@ -517,6 +576,57 @@ export default function CryptoDeposit() {
                     </div>
                   </div>
 
+                  {depositForm.crypto_type && (
+                    <div style={{ marginBottom: '24px' }}>
+                      <label style={{ 
+                        display: 'block', 
+                        marginBottom: '10px', 
+                        fontWeight: '600', 
+                        color: '#374151',
+                        fontSize: '14px'
+                      }}>
+                        Select Network
+                      </label>
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                        gap: '12px'
+                      }}>
+                        {getAvailableNetworks().map(network => (
+                          <div
+                            key={network.value}
+                            onClick={() => handleNetworkChange(network.value)}
+                            style={{
+                              padding: '14px',
+                              borderRadius: '8px',
+                              border: `2px solid ${depositForm.network_type === network.value ? '#0066cc' : '#e5e7eb'}`,
+                              backgroundColor: depositForm.network_type === network.value ? '#eff6ff' : '#fff',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                              <span style={{ fontSize: '18px' }}>{network.icon}</span>
+                              <div style={{ 
+                                fontWeight: '600', 
+                                color: '#1a1a1a',
+                                fontSize: '14px'
+                              }}>
+                                {network.label}
+                              </div>
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#6b7280', marginLeft: '26px' }}>
+                              {network.confirmations} confirmations
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#6b7280', marginLeft: '26px' }}>
+                              Min: {network.minDeposit} {depositForm.crypto_type}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div style={{ marginBottom: '32px' }}>
                     <label style={{ 
                       display: 'block', 
@@ -556,11 +666,15 @@ export default function CryptoDeposit() {
                           outline: 'none',
                           transition: 'border-color 0.2s'
                         }}
-                        onFocus={(e) => e.target.style.borderColor = '#0066cc'}
-                        onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                         required
                       />
                     </div>
+                    {depositForm.network_type && getSelectedNetwork() && (
+                      <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '8px' }}>
+                        Minimum deposit: {getSelectedNetwork().minDeposit} {depositForm.crypto_type} • 
+                        {getSelectedNetwork().confirmations} network confirmations required
+                      </p>
+                    )}
                   </div>
 
                   <button
@@ -578,20 +692,6 @@ export default function CryptoDeposit() {
                       cursor: accounts.length === 0 ? 'not-allowed' : 'pointer',
                       transition: 'all 0.2s',
                       boxShadow: accounts.length === 0 ? 'none' : '0 2px 8px rgba(0,102,204,0.2)'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (accounts.length > 0) {
-                        e.target.style.backgroundColor = '#0052a3';
-                        e.target.style.transform = 'translateY(-1px)';
-                        e.target.style.boxShadow = '0 4px 12px rgba(0,102,204,0.3)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (accounts.length > 0) {
-                        e.target.style.backgroundColor = '#0066cc';
-                        e.target.style.transform = 'translateY(0)';
-                        e.target.style.boxShadow = '0 2px 8px rgba(0,102,204,0.2)';
-                      }
                     }}
                   >
                     Continue to Payment
@@ -615,7 +715,7 @@ export default function CryptoDeposit() {
                     marginBottom: '30px',
                     fontSize: '15px'
                   }}>
-                    Send exactly <strong style={{ color: '#1a1a1a' }}>{formatCurrency(depositForm.amount)}</strong> worth of {getSelectedCrypto().value} to the wallet address below
+                    Send exactly <strong style={{ color: '#1a1a1a' }}>{formatCurrency(depositForm.amount)}</strong> worth of {getSelectedCrypto().value} via <strong>{getSelectedNetwork()?.label}</strong>
                   </p>
 
                   {loadingWallet ? (
@@ -662,7 +762,7 @@ export default function CryptoDeposit() {
                             marginBottom: '8px',
                             fontWeight: '500'
                           }}>
-                            WALLET ADDRESS
+                            {getSelectedNetwork()?.label} WALLET ADDRESS
                           </p>
                           <div style={{
                             padding: '14px 16px',
@@ -690,14 +790,6 @@ export default function CryptoDeposit() {
                               cursor: 'pointer',
                               transition: 'all 0.2s'
                             }}
-                            onMouseEnter={(e) => {
-                              e.target.style.backgroundColor = '#0066cc';
-                              e.target.style.color = '#fff';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.target.style.backgroundColor = '#fff';
-                              e.target.style.color = '#0066cc';
-                            }}
                           >
                             📋 Copy Address
                           </button>
@@ -705,7 +797,7 @@ export default function CryptoDeposit() {
                       </div>
 
                       <div style={{
-                        backgroundColor: '#fffbeb',
+                        backgroundColor: '#fef3c7',
                         border: '2px solid #fbbf24',
                         borderRadius: '12px',
                         padding: '20px',
@@ -733,10 +825,12 @@ export default function CryptoDeposit() {
                               fontSize: '14px',
                               lineHeight: '1.6'
                             }}>
+                              <li><strong>Make sure you deposit on the {getSelectedNetwork()?.label} network</strong></li>
+                              <li>Deposits on the wrong chain may be permanently lost</li>
                               <li>Send only {getSelectedCrypto().value} to this address</li>
-                              <li>Sending other cryptocurrencies may result in permanent loss</li>
-                              <li>Make sure the amount matches your deposit amount</li>
-                              <li>Once you've sent the payment, click "I've Sent the Payment" below</li>
+                              <li>Minimum deposit: {getSelectedNetwork()?.minDeposit} {depositForm.crypto_type}</li>
+                              <li>Required confirmations: {getSelectedNetwork()?.confirmations}</li>
+                              <li>Once sent, click "I've Sent the Payment" below</li>
                             </ul>
                           </div>
                         </div>
@@ -760,14 +854,6 @@ export default function CryptoDeposit() {
                             cursor: 'pointer',
                             transition: 'all 0.2s'
                           }}
-                          onMouseEnter={(e) => {
-                            e.target.style.borderColor = '#d1d5db';
-                            e.target.style.color = '#1a1a1a';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.borderColor = '#e5e7eb';
-                            e.target.style.color = '#6b7280';
-                          }}
                         >
                           ← Back
                         </button>
@@ -785,16 +871,6 @@ export default function CryptoDeposit() {
                             cursor: 'pointer',
                             transition: 'all 0.2s',
                             boxShadow: '0 2px 8px rgba(0,102,204,0.2)'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#0052a3';
-                            e.target.style.transform = 'translateY(-1px)';
-                            e.target.style.boxShadow = '0 4px 12px rgba(0,102,204,0.3)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = '#0066cc';
-                            e.target.style.transform = 'translateY(0)';
-                            e.target.style.boxShadow = '0 2px 8px rgba(0,102,204,0.2)';
                           }}
                         >
                           I've Sent the Payment →
@@ -816,7 +892,7 @@ export default function CryptoDeposit() {
                         fontSize: '18px',
                         marginBottom: '12px'
                       }}>
-                        No Wallet Assigned
+                        No Wallet Assigned for This Network
                       </h3>
                       <p style={{ 
                         color: '#92400e', 
@@ -825,7 +901,7 @@ export default function CryptoDeposit() {
                         maxWidth: '400px',
                         margin: '0 auto 24px'
                       }}>
-                        You don't have a {getSelectedCrypto().value} wallet assigned to your account yet. Please contact our support team to get one assigned.
+                        You don't have a {getSelectedCrypto().value} wallet assigned for {getSelectedNetwork()?.label} yet. Please contact our support team to get one assigned.
                       </p>
                       <button
                         onClick={() => setCurrentStep(1)}
@@ -934,6 +1010,22 @@ export default function CryptoDeposit() {
                     </div>
                     <div style={{ 
                       display: 'flex', 
+                      justifyContent: 'space-between',
+                      marginBottom: '12px',
+                      paddingBottom: '12px',
+                      borderBottom: '1px solid #e5e7eb'
+                    }}>
+                      <span style={{ color: '#6b7280', fontSize: '15px' }}>Network</span>
+                      <span style={{ 
+                        color: '#1a1a1a', 
+                        fontWeight: '600',
+                        fontSize: '15px'
+                      }}>
+                        {getSelectedNetwork()?.label}
+                      </span>
+                    </div>
+                    <div style={{ 
+                      display: 'flex', 
                       justifyContent: 'space-between'
                     }}>
                       <span style={{ color: '#6b7280', fontSize: '15px' }}>Amount</span>
@@ -967,18 +1059,6 @@ export default function CryptoDeposit() {
                         transition: 'all 0.2s',
                         opacity: submitting ? 0.5 : 1
                       }}
-                      onMouseEnter={(e) => {
-                        if (!submitting) {
-                          e.target.style.borderColor = '#d1d5db';
-                          e.target.style.color = '#1a1a1a';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!submitting) {
-                          e.target.style.borderColor = '#e5e7eb';
-                          e.target.style.color = '#6b7280';
-                        }
-                      }}
                     >
                       ← Back
                     </button>
@@ -998,20 +1078,6 @@ export default function CryptoDeposit() {
                         transition: 'all 0.2s',
                         boxShadow: submitting ? 'none' : '0 2px 8px rgba(16,185,129,0.2)'
                       }}
-                      onMouseEnter={(e) => {
-                        if (!submitting) {
-                          e.target.style.backgroundColor = '#059669';
-                          e.target.style.transform = 'translateY(-1px)';
-                          e.target.style.boxShadow = '0 4px 12px rgba(16,185,129,0.3)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!submitting) {
-                          e.target.style.backgroundColor = '#10b981';
-                          e.target.style.transform = 'translateY(0)';
-                          e.target.style.boxShadow = '0 2px 8px rgba(16,185,129,0.2)';
-                        }
-                      }}
                     >
                       {submitting ? 'Processing...' : 'Confirm Payment'}
                     </button>
@@ -1023,7 +1089,7 @@ export default function CryptoDeposit() {
                     color: '#9ca3af',
                     fontStyle: 'italic'
                   }}>
-                    Processing typically takes 10-30 minutes depending on network confirmation
+                    Processing typically takes {getSelectedNetwork()?.confirmations} confirmations (varies by network congestion)
                   </p>
                 </div>
               )}
@@ -1083,6 +1149,17 @@ export default function CryptoDeposit() {
                         textTransform: 'uppercase',
                         letterSpacing: '0.5px'
                       }}>
+                        Network
+                      </th>
+                      <th style={{ 
+                        padding: '12px 16px', 
+                        textAlign: 'left', 
+                        color: '#6b7280', 
+                        fontWeight: '600',
+                        fontSize: '13px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}>
                         Account
                       </th>
                       <th style={{ 
@@ -1114,15 +1191,15 @@ export default function CryptoDeposit() {
                       <tr key={deposit.id} style={{ 
                         borderBottom: '1px solid #f3f4f6',
                         transition: 'background-color 0.2s'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
+                      }}>
                         <td style={{ padding: '16px', fontSize: '14px', color: '#374151' }}>
                           {formatDate(deposit.created_at)}
                         </td>
                         <td style={{ padding: '16px', fontSize: '14px', fontWeight: '600', color: '#1a1a1a' }}>
                           {deposit.crypto_type}
+                        </td>
+                        <td style={{ padding: '16px', fontSize: '13px', color: '#6b7280' }}>
+                          {deposit.network_type || 'N/A'}
                         </td>
                         <td style={{ 
                           padding: '16px', 
