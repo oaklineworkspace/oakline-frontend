@@ -100,13 +100,12 @@ export default function Transfer() {
       if (userAccounts && userAccounts.length > 0) {
         const accountIds = userAccounts.map(acc => acc.id);
         
-        // Fetch all internal transfers (both in and out) for user's accounts
+        // Fetch all transfers (both in and out) for user's accounts
         const { data: transfers, error: transfersError } = await supabase
           .from('transactions')
           .select('*')
           .in('account_id', accountIds)
           .in('type', ['transfer_out', 'transfer_in'])
-          .eq('transfer_type', 'internal')
           .order('created_at', { ascending: false })
           .limit(10);
 
