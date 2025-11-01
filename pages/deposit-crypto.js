@@ -1388,10 +1388,24 @@ export default function CryptoDeposit() {
                             ...styles.statusBadge,
                             backgroundColor: 
                               deposit.status === 'pending' ? '#fef3c7' :
-                              deposit.status === 'approved' ? '#d1fae5' : '#fee2e2',
+                              deposit.status === 'on_hold' ? '#fef3c7' :
+                              deposit.status === 'awaiting_confirmations' ? '#fef3c7' :
+                              deposit.status === 'processing' ? '#fef3c7' :
+                              deposit.status === 'confirmed' ? '#d1fae5' :
+                              deposit.status === 'completed' ? '#d1fae5' :
+                              deposit.status === 'approved' ? '#d1fae5' :
+                              deposit.status === 'failed' ? '#fee2e2' :
+                              deposit.status === 'reversed' ? '#fee2e2' : '#fee2e2',
                             color:
                               deposit.status === 'pending' ? '#92400e' :
-                              deposit.status === 'approved' ? '#065f46' : '#991b1b'
+                              deposit.status === 'on_hold' ? '#92400e' :
+                              deposit.status === 'awaiting_confirmations' ? '#92400e' :
+                              deposit.status === 'processing' ? '#92400e' :
+                              deposit.status === 'confirmed' ? '#065f46' :
+                              deposit.status === 'completed' ? '#065f46' :
+                              deposit.status === 'approved' ? '#065f46' :
+                              deposit.status === 'failed' ? '#991b1b' :
+                              deposit.status === 'reversed' ? '#991b1b' : '#991b1b'
                           }}>
                             {deposit.status}
                           </span>

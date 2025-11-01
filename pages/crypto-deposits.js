@@ -114,14 +114,14 @@ export default function CryptoDeposits() {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      pending: { label: 'Pending', color: '#f59e0b', bg: '#fef3c7' },
-      on_hold: { label: 'On Hold', color: '#f59e0b', bg: '#fef3c7' },
-      awaiting_confirmations: { label: 'Awaiting Confirmations', color: '#3b82f6', bg: '#dbeafe' },
-      confirmed: { label: 'Confirmed', color: '#10b981', bg: '#d1fae5' },
-      processing: { label: 'Processing', color: '#3b82f6', bg: '#dbeafe' },
-      completed: { label: 'Completed', color: '#10b981', bg: '#d1fae5' },
-      failed: { label: 'Failed', color: '#ef4444', bg: '#fee2e2' },
-      reversed: { label: 'Reversed', color: '#ef4444', bg: '#fee2e2' }
+      pending: { label: 'Pending', color: '#92400e', bg: '#fef3c7' },
+      on_hold: { label: 'On Hold', color: '#92400e', bg: '#fef3c7' },
+      awaiting_confirmations: { label: 'Awaiting Confirmations', color: '#92400e', bg: '#fef3c7' },
+      confirmed: { label: 'Confirmed', color: '#065f46', bg: '#d1fae5' },
+      processing: { label: 'Processing', color: '#92400e', bg: '#fef3c7' },
+      completed: { label: 'Completed', color: '#065f46', bg: '#d1fae5' },
+      failed: { label: 'Failed', color: '#991b1b', bg: '#fee2e2' },
+      reversed: { label: 'Reversed', color: '#991b1b', bg: '#fee2e2' }
     };
 
     const config = statusConfig[status] || { label: status, color: '#6b7280', bg: '#f3f4f6' };
