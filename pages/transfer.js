@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -100,7 +101,6 @@ export default function Transfer() {
       if (userAccounts && userAccounts.length > 0) {
         const accountIds = userAccounts.map(acc => acc.id);
         
-        // Fetch all transfers (both in and out) for user's accounts
         const { data: transfers, error: transfersError } = await supabase
           .from('transactions')
           .select('*')
@@ -179,8 +179,7 @@ export default function Transfer() {
         return;
       }
 
-      const transferGroupId = crypto.randomUUID();
-      const referenceNumber = `TXN-${transferGroupId.substring(0, 8).toUpperCase()}`;
+      const referenceNumber = generateReferenceNumber();
       const debitReference = `${referenceNumber}-DR`;
       const creditReference = `${referenceNumber}-CR`;
 
@@ -211,7 +210,7 @@ export default function Transfer() {
         throw new Error('Failed to credit destination account');
       }
 
-      // Create both debit and credit transactions with transfer_group_id
+      // Create both debit and credit transactions
       const { error: transactionError } = await supabase.from('transactions').insert([
         {
           user_id: user.id,
@@ -254,7 +253,14 @@ export default function Transfer() {
       // Generate receipt data
       const receipt = {
         referenceNumber,
-        date: new Date().toLocaleString(),
+        date: new Date().toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        }),
         senderName: user?.email?.split('@')[0] || 'Account Holder',
         fromAccount: {
           type: selectedFromAccount.account_type,
@@ -292,6 +298,32 @@ export default function Transfer() {
 
   const printReceipt = () => {
     window.print();
+  };
+
+  const viewTransferReceipt = (transfer) => {
+    const fromAccountData = accounts.find(acc => acc.id === transfer.account_id);
+    const isDebit = transfer.type === 'debit';
+    
+    const receipt = {
+      referenceNumber: transfer.reference || 'N/A',
+      date: formatDate(transfer.created_at),
+      senderName: user?.email?.split('@')[0] || 'Account Holder',
+      fromAccount: {
+        type: fromAccountData?.account_type || 'N/A',
+        number: fromAccountData?.account_number || 'N/A',
+        balance: transfer.balance_after || 0
+      },
+      toAccount: {
+        type: 'Account',
+        number: 'N/A'
+      },
+      amount: transfer.amount,
+      memo: transfer.description || 'Transfer',
+      status: transfer.status || 'completed'
+    };
+
+    setReceiptData(receipt);
+    setShowReceipt(true);
   };
 
   const getAccountTypeIcon = (type) => {
@@ -410,7 +442,8 @@ export default function Transfer() {
       borderRadius: '16px',
       padding: isMobile ? '1rem' : '2rem',
       boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-      border: '1px solid #059669'
+      border: '1px solid #059669',
+      marginBottom: '2rem'
     },
     sectionTitle: {
       fontSize: isMobile ? '1.1rem' : '1.25rem',
@@ -623,7 +656,7 @@ export default function Transfer() {
       padding: isMobile ? '1rem' : '2rem',
       boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
       border: '1px solid #059669',
-      marginBottom: '2rem'
+      marginTop: '2rem'
     },
     transfersList: {
       display: 'flex',
@@ -638,7 +671,8 @@ export default function Transfer() {
       backgroundColor: '#f8fafc',
       borderRadius: '12px',
       border: '2px solid #e2e8f0',
-      transition: 'all 0.2s'
+      transition: 'all 0.2s',
+      cursor: 'pointer'
     },
     transferLeft: {
       display: 'flex',
@@ -715,6 +749,17 @@ export default function Transfer() {
       fontSize: '0.9rem',
       color: '#64748b',
       fontWeight: '500'
+    },
+    viewReceiptButton: {
+      fontSize: '0.7rem',
+      padding: '0.25rem 0.5rem',
+      backgroundColor: '#1e40af',
+      color: 'white',
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      fontWeight: '600',
+      marginTop: '0.25rem'
     }
   };
 
@@ -847,7 +892,7 @@ export default function Transfer() {
                     </div>
                   </div>
                   <div style={{ textAlign: 'center', marginTop: '1rem', padding: '0.75rem', backgroundColor: 'rgba(5, 150, 105, 0.3)', borderRadius: '8px' }}>
-                    <span style={{ fontSize: '1.1rem', fontWeight: '700' }}>✓ Transfer Successful</span>
+                    <span style={{ fontSize: '1.1rem', fontWeight: '700' }}>✓ Transfer {receiptData.status || 'Successful'}</span>
                   </div>
                 </div>
 
@@ -902,7 +947,7 @@ export default function Transfer() {
                     <p style={{ fontSize: '2.5rem', fontWeight: '800', color: '#047857', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>{formatCurrency(receiptData.amount)}</p>
                   </div>
 
-                  {receiptData.memo && (
+                  {receiptData.memo && receiptData.memo !== 'Internal Transfer' && (
                     <div style={{ backgroundColor: '#fef3c7', border: '2px solid #fbbf24', borderRadius: '8px', padding: '1rem', marginTop: '1rem' }}>
                       <p style={{ margin: 0, fontSize: '0.9rem', color: '#92400e', fontWeight: '600' }}>
                         <span style={{ fontSize: '1.1rem', marginRight: '0.5rem' }}>📝</span>
@@ -958,48 +1003,6 @@ export default function Transfer() {
 
           {message && (
             <div style={styles.errorMessage}>{message}</div>
-          )}
-
-          {recentTransfers.length > 0 && (
-            <div style={styles.recentTransfersSection}>
-              <h2 style={styles.sectionTitle}>Recent Transfers</h2>
-              <div style={styles.transfersList}>
-                {recentTransfers.map(transfer => (
-                  <div key={transfer.id} style={styles.transferItem}>
-                    <div style={styles.transferLeft}>
-                      <span style={styles.transferIcon}>
-                        {transfer.type === 'debit' ? '📤' : '📥'}
-                      </span>
-                      <div style={styles.transferInfo}>
-                        <div style={styles.transferDescription}>
-                          {transfer.description}
-                        </div>
-                        <div style={styles.transferDate}>
-                          {formatDate(transfer.created_at)}
-                        </div>
-                        {transfer.reference && (
-                          <div style={styles.transferRef}>
-                            Ref: {transfer.reference}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div style={styles.transferRight}>
-                      <div style={{
-                        ...styles.transferAmount,
-                        color: transfer.type === 'credit' ? '#059669' : '#dc2626'
-                      }}>
-                        {transfer.type === 'credit' ? '+' : '-'}
-                        {formatCurrency(transfer.amount)}
-                      </div>
-                      <div style={styles.transferStatus}>
-                        {transfer.status || 'completed'}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           )}
 
           <div style={styles.contentSection}>
@@ -1111,6 +1114,61 @@ export default function Transfer() {
               </button>
             </form>
           </div>
+
+          {recentTransfers.length > 0 && (
+            <div style={styles.recentTransfersSection}>
+              <h2 style={styles.sectionTitle}>Recent Transfers</h2>
+              <div style={styles.transfersList}>
+                {recentTransfers.map(transfer => (
+                  <div 
+                    key={transfer.id} 
+                    style={styles.transferItem}
+                    onClick={() => viewTransferReceipt(transfer)}
+                  >
+                    <div style={styles.transferLeft}>
+                      <span style={styles.transferIcon}>
+                        {transfer.type === 'debit' ? '📤' : '📥'}
+                      </span>
+                      <div style={styles.transferInfo}>
+                        <div style={styles.transferDescription}>
+                          {transfer.description}
+                        </div>
+                        <div style={styles.transferDate}>
+                          {formatDate(transfer.created_at)}
+                        </div>
+                        {transfer.reference && (
+                          <div style={styles.transferRef}>
+                            Ref: {transfer.reference}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div style={styles.transferRight}>
+                      <div style={{
+                        ...styles.transferAmount,
+                        color: transfer.type === 'credit' ? '#059669' : '#dc2626'
+                      }}>
+                        {transfer.type === 'credit' ? '+' : '-'}
+                        {formatCurrency(transfer.amount)}
+                      </div>
+                      <div style={styles.transferStatus}>
+                        {transfer.status || 'completed'}
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          viewTransferReceipt(transfer);
+                        }}
+                        style={styles.viewReceiptButton}
+                      >
+                        📄 View Receipt
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </>
