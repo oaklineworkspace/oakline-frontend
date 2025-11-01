@@ -295,7 +295,7 @@ export default function CryptoDeposit() {
         .from('crypto_deposits')
         .insert([{
           user_id: user.id,
-          account_number: depositForm.account_number,
+          account_id: depositForm.account_id,
           crypto_type: depositForm.crypto_type,
           network_type: depositForm.network_type,
           wallet_address: walletAddress,
