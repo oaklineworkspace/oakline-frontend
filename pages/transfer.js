@@ -32,12 +32,20 @@ export default function Transfer() {
   const [pageLoading, setPageLoading] = useState(true);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
+  const [recentTransfers, setRecentTransfers] = useState([]);
+  const [loadingTransfers, setLoadingTransfers] = useState(false);
   const router = useRouter();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   useEffect(() => {
     checkUserAndFetchData();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchRecentTransfers();
+    }
+  }, [user]);
 
   const checkUserAndFetchData = async () => {
     try {
@@ -67,11 +75,49 @@ export default function Transfer() {
     }
   };
 
+  const fetchRecentTransfers = async () => {
+    setLoadingTransfers(true);
+    try {
+      const { data: accounts } = await supabase
+        .from('accounts')
+        .select('id')
+        .eq('user_id', user.id);
+
+      if (accounts && accounts.length > 0) {
+        const accountIds = accounts.map(acc => acc.id);
+        const { data: transfers } = await supabase
+          .from('transactions')
+          .select('*')
+          .in('account_id', accountIds)
+          .in('type', ['transfer_out', 'transfer_in'])
+          .eq('transfer_type', 'internal')
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        setRecentTransfers(transfers || []);
+      }
+    } catch (error) {
+      console.error('Error fetching recent transfers:', error);
+    } finally {
+      setLoadingTransfers(false);
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
     }).format(amount || 0);
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   const generateReferenceNumber = () => {
@@ -425,15 +471,6 @@ export default function Transfer() {
       borderRadius: '18px 18px 0 0',
       color: 'white'
     },
-    receiptRef: {
-      fontSize: '0.9rem',
-      color: '#64748b',
-      fontFamily: 'monospace'
-    },
-    receiptDate: {
-      fontSize: '0.85rem',
-      color: '#94a3b8'
-    },
     receiptBody: {
       marginBottom: '1.5rem'
     },
@@ -443,45 +480,6 @@ export default function Transfer() {
       borderRadius: '12px',
       marginBottom: '1rem',
       border: '2px solid #e2e8f0'
-    },
-    receiptArrow: {
-      textAlign: 'center',
-      fontSize: '2.5rem',
-      color: '#059669',
-      margin: '1rem 0',
-      fontWeight: 'bold'
-    },
-    receiptTotal: {
-      background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
-      padding: '1.5rem',
-      borderRadius: '12px',
-      textAlign: 'center',
-      marginTop: '1.5rem',
-      border: '2px solid #059669'
-    },
-    receiptAmount: {
-      fontSize: '2.5rem',
-      fontWeight: 'bold',
-      color: '#047857',
-      margin: '0.5rem 0',
-      textShadow: '0 2px 4px rgba(0,0,0,0.1)'
-    },
-    receiptMemo: {
-      marginTop: '1rem',
-      padding: '0.75rem',
-      backgroundColor: '#fef3c7',
-      borderRadius: '6px'
-    },
-    receiptFooter: {
-      textAlign: 'center',
-      borderTop: '2px solid #e2e8f0',
-      paddingTop: '1rem',
-      marginTop: '1.5rem'
-    },
-    receiptDisclaimer: {
-      fontSize: '0.75rem',
-      color: '#94a3b8',
-      marginTop: '0.5rem'
     },
     receiptButtons: {
       display: 'flex',
@@ -565,100 +563,6 @@ export default function Transfer() {
       fontWeight: '600',
       fontSize: '1rem'
     },
-    sectionHeaderRow: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '1.5rem',
-      flexWrap: 'wrap',
-      gap: '1rem'
-    },
-    historyButton: {
-      padding: '0.6rem 1.2rem',
-      backgroundColor: '#f1f5f9',
-      color: '#1e40af',
-      border: '2px solid #e2e8f0',
-      borderRadius: '8px',
-      cursor: 'pointer',
-      fontSize: '0.9rem',
-      fontWeight: '600',
-      transition: 'all 0.2s'
-    },
-    historySection: {
-      backgroundColor: '#f8fafc',
-      padding: '1.5rem',
-      borderRadius: '12px',
-      marginBottom: '2rem',
-      border: '1px solid #e2e8f0'
-    },
-    historyTitle: {
-      fontSize: '1.1rem',
-      fontWeight: '600',
-      color: '#1e293b',
-      marginBottom: '1rem'
-    },
-    historyList: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0.75rem'
-    },
-    historyItem: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '0.75rem',
-      backgroundColor: 'white',
-      borderRadius: '8px',
-      border: '1px solid #e2e8f0'
-    },
-    historyInfo: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0.25rem',
-      flex: 1
-    },
-    historyDesc: {
-      fontSize: '0.9rem',
-      fontWeight: '500',
-      color: '#1e293b'
-    },
-    historyDate: {
-      fontSize: '0.75rem',
-      color: '#64748b'
-    },
-    historyAmount: {
-      fontSize: '1rem',
-      fontWeight: '700'
-    },
-    quickAmounts: {
-      display: 'flex',
-      gap: '0.5rem',
-      marginTop: '0.75rem',
-      flexWrap: 'wrap',
-      alignItems: 'center'
-    },
-    quickAmountsLabel: {
-      fontSize: '0.85rem',
-      color: '#64748b',
-      fontWeight: '500'
-    },
-    quickAmountButton: {
-      padding: '0.4rem 0.8rem',
-      backgroundColor: '#eff6ff',
-      color: '#1e40af',
-      border: '1px solid #bfdbfe',
-      borderRadius: '6px',
-      cursor: 'pointer',
-      fontSize: '0.8rem',
-      fontWeight: '600',
-      transition: 'all 0.2s'
-    },
-    balanceAfter: {
-      marginTop: '0.75rem',
-      fontSize: '0.9rem',
-      color: '#64748b',
-      fontWeight: '500'
-    },
     recentTransfersSection: {
       backgroundColor: 'rgba(255, 255, 255, 0.98)',
       borderRadius: '16px',
@@ -728,6 +632,35 @@ export default function Transfer() {
       borderRadius: '8px',
       textTransform: 'capitalize',
       fontWeight: '600'
+    },
+    quickAmounts: {
+      display: 'flex',
+      gap: '0.5rem',
+      marginTop: '0.75rem',
+      flexWrap: 'wrap',
+      alignItems: 'center'
+    },
+    quickAmountsLabel: {
+      fontSize: '0.85rem',
+      color: '#64748b',
+      fontWeight: '500'
+    },
+    quickAmountButton: {
+      padding: '0.4rem 0.8rem',
+      backgroundColor: '#eff6ff',
+      color: '#1e40af',
+      border: '1px solid #bfdbfe',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      fontSize: '0.8rem',
+      fontWeight: '600',
+      transition: 'all 0.2s'
+    },
+    balanceAfter: {
+      marginTop: '0.75rem',
+      fontSize: '0.9rem',
+      color: '#64748b',
+      fontWeight: '500'
     }
   };
 
@@ -787,13 +720,7 @@ export default function Transfer() {
           </div>
 
           <div style={styles.transferOptions}>
-            <Link 
-              href="/internal-transfer" 
-              style={{
-                ...styles.transferCard,
-                ':hover': { borderColor: '#1e40af', transform: 'translateY(-4px)' }
-              }}
-            >
+            <Link href="/internal-transfer" style={styles.transferCard}>
               <div style={styles.transferCardIcon}>👤</div>
               <h2 style={styles.transferCardTitle}>Send to Oakline User</h2>
               <p style={styles.transferCardDesc}>
@@ -801,13 +728,7 @@ export default function Transfer() {
               </p>
             </Link>
 
-            <Link 
-              href="/wire-transfer" 
-              style={{
-                ...styles.transferCard,
-                ':hover': { borderColor: '#1e40af', transform: 'translateY(-4px)' }
-              }}
-            >
+            <Link href="/wire-transfer" style={styles.transferCard}>
               <div style={styles.transferCardIcon}>🌐</div>
               <h2 style={styles.transferCardTitle}>Wire Transfer</h2>
               <p style={styles.transferCardDesc}>
@@ -828,43 +749,6 @@ export default function Transfer() {
       </div>
     );
   }
-
-  const [recentTransfers, setRecentTransfers] = useState([]);
-  const [loadingTransfers, setLoadingTransfers] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      fetchRecentTransfers();
-    }
-  }, [user]);
-
-  const fetchRecentTransfers = async () => {
-    setLoadingTransfers(true);
-    try {
-      const { data: accounts } = await supabase
-        .from('accounts')
-        .select('id')
-        .eq('user_id', user.id);
-
-      if (accounts && accounts.length > 0) {
-        const accountIds = accounts.map(acc => acc.id);
-        const { data: transfers } = await supabase
-          .from('transactions')
-          .select('*')
-          .in('account_id', accountIds)
-          .in('type', ['transfer_out', 'transfer_in'])
-          .eq('transfer_type', 'internal')
-          .order('created_at', { ascending: false })
-          .limit(5);
-
-        setRecentTransfers(transfers || []);
-      }
-    } catch (error) {
-      console.error('Error fetching recent transfers:', error);
-    } finally {
-      setLoadingTransfers(false);
-    }
-  };
 
   return (
     <>
@@ -1001,10 +885,7 @@ export default function Transfer() {
           </div>
 
           <div style={styles.transferOptions}>
-            <Link 
-              href="/internal-transfer" 
-              style={styles.transferCard}
-            >
+            <Link href="/internal-transfer" style={styles.transferCard}>
               <div style={styles.transferCardIcon}>👤</div>
               <h2 style={styles.transferCardTitle}>Send to Oakline User</h2>
               <p style={styles.transferCardDesc}>
@@ -1012,10 +893,7 @@ export default function Transfer() {
               </p>
             </Link>
 
-            <Link 
-              href="/wire-transfer" 
-              style={styles.transferCard}
-            >
+            <Link href="/wire-transfer" style={styles.transferCard}>
               <div style={styles.transferCardIcon}>🌐</div>
               <h2 style={styles.transferCardTitle}>Wire Transfer</h2>
               <p style={styles.transferCardDesc}>
@@ -1071,11 +949,8 @@ export default function Transfer() {
           )}
 
           <div style={styles.contentSection}>
-            <div style={styles.sectionHeaderRow}>
-              <h2 style={styles.sectionTitle}>Transfer Between My Accounts</h2>
-              <Link href="/transactions" style={styles.historyButton}>View Transaction History</Link>
-            </div>
-            
+            <h2 style={styles.sectionTitle}>Transfer Between My Accounts</h2>
+
             <form onSubmit={handleSubmit}>
               <div style={styles.formGrid}>
                 <div style={styles.formGroup}>
