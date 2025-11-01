@@ -306,12 +306,18 @@ export default function CryptoDeposit() {
         .single();
 
       if (error) {
+        console.error('Deposit insertion error:', error);
         throw new Error(error.message || 'Deposit submission failed');
+      }
+
+      if (!data || !data.id) {
+        console.error('No data returned from deposit insertion');
+        throw new Error('Failed to create deposit record');
       }
 
       // Create receipt data
       const receipt = {
-        referenceNumber: data.id.substring(0, 8).toUpperCase(),
+        referenceNumber: String(data.id).substring(0, 8).toUpperCase(),
         date: new Date().toLocaleString('en-US', {
           year: 'numeric',
           month: 'long',
