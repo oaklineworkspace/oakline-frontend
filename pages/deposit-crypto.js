@@ -144,10 +144,10 @@ export default function CryptoDeposit() {
         networkType: depositForm.network_type 
       });
 
-      // Fetch from user_crypto_wallets table
+      // First try user_crypto_wallets table
       const { data: userWallet, error: userError } = await supabase
         .from('user_crypto_wallets')
-        .select('wallet_address')
+        .select('wallet_address, crypto_type, network_type')
         .eq('user_id', user.id)
         .eq('crypto_type', depositForm.crypto_type)
         .eq('network_type', depositForm.network_type)
@@ -157,11 +157,38 @@ export default function CryptoDeposit() {
 
       if (userError) {
         console.error('Error fetching user wallet:', userError);
+        // If there's a permissions error, show helpful message
+        if (userError.code === 'PGRST301' || userError.message?.includes('permission')) {
+          setMessage('Database permissions error. Please contact support.');
+          setMessageType('error');
+        }
       }
 
       if (userWallet && userWallet.wallet_address) {
         setWalletAddress(userWallet.wallet_address);
         console.log('Wallet address found:', userWallet.wallet_address);
+        return;
+      }
+
+      // If no user wallet found, try admin_assigned_wallets
+      console.log('No user wallet found, checking admin assigned wallets...');
+      const { data: adminWallet, error: adminError } = await supabase
+        .from('admin_assigned_wallets')
+        .select('wallet_address, crypto_type, network_type')
+        .eq('user_id', user.id)
+        .eq('crypto_type', depositForm.crypto_type)
+        .eq('network_type', depositForm.network_type)
+        .maybeSingle();
+
+      console.log('Admin wallet query result:', { adminWallet, adminError });
+
+      if (adminError) {
+        console.error('Error fetching admin wallet:', adminError);
+      }
+
+      if (adminWallet && adminWallet.wallet_address) {
+        setWalletAddress(adminWallet.wallet_address);
+        console.log('Admin wallet address found:', adminWallet.wallet_address);
       } else {
         console.log('No wallet assigned for this crypto/network combination');
       }
