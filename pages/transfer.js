@@ -209,34 +209,21 @@ export default function Transfer() {
         throw new Error('Failed to credit destination account');
       }
 
-      // Create both debit and credit transactions
-      const { error: transactionError } = await supabase.from('transactions').insert([
-        {
-          user_id: user.id,
-          account_id: fromAccount,
-          type: 'debit',
-          amount: transferAmount,
-          description: `Transfer to ${selectedToAccount.account_type?.toUpperCase()} account ending in ${selectedToAccount.account_number?.slice(-4)}`,
-          status: 'completed',
-          reference: debitReference,
-          balance_before: parseFloat(selectedFromAccount.balance),
-          balance_after: newFromBalance
-        },
-        {
-          user_id: user.id,
-          account_id: toAccount,
-          type: 'credit',
-          amount: transferAmount,
-          description: `Transfer from ${selectedFromAccount.account_type?.toUpperCase()} account ending in ${selectedFromAccount.account_number?.slice(-4)}`,
-          status: 'completed',
-          reference: creditReference,
-          balance_before: parseFloat(selectedToAccount.balance),
-          balance_after: newToBalance
-        }
-      ]);
+      // Create debit transaction
+      const { error: debitTransactionError } = await supabase.from('transactions').insert({
+        user_id: user.id,
+        account_id: fromAccount,
+        type: 'debit',
+        amount: transferAmount,
+        description: `Transfer to ${selectedToAccount.account_type?.toUpperCase()} account ending in ${selectedToAccount.account_number?.slice(-4)}`,
+        status: 'completed',
+        reference: debitReference,
+        balance_before: parseFloat(selectedFromAccount.balance),
+        balance_after: newFromBalance
+      });
 
-      if (transactionError) {
-        console.error('Transaction insert error:', transactionError);
+      if (debitTransactionError) {
+        console.error('Debit transaction insert error:', debitTransactionError);
         // Rollback both account updates
         await supabase
           .from('accounts')
@@ -246,7 +233,38 @@ export default function Transfer() {
           .from('accounts')
           .update({ balance: parseFloat(selectedToAccount.balance) })
           .eq('id', toAccount);
-        throw new Error('Failed to record transactions');
+        throw new Error('Failed to record debit transaction');
+      }
+
+      // Create credit transaction
+      const { error: creditTransactionError } = await supabase.from('transactions').insert({
+        user_id: user.id,
+        account_id: toAccount,
+        type: 'credit',
+        amount: transferAmount,
+        description: `Transfer from ${selectedFromAccount.account_type?.toUpperCase()} account ending in ${selectedFromAccount.account_number?.slice(-4)}`,
+        status: 'completed',
+        reference: creditReference,
+        balance_before: parseFloat(selectedToAccount.balance),
+        balance_after: newToBalance
+      });
+
+      if (creditTransactionError) {
+        console.error('Credit transaction insert error:', creditTransactionError);
+        // Rollback account updates and debit transaction
+        await supabase
+          .from('accounts')
+          .update({ balance: parseFloat(selectedFromAccount.balance) })
+          .eq('id', fromAccount);
+        await supabase
+          .from('accounts')
+          .update({ balance: parseFloat(selectedToAccount.balance) })
+          .eq('id', toAccount);
+        await supabase
+          .from('transactions')
+          .delete()
+          .eq('reference', debitReference);
+        throw new Error('Failed to record credit transaction');
       }
 
       // Generate receipt data
