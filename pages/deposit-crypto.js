@@ -294,14 +294,14 @@ export default function CryptoDeposit() {
                 margin: '0 0 10px 0',
                 fontWeight: '700'
               }}>
-                Cryptocurrency Deposit
+                Add Funds via Cryptocurrency
               </h1>
               <p style={{ 
                 fontSize: '16px', 
                 margin: 0,
                 opacity: 0.95
               }}>
-                Securely deposit cryptocurrency to your account
+                Securely add money to your Oakline Bank account using cryptocurrency
               </p>
             </div>
 

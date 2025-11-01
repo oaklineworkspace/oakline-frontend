@@ -143,7 +143,8 @@ export default function MainMenu() {
       services: [
         { name: 'Investment Portfolio', path: '/investments', icon: '💼', desc: 'Manage your investments' },
         { name: 'Retirement Planning', path: '/investments', icon: '🏖️', desc: 'Plan for your future' },
-        { name: 'Cryptocurrency', path: '/crypto', icon: '₿', desc: 'Digital currency trading' },
+        { name: 'Deposit via Cryptocurrency', path: '/deposit-crypto', icon: '₿', desc: 'Add funds to your account using cryptocurrency' },
+        { name: 'Cryptocurrency Trading', path: '/crypto', icon: '📊', desc: 'Digital currency trading platform' },
         { name: 'Financial Advisory', path: '/financial-advisory', icon: '👨‍💼', desc: 'Professional guidance' },
         { name: 'Market Research', path: '/market-news', icon: '📰', desc: 'Latest market insights' }
       ]
@@ -220,7 +221,7 @@ export default function MainMenu() {
                     <Link href="/transactions" style={styles.dropdownLink}>📜 Transaction History</Link>
                     <Link href="/bill-pay" style={styles.dropdownLink}>🧾 Pay Bills</Link>
                     <Link href="/deposit-real" style={styles.dropdownLink}>📱 Mobile Deposit</Link>
-                    <Link href="/deposit-crypto" style={styles.dropdownLink}>₿ Crypto Deposit</Link>
+                    <Link href="/deposit-crypto" style={styles.dropdownLink}>₿ Deposit Funds via Cryptocurrency</Link>
                     <Link href="/withdrawal" style={styles.dropdownLink}>📤 Withdraw Funds</Link>
                     <Link href="/zelle" style={styles.dropdownLink}>💰 Zelle</Link>
                   </div>

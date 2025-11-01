@@ -379,7 +379,7 @@ function DashboardContent() {
                     <Link href="/transactions" style={styles.dropdownLink}>📜 Transaction History</Link>
                     <Link href="/bill-pay" style={styles.dropdownLink}>🧾 Pay Bills</Link>
                     <Link href="/deposit-real" style={styles.dropdownLink}>📱 Mobile Deposit</Link>
-                    <Link href="/deposit-crypto" style={styles.dropdownLink}>₿ Crypto Deposit</Link>
+                    <Link href="/deposit-crypto" style={styles.dropdownLink}>₿ Deposit Funds via Cryptocurrency</Link>
                     <Link href="/withdrawal" style={styles.dropdownLink}>📤 Withdraw Funds</Link>
                     <Link href="/zelle" style={styles.dropdownLink}>💰 Zelle</Link>
                   </div>
@@ -697,7 +697,7 @@ function DashboardContent() {
             </Link>
             <Link href="/deposit-crypto" style={styles.standardActionButton}>
               <span style={styles.quickActionIcon}>₿</span>
-              <span style={styles.quickActionText}>Crypto Deposit</span>
+              <span style={styles.quickActionText}>Add Funds via Crypto</span>
             </Link>
             <Link href="/investment" style={styles.standardActionButton}>
               <span style={styles.quickActionIcon}>📈</span>
