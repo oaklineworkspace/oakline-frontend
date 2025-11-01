@@ -1199,8 +1199,6 @@ export default function Transfer() {
             </Link>
           </div>
 
-          <RecentTransfers user={user} isMobile={isMobile} />
-
           {message && (
             <div style={styles.errorMessage}>{message}</div>
           )}
@@ -1314,6 +1312,8 @@ export default function Transfer() {
               </button>
             </form>
           </div>
+
+          <RecentTransfers user={user} isMobile={isMobile} />
         </main>
       </div>
     </>
