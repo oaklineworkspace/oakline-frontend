@@ -582,7 +582,6 @@ function DashboardContent() {
                 // Money coming IN (Credit - Green/Positive)
                 if (txType === 'deposit' || 
                     txType === 'credit' || 
-                    txType === 'transfer_in' || 
                     txType === 'interest' || 
                     txType === 'refund' || 
                     txType === 'zelle_receive' ||
@@ -597,7 +596,6 @@ function DashboardContent() {
                 else if (txType === 'debit' || 
                          txType === 'withdrawal' || 
                          txType === 'purchase' || 
-                         txType === 'transfer_out' || 
                          txType === 'bill_payment' || 
                          txType === 'fee' || 
                          txType === 'zelle_send' ||
@@ -615,8 +613,8 @@ function DashboardContent() {
                   switch (type?.toLowerCase()) {
                     case 'deposit': return '📥';
                     case 'withdrawal': return '📤';
-                    case 'transfer_in': return '💸';
-                    case 'transfer_out': return '💰';
+                    case 'credit': return '💸';
+                    case 'debit': return '💰';
                     case 'bill_payment': return '🧾';
                     case 'fee': return '💳';
                     case 'zelle_send': return 'Z';

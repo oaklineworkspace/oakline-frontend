@@ -36,7 +36,7 @@ function RecentTransfers({ user, isMobile }) {
         .from('transactions')
         .select('*')
         .eq('user_id', user.id)
-        .in('type', ['transfer_out', 'transfer_in'])
+        .in('type', ['debit', 'credit'])
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -165,15 +165,15 @@ function RecentTransfers({ user, isMobile }) {
             >
               <div style={transferStyles.transferHeader}>
                 <div style={transferStyles.transferType}>
-                  {transfer.type === 'transfer_out' ? '📤 Sent' : '📥 Received'}
+                  {transfer.type === 'debit' ? '📤 Sent' : '📥 Received'}
                 </div>
                 <div
                   style={{
                     ...transferStyles.transferAmount,
-                    color: transfer.type === 'transfer_out' ? '#dc2626' : '#059669'
+                    color: transfer.type === 'debit' ? '#dc2626' : '#059669'
                   }}
                 >
-                  {transfer.type === 'transfer_out' ? '-' : '+'}{formatCurrency(transfer.amount)}
+                  {transfer.type === 'debit' ? '-' : '+'}{formatCurrency(transfer.amount)}
                 </div>
               </div>
               <div style={transferStyles.transferDetails}>

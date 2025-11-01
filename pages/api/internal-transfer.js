@@ -127,9 +127,9 @@ export default async function handler(req, res) {
       {
         user_id: user.id,
         account_id: from_account_id,
-        type: 'transfer_out',
+        type: 'debit',
         amount: transferAmount,
-        description: `Transfer to ${recipientName} - ${memo || 'Internal Transfer'}`,
+        description: `Internal transfer to ${recipientName} (${toAccount.account_number})`,
         status: 'completed',
         reference: referenceNumber,
         balance_before: parseFloat(fromAccount.balance),
@@ -138,9 +138,9 @@ export default async function handler(req, res) {
       {
         user_id: toAccount.user_id,
         account_id: toAccount.id,
-        type: 'transfer_in',
+        type: 'credit',
         amount: transferAmount,
-        description: `Transfer from ${senderName} - ${memo || 'Internal Transfer'}`,
+        description: `Internal transfer from ${senderName} (${fromAccount.account_number})`,
         status: 'completed',
         reference: referenceNumber,
         balance_before: parseFloat(toAccount.balance),

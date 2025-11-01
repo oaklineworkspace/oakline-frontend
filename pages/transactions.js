@@ -123,12 +123,10 @@ export default function TransactionsHistory() {
     switch (type?.toLowerCase()) {
       case 'deposit': return '📥';
       case 'withdrawal': return '📤';
-      case 'transfer_in': return '💸';
-      case 'transfer_out': return '💰';
+      case 'credit': return '💸';
+      case 'debit': return '💰';
       case 'bill_payment': return '🧾';
       case 'fee': return '💳';
-      case 'debit': return '💳';
-      case 'credit': return '💵';
       case 'purchase': return '🛒';
       case 'refund': return '↩️';
       case 'interest': return '💎';
@@ -144,8 +142,7 @@ export default function TransactionsHistory() {
     const description = (tx.description || '').toLowerCase();
 
     // Check transaction type first for exact matches
-    if (txType === 'transfer_in' || 
-        txType === 'deposit' || 
+    if (txType === 'deposit' || 
         txType === 'credit' || 
         txType === 'interest' || 
         txType === 'refund' || 
@@ -159,8 +156,7 @@ export default function TransactionsHistory() {
       return true;
     }
 
-    if (txType === 'transfer_out' || 
-        txType === 'withdrawal' || 
+    if (txType === 'withdrawal' || 
         txType === 'debit' || 
         txType === 'purchase' || 
         txType === 'bill_payment' || 
@@ -364,6 +360,18 @@ export default function TransactionsHistory() {
                           Account •••• {tx.accounts.account_number.slice(-4)}
                         </div>
                       )}
+                      {tx.reference && (
+                        <div 
+                          style={styles.transactionRef}
+                          onClick={() => {
+                            navigator.clipboard.writeText(tx.reference);
+                            alert('Reference number copied to clipboard!');
+                          }}
+                          title="Click to copy reference number"
+                        >
+                          Ref: {tx.reference} 📋
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div style={styles.transactionRight}>
@@ -538,6 +546,14 @@ const styles = {
     fontSize: '0.65rem',
     color: '#94a3b8',
     marginTop: '0.2rem'
+  },
+  transactionRef: {
+    fontSize: '0.65rem',
+    color: '#1e40af',
+    marginTop: '0.2rem',
+    cursor: 'pointer',
+    fontFamily: 'monospace',
+    fontWeight: '600'
   },
   transactionRight: {
     display: 'flex',

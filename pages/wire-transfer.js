@@ -137,7 +137,8 @@ export default function WireTransferPage() {
       if (wireError) throw wireError;
 
       // Deduct from sender account
-      const newBalance = parseFloat(selectedAccount.balance) - amount;
+      const balanceBefore = parseFloat(selectedAccount.balance);
+      const newBalance = balanceBefore - amount;
       await supabase
         .from('accounts')
         .update({ balance: newBalance, updated_at: new Date().toISOString() })
@@ -147,11 +148,13 @@ export default function WireTransferPage() {
       await supabase.from('transactions').insert([{
         user_id: user.id,
         account_id: wireForm.from_account,
-        type: 'wire_transfer',
+        type: 'debit',
         amount: amount,
         description: `Wire transfer to ${wireForm.beneficiary_name} - ${wireForm.beneficiary_bank}`,
         status: 'completed',
-        reference: wireTransfer.reference_number
+        reference: wireTransfer.reference_number,
+        balance_before: balanceBefore,
+        balance_after: newBalance
       }]);
 
       // Create notification

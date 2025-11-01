@@ -105,7 +105,7 @@ export default function Transfer() {
           .from('transactions')
           .select('*')
           .in('account_id', accountIds)
-          .in('type', ['transfer_out', 'transfer_in'])
+          .in('type', ['debit', 'credit'])
           .order('created_at', { ascending: false })
           .limit(10);
 
@@ -200,9 +200,9 @@ export default function Transfer() {
         {
           user_id: user.id,
           account_id: fromAccount,
-          type: 'transfer_out',
+          type: 'debit',
           amount: transferAmount,
-          description: `Transfer to ${selectedToAccount.account_type?.toUpperCase()} - ${memo || 'Internal Transfer'}`,
+          description: `Transfer to ${selectedToAccount.account_type?.toUpperCase()} account ${selectedToAccount.account_number}`,
           status: 'completed',
           reference: referenceNumber,
           balance_before: parseFloat(selectedFromAccount.balance),
@@ -211,9 +211,9 @@ export default function Transfer() {
         {
           user_id: user.id,
           account_id: toAccount,
-          type: 'transfer_in',
+          type: 'credit',
           amount: transferAmount,
-          description: `Transfer from ${selectedFromAccount.account_type?.toUpperCase()} - ${memo || 'Internal Transfer'}`,
+          description: `Transfer from ${selectedFromAccount.account_type?.toUpperCase()} account ${selectedFromAccount.account_number}`,
           status: 'completed',
           reference: referenceNumber,
           balance_before: parseFloat(selectedToAccount.balance),
@@ -938,7 +938,7 @@ export default function Transfer() {
                   <div key={transfer.id} style={styles.transferItem}>
                     <div style={styles.transferLeft}>
                       <span style={styles.transferIcon}>
-                        {transfer.type === 'transfer_out' ? '📤' : '📥'}
+                        {transfer.type === 'debit' ? '📤' : '📥'}
                       </span>
                       <div style={styles.transferInfo}>
                         <div style={styles.transferDescription}>
@@ -957,9 +957,9 @@ export default function Transfer() {
                     <div style={styles.transferRight}>
                       <div style={{
                         ...styles.transferAmount,
-                        color: transfer.type === 'transfer_in' ? '#059669' : '#dc2626'
+                        color: transfer.type === 'credit' ? '#059669' : '#dc2626'
                       }}>
-                        {transfer.type === 'transfer_in' ? '+' : '-'}
+                        {transfer.type === 'credit' ? '+' : '-'}
                         {formatCurrency(transfer.amount)}
                       </div>
                       <div style={styles.transferStatus}>
