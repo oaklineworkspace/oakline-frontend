@@ -34,8 +34,8 @@ export default function Transfer() {
   const [receiptData, setReceiptData] = useState(null);
   const [recentTransfers, setRecentTransfers] = useState([]);
   const [loadingTransfers, setLoadingTransfers] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
-  const isMobile = useMediaQuery('(max-width: 768px)');
 
   useEffect(() => {
     checkUserAndFetchData();
@@ -46,6 +46,15 @@ export default function Transfer() {
       fetchRecentTransfers();
     }
   }, [user]);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.matchMedia('(max-width: 768px)').matches);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const checkUserAndFetchData = async () => {
     try {
@@ -78,23 +87,35 @@ export default function Transfer() {
   const fetchRecentTransfers = async () => {
     setLoadingTransfers(true);
     try {
-      const { data: accounts } = await supabase
+      const { data: userAccounts, error: accountsError } = await supabase
         .from('accounts')
         .select('id')
         .eq('user_id', user.id);
 
-      if (accounts && accounts.length > 0) {
-        const accountIds = accounts.map(acc => acc.id);
-        const { data: transfers } = await supabase
+      if (accountsError) {
+        console.error('Error fetching accounts for transfers:', accountsError);
+        return;
+      }
+
+      if (userAccounts && userAccounts.length > 0) {
+        const accountIds = userAccounts.map(acc => acc.id);
+        
+        // Fetch all internal transfers (both in and out) for user's accounts
+        const { data: transfers, error: transfersError } = await supabase
           .from('transactions')
           .select('*')
           .in('account_id', accountIds)
           .in('type', ['transfer_out', 'transfer_in'])
           .eq('transfer_type', 'internal')
           .order('created_at', { ascending: false })
-          .limit(5);
+          .limit(10);
 
-        setRecentTransfers(transfers || []);
+        if (transfersError) {
+          console.error('Error fetching transfers:', transfersError);
+        } else {
+          console.log('Fetched recent transfers:', transfers);
+          setRecentTransfers(transfers || []);
+        }
       }
     } catch (error) {
       console.error('Error fetching recent transfers:', error);
@@ -227,7 +248,11 @@ export default function Transfer() {
 
       // Refresh accounts and transfers
       await checkUserAndFetchData();
-      await fetchRecentTransfers();
+      
+      // Wait a bit for the database to be updated, then fetch transfers
+      setTimeout(async () => {
+        await fetchRecentTransfers();
+      }, 500);
 
     } catch (error) {
       setMessage(error.message || 'Transfer failed. Please try again.');
