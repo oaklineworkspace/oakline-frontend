@@ -395,6 +395,34 @@ export default function CryptoDeposit() {
     window.print();
   };
 
+  const viewDepositReceipt = (deposit) => {
+    const receipt = {
+      referenceNumber: String(deposit.id).substring(0, 8).toUpperCase(),
+      date: new Date(deposit.created_at).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      }),
+      accountNumber: deposit.account_number,
+      cryptoType: cryptoTypes.find(c => c.value === deposit.crypto_type)?.label || deposit.crypto_type,
+      cryptoSymbol: deposit.crypto_type,
+      network: deposit.network_type || 'N/A',
+      amount: formatCurrency(deposit.amount),
+      walletAddress: deposit.wallet_address || 'N/A',
+      confirmations: networkConfigs[deposit.crypto_type]?.find(n => n.value === deposit.network_type)?.confirmations || 'N/A',
+      status: deposit.status === 'pending' ? 'Pending Confirmation' : 
+              deposit.status === 'approved' ? 'Approved & Credited' : 'Rejected',
+      transactionId: deposit.id
+    };
+
+    setReceiptData(receipt);
+    setShowReceipt(true);
+  };
+
   const styles = {
     container: {
       minHeight: '100vh',
@@ -1315,7 +1343,12 @@ export default function CryptoDeposit() {
 
         {deposits.length > 0 && (
           <div style={styles.contentCard}>
-            <h2 style={styles.sectionTitle}>Recent Deposits</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2 style={styles.sectionTitle}>Recent Deposits</h2>
+              <p style={{ fontSize: '0.85rem', color: '#64748b', fontStyle: 'italic' }}>
+                💡 Click any row to view receipt
+              </p>
+            </div>
             <div style={{ overflowX: 'auto' }}>
               <table style={styles.transactionsTable}>
                 <thead style={styles.tableHeader}>
@@ -1330,7 +1363,16 @@ export default function CryptoDeposit() {
                 </thead>
                 <tbody>
                   {deposits.map((deposit) => (
-                    <tr key={deposit.id}>
+                    <tr 
+                      key={deposit.id}
+                      onClick={() => viewDepositReceipt(deposit)}
+                      style={{ 
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
                       <td style={styles.td}>{formatDate(deposit.created_at)}</td>
                       <td style={{ ...styles.td, fontWeight: '600' }}>{deposit.crypto_type}</td>
                       <td style={{ ...styles.td, color: '#64748b' }}>{deposit.network_type || 'N/A'}</td>
