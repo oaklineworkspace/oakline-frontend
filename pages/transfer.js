@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -100,7 +99,7 @@ export default function Transfer() {
 
       if (userAccounts && userAccounts.length > 0) {
         const accountIds = userAccounts.map(acc => acc.id);
-        
+
         const { data: transfers, error: transfersError } = await supabase
           .from('transactions')
           .select('*')
@@ -283,7 +282,7 @@ export default function Transfer() {
 
       // Refresh accounts and transfers
       await checkUserAndFetchData();
-      
+
       // Wait a bit for the database to be updated, then fetch transfers
       setTimeout(async () => {
         await fetchRecentTransfers();
@@ -303,7 +302,7 @@ export default function Transfer() {
   const viewTransferReceipt = (transfer) => {
     const fromAccountData = accounts.find(acc => acc.id === transfer.account_id);
     const isDebit = transfer.type === 'debit';
-    
+
     const receipt = {
       referenceNumber: transfer.reference || 'N/A',
       date: formatDate(transfer.created_at),
@@ -1114,61 +1113,6 @@ export default function Transfer() {
               </button>
             </form>
           </div>
-
-          {recentTransfers.length > 0 && (
-            <div style={styles.recentTransfersSection}>
-              <h2 style={styles.sectionTitle}>Recent Transfers</h2>
-              <div style={styles.transfersList}>
-                {recentTransfers.map(transfer => (
-                  <div 
-                    key={transfer.id} 
-                    style={styles.transferItem}
-                    onClick={() => viewTransferReceipt(transfer)}
-                  >
-                    <div style={styles.transferLeft}>
-                      <span style={styles.transferIcon}>
-                        {transfer.type === 'debit' ? '📤' : '📥'}
-                      </span>
-                      <div style={styles.transferInfo}>
-                        <div style={styles.transferDescription}>
-                          {transfer.description}
-                        </div>
-                        <div style={styles.transferDate}>
-                          {formatDate(transfer.created_at)}
-                        </div>
-                        {transfer.reference && (
-                          <div style={styles.transferRef}>
-                            Ref: {transfer.reference}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div style={styles.transferRight}>
-                      <div style={{
-                        ...styles.transferAmount,
-                        color: transfer.type === 'credit' ? '#059669' : '#dc2626'
-                      }}>
-                        {transfer.type === 'credit' ? '+' : '-'}
-                        {formatCurrency(transfer.amount)}
-                      </div>
-                      <div style={styles.transferStatus}>
-                        {transfer.status || 'completed'}
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          viewTransferReceipt(transfer);
-                        }}
-                        style={styles.viewReceiptButton}
-                      >
-                        📄 View Receipt
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </main>
       </div>
     </>
