@@ -3,11 +3,23 @@
 ## Overview
 Oakline Bank is a comprehensive Next.js/React-based banking web application providing a complete digital banking experience. It serves retail and business clients with features like account management, transactions, card services, loan applications, cryptocurrency trading, bill payments, and investment services. The platform emphasizes security, user experience, and real-time data synchronization. The project includes a professional internationalization page and robust administrative features.
 
-## Recent Updates (October 2025)
+## Recent Updates
+
+### November 2025 - Vercel to Replit Migration
+- **Platform Migration**: Successfully migrated from Vercel to Replit with proper port configuration (5000), environment variable setup, and workflow configuration.
+- **Crypto Wallet Verification**: Verified and confirmed that `/pages/deposit-crypto.js` correctly fetches crypto wallets from **both** `user_crypto_wallets` AND `admin_assigned_wallets` tables. The implementation:
+  - First queries `user_crypto_wallets` for user-specific wallet assignments
+  - Falls back to `admin_assigned_wallets` if no user wallet is found
+  - Displays wallet address with QR code when found from either table
+  - Shows clear "No Wallet Assigned" message when neither table has a matching wallet
+  - Includes comprehensive error handling and permission checking
+  - Filters by `user_id`, `crypto_type`, and `network_type` for precise wallet matching
+
+### October 2025
 **New Features Added:**
 - **Bill Pay System** (`/pages/bill-pay.js`): Full-featured bill payment page with beneficiary management, scheduled payments, payment history tracking, and automatic transaction recording in both `bill_payments` and `transactions` tables.
 - **Investment Portfolio** (`/pages/investment.js`): Comprehensive investment management with product listings, portfolio tracking, transaction history, and real-time portfolio value calculations.
-- **Crypto Deposit System** (`/pages/deposit-crypto.js`): Professional 3-step cryptocurrency deposit flow with account selection, multi-crypto support (BTC, USDT, ETH, BNB with color-coded icons), admin-assigned wallet address display with QR codes (using `react-qr-code`), payment instructions, user payment confirmation, and deposit submission to `crypto_deposits` table with `pending` status. Features include: progress stepper UI, professional gradient header, wallet address copy-to-clipboard, comprehensive validation, and deposit history table. Integrates with `user_crypto_wallets` table for wallet assignments.
+- **Crypto Deposit System** (`/pages/deposit-crypto.js`): Professional 3-step cryptocurrency deposit flow with account selection, multi-crypto support (BTC, USDT, ETH, BNB with color-coded icons), wallet address display with QR codes (using `react-qr-code`), payment instructions, user payment confirmation, and deposit submission to `crypto_deposits` table with `pending` status. Features include: progress stepper UI, professional gradient header, wallet address copy-to-clipboard, comprehensive validation, and deposit history table. Fetches wallets from both `user_crypto_wallets` and `admin_assigned_wallets` tables.
 
 **Security Enhancements:**
 - All account balance updates now include `user_id` verification to prevent unauthorized account access.
