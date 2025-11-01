@@ -505,11 +505,7 @@ function DashboardContent() {
           </div>
 
           <div style={styles.summaryCards}>
-            <div style={{
-              ...styles.primaryBalanceCard,
-              backgroundColor: '#1a365d', // Matches header background
-              borderColor: '#059669' // Matches header border
-            }}>
+            <div style={styles.primaryBalanceCard}>
               <div style={styles.balanceCardHeader}>
                 <div style={styles.balanceHeaderInfo}>
                   <h3 style={styles.balanceCardLabel}>Total Available Balance</h3>
@@ -1369,12 +1365,12 @@ const styles = {
   },
   primaryBalanceCard: {
     gridColumn: 'span 1',
-    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+    background: '#1a365d',
     borderRadius: '16px',
     padding: '2rem',
     color: 'white',
-    boxShadow: '0 8px 24px rgba(30, 64, 175, 0.3)',
-    border: '1px solid #3b82f6', // Added border to match header
+    boxShadow: '0 8px 24px rgba(26, 54, 93, 0.3)',
+    border: '3px solid #059669',
     position: 'relative',
     overflow: 'hidden',
     minWidth: '320px',
@@ -1888,8 +1884,8 @@ const styles = {
     alignItems: 'center',
     gap: '0.5rem',
     padding: '0.75rem 1.25rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    color: 'white',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    color: '#1e40af',
     border: '1px solid rgba(255, 255, 255, 0.3)',
     borderRadius: '8px',
     fontSize: '0.95rem',
