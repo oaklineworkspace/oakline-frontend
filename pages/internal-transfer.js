@@ -1030,6 +1030,8 @@ export default function InternalTransfer() {
             <p style={styles.welcomeSubtitle}>Transfer funds securely to another Oakline Bank customer</p>
           </div>
 
+          <RecentTransfers user={user} isMobile={isMobile} />
+
           {message && (
             <div style={{
               ...styles.messageBox,
@@ -1095,41 +1097,142 @@ export default function InternalTransfer() {
               </div>
 
               {recipientInfo && (
-                <>
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>Recipient Name *</label>
-                    <input
-                      type="text"
-                      style={{ ...styles.input, backgroundColor: '#f0f9ff', cursor: 'not-allowed' }}
-                      value={recipientInfo.ownerName}
-                      readOnly
-                      disabled
-                    />
+                <div style={{
+                  backgroundColor: '#ecfdf5',
+                  border: '3px solid #10b981',
+                  borderRadius: '16px',
+                  padding: isMobile ? '1.5rem' : '2rem',
+                  marginBottom: isMobile ? '1.5rem' : '2rem',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.15)'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    marginBottom: '1.5rem',
+                    paddingBottom: '1rem',
+                    borderBottom: '2px solid #6ee7b7'
+                  }}>
+                    <span style={{ fontSize: '2rem' }}>✅</span>
+                    <div>
+                      <h3 style={{
+                        margin: 0,
+                        fontSize: isMobile ? '1.1rem' : '1.3rem',
+                        fontWeight: '700',
+                        color: '#065f46'
+                      }}>
+                        Recipient Verified
+                      </h3>
+                      <p style={{
+                        margin: '0.25rem 0 0 0',
+                        fontSize: isMobile ? '0.85rem' : '0.95rem',
+                        color: '#059669'
+                      }}>
+                        Please confirm the details below before proceeding
+                      </p>
+                    </div>
                   </div>
 
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>Recipient Account Type *</label>
-                    <input
-                      type="text"
-                      style={{ ...styles.input, backgroundColor: '#f0f9ff', cursor: 'not-allowed' }}
-                      value={`${getAccountTypeIcon(recipientInfo.accountType)} ${recipientInfo.accountType?.replace('_', ' ')?.toUpperCase()} Account`}
-                      readOnly
-                      disabled
-                    />
+                  <div style={{
+                    display: 'grid',
+                    gap: '1rem'
+                  }}>
+                    <div style={{
+                      backgroundColor: 'white',
+                      padding: '1rem',
+                      borderRadius: '10px',
+                      border: '1px solid #a7f3d0'
+                    }}>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        color: '#059669',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        marginBottom: '0.5rem'
+                      }}>
+                        Recipient Name
+                      </div>
+                      <div style={{
+                        fontSize: isMobile ? '1.1rem' : '1.25rem',
+                        fontWeight: '700',
+                        color: '#064e3b'
+                      }}>
+                        {recipientInfo.ownerName}
+                      </div>
+                    </div>
+
+                    <div style={{
+                      backgroundColor: 'white',
+                      padding: '1rem',
+                      borderRadius: '10px',
+                      border: '1px solid #a7f3d0'
+                    }}>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        color: '#059669',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        marginBottom: '0.5rem'
+                      }}>
+                        Account Type
+                      </div>
+                      <div style={{
+                        fontSize: isMobile ? '1rem' : '1.1rem',
+                        fontWeight: '700',
+                        color: '#064e3b',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        <span style={{ fontSize: '1.5rem' }}>
+                          {getAccountTypeIcon(recipientInfo.accountType)}
+                        </span>
+                        {recipientInfo.accountType?.replace('_', ' ')?.toUpperCase()} Account
+                      </div>
+                    </div>
+
+                    <div style={{
+                      backgroundColor: 'white',
+                      padding: '1rem',
+                      borderRadius: '10px',
+                      border: '1px solid #a7f3d0'
+                    }}>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        color: '#059669',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        marginBottom: '0.5rem'
+                      }}>
+                        Account Number
+                      </div>
+                      <div style={{
+                        fontSize: isMobile ? '1rem' : '1.1rem',
+                        fontWeight: '700',
+                        color: '#064e3b',
+                        fontFamily: 'monospace'
+                      }}>
+                        ••••••{recipientInfo.accountNumber?.slice(-4)}
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div style={styles.recipientCard}>
-                    <div style={styles.recipientTitle}>
-                      ✓ Recipient Verified Successfully
-                    </div>
-                    <div style={styles.recipientDetails}>
-                      All recipient information has been verified and confirmed
-                    </div>
-                    <div style={{ ...styles.recipientDetails, marginTop: '0.5rem', fontSize: '0.9rem' }}>
-                      Reference: {recipientInfo.accountNumber}
-                    </div>
+
+                  <div style={{
+                    marginTop: '1rem',
+                    padding: '0.75rem',
+                    backgroundColor: '#d1fae5',
+                    borderRadius: '8px',
+                    fontSize: isMobile ? '0.8rem' : '0.9rem',
+                    color: '#065f46',
+                    textAlign: 'center',
+                    fontWeight: '500'
+                  }}>
+                    🔒 This information has been verified and encrypted for your security
                   </div>
-                </>
+                </div>
               )}
 
               <div style={styles.formGroup}>
@@ -1186,8 +1289,6 @@ export default function InternalTransfer() {
               </button>
             </form>
           </div>
-
-          <RecentTransfers user={user} isMobile={isMobile} />
 
           <div style={styles.infoBox}>
             <h3 style={styles.infoTitle}>

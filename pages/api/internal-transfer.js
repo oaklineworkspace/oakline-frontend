@@ -74,6 +74,8 @@ export default async function handler(req, res) {
 
     const transferGroupId = crypto.randomUUID();
     const referenceNumber = `INT-${transferGroupId.substring(0, 8).toUpperCase()}`;
+    const debitReference = `${referenceNumber}-DR`;
+    const creditReference = `${referenceNumber}-CR`;
     const newFromBalance = parseFloat(fromAccount.balance) - transferAmount;
     const newToBalance = parseFloat(toAccount.balance) + transferAmount;
 
@@ -148,7 +150,7 @@ export default async function handler(req, res) {
         amount: transferAmount,
         description: `Internal transfer to ${recipientName} (${toAccount.account_number})`,
         status: 'completed',
-        reference: referenceNumber,
+        reference: debitReference,
         balance_before: parseFloat(fromAccount.balance),
         balance_after: newFromBalance
       },
@@ -159,7 +161,7 @@ export default async function handler(req, res) {
         amount: transferAmount,
         description: `Internal transfer from ${senderName} (${fromAccount.account_number})`,
         status: 'completed',
-        reference: referenceNumber,
+        reference: creditReference,
         balance_before: parseFloat(toAccount.balance),
         balance_after: newToBalance
       }

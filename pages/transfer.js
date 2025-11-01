@@ -181,6 +181,8 @@ export default function Transfer() {
 
       const transferGroupId = crypto.randomUUID();
       const referenceNumber = `TXN-${transferGroupId.substring(0, 8).toUpperCase()}`;
+      const debitReference = `${referenceNumber}-DR`;
+      const creditReference = `${referenceNumber}-CR`;
 
       // Deduct from source account
       const newFromBalance = parseFloat(selectedFromAccount.balance) - transferAmount;
@@ -218,11 +220,9 @@ export default function Transfer() {
           amount: transferAmount,
           description: `Transfer to ${selectedToAccount.account_type?.toUpperCase()} account ending in ${selectedToAccount.account_number?.slice(-4)}`,
           status: 'completed',
-          reference: referenceNumber,
+          reference: debitReference,
           balance_before: parseFloat(selectedFromAccount.balance),
-          balance_after: newFromBalance,
-          transfer_group_id: transferGroupId,
-          transfer_type: 'internal'
+          balance_after: newFromBalance
         },
         {
           user_id: user.id,
@@ -231,11 +231,9 @@ export default function Transfer() {
           amount: transferAmount,
           description: `Transfer from ${selectedFromAccount.account_type?.toUpperCase()} account ending in ${selectedFromAccount.account_number?.slice(-4)}`,
           status: 'completed',
-          reference: referenceNumber,
+          reference: creditReference,
           balance_before: parseFloat(selectedToAccount.balance),
-          balance_after: newToBalance,
-          transfer_group_id: transferGroupId,
-          transfer_type: 'internal'
+          balance_after: newToBalance
         }
       ]);
 
