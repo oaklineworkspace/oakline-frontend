@@ -282,7 +282,14 @@ export default function InternalTransfer() {
 
       const { data: recipientAccount, error } = await supabase
         .from('accounts')
-        .select('*, profiles!inner(first_name, last_name, email)')
+        .select(`
+          *,
+          profiles:user_id (
+            first_name,
+            last_name,
+            email
+          )
+        `)
         .eq('account_number', recipientAccountNumber.trim())
         .eq('status', 'active')
         .single();

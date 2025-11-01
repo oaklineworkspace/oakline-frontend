@@ -55,7 +55,14 @@ export default async function handler(req, res) {
     // Try to find the recipient account (exact match after trimming)
     const { data: toAccount, error: toAccountError } = await supabaseAdmin
       .from('accounts')
-      .select('*, profiles!inner(first_name, last_name, email)')
+      .select(`
+        *,
+        profiles:user_id (
+          first_name,
+          last_name,
+          email
+        )
+      `)
       .eq('account_number', to_account_number.trim())
       .eq('status', 'active')
       .single();
