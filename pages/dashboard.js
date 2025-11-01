@@ -22,6 +22,7 @@ function DashboardContent() {
   const [showBalance, setShowBalance] = useState(true);
   const [cryptoDeposits, setCryptoDeposits] = useState([]);
   const router = useRouter();
+  const [addFundsDropdownVisible, setAddFundsDropdownVisible] = useState(false); // State to control add funds dropdown visibility
 
   useEffect(() => {
     if (user) {
@@ -274,6 +275,7 @@ function DashboardContent() {
 
   const closeAllDropdowns = () => {
     setDropdownOpen({});
+    setAddFundsDropdownVisible(false); // Close add funds dropdown too
   };
 
   const handleSignOut = async () => {
@@ -503,7 +505,11 @@ function DashboardContent() {
           </div>
 
           <div style={styles.summaryCards}>
-            <div style={styles.primaryBalanceCard}>
+            <div style={{
+              ...styles.primaryBalanceCard,
+              backgroundColor: '#1a365d', // Matches header background
+              borderColor: '#059669' // Matches header border
+            }}>
               <div style={styles.balanceCardHeader}>
                 <div style={styles.balanceHeaderInfo}>
                   <h3 style={styles.balanceCardLabel}>Total Available Balance</h3>
@@ -536,6 +542,36 @@ function DashboardContent() {
               <div style={styles.balanceCardFooter}>
                 <div style={styles.balanceFooterItem}>
                   <span style={styles.footerText}>FDIC Insured</span>
+                </div>
+                {/* Add Funds Button */}
+                <div style={{ position: 'relative' }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAddFundsDropdownVisible(!addFundsDropdownVisible);
+                    }}
+                    style={styles.addFundsButton}
+                  >
+                    Add Funds
+                    <span style={{ fontSize: '0.7rem' }}>▼</span>
+                  </button>
+                  {addFundsDropdownVisible && (
+                    <div style={styles.addFundsDropdown}>
+                      <Link href="/deposit-crypto" style={styles.addFundsDropdownItem}>
+                        <div>
+                          <div style={styles.dropdownItemTitle}>Deposit Crypto</div>
+                          <div style={styles.dropdownItemDesc}>Add funds using various cryptocurrencies</div>
+                        </div>
+                      </Link>
+                      <Link href="/pages/deposit-crypto" style={styles.addFundsDropdownItem}> {/* Assuming /pages/deposit-crypto is the correct path */}
+                        <div>
+                          <div style={styles.dropdownItemTitle}>Add via Debit Card</div>
+                          <div style={styles.dropdownItemDesc}>Securely add funds using your debit card</div>
+                        </div>
+                      </Link>
+                      {/* Add more options as needed */}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -585,14 +621,14 @@ function DashboardContent() {
                 const txType = (tx.type || tx.transaction_type || '').toLowerCase();
                 const description = (tx.description || '').toLowerCase();
                 const amount = parseFloat(tx.amount) || 0;
-                
+
                 // Determine if it's a credit (money in) or debit (money out) based on transaction type
                 let isCredit = false;
-                
+
                 // Check description for "transfer to" or "transfer from"
                 const isTransferTo = description.includes('transfer to') || description.includes('sent to');
                 const isTransferFrom = description.includes('transfer from') || description.includes('received from');
-                
+
                 // Money coming IN (Credit - Green/Positive)
                 if (txType === 'deposit' || 
                     txType === 'credit' || 
@@ -605,7 +641,7 @@ function DashboardContent() {
                     isTransferFrom) {
                   isCredit = true;
                 }
-                
+
                 // Money going OUT (Debit - Red/Negative)
                 else if (txType === 'debit' || 
                          txType === 'withdrawal' || 
@@ -617,7 +653,7 @@ function DashboardContent() {
                          isTransferTo) {
                   isCredit = false;
                 }
-                
+
                 // Default fallback
                 else {
                   isCredit = amount >= 0;
@@ -655,7 +691,7 @@ function DashboardContent() {
 
                 const status = tx.status || 'completed';
                 const statusColors = getStatusColor(status);
-                
+
                 return (
                   <div key={tx.id} style={styles.transactionItem}>
                     <div style={styles.transactionLeft}>
@@ -1338,7 +1374,7 @@ const styles = {
     padding: '2rem',
     color: 'white',
     boxShadow: '0 8px 24px rgba(30, 64, 175, 0.3)',
-    border: 'none',
+    border: '1px solid #3b82f6', // Added border to match header
     position: 'relative',
     overflow: 'hidden',
     minWidth: '320px',
@@ -1436,7 +1472,8 @@ const styles = {
     marginTop: '1.5rem',
     paddingTop: '1.5rem',
     borderTop: '1px solid rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center'
+    justifyContent: 'space-between', // Changed to space-between to push add funds button to the right
+    alignItems: 'center'
   },
   balanceFooterItem: {
     display: 'flex',
@@ -1843,5 +1880,56 @@ const styles = {
     justifyContent: 'center',
     width: '100%',
     maxWidth: '200px'
+  },
+
+  // Added styles for the "Add Funds" button and dropdown
+  addFundsButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.75rem 1.25rem',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    color: 'white',
+    border: '1px solid rgba(255, 255, 255, 0.3)',
+    borderRadius: '8px',
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    backdropFilter: 'blur(10px)'
+  },
+  addFundsDropdown: {
+    position: 'absolute',
+    bottom: '100%', // Position above the button
+    right: '0',
+    marginBottom: '0.5rem', // Space between button and dropdown
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+    border: '1px solid #e5e7eb',
+    minWidth: '280px',
+    overflow: 'hidden',
+    zIndex: 1000
+  },
+  addFundsDropdownItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    padding: '1rem 1.25rem',
+    textDecoration: 'none',
+    color: '#1e293b',
+    transition: 'all 0.2s',
+    cursor: 'pointer',
+    borderBottom: '1px solid #f1f5f9'
+  },
+  dropdownItemTitle: {
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: '0.25rem'
+  },
+  dropdownItemDesc: {
+    fontSize: '0.8rem',
+    color: '#64748b'
   }
 };
