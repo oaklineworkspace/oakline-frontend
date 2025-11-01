@@ -315,13 +315,6 @@ function DashboardContent() {
 
       /* Professional Dashboard Hover Effects */
       @media (hover: hover) {
-        a[href="/deposit-crypto"]:hover,
-        a[href="/pages/deposit-crypto"]:hover {
-          background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%) !important;
-          transform: translateX(4px) !important;
-          border-left: 4px solid #059669 !important;
-        }
-
         div[style*="accountItem"]:hover,
         div[style*="background: rgb(248, 250, 252)"]:hover {
           transform: translateY(-2px) !important;
@@ -561,31 +554,18 @@ function DashboardContent() {
                   {addFundsDropdownVisible && (
                     <div style={styles.addFundsDropdown}>
                       <Link href="/deposit-crypto" style={styles.addFundsDropdownItem}>
-                        <div style={{
-                          fontSize: '1.75rem',
-                          minWidth: '40px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>₿</div>
                         <div>
                           <div style={styles.dropdownItemTitle}>Deposit Crypto</div>
                           <div style={styles.dropdownItemDesc}>Add funds using various cryptocurrencies</div>
                         </div>
                       </Link>
-                      <Link href="/deposit-real" style={styles.addFundsDropdownItem}>
-                        <div style={{
-                          fontSize: '1.75rem',
-                          minWidth: '40px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>💳</div>
+                      <Link href="/pages/deposit-crypto" style={styles.addFundsDropdownItem}> {/* Assuming /pages/deposit-crypto is the correct path */}
                         <div>
-                          <div style={styles.dropdownItemTitle}>Mobile Deposit</div>
-                          <div style={styles.dropdownItemDesc}>Deposit checks using your mobile device</div>
+                          <div style={styles.dropdownItemTitle}>Add via Debit Card</div>
+                          <div style={styles.dropdownItemDesc}>Securely add funds using your debit card</div>
                         </div>
                       </Link>
+                      {/* Add more options as needed */}
                     </div>
                   )}
                 </div>
@@ -625,14 +605,10 @@ function DashboardContent() {
         </section>
 
         {/* Recent Transactions - Moved after Account Details */}
-        <section style={{
-          ...styles.transactionsSection,
-          background: '#1a365d',
-          border: '3px solid #059669'
-        }}>
+        <section style={styles.transactionsSection}>
           <div style={styles.sectionHeaderWithAction}>
-            <h3 style={{...styles.sectionTitle, color: 'white'}}>Recent Transactions</h3>
-            <Link href="/transactions" style={{...styles.viewAllLink, color: '#059669'}}>View All →</Link>
+            <h3 style={styles.sectionTitle}>Recent Transactions</h3>
+            <Link href="/transactions" style={styles.viewAllLink}>View All →</Link>
           </div>
 
           <div style={styles.transactionsList}>
@@ -713,20 +689,16 @@ function DashboardContent() {
                 const statusColors = getStatusColor(status);
 
                 return (
-                  <div key={tx.id} style={{
-                    ...styles.transactionItem,
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)'
-                  }}>
+                  <div key={tx.id} style={styles.transactionItem}>
                     <div style={styles.transactionLeft}>
                       <span style={styles.transactionIcon}>
                         {getTransactionIcon(tx.transaction_type)}
                       </span>
                       <div style={styles.transactionInfo}>
-                        <div style={{...styles.transactionDescription, color: 'white'}}>
+                        <div style={styles.transactionDescription}>
                           {tx.description || tx.transaction_type?.replace(/_/g, ' ').toUpperCase()}
                         </div>
-                        <div style={{...styles.transactionDate, color: 'rgba(255, 255, 255, 0.7)'}}>
+                        <div style={styles.transactionDate}>
                           {formatDate(tx.created_at)}
                         </div>
                         {tx.transaction_type === 'crypto_deposit' && tx.fee && (
@@ -770,10 +742,10 @@ function DashboardContent() {
                 );
               })
             ) : (
-              <div style={{...styles.emptyState, color: 'rgba(255, 255, 255, 0.9)'}}>
+              <div style={styles.emptyState}>
                 <span style={styles.emptyIcon}>📭</span>
-                <h4 style={{...styles.emptyTitle, color: 'white'}}>No recent transactions</h4>
-                <p style={{...styles.emptyDesc, color: 'rgba(255, 255, 255, 0.7)'}}>Your transaction history will appear here.</p>
+                <h4 style={styles.emptyTitle}>No recent transactions</h4>
+                <p style={styles.emptyDesc}>Your transaction history will appear here.</p>
               </div>
             )}
           </div>
@@ -1924,41 +1896,36 @@ const styles = {
   },
   addFundsDropdown: {
     position: 'absolute',
-    bottom: '100%',
+    bottom: '100%', // Position above the button
     right: '0',
-    marginBottom: '0.75rem',
-    backgroundColor: '#ffffff',
-    borderRadius: '16px',
-    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(5, 150, 105, 0.1)',
-    border: '2px solid #059669',
-    minWidth: '320px',
+    marginBottom: '0.5rem', // Space between button and dropdown
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+    border: '1px solid #e5e7eb',
+    minWidth: '280px',
     overflow: 'hidden',
-    zIndex: 1000,
-    backdropFilter: 'blur(10px)'
+    zIndex: 1000
   },
   addFundsDropdownItem: {
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: '1rem',
-    padding: '1.25rem 1.5rem',
+    padding: '1rem 1.25rem',
     textDecoration: 'none',
     color: '#1e293b',
-    transition: 'all 0.3s ease',
+    transition: 'all 0.2s',
     cursor: 'pointer',
-    borderBottom: '1px solid #e2e8f0',
-    backgroundColor: 'white',
-    position: 'relative'
+    borderBottom: '1px solid #f1f5f9'
   },
   dropdownItemTitle: {
-    fontSize: '1rem',
-    fontWeight: '700',
-    color: '#1a365d',
-    marginBottom: '0.35rem',
-    letterSpacing: '-0.01em'
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: '0.25rem'
   },
   dropdownItemDesc: {
-    fontSize: '0.85rem',
-    color: '#64748b',
-    lineHeight: '1.4'
+    fontSize: '0.8rem',
+    color: '#64748b'
   }
 };
