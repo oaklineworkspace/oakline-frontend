@@ -111,10 +111,37 @@ function DashboardContent() {
           .limit(50);
 
         if (!txError && txData) {
-          // Show all transactions for the user's accounts
-          // Each account will show its own side of the transfer
-          transactionsData = txData.slice(0, 10);
+          transactionsData = txData || [];
         }
+      }
+
+      // Fetch crypto deposits
+      const { data: cryptoTxData } = await supabase
+        .from('crypto_deposits')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      // Merge and format crypto deposits as transactions
+      if (cryptoTxData && cryptoTxData.length > 0) {
+        const formattedCryptoDeposits = cryptoTxData.map(crypto => ({
+          id: crypto.id,
+          type: 'crypto_deposit',
+          transaction_type: 'crypto_deposit',
+          description: `${crypto.crypto_type} Deposit via ${crypto.network_type}`,
+          amount: crypto.amount,
+          status: crypto.status,
+          created_at: crypto.created_at,
+          crypto_type: crypto.crypto_type,
+          network_type: crypto.network_type,
+          wallet_address: crypto.wallet_address
+        }));
+
+        // Merge and sort all transactions
+        transactionsData = [...transactionsData, ...formattedCryptoDeposits]
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+          .slice(0, 10);
       }
 
       setTransactions(transactionsData);
@@ -561,6 +588,7 @@ function DashboardContent() {
                     txType === 'zelle_receive' ||
                     txType === 'salary' ||
                     txType === 'payment_received' ||
+                    txType === 'crypto_deposit' ||
                     isTransferFrom) {
                   isCredit = true;
                 }
@@ -593,6 +621,7 @@ function DashboardContent() {
                     case 'fee': return '💳';
                     case 'zelle_send': return 'Z';
                     case 'zelle_receive': return 'Z';
+                    case 'crypto_deposit': return '₿';
                     default: return '💼';
                   }
                 };

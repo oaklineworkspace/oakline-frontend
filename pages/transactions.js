@@ -42,30 +42,58 @@ export default function TransactionsHistory() {
 
       if (accountsError) throw accountsError;
 
-      if (!accounts || accounts.length === 0) {
-        setTransactions([]);
-        setLoading(false);
-        return;
+      let transactionsData = [];
+
+      if (accounts && accounts.length > 0) {
+        const accountIds = accounts.map(acc => acc.id);
+
+        const { data: txs, error: txError } = await supabase
+          .from('transactions')
+          .select(`
+            *,
+            accounts:account_id (
+              account_number,
+              account_type
+            )
+          `)
+          .in('account_id', accountIds)
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (txError) throw txError;
+
+        transactionsData = txs || [];
       }
 
-      const accountIds = accounts.map(acc => acc.id);
-
-      const { data: txs, error: txError } = await supabase
-        .from('transactions')
-        .select(`
-          *,
-          accounts:account_id (
-            account_number,
-            account_type
-          )
-        `)
-        .in('account_id', accountIds)
+      // Fetch crypto deposits
+      const { data: cryptoTxData } = await supabase
+        .from('crypto_deposits')
+        .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(50);
 
-      if (txError) throw txError;
+      // Merge and format crypto deposits as transactions
+      if (cryptoTxData && cryptoTxData.length > 0) {
+        const formattedCryptoDeposits = cryptoTxData.map(crypto => ({
+          id: crypto.id,
+          type: 'crypto_deposit',
+          transaction_type: 'crypto_deposit',
+          description: `${crypto.crypto_type} Deposit via ${crypto.network_type}`,
+          amount: crypto.amount,
+          status: crypto.status,
+          created_at: crypto.created_at,
+          crypto_type: crypto.crypto_type,
+          network_type: crypto.network_type,
+          wallet_address: crypto.wallet_address
+        }));
 
-      setTransactions(txs || []);
+        // Merge and sort all transactions
+        transactionsData = [...transactionsData, ...formattedCryptoDeposits]
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      }
+
+      setTransactions(transactionsData);
     } catch (error) {
       console.error('Error fetching transactions:', error);
       setError('Failed to load transactions');
@@ -106,6 +134,7 @@ export default function TransactionsHistory() {
       case 'interest': return '💎';
       case 'zelle_send': return 'Z';
       case 'zelle_receive': return 'Z';
+      case 'crypto_deposit': return '₿';
       default: return '💼';
     }
   };
@@ -124,6 +153,7 @@ export default function TransactionsHistory() {
         txType === 'reward' || 
         txType === 'cashback' || 
         txType === 'zelle_receive' ||
+        txType === 'crypto_deposit' ||
         description.includes('received from') ||
         description.includes('transfer from')) {
       return true;
