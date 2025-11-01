@@ -853,7 +853,7 @@ function DashboardContent() {
           <section style={styles.transactionsSection}>
             <div style={styles.sectionHeaderWithAction}>
               <h3 style={styles.sectionTitle}>Crypto Deposits</h3>
-              <Link href="/deposit-crypto" style={styles.viewAllLink}>Make Deposit →</Link>
+              <Link href="/crypto-deposits" style={styles.viewAllLink}>View All Deposits →</Link>
             </div>
 
             <div style={styles.transactionsList}>
