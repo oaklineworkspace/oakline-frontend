@@ -280,32 +280,53 @@ export default function InternalTransfer() {
         return;
       }
 
-      const { data: recipientAccount, error } = await supabase
+      // First, get the account
+      const { data: recipientAccount, error: accountError } = await supabase
         .from('accounts')
-        .select(`
-          *,
-          profiles:user_id (
-            first_name,
-            last_name,
-            email
-          )
-        `)
+        .select('*')
         .eq('account_number', recipientAccountNumber.trim())
         .eq('status', 'active')
         .single();
 
-      if (error || !recipientAccount) {
+      if (accountError || !recipientAccount) {
         setMessage('Account not found or inactive. Please verify the account number.');
         setMessageType('error');
         setVerifying(false);
         return;
       }
 
+      // Try to get profile from profiles table
+      let ownerName = 'Oakline User';
+      if (recipientAccount.user_id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', recipientAccount.user_id)
+          .single();
+
+        if (profile && profile.first_name && profile.last_name) {
+          ownerName = `${profile.first_name} ${profile.last_name}`;
+        }
+      }
+
+      // If no profile found, try applications table
+      if (ownerName === 'Oakline User' && recipientAccount.application_id) {
+        const { data: application } = await supabase
+          .from('applications')
+          .select('first_name, last_name')
+          .eq('id', recipientAccount.application_id)
+          .single();
+
+        if (application && application.first_name && application.last_name) {
+          ownerName = `${application.first_name} ${application.last_name}`;
+        }
+      }
+
       setRecipientInfo({
         accountId: recipientAccount.id,
         accountNumber: recipientAccount.account_number,
         accountType: recipientAccount.account_type,
-        ownerName: `${recipientAccount.profiles.first_name} ${recipientAccount.profiles.last_name}`,
+        ownerName: ownerName,
         userId: recipientAccount.user_id
       });
 

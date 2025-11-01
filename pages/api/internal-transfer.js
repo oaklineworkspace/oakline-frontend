@@ -55,14 +55,7 @@ export default async function handler(req, res) {
     // Try to find the recipient account (exact match after trimming)
     const { data: toAccount, error: toAccountError } = await supabaseAdmin
       .from('accounts')
-      .select(`
-        *,
-        profiles:user_id (
-          first_name,
-          last_name,
-          email
-        )
-      `)
+      .select('*')
       .eq('account_number', to_account_number.trim())
       .eq('status', 'active')
       .single();
@@ -108,16 +101,33 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to credit recipient account' });
     }
 
-    // Get recipient profile info
-    const { data: recipientProfile } = await supabaseAdmin
-      .from('profiles')
-      .select('first_name, last_name')
-      .eq('id', toAccount.user_id)
-      .single();
+    // Get recipient profile info - try profiles table first
+    let recipientName = 'Oakline User';
+    
+    if (toAccount.user_id) {
+      const { data: recipientProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', toAccount.user_id)
+        .single();
 
-    const recipientName = recipientProfile 
-      ? `${recipientProfile.first_name} ${recipientProfile.last_name}`.trim()
-      : 'Oakline User';
+      if (recipientProfile && recipientProfile.first_name && recipientProfile.last_name) {
+        recipientName = `${recipientProfile.first_name} ${recipientProfile.last_name}`.trim();
+      }
+    }
+    
+    // If no profile found, try applications table
+    if (recipientName === 'Oakline User' && toAccount.application_id) {
+      const { data: application } = await supabaseAdmin
+        .from('applications')
+        .select('first_name, last_name')
+        .eq('id', toAccount.application_id)
+        .single();
+
+      if (application && application.first_name && application.last_name) {
+        recipientName = `${application.first_name} ${application.last_name}`.trim();
+      }
+    }
 
     // Get sender profile info
     const { data: senderProfile } = await supabaseAdmin
