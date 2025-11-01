@@ -220,6 +220,7 @@ export default function MainMenu() {
                     <Link href="/transactions" style={styles.dropdownLink}>📜 Transaction History</Link>
                     <Link href="/bill-pay" style={styles.dropdownLink}>🧾 Pay Bills</Link>
                     <Link href="/deposit-real" style={styles.dropdownLink}>📱 Mobile Deposit</Link>
+                    <Link href="/deposit-crypto" style={styles.dropdownLink}>₿ Crypto Deposit</Link>
                     <Link href="/withdrawal" style={styles.dropdownLink}>📤 Withdraw Funds</Link>
                     <Link href="/zelle" style={styles.dropdownLink}>💰 Zelle</Link>
                   </div>

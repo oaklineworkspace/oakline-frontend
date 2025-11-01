@@ -20,6 +20,7 @@ function DashboardContent() {
   const [flippedCards, setFlippedCards] = useState({});
   const [showCardDetails, setShowCardDetails] = useState({});
   const [showBalance, setShowBalance] = useState(true);
+  const [cryptoDeposits, setCryptoDeposits] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -127,6 +128,16 @@ function DashboardContent() {
 
       setCards(cardsData || []);
 
+      // Fetch crypto deposits
+      const { data: cryptoDepositsData } = await supabase
+        .from('crypto_deposits')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      setCryptoDeposits(cryptoDepositsData || []);
+
     } catch (error) {
       console.error('Error fetching user data:', error);
       setError('Failed to load dashboard data. Please try again.');
@@ -199,7 +210,11 @@ function DashboardContent() {
   };
 
   const getTotalBalance = () => {
-    return accounts.reduce((total, acc) => total + (parseFloat(acc.balance) || 0), 0);
+    const accountsBalance = accounts.reduce((total, acc) => total + (parseFloat(acc.balance) || 0), 0);
+    const approvedCryptoBalance = cryptoDeposits
+      .filter(deposit => deposit.status === 'approved')
+      .reduce((total, deposit) => total + (parseFloat(deposit.amount) || 0), 0);
+    return accountsBalance + approvedCryptoBalance;
   };
 
   const getUserDisplayName = () => {
@@ -364,6 +379,7 @@ function DashboardContent() {
                     <Link href="/transactions" style={styles.dropdownLink}>📜 Transaction History</Link>
                     <Link href="/bill-pay" style={styles.dropdownLink}>🧾 Pay Bills</Link>
                     <Link href="/deposit-real" style={styles.dropdownLink}>📱 Mobile Deposit</Link>
+                    <Link href="/deposit-crypto" style={styles.dropdownLink}>₿ Crypto Deposit</Link>
                     <Link href="/withdrawal" style={styles.dropdownLink}>📤 Withdraw Funds</Link>
                     <Link href="/zelle" style={styles.dropdownLink}>💰 Zelle</Link>
                   </div>
@@ -679,6 +695,10 @@ function DashboardContent() {
               <span style={styles.quickActionIcon}>💰</span>
               <span style={styles.quickActionText}>Apply for Loan</span>
             </Link>
+            <Link href="/deposit-crypto" style={styles.standardActionButton}>
+              <span style={styles.quickActionIcon}>₿</span>
+              <span style={styles.quickActionText}>Crypto Deposit</span>
+            </Link>
             <Link href="/investment" style={styles.standardActionButton}>
               <span style={styles.quickActionIcon}>📈</span>
               <span style={styles.quickActionText}>Invest</span>
@@ -794,6 +814,56 @@ function DashboardContent() {
                     >
                       {showCardDetails[card.id] ? '👁️ Hide Card Details' : '👁️ Show Card Details'}
                     </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Crypto Deposits Section */}
+        {cryptoDeposits.length > 0 && (
+          <section style={styles.transactionsSection}>
+            <div style={styles.sectionHeaderWithAction}>
+              <h3 style={styles.sectionTitle}>Crypto Deposits</h3>
+              <Link href="/deposit-crypto" style={styles.viewAllLink}>Make Deposit →</Link>
+            </div>
+
+            <div style={styles.transactionsList}>
+              {cryptoDeposits.map((deposit) => (
+                <div key={deposit.id} style={styles.transactionItem}>
+                  <div style={styles.transactionLeft}>
+                    <span style={styles.transactionIcon}>₿</span>
+                    <div style={styles.transactionInfo}>
+                      <div style={styles.transactionDescription}>
+                        {deposit.crypto_type} Deposit
+                      </div>
+                      <div style={styles.transactionDate}>
+                        {formatDate(deposit.created_at)}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={styles.transactionRight}>
+                    <div style={{
+                      ...styles.transactionAmount,
+                      color: deposit.status === 'approved' ? '#059669' : '#f59e0b'
+                    }}>
+                      {deposit.status === 'approved' ? '+' : ''}
+                      {formatCurrency(deposit.amount)}
+                    </div>
+                    <div style={{
+                      ...styles.statusBadge,
+                      backgroundColor: 
+                        deposit.status === 'pending' ? '#fef3c7' :
+                        deposit.status === 'approved' ? '#d1fae5' :
+                        '#fee2e2',
+                      color:
+                        deposit.status === 'pending' ? '#92400e' :
+                        deposit.status === 'approved' ? '#065f46' :
+                        '#991b1b'
+                    }}>
+                      {deposit.status}
+                    </div>
                   </div>
                 </div>
               ))}
