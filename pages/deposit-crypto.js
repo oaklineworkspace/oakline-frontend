@@ -138,7 +138,13 @@ export default function CryptoDeposit() {
     setLoadingWallet(true);
     setWalletAddress('');
     try {
-      // First try user_crypto_wallets table
+      console.log('Fetching wallet for:', { 
+        userId: user.id, 
+        cryptoType: depositForm.crypto_type, 
+        networkType: depositForm.network_type 
+      });
+
+      // Fetch from user_crypto_wallets table
       const { data: userWallet, error: userError } = await supabase
         .from('user_crypto_wallets')
         .select('wallet_address')
@@ -147,27 +153,17 @@ export default function CryptoDeposit() {
         .eq('network_type', depositForm.network_type)
         .maybeSingle();
 
-      if (userWallet && userWallet.wallet_address) {
-        setWalletAddress(userWallet.wallet_address);
-      } else {
-        // Try admin_assigned_wallets table if no user wallet found
-        const { data: adminWallet, error: adminError } = await supabase
-          .from('admin_assigned_wallets')
-          .select('wallet_address')
-          .eq('user_id', user.id)
-          .eq('crypto_type', depositForm.crypto_type)
-          .eq('network_type', depositForm.network_type)
-          .maybeSingle();
+      console.log('User wallet query result:', { userWallet, userError });
 
-        if (adminWallet && adminWallet.wallet_address) {
-          setWalletAddress(adminWallet.wallet_address);
-        } else if (adminError && adminError.code !== 'PGRST116') {
-          console.error('Error fetching admin wallet:', adminError);
-        }
+      if (userError) {
+        console.error('Error fetching user wallet:', userError);
       }
 
-      if (userError && userError.code !== 'PGRST116') {
-        console.error('Error fetching user wallet:', userError);
+      if (userWallet && userWallet.wallet_address) {
+        setWalletAddress(userWallet.wallet_address);
+        console.log('Wallet address found:', userWallet.wallet_address);
+      } else {
+        console.log('No wallet assigned for this crypto/network combination');
       }
     } catch (error) {
       console.error('Error fetching wallet:', error);
