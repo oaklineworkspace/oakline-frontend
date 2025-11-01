@@ -372,7 +372,15 @@ export default function InternalTransfer() {
         return;
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session?.access_token) {
+        setMessage('Authentication error. Please sign in again.');
+        setMessageType('error');
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch('/api/internal-transfer', {
         method: 'POST',
         headers: {
@@ -1087,18 +1095,30 @@ export default function InternalTransfer() {
               </div>
 
               {recipientInfo && (
-                <div style={styles.recipientCard}>
-                  <div style={styles.recipientTitle}>
-                    ✓ Recipient Verified Successfully
+                <>
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Recipient Name *</label>
+                    <input
+                      type="text"
+                      style={{ ...styles.input, backgroundColor: '#f0f9ff', cursor: 'not-allowed' }}
+                      value={recipientInfo.ownerName}
+                      readOnly
+                      disabled
+                    />
                   </div>
-                  <div style={styles.recipientName}>{recipientInfo.ownerName}</div>
-                  <div style={styles.recipientDetails}>
-                    {getAccountTypeIcon(recipientInfo.accountType)} {recipientInfo.accountType?.replace('_', ' ')?.toUpperCase()} Account
+                  
+                  <div style={styles.recipientCard}>
+                    <div style={styles.recipientTitle}>
+                      ✓ Recipient Verified Successfully
+                    </div>
+                    <div style={styles.recipientDetails}>
+                      {getAccountTypeIcon(recipientInfo.accountType)} {recipientInfo.accountType?.replace('_', ' ')?.toUpperCase()} Account
+                    </div>
+                    <div style={{ ...styles.recipientDetails, marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                      Account Number: {recipientInfo.accountNumber}
+                    </div>
                   </div>
-                  <div style={{ ...styles.recipientDetails, marginTop: '0.5rem', fontSize: '0.9rem' }}>
-                    Account Number: {recipientInfo.accountNumber}
-                  </div>
-                </div>
+                </>
               )}
 
               <div style={styles.formGroup}>
