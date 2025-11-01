@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 
-const QRCode = dynamic(() => import('react-qr-code'), { ssr: false });
+const QRCode = dynamic(() => import('react-qr-code').then(mod => mod.default || mod), { ssr: false });
 
 const useMediaQuery = (query) => {
   const [matches, setMatches] = useState(false);
