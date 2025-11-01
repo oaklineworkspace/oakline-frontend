@@ -115,10 +115,16 @@ function DashboardContent() {
         }
       }
 
-      // Fetch crypto deposits
+      // Fetch crypto deposits with account details
       const { data: cryptoTxData } = await supabase
         .from('crypto_deposits')
-        .select('*')
+        .select(`
+          *,
+          accounts:account_id (
+            account_number,
+            account_type
+          )
+        `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -130,12 +136,20 @@ function DashboardContent() {
           type: 'crypto_deposit',
           transaction_type: 'crypto_deposit',
           description: `${crypto.crypto_type} Deposit via ${crypto.network_type}`,
-          amount: crypto.amount,
+          amount: crypto.net_amount || crypto.amount,
           status: crypto.status,
           created_at: crypto.created_at,
+          updated_at: crypto.updated_at,
+          completed_at: crypto.completed_at,
           crypto_type: crypto.crypto_type,
           network_type: crypto.network_type,
-          wallet_address: crypto.wallet_address
+          wallet_address: crypto.wallet_address,
+          transaction_hash: crypto.transaction_hash,
+          fee: crypto.fee,
+          gross_amount: crypto.amount,
+          confirmations: crypto.confirmations,
+          required_confirmations: crypto.required_confirmations,
+          accounts: crypto.accounts
         }));
 
         // Merge and sort all transactions
@@ -655,6 +669,25 @@ function DashboardContent() {
                         <div style={styles.transactionDate}>
                           {formatDate(tx.created_at)}
                         </div>
+                        {tx.transaction_type === 'crypto_deposit' && tx.fee && (
+                          <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+                            Fee: ${parseFloat(tx.fee).toFixed(2)} • Net: ${parseFloat(tx.amount).toFixed(2)}
+                          </div>
+                        )}
+                        {tx.transaction_type === 'crypto_deposit' && tx.transaction_hash && (
+                          <div style={{ 
+                            fontSize: '0.65rem', 
+                            color: '#1e40af', 
+                            marginTop: '0.2rem',
+                            fontFamily: 'monospace',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            maxWidth: '200px'
+                          }}>
+                            Hash: {tx.transaction_hash.substring(0, 16)}...
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div style={styles.transactionRight}>

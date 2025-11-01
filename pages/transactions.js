@@ -65,13 +65,19 @@ export default function TransactionsHistory() {
         transactionsData = txs || [];
       }
 
-      // Fetch crypto deposits
+      // Fetch crypto deposits with account details
       const { data: cryptoTxData } = await supabase
         .from('crypto_deposits')
-        .select('*')
+        .select(`
+          *,
+          accounts:account_id (
+            account_number,
+            account_type
+          )
+        `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
 
       // Merge and format crypto deposits as transactions
       if (cryptoTxData && cryptoTxData.length > 0) {
@@ -80,12 +86,21 @@ export default function TransactionsHistory() {
           type: 'crypto_deposit',
           transaction_type: 'crypto_deposit',
           description: `${crypto.crypto_type} Deposit via ${crypto.network_type}`,
-          amount: crypto.amount,
+          amount: crypto.net_amount || crypto.amount,
           status: crypto.status,
           created_at: crypto.created_at,
+          updated_at: crypto.updated_at,
+          completed_at: crypto.completed_at,
           crypto_type: crypto.crypto_type,
           network_type: crypto.network_type,
-          wallet_address: crypto.wallet_address
+          wallet_address: crypto.wallet_address,
+          transaction_hash: crypto.transaction_hash,
+          fee: crypto.fee,
+          gross_amount: crypto.amount,
+          confirmations: crypto.confirmations,
+          required_confirmations: crypto.required_confirmations,
+          accounts: crypto.accounts,
+          reference: crypto.transaction_hash || `CRYPTO-${crypto.id.substring(0, 8).toUpperCase()}`
         }));
 
         // Merge and sort all transactions
@@ -388,6 +403,20 @@ export default function TransactionsHistory() {
                         >
                           Ref: {tx.reference} 📋
                         </div>
+                      )}
+                      {tx.transaction_type === 'crypto_deposit' && (
+                        <>
+                          {tx.fee && (
+                            <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+                              Fee: ${parseFloat(tx.fee).toFixed(2)} | Gross: ${parseFloat(tx.gross_amount || tx.amount).toFixed(2)}
+                            </div>
+                          )}
+                          {tx.confirmations !== undefined && (
+                            <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+                              Confirmations: {tx.confirmations}/{tx.required_confirmations || 3}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>

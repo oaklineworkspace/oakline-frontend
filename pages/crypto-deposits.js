@@ -12,7 +12,7 @@ export default function CryptoDeposits() {
   const [loading, setLoading] = useState(true);
   const [selectedDeposit, setSelectedDeposit] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -38,7 +38,7 @@ export default function CryptoDeposits() {
   const checkUserAndLoadData = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session?.user) {
         router.push('/sign-in');
         return;
@@ -57,14 +57,24 @@ export default function CryptoDeposits() {
     try {
       const { data, error } = await supabase
         .from('crypto_deposits')
-        .select('*')
+        .select(`
+          *,
+          accounts:account_id (
+            account_number,
+            account_type
+          )
+        `)
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching deposits:', error);
+        return;
+      }
+
       setDeposits(data || []);
     } catch (error) {
-      console.error('Error fetching deposits:', error);
+      console.error('Error loading deposits:', error);
     }
   };
 
@@ -188,8 +198,8 @@ export default function CryptoDeposits() {
   const endIndex = startIndex + itemsPerPage;
   const currentDeposits = filteredDeposits.slice(startIndex, endIndex);
 
-  const uniqueCryptoTypes = [...new Set(deposits.map(d => d.crypto_type))];
-  const uniqueStatuses = [...new Set(deposits.map(d => d.status))];
+  const uniqueCryptoTypes = [...new Set(deposits.map(d => d.crypto_type))].filter(Boolean);
+  const uniqueStatuses = [...new Set(deposits.map(d => d.status))].filter(Boolean);
 
   if (loading) {
     return (
@@ -343,6 +353,7 @@ export default function CryptoDeposits() {
                     <tr style={styles.tableHeader}>
                       <th style={styles.th}>Crypto</th>
                       <th style={styles.th}>Network</th>
+                      <th style={styles.th}>Account</th>
                       <th style={styles.th}>Amount</th>
                       <th style={styles.th}>Fee</th>
                       <th style={styles.th}>Net Amount</th>
@@ -356,38 +367,49 @@ export default function CryptoDeposits() {
                     {currentDeposits.map((deposit) => (
                       <tr key={deposit.id} style={styles.tableRow}>
                         <td style={styles.td}>
-                          <div style={styles.cryptoCell}>
-                            <span style={styles.cryptoIcon}>{getCryptoIcon(deposit.crypto_type)}</span>
-                            <span style={styles.cryptoName}>{deposit.crypto_type}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '1.2rem' }}>{getCryptoIcon(deposit.crypto_type)}</span>
+                            <span style={{ fontWeight: '600' }}>{deposit.crypto_type}</span>
                           </div>
                         </td>
                         <td style={styles.td}>{deposit.network_type}</td>
                         <td style={styles.td}>
-                          <span style={styles.amountValue}>{formatCurrency(deposit.amount)}</span>
+                          {deposit.accounts?.account_number ?
+                            `****${deposit.accounts.account_number.slice(-4)}` :
+                            'N/A'}
                         </td>
-                        <td style={styles.td}>
-                          <span style={styles.feeValue}>{formatCurrency(deposit.fee)}</span>
-                        </td>
-                        <td style={styles.td}>
-                          <span style={styles.netAmount}>{formatCurrency(deposit.net_amount)}</span>
+                        <td style={styles.td}>{formatCurrency(deposit.amount)}</td>
+                        <td style={styles.td}>{formatCurrency(deposit.fee || 0)}</td>
+                        <td style={styles.td} style={{ fontWeight: '600' }}>
+                          {formatCurrency(deposit.net_amount || ((deposit.amount || 0) - (deposit.fee || 0)))}
                         </td>
                         <td style={styles.td}>{getStatusBadge(deposit.status)}</td>
                         <td style={styles.td}>
-                          <span style={styles.confirmations}>
-                            {deposit.confirmations}/{deposit.required_confirmations}
-                          </span>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem',
+                            color: (deposit.confirmations || 0) >= (deposit.required_confirmations || 3) ? '#059669' : '#f59e0b'
+                          }}>
+                            {deposit.confirmations || 0} / {deposit.required_confirmations || 3}
+                          </div>
                         </td>
                         <td style={styles.td}>
-                          <div style={styles.dateCell}>
+                          <div style={{ fontSize: '0.85rem' }}>
                             {formatDate(deposit.created_at)}
                           </div>
+                          {deposit.completed_at && (
+                            <div style={{ fontSize: '0.7rem', color: '#059669', marginTop: '0.25rem' }}>
+                              Completed: {formatDate(deposit.completed_at)}
+                            </div>
+                          )}
                         </td>
                         <td style={styles.td}>
                           <button
                             onClick={() => viewDetails(deposit)}
                             style={styles.viewButton}
                           >
-                            View
+                            View Details
                           </button>
                         </td>
                       </tr>
@@ -413,6 +435,14 @@ export default function CryptoDeposits() {
 
                     <div style={styles.mobileCardBody}>
                       <div style={styles.mobileRow}>
+                        <span style={styles.mobileLabel}>Account:</span>
+                        <span style={styles.mobileValue}>
+                          {deposit.accounts?.account_number ?
+                            `****${deposit.accounts.account_number.slice(-4)}` :
+                            'N/A'}
+                        </span>
+                      </div>
+                      <div style={styles.mobileRow}>
                         <span style={styles.mobileLabel}>Amount:</span>
                         <span style={styles.mobileValue}>{formatCurrency(deposit.amount)}</span>
                       </div>
@@ -422,18 +452,24 @@ export default function CryptoDeposits() {
                       </div>
                       <div style={styles.mobileRow}>
                         <span style={styles.mobileLabel}>Net Amount:</span>
-                        <span style={styles.mobileValueBold}>{formatCurrency(deposit.net_amount)}</span>
+                        <span style={styles.mobileValueBold}>{formatCurrency(deposit.net_amount || ((deposit.amount || 0) - (deposit.fee || 0)))}</span>
                       </div>
                       <div style={styles.mobileRow}>
                         <span style={styles.mobileLabel}>Confirmations:</span>
                         <span style={styles.mobileValue}>
-                          {deposit.confirmations}/{deposit.required_confirmations}
+                          {deposit.confirmations || 0} / {deposit.required_confirmations || 3}
                         </span>
                       </div>
                       <div style={styles.mobileRow}>
-                        <span style={styles.mobileLabel}>Date:</span>
+                        <span style={styles.mobileLabel}>Created:</span>
                         <span style={styles.mobileValue}>{formatDate(deposit.created_at)}</span>
                       </div>
+                      {deposit.completed_at && (
+                        <div style={styles.mobileRow}>
+                          <span style={styles.mobileLabel}>Completed:</span>
+                          <span style={styles.mobileValue}>{formatDate(deposit.completed_at)}</span>
+                        </div>
+                      )}
                     </div>
 
                     <button
@@ -482,22 +518,22 @@ export default function CryptoDeposits() {
 
         {/* Detail Modal */}
         {showDetailModal && selectedDeposit && (
-          <div style={styles.modal} onClick={() => setShowDetailModal(false)}>
-            <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div style={styles.modalOverlay} onClick={() => setShowDetailModal(false)}>
+            <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
               <div style={styles.modalHeader}>
                 <h2 style={styles.modalTitle}>Deposit Details</h2>
                 <button
                   onClick={() => setShowDetailModal(false)}
-                  style={styles.modalCloseButton}
+                  style={styles.closeButton}
                 >
                   ×
                 </button>
               </div>
 
-              <div style={styles.modalBody}>
+              <div style={styles.modalContent}>
                 <div style={styles.detailSection}>
                   <h3 style={styles.detailSectionTitle}>Transaction Information</h3>
-                  
+
                   <div style={styles.detailRow}>
                     <span style={styles.detailLabel}>Cryptocurrency:</span>
                     <span style={styles.detailValue}>
@@ -529,7 +565,7 @@ export default function CryptoDeposits() {
 
                 <div style={styles.detailSection}>
                   <h3 style={styles.detailSectionTitle}>Amount Details</h3>
-                  
+
                   <div style={styles.detailRow}>
                     <span style={styles.detailLabel}>Deposit Amount:</span>
                     <span style={styles.detailValue}>{formatCurrency(selectedDeposit.amount)}</span>
@@ -543,14 +579,14 @@ export default function CryptoDeposits() {
                   <div style={styles.detailRow}>
                     <span style={styles.detailLabel}>Net Amount:</span>
                     <span style={{...styles.detailValue, fontWeight: 'bold', color: '#10b981'}}>
-                      {formatCurrency(selectedDeposit.net_amount)}
+                      {formatCurrency(selectedDeposit.net_amount || ((selectedDeposit.amount || 0) - (selectedDeposit.fee || 0)))}
                     </span>
                   </div>
                 </div>
 
                 <div style={styles.detailSection}>
                   <h3 style={styles.detailSectionTitle}>Status & Confirmations</h3>
-                  
+
                   <div style={styles.detailRow}>
                     <span style={styles.detailLabel}>Status:</span>
                     {getStatusBadge(selectedDeposit.status)}
@@ -582,7 +618,7 @@ export default function CryptoDeposits() {
 
                 <div style={styles.detailSection}>
                   <h3 style={styles.detailSectionTitle}>Timestamps</h3>
-                  
+
                   <div style={styles.detailRow}>
                     <span style={styles.detailLabel}>Created:</span>
                     <span style={styles.detailValue}>{formatDate(selectedDeposit.created_at)}</span>
@@ -935,50 +971,51 @@ const styles = {
     fontSize: '1rem',
     fontWeight: '600'
   },
-  modal: {
+  modalOverlay: {
     position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
     padding: '1rem'
   },
-  modalContent: {
+  modal: {
     backgroundColor: 'white',
     borderRadius: '12px',
     maxWidth: '600px',
     width: '100%',
     maxHeight: '90vh',
-    overflow: 'auto',
-    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+    overflowY: 'auto',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
   },
   modalHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '1.5rem',
-    borderBottom: '1px solid #e2e8f0'
+    borderBottom: '1px solid #e5e7eb'
   },
   modalTitle: {
-    margin: 0,
     fontSize: '1.5rem',
+    fontWeight: '700',
     color: '#1e293b',
-    fontWeight: '700'
+    margin: 0
   },
-  modalCloseButton: {
+  closeButton: {
     background: 'none',
     border: 'none',
-    fontSize: '2rem',
-    color: '#94a3b8',
+    fontSize: '1.5rem',
     cursor: 'pointer',
-    lineHeight: '1'
+    color: '#64748b',
+    padding: '0.25rem',
+    lineHeight: 1
   },
-  modalBody: {
+  modalContent: {
     padding: '1.5rem'
   },
   detailSection: {
@@ -1049,8 +1086,10 @@ const styles = {
 // Add media query for responsive table
 if (typeof window !== 'undefined') {
   const mediaQuery = window.matchMedia('(min-width: 1024px)');
-  if (mediaQuery.matches) {
-    styles.tableContainer.display = 'block';
-    styles.mobileCards.display = 'none';
-  }
+  const updateDisplay = (matches) => {
+    if (styles.tableContainer) styles.tableContainer.display = matches ? 'block' : 'none';
+    if (styles.mobileCards) styles.mobileCards.display = matches ? 'none' : 'flex';
+  };
+  updateDisplay(mediaQuery.matches);
+  mediaQuery.addEventListener('change', (e) => updateDisplay(e.matches));
 }
