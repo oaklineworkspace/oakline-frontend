@@ -1,0 +1,77 @@
+I want you to update my crypto deposit page so that each crypto only shows the supported and most reliable network types.
+Users should see only these specific network options when selecting a crypto type.
+
+⸻
+
+💰 Updated Network Types per Crypto
+
+🟡 USDT (Tether)
+
+Show only these 4 networks:
+	1.	BSC (BEP20)
+	•	Deposit Completion: 60 confirmations
+	•	Min Deposit Amount: 0.005 USDT
+	2.	TRON (TRC20)
+	•	Deposit Completion: 20 confirmations
+	•	Min Deposit Amount: 0.005 USDT
+	3.	Ethereum (ERC20)
+	•	Deposit Completion: 6 confirmations
+	•	Min Deposit Amount: 0.005 USDT
+	4.	Solana (SOL)
+	•	Deposit Completion: 200 confirmations
+	•	Min Deposit Amount: 0.005 USDT
+	5.	TON (The Open Network)
+	•	Deposit Completion: 1 confirmation
+	•	Min Deposit Amount: 0.005 USDT
+
+⸻
+
+⚪ ETH (Ethereum)
+
+Show only these 4 networks:
+	1.	Ethereum (ERC20) – 6 confirmations, Min: 0.00005 ETH
+	2.	BSC (BEP20) – 60 confirmations
+	3.	Arbitrum One – 120 confirmations, Min: 0.000001 ETH
+	4.	Base Mainnet – 30 confirmations
+
+⸻
+
+🟣 BNB (Binance Coin)
+
+Show only this one network:
+	1.	BSC (BEP20) – 60 confirmations, Min: 0.0005 BNB
+
+⸻
+
+🟠 BTC (Bitcoin)
+
+Show these 2 network types:
+	1.	Bitcoin Mainnet – 1 confirmation, Min: 0.0001 BTC
+	2.	BSC (BEP20) – 60 confirmations, Min: 0.0001 BTC
+
+⸻
+
+🧩 Page Logic
+	•	When a user selects a crypto type, show only the supported network options above.
+	•	Once a network is selected:
+	•	Display the assigned wallet address for that crypto + network.
+	•	Show a QR code and Copy Address button.
+	•	Add a note:
+“⚠️ Make sure you deposit on the selected network. Deposits on the wrong chain may be lost.”
+	•	If no wallet exists for that network, display:
+“No wallet assigned yet for this network. Please contact support.”
+
+🎨 UI Design
+	•	Display networks as selectable buttons or cards.
+	•	Highlight the selected one.
+	•	Show wallet info and QR code neatly under it.
+	•	Keep the layout clean, fast, and mobile-friendly (like Binance or OKX).
+
+⸻
+
+✅ Goal
+	•	Simplify supported networks for each crypto.
+	•	Add SOL and TON to USDT.
+	•	Add BEP20 as a second option for BTC.
+	•	Maintain a professional, secure, and easy deposit experience.
+
