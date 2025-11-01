@@ -66,8 +66,8 @@ export default function CryptoDeposit() {
       { value: 'BEP20', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.0005, icon: '🟡' }
     ],
     BTC: [
-      { value: 'BITCOIN', label: 'Bitcoin Mainnet', confirmations: 1, minDeposit: 0.0001, icon: '🟠' },
-      { value: 'BEP20', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.0001, icon: '🟡' }
+      { value: 'Bitcoin Mainnet', label: 'Bitcoin Mainnet', confirmations: 1, minDeposit: 0.0001, icon: '🟠' },
+      { value: 'BSC (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.0001, icon: '🟡' }
     ]
   };
 
