@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -38,7 +37,6 @@ function RecentTransfers({ user, isMobile }) {
         .select('*')
         .eq('user_id', user.id)
         .in('type', ['transfer_out', 'transfer_in'])
-        .eq('transfer_type', 'internal')
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -317,7 +315,7 @@ export default function InternalTransfer() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!recipientInfo) {
       setMessage('Please verify the recipient account first');
       setMessageType('error');
@@ -372,7 +370,7 @@ export default function InternalTransfer() {
 
       const receipt = {
         referenceNumber,
-        date: new Date().toLocaleString('en-US', { 
+        date: new Date().toLocaleString('en-US', {
           year: 'numeric',
           month: 'long',
           day: 'numeric',
@@ -397,14 +395,14 @@ export default function InternalTransfer() {
 
       setReceiptData(receipt);
       setShowReceipt(true);
-      
+
       setAmount('');
       setMemo('');
       setRecipientAccountNumber('');
       setRecipientInfo(null);
       setMessage('');
       setMessageType('');
-      
+
       await checkUserAndFetchData();
 
     } catch (error) {
@@ -970,16 +968,16 @@ export default function InternalTransfer() {
                 </div>
 
                 <div style={styles.receiptButtons}>
-                  <button 
-                    onClick={printReceipt} 
+                  <button
+                    onClick={printReceipt}
                     style={styles.printButton}
                     onMouseEnter={(e) => e.target.style.backgroundColor = '#047857'}
                     onMouseLeave={(e) => e.target.style.backgroundColor = '#059669'}
                   >
                     🖨️ Print Receipt
                   </button>
-                  <button 
-                    onClick={() => setShowReceipt(false)} 
+                  <button
+                    onClick={() => setShowReceipt(false)}
                     style={styles.closeButton}
                     onMouseEnter={(e) => e.target.style.backgroundColor = '#1e3a8a'}
                     onMouseLeave={(e) => e.target.style.backgroundColor = '#1e40af'}
@@ -1067,7 +1065,10 @@ export default function InternalTransfer() {
                   </div>
                   <div style={styles.recipientName}>{recipientInfo.ownerName}</div>
                   <div style={styles.recipientDetails}>
-                    {getAccountTypeIcon(recipientInfo.accountType)} {recipientInfo.accountType?.replace('_', ' ')?.toUpperCase()} Account - ****{recipientInfo.accountNumber?.slice(-4)}
+                    {getAccountTypeIcon(recipientInfo.accountType)} {recipientInfo.accountType?.replace('_', ' ')?.toUpperCase()} Account
+                  </div>
+                  <div style={{ ...styles.recipientDetails, marginTop: '0.5rem', fontSize: '0.9rem' }}>
+                    Account Number: {recipientInfo.accountNumber}
                   </div>
                 </div>
               )}

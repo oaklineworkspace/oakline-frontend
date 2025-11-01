@@ -195,7 +195,7 @@ export default function Transfer() {
         .update({ balance: newToBalance, updated_at: new Date().toISOString() })
         .eq('id', toAccount);
 
-      // Create both debit and credit transactions with transfer_group_id
+      // Create both debit and credit transactions
       await supabase.from('transactions').insert([
         {
           user_id: user.id,
@@ -205,8 +205,8 @@ export default function Transfer() {
           description: `Transfer to ${selectedToAccount.account_type?.toUpperCase()} - ${memo || 'Internal Transfer'}`,
           status: 'completed',
           reference: referenceNumber,
-          transfer_group_id: transferGroupId,
-          transfer_type: 'internal'
+          balance_before: parseFloat(selectedFromAccount.balance),
+          balance_after: newFromBalance
         },
         {
           user_id: user.id,
@@ -216,8 +216,8 @@ export default function Transfer() {
           description: `Transfer from ${selectedFromAccount.account_type?.toUpperCase()} - ${memo || 'Internal Transfer'}`,
           status: 'completed',
           reference: referenceNumber,
-          transfer_group_id: transferGroupId,
-          transfer_type: 'internal'
+          balance_before: parseFloat(selectedToAccount.balance),
+          balance_after: newToBalance
         }
       ]);
 

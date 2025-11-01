@@ -52,15 +52,20 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Insufficient funds' });
     }
 
+    // Try to find the recipient account (case-insensitive and trimmed)
     const { data: toAccount, error: toAccountError } = await supabaseAdmin
       .from('accounts')
-      .select('*')
-      .eq('account_number', to_account_number)
+      .select('*, profiles!inner(first_name, last_name, email)')
+      .ilike('account_number', to_account_number.trim())
       .eq('status', 'active')
       .single();
 
     if (toAccountError || !toAccount) {
-      return res.status(404).json({ error: 'Recipient account not found or inactive' });
+      console.error('Recipient account lookup error:', toAccountError);
+      return res.status(404).json({ 
+        error: 'Recipient account not found or inactive. Please verify the account number.',
+        details: toAccountError?.message 
+      });
     }
 
     if (from_account_id === toAccount.id) {
@@ -127,8 +132,6 @@ export default async function handler(req, res) {
         description: `Transfer to ${recipientName} - ${memo || 'Internal Transfer'}`,
         status: 'completed',
         reference: referenceNumber,
-        transfer_group_id: transferGroupId,
-        transfer_type: 'internal',
         balance_before: parseFloat(fromAccount.balance),
         balance_after: newFromBalance
       },
@@ -140,8 +143,6 @@ export default async function handler(req, res) {
         description: `Transfer from ${senderName} - ${memo || 'Internal Transfer'}`,
         status: 'completed',
         reference: referenceNumber,
-        transfer_group_id: transferGroupId,
-        transfer_type: 'internal',
         balance_before: parseFloat(toAccount.balance),
         balance_after: newToBalance
       }
