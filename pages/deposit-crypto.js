@@ -4,7 +4,9 @@ import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
 import Head from 'next/head';
-import QRCode from 'react-qr-code';
+import dynamic from 'next/dynamic';
+
+const QRCode = dynamic(() => import('react-qr-code'), { ssr: false });
 
 const useMediaQuery = (query) => {
   const [matches, setMatches] = useState(false);
@@ -136,7 +138,8 @@ export default function CryptoDeposit() {
     setLoadingWallet(true);
     setWalletAddress('');
     try {
-      const { data, error } = await supabase
+      // First try user_crypto_wallets table
+      const { data: userWallet, error: userError } = await supabase
         .from('user_crypto_wallets')
         .select('wallet_address')
         .eq('user_id', user.id)
@@ -144,10 +147,27 @@ export default function CryptoDeposit() {
         .eq('network_type', depositForm.network_type)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching wallet:', error);
-      } else if (data) {
-        setWalletAddress(data.wallet_address);
+      if (userWallet && userWallet.wallet_address) {
+        setWalletAddress(userWallet.wallet_address);
+      } else {
+        // Try admin_assigned_wallets table if no user wallet found
+        const { data: adminWallet, error: adminError } = await supabase
+          .from('admin_assigned_wallets')
+          .select('wallet_address')
+          .eq('user_id', user.id)
+          .eq('crypto_type', depositForm.crypto_type)
+          .eq('network_type', depositForm.network_type)
+          .maybeSingle();
+
+        if (adminWallet && adminWallet.wallet_address) {
+          setWalletAddress(adminWallet.wallet_address);
+        } else if (adminError && adminError.code !== 'PGRST116') {
+          console.error('Error fetching admin wallet:', adminError);
+        }
+      }
+
+      if (userError && userError.code !== 'PGRST116') {
+        console.error('Error fetching user wallet:', userError);
       }
     } catch (error) {
       console.error('Error fetching wallet:', error);
