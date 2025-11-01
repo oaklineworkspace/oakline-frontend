@@ -144,56 +144,70 @@ export default function CryptoDeposit() {
         networkType: depositForm.network_type 
       });
 
-      // First try user_crypto_wallets table
-      const { data: userWallet, error: userError } = await supabase
+      // Query user_crypto_wallets table
+      const { data: wallets, error: walletError } = await supabase
         .from('user_crypto_wallets')
-        .select('wallet_address, crypto_type, network_type')
-        .eq('user_id', user.id)
-        .eq('crypto_type', depositForm.crypto_type)
-        .eq('network_type', depositForm.network_type)
-        .maybeSingle();
+        .select('crypto_type, network_type, wallet_address')
+        .eq('user_id', user.id);
 
-      console.log('User wallet query result:', { userWallet, userError });
+      console.log('All user wallets:', { wallets, walletError });
 
-      if (userError) {
-        console.error('Error fetching user wallet:', userError);
-        // If there's a permissions error, show helpful message
-        if (userError.code === 'PGRST301' || userError.message?.includes('permission')) {
-          setMessage('Database permissions error. Please contact support.');
-          setMessageType('error');
-        }
-      }
-
-      if (userWallet && userWallet.wallet_address) {
-        setWalletAddress(userWallet.wallet_address);
-        console.log('Wallet address found:', userWallet.wallet_address);
+      if (walletError) {
+        console.error('Error fetching user wallets:', walletError);
+        setMessage('Error loading wallet information. Please contact support.');
+        setMessageType('error');
         return;
       }
 
-      // If no user wallet found, try admin_assigned_wallets
-      console.log('No user wallet found, checking admin assigned wallets...');
-      const { data: adminWallet, error: adminError } = await supabase
-        .from('admin_assigned_wallets')
-        .select('wallet_address, crypto_type, network_type')
-        .eq('user_id', user.id)
-        .eq('crypto_type', depositForm.crypto_type)
-        .eq('network_type', depositForm.network_type)
-        .maybeSingle();
+      if (wallets && wallets.length > 0) {
+        // Find matching wallet based on crypto_type and network_type
+        const matchingWallet = wallets.find(w => 
+          w.crypto_type === depositForm.crypto_type && 
+          w.network_type === depositForm.network_type
+        );
 
-      console.log('Admin wallet query result:', { adminWallet, adminError });
+        console.log('Matching wallet:', matchingWallet);
+
+        if (matchingWallet && matchingWallet.wallet_address) {
+          setWalletAddress(matchingWallet.wallet_address);
+          console.log('Wallet address found:', matchingWallet.wallet_address);
+          return;
+        }
+      }
+
+      // If no matching wallet found in user_crypto_wallets, try admin_assigned_wallets as fallback
+      console.log('No user wallet found, checking admin assigned wallets...');
+      const { data: adminWallets, error: adminError } = await supabase
+        .from('admin_assigned_wallets')
+        .select('crypto_type, network_type, wallet_address')
+        .eq('user_id', user.id);
+
+      console.log('All admin wallets:', { adminWallets, adminError });
 
       if (adminError) {
-        console.error('Error fetching admin wallet:', adminError);
+        console.error('Error fetching admin wallets:', adminError);
       }
 
-      if (adminWallet && adminWallet.wallet_address) {
-        setWalletAddress(adminWallet.wallet_address);
-        console.log('Admin wallet address found:', adminWallet.wallet_address);
-      } else {
-        console.log('No wallet assigned for this crypto/network combination');
+      if (adminWallets && adminWallets.length > 0) {
+        const matchingAdminWallet = adminWallets.find(w => 
+          w.crypto_type === depositForm.crypto_type && 
+          w.network_type === depositForm.network_type
+        );
+
+        console.log('Matching admin wallet:', matchingAdminWallet);
+
+        if (matchingAdminWallet && matchingAdminWallet.wallet_address) {
+          setWalletAddress(matchingAdminWallet.wallet_address);
+          console.log('Admin wallet address found:', matchingAdminWallet.wallet_address);
+          return;
+        }
       }
+
+      console.log('No wallet assigned for this crypto/network combination');
     } catch (error) {
       console.error('Error fetching wallet:', error);
+      setMessage('Unexpected error loading wallet. Please try again.');
+      setMessageType('error');
     } finally {
       setLoadingWallet(false);
     }
