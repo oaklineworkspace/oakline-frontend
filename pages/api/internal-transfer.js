@@ -72,8 +72,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Cannot transfer to the same account' });
     }
 
-    const referenceNumber = `INT-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     const transferGroupId = crypto.randomUUID();
+    const referenceNumber = `INT-${transferGroupId.substring(0, 8).toUpperCase()}`;
     const newFromBalance = parseFloat(fromAccount.balance) - transferAmount;
     const newToBalance = parseFloat(toAccount.balance) + transferAmount;
 
@@ -240,7 +240,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: 'Transfer completed successfully',
+      message: 'Your transfer has been completed successfully and funds are now available to the recipient.',
       reference_number: referenceNumber,
       transfer_group_id: transferGroupId,
       new_balance: newFromBalance

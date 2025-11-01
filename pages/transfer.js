@@ -141,7 +141,8 @@ export default function Transfer() {
   };
 
   const generateReferenceNumber = () => {
-    return `TXN${Date.now()}${Math.floor(Math.random() * 10000)}`;
+    const uuid = crypto.randomUUID();
+    return `TXN-${uuid.substring(0, 8).toUpperCase()}`;
   };
 
   const handleSubmit = async (e) => {
@@ -178,48 +179,79 @@ export default function Transfer() {
         return;
       }
 
-      const referenceNumber = generateReferenceNumber();
       const transferGroupId = crypto.randomUUID();
+      const referenceNumber = `TXN-${transferGroupId.substring(0, 8).toUpperCase()}`;
 
       // Deduct from source account
       const newFromBalance = parseFloat(selectedFromAccount.balance) - transferAmount;
-      await supabase
+      const { error: debitError } = await supabase
         .from('accounts')
         .update({ balance: newFromBalance, updated_at: new Date().toISOString() })
         .eq('id', fromAccount);
 
+      if (debitError) {
+        throw new Error('Failed to debit source account');
+      }
+
       // Add to destination account
       const newToBalance = parseFloat(selectedToAccount.balance) + transferAmount;
-      await supabase
+      const { error: creditError } = await supabase
         .from('accounts')
         .update({ balance: newToBalance, updated_at: new Date().toISOString() })
         .eq('id', toAccount);
 
-      // Create both debit and credit transactions
-      await supabase.from('transactions').insert([
+      if (creditError) {
+        // Rollback debit
+        await supabase
+          .from('accounts')
+          .update({ balance: parseFloat(selectedFromAccount.balance) })
+          .eq('id', fromAccount);
+        throw new Error('Failed to credit destination account');
+      }
+
+      // Create both debit and credit transactions with transfer_group_id
+      const { error: transactionError } = await supabase.from('transactions').insert([
         {
           user_id: user.id,
           account_id: fromAccount,
           type: 'debit',
           amount: transferAmount,
-          description: `Transfer to ${selectedToAccount.account_type?.toUpperCase()} account ${selectedToAccount.account_number}`,
+          description: `Transfer to ${selectedToAccount.account_type?.toUpperCase()} account ending in ${selectedToAccount.account_number?.slice(-4)}`,
           status: 'completed',
           reference: referenceNumber,
           balance_before: parseFloat(selectedFromAccount.balance),
-          balance_after: newFromBalance
+          balance_after: newFromBalance,
+          transfer_group_id: transferGroupId,
+          transfer_type: 'internal'
         },
         {
           user_id: user.id,
           account_id: toAccount,
           type: 'credit',
           amount: transferAmount,
-          description: `Transfer from ${selectedFromAccount.account_type?.toUpperCase()} account ${selectedFromAccount.account_number}`,
+          description: `Transfer from ${selectedFromAccount.account_type?.toUpperCase()} account ending in ${selectedFromAccount.account_number?.slice(-4)}`,
           status: 'completed',
           reference: referenceNumber,
           balance_before: parseFloat(selectedToAccount.balance),
-          balance_after: newToBalance
+          balance_after: newToBalance,
+          transfer_group_id: transferGroupId,
+          transfer_type: 'internal'
         }
       ]);
+
+      if (transactionError) {
+        console.error('Transaction insert error:', transactionError);
+        // Rollback both account updates
+        await supabase
+          .from('accounts')
+          .update({ balance: parseFloat(selectedFromAccount.balance) })
+          .eq('id', fromAccount);
+        await supabase
+          .from('accounts')
+          .update({ balance: parseFloat(selectedToAccount.balance) })
+          .eq('id', toAccount);
+        throw new Error('Failed to record transactions');
+      }
 
       // Generate receipt data
       const receipt = {

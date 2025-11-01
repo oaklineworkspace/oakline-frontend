@@ -1106,16 +1106,27 @@ export default function InternalTransfer() {
                       disabled
                     />
                   </div>
+
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Recipient Account Type *</label>
+                    <input
+                      type="text"
+                      style={{ ...styles.input, backgroundColor: '#f0f9ff', cursor: 'not-allowed' }}
+                      value={`${getAccountTypeIcon(recipientInfo.accountType)} ${recipientInfo.accountType?.replace('_', ' ')?.toUpperCase()} Account`}
+                      readOnly
+                      disabled
+                    />
+                  </div>
                   
                   <div style={styles.recipientCard}>
                     <div style={styles.recipientTitle}>
                       ✓ Recipient Verified Successfully
                     </div>
                     <div style={styles.recipientDetails}>
-                      {getAccountTypeIcon(recipientInfo.accountType)} {recipientInfo.accountType?.replace('_', ' ')?.toUpperCase()} Account
+                      All recipient information has been verified and confirmed
                     </div>
                     <div style={{ ...styles.recipientDetails, marginTop: '0.5rem', fontSize: '0.9rem' }}>
-                      Account Number: {recipientInfo.accountNumber}
+                      Reference: {recipientInfo.accountNumber}
                     </div>
                   </div>
                 </>
