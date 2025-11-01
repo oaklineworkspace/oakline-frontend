@@ -179,8 +179,9 @@ export default function Transfer() {
       setAmount('');
       setMemo('');
 
-      // Refresh accounts
+      // Refresh accounts and transfers
       await checkUserAndFetchData();
+      await fetchRecentTransfers();
 
     } catch (error) {
       setMessage(error.message || 'Transfer failed. Please try again.');
@@ -657,6 +658,76 @@ export default function Transfer() {
       fontSize: '0.9rem',
       color: '#64748b',
       fontWeight: '500'
+    },
+    recentTransfersSection: {
+      backgroundColor: 'rgba(255, 255, 255, 0.98)',
+      borderRadius: '16px',
+      padding: isMobile ? '1rem' : '2rem',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+      border: '1px solid #059669',
+      marginBottom: '2rem'
+    },
+    transfersList: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0.75rem'
+    },
+    transferItem: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '1rem',
+      backgroundColor: '#f8fafc',
+      borderRadius: '12px',
+      border: '2px solid #e2e8f0',
+      transition: 'all 0.2s'
+    },
+    transferLeft: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem',
+      flex: 1
+    },
+    transferIcon: {
+      fontSize: '1.5rem'
+    },
+    transferInfo: {
+      flex: 1
+    },
+    transferDescription: {
+      fontSize: '0.9rem',
+      fontWeight: '600',
+      color: '#1e293b',
+      marginBottom: '0.25rem'
+    },
+    transferDate: {
+      fontSize: '0.75rem',
+      color: '#64748b'
+    },
+    transferRef: {
+      fontSize: '0.7rem',
+      color: '#94a3b8',
+      fontFamily: 'monospace',
+      marginTop: '0.25rem'
+    },
+    transferRight: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-end',
+      gap: '0.25rem'
+    },
+    transferAmount: {
+      fontSize: '1rem',
+      fontWeight: '700'
+    },
+    transferStatus: {
+      fontSize: '0.7rem',
+      padding: '0.25rem 0.5rem',
+      backgroundColor: '#d1fae5',
+      color: '#065f46',
+      borderRadius: '8px',
+      textTransform: 'capitalize',
+      fontWeight: '600'
     }
   };
 
@@ -758,6 +829,43 @@ export default function Transfer() {
     );
   }
 
+  const [recentTransfers, setRecentTransfers] = useState([]);
+  const [loadingTransfers, setLoadingTransfers] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      fetchRecentTransfers();
+    }
+  }, [user]);
+
+  const fetchRecentTransfers = async () => {
+    setLoadingTransfers(true);
+    try {
+      const { data: accounts } = await supabase
+        .from('accounts')
+        .select('id')
+        .eq('user_id', user.id);
+
+      if (accounts && accounts.length > 0) {
+        const accountIds = accounts.map(acc => acc.id);
+        const { data: transfers } = await supabase
+          .from('transactions')
+          .select('*')
+          .in('account_id', accountIds)
+          .in('type', ['transfer_out', 'transfer_in'])
+          .eq('transfer_type', 'internal')
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        setRecentTransfers(transfers || []);
+      }
+    } catch (error) {
+      console.error('Error fetching recent transfers:', error);
+    } finally {
+      setLoadingTransfers(false);
+    }
+  };
+
   return (
     <>
       <Head>
@@ -781,50 +889,102 @@ export default function Transfer() {
         <main style={styles.main}>
           {showReceipt && receiptData && (
             <div style={styles.receiptModal}>
-              <div style={styles.receipt}>
+              <div style={styles.receipt} className="receipt-print">
                 <div style={styles.receiptHeader}>
-                  <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.8rem' }}>✓ Transfer Complete</h2>
-                  <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', opacity: 0.9 }}>Reference: {receiptData.referenceNumber}</p>
-                  <p style={{ margin: '0.25rem 0', fontSize: '0.85rem', opacity: 0.8 }}>{receiptData.date}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+                    <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={{ height: '50px', marginRight: '1rem' }} />
+                    <div style={{ textAlign: 'left' }}>
+                      <h2 style={{ margin: 0, fontSize: '1.5rem', color: 'white' }}>Oakline Bank</h2>
+                      <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.9 }}>Transfer Receipt</p>
+                    </div>
+                  </div>
+                  <div style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '1rem', borderRadius: '8px', marginTop: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                      <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>Reference:</span>
+                      <span style={{ fontSize: '0.9rem', fontWeight: '700', fontFamily: 'monospace' }}>{receiptData.referenceNumber}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>Date & Time:</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: '600' }}>{receiptData.date}</span>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'center', marginTop: '1rem', padding: '0.75rem', backgroundColor: 'rgba(5, 150, 105, 0.3)', borderRadius: '8px' }}>
+                    <span style={{ fontSize: '1.1rem', fontWeight: '700' }}>✓ Transfer Successful</span>
+                  </div>
                 </div>
 
                 <div style={styles.receiptBody}>
-                  <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                    <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '0.5rem' }}>Sent by</p>
-                    <p style={{ fontSize: '1.2rem', fontWeight: '700', color: '#1a365d' }}>{receiptData.senderName}</p>
+                  <div style={{ backgroundColor: '#f8fafc', padding: '1.25rem', borderRadius: '12px', marginBottom: '1rem' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '2px dashed #e2e8f0' }}>
+                      <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500' }}>Authorized by</p>
+                      <p style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1e40af', margin: 0 }}>{receiptData.senderName}</p>
+                    </div>
+
+                    <div style={styles.receiptSection}>
+                      <h3 style={{ fontSize: '0.9rem', color: '#1e40af', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '700' }}>
+                        📤 From Account
+                      </h3>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', margin: '0.5rem 0', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
+                        <span style={{ color: '#64748b', fontSize: '0.9rem' }}>Account Type:</span>
+                        <span style={{ fontWeight: '600', color: '#1e293b', fontSize: '0.9rem' }}>{receiptData.fromAccount.type?.toUpperCase()}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', margin: '0.5rem 0', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
+                        <span style={{ color: '#64748b', fontSize: '0.9rem' }}>Account Number:</span>
+                        <span style={{ fontWeight: '600', color: '#1e293b', fontFamily: 'monospace', fontSize: '0.9rem' }}>••••{receiptData.fromAccount.number?.slice(-4)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', margin: '0.5rem 0', padding: '0.5rem 0' }}>
+                        <span style={{ color: '#64748b', fontSize: '0.9rem' }}>New Balance:</span>
+                        <span style={{ fontWeight: '700', color: '#1e40af', fontSize: '0.95rem' }}>{formatCurrency(receiptData.fromAccount.balance)}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: 'center', margin: '1.5rem 0', fontSize: '2rem', color: '#059669' }}>⬇</div>
+
+                    <div style={styles.receiptSection}>
+                      <h3 style={{ fontSize: '0.9rem', color: '#059669', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '700' }}>
+                        📥 To Account
+                      </h3>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', margin: '0.5rem 0', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
+                        <span style={{ color: '#64748b', fontSize: '0.9rem' }}>Account Type:</span>
+                        <span style={{ fontWeight: '600', color: '#1e293b', fontSize: '0.9rem' }}>{receiptData.toAccount.type?.toUpperCase()}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', margin: '0.5rem 0', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
+                        <span style={{ color: '#64748b', fontSize: '0.9rem' }}>Account Number:</span>
+                        <span style={{ fontWeight: '600', color: '#1e293b', fontFamily: 'monospace', fontSize: '0.9rem' }}>••••{receiptData.toAccount.number?.slice(-4)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', margin: '0.5rem 0', padding: '0.5rem 0' }}>
+                        <span style={{ color: '#64748b', fontSize: '0.9rem' }}>New Balance:</span>
+                        <span style={{ fontWeight: '700', color: '#059669', fontSize: '0.95rem' }}>{formatCurrency(receiptData.toAccount.balance)}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div style={styles.receiptSection}>
-                    <h3 style={{ fontSize: '1rem', color: '#1a365d', marginBottom: '0.75rem' }}>From Account</h3>
-                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>Type:</strong> {receiptData.fromAccount.type?.toUpperCase()}</p>
-                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>Account:</strong> ••••{receiptData.fromAccount.number?.slice(-4)}</p>
-                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>New Balance:</strong> {formatCurrency(receiptData.fromAccount.balance)}</p>
-                  </div>
-
-                  <div style={styles.receiptArrow}>→</div>
-
-                  <div style={styles.receiptSection}>
-                    <h3 style={{ fontSize: '1rem', color: '#1a365d', marginBottom: '0.75rem' }}>To Account</h3>
-                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>Type:</strong> {receiptData.toAccount.type?.toUpperCase()}</p>
-                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>Account:</strong> ••••{receiptData.toAccount.number?.slice(-4)}</p>
-                    <p style={{ margin: '0.5rem 0', color: '#475569' }}><strong>New Balance:</strong> {formatCurrency(receiptData.toAccount.balance)}</p>
-                  </div>
-
-                  <div style={styles.receiptTotal}>
-                    <h3 style={{ fontSize: '1.1rem', color: '#047857', margin: '0 0 0.5rem 0' }}>Amount Transferred</h3>
-                    <p style={styles.receiptAmount}>{formatCurrency(receiptData.amount)}</p>
+                  <div style={{ background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', padding: '2rem', borderRadius: '12px', textAlign: 'center', border: '2px solid #059669', boxShadow: '0 4px 12px rgba(5, 150, 105, 0.2)' }}>
+                    <h3 style={{ fontSize: '1rem', color: '#047857', margin: '0 0 0.75rem 0', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }}>Transfer Amount</h3>
+                    <p style={{ fontSize: '2.5rem', fontWeight: '800', color: '#047857', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>{formatCurrency(receiptData.amount)}</p>
                   </div>
 
                   {receiptData.memo && (
-                    <div style={{ ...styles.receiptMemo, backgroundColor: '#fef3c7', border: '1px solid #fbbf24', marginTop: '1rem' }}>
-                      <p style={{ margin: '0', fontSize: '0.9rem', color: '#92400e' }}><strong>📝 Memo:</strong> {receiptData.memo}</p>
+                    <div style={{ backgroundColor: '#fef3c7', border: '2px solid #fbbf24', borderRadius: '8px', padding: '1rem', marginTop: '1rem' }}>
+                      <p style={{ margin: 0, fontSize: '0.9rem', color: '#92400e', fontWeight: '600' }}>
+                        <span style={{ fontSize: '1.1rem', marginRight: '0.5rem' }}>📝</span>
+                        Memo: {receiptData.memo}
+                      </p>
                     </div>
                   )}
                 </div>
 
-                <div style={{ textAlign: 'center', borderTop: '2px solid #e2e8f0', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
-                  <p style={{ fontSize: '1.1rem', fontWeight: '600', color: '#059669', margin: '0 0 0.5rem 0' }}>✅ Transfer Completed Successfully</p>
-                  <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: '0' }}>Official transaction receipt from Oakline Bank</p>
+                <div style={{ borderTop: '2px solid #e2e8f0', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
+                  <div style={{ backgroundColor: '#eff6ff', padding: '1rem', borderRadius: '8px', border: '1px solid #bfdbfe', marginBottom: '1rem' }}>
+                    <p style={{ fontSize: '0.85rem', color: '#1e40af', margin: 0, textAlign: 'center', fontWeight: '500' }}>
+                      This is an official receipt from Oakline Bank. For support, contact us at support@theoaklinebank.com
+                    </p>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0 }}>
+                      © {new Date().getFullYear()} Oakline Bank. All rights reserved. | Member FDIC
+                    </p>
+                  </div>
                 </div>
 
                 <div style={styles.receiptButtons}>
@@ -866,6 +1026,48 @@ export default function Transfer() {
 
           {message && (
             <div style={styles.errorMessage}>{message}</div>
+          )}
+
+          {recentTransfers.length > 0 && (
+            <div style={styles.recentTransfersSection}>
+              <h2 style={styles.sectionTitle}>Recent Transfers</h2>
+              <div style={styles.transfersList}>
+                {recentTransfers.map(transfer => (
+                  <div key={transfer.id} style={styles.transferItem}>
+                    <div style={styles.transferLeft}>
+                      <span style={styles.transferIcon}>
+                        {transfer.type === 'transfer_out' ? '📤' : '📥'}
+                      </span>
+                      <div style={styles.transferInfo}>
+                        <div style={styles.transferDescription}>
+                          {transfer.description}
+                        </div>
+                        <div style={styles.transferDate}>
+                          {formatDate(transfer.created_at)}
+                        </div>
+                        {transfer.reference && (
+                          <div style={styles.transferRef}>
+                            Ref: {transfer.reference}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div style={styles.transferRight}>
+                      <div style={{
+                        ...styles.transferAmount,
+                        color: transfer.type === 'transfer_in' ? '#059669' : '#dc2626'
+                      }}>
+                        {transfer.type === 'transfer_in' ? '+' : '-'}
+                        {formatCurrency(transfer.amount)}
+                      </div>
+                      <div style={styles.transferStatus}>
+                        {transfer.status || 'completed'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
 
           <div style={styles.contentSection}>

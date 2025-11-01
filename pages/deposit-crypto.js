@@ -1383,17 +1383,41 @@ export default function CryptoDeposit() {
                         {formatCurrency(deposit.amount)}
                       </td>
                       <td style={{ ...styles.td, textAlign: 'center' }}>
-                        <span style={{
-                          ...styles.statusBadge,
-                          backgroundColor: 
-                            deposit.status === 'pending' ? '#fef3c7' :
-                            deposit.status === 'approved' ? '#d1fae5' : '#fee2e2',
-                          color:
-                            deposit.status === 'pending' ? '#92400e' :
-                            deposit.status === 'approved' ? '#065f46' : '#991b1b'
-                        }}>
-                          {deposit.status}
-                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{
+                            ...styles.statusBadge,
+                            backgroundColor: 
+                              deposit.status === 'pending' ? '#fef3c7' :
+                              deposit.status === 'approved' ? '#d1fae5' : '#fee2e2',
+                            color:
+                              deposit.status === 'pending' ? '#92400e' :
+                              deposit.status === 'approved' ? '#065f46' : '#991b1b'
+                          }}>
+                            {deposit.status}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              viewDepositReceipt(deposit);
+                            }}
+                            style={{
+                              padding: '0.4rem 0.8rem',
+                              backgroundColor: '#1e40af',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              fontSize: '0.75rem',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                              whiteSpace: 'nowrap'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e3a8a'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1e40af'}
+                          >
+                            📄 View Receipt
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
