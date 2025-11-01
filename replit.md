@@ -5,7 +5,14 @@ Oakline Bank is a comprehensive Next.js/React-based banking web application prov
 
 ## Recent Updates
 
-### November 2025 - Vercel to Replit Migration & Button Styling Fix
+### November 2025 - Transaction Type Standardization & Platform Migration
+- **Transaction Type Standardization**: Completed comprehensive migration to standardized transaction types across all transfer functionality:
+  - All transfer operations now use `debit` (money out) and `credit` (money in) transaction types instead of legacy `transfer_out` and `transfer_in`
+  - All transactions now record complete audit trail: `balance_before`, `balance_after`, `reference` number, `user_id`, and `created_at`
+  - Updated transaction categorization logic consistently across `dashboard.js`, `transactions.js`, and `account-details.js`
+  - Added reference number display with copy-to-clipboard functionality (with fallback for browsers without clipboard API)
+  - Transaction icons now properly mapped for all types: deposit, withdrawal, credit, debit, bill_payment, purchase, refund, interest, crypto_deposit, zelle_send/receive
+  - All legacy transaction type references removed from codebase
 - **Platform Migration**: Successfully migrated from Vercel to Replit with proper port configuration (5000), environment variable setup, and workflow configuration.
 - **Button Styling Fix**: Resolved global button styling issue where `styles/button-fixes.css` contained a `button { background: none !important; }` rule that was removing all button backgrounds across the app. This was causing buttons on deposit-crypto and other pages to appear white with invisible text. The fix removed the global override while preserving specific `.serviceCard` styling.
 - **Crypto Wallet Verification**: Verified and confirmed that `/pages/deposit-crypto.js` correctly fetches crypto wallets from **both** `user_crypto_wallets` AND `admin_assigned_wallets` tables. The implementation:
