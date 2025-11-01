@@ -363,9 +363,26 @@ export default function TransactionsHistory() {
                       {tx.reference && (
                         <div 
                           style={styles.transactionRef}
-                          onClick={() => {
-                            navigator.clipboard.writeText(tx.reference);
-                            alert('Reference number copied to clipboard!');
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(tx.reference);
+                              alert('Reference number copied to clipboard!');
+                            } catch (err) {
+                              // Fallback for browsers without clipboard API
+                              const textArea = document.createElement('textarea');
+                              textArea.value = tx.reference;
+                              textArea.style.position = 'fixed';
+                              textArea.style.opacity = '0';
+                              document.body.appendChild(textArea);
+                              textArea.select();
+                              try {
+                                document.execCommand('copy');
+                                alert('Reference number copied to clipboard!');
+                              } catch (e) {
+                                alert(`Reference: ${tx.reference}`);
+                              }
+                              document.body.removeChild(textArea);
+                            }
                           }}
                           title="Click to copy reference number"
                         >

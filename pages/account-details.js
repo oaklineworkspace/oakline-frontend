@@ -133,10 +133,16 @@ export default function AccountDetails() {
     switch (type?.toLowerCase()) {
       case 'deposit': return '📥';
       case 'withdrawal': return '📤';
-      case 'transfer_in': return '💸';
-      case 'transfer_out': return '💰';
+      case 'credit': return '💸';
+      case 'debit': return '💰';
       case 'bill_payment': return '🧾';
       case 'fee': return '💳';
+      case 'purchase': return '🛒';
+      case 'refund': return '↩️';
+      case 'interest': return '💎';
+      case 'zelle_send': return 'Z';
+      case 'zelle_receive': return 'Z';
+      case 'crypto_deposit': return '₿';
       default: return '💼';
     }
   };
@@ -573,23 +579,27 @@ export default function AccountDetails() {
                     // Determine if it's a credit (money in) or debit (money out)
                     let isCredit = false;
 
-                    // Check transaction type first
-                    if (txType === 'transfer_in' || 
-                        txType === 'deposit' || 
+                    // Check transaction type first - Money coming IN (Credit)
+                    if (txType === 'deposit' || 
                         txType === 'credit' || 
                         txType === 'interest' || 
                         txType === 'refund' ||
+                        txType === 'bonus' || 
+                        txType === 'reward' || 
+                        txType === 'cashback' ||
                         txType === 'zelle_receive' ||
+                        txType === 'crypto_deposit' ||
                         description.includes('received from') ||
                         description.includes('transfer from')) {
                       isCredit = true;
                     } 
-                    else if (txType === 'transfer_out' || 
-                             txType === 'withdrawal' || 
+                    // Money going OUT (Debit)
+                    else if (txType === 'withdrawal' || 
                              txType === 'debit' || 
                              txType === 'purchase' || 
                              txType === 'bill_payment' || 
                              txType === 'fee' ||
+                             txType === 'payment' ||
                              txType === 'zelle_send' ||
                              description.includes('transfer to') ||
                              description.includes('sent to')) {
