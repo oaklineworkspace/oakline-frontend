@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -5,15 +6,15 @@ export default function AmortizationSchedule({ loanId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [scheduleData, setScheduleData] = useState(null);
-  const [showAll, setShowAll] = useState(false);
+  const [viewMode, setViewMode] = useState('upcoming'); // upcoming, all, paid
 
   useEffect(() => {
     if (loanId) {
-      fetchAmortizationSchedule();
+      fetchSchedule();
     }
   }, [loanId]);
 
-  const fetchAmortizationSchedule = async () => {
+  const fetchSchedule = async () => {
     setLoading(true);
     setError('');
     
@@ -38,17 +39,44 @@ export default function AmortizationSchedule({ loanId }) {
         setError(data.error || 'Failed to fetch amortization schedule');
       }
     } catch (err) {
-      console.error('Error fetching amortization schedule:', err);
+      console.error('Error fetching schedule:', err);
       setError('An error occurred while fetching the schedule');
     } finally {
       setLoading(false);
     }
   };
 
+  const downloadSchedule = () => {
+    if (!scheduleData) return;
+    
+    const csvContent = [
+      ['Payment #', 'Date', 'Payment Amount', 'Principal', 'Interest', 'Remaining Balance', 'Status'].join(','),
+      ...scheduleData.schedule.map(s => [
+        s.payment_number,
+        new Date(s.payment_date).toLocaleDateString(),
+        s.payment_amount.toFixed(2),
+        s.principal_amount.toFixed(2),
+        s.interest_amount.toFixed(2),
+        s.remaining_balance.toFixed(2),
+        s.is_paid ? 'Paid' : 'Upcoming'
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `amortization_schedule_${loanId.substring(0, 8)}.csv`;
+    a.click();
+  };
+
   if (loading) {
     return (
       <div style={styles.container}>
-        <div style={styles.loading}>Loading amortization schedule...</div>
+        <div style={styles.loadingContainer}>
+          <div style={styles.spinner}></div>
+          <div style={styles.loadingText}>Loading payment schedule...</div>
+        </div>
       </div>
     );
   }
@@ -56,7 +84,13 @@ export default function AmortizationSchedule({ loanId }) {
   if (error) {
     return (
       <div style={styles.container}>
-        <div style={styles.error}>{error}</div>
+        <div style={styles.errorBox}>
+          <div style={styles.errorIcon}>⚠️</div>
+          <div style={styles.errorText}>{error}</div>
+          <button onClick={fetchSchedule} style={styles.retryButton}>
+            🔄 Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -65,100 +99,211 @@ export default function AmortizationSchedule({ loanId }) {
     return null;
   }
 
-  const { loan_details, amortization_schedule } = scheduleData;
-  const displayedSchedule = showAll ? amortization_schedule : amortization_schedule.slice(0, 12);
+  const { loan_details, schedule, summary } = scheduleData;
+  
+  let filteredSchedule = schedule;
+  if (viewMode === 'upcoming') {
+    filteredSchedule = schedule.filter(s => !s.is_paid);
+  } else if (viewMode === 'paid') {
+    filteredSchedule = schedule.filter(s => s.is_paid);
+  }
+
+  const progressPercent = ((loan_details.payments_made / loan_details.term_months) * 100).toFixed(1);
 
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h2 style={styles.title}>Amortization Schedule</h2>
-        <p style={styles.subtitle}>Complete payment breakdown for your {loan_details.loan_type} loan</p>
+        <div>
+          <h2 style={styles.title}>📊 Payment Schedule</h2>
+          <p style={styles.subtitle}>Detailed amortization schedule for your loan</p>
+        </div>
+        <button onClick={downloadSchedule} style={styles.downloadButton}>
+          📥 Download Schedule
+        </button>
       </div>
 
+      {/* Progress Section */}
+      <div style={styles.progressCard}>
+        <div style={styles.progressHeader}>
+          <div style={styles.progressInfo}>
+            <div style={styles.progressLabel}>Loan Progress</div>
+            <div style={styles.progressStats}>
+              {loan_details.payments_made} of {loan_details.term_months} payments completed
+            </div>
+          </div>
+          <div style={styles.progressPercent}>{progressPercent}%</div>
+        </div>
+        <div style={styles.progressBarContainer}>
+          <div style={{...styles.progressBarFill, width: `${progressPercent}%`}}></div>
+        </div>
+        <div style={styles.progressMilestones}>
+          <div style={styles.milestone}>
+            <div style={styles.milestoneIcon}>🚀</div>
+            <div style={styles.milestoneLabel}>Started</div>
+          </div>
+          <div style={{...styles.milestone, opacity: progressPercent >= 25 ? 1 : 0.3}}>
+            <div style={styles.milestoneIcon}>📈</div>
+            <div style={styles.milestoneLabel}>25%</div>
+          </div>
+          <div style={{...styles.milestone, opacity: progressPercent >= 50 ? 1 : 0.3}}>
+            <div style={styles.milestoneIcon}>🎯</div>
+            <div style={styles.milestoneLabel}>Halfway</div>
+          </div>
+          <div style={{...styles.milestone, opacity: progressPercent >= 75 ? 1 : 0.3}}>
+            <div style={styles.milestoneIcon}>🏃</div>
+            <div style={styles.milestoneLabel}>75%</div>
+          </div>
+          <div style={{...styles.milestone, opacity: progressPercent >= 100 ? 1 : 0.3}}>
+            <div style={styles.milestoneIcon}>🎉</div>
+            <div style={styles.milestoneLabel}>Complete</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
       <div style={styles.summaryGrid}>
         <div style={styles.summaryCard}>
-          <div style={styles.summaryLabel}>Principal Amount</div>
-          <div style={styles.summaryValue}>${loan_details.principal.toLocaleString()}</div>
+          <div style={styles.summaryIcon}>💰</div>
+          <div>
+            <div style={styles.summaryLabel}>Total Interest</div>
+            <div style={styles.summaryValue}>${summary.total_interest.toLocaleString()}</div>
+          </div>
         </div>
         <div style={styles.summaryCard}>
-          <div style={styles.summaryLabel}>Monthly Payment</div>
-          <div style={styles.summaryValue}>${loan_details.monthly_payment.toLocaleString()}</div>
+          <div style={styles.summaryIcon}>💸</div>
+          <div>
+            <div style={styles.summaryLabel}>Total Payments</div>
+            <div style={styles.summaryValue}>${summary.total_payments.toLocaleString()}</div>
+          </div>
         </div>
         <div style={styles.summaryCard}>
-          <div style={styles.summaryLabel}>Total Interest</div>
-          <div style={styles.summaryValue}>${loan_details.total_interest.toLocaleString()}</div>
-        </div>
-        <div style={styles.summaryCard}>
-          <div style={styles.summaryLabel}>Total Amount</div>
-          <div style={styles.summaryValue}>${loan_details.total_amount.toLocaleString()}</div>
+          <div style={styles.summaryIcon}>📅</div>
+          <div>
+            <div style={styles.summaryLabel}>Payments Remaining</div>
+            <div style={styles.summaryValue}>{loan_details.term_months - loan_details.payments_made}</div>
+          </div>
         </div>
       </div>
 
-      <div style={styles.progressSection}>
-        <div style={styles.progressHeader}>
-          <span>Payment Progress: {loan_details.payments_made} of {loan_details.term_months} payments</span>
-          <span>{((loan_details.payments_made / loan_details.term_months) * 100).toFixed(1)}%</span>
-        </div>
-        <div style={styles.progressBar}>
-          <div style={{
-            ...styles.progressFill,
-            width: `${(loan_details.payments_made / loan_details.term_months) * 100}%`
-          }}></div>
-        </div>
+      {/* View Mode Filters */}
+      <div style={styles.viewModeContainer}>
+        <button
+          onClick={() => setViewMode('upcoming')}
+          style={{
+            ...styles.viewModeButton,
+            ...(viewMode === 'upcoming' ? styles.viewModeButtonActive : {})
+          }}
+        >
+          📅 Upcoming ({schedule.filter(s => !s.is_paid).length})
+        </button>
+        <button
+          onClick={() => setViewMode('paid')}
+          style={{
+            ...styles.viewModeButton,
+            ...(viewMode === 'paid' ? styles.viewModeButtonActive : {})
+          }}
+        >
+          ✓ Paid ({schedule.filter(s => s.is_paid).length})
+        </button>
+        <button
+          onClick={() => setViewMode('all')}
+          style={{
+            ...styles.viewModeButton,
+            ...(viewMode === 'all' ? styles.viewModeButtonActive : {})
+          }}
+        >
+          📋 All ({schedule.length})
+        </button>
       </div>
 
-      <div style={styles.tableWrapper}>
+      {/* Schedule Table */}
+      <div style={styles.tableContainer}>
         <table style={styles.table}>
           <thead>
-            <tr style={styles.tableHeader}>
-              <th style={styles.th}>#</th>
-              <th style={styles.th}>Payment Date</th>
-              <th style={styles.th}>Payment</th>
-              <th style={styles.th}>Principal</th>
-              <th style={styles.th}>Interest</th>
-              <th style={styles.th}>Balance</th>
-              <th style={styles.th}>Status</th>
+            <tr style={styles.tableHeaderRow}>
+              <th style={styles.tableHeader}>#</th>
+              <th style={styles.tableHeader}>Date</th>
+              <th style={styles.tableHeader}>Payment</th>
+              <th style={styles.tableHeader}>Principal</th>
+              <th style={styles.tableHeader}>Interest</th>
+              <th style={styles.tableHeader}>Balance</th>
+              <th style={styles.tableHeader}>Status</th>
             </tr>
           </thead>
           <tbody>
-            {displayedSchedule.map((payment) => (
-              <tr 
-                key={payment.payment_number} 
-                style={{
-                  ...styles.tableRow,
-                  backgroundColor: payment.is_paid ? '#f0fdf4' : payment.status === 'overdue' ? '#fef2f2' : '#fff'
-                }}
-              >
-                <td style={styles.td}>{payment.payment_number}</td>
-                <td style={styles.td}>{new Date(payment.payment_date).toLocaleDateString()}</td>
-                <td style={styles.td}>
-                  ${payment.actual_payment ? payment.actual_payment.toLocaleString() : payment.scheduled_payment.toLocaleString()}
-                </td>
-                <td style={styles.td}>${payment.principal.toLocaleString()}</td>
-                <td style={styles.td}>${payment.interest.toLocaleString()}</td>
-                <td style={styles.td}>${payment.remaining_balance.toLocaleString()}</td>
-                <td style={styles.td}>
-                  <span style={{
-                    ...styles.statusBadge,
-                    backgroundColor: payment.is_paid ? '#10b981' : payment.status === 'overdue' ? '#ef4444' : '#f59e0b'
-                  }}>
-                    {payment.is_paid ? 'Paid' : payment.status === 'overdue' ? 'Overdue' : 'Upcoming'}
-                  </span>
-                </td>
-              </tr>
-            ))}
+            {filteredSchedule.map((payment, index) => {
+              const isNextPayment = !payment.is_paid && index === 0 && viewMode === 'upcoming';
+              
+              return (
+                <tr 
+                  key={payment.payment_number} 
+                  style={{
+                    ...styles.tableRow,
+                    ...(payment.is_paid ? styles.tableRowPaid : {}),
+                    ...(isNextPayment ? styles.tableRowNext : {})
+                  }}
+                >
+                  <td style={styles.tableCell}>
+                    <div style={styles.paymentNumber}>
+                      {payment.payment_number}
+                    </div>
+                  </td>
+                  <td style={styles.tableCell}>
+                    <div style={styles.dateCell}>
+                      {new Date(payment.payment_date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                      {isNextPayment && (
+                        <span style={styles.nextBadge}>Next</span>
+                      )}
+                    </div>
+                  </td>
+                  <td style={styles.tableCell}>
+                    <div style={styles.amountCell}>
+                      ${payment.payment_amount.toLocaleString()}
+                    </div>
+                  </td>
+                  <td style={styles.tableCell}>
+                    <div style={styles.principalCell}>
+                      ${payment.principal_amount.toLocaleString()}
+                    </div>
+                  </td>
+                  <td style={styles.tableCell}>
+                    <div style={styles.interestCell}>
+                      ${payment.interest_amount.toLocaleString()}
+                    </div>
+                  </td>
+                  <td style={styles.tableCell}>
+                    <div style={styles.balanceCell}>
+                      ${payment.remaining_balance.toLocaleString()}
+                    </div>
+                  </td>
+                  <td style={styles.tableCell}>
+                    {payment.is_paid ? (
+                      <span style={styles.statusPaid}>✓ Paid</span>
+                    ) : (
+                      <span style={styles.statusUpcoming}>Upcoming</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      {amortization_schedule.length > 12 && (
-        <div style={styles.showMoreContainer}>
-          <button 
-            onClick={() => setShowAll(!showAll)} 
-            style={styles.showMoreButton}
-          >
-            {showAll ? 'Show Less' : `Show All ${amortization_schedule.length} Payments`}
-          </button>
+      {filteredSchedule.length === 0 && (
+        <div style={styles.emptyState}>
+          <div style={styles.emptyIcon}>📭</div>
+          <p style={styles.emptyText}>
+            {viewMode === 'paid' 
+              ? 'No payments have been made yet.'
+              : viewMode === 'upcoming'
+              ? 'No upcoming payments.'
+              : 'No schedule data available.'}
+          </p>
         </div>
       )}
     </div>
@@ -168,130 +313,315 @@ export default function AmortizationSchedule({ loanId }) {
 const styles = {
   container: {
     backgroundColor: '#fff',
-    borderRadius: '12px',
-    padding: '24px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    marginTop: '20px'
+    borderRadius: '16px',
+    padding: '2rem',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    border: '1px solid #e5e7eb'
   },
   header: {
-    marginBottom: '24px'
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '2rem',
+    gap: '1rem',
+    flexWrap: 'wrap'
   },
   title: {
-    fontSize: '24px',
-    fontWeight: '700',
+    fontSize: '1.75rem',
+    fontWeight: '800',
     color: '#1f2937',
-    margin: '0 0 8px 0'
+    margin: '0 0 0.5rem 0'
   },
   subtitle: {
-    fontSize: '14px',
+    fontSize: '0.95rem',
     color: '#6b7280',
     margin: 0
   },
-  summaryGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '16px',
-    marginBottom: '24px'
-  },
-  summaryCard: {
-    backgroundColor: '#f9fafb',
-    padding: '16px',
-    borderRadius: '8px',
-    border: '1px solid #e5e7eb'
-  },
-  summaryLabel: {
-    fontSize: '12px',
-    color: '#6b7280',
-    marginBottom: '4px',
-    textTransform: 'uppercase',
-    fontWeight: '600'
-  },
-  summaryValue: {
-    fontSize: '20px',
+  downloadButton: {
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#10b981',
+    color: 'white',
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '0.9rem',
     fontWeight: '700',
-    color: '#1f2937'
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.2)'
   },
-  progressSection: {
-    marginBottom: '24px'
+  loadingContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '4rem 2rem',
+    gap: '1rem'
+  },
+  spinner: {
+    width: '48px',
+    height: '48px',
+    border: '4px solid #f3f4f6',
+    borderTop: '4px solid #10b981',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite'
+  },
+  loadingText: {
+    fontSize: '1rem',
+    color: '#6b7280',
+    fontWeight: '500'
+  },
+  errorBox: {
+    textAlign: 'center',
+    padding: '3rem 2rem',
+    backgroundColor: '#fef2f2',
+    borderRadius: '12px',
+    border: '1px solid #fee2e2'
+  },
+  errorIcon: {
+    fontSize: '3rem',
+    marginBottom: '1rem'
+  },
+  errorText: {
+    fontSize: '1rem',
+    color: '#dc2626',
+    marginBottom: '1.5rem'
+  },
+  retryButton: {
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#dc2626',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '0.9rem',
+    fontWeight: '700',
+    cursor: 'pointer'
+  },
+  progressCard: {
+    padding: '1.5rem',
+    backgroundColor: '#eff6ff',
+    borderRadius: '12px',
+    border: '1px solid #dbeafe',
+    marginBottom: '2rem'
   },
   progressHeader: {
     display: 'flex',
     justifyContent: 'space-between',
-    fontSize: '14px',
-    color: '#4b5563',
-    marginBottom: '8px',
-    fontWeight: '500'
+    alignItems: 'center',
+    marginBottom: '1rem'
   },
-  progressBar: {
+  progressInfo: {
+    flex: 1
+  },
+  progressLabel: {
+    fontSize: '0.85rem',
+    fontWeight: '700',
+    color: '#1e40af',
+    marginBottom: '0.25rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
+  },
+  progressStats: {
+    fontSize: '0.9rem',
+    color: '#3b82f6'
+  },
+  progressPercent: {
+    fontSize: '2rem',
+    fontWeight: '800',
+    color: '#1e40af'
+  },
+  progressBarContainer: {
     width: '100%',
-    height: '8px',
-    backgroundColor: '#e5e7eb',
-    borderRadius: '4px',
-    overflow: 'hidden'
+    height: '12px',
+    backgroundColor: '#dbeafe',
+    borderRadius: '6px',
+    overflow: 'hidden',
+    marginBottom: '1.5rem'
   },
-  progressFill: {
+  progressBarFill: {
     height: '100%',
-    backgroundColor: '#10b981',
-    transition: 'width 0.3s ease'
+    background: 'linear-gradient(90deg, #3b82f6 0%, #1e40af 100%)',
+    borderRadius: '6px',
+    transition: 'width 0.5s ease'
   },
-  tableWrapper: {
-    overflowX: 'auto'
+  progressMilestones: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  milestone: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '0.25rem',
+    transition: 'opacity 0.3s'
+  },
+  milestoneIcon: {
+    fontSize: '1.5rem'
+  },
+  milestoneLabel: {
+    fontSize: '0.7rem',
+    fontWeight: '600',
+    color: '#1e40af'
+  },
+  summaryGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '1.25rem',
+    marginBottom: '2rem'
+  },
+  summaryCard: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    padding: '1.5rem',
+    backgroundColor: '#f9fafb',
+    borderRadius: '12px',
+    border: '1px solid #e5e7eb'
+  },
+  summaryIcon: {
+    fontSize: '2.5rem',
+    flexShrink: 0
+  },
+  summaryLabel: {
+    fontSize: '0.75rem',
+    color: '#6b7280',
+    textTransform: 'uppercase',
+    fontWeight: '700',
+    letterSpacing: '0.5px',
+    marginBottom: '0.25rem'
+  },
+  summaryValue: {
+    fontSize: '1.5rem',
+    fontWeight: '800',
+    color: '#1f2937'
+  },
+  viewModeContainer: {
+    display: 'flex',
+    gap: '0.5rem',
+    marginBottom: '1.5rem',
+    padding: '0.5rem',
+    backgroundColor: '#f9fafb',
+    borderRadius: '10px',
+    flexWrap: 'wrap'
+  },
+  viewModeButton: {
+    flex: 1,
+    minWidth: '120px',
+    padding: '0.75rem 1rem',
+    border: '2px solid #e5e7eb',
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '0.85rem',
+    fontWeight: '700',
+    color: '#6b7280',
+    transition: 'all 0.2s'
+  },
+  viewModeButtonActive: {
+    backgroundColor: '#1e40af',
+    color: 'white',
+    borderColor: '#1e40af'
+  },
+  tableContainer: {
+    overflowX: 'auto',
+    borderRadius: '12px',
+    border: '1px solid #e5e7eb'
   },
   table: {
     width: '100%',
-    borderCollapse: 'collapse',
-    fontSize: '14px'
+    borderCollapse: 'collapse'
+  },
+  tableHeaderRow: {
+    backgroundColor: '#f9fafb'
   },
   tableHeader: {
-    backgroundColor: '#f9fafb',
+    padding: '1rem',
+    textAlign: 'left',
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    color: '#374151',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
     borderBottom: '2px solid #e5e7eb'
   },
-  th: {
-    padding: '12px',
-    textAlign: 'left',
-    fontWeight: '600',
-    color: '#374151',
-    fontSize: '13px'
-  },
   tableRow: {
-    borderBottom: '1px solid #e5e7eb'
+    transition: 'background-color 0.2s'
   },
-  td: {
-    padding: '12px',
+  tableRowPaid: {
+    backgroundColor: '#f0fdf4'
+  },
+  tableRowNext: {
+    backgroundColor: '#fffbeb',
+    borderLeft: '4px solid #f59e0b'
+  },
+  tableCell: {
+    padding: '1rem',
+    borderBottom: '1px solid #f3f4f6',
+    fontSize: '0.85rem'
+  },
+  paymentNumber: {
+    fontWeight: '700',
     color: '#1f2937'
   },
-  statusBadge: {
-    display: 'inline-block',
-    padding: '4px 12px',
-    borderRadius: '12px',
-    fontSize: '12px',
-    fontWeight: '600',
-    color: '#fff'
+  dateCell: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    color: '#374151'
   },
-  showMoreContainer: {
-    textAlign: 'center',
-    marginTop: '20px'
+  nextBadge: {
+    padding: '0.25rem 0.5rem',
+    backgroundColor: '#f59e0b',
+    color: 'white',
+    borderRadius: '4px',
+    fontSize: '0.65rem',
+    fontWeight: '700'
   },
-  showMoreButton: {
-    padding: '10px 24px',
-    backgroundColor: '#10b981',
-    color: '#fff',
-    border: 'none',
+  amountCell: {
+    fontWeight: '700',
+    color: '#1f2937'
+  },
+  principalCell: {
+    color: '#059669',
+    fontWeight: '600'
+  },
+  interestCell: {
+    color: '#dc2626',
+    fontWeight: '600'
+  },
+  balanceCell: {
+    color: '#6b7280',
+    fontWeight: '600'
+  },
+  statusPaid: {
+    padding: '0.375rem 0.75rem',
+    backgroundColor: '#d1fae5',
+    color: '#059669',
     borderRadius: '6px',
-    fontSize: '14px',
-    fontWeight: '600',
-    cursor: 'pointer'
+    fontSize: '0.75rem',
+    fontWeight: '700'
   },
-  loading: {
+  statusUpcoming: {
+    padding: '0.375rem 0.75rem',
+    backgroundColor: '#e0e7ff',
+    color: '#4f46e5',
+    borderRadius: '6px',
+    fontSize: '0.75rem',
+    fontWeight: '600'
+  },
+  emptyState: {
     textAlign: 'center',
-    padding: '40px',
+    padding: '3rem 2rem',
+    backgroundColor: '#f9fafb',
+    borderRadius: '12px',
+    border: '2px dashed #e5e7eb'
+  },
+  emptyIcon: {
+    fontSize: '3rem',
+    marginBottom: '1rem'
+  },
+  emptyText: {
+    fontSize: '0.95rem',
     color: '#6b7280'
-  },
-  error: {
-    textAlign: 'center',
-    padding: '20px',
-    color: '#ef4444',
-    backgroundColor: '#fef2f2',
-    borderRadius: '8px'
   }
 };

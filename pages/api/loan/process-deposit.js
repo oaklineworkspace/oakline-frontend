@@ -81,8 +81,7 @@ export default async function handler(req, res) {
         .insert([{
           user_id: user.id,
           account_id: account_id,
-          type: 'LOAN_DEPOSIT',
-          transaction_type: 'debit',
+          type: 'debit',
           amount: -amount,
           balance_before: accountBalance,
           balance_after: newBalance,

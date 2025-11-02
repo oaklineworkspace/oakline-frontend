@@ -121,8 +121,7 @@ export default async function handler(req, res) {
       .insert([{
         account_id: account.id,
         user_id: user.id,
-        type: 'LOAN_PAYMENT',
-        transaction_type: 'debit',
+        type: 'debit',
         amount: -amount,
         balance_before: originalAccountBalance,
         balance_after: newBalance,
@@ -131,6 +130,10 @@ export default async function handler(req, res) {
         reference: `LOAN-PAY-${loan.id.substring(0, 8)}`,
         created_at: new Date().toISOString()
       }]);
+
+      if (transactionError) {
+        console.error('Error creating loan payment transaction:', transactionError);
+      }
 
     if (transactionError) {
       console.error('Error creating transaction record:', transactionError);
