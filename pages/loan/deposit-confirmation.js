@@ -183,11 +183,8 @@ function DepositConfirmationContent() {
         throw new Error(data.error || 'Failed to initiate crypto deposit');
       }
 
-      if (data.redirect) {
-        router.push(data.redirect);
-      } else {
-        router.push(`/loan/deposit-crypto?loan_id=${loan_id}&amount=${amount}`);
-      }
+      // Always redirect to the loan-specific crypto deposit page
+      router.push(`/loan/deposit-crypto?loan_id=${loan_id}&amount=${amount}`);
 
     } catch (err) {
       setError(err.message || 'An error occurred while initiating crypto deposit');
