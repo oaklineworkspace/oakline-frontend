@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import Header from '../components/Header';
@@ -22,7 +23,6 @@ export default function Messages() {
   useEffect(() => {
     if (!user) return;
 
-    // Subscribe to thread updates
     const subscription = supabase
       .channel('chat_threads_changes')
       .on('postgres_changes', {
@@ -93,7 +93,6 @@ export default function Messages() {
 
     setCreating(true);
     try {
-      // Create thread
       const { data: thread, error: threadError } = await supabase
         .from('chat_threads')
         .insert({
@@ -108,7 +107,6 @@ export default function Messages() {
 
       if (threadError) throw threadError;
 
-      // Create first message
       const { error: messageError } = await supabase
         .from('chat_messages')
         .insert({
@@ -123,7 +121,6 @@ export default function Messages() {
       setNewThreadMessage('');
       setShowNewThread(false);
 
-      // Navigate to new thread
       router.push(`/messages/${thread.id}`);
 
     } catch (error) {
@@ -298,6 +295,9 @@ const styles = {
     minHeight: '100vh',
     backgroundColor: '#f8fafc',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+  },
+  content: {
+    padding: '2rem 1rem'
   },
   main: {
     padding: '1rem',
