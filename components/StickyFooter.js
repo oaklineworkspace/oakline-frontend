@@ -95,7 +95,7 @@ export default function StickyFooter() {
     
     // Specialized Accounts
     { name: 'All Account Types', href: '/account-types', icon: '🏦', desc: '23+ account options', color: '#1E40AF', category: 'Specialized Accounts' },
-    { name: 'Retirement Accounts', href: '/investments', icon: '🏖️', desc: 'IRA & 401(k)', color: '#059669', category: 'Specialized Accounts' },
+    { name: 'Retirement Planning', href: '/retirement-planning', icon: '🏖️', desc: 'IRA & 401(k)', color: '#059669', category: 'Specialized Accounts' },
     { name: 'Student Accounts', href: '/account-types', icon: '🎓', desc: 'Education banking', color: '#0EA5E9', category: 'Specialized Accounts' },
     { name: 'Senior Banking', href: '/account-types', icon: '👴', desc: 'Age 55+ benefits', color: '#DC2626', category: 'Specialized Accounts' }
   ];

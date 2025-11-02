@@ -2227,10 +2227,10 @@ const styles = {
     borderRadius: '8px',
     fontSize: '0.9rem',
     fontWeight: '700',
+    boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)',
     transition: 'all 0.3s ease',
     flex: 1,
-    minWidth: '120px',
-    boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)'
+    minWidth: '120px'
   },
   bankingDropdownSecondaryButton: {
     display: 'inline-flex',

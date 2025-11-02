@@ -104,9 +104,31 @@ export default function MainMenu({ user }) {
           category: 'Support & Tools',
           items: [
             { name: 'Customer Support', href: '/support', icon: '🎧' },
-            { name: 'Branch Locator', href: '/support', icon: '📍' },
-            { name: 'Financial Education', href: '/support', icon: '🎓' },
-            { name: 'Security Center', href: '/security', icon: '🔒' }
+            { name: 'Branch Locator', href: '/branch-locator', icon: '📍' },
+            { name: 'Financial Education', href: '/financial-education', icon: '🎓' },
+            { name: 'Security Center', href: '/security', icon: '🔒' },
+            { name: 'Personal Finance Tips', href: '/personal-finance-tips', icon: '💡' },
+            { name: 'Customer Stories', href: '/customer-stories', icon: '⭐' }
+          ]
+        },
+        {
+          category: 'Company & Policies',
+          items: [
+            { name: 'About Us', href: '/about', icon: 'ℹ️' },
+            { name: 'Community Impact', href: '/community-impact', icon: '🤝' },
+            { name: 'Green Banking', href: '/green-banking', icon: '🌱' },
+            { name: 'Accessibility', href: '/accessibility', icon: '♿' },
+            { name: 'Compliance', href: '/compliance', icon: '📋' },
+            { name: 'Disclosures', href: '/disclosures', icon: '📄' }
+          ]
+        },
+        {
+          category: 'Additional Services',
+          items: [
+            { name: 'Retirement Planning', href: '/retirement-planning', icon: '🏖️' },
+            { name: 'International Services', href: '/internationalization', icon: '🌍' },
+            { name: 'Site Map', href: '/sitemap', icon: '🗺️' },
+            { name: 'Forms & Documents', href: '/forms-documents', icon: '📝' }
           ]
         }
       ]

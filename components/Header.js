@@ -142,9 +142,24 @@ export default function Header() {
                   </div>
                   <div style={styles.dropdownSection}>
                     <h4 style={styles.dropdownHeading}>💰 Investment</h4>
-                    <Link href="/investments" style={styles.dropdownLink}>Investment Portfolio</Link>
+                    <Link href="/investment" style={styles.dropdownLink}>Investment Portfolio</Link>
                     <Link href="/crypto" style={styles.dropdownLink}>Crypto Trading</Link>
                     <Link href="/financial-advisory" style={styles.dropdownLink}>Financial Advisory</Link>
+                    <Link href="/retirement-planning" style={styles.dropdownLink}>Retirement Planning</Link>
+                  </div>
+                  <div style={styles.dropdownSection}>
+                    <h4 style={styles.dropdownHeading}>🌟 Resources</h4>
+                    <Link href="/personal-finance-tips" style={styles.dropdownLink}>Finance Tips</Link>
+                    <Link href="/customer-stories" style={styles.dropdownLink}>Customer Stories</Link>
+                    <Link href="/community-impact" style={styles.dropdownLink}>Community Impact</Link>
+                    <Link href="/green-banking" style={styles.dropdownLink}>Green Banking</Link>
+                  </div>
+                  <div style={styles.dropdownSection}>
+                    <h4 style={styles.dropdownHeading}>📋 Legal & Info</h4>
+                    <Link href="/accessibility" style={styles.dropdownLink}>Accessibility</Link>
+                    <Link href="/compliance" style={styles.dropdownLink}>Compliance</Link>
+                    <Link href="/disclosures" style={styles.dropdownLink}>Disclosures</Link>
+                    <Link href="/sitemap" style={styles.dropdownLink}>Site Map</Link>
                   </div>
                 </div>
               )}
