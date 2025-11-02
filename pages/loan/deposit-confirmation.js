@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
@@ -16,15 +16,59 @@ function DepositConfirmationContent() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loanDetails, setLoanDetails] = useState(null);
+  const channelRef = useRef(null);
 
   useEffect(() => {
     if (user) {
       fetchUserAccounts();
       if (loan_id) {
         fetchLoanDetails();
+        setupRealtimeSubscription();
       }
     }
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
   }, [user, loan_id]);
+
+  const setupRealtimeSubscription = () => {
+    const channel = supabase
+      .channel(`loan-${loan_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'loans',
+          filter: `id=eq.${loan_id}`
+        },
+        (payload) => {
+          console.log('Loan updated:', payload);
+          if (payload.new) {
+            setLoanDetails(payload.new);
+            
+            if (payload.new.deposit_paid) {
+              setSuccess('Deposit confirmed! Your loan application is now under review.');
+            }
+            
+            if (payload.new.status === 'approved' || payload.new.status === 'active') {
+              setSuccess('Great news! Your loan has been approved!');
+              setTimeout(() => {
+                router.push('/loan/dashboard');
+              }, 2000);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+    return channel;
+  };
 
   const fetchUserAccounts = async () => {
     try {
@@ -108,8 +152,49 @@ function DepositConfirmationContent() {
     }
   };
 
-  const handleCryptoDeposit = () => {
-    router.push(`/deposit-crypto?loan_id=${loan_id}&amount=${amount}&redirect=loan_deposit`);
+  const handleCryptoDeposit = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('Session expired. Please log in again.');
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch('/api/loan/process-deposit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          loan_id,
+          amount: parseFloat(amount),
+          deposit_method: 'crypto'
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to initiate crypto deposit');
+      }
+
+      if (data.redirect) {
+        router.push(data.redirect);
+      } else {
+        router.push(`/deposit-crypto?loan_id=${loan_id}&amount=${amount}&redirect=loan_deposit`);
+      }
+
+    } catch (err) {
+      setError(err.message || 'An error occurred while initiating crypto deposit');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const selectedAccountData = accounts.find(acc => acc.id === selectedAccount);

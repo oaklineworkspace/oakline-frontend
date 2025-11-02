@@ -129,9 +129,41 @@ export default async function handler(req, res) {
         message: 'Deposit processed successfully',
         new_balance: newBalance
       });
+    } else if (deposit_method === 'crypto') {
+      // For crypto deposits, mark loan as awaiting crypto confirmation
+      // The crypto deposit will be verified through the crypto_deposits table
+      const { error: updateLoanError } = await supabaseAdmin
+        .from('loans')
+        .update({
+          deposit_method: 'crypto',
+          status: 'awaiting_crypto_deposit',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', loan_id);
+
+      if (updateLoanError) {
+        console.error('Error updating loan for crypto deposit:', updateLoanError);
+        return res.status(500).json({ error: 'Failed to update loan status' });
+      }
+
+      await supabaseAdmin
+        .from('notifications')
+        .insert([{
+          user_id: user.id,
+          type: 'loan',
+          title: 'Crypto Deposit Pending',
+          message: `Please complete your crypto deposit of $${amount.toLocaleString()} for your loan application. Your loan will be reviewed after the deposit is confirmed.`,
+          read: false
+        }]);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Crypto deposit initiated. Please complete the deposit.',
+        redirect: `/deposit-crypto?loan_id=${loan_id}&amount=${amount}&redirect=loan_deposit`
+      });
     }
 
-    return res.status(400).json({ error: 'Invalid deposit method' });
+    return res.status(400).json({ error: 'Invalid deposit method. Supported methods: balance, crypto' });
 
   } catch (error) {
     console.error('Error processing loan deposit:', error);
