@@ -1,11 +1,31 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 export default function Support() {
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('general');
+  const [bankDetails, setBankDetails] = useState(null);
+
+  useEffect(() => {
+    const fetchBankDetails = async () => {
+      const { data, error } = await supabase
+        .from('bank_details')
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Error fetching bank details:', error);
+      } else {
+        setBankDetails(data);
+      }
+    };
+
+    fetchBankDetails();
+  }, []);
 
   const faqCategories = {
     general: 'General Banking',
@@ -108,7 +128,7 @@ export default function Support() {
       icon: '📞',
       title: 'Phone/Text',
       description: 'Customer support and banking services',
-      contact: '+1 (636) 635-6122',
+      contact: bankDetails?.phone || '+1 (636) 635-6122',
       hours: 'Mon-Fri 9AM-5PM, Sat 9AM-1PM'
     },
     {
@@ -122,14 +142,14 @@ export default function Support() {
       icon: '🏦',
       title: 'Visit Us',
       description: 'Oklahoma City Branch - In-person banking services',
-      contact: '12201 N. May Avenue, OKC, OK 73120',
+      contact: bankDetails?.address || '12201 N. May Avenue, OKC, OK 73120',
       hours: 'Mon-Fri 9AM-5PM, Sat 9AM-1PM'
     },
     {
       icon: '✉️',
       title: 'Email Support',
       description: 'Written support for non-urgent inquiries',
-      contact: 'contact-us@theoaklinebank.com',
+      contact: bankDetails?.email_info || 'contact-us@theoaklinebank.com',
       hours: 'Response within 24 hours'
     }
   ];
@@ -188,7 +208,7 @@ export default function Support() {
         <section style={styles.faqSection}>
           <div style={styles.container}>
             <h2 style={styles.sectionTitle}>Frequently Asked Questions</h2>
-            
+
             {/* Category Filter */}
             <div style={styles.categoryFilter}>
               {Object.entries(faqCategories).map(([key, label]) => (
@@ -239,8 +259,8 @@ export default function Support() {
                 For urgent issues like lost cards, suspected fraud, or account emergencies:
               </p>
               <div style={styles.emergencyActions}>
-                <a href="tel:1-800-625-5463" style={styles.emergencyButton}>
-                  📞 Call 1-800-OAKLINE
+                <a href={`tel:${bankDetails?.emergency_phone || '1-800-625-5463'}`} style={styles.emergencyButton}>
+                  📞 Call {bankDetails?.emergency_phone_label || '1-800-OAKLINE'}
                 </a>
                 <button style={styles.chatButton}>
                   💬 Start Live Chat
@@ -256,13 +276,14 @@ export default function Support() {
             <div style={styles.footerContent}>
               <div style={styles.footerSection}>
                 <h4>Contact Information</h4>
-                <p>Phone: 1-800-OAKLINE</p>
-                <p>Email: support@oaklinebank.com</p>
-                <p>Routing Number: 075915826</p>
+                <p>Phone: {bankDetails?.phone || '+1 (636) 635-6122'}</p>
+                <p>Email: {bankDetails?.email_info || 'contact-us@theoaklinebank.com'}</p>
+                <p>Routing Number: {bankDetails?.routing_number || '075915826'}</p>
+                <p>Address: {bankDetails?.address || '12201 N. May Avenue, OKC, OK 73120'}</p>
               </div>
               <div style={styles.footerSection}>
                 <h4>Quick Links</h4>
-                <Link href="/login">Online Banking</Link>
+                <Link href="/sign-in">Online Banking</Link>
                 <Link href="/apply">Open Account</Link>
                 <Link href="/account-types">Account Types</Link>
               </div>
