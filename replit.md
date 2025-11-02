@@ -17,6 +17,19 @@ Oakline Bank is a comprehensive Next.js/React-based banking web application prov
   - Removed all admin pages (`pages/admin/` and `pages/api/admin/`) as they belong in separate admin repository
   - Confirmed all Supabase environment variables configured in Replit Secrets
   - Development server running on port 5000 with host 0.0.0.0 for Replit compatibility
+- **Phone Validation Enhancement**: Updated account application form (`pages/apply.js`) to accept international phone numbers with optional `+` prefix. Regex pattern changed from `/^[\d\s\-\(\)]{10,}$/` to `/^\+?[\d\s\-\(\)]{10,}$/` with improved error messaging.
+- **Content Expansion - 10 New Banking Pages**: Added comprehensive informational pages with professional AI-generated hero images:
+  - **Personal Finance Tips** (`/pages/personal-finance-tips.js`): Budgeting strategies, emergency fund guidance, debt management, credit score improvement
+  - **Retirement Planning** (`/pages/retirement-planning.js`): Retirement accounts (401k, IRA, Roth IRA), contribution strategies, catch-up contributions, Social Security optimization
+  - **Green Banking** (`/pages/green-banking.js`): Sustainable banking initiatives, paperless statements, green loans, carbon footprint tracking, eco-friendly products
+  - **Digital Wallets** (`/pages/digital-wallets.js`): Cryptocurrency integration (BTC, ETH, USDT, BNB), digital payment methods, mobile wallet features
+  - **Promotions** (`/pages/promotions.js`): Current banking offers, sign-up bonuses, referral programs, limited-time promotions
+  - **Business Insights** (`/pages/business-insights.js`): Cash flow management, business growth strategies, commercial banking services, financial planning resources
+  - **Community Impact** (`/pages/community-impact.js`): Corporate social responsibility, community investment programs, volunteer initiatives, financial literacy education
+  - **Financial Tools** (`/pages/financial-tools.js`): Mortgage calculator, retirement planner, budget tracker, savings goal calculator, loan comparison tools
+  - **Security Awareness** (`/pages/security-awareness.js`): Fraud prevention, phishing awareness, password security, two-factor authentication, digital safety best practices
+  - **Customer Stories** (`/pages/customer-stories.js`): Testimonials from diverse customer segments (first-time homebuyers, small business owners, retirees, young professionals)
+  - All pages follow consistent design patterns with hero images stored in `public/images/pages/`, professional typography, responsive layouts, and internal navigation links
 - **Zelle Payment System**: Comprehensive Zelle® integration with real-time Supabase data synchronization:
   - **Main Features** (`/pages/zelle.js`): Send money, manage contacts, view transaction history with tabbed interface
   - **Zelle Settings** (`/pages/zelle-settings.js`): Contact management, spending limit tracking (daily $2,500, monthly $20,000), security settings
