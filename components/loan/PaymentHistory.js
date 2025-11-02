@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -18,7 +17,7 @@ export default function PaymentHistory({ loanId }) {
   const fetchPaymentHistory = async () => {
     setLoading(true);
     setError('');
-    
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -49,7 +48,7 @@ export default function PaymentHistory({ loanId }) {
 
   const downloadStatement = () => {
     if (!historyData) return;
-    
+
     const csvContent = [
       ['Date', 'Amount', 'Principal', 'Interest', 'Late Fee', 'Balance After', 'Status', 'Reference'].join(','),
       ...historyData.payments.map(p => [
@@ -102,20 +101,20 @@ export default function PaymentHistory({ loanId }) {
   }
 
   const { loan_info, payment_summary, payments } = historyData;
-  
-  let filteredPayments = filter === 'all' 
-    ? payments 
+
+  let filteredPayments = filter === 'all'
+    ? payments
     : payments.filter(p => p.status === filter);
 
   // Apply sorting
   if (sortBy === 'date_desc') {
-    filteredPayments.sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date));
+    filteredPayments.sort((a, b) => new Date(b.payment_date || b.created_at) - new Date(a.payment_date || a.created_at));
   } else if (sortBy === 'date_asc') {
-    filteredPayments.sort((a, b) => new Date(a.payment_date) - new Date(b.payment_date));
+    filteredPayments.sort((a, b) => new Date(a.payment_date || a.created_at) - new Date(b.payment_date || b.created_at));
   } else if (sortBy === 'amount_desc') {
-    filteredPayments.sort((a, b) => b.amount - a.amount);
+    filteredPayments.sort((a, b) => parseFloat(b.amount || 0) - parseFloat(a.amount || 0));
   } else if (sortBy === 'amount_asc') {
-    filteredPayments.sort((a, b) => a.amount - b.amount);
+    filteredPayments.sort((a, b) => parseFloat(a.amount || 0) - parseFloat(b.amount || 0));
   }
 
   return (
@@ -140,33 +139,33 @@ export default function PaymentHistory({ loanId }) {
             <div style={styles.summarySubtext}>{payment_summary.completed_payments} completed</div>
           </div>
         </div>
-        
+
         <div style={styles.summaryCard}>
           <div style={styles.summaryIcon}>💰</div>
           <div>
             <div style={styles.summaryLabel}>Total Paid</div>
-            <div style={styles.summaryValue}>${payment_summary.total_paid.toLocaleString()}</div>
+            <div style={styles.summaryValue}>${parseFloat(payment_summary.total_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <div style={styles.summarySubtext}>All time</div>
           </div>
         </div>
-        
+
         <div style={styles.summaryCard}>
           <div style={styles.summaryIcon}>📈</div>
           <div>
             <div style={styles.summaryLabel}>Principal Paid</div>
-            <div style={styles.summaryValue}>${payment_summary.total_principal_paid.toLocaleString()}</div>
+            <div style={styles.summaryValue}>${parseFloat(payment_summary.total_principal_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <div style={styles.summarySubtext}>Reducing balance</div>
           </div>
         </div>
-        
+
         <div style={styles.summaryCard}>
           <div style={styles.summaryIcon}>💸</div>
           <div>
             <div style={styles.summaryLabel}>Interest Paid</div>
-            <div style={styles.summaryValue}>${payment_summary.total_interest_paid.toLocaleString()}</div>
+            <div style={styles.summaryValue}>${parseFloat(payment_summary.total_interest_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             {payment_summary.total_late_fees > 0 && (
               <div style={{...styles.summarySubtext, color: '#ef4444'}}>
-                +${payment_summary.total_late_fees.toFixed(2)} late fees
+                +${parseFloat(payment_summary.total_late_fees || 0).toFixed(2)} late fees
               </div>
             )}
           </div>
@@ -178,8 +177,8 @@ export default function PaymentHistory({ loanId }) {
         <div style={styles.filterSection}>
           <span style={styles.filterLabel}>Filter:</span>
           <div style={styles.filters}>
-            <button 
-              onClick={() => setFilter('all')} 
+            <button
+              onClick={() => setFilter('all')}
               style={{
                 ...styles.filterButton,
                 ...(filter === 'all' ? styles.filterButtonActive : {})
@@ -187,8 +186,8 @@ export default function PaymentHistory({ loanId }) {
             >
               All ({payment_summary.total_payments})
             </button>
-            <button 
-              onClick={() => setFilter('completed')} 
+            <button
+              onClick={() => setFilter('completed')}
               style={{
                 ...styles.filterButton,
                 ...(filter === 'completed' ? styles.filterButtonActiveGreen : {})
@@ -196,8 +195,8 @@ export default function PaymentHistory({ loanId }) {
             >
               ✓ Completed ({payment_summary.completed_payments})
             </button>
-            <button 
-              onClick={() => setFilter('pending')} 
+            <button
+              onClick={() => setFilter('pending')}
               style={{
                 ...styles.filterButton,
                 ...(filter === 'pending' ? styles.filterButtonActiveYellow : {})
@@ -206,8 +205,8 @@ export default function PaymentHistory({ loanId }) {
               ⏳ Pending ({payment_summary.pending_payments})
             </button>
             {payment_summary.failed_payments > 0 && (
-              <button 
-                onClick={() => setFilter('failed')} 
+              <button
+                onClick={() => setFilter('failed')}
                 style={{
                   ...styles.filterButton,
                   ...(filter === 'failed' ? styles.filterButtonActiveRed : {})
@@ -221,8 +220,8 @@ export default function PaymentHistory({ loanId }) {
 
         <div style={styles.sortSection}>
           <span style={styles.filterLabel}>Sort:</span>
-          <select 
-            value={sortBy} 
+          <select
+            value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             style={styles.sortSelect}
           >
@@ -240,7 +239,7 @@ export default function PaymentHistory({ loanId }) {
           <div style={styles.emptyIcon}>📭</div>
           <h3 style={styles.emptyTitle}>No {filter !== 'all' ? filter : ''} payments found</h3>
           <p style={styles.emptyText}>
-            {filter !== 'all' 
+            {filter !== 'all'
               ? 'Try selecting a different filter to view other payments.'
               : 'Payment history will appear here once you make your first payment.'}
           </p>
@@ -250,10 +249,10 @@ export default function PaymentHistory({ loanId }) {
           {filteredPayments.map((payment, index) => {
             const isFirst = index === 0;
             const isLast = index === filteredPayments.length - 1;
-            
+
             return (
-              <div 
-                key={payment.id} 
+              <div
+                key={payment.id}
                 style={{
                   ...styles.paymentCard,
                   ...(isFirst ? styles.paymentCardFirst : {}),
@@ -265,10 +264,10 @@ export default function PaymentHistory({ loanId }) {
                     <div style={styles.paymentNumber}>#{filteredPayments.length - index}</div>
                     <div>
                       <div style={styles.paymentDate}>
-                        {new Date(payment.payment_date).toLocaleDateString('en-US', { 
+                        {new Date(payment.payment_date || payment.created_at).toLocaleDateString('en-US', {
                           weekday: 'short',
-                          year: 'numeric', 
-                          month: 'long', 
+                          year: 'numeric',
+                          month: 'long',
                           day: 'numeric',
                           hour: '2-digit',
                           minute: '2-digit'
@@ -276,7 +275,7 @@ export default function PaymentHistory({ loanId }) {
                       </div>
                       {payment.payment_type && (
                         <div style={styles.paymentTypeLabel}>
-                          {payment.payment_type === 'auto_payment' ? '🤖 Auto Payment' : 
+                          {payment.payment_type === 'auto_payment' ? '🤖 Auto Payment' :
                            payment.payment_type === 'early_payoff' ? '⚡ Early Payoff' :
                            payment.payment_type === 'late_fee' ? '⚠️ Late Fee' : '👤 Manual Payment'}
                         </div>
@@ -285,12 +284,12 @@ export default function PaymentHistory({ loanId }) {
                   </div>
                   <div style={{
                     ...styles.paymentStatus,
-                    backgroundColor: payment.status === 'completed' ? '#d1fae5' : 
+                    backgroundColor: payment.status === 'completed' ? '#d1fae5' :
                                    payment.status === 'pending' ? '#fef3c7' : '#fee2e2',
-                    color: payment.status === 'completed' ? '#059669' : 
+                    color: payment.status === 'completed' ? '#059669' :
                           payment.status === 'pending' ? '#d97706' : '#dc2626'
                   }}>
-                    {payment.status === 'completed' ? '✓' : 
+                    {payment.status === 'completed' ? '✓' :
                      payment.status === 'pending' ? '⏳' : '✗'} {payment.status.toUpperCase()}
                   </div>
                 </div>
@@ -299,11 +298,11 @@ export default function PaymentHistory({ loanId }) {
                   <div style={styles.amountSection}>
                     <div style={styles.mainAmount}>
                       <span style={styles.amountLabel}>Payment Amount</span>
-                      <span style={styles.amountValue}>${payment.amount.toLocaleString()}</span>
+                      <span style={styles.amountValue}>${parseFloat(payment.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                   </div>
 
-                  {(payment.principal_amount > 0 || payment.interest_amount > 0) && (
+                  {(parseFloat(payment.principal_amount || 0) > 0 || parseFloat(payment.interest_amount || 0) > 0) && (
                     <div style={styles.breakdownSection}>
                       <div style={styles.breakdownTitle}>Payment Breakdown</div>
                       <div style={styles.breakdownGrid}>
@@ -311,22 +310,22 @@ export default function PaymentHistory({ loanId }) {
                           <span style={styles.breakdownIcon}>💵</span>
                           <div>
                             <div style={styles.breakdownLabel}>Principal</div>
-                            <div style={styles.breakdownValue}>${payment.principal_amount.toLocaleString()}</div>
+                            <div style={styles.breakdownValue}>${parseFloat(payment.principal_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                           </div>
                         </div>
                         <div style={styles.breakdownItem}>
                           <span style={styles.breakdownIcon}>📊</span>
                           <div>
                             <div style={styles.breakdownLabel}>Interest</div>
-                            <div style={styles.breakdownValue}>${payment.interest_amount.toLocaleString()}</div>
+                            <div style={styles.breakdownValue}>${parseFloat(payment.interest_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                           </div>
                         </div>
-                        {payment.late_fee > 0 && (
+                        {parseFloat(payment.late_fee || 0) > 0 && (
                           <div style={styles.breakdownItem}>
                             <span style={styles.breakdownIcon}>⚠️</span>
                             <div>
                               <div style={{...styles.breakdownLabel, color: '#ef4444'}}>Late Fee</div>
-                              <div style={{...styles.breakdownValue, color: '#ef4444'}}>${payment.late_fee.toLocaleString()}</div>
+                              <div style={{...styles.breakdownValue, color: '#ef4444'}}>${parseFloat(payment.late_fee || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                             </div>
                           </div>
                         )}
@@ -337,14 +336,14 @@ export default function PaymentHistory({ loanId }) {
                   <div style={styles.balanceSection}>
                     <div style={styles.balanceItem}>
                       <span style={styles.balanceLabel}>Balance After Payment</span>
-                      <span style={styles.balanceValue}>${payment.balance_after.toLocaleString()}</span>
+                      <span style={styles.balanceValue}>${parseFloat(payment.balance_after || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                   </div>
 
                   {payment.reference_number && (
                     <div style={styles.referenceSection}>
                       <span style={styles.referenceLabel}>Reference Number:</span>
-                      <span 
+                      <span
                         style={styles.referenceNumber}
                         onClick={() => {
                           navigator.clipboard.writeText(payment.reference_number);

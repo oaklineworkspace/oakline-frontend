@@ -47,36 +47,29 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to fetch payment history' });
     }
 
-    const enrichedPayments = (payments || []).map(payment => ({
-      id: payment.id,
-      amount: parseFloat(payment.amount),
-      principal_amount: parseFloat(payment.principal_amount || 0),
-      interest_amount: parseFloat(payment.interest_amount || 0),
-      late_fee: parseFloat(payment.late_fee || 0),
-      balance_after: parseFloat(payment.balance_after || 0),
-      payment_date: payment.payment_date,
-      status: payment.status,
-      payment_type: payment.payment_type || 'manual',
-      reference_number: payment.reference_number,
-      notes: payment.notes,
-      created_at: payment.created_at
-    }));
+    let totalPaid = 0;
+    let totalPrincipalPaid = 0;
+    let totalInterestPaid = 0;
+    let totalLateFees = 0;
 
-    const totalPaid = enrichedPayments
-      .filter(p => p.status === 'completed')
-      .reduce((sum, p) => sum + p.amount, 0);
+    const enrichedPayments = (payments || []).map(payment => {
+        const principalAmount = parseFloat(payment.principal_amount || 0);
+        const interestAmount = parseFloat(payment.interest_amount || 0);
+        const lateFee = parseFloat(payment.late_fee || 0);
 
-    const totalPrincipalPaid = enrichedPayments
-      .filter(p => p.status === 'completed')
-      .reduce((sum, p) => sum + p.principal_amount, 0);
+        totalPaid += parseFloat(payment.amount);
+        totalPrincipalPaid += principalAmount;
+        totalInterestPaid += interestAmount;
+        totalLateFees += lateFee;
 
-    const totalInterestPaid = enrichedPayments
-      .filter(p => p.status === 'completed')
-      .reduce((sum, p) => sum + p.interest_amount, 0);
-
-    const totalLateFees = enrichedPayments
-      .filter(p => p.status === 'completed')
-      .reduce((sum, p) => sum + p.late_fee, 0);
+        return {
+          ...payment,
+          principal_amount: principalAmount,
+          interest_amount: interestAmount,
+          late_fee: lateFee,
+          payment_type: payment.payment_type || 'manual' // Added payment_type
+        };
+      });
 
     return res.status(200).json({
       success: true,

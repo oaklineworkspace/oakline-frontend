@@ -74,13 +74,24 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to deduct payment from account' });
     }
 
+    // Calculate principal and interest breakdown
+    const monthlyRate = parseFloat(loan.interest_rate) / 100 / 12;
+    const interestAmount = parseFloat(loan.remaining_balance) * monthlyRate;
+    const principalAmount = amount - interestAmount;
+
     const { data: paymentRecord, error: paymentError } = await supabaseAdmin
       .from('loan_payments')
       .insert([{
         loan_id: loan.id,
         amount,
+        principal_amount: principalAmount > 0 ? principalAmount : amount,
+        interest_amount: interestAmount > 0 ? interestAmount : 0,
+        late_fee: 0,
+        balance_after: newRemainingBalance,
         payment_date: new Date().toISOString(),
-        status: 'completed'
+        payment_type: 'manual',
+        status: 'completed',
+        processed_by: user.id
       }])
       .select()
       .single();
@@ -99,6 +110,8 @@ export default async function handler(req, res) {
       .update({ 
         remaining_balance: newRemainingBalance,
         status: loanStatus,
+        payments_made: (loan.payments_made || 0) + 1,
+        last_payment_date: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .eq('id', loan.id);
