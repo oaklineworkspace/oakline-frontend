@@ -1,0 +1,102 @@
+🧭 Prompt for Replit AI (Frontend Repository)
+
+💬 “Enhance the Oakline Bank frontend loan system to make it fully professional and connected to Supabase.
+Users should be able to apply for loans, see their approval status, loan reference number, remaining balance, and repayment history.
+
+⸻
+
+🟩 Loan Application Page (/loan/apply)
+	1.	Create a clean, bank-style loan application form with:
+	•	Loan type (Personal / Business / Mortgage / Auto)
+	•	Amount requested
+	•	Purpose of loan
+	•	Repayment period (in months)
+	•	User’s selected account number for disbursement
+	•	Agreement checkbox (“I agree to Oakline Bank terms and repayment policy”)
+	2.	Validate form input (no empty fields, valid numbers).
+	3.	On submit:
+	•	Insert a new row into loans table in Supabase:
+	•	user_id, account_id, loan_type, amount, purpose, repayment_period, status = 'pending', created_at
+	•	Show a success message:
+“Your loan application has been submitted. You’ll receive an update once reviewed by our admin team.”
+
+⸻
+
+📊 Loan Dashboard (/loan)
+
+Display all user loans from Supabase filtered by user_id.
+
+Each loan card should show:
+	•	Loan Reference ID (e.g., OAKLN-20251102-12345)
+	•	Amount (e.g., $10,000)
+	•	Status (Pending / Approved / Active / Closed)
+	•	Remaining Balance
+	•	Approved Date
+	•	Disbursed Date
+	•	Next Payment Due
+
+If no loans exist:
+
+Show friendly message: “You have no active loans. Apply for one today!”
+
+⸻
+
+💰 Loan Repayment Section (/loan/repay)
+
+If loan status = active, show repayment form:
+	•	Amount to repay
+	•	Select repayment method:
+	•	“From my account balance”
+	•	“Crypto deposit”
+	•	On submit:
+	•	If user chooses “from my account balance,” deduct from their accounts.balance
+	•	Record repayment in loan_payments
+	•	Update remaining_balance
+	•	If remaining_balance <= 0, update status = 'closed'
+	•	Show success message: “Repayment successful! Thank you.”
+
+⸻
+
+🧾 Loan History (/loan/history)
+	•	Table showing all repayments with:
+	•	Payment Date
+	•	Amount
+	•	Payment Method
+	•	Status
+	•	Fetch from loan_payments filtered by loan_id.
+
+⸻
+
+📢 Notifications Integration
+
+Whenever admin changes a loan status (e.g., approved/disbursed/closed), the user should see:
+	•	Notification banner or toast:
+	•	“🎉 Your loan has been approved!”
+	•	“💸 Your loan has been disbursed to your account.”
+	•	“✅ Your loan is fully repaid.”
+
+Use Supabase real-time subscriptions on the loans table to auto-update the dashboard when status changes.
+
+⸻
+
+🏦 Dashboard Header
+
+At the top of the user dashboard:
+	•	Show Current Account Balance
+	•	Show Total Loan Amount Active
+	•	Show Total Remaining Loan Balance
+	•	Refresh automatically on disbursement or repayment.
+
+⸻
+
+⚙️ Technical Notes
+	•	All pages fetch data securely via Supabase queries filtered by user_id.
+	•	Include clear loading and error states.
+	•	Make design modern, minimal, and responsive.
+	•	Include professional loan-related imagery for visuals.
+
+⸻
+
+🧠 Ensure frontend flow matches admin logic:
+	•	Loans are disbursed only after admin approval and treasury verification.
+	•	Repayments credit back to the treasury account automatically.
