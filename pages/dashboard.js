@@ -455,6 +455,7 @@ function DashboardContent() {
                     <h4 style={styles.dropdownSectionTitle}>📬 Communications</h4>
                     <Link href="/notifications" style={styles.dropdownLink}>🔔 Alerts & Notifications</Link>
                     <Link href="/messages" style={styles.dropdownLink}>💬 Messages</Link>
+                    <Link href="/support" style={styles.dropdownLink}>🎧 Customer Support</Link>
                   </div>
                   <div style={styles.dropdownDivider}></div>
                   <div style={styles.dropdownSection}>

@@ -247,7 +247,7 @@ export default function MainMenu() {
                     <Link href="/notifications" style={styles.dropdownLink}>🔔 Notifications</Link>
                     <Link href="/privacy" style={styles.dropdownLink}>🛡️ Privacy Settings</Link>
                     <Link href="/profile" style={styles.dropdownLink}>👤 Edit Profile</Link>
-                    <Link href="/messages" style={styles.dropdownLink}>📧 Messages</Link>
+                    <Link href="/messages" style={styles.dropdownLink}>💬 Messages</Link>
                   </div>
                   <div style={styles.dropdownDivider}></div>
                   <div style={styles.dropdownSection}>
