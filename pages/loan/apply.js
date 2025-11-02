@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabaseClient';
@@ -170,7 +169,7 @@ function LoanApplicationContent() {
       }
 
       setSuccess('Loan application submitted successfully!');
-      
+
       // Redirect to deposit confirmation page
       setTimeout(() => {
         router.push(`/loan/deposit-confirmation?loan_id=${data.loan.id}&amount=${requiredDeposit}`);
