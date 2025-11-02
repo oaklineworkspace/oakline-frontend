@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabaseClient';
@@ -14,18 +15,31 @@ function LoanApplicationContent() {
     principal: '',
     term_months: '',
     purpose: '',
-    interest_rate: ''
+    interest_rate: '',
+    collateral_description: '',
+    deposit_method: 'balance'
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [bankDetails, setBankDetails] = useState(null);
+  const [depositAmount, setDepositAmount] = useState(0);
+  const [hasActiveLoan, setHasActiveLoan] = useState(false);
+  const DEPOSIT_PERCENTAGE = 0.10; // 10% deposit requirement
 
   useEffect(() => {
     fetchBankDetails();
     if (user) {
       fetchUserAccounts();
+      checkActiveLoan();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (formData.principal) {
+      const required = parseFloat(formData.principal) * DEPOSIT_PERCENTAGE;
+      setDepositAmount(required);
+    }
+  }, [formData.principal]);
 
   const fetchBankDetails = async () => {
     try {
@@ -37,8 +51,6 @@ function LoanApplicationContent() {
 
       if (!error && data) {
         setBankDetails(data);
-      } else if (error) {
-        console.error('Error fetching bank details:', error);
       }
     } catch (err) {
       console.error('Error fetching bank details:', err);
@@ -58,6 +70,22 @@ function LoanApplicationContent() {
       }
     } catch (err) {
       console.error('Error fetching accounts:', err);
+    }
+  };
+
+  const checkActiveLoan = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('loans')
+        .select('id, status')
+        .eq('user_id', user.id)
+        .in('status', ['pending', 'active']);
+
+      if (!error && data && data.length > 0) {
+        setHasActiveLoan(true);
+      }
+    } catch (err) {
+      console.error('Error checking active loans:', err);
     }
   };
 
@@ -95,6 +123,12 @@ function LoanApplicationContent() {
         return;
       }
 
+      if (hasActiveLoan) {
+        setError('You already have an active or pending loan. Please complete or close your existing loan before applying for a new one.');
+        setLoading(false);
+        return;
+      }
+
       if (accounts.length === 0) {
         setError('You must have an active account to apply for a loan');
         setLoading(false);
@@ -108,6 +142,9 @@ function LoanApplicationContent() {
         return;
       }
 
+      const principal = parseFloat(formData.principal);
+      const requiredDeposit = principal * DEPOSIT_PERCENTAGE;
+
       const response = await fetch('/api/loan/apply', {
         method: 'POST',
         headers: {
@@ -116,10 +153,13 @@ function LoanApplicationContent() {
         },
         body: JSON.stringify({
           loan_type: formData.loan_type,
-          principal: parseFloat(formData.principal),
+          principal: principal,
           term_months: parseInt(formData.term_months),
           purpose: formData.purpose,
-          interest_rate: parseFloat(formData.interest_rate)
+          interest_rate: parseFloat(formData.interest_rate),
+          collateral_description: formData.collateral_description,
+          deposit_required: requiredDeposit,
+          deposit_method: formData.deposit_method
         })
       });
 
@@ -129,18 +169,12 @@ function LoanApplicationContent() {
         throw new Error(data.error || 'Failed to submit loan application');
       }
 
-      setSuccess('Loan application submitted successfully! You will receive an email confirmation shortly.');
-      setFormData({
-        loan_type: '',
-        principal: '',
-        term_months: '',
-        purpose: '',
-        interest_rate: ''
-      });
-
+      setSuccess('Loan application submitted successfully!');
+      
+      // Redirect to deposit confirmation page
       setTimeout(() => {
-        router.push('/loan/dashboard');
-      }, 2000);
+        router.push(`/loan/deposit-confirmation?loan_id=${data.loan.id}&amount=${requiredDeposit}`);
+      }, 1500);
 
     } catch (err) {
       setError(err.message || 'An error occurred while submitting your application');
@@ -179,39 +213,31 @@ function LoanApplicationContent() {
   };
 
   const selectedLoanType = loanTypes.find(lt => lt.value === formData.loan_type);
+  const accountBalance = accounts.length > 0 ? parseFloat(accounts[0].balance) : 0;
+  const hasSufficientBalance = accountBalance >= depositAmount;
 
   return (
     <div style={styles.container}>
-      {/* Hero Section */}
       <div style={styles.hero}>
         <div style={styles.heroContent}>
           <div style={styles.heroIcon}>💼</div>
           <h1 style={styles.heroTitle}>Loan Application</h1>
           <p style={styles.heroSubtitle}>
-            Take the next step towards your financial goals. Our streamlined application process
-            ensures you get a decision quickly with competitive rates.
+            Take the next step towards your financial goals. Complete your application and make the required deposit to get approved.
           </p>
         </div>
       </div>
 
       <div style={styles.mainContent}>
-        {/* Progress Indicator */}
-        <div style={styles.progressBar}>
-          <div style={styles.progressStep}>
-            <div style={{...styles.progressCircle, ...styles.progressCircleActive}}>1</div>
-            <span style={styles.progressLabel}>Application</span>
+        {hasActiveLoan && (
+          <div style={styles.warningAlert}>
+            <div style={styles.alertIcon}>⚠️</div>
+            <div>
+              <strong style={styles.alertTitle}>Active Loan Exists</strong>
+              <p style={styles.alertMessage}>You already have an active or pending loan. Please complete your existing loan before applying for a new one.</p>
+            </div>
           </div>
-          <div style={styles.progressLine}></div>
-          <div style={styles.progressStep}>
-            <div style={styles.progressCircle}>2</div>
-            <span style={styles.progressLabel}>Review</span>
-          </div>
-          <div style={styles.progressLine}></div>
-          <div style={styles.progressStep}>
-            <div style={styles.progressCircle}>3</div>
-            <span style={styles.progressLabel}>Approval</span>
-          </div>
-        </div>
+        )}
 
         {error && (
           <div style={styles.alert}>
@@ -234,7 +260,6 @@ function LoanApplicationContent() {
         )}
 
         <form onSubmit={handleSubmit} style={styles.form}>
-          {/* Loan Type Selection */}
           <div style={styles.section}>
             <h2 style={styles.sectionTitle}>Select Loan Type</h2>
             <p style={styles.sectionDesc}>Choose the loan product that best fits your needs</p>
@@ -243,10 +268,11 @@ function LoanApplicationContent() {
               {loanTypes.map(type => (
                 <div
                   key={type.value}
-                  onClick={() => handleInputChange({ target: { name: 'loan_type', value: type.value } })}
+                  onClick={() => !hasActiveLoan && handleInputChange({ target: { name: 'loan_type', value: type.value } })}
                   style={{
                     ...styles.loanTypeCard,
-                    ...(formData.loan_type === type.value ? styles.loanTypeCardSelected : {})
+                    ...(formData.loan_type === type.value ? styles.loanTypeCardSelected : {}),
+                    ...(hasActiveLoan ? { opacity: 0.5, cursor: 'not-allowed' } : {})
                   }}
                 >
                   <div style={styles.loanTypeIcon}>{type.icon}</div>
@@ -264,191 +290,264 @@ function LoanApplicationContent() {
             </div>
           </div>
 
-          {/* Loan Details */}
-          {formData.loan_type && (
-            <div style={styles.section}>
-              <h2 style={styles.sectionTitle}>Loan Details</h2>
-              <p style={styles.sectionDesc}>Specify the amount and term for your {selectedLoanType?.label}</p>
+          {formData.loan_type && !hasActiveLoan && (
+            <>
+              <div style={styles.section}>
+                <h2 style={styles.sectionTitle}>Loan Details</h2>
+                <p style={styles.sectionDesc}>Specify the amount and term for your {selectedLoanType?.label}</p>
 
-              <div style={styles.formGrid}>
+                <div style={styles.formGrid}>
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>
+                      <span style={styles.labelText}>Loan Amount</span>
+                      <span style={styles.required}>*</span>
+                    </label>
+                    <div style={styles.inputWrapper}>
+                      <span style={styles.inputPrefix}>$</span>
+                      <input
+                        type="number"
+                        name="principal"
+                        value={formData.principal}
+                        onChange={handleInputChange}
+                        placeholder="10,000"
+                        min="1000"
+                        max="5000000"
+                        step="100"
+                        required
+                        style={{...styles.input, paddingLeft: '36px'}}
+                      />
+                    </div>
+                    <span style={styles.hint}>Minimum: $1,000 | Maximum: $5,000,000</span>
+                  </div>
+
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>
+                      <span style={styles.labelText}>Loan Term</span>
+                      <span style={styles.required}>*</span>
+                    </label>
+                    <div style={styles.inputWrapper}>
+                      <input
+                        type="number"
+                        name="term_months"
+                        value={formData.term_months}
+                        onChange={handleInputChange}
+                        placeholder="36"
+                        min="1"
+                        max="360"
+                        required
+                        style={{...styles.input, paddingRight: '80px'}}
+                      />
+                      <span style={styles.inputSuffix}>months</span>
+                    </div>
+                    <span style={styles.hint}>Common terms: 12, 24, 36, 60, 120, 180, 360 months</span>
+                  </div>
+
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>
+                      <span style={styles.labelText}>Interest Rate (APR)</span>
+                    </label>
+                    <div style={styles.inputWrapper}>
+                      <input
+                        type="text"
+                        name="interest_rate"
+                        value={formData.interest_rate ? `${formData.interest_rate}%` : ''}
+                        readOnly
+                        placeholder="Rate will be set automatically"
+                        style={{...styles.input, backgroundColor: '#f9fafb', cursor: 'not-allowed', color: '#10b981', fontWeight: '600'}}
+                      />
+                    </div>
+                    <span style={styles.hint}>Competitive rate automatically assigned based on loan type</span>
+                  </div>
+                </div>
+
                 <div style={styles.formGroup}>
                   <label style={styles.label}>
-                    <span style={styles.labelText}>Loan Amount</span>
+                    <span style={styles.labelText}>Purpose of Loan</span>
                     <span style={styles.required}>*</span>
                   </label>
-                  <div style={styles.inputWrapper}>
-                    <span style={styles.inputPrefix}>$</span>
-                    <input
-                      type="number"
-                      name="principal"
-                      value={formData.principal}
-                      onChange={handleInputChange}
-                      placeholder="10,000"
-                      min="1000"
-                      max="5000000"
-                      step="100"
-                      required
-                      style={{...styles.input, paddingLeft: '36px'}}
-                    />
-                  </div>
-                  <span style={styles.hint}>Minimum: $1,000 | Maximum: $5,000,000</span>
+                  <textarea
+                    name="purpose"
+                    value={formData.purpose}
+                    onChange={handleInputChange}
+                    placeholder="Please describe in detail how you plan to use the loan funds..."
+                    required
+                    rows="5"
+                    style={styles.textarea}
+                  />
+                  <span style={styles.hint}>Provide specific details to help us process your application faster</span>
                 </div>
 
                 <div style={styles.formGroup}>
                   <label style={styles.label}>
-                    <span style={styles.labelText}>Loan Term</span>
-                    <span style={styles.required}>*</span>
+                    <span style={styles.labelText}>Collateral Description (Optional)</span>
                   </label>
-                  <div style={styles.inputWrapper}>
-                    <input
-                      type="number"
-                      name="term_months"
-                      value={formData.term_months}
+                  <textarea
+                    name="collateral_description"
+                    value={formData.collateral_description}
+                    onChange={handleInputChange}
+                    placeholder="Describe any collateral you're offering for this loan..."
+                    rows="3"
+                    style={styles.textarea}
+                  />
+                  <span style={styles.hint}>Providing collateral may improve your approval chances</span>
+                </div>
+              </div>
+
+              {depositAmount > 0 && (
+                <div style={styles.depositSection}>
+                  <div style={styles.depositHeader}>
+                    <h3 style={styles.depositTitle}>💰 Required Deposit</h3>
+                    <p style={styles.depositDesc}>A {(DEPOSIT_PERCENTAGE * 100)}% deposit is required to process your loan application</p>
+                  </div>
+
+                  <div style={styles.depositBox}>
+                    <div style={styles.depositRow}>
+                      <span style={styles.depositLabel}>Loan Amount:</span>
+                      <span style={styles.depositValue}>${parseFloat(formData.principal).toLocaleString()}</span>
+                    </div>
+                    <div style={styles.depositRow}>
+                      <span style={styles.depositLabel}>Required Deposit ({(DEPOSIT_PERCENTAGE * 100)}%):</span>
+                      <span style={{...styles.depositValue, color: '#10b981', fontSize: '1.5rem'}}>
+                        ${depositAmount.toLocaleString()}
+                      </span>
+                    </div>
+                    <div style={styles.depositRow}>
+                      <span style={styles.depositLabel}>Your Account Balance:</span>
+                      <span style={{...styles.depositValue, color: hasSufficientBalance ? '#10b981' : '#ef4444'}}>
+                        ${accountBalance.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  {!hasSufficientBalance && (
+                    <div style={styles.insufficientAlert}>
+                      <span style={styles.alertIcon}>⚠️</span>
+                      <div>
+                        <strong>Insufficient Balance</strong>
+                        <p style={{margin: '4px 0 0 0'}}>
+                          You need ${(depositAmount - accountBalance).toLocaleString()} more in your account. 
+                          Please deposit funds or choose a lower loan amount.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>
+                      <span style={styles.labelText}>Deposit Method</span>
+                      <span style={styles.required}>*</span>
+                    </label>
+                    <select
+                      name="deposit_method"
+                      value={formData.deposit_method}
                       onChange={handleInputChange}
-                      placeholder="36"
-                      min="1"
-                      max="360"
+                      style={styles.select}
                       required
-                      style={{...styles.input, paddingRight: '80px'}}
-                    />
-                    <span style={styles.inputSuffix}>months</span>
-                  </div>
-                  <span style={styles.hint}>Common terms: 12, 24, 36, 60, 120, 180, 360 months</span>
-                </div>
-
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>
-                    <span style={styles.labelText}>Interest Rate (APR)</span>
-                  </label>
-                  <div style={styles.inputWrapper}>
-                    <input
-                      type="text"
-                      name="interest_rate"
-                      value={formData.interest_rate ? `${formData.interest_rate}%` : ''}
-                      readOnly
-                      placeholder="Rate will be set automatically"
-                      style={{...styles.input, backgroundColor: '#f9fafb', cursor: 'not-allowed', color: '#10b981', fontWeight: '600'}}
-                    />
-                  </div>
-                  <span style={styles.hint}>Competitive rate automatically assigned based on loan type</span>
-                </div>
-              </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>
-                  <span style={styles.labelText}>Purpose of Loan</span>
-                  <span style={styles.required}>*</span>
-                </label>
-                <textarea
-                  name="purpose"
-                  value={formData.purpose}
-                  onChange={handleInputChange}
-                  placeholder="Please describe in detail how you plan to use the loan funds. For example: 'Consolidating credit card debt totaling $15,000' or 'Purchasing equipment for my consulting business'..."
-                  required
-                  rows="5"
-                  style={styles.textarea}
-                />
-                <span style={styles.hint}>Provide specific details to help us process your application faster</span>
-              </div>
-            </div>
-          )}
-
-          {/* Payment Calculator */}
-          {formData.principal && formData.interest_rate && formData.term_months && (
-            <div style={styles.calculatorSection}>
-              <div style={styles.calculatorHeader}>
-                <h3 style={styles.calculatorTitle}>📊 Payment Estimate</h3>
-                <p style={styles.calculatorDesc}>Based on the information provided</p>
-              </div>
-
-              <div style={styles.calculatorGrid}>
-                <div style={styles.calculatorCard}>
-                  <div style={styles.calculatorLabel}>Monthly Payment</div>
-                  <div style={styles.calculatorValue}>${calculateMonthlyPayment()}</div>
-                </div>
-
-                <div style={styles.calculatorCard}>
-                  <div style={styles.calculatorLabel}>Total to Repay</div>
-                  <div style={styles.calculatorValue}>
-                    ${(parseFloat(calculateMonthlyPayment()) * parseInt(formData.term_months)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    >
+                      <option value="balance">Pay from Account Balance</option>
+                      <option value="crypto">Crypto Deposit</option>
+                      <option value="wire">Wire Transfer</option>
+                      <option value="check">Check Deposit</option>
+                    </select>
                   </div>
                 </div>
-
-                <div style={styles.calculatorCard}>
-                  <div style={styles.calculatorLabel}>Total Interest</div>
-                  <div style={styles.calculatorValue}>
-                    ${calculateTotalInterest()}
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.calculatorNote}>
-                <span style={styles.noteIcon}>ℹ️</span>
-                <span>These are estimated figures. Final terms will be confirmed upon approval.</span>
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div style={styles.actionSection}>
-            <button
-              type="button"
-              onClick={() => router.push('/loan/dashboard')}
-              style={styles.cancelButton}
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading || !formData.loan_type}
-              style={{
-                ...styles.submitButton,
-                ...((loading || !formData.loan_type) ? styles.submitButtonDisabled : {})
-              }}
-            >
-              {loading ? (
-                <>
-                  <span style={styles.spinner}></span>
-                  Processing...
-                </>
-              ) : (
-                'Submit Application'
               )}
-            </button>
-          </div>
+
+              {formData.principal && formData.interest_rate && formData.term_months && (
+                <div style={styles.calculatorSection}>
+                  <div style={styles.calculatorHeader}>
+                    <h3 style={styles.calculatorTitle}>📊 Payment Estimate</h3>
+                    <p style={styles.calculatorDesc}>Based on the information provided</p>
+                  </div>
+
+                  <div style={styles.calculatorGrid}>
+                    <div style={styles.calculatorCard}>
+                      <div style={styles.calculatorLabel}>Monthly Payment</div>
+                      <div style={styles.calculatorValue}>${calculateMonthlyPayment()}</div>
+                    </div>
+
+                    <div style={styles.calculatorCard}>
+                      <div style={styles.calculatorLabel}>Total to Repay</div>
+                      <div style={styles.calculatorValue}>
+                        ${(parseFloat(calculateMonthlyPayment()) * parseInt(formData.term_months)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                    </div>
+
+                    <div style={styles.calculatorCard}>
+                      <div style={styles.calculatorLabel}>Total Interest</div>
+                      <div style={styles.calculatorValue}>
+                        ${calculateTotalInterest()}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={styles.calculatorNote}>
+                    <span style={styles.noteIcon}>ℹ️</span>
+                    <span>These are estimated figures. Final terms will be confirmed upon approval.</span>
+                  </div>
+                </div>
+              )}
+
+              <div style={styles.actionSection}>
+                <button
+                  type="button"
+                  onClick={() => router.push('/loan/dashboard')}
+                  style={styles.cancelButton}
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || !formData.loan_type || !hasSufficientBalance}
+                  style={{
+                    ...styles.submitButton,
+                    ...((loading || !formData.loan_type || !hasSufficientBalance) ? styles.submitButtonDisabled : {})
+                  }}
+                >
+                  {loading ? (
+                    <>
+                      <span style={styles.spinner}></span>
+                      Processing...
+                    </>
+                  ) : (
+                    'Submit Application'
+                  )}
+                </button>
+              </div>
+            </>
+          )}
         </form>
 
-        {/* Information Box */}
         <div style={styles.infoBox}>
-          <h3 style={styles.infoTitle}>📋 What Happens Next?</h3>
+          <h3 style={styles.infoTitle}>📋 Application Process</h3>
           <div style={styles.timelineContainer}>
             <div style={styles.timelineItem}>
               <div style={styles.timelineDot}></div>
               <div style={styles.timelineContent}>
-                <strong>Immediate Confirmation</strong>
-                <p>You'll receive an email confirming receipt of your application</p>
+                <strong>1. Submit Application</strong>
+                <p>Complete the loan application form with required details</p>
               </div>
             </div>
             <div style={styles.timelineItem}>
               <div style={styles.timelineDot}></div>
               <div style={styles.timelineContent}>
-                <strong>Application Review</strong>
-                <p>Our loan department will review your application within 24-48 hours</p>
+                <strong>2. Make Required Deposit</strong>
+                <p>Deposit {(DEPOSIT_PERCENTAGE * 100)}% of the requested loan amount</p>
               </div>
             </div>
             <div style={styles.timelineItem}>
               <div style={styles.timelineDot}></div>
               <div style={styles.timelineContent}>
-                <strong>Decision Notification</strong>
-                <p>You'll receive an in-app notification and email with the decision</p>
+                <strong>3. Application Review</strong>
+                <p>Our team reviews your application within 24-48 hours</p>
               </div>
             </div>
             <div style={styles.timelineItem}>
               <div style={styles.timelineDot}></div>
               <div style={styles.timelineContent}>
-                <strong>Funding (if approved)</strong>
-                <p>Approved funds will be credited to your active account</p>
+                <strong>4. Approval & Funding</strong>
+                <p>Upon approval, funds are credited to your account</p>
               </div>
             </div>
           </div>
@@ -457,12 +556,8 @@ function LoanApplicationContent() {
             <span style={styles.supportIcon}>💬</span>
             <div>
               Need assistance? Contact our support team at{' '}
-              <a href={`tel:${bankDetails?.phone || '+1 (636) 635-6122'}`} style={{ color: '#1A3E6F', fontWeight: '600', textDecoration: 'none', wordBreak: 'break-word' }}>
+              <a href={`tel:${bankDetails?.phone || '+1 (636) 635-6122'}`} style={{ color: '#1A3E6F', fontWeight: '600', textDecoration: 'none' }}>
                 {bankDetails?.phone || '+1 (636) 635-6122'}
-              </a>{' '}
-              or email{' '}
-              <a href={`mailto:${bankDetails?.email_contact || 'contact-us@theoaklinebank.com'}`} style={{ color: '#1A3E6F', fontWeight: '600', textDecoration: 'none', wordBreak: 'break-word' }}>
-                {bankDetails?.email_contact || 'contact-us@theoaklinebank.com'}
               </a>
             </div>
           </div>
@@ -476,7 +571,7 @@ const styles = {
   container: {
     minHeight: '100vh',
     backgroundColor: '#f8fafc',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
   },
   hero: {
     background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
@@ -512,50 +607,16 @@ const styles = {
     padding: '0 20px 60px',
     position: 'relative'
   },
-  progressBar: {
+  warningAlert: {
+    backgroundColor: '#fef3c7',
+    border: '1px solid: '#fde68a',
+    borderLeft: '4px solid #f59e0b',
+    borderRadius: '12px',
+    padding: '20px',
+    marginBottom: '24px',
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    padding: '30px',
-    borderRadius: '16px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-    marginBottom: '30px'
-  },
-  progressStep: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '8px'
-  },
-  progressCircle: {
-    width: '48px',
-    height: '48px',
-    borderRadius: '50%',
-    backgroundColor: '#e5e7eb',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: '700',
-    fontSize: '18px',
-    color: '#6b7280',
-    transition: 'all 0.3s'
-  },
-  progressCircleActive: {
-    backgroundColor: '#10b981',
-    color: '#fff',
-    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)'
-  },
-  progressLine: {
-    width: '80px',
-    height: '3px',
-    backgroundColor: '#e5e7eb',
-    margin: '0 20px'
-  },
-  progressLabel: {
-    fontSize: '13px',
-    fontWeight: '600',
-    color: '#64748b'
+    gap: '16px',
+    alignItems: 'flex-start'
   },
   alert: {
     backgroundColor: '#fef2f2',
@@ -627,12 +688,7 @@ const styles = {
     border: '2px solid #e5e7eb',
     backgroundColor: '#fff',
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    ':hover': {
-      borderColor: '#10b981',
-      transform: 'translateY(-2px)',
-      boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
-    }
+    transition: 'all 0.3s ease'
   },
   loanTypeCardSelected: {
     borderColor: '#10b981',
@@ -736,6 +792,17 @@ const styles = {
     fontFamily: 'inherit',
     backgroundColor: '#fff'
   },
+  select: {
+    width: '100%',
+    padding: '14px 16px',
+    fontSize: '15px',
+    border: '2px solid #e5e7eb',
+    borderRadius: '10px',
+    outline: 'none',
+    transition: 'all 0.3s',
+    fontFamily: 'inherit',
+    backgroundColor: '#fff'
+  },
   textarea: {
     width: '100%',
     padding: '14px 16px',
@@ -753,6 +820,59 @@ const styles = {
     fontSize: '13px',
     color: '#64748b',
     marginTop: '6px'
+  },
+  depositSection: {
+    padding: '40px',
+    backgroundColor: '#f0fdf4',
+    borderTop: '1px solid #e5e7eb'
+  },
+  depositHeader: {
+    textAlign: 'center',
+    marginBottom: '28px'
+  },
+  depositTitle: {
+    fontSize: '22px',
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: '8px'
+  },
+  depositDesc: {
+    fontSize: '14px',
+    color: '#64748b'
+  },
+  depositBox: {
+    backgroundColor: '#fff',
+    padding: '24px',
+    borderRadius: '12px',
+    marginBottom: '20px',
+    border: '1px solid #dcfce7'
+  },
+  depositRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '12px 0',
+    borderBottom: '1px solid #f3f4f6'
+  },
+  depositLabel: {
+    fontSize: '14px',
+    color: '#6b7280',
+    fontWeight: '500'
+  },
+  depositValue: {
+    fontSize: '18px',
+    fontWeight: '700',
+    color: '#1f2937'
+  },
+  insufficientAlert: {
+    backgroundColor: '#fef2f2',
+    border: '1px solid #fee2e2',
+    borderRadius: '10px',
+    padding: '16px',
+    marginBottom: '20px',
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'flex-start',
+    color: '#dc2626'
   },
   calculatorSection: {
     padding: '40px',
@@ -912,41 +1032,8 @@ const styles = {
   supportIcon: {
     fontSize: '24px',
     flexShrink: 0
-  },
-  link: {
-    color: '#10b981',
-    textDecoration: 'none',
-    fontWeight: '600'
   }
 };
-
-// Add CSS animation for spinner and input styles
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-      opacity: 1;
-    }
-
-    input:focus,
-    textarea:focus {
-      border-color: #10b981 !important;
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
-    }
-
-    input::placeholder,
-    textarea::placeholder {
-      color: #9ca3af;
-      font-weight: 400;
-    }
-  `;
-  document.head.appendChild(style);
-}
 
 export default function LoanApplication() {
   return (

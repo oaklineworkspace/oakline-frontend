@@ -20,7 +20,7 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized - Invalid authentication' });
     }
 
-    const { loan_type, principal, term_months, purpose, interest_rate } = req.body;
+    const { loan_type, principal, term_months, purpose, interest_rate, collateral_description, deposit_required, deposit_method } = req.body;
 
     if (!loan_type || !principal || !term_months || !purpose || !interest_rate) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -28,6 +28,17 @@ export default async function handler(req, res) {
 
     if (principal <= 0 || term_months <= 0 || interest_rate < 0) {
       return res.status(400).json({ error: 'Invalid loan parameters' });
+    }
+
+    // Check for existing active or pending loans
+    const { data: existingLoans, error: existingLoansError } = await supabaseAdmin
+      .from('loans')
+      .select('id, status')
+      .eq('user_id', user.id)
+      .in('status', ['pending', 'active', 'awaiting_approval']);
+
+    if (!existingLoansError && existingLoans && existingLoans.length > 0) {
+      return res.status(400).json({ error: 'You already have an active or pending loan. Please complete your existing loan before applying for a new one.' });
     }
 
     const { data: activeAccounts, error: accountError } = await supabaseAdmin
@@ -72,12 +83,16 @@ export default async function handler(req, res) {
         interest_rate,
         term_months,
         purpose,
+        collateral_description: collateral_description || null,
         remaining_balance: totalDue,
         monthly_payment_amount: monthlyPayment,
         total_amount: totalDue,
         next_payment_date: firstPaymentDate.toISOString().split('T')[0],
         payments_made: 0,
-        status: 'pending'
+        status: 'pending',
+        deposit_required: deposit_required || 0,
+        deposit_paid: false,
+        deposit_method: deposit_method || 'balance'
       }])
       .select()
       .single();
