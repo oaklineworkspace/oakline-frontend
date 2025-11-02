@@ -554,6 +554,32 @@ export default function Apply() {
       console.log('✅ Application created successfully:', applicationData.id);
       console.log('Application will be reviewed by admin who will create user account and send credentials');
 
+      // Send confirmation email to applicant
+      try {
+        const emailResponse = await fetch('/api/send-application-confirmation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: normalizedEmail,
+            firstName: formData.firstName.trim(),
+            lastName: formData.lastName.trim(),
+            accountTypes: formData.accountTypes.map(id => {
+              const accountType = ACCOUNT_TYPES.find(at => at.id === id);
+              return accountType?.name || '';
+            })
+          })
+        });
+
+        if (emailResponse.ok) {
+          console.log('✅ Confirmation email sent to applicant');
+        } else {
+          console.error('Failed to send confirmation email, but application was created');
+        }
+      } catch (emailError) {
+        console.error('Error sending confirmation email:', emailError);
+        // Don't fail the application if email fails
+      }
+
       // Show success screen
       setSubmitSuccess(true);
       setCurrentStep(4); // Move to success screen
@@ -1893,7 +1919,7 @@ export default function Apply() {
           )}
 
           {/* Step 4: Success Screen */}
-          {currentStep === 4 && submitSuccess && (
+          {currentStep === 4 && (
             <div style={{
               textAlign: 'center',
               padding: '0',
