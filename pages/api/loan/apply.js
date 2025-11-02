@@ -35,7 +35,7 @@ export default async function handler(req, res) {
       .from('loans')
       .select('id, status')
       .eq('user_id', user.id)
-      .in('status', ['pending', 'active', 'awaiting_approval']);
+      .in('status', ['pending', 'active', 'approved']);
 
     if (!existingLoansError && existingLoans && existingLoans.length > 0) {
       return res.status(400).json({ error: 'You already have an active or pending loan. Please complete your existing loan before applying for a new one.' });

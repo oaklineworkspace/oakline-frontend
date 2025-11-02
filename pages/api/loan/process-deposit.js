@@ -98,7 +98,7 @@ export default async function handler(req, res) {
           deposit_amount: amount,
           deposit_date: new Date().toISOString(),
           deposit_method: 'balance',
-          status: 'awaiting_approval',
+          status: 'pending',
           updated_at: new Date().toISOString()
         })
         .eq('id', loan_id);
@@ -136,7 +136,7 @@ export default async function handler(req, res) {
         .from('loans')
         .update({
           deposit_method: 'crypto',
-          status: 'awaiting_crypto_deposit',
+          status: 'pending',
           updated_at: new Date().toISOString()
         })
         .eq('id', loan_id);
