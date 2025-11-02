@@ -122,10 +122,13 @@ export default async function handler(req, res) {
         account_id: account.id,
         user_id: user.id,
         type: 'LOAN_PAYMENT',
+        transaction_type: 'debit',
         amount: -amount,
+        balance_before: originalAccountBalance,
         balance_after: newBalance,
-        description: `Loan payment for ${loan.loan_type} loan`,
+        description: `Loan payment for ${loan.loan_type?.replace(/_/g, ' ')} loan`,
         status: 'completed',
+        reference: `LOAN-PAY-${loan.id.substring(0, 8)}`,
         created_at: new Date().toISOString()
       }]);
 

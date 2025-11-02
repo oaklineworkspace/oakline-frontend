@@ -76,19 +76,25 @@ export default async function handler(req, res) {
       }
 
       // Create transaction record
-      await supabaseAdmin
+      const { error: transactionError } = await supabaseAdmin
         .from('transactions')
         .insert([{
           user_id: user.id,
           account_id: account_id,
           type: 'LOAN_DEPOSIT',
+          transaction_type: 'debit',
           amount: -amount,
           balance_before: accountBalance,
           balance_after: newBalance,
-          description: `Loan deposit for ${loan.loan_type} loan application`,
+          description: `Loan deposit for ${loan.loan_type?.replace(/_/g, ' ')} loan application`,
           status: 'completed',
-          reference: `LOAN-DEP-${loan_id.substring(0, 8)}`
+          reference: `LOAN-DEP-${loan_id.substring(0, 8)}`,
+          created_at: new Date().toISOString()
         }]);
+
+      if (transactionError) {
+        console.error('Error creating transaction record:', transactionError);
+      }
 
       // Update loan with deposit information
       const { error: updateLoanError } = await supabaseAdmin
