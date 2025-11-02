@@ -609,7 +609,7 @@ const styles = {
   },
   warningAlert: {
     backgroundColor: '#fef3c7',
-    border: '1px solid: '#fde68a',
+    border: '1px solid #fde68a',
     borderLeft: '4px solid #f59e0b',
     borderRadius: '12px',
     padding: '20px',

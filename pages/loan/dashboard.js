@@ -358,6 +358,16 @@ function LoanDashboardContent() {
                           <span style={styles.loanValue}>${parseFloat(loan.principal).toLocaleString()}</span>
                         </div>
                         
+                        {loan.deposit_required && loan.deposit_required > 0 && (
+                          <div style={styles.loanRow}>
+                            <span style={styles.loanLabel}>Deposit Required</span>
+                            <span style={{...styles.loanValue, color: loan.deposit_paid ? '#10b981' : '#f59e0b'}}>
+                              ${parseFloat(loan.deposit_required).toLocaleString()}
+                              {loan.deposit_paid && ' ✓ Paid'}
+                            </span>
+                          </div>
+                        )}
+                        
                         {loan.status === 'active' && (
                           <>
                             <div style={styles.loanRow}>
@@ -395,7 +405,19 @@ function LoanDashboardContent() {
                           </>
                         )}
 
-                        {loan.status === 'pending' && (
+                        {loan.status === 'pending' && !loan.deposit_paid && loan.deposit_required > 0 && (
+                          <div style={styles.warningNotice}>
+                            💰 Deposit Required: Please complete your ${parseFloat(loan.deposit_required).toLocaleString()} deposit to proceed with approval.
+                          </div>
+                        )}
+
+                        {loan.status === 'pending' && loan.deposit_paid && (
+                          <div style={styles.pendingNotice}>
+                            ⏳ Your application is being reviewed. You'll receive a notification once approved.
+                          </div>
+                        )}
+
+                        {loan.status === 'pending' && !loan.deposit_required && (
                           <div style={styles.pendingNotice}>
                             ⏳ Your application is being reviewed. You'll receive a notification once approved.
                           </div>
@@ -419,6 +441,18 @@ function LoanDashboardContent() {
                           </div>
                         )}
                       </div>
+
+                      {loan.status === 'pending' && !loan.deposit_paid && loan.deposit_required > 0 && (
+                        <div style={styles.loanCardActions}>
+                          <Link
+                            href={`/loan/deposit-confirmation?loan_id=${loan.id}&amount=${loan.deposit_required}`}
+                            style={styles.primaryActionButton}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            💰 Complete Deposit
+                          </Link>
+                        </div>
+                      )}
 
                       {loan.status === 'active' && (
                         <div style={styles.loanCardActions}>
@@ -1076,6 +1110,16 @@ const styles = {
     border: '1px solid #fee2e2',
     borderRadius: '8px',
     color: '#991b1b',
+    fontSize: '0.85rem',
+    fontWeight: '600'
+  },
+  warningNotice: {
+    marginTop: '1rem',
+    padding: '0.875rem',
+    backgroundColor: '#fffbeb',
+    border: '1px solid #fde68a',
+    borderRadius: '8px',
+    color: '#92400e',
     fontSize: '0.85rem',
     fontWeight: '600'
   },
