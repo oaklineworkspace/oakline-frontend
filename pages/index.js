@@ -137,17 +137,27 @@ export default function Home() {
     { name: 'Home Loans', href: '/loans', icon: '🏠', desc: 'Mortgage solutions', color: '#3B82F6', section: 'premium' },
     { name: 'Personal Loans', href: '/loans', icon: '💰', desc: 'Competitive rates', color: '#059669', section: 'premium' },
     { name: 'Business Banking', href: '/account-types', icon: '🏢', desc: 'Commercial services', color: '#EF4444', section: 'premium' },
+    { name: 'Business Insights', href: '/business-insights', icon: '💼', desc: 'Market analysis & trends', color: '#0369A1', section: 'premium' },
     { name: 'Wealth Management', href: user ? '/investments' : '/login', icon: '💎', desc: 'Private banking', color: '#8B5CF6', section: 'premium' },
     { name: 'Financial Advisory', href: '/financial-advisory', icon: '🎯', desc: 'Expert consultation', color: '#06B6D4', section: 'premium' },
+    { name: 'Retirement Planning', href: '/retirement-planning', icon: '🏖️', desc: '401k & IRA guidance', color: '#7C3AED', section: 'premium' },
+    { name: 'Personal Finance Tips', href: '/personal-finance-tips', icon: '💡', desc: 'Budgeting & saving strategies', color: '#059669', section: 'premium' },
     { name: 'International Banking', href: '/internationalization', icon: '🌍', desc: 'Global services', color: '#84CC16', section: 'premium' },
     { name: 'Trust Services', href: '/about', icon: '🛡️', desc: 'Estate planning', color: '#F97316', section: 'premium' },
     { name: 'Credit Reports', href: user ? '/credit-report' : '/login', icon: '📊', desc: 'Monitor your credit', color: '#7C3AED', section: 'premium' },
     { name: 'Rewards Program', href: user ? '/rewards' : '/login', icon: '🎁', desc: 'Earn & redeem rewards', color: '#F43F5E', section: 'premium' },
+    { name: 'Digital Wallets', href: '/digital-wallets', icon: '📲', desc: 'Crypto & digital payments', color: '#8B5CF6', section: 'premium' },
+    { name: 'Green Banking', href: '/green-banking', icon: '🌱', desc: 'Sustainable banking', color: '#10B981', section: 'premium' },
+    { name: 'Promotions', href: '/promotions', icon: '🎉', desc: 'Current offers & deals', color: '#F59E0B', section: 'premium' },
+    { name: 'Community Impact', href: '/community-impact', icon: '🤝', desc: 'CSR programs', color: '#0891B2', section: 'premium' },
     { name: 'Market News', href: '/market-news', icon: '📰', desc: 'Financial insights', color: '#0EA5E9', section: 'premium' },
     { name: 'Financial Education', href: '/financial-education', icon: '📚', desc: 'Learning resources', color: '#10B981', section: 'premium' },
+    { name: 'Financial Tools', href: '/financial-tools', icon: '🔧', desc: 'Calculators & planners', color: '#F59E0B', section: 'premium' },
     { name: 'Calculators', href: '/calculators', icon: '🧮', desc: 'Financial planning tools', color: '#F59E0B', section: 'premium' },
     { name: 'Current Rates', href: '/current-rates', icon: '📈', desc: 'Interest & exchange rates', color: '#6366F1', section: 'premium' },
-    { name: 'Security Center', href: user ? '/security' : '/login', icon: '🔒', desc: 'Account protection', color: '#EF4444', section: 'premium' }
+    { name: 'Security Awareness', href: '/security-awareness', icon: '🔐', desc: 'Fraud prevention tips', color: '#DC2626', section: 'premium' },
+    { name: 'Security Center', href: user ? '/security' : '/login', icon: '🔒', desc: 'Account protection', color: '#EF4444', section: 'premium' },
+    { name: 'Customer Stories', href: '/customer-stories', icon: '⭐', desc: 'Real testimonials', color: '#EC4899', section: 'premium' }
   ];
 
   const coreFeatures = premiumFeatures.filter(f => f.section === 'core');
