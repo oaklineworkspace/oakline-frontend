@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabaseClient';
@@ -50,11 +49,11 @@ function DepositConfirmationContent() {
           console.log('Loan updated:', payload);
           if (payload.new) {
             setLoanDetails(payload.new);
-            
+
             if (payload.new.deposit_paid) {
               setSuccess('Deposit confirmed! Your loan application is now under review.');
             }
-            
+
             if (payload.new.status === 'approved' || payload.new.status === 'active') {
               setSuccess('Great news! Your loan has been approved!');
               setTimeout(() => {
@@ -140,7 +139,7 @@ function DepositConfirmationContent() {
       }
 
       setSuccess('Deposit processed successfully! Your loan application is now under review.');
-      
+
       setTimeout(() => {
         router.push('/loan/dashboard');
       }, 2000);
@@ -187,7 +186,7 @@ function DepositConfirmationContent() {
       if (data.redirect) {
         router.push(data.redirect);
       } else {
-        router.push(`/deposit-crypto?loan_id=${loan_id}&amount=${amount}&redirect=loan_deposit`);
+        router.push(`/loan/deposit-crypto?loan_id=${loan_id}&amount=${amount}`);
       }
 
     } catch (err) {
@@ -254,7 +253,7 @@ function DepositConfirmationContent() {
 
           <div style={styles.methodSection}>
             <h3 style={styles.methodTitle}>Select Deposit Method</h3>
-            
+
             <div style={styles.methodGrid}>
               <div
                 onClick={() => setDepositMethod('balance')}
@@ -302,7 +301,7 @@ function DepositConfirmationContent() {
               >
                 {accounts.map((account) => (
                   <option key={account.id} value={account.id}>
-                    {account.account_type.toUpperCase()} - ****{account.account_number.slice(-4)} 
+                    {account.account_type.toUpperCase()} - ****{account.account_number.slice(-4)}
                     (${parseFloat(account.balance).toLocaleString()})
                   </option>
                 ))}
