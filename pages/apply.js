@@ -168,7 +168,7 @@ export default function Apply() {
   }, []);
 
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const validatePhone = (phone) => /^[\d\s\-\(\)]{10,}$/.test(phone);
+  const validatePhone = (phone) => /^\+?[\d\s\-\(\)]{10,}$/.test(phone);
 
   const getEffectiveCountry = () => {
     return formData.country === 'OTHER' ? formData.manualCountry : formData.country;
@@ -316,7 +316,7 @@ export default function Apply() {
       if (!formData.phone.trim()) {
         newErrors.phone = 'Phone number is required';
       } else if (!validatePhone(formData.phone)) {
-        newErrors.phone = 'Invalid phone number';
+        newErrors.phone = 'Invalid phone number format (can start with + for international numbers)';
       }
       if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
 
