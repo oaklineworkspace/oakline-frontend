@@ -17,6 +17,12 @@ Oakline Bank is a comprehensive Next.js/React-based banking web application prov
   - Removed all admin pages (`pages/admin/` and `pages/api/admin/`) as they belong in separate admin repository
   - Confirmed all Supabase environment variables configured in Replit Secrets
   - Development server running on port 5000 with host 0.0.0.0 for Replit compatibility
+  - All npm dependencies installed successfully (407 packages)
+  - Workflow configured with proper autoscale deployment settings
+- **Bug Fixes (November 3, 2025)**:
+  - **Crypto Deposit Initial Load Fix**: Fixed `deposit-crypto.js` to display neutral "Select a cryptocurrency above to continue" message instead of erroneously showing "No network available" when page first loads. Changed default `crypto_type` from 'BTC' to empty string, preventing premature network availability check.
+  - **Transaction Purpose Display Fix**: Updated `dashboard.js` and `transactions.js` to properly map and display crypto deposit purposes. Now correctly shows "Add to Balance" for `general_deposit`, "Loan Payment" for `loan_requirement`/`loan_payment`, and "Transaction" as fallback instead of "undefined".
+  - **Loan Notification Email**: Added `sendLoanNotificationEmail` function to `lib/email.js` for sending professional loan approval/decline notifications with conditional styling (green for approved, red for declined), loan details, optional admin remarks, and next steps guidance. Ready for integration with admin loan management workflows.
 - **Phone Validation Enhancement**: Updated account application form (`pages/apply.js`) to accept international phone numbers with optional `+` prefix. Regex pattern changed from `/^[\d\s\-\(\)]{10,}$/` to `/^\+?[\d\s\-\(\)]{10,}$/` with improved error messaging.
 - **Content Expansion - 10 New Banking Pages**: Added comprehensive informational pages with professional AI-generated hero images:
   - **Personal Finance Tips** (`/pages/personal-finance-tips.js`): Budgeting strategies, emergency fund guidance, debt management, credit score improvement
