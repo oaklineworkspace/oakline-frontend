@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -11,6 +12,7 @@ export default function TransactionsHistory() {
   const [filter, setFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -87,7 +89,6 @@ export default function TransactionsHistory() {
       // Merge and format crypto deposits as transactions
       if (cryptoTxData && cryptoTxData.length > 0) {
         const formattedCryptoDeposits = cryptoTxData.map(crypto => {
-          // Map purpose field to display text
           let purposeDisplay = '';
           if (crypto.purpose === 'general_deposit') {
             purposeDisplay = 'Add to Balance';
@@ -107,7 +108,7 @@ export default function TransactionsHistory() {
             id: crypto.id,
             type: 'crypto_deposit',
             transaction_type: 'crypto_deposit',
-            description: `${cryptoSymbol} ${purposeDisplay} via ${networkName}`,
+            description: `${cryptoSymbol} ${purposeDisplay}`,
             amount: crypto.net_amount || crypto.amount || 0,
             status: crypto.status || 'pending',
             created_at: crypto.created_at,
@@ -181,7 +182,6 @@ export default function TransactionsHistory() {
     const txType = (tx.type || tx.transaction_type || '').toLowerCase();
     const description = (tx.description || '').toLowerCase();
 
-    // Check transaction type first for exact matches
     if (txType === 'deposit' || 
         txType === 'credit' || 
         txType === 'interest' || 
@@ -208,7 +208,6 @@ export default function TransactionsHistory() {
       return false;
     }
 
-    // Fallback
     const amount = parseFloat(tx.amount) || 0;
     return amount >= 0;
   };
@@ -229,7 +228,7 @@ export default function TransactionsHistory() {
   };
 
   const getFilteredTransactions = () => {
-    let filtered = [...transactions]; // Create a copy to avoid mutation
+    let filtered = [...transactions];
 
     if (filter !== 'all') {
       filtered = filtered.filter(tx => {
@@ -256,6 +255,27 @@ export default function TransactionsHistory() {
     }
 
     return filtered;
+  };
+
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('Copied to clipboard!');
+    } catch (err) {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        alert('Copied to clipboard!');
+      } catch (e) {
+        alert(`Value: ${text}`);
+      }
+      document.body.removeChild(textArea);
+    }
   };
 
   const filteredTransactions = getFilteredTransactions();
@@ -339,24 +359,6 @@ export default function TransactionsHistory() {
             >
               ⏳ Pending
             </button>
-            <button
-              onClick={() => setStatusFilter('failed')}
-              style={{
-                ...styles.filterButton,
-                ...(statusFilter === 'failed' ? styles.filterButtonActive : {})
-              }}
-            >
-              ✗ Failed
-            </button>
-            <button
-              onClick={() => setStatusFilter('cancelled')}
-              style={{
-                ...styles.filterButton,
-                ...(statusFilter === 'cancelled' ? styles.filterButtonActive : {})
-              }}
-            >
-              ⊘ Cancelled
-            </button>
           </div>
 
           <input
@@ -377,72 +379,28 @@ export default function TransactionsHistory() {
         ) : (
           <div style={styles.transactionsList}>
             {filteredTransactions.map(tx => {
-              const txType = tx.type || tx.transaction_type || '';
               const amount = parseFloat(tx.amount) || 0;
               const isCredit = isTransactionCredit(tx);
               const status = tx.status || 'completed';
               const statusColors = getStatusColor(status);
 
               return (
-                <div key={tx.id} style={styles.transactionItem}>
+                <div 
+                  key={tx.id} 
+                  style={styles.transactionItem}
+                  onClick={() => setSelectedTransaction(tx)}
+                >
                   <div style={styles.transactionLeft}>
                     <span style={styles.transactionIcon}>
                       {getTransactionIcon(tx.type || tx.transaction_type)}
                     </span>
                     <div style={styles.transactionInfo}>
                       <div style={styles.transactionDescription}>
-                        {tx.description || (tx.type || tx.transaction_type)?.replace(/_/g, ' ').toUpperCase()}</div>
+                        {tx.description || (tx.type || tx.transaction_type)?.replace(/_/g, ' ').toUpperCase()}
+                      </div>
                       <div style={styles.transactionDate}>
                         {formatDate(tx.created_at)}
                       </div>
-                      {tx.accounts?.account_number && (
-                        <div style={styles.transactionAccount}>
-                          Account •••• {tx.accounts.account_number.slice(-4)}
-                        </div>
-                      )}
-                      {tx.reference && (
-                        <div 
-                          style={styles.transactionRef}
-                          onClick={async () => {
-                            try {
-                              await navigator.clipboard.writeText(tx.reference);
-                              alert('Reference number copied to clipboard!');
-                            } catch (err) {
-                              // Fallback for browsers without clipboard API
-                              const textArea = document.createElement('textarea');
-                              textArea.value = tx.reference;
-                              textArea.style.position = 'fixed';
-                              textArea.style.opacity = '0';
-                              document.body.appendChild(textArea);
-                              textArea.select();
-                              try {
-                                document.execCommand('copy');
-                                alert('Reference number copied to clipboard!');
-                              } catch (e) {
-                                alert(`Reference: ${tx.reference}`);
-                              }
-                              document.body.removeChild(textArea);
-                            }
-                          }}
-                          title="Click to copy reference number"
-                        >
-                          Ref: {tx.reference} 📋
-                        </div>
-                      )}
-                      {tx.transaction_type === 'crypto_deposit' && (
-                        <>
-                          {tx.fee && (
-                            <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
-                              Fee: ${parseFloat(tx.fee).toFixed(2)} | Gross: ${parseFloat(tx.gross_amount || tx.amount).toFixed(2)}
-                            </div>
-                          )}
-                          {tx.confirmations !== undefined && (
-                            <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
-                              Confirmations: {tx.confirmations}/{tx.required_confirmations || 3}
-                            </div>
-                          )}
-                        </>
-                      )}
                     </div>
                   </div>
                   <div style={styles.transactionRight}>
@@ -466,6 +424,148 @@ export default function TransactionsHistory() {
           </div>
         )}
       </div>
+
+      {/* Transaction Details Modal */}
+      {selectedTransaction && (
+        <div style={styles.modalOverlay} onClick={() => setSelectedTransaction(null)}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>Transaction Details</h2>
+              <button 
+                style={styles.closeButton}
+                onClick={() => setSelectedTransaction(null)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={styles.modalBody}>
+              <div style={styles.detailRow}>
+                <span style={styles.detailLabel}>Type:</span>
+                <span style={styles.detailValue}>
+                  {getTransactionIcon(selectedTransaction.type || selectedTransaction.transaction_type)} {' '}
+                  {selectedTransaction.description || (selectedTransaction.type || selectedTransaction.transaction_type)?.replace(/_/g, ' ').toUpperCase()}
+                </span>
+              </div>
+
+              <div style={styles.detailRow}>
+                <span style={styles.detailLabel}>Amount:</span>
+                <span style={{
+                  ...styles.detailValue,
+                  color: isTransactionCredit(selectedTransaction) ? '#059669' : '#dc2626',
+                  fontWeight: '700',
+                  fontSize: '1.1rem'
+                }}>
+                  {isTransactionCredit(selectedTransaction) ? '+' : '-'}
+                  {formatCurrency(Math.abs(parseFloat(selectedTransaction.amount) || 0))}
+                </span>
+              </div>
+
+              <div style={styles.detailRow}>
+                <span style={styles.detailLabel}>Status:</span>
+                <span style={{
+                  ...styles.statusBadge,
+                  ...getStatusColor(selectedTransaction.status || 'completed')
+                }}>
+                  {selectedTransaction.status || 'completed'}
+                </span>
+              </div>
+
+              <div style={styles.detailRow}>
+                <span style={styles.detailLabel}>Date:</span>
+                <span style={styles.detailValue}>{formatDate(selectedTransaction.created_at)}</span>
+              </div>
+
+              {selectedTransaction.accounts?.account_number && (
+                <div style={styles.detailRow}>
+                  <span style={styles.detailLabel}>Account:</span>
+                  <span style={styles.detailValue}>
+                    {selectedTransaction.accounts.account_type} (••••{selectedTransaction.accounts.account_number.slice(-4)})
+                  </span>
+                </div>
+              )}
+
+              {selectedTransaction.reference && (
+                <div style={styles.detailRow}>
+                  <span style={styles.detailLabel}>Reference:</span>
+                  <span 
+                    style={{...styles.detailValue, ...styles.copyableText}}
+                    onClick={() => copyToClipboard(selectedTransaction.reference)}
+                  >
+                    {selectedTransaction.reference} 📋
+                  </span>
+                </div>
+              )}
+
+              {selectedTransaction.transaction_type === 'crypto_deposit' && (
+                <>
+                  <div style={styles.divider}></div>
+                  <h3 style={styles.sectionTitle}>Crypto Details</h3>
+
+                  <div style={styles.detailRow}>
+                    <span style={styles.detailLabel}>Cryptocurrency:</span>
+                    <span style={styles.detailValue}>
+                      {selectedTransaction.crypto_symbol} ({selectedTransaction.crypto_type})
+                    </span>
+                  </div>
+
+                  <div style={styles.detailRow}>
+                    <span style={styles.detailLabel}>Network:</span>
+                    <span style={styles.detailValue}>{selectedTransaction.network_type}</span>
+                  </div>
+
+                  {selectedTransaction.wallet_address && (
+                    <div style={styles.detailRow}>
+                      <span style={styles.detailLabel}>Wallet Address:</span>
+                      <span 
+                        style={{...styles.detailValue, ...styles.copyableText, fontSize: '0.75rem'}}
+                        onClick={() => copyToClipboard(selectedTransaction.wallet_address)}
+                      >
+                        {selectedTransaction.wallet_address.substring(0, 20)}...{selectedTransaction.wallet_address.slice(-10)} 📋
+                      </span>
+                    </div>
+                  )}
+
+                  {selectedTransaction.transaction_hash && (
+                    <div style={styles.detailRow}>
+                      <span style={styles.detailLabel}>Transaction Hash:</span>
+                      <span 
+                        style={{...styles.detailValue, ...styles.copyableText, fontSize: '0.75rem'}}
+                        onClick={() => copyToClipboard(selectedTransaction.transaction_hash)}
+                      >
+                        {selectedTransaction.transaction_hash.substring(0, 20)}...{selectedTransaction.transaction_hash.slice(-10)} 📋
+                      </span>
+                    </div>
+                  )}
+
+                  {selectedTransaction.fee && (
+                    <div style={styles.detailRow}>
+                      <span style={styles.detailLabel}>Fee:</span>
+                      <span style={styles.detailValue}>{formatCurrency(selectedTransaction.fee)}</span>
+                    </div>
+                  )}
+
+                  {selectedTransaction.gross_amount && (
+                    <div style={styles.detailRow}>
+                      <span style={styles.detailLabel}>Gross Amount:</span>
+                      <span style={styles.detailValue}>{formatCurrency(selectedTransaction.gross_amount)}</span>
+                    </div>
+                  )}
+
+                  {selectedTransaction.confirmations !== undefined && (
+                    <div style={styles.detailRow}>
+                      <span style={styles.detailLabel}>Confirmations:</span>
+                      <span style={styles.detailValue}>
+                        {selectedTransaction.confirmations}/{selectedTransaction.required_confirmations || 3}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -579,29 +679,38 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '0.8rem',
-    backgroundColor: '#f8fafc',
+    padding: '1rem',
+    backgroundColor: 'white',
     borderRadius: '12px',
     border: '1px solid #e2e8f0',
-    transition: 'all 0.2s'
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
   },
   transactionLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.6rem',
+    gap: '0.8rem',
     flex: 1,
     minWidth: 0
   },
   transactionIcon: {
-    fontSize: '1.2rem',
-    flexShrink: 0
+    fontSize: '1.5rem',
+    flexShrink: 0,
+    width: '40px',
+    height: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f1f5f9',
+    borderRadius: '10px'
   },
   transactionInfo: {
     flex: 1,
     minWidth: 0
   },
   transactionDescription: {
-    fontSize: '0.8rem',
+    fontSize: '0.9rem',
     fontWeight: '600',
     color: '#1e293b',
     marginBottom: '0.2rem',
@@ -610,40 +719,116 @@ const styles = {
     whiteSpace: 'nowrap'
   },
   transactionDate: {
-    fontSize: '0.7rem',
+    fontSize: '0.75rem',
     color: '#64748b'
-  },
-  transactionAccount: {
-    fontSize: '0.65rem',
-    color: '#94a3b8',
-    marginTop: '0.2rem'
-  },
-  transactionRef: {
-    fontSize: '0.65rem',
-    color: '#1e40af',
-    marginTop: '0.2rem',
-    cursor: 'pointer',
-    fontFamily: 'monospace',
-    fontWeight: '600'
   },
   transactionRight: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-end',
-    gap: '0.3rem',
+    gap: '0.4rem',
     flexShrink: 0
   },
   transactionAmount: {
-    fontSize: '0.85rem',
+    fontSize: '0.95rem',
     fontWeight: '700',
     whiteSpace: 'nowrap'
   },
   statusBadge: {
-    padding: '0.2rem 0.6rem',
+    padding: '0.25rem 0.7rem',
     borderRadius: '12px',
-    fontSize: '0.65rem',
+    fontSize: '0.7rem',
     fontWeight: '600',
     textTransform: 'capitalize',
     whiteSpace: 'nowrap'
+  },
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+    padding: '1rem'
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: '16px',
+    maxWidth: '600px',
+    width: '100%',
+    maxHeight: '90vh',
+    overflow: 'auto',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+  },
+  modalHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '1.5rem',
+    borderBottom: '1px solid #e2e8f0',
+    position: 'sticky',
+    top: 0,
+    backgroundColor: 'white',
+    borderRadius: '16px 16px 0 0'
+  },
+  modalTitle: {
+    fontSize: '1.3rem',
+    fontWeight: '700',
+    color: '#1e293b',
+    margin: 0
+  },
+  closeButton: {
+    background: 'none',
+    border: 'none',
+    fontSize: '1.5rem',
+    cursor: 'pointer',
+    color: '#64748b',
+    padding: '0.25rem',
+    lineHeight: 1,
+    transition: 'color 0.2s'
+  },
+  modalBody: {
+    padding: '1.5rem'
+  },
+  detailRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '0.75rem 0',
+    borderBottom: '1px solid #f1f5f9'
+  },
+  detailLabel: {
+    fontSize: '0.85rem',
+    fontWeight: '600',
+    color: '#64748b'
+  },
+  detailValue: {
+    fontSize: '0.9rem',
+    fontWeight: '500',
+    color: '#1e293b',
+    textAlign: 'right',
+    maxWidth: '60%',
+    wordBreak: 'break-word'
+  },
+  copyableText: {
+    color: '#1e40af',
+    cursor: 'pointer',
+    fontFamily: 'monospace',
+    textDecoration: 'underline'
+  },
+  divider: {
+    height: '1px',
+    backgroundColor: '#e2e8f0',
+    margin: '1rem 0'
+  },
+  sectionTitle: {
+    fontSize: '1rem',
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: '0.75rem'
   }
 };
