@@ -196,10 +196,21 @@ function DashboardContent() {
 
       setCards(cardsData || []);
 
-      // Fetch crypto deposits
+      // Fetch crypto deposits with crypto asset details
       const { data: cryptoDepositsData } = await supabase
         .from('crypto_deposits')
-        .select('*')
+        .select(`
+          *,
+          accounts:account_id (
+            account_number,
+            account_type
+          ),
+          crypto_assets:crypto_asset_id (
+            crypto_type,
+            network_type,
+            symbol
+          )
+        `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -949,43 +960,72 @@ function DashboardContent() {
             </div>
 
             <div style={styles.transactionsList}>
-              {cryptoDeposits.map((deposit) => (
-                <div key={deposit.id} style={styles.transactionItem}>
-                  <div style={styles.transactionLeft}>
-                    <span style={styles.transactionIcon}>₿</span>
-                    <div style={styles.transactionInfo}>
-                      <div style={styles.transactionDescription}>
-                        {deposit.crypto_type} Deposit
+              {cryptoDeposits.map((deposit) => {
+                // Get crypto details from the joined crypto_assets table
+                const cryptoType = deposit.crypto_assets?.crypto_type || 'Cryptocurrency';
+                const cryptoSymbol = deposit.crypto_assets?.symbol || 'CRYPTO';
+                const networkType = deposit.crypto_assets?.network_type || 'Network';
+                
+                // Map purpose field to display text
+                let purposeDisplay = '';
+                if (deposit.purpose === 'general_deposit') {
+                  purposeDisplay = 'Add to Balance';
+                } else if (deposit.purpose === 'loan_requirement') {
+                  purposeDisplay = 'Loan Deposit (10% Collateral)';
+                } else if (deposit.purpose === 'loan_payment') {
+                  purposeDisplay = 'Loan Payment';
+                } else {
+                  purposeDisplay = 'Deposit';
+                }
+
+                return (
+                  <div key={deposit.id} style={styles.transactionItem}>
+                    <div style={styles.transactionLeft}>
+                      <span style={styles.transactionIcon}>₿</span>
+                      <div style={styles.transactionInfo}>
+                        <div style={styles.transactionDescription}>
+                          {cryptoSymbol} {purposeDisplay} via {networkType}
+                        </div>
+                        <div style={styles.transactionDate}>
+                          {formatDate(deposit.created_at)}
+                        </div>
+                        {deposit.fee && (
+                          <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+                            Fee: ${parseFloat(deposit.fee).toFixed(2)} • Net: ${parseFloat(deposit.net_amount || deposit.amount).toFixed(2)}
+                          </div>
+                        )}
+                        {deposit.confirmations !== undefined && (
+                          <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+                            Confirmations: {deposit.confirmations}/{deposit.required_confirmations || 3}
+                          </div>
+                        )}
                       </div>
-                      <div style={styles.transactionDate}>
-                        {formatDate(deposit.created_at)}
+                    </div>
+                    <div style={styles.transactionRight}>
+                      <div style={{
+                        ...styles.transactionAmount,
+                        color: deposit.status === 'completed' ? '#059669' : '#f59e0b'
+                      }}>
+                        {deposit.status === 'completed' ? '+' : ''}
+                        {formatCurrency(deposit.net_amount || deposit.amount)}
+                      </div>
+                      <div style={{
+                        ...styles.statusBadge,
+                        backgroundColor: 
+                          deposit.status === 'pending' ? '#fef3c7' :
+                          deposit.status === 'completed' ? '#d1fae5' :
+                          '#fee2e2',
+                        color:
+                          deposit.status === 'pending' ? '#92400e' :
+                          deposit.status === 'completed' ? '#065f46' :
+                          '#991b1b'
+                      }}>
+                        {deposit.status}
                       </div>
                     </div>
                   </div>
-                  <div style={styles.transactionRight}>
-                    <div style={{
-                      ...styles.transactionAmount,
-                      color: deposit.status === 'approved' ? '#059669' : '#f59e0b'
-                    }}>
-                      {deposit.status === 'approved' ? '+' : ''}
-                      {formatCurrency(deposit.amount)}
-                    </div>
-                    <div style={{
-                      ...styles.statusBadge,
-                      backgroundColor: 
-                        deposit.status === 'pending' ? '#fef3c7' :
-                        deposit.status === 'approved' ? '#d1fae5' :
-                        '#fee2e2',
-                      color:
-                        deposit.status === 'pending' ? '#92400e' :
-                        deposit.status === 'approved' ? '#065f46' :
-                        '#991b1b'
-                    }}>
-                      {deposit.status}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
