@@ -20,6 +20,7 @@ function LoanApplicationContent() {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [successData, setSuccessData] = useState(null);
   const [bankDetails, setBankDetails] = useState(null);
   const [depositAmount, setDepositAmount] = useState(0);
   const [hasActiveLoan, setHasActiveLoan] = useState(false);
@@ -168,12 +169,12 @@ function LoanApplicationContent() {
         throw new Error(data.error || 'Failed to submit loan application');
       }
 
-      setSuccess('Loan application submitted successfully!');
-
-      // Redirect to deposit confirmation page
-      setTimeout(() => {
-        router.push(`/loan/deposit-confirmation?loan_id=${data.loan.id}&amount=${requiredDeposit}`);
-      }, 1500);
+      setSuccessData({
+        loanId: data.loan.id,
+        amount: requiredDeposit,
+        loanType: formData.loan_type
+      });
+      setSuccess('success');
 
     } catch (err) {
       setError(err.message || 'An error occurred while submitting your application');
@@ -214,6 +215,56 @@ function LoanApplicationContent() {
   const selectedLoanType = loanTypes.find(lt => lt.value === formData.loan_type);
   const accountBalance = accounts.length > 0 ? parseFloat(accounts[0].balance) : 0;
   const hasSufficientBalance = accountBalance >= depositAmount;
+
+  // Success Modal
+  if (success === 'success' && successData) {
+    return (
+      <div style={styles.successModalOverlay}>
+        <div style={styles.successModalContent}>
+          <div style={styles.successCheckmark}>
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+              <circle cx="40" cy="40" r="38" stroke="#10b981" strokeWidth="4" fill="#f0fdf4"/>
+              <path d="M25 40L35 50L55 30" stroke="#10b981" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <h2 style={styles.successModalTitle}>Application Submitted!</h2>
+          <p style={styles.successModalMessage}>
+            Your loan application has been successfully submitted. Please complete the required deposit to proceed with your application.
+          </p>
+          <div style={styles.successModalDetails}>
+            <div style={styles.successDetailRow}>
+              <span style={styles.successDetailLabel}>Loan Type:</span>
+              <span style={styles.successDetailValue}>{loanTypes.find(lt => lt.value === successData.loanType)?.label || 'Loan'}</span>
+            </div>
+            <div style={styles.successDetailRow}>
+              <span style={styles.successDetailLabel}>Required Deposit:</span>
+              <span style={styles.successDetailValue}>${parseFloat(successData.amount).toLocaleString()}</span>
+            </div>
+            <div style={styles.successDetailRow}>
+              <span style={styles.successDetailLabel}>Application Status:</span>
+              <span style={styles.successDetailValue}>⏳ Awaiting Deposit</span>
+            </div>
+          </div>
+          <div style={styles.successModalInfo}>
+            <p style={styles.successInfoText}>
+              <strong>Next Steps:</strong>
+            </p>
+            <ul style={styles.successInfoList}>
+              <li>Complete your 10% deposit to activate your application</li>
+              <li>Choose your preferred deposit method (Balance or Crypto)</li>
+              <li>Our team will review your application within 24-48 hours</li>
+            </ul>
+          </div>
+          <button
+            onClick={() => router.push(`/loan/deposit-confirmation?loan_id=${successData.loanId}&amount=${successData.amount}`)}
+            style={styles.successModalButton}
+          >
+            Proceed to Deposit
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -567,6 +618,101 @@ function LoanApplicationContent() {
 }
 
 const styles = {
+  successModalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999,
+    padding: '20px'
+  },
+  successModalContent: {
+    backgroundColor: '#fff',
+    borderRadius: '20px',
+    padding: '48px',
+    maxWidth: '600px',
+    width: '100%',
+    textAlign: 'center',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+  },
+  successCheckmark: {
+    marginBottom: '24px',
+    display: 'flex',
+    justifyContent: 'center'
+  },
+  successModalTitle: {
+    fontSize: '32px',
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: '16px'
+  },
+  successModalMessage: {
+    fontSize: '18px',
+    color: '#64748b',
+    marginBottom: '32px',
+    lineHeight: '1.6'
+  },
+  successModalDetails: {
+    backgroundColor: '#f8fafc',
+    borderRadius: '12px',
+    padding: '24px',
+    marginBottom: '32px',
+    textAlign: 'left'
+  },
+  successDetailRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '12px 0',
+    borderBottom: '1px solid #e2e8f0'
+  },
+  successDetailLabel: {
+    fontSize: '14px',
+    color: '#64748b',
+    fontWeight: '500'
+  },
+  successDetailValue: {
+    fontSize: '14px',
+    color: '#1e293b',
+    fontWeight: '600'
+  },
+  successModalInfo: {
+    backgroundColor: '#f0fdf4',
+    border: '1px solid #bbf7d0',
+    borderRadius: '12px',
+    padding: '20px',
+    marginBottom: '32px',
+    textAlign: 'left'
+  },
+  successInfoText: {
+    fontSize: '14px',
+    color: '#1e293b',
+    marginBottom: '12px'
+  },
+  successInfoList: {
+    margin: '0',
+    paddingLeft: '24px',
+    color: '#64748b',
+    fontSize: '14px',
+    lineHeight: '2'
+  },
+  successModalButton: {
+    width: '100%',
+    padding: '16px',
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#fff',
+    background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+    border: 'none',
+    borderRadius: '12px',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+    transition: 'all 0.3s'
+  },
   container: {
     minHeight: '100vh',
     backgroundColor: '#f8fafc',

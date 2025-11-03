@@ -76,18 +76,19 @@ export default async function handler(req, res) {
       }
 
       // Create transaction record
+      const loanTypeName = loan.loan_type ? loan.loan_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Loan';
       const { error: transactionError } = await supabaseAdmin
         .from('transactions')
         .insert([{
           user_id: user.id,
           account_id: account_id,
           type: 'debit',
-          amount: -amount,
+          amount: amount,
           balance_before: accountBalance,
           balance_after: newBalance,
-          description: `Loan deposit for ${loan.loan_type?.replace(/_/g, ' ')} loan application`,
+          description: `Loan Deposit - ${loanTypeName} Application (10% Collateral)`,
           status: 'completed',
-          reference: `LOAN-DEP-${loan_id.substring(0, 8)}`,
+          reference: `LOAN-DEP-${loan_id.substring(0, 8).toUpperCase()}`,
           created_at: new Date().toISOString()
         }]);
 

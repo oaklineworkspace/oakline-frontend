@@ -86,19 +86,24 @@ export default function TransactionsHistory() {
           let purposeDisplay = '';
           if (crypto.purpose === 'general_deposit') {
             purposeDisplay = 'Add to Balance';
-          } else if (crypto.purpose === 'loan_requirement' || crypto.purpose === 'loan_payment') {
+          } else if (crypto.purpose === 'loan_requirement') {
+            purposeDisplay = 'Loan Deposit (10% Collateral)';
+          } else if (crypto.purpose === 'loan_payment') {
             purposeDisplay = 'Loan Payment';
           } else {
-            purposeDisplay = 'Transaction';
+            purposeDisplay = 'Deposit';
           }
+
+          const cryptoName = crypto.crypto_type || 'Crypto';
+          const networkName = crypto.network_type || 'Network';
 
           return {
             id: crypto.id,
             type: 'crypto_deposit',
             transaction_type: 'crypto_deposit',
-            description: `${crypto.crypto_type} Deposit via ${crypto.network_type} - ${purposeDisplay}`,
-            amount: crypto.net_amount || crypto.amount,
-            status: crypto.status,
+            description: `${cryptoName} ${purposeDisplay} via ${networkName}`,
+            amount: crypto.net_amount || crypto.amount || 0,
+            status: crypto.status || 'pending',
             created_at: crypto.created_at,
             updated_at: crypto.updated_at,
             completed_at: crypto.completed_at,

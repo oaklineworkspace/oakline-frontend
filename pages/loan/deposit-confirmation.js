@@ -138,11 +138,8 @@ function DepositConfirmationContent() {
         throw new Error(data.error || 'Failed to process deposit');
       }
 
-      setSuccess('Deposit processed successfully! Your loan application is now under review.');
-
-      setTimeout(() => {
-        router.push('/loan/dashboard');
-      }, 2000);
+      // Show success modal instead of inline message
+      setSuccess('success');
 
     } catch (err) {
       setError(err.message || 'An error occurred while processing deposit');
@@ -177,6 +174,56 @@ function DepositConfirmationContent() {
 
   const selectedAccountData = accounts.find(acc => acc.id === selectedAccount);
   const hasSufficientBalance = selectedAccountData && parseFloat(selectedAccountData.balance) >= parseFloat(amount);
+
+  // Success Modal Component
+  if (success === 'success') {
+    return (
+      <div style={styles.successModalOverlay}>
+        <div style={styles.successModalContent}>
+          <div style={styles.successCheckmark}>
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+              <circle cx="40" cy="40" r="38" stroke="#10b981" strokeWidth="4" fill="#f0fdf4"/>
+              <path d="M25 40L35 50L55 30" stroke="#10b981" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <h2 style={styles.successModalTitle}>Deposit Successful!</h2>
+          <p style={styles.successModalMessage}>
+            Your loan deposit of <strong>${parseFloat(amount).toLocaleString()}</strong> has been processed successfully.
+          </p>
+          <div style={styles.successModalDetails}>
+            <div style={styles.successDetailRow}>
+              <span style={styles.successDetailLabel}>Transaction Status:</span>
+              <span style={styles.successDetailValue}>✓ Completed</span>
+            </div>
+            <div style={styles.successDetailRow}>
+              <span style={styles.successDetailLabel}>Processing Time:</span>
+              <span style={styles.successDetailValue}>Instant</span>
+            </div>
+            <div style={styles.successDetailRow}>
+              <span style={styles.successDetailLabel}>Next Step:</span>
+              <span style={styles.successDetailValue}>Under Review</span>
+            </div>
+          </div>
+          <div style={styles.successModalInfo}>
+            <p style={styles.successInfoText}>
+              <strong>What happens next?</strong>
+            </p>
+            <ul style={styles.successInfoList}>
+              <li>Our team will review your application within 24-48 hours</li>
+              <li>You'll receive a notification once your loan is approved</li>
+              <li>Funds will be disbursed to your account upon approval</li>
+            </ul>
+          </div>
+          <button
+            onClick={() => router.push('/loan/dashboard')}
+            style={styles.successModalButton}
+          >
+            View Loan Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -333,6 +380,102 @@ function DepositConfirmationContent() {
 }
 
 const styles = {
+  successModalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999,
+    padding: '20px'
+  },
+  successModalContent: {
+    backgroundColor: '#fff',
+    borderRadius: '20px',
+    padding: '48px',
+    maxWidth: '600px',
+    width: '100%',
+    textAlign: 'center',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    animation: 'slideUp 0.4s ease-out'
+  },
+  successCheckmark: {
+    marginBottom: '24px',
+    display: 'flex',
+    justifyContent: 'center'
+  },
+  successModalTitle: {
+    fontSize: '32px',
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: '16px'
+  },
+  successModalMessage: {
+    fontSize: '18px',
+    color: '#64748b',
+    marginBottom: '32px',
+    lineHeight: '1.6'
+  },
+  successModalDetails: {
+    backgroundColor: '#f8fafc',
+    borderRadius: '12px',
+    padding: '24px',
+    marginBottom: '32px',
+    textAlign: 'left'
+  },
+  successDetailRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '12px 0',
+    borderBottom: '1px solid #e2e8f0'
+  },
+  successDetailLabel: {
+    fontSize: '14px',
+    color: '#64748b',
+    fontWeight: '500'
+  },
+  successDetailValue: {
+    fontSize: '14px',
+    color: '#1e293b',
+    fontWeight: '600'
+  },
+  successModalInfo: {
+    backgroundColor: '#f0fdf4',
+    border: '1px solid #bbf7d0',
+    borderRadius: '12px',
+    padding: '20px',
+    marginBottom: '32px',
+    textAlign: 'left'
+  },
+  successInfoText: {
+    fontSize: '14px',
+    color: '#1e293b',
+    marginBottom: '12px'
+  },
+  successInfoList: {
+    margin: '0',
+    paddingLeft: '24px',
+    color: '#64748b',
+    fontSize: '14px',
+    lineHeight: '2'
+  },
+  successModalButton: {
+    width: '100%',
+    padding: '16px',
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#fff',
+    background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+    border: 'none',
+    borderRadius: '12px',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+    transition: 'all 0.3s'
+  },
   container: {
     minHeight: '100vh',
     backgroundColor: '#f8fafc',

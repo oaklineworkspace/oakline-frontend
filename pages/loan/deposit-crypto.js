@@ -583,11 +583,11 @@ function LoanDepositCryptoContent() {
           </div>
         )}
 
+        {/* Updated Treasury Banner */}
         <div style={styles.treasuryBanner}>
           <div style={styles.treasuryTitle}>🏦 Direct Treasury Deposit</div>
           <p style={styles.treasuryText}>
-            You're depositing your 10% loan collateral directly to Oakline Bank Treasury (Account: 9900000001) for loan processing.
-            This deposit will be securely held and applied to your loan once approved.
+            You're depositing your 10% loan collateral directly to Oakline Bank's secure treasury system. This deposit will be safely held in our custodial account and applied to your loan once approved by our underwriting team.
           </p>
         </div>
 
@@ -786,7 +786,7 @@ function LoanDepositCryptoContent() {
               </div>
               <div style={styles.summaryRow} >
                 <span style={styles.summaryLabel}>Destination</span>
-                <span style={styles.summaryValue}>Oakline Bank Treasury (9900000001)</span>
+                <span style={styles.summaryValue}>Oakline Bank Treasury</span>
               </div>
             </div>
             <div style={styles.buttonGroup}>
