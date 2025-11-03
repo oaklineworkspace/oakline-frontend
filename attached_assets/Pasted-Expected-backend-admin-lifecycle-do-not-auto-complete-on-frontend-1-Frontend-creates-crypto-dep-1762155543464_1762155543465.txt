@@ -1,0 +1,42 @@
+Expected backend/admin lifecycle (do not auto-complete on frontend):
+	1.	Frontend creates crypto_deposits with purpose: loan_requirement and status: pending.
+	2.	Admin reviews deposit proof; when admin confirms, the admin process sets crypto_deposits.status = 'completed' and crypto_deposits.approved_amount = actual_amount. This will (via trigger/function) update loans.deposit_status = 'completed'.
+	3.	Admin then enables Approve Loan or Disburse Loan. Disbursement deducts from treasury and credits user.
+
+⸻
+
+Business Rules & UX behaviors to enforce
+	•	Loans require a 10% deposit before approval if deposit_required > 0.
+	•	Frontend must not mark a deposit as verified. Only admin confirmation should change loan.deposit_status to completed.
+	•	Show a clear banner on loan detail if deposit is missing: “10% deposit required. Please deposit here → [Deposit Now]”
+	•	If deposit_status = 'pending', show message: “Deposit submitted — pending admin confirmation”
+	•	If treasury has insufficient funds (admin-side), user sees a clear message after admin rejects or delays disbursement: “Loan approval delayed due to treasury balance” — ensure real-time update so user sees status change.
+	•	When loan moves to active (disbursed), update user balance and transaction history in real time.
+
+⸻
+
+Validation & calculations
+	•	Payment calculator: monthly payment = P * r / (1 - (1 + r)^-n) where r = monthly interest rate and n = months. Show total interest and monthly breakdown.
+	•	Deposit amount = roundTo2(principal * 0.10). Display both fiat and estimated crypto amount.
+	•	Validate file uploads (max size 5MB, allowed image/pdf types).
+
+⸻
+
+Security & environment
+	•	Use environment variables for Supabase URL/ANON key (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY).
+	•	Ensure only authenticated users can access loan pages and endpoints are filtered by user_id.
+	•	Do not show treasury balance or admin controls in user UI.
+
+⸻
+
+Developer guidance for Replit AI
+	•	Integrate with the existing loan components (modify / extend) — do not rebuild from scratch. If the existing system uses a different pattern (hooks, context), follow the same pattern.
+	•	Add unit test coverage for calculation helpers and form validation if possible.
+	•	Provide clear README notes in the frontend repo describing the new pages, routes, and the crypto_deposit → loan lifecycle.
+	•	Use clear, accessible ARIA labels for forms and buttons.
+
+⸻
+
+Deliverable: A production-ready frontend implementation with the pages above, real-time subscriptions, deposit flow to purpose: 'loan_requirement', correct UX for pending admin confirmation, and integration points to the given API endpoints. Provide a small integration test or manual test steps to verify: (a) apply → (b) deposit collateral via /loan/deposit-crypto → (c) check that deposit row was created with purpose+loan_id → (d) admin confirms deposit → (e) loan deposit_status updates → (f) admin disburses → user balance updates.
+
+If anything in the existing frontend prevents this approach, update code thoughtfully and document changes in the commit message.
