@@ -164,26 +164,8 @@ function DepositConfirmationContent() {
         return;
       }
 
-      const response = await fetch('/api/loan/process-deposit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-          loan_id,
-          amount: parseFloat(amount),
-          deposit_method: 'crypto'
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to initiate crypto deposit');
-      }
-
-      // Always redirect to the loan-specific crypto deposit page
+      // Directly redirect to the loan-specific crypto deposit page
+      // No need to call API first - the deposit record will be created when user confirms payment
       router.push(`/loan/deposit-crypto?loan_id=${loan_id}&amount=${amount}`);
 
     } catch (err) {

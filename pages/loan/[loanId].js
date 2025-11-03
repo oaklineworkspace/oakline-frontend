@@ -37,7 +37,10 @@ function LoanDetailContent() {
     }
 
     return () => {
-      supabase.channel('loan_updates').unsubscribe();
+      const channel = supabase.channel('loan_updates');
+      if (channel) {
+        channel.unsubscribe();
+      }
     };
   }, [user, loanId]);
 

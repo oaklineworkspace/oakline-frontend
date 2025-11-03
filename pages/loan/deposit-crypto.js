@@ -56,8 +56,49 @@ function LoanDepositCryptoContent() {
   useEffect(() => {
     if (user && loan_id) {
       fetchLoanDetails();
+      setupRealtimeSubscription();
     }
+
+    return () => {
+      supabase.channel(`loan-deposit-${loan_id}`).unsubscribe();
+    };
   }, [user, loan_id]);
+
+  const setupRealtimeSubscription = () => {
+    const channel = supabase
+      .channel(`loan-deposit-${loan_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'loans',
+          filter: `id=eq.${loan_id}`
+        },
+        (payload) => {
+          console.log('Loan updated:', payload);
+          if (payload.new) {
+            setLoanDetails(payload.new);
+            
+            if (payload.new.deposit_status === 'completed') {
+              setMessage('Your deposit has been confirmed by our team!');
+              setMessageType('success');
+            }
+
+            if (payload.new.status === 'approved') {
+              setMessage('Great news! Your loan has been approved!');
+              setMessageType('success');
+              setTimeout(() => {
+                router.push('/loan/dashboard');
+              }, 2000);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return channel;
+  };
 
   useEffect(() => {
     if (amount) {
@@ -199,7 +240,8 @@ function LoanDepositCryptoContent() {
       const { data: treasuryAccount, error: treasuryError } = await supabase
         .from('accounts')
         .select('id')
-        .eq('account_number', '9900000001') // Corrected account number
+        .eq('account_number', '9900000001')
+        .eq('account_type', 'treasury')
         .single();
 
       if (treasuryError || !treasuryAccount) {

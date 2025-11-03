@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -357,7 +356,7 @@ function LoanDashboardContent() {
                           <span style={styles.loanLabel}>Loan Amount</span>
                           <span style={styles.loanValue}>${parseFloat(loan.principal).toLocaleString()}</span>
                         </div>
-                        
+
                         {loan.deposit_required && loan.deposit_required > 0 && (
                           <div style={styles.loanRow}>
                             <span style={styles.loanLabel}>Deposit Required</span>
@@ -367,7 +366,7 @@ function LoanDashboardContent() {
                             </span>
                           </div>
                         )}
-                        
+
                         {loan.status === 'active' && (
                           <>
                             <div style={styles.loanRow}>
@@ -574,7 +573,7 @@ function LoanDashboardContent() {
                           <div style={styles.infoLabel}>Monthly Payment</div>
                           <div style={styles.infoValue}>${calculateMonthlyPayment(selectedLoan).toFixed(2)}</div>
                         </div>
-                        
+
                         {selectedLoan.status === 'active' && (
                           <>
                             <div style={styles.infoCard}>
@@ -743,14 +742,14 @@ function LoanDashboardContent() {
         }}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <h2 style={styles.modalTitle}>Early Loan Payoff</h2>
-            
+
             {earlyPayoffData ? (
               <>
                 <div style={styles.earlyPayoffInfo}>
                   <p style={styles.earlyPayoffDesc}>
                     Pay off your loan early and save on interest! Get a 2% discount on your remaining balance.
                   </p>
-                  
+
                   <div style={styles.earlyPayoffGrid}>
                     <div style={styles.payoffRow}>
                       <span>Current Balance:</span>
