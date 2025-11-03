@@ -1,0 +1,44 @@
+{
+"user_id": "<current_user_id>",
+"loan_id": "<loanId>",
+"amount": <amount>,
+"status": "pending",
+"purpose": "loan_requirement",
+"approved_amount": 0
+}
+
+2.	IMPORTANT: The deposit should be recorded as a crypto_deposits row targeting the treasury account (server/admin code will credit treasury when deposit finalizes). The frontend should send purpose: 'loan_requirement' and loan_id.
+3.	After API/Supabase call completes, redirect to /loan and show toast: “Deposit submitted — pending admin confirmation.”
+•	Allow users to upload proof of on-chain transfer (tx hash screenshot) to POST /api/user/upload-deposit-proof.
+•	Do not mark loan deposit_status as completed from frontend. That is admin-only after review.
+5) /loan/history — Payment History & Exports
+• Pull loan_payments for current user (GET /api/user/get-payment-history?loanId=xxx).
+• Allow filtering date ranges and export to PDF (client-side PDF generation ok).
+
+⸻
+
+Data & API integration (Supabase)
+• Use the provided endpoints (or create them if missing) and Supabase client:
+• GET /api/user/get-loans → returns array of loans for user_id
+• POST /api/user/apply-loan → inserts new loan
+• GET /api/user/get-loan-detail?loanId=xxx → single loan details
+• POST /api/user/make-payment → process payment (call backend to handle accounting)
+• POST /api/user/upload-deposit-proof → attach proof files
+• GET /api/user/get-payment-history?loanId=xxx
+• Real-time: subscribe to loans and crypto_deposits channels for the current user so UI updates when admin confirms deposit or approves/disburses loan.
+• When creating crypto deposit, ensure the frontend sets purpose = 'loan_requirement' and loan_id in the created crypto_deposits row. (Server-side will credit treasury or admin will confirm.)
+
+Example request payload for loan deposit creation (frontend → backend or Supabase):
+
+{
+"user_id": "USER_UUID",
+"loan_id": "LOAN_UUID",
+"amount": 500.00,
+"currency": "USDT",
+"purpose": "loan_requirement",
+"status": "pending",
+"metadata": { "method": "crypto", "wallet": "treasury_wallet_address" }
+}
+
+I have added all the environmental variables in the Replit secret
+18 minutes ago

@@ -216,10 +216,11 @@ function LoanDepositCryptoContent() {
           network_type: depositForm.network_type,
           wallet_address: walletAddress,
           amount: parseFloat(depositForm.amount),
+          approved_amount: 0,
           status: 'pending',
+          purpose: 'loan_requirement',
+          loan_id: loan_id,
           metadata: {
-            purpose: 'loan_requirement',
-            loan_id: loan_id,
             treasury_deposit: true
           }
         }])
@@ -237,8 +238,8 @@ function LoanDepositCryptoContent() {
           deposit_method: 'crypto',
           deposit_amount: parseFloat(depositForm.amount),
           deposit_date: new Date().toISOString(),
-          deposit_paid: false, // Will be set to true when admin confirms
-          status: 'pending', // Keep as pending until crypto is confirmed
+          deposit_status: 'pending', // Will be set to 'completed' when admin confirms
+          status: 'pending', // Keep as pending until deposit is confirmed and approved
           updated_at: new Date().toISOString()
         })
         .eq('id', loan_id);
@@ -262,7 +263,7 @@ function LoanDepositCryptoContent() {
       setMessageType('success');
 
       setTimeout(() => {
-        router.push('/loan/dashboard');
+        router.push('/loan');
       }, 3000);
 
     } catch (error) {
