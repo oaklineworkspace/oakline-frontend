@@ -99,21 +99,23 @@ export default function TransactionsHistory() {
             purposeDisplay = 'Deposit';
           }
 
-          const cryptoName = crypto.crypto_assets?.crypto_type || crypto.crypto_type || 'Crypto';
-          const networkName = crypto.crypto_assets?.network_type || crypto.network_type || 'Network';
+          const cryptoSymbol = crypto.crypto_assets?.symbol || 'CRYPTO';
+          const cryptoType = crypto.crypto_assets?.crypto_type || 'Cryptocurrency';
+          const networkName = crypto.crypto_assets?.network_type || 'Network';
 
           return {
             id: crypto.id,
             type: 'crypto_deposit',
             transaction_type: 'crypto_deposit',
-            description: `${cryptoName} ${purposeDisplay} via ${networkName}`,
+            description: `${cryptoSymbol} ${purposeDisplay} via ${networkName}`,
             amount: crypto.net_amount || crypto.amount || 0,
             status: crypto.status || 'pending',
             created_at: crypto.created_at,
             updated_at: crypto.updated_at,
             completed_at: crypto.completed_at,
-            crypto_type: crypto.crypto_type,
-            network_type: crypto.network_type,
+            crypto_type: cryptoType,
+            crypto_symbol: cryptoSymbol,
+            network_type: networkName,
             wallet_address: crypto.wallet_address,
             transaction_hash: crypto.transaction_hash,
             fee: crypto.fee,

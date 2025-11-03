@@ -77,6 +77,8 @@ export default function CryptoDeposits() {
         return;
       }
 
+      // Log the data to debug
+      console.log('Crypto deposits data:', data);
       setDeposits(data || []);
     } catch (error) {
       console.error('Error loading deposits:', error);
@@ -168,6 +170,15 @@ export default function CryptoDeposits() {
       'TON': 'T'
     };
     return icons[cryptoType] || '🪙';
+  };
+
+  const getCryptoData = (deposit) => {
+    // Get crypto data from the joined crypto_assets table
+    return {
+      type: deposit.crypto_assets?.crypto_type || 'Unknown',
+      symbol: deposit.crypto_assets?.symbol || 'N/A',
+      network: deposit.crypto_assets?.network_type || 'Unknown'
+    };
   };
 
   const formatCurrency = (amount) => {
@@ -381,11 +392,11 @@ export default function CryptoDeposits() {
                       <tr key={deposit.id} style={styles.tableRow}>
                         <td style={styles.td}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '1.2rem' }}>{getCryptoIcon(deposit.crypto_assets?.crypto_type)}</span>
-                            <span style={{ fontWeight: '600' }}>{deposit.crypto_assets?.symbol || 'N/A'}</span>
+                            <span style={{ fontSize: '1.2rem' }}>{getCryptoIcon(getCryptoData(deposit).type)}</span>
+                            <span style={{ fontWeight: '600' }}>{getCryptoData(deposit).symbol}</span>
                           </div>
                         </td>
-                        <td style={styles.td}>{deposit.crypto_assets?.network_type || 'N/A'}</td>
+                        <td style={styles.td}>{getCryptoData(deposit).network}</td>
                         <td style={styles.td}>
                           {deposit.accounts?.account_number ?
                             `****${deposit.accounts.account_number.slice(-4)}` :
@@ -437,10 +448,10 @@ export default function CryptoDeposits() {
                   <div key={deposit.id} style={styles.mobileCard}>
                     <div style={styles.mobileCardHeader}>
                       <div style={styles.cryptoCell}>
-                        <span style={styles.cryptoIconLarge}>{getCryptoIcon(deposit.crypto_assets?.crypto_type)}</span>
+                        <span style={styles.cryptoIconLarge}>{getCryptoIcon(getCryptoData(deposit).type)}</span>
                         <div>
-                          <div style={styles.cryptoNameLarge}>{deposit.crypto_assets?.symbol || 'N/A'}</div>
-                          <div style={styles.networkType}>{deposit.crypto_assets?.network_type || 'N/A'}</div>
+                          <div style={styles.cryptoNameLarge}>{getCryptoData(deposit).symbol}</div>
+                          <div style={styles.networkType}>{getCryptoData(deposit).network}</div>
                         </div>
                       </div>
                       {getStatusBadge(deposit.status)}

@@ -142,34 +142,38 @@ function DashboardContent() {
           let purposeDisplay = '';
           if (crypto.purpose === 'general_deposit') {
             purposeDisplay = 'Add to Balance';
-          } else if (crypto.purpose === 'loan_requirement' || crypto.purpose === 'loan_payment') {
+          } else if (crypto.purpose === 'loan_requirement') {
+            purposeDisplay = 'Loan Deposit (10% Collateral)';
+          } else if (crypto.purpose === 'loan_payment') {
             purposeDisplay = 'Loan Payment';
           } else {
-            purposeDisplay = 'Transaction';
+            purposeDisplay = 'Deposit';
           }
 
-          // Get crypto details from crypto_assets if available
-          const cryptoType = crypto.crypto_assets?.crypto_type || crypto.crypto_type || 'Crypto';
-          const networkType = crypto.crypto_assets?.network_type || crypto.network_type || 'Network';
+          // Get crypto details from crypto_assets if available (joined data)
+          const cryptoType = crypto.crypto_assets?.crypto_type || 'Cryptocurrency';
+          const cryptoSymbol = crypto.crypto_assets?.symbol || 'CRYPTO';
+          const networkType = crypto.crypto_assets?.network_type || 'Network';
 
           return {
             id: crypto.id,
             type: 'crypto_deposit',
             transaction_type: 'crypto_deposit',
-            description: `${cryptoType} Deposit via ${networkType} - ${purposeDisplay}`,
-            amount: crypto.net_amount || crypto.amount,
-            status: crypto.status,
+            description: `${cryptoSymbol} ${purposeDisplay} via ${networkType}`,
+            amount: crypto.net_amount || crypto.amount || 0,
+            status: crypto.status || 'pending',
             created_at: crypto.created_at,
             updated_at: crypto.updated_at,
             completed_at: crypto.completed_at,
-            crypto_type: crypto.crypto_type,
-            network_type: crypto.network_type,
+            crypto_type: cryptoType,
+            crypto_symbol: cryptoSymbol,
+            network_type: networkType,
             wallet_address: crypto.wallet_address,
             transaction_hash: crypto.transaction_hash,
-            fee: crypto.fee,
-            gross_amount: crypto.amount,
-            confirmations: crypto.confirmations,
-            required_confirmations: crypto.required_confirmations,
+            fee: crypto.fee || 0,
+            gross_amount: crypto.amount || 0,
+            confirmations: crypto.confirmations || 0,
+            required_confirmations: crypto.required_confirmations || 3,
             accounts: crypto.accounts,
             purpose: crypto.purpose
           };
