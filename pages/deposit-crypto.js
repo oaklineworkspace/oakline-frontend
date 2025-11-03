@@ -32,6 +32,7 @@ export default function CryptoDeposit() {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
+  const [memo, setMemo] = useState('');
   const [loadingWallet, setLoadingWallet] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [showReceipt, setShowReceipt] = useState(false);
@@ -47,52 +48,24 @@ export default function CryptoDeposit() {
     amount: ''
   });
 
-  const networkConfigs = {
-    'Tether USD': [
-      { value: 'BNB Smart Chain (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.005, icon: '🟡' },
-      { value: 'Tron (TRC20)', label: 'TRON (TRC20)', confirmations: 20, minDeposit: 0.005, icon: '🔴' },
-      { value: 'Ethereum (ERC20)', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.005, icon: '⚪' },
-      { value: 'Solana (SOL)', label: 'Solana (SOL)', confirmations: 200, minDeposit: 0.005, icon: '🟣' },
-      { value: 'The Open Network (TON)', label: 'TON (The Open Network)', confirmations: 1, minDeposit: 0.005, icon: '🔵' }
-    ],
-    'Ethereum': [
-      { value: 'Ethereum (ERC20)', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.00005, icon: '⚪' },
-      { value: 'BNB Smart Chain (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.00005, icon: '🟡' },
-      { value: 'Arbitrum One', label: 'Arbitrum One', confirmations: 120, minDeposit: 0.000001, icon: '🔵' },
-      { value: 'Base', label: 'Base', confirmations: 30, minDeposit: 0.000001, icon: '🔷' }
-    ],
-    'BNB': [
-      { value: 'BNB Smart Chain (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.0005, icon: '🟡' }
-    ],
-    'Bitcoin': [
-      { value: 'Bitcoin', label: 'Bitcoin Mainnet', confirmations: 1, minDeposit: 0.0001, icon: '🟠' }
-    ],
-    'USD Coin': [
-      { value: 'Ethereum (ERC20)', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.005, icon: '⚪' },
-      { value: 'BNB Smart Chain (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.005, icon: '🟡' },
-      { value: 'Solana (SOL)', label: 'Solana (SOL)', confirmations: 200, minDeposit: 0.005, icon: '🟣' }
-    ],
-    'Solana': [
-      { value: 'Solana (SOL)', label: 'Solana (SOL)', confirmations: 200, minDeposit: 0.0001, icon: '🟣' }
-    ],
-    'Cardano': [
-      { value: 'Cardano', label: 'Cardano', confirmations: 15, minDeposit: 0.1, icon: '🔵' }
-    ],
-    'Polygon': [
-      { value: 'Polygon (MATIC)', label: 'Polygon (MATIC)', confirmations: 128, minDeposit: 0.01, icon: '🟣' }
-    ],
-    'Avalanche': [
-      { value: 'Avalanche (C-Chain)', label: 'Avalanche (C-Chain)', confirmations: 35, minDeposit: 0.01, icon: '🔴' }
-    ],
-    'Litecoin': [
-      { value: 'Litecoin', label: 'Litecoin', confirmations: 6, minDeposit: 0.001, icon: '⚪' }
-    ],
-    'XRP': [
-      { value: 'XRP Ledger', label: 'XRP Ledger', confirmations: 1, minDeposit: 1, icon: '🔵' }
-    ],
-    'TON': [
-      { value: 'The Open Network (TON)', label: 'The Open Network (TON)', confirmations: 1, minDeposit: 0.1, icon: '🔵' }
-    ]
+  const [availableNetworks, setAvailableNetworks] = useState([]);
+  const [loadingNetworks, setLoadingNetworks] = useState(false);
+
+  const networkIconMap = {
+    'Bitcoin': '🟠',
+    'BNB Smart Chain (BEP20)': '🟡',
+    'Ethereum (ERC20)': '⚪',
+    'Arbitrum One': '🔵',
+    'Optimism': '🔴',
+    'Base': '🔷',
+    'Tron (TRC20)': '🔴',
+    'Solana (SOL)': '🟣',
+    'Polygon (MATIC)': '🟣',
+    'Avalanche (C-Chain)': '🔴',
+    'Litecoin': '⚪',
+    'XRP Ledger': '🔵',
+    'The Open Network (TON)': '🔵',
+    'Cardano': '🔵'
   };
 
   const cryptoTypes = [
@@ -115,10 +88,59 @@ export default function CryptoDeposit() {
   }, []);
 
   useEffect(() => {
+    if (depositForm.crypto_type) {
+      fetchAvailableNetworks();
+    }
+  }, [depositForm.crypto_type]);
+
+  useEffect(() => {
     if (user && depositForm.crypto_type && depositForm.network_type && currentStep >= 2) {
       fetchWalletAddress();
     }
   }, [depositForm.crypto_type, depositForm.network_type, user, currentStep]);
+
+  const fetchAvailableNetworks = async () => {
+    setLoadingNetworks(true);
+    try {
+      const { data: cryptoAssets, error } = await supabase
+        .from('crypto_assets')
+        .select('network_type, confirmations_required, min_deposit, deposit_fee_percent')
+        .eq('crypto_type', depositForm.crypto_type)
+        .eq('status', 'active')
+        .order('network_type');
+
+      if (error) {
+        console.error('Error fetching networks:', error);
+        setMessage('Error loading available networks. Please try again.');
+        setMessageType('error');
+        setAvailableNetworks([]);
+        return;
+      }
+
+      if (cryptoAssets && cryptoAssets.length > 0) {
+        const networks = cryptoAssets.map(asset => ({
+          value: asset.network_type,
+          label: asset.network_type,
+          confirmations: asset.confirmations_required || 1,
+          minDeposit: asset.min_deposit || 0,
+          fee: asset.deposit_fee_percent || 0,
+          icon: networkIconMap[asset.network_type] || '🔹'
+        }));
+        setAvailableNetworks(networks);
+      } else {
+        setAvailableNetworks([]);
+        setMessage(`No networks available for ${depositForm.crypto_type}. Please contact support.`);
+        setMessageType('error');
+      }
+    } catch (error) {
+      console.error('Error fetching networks:', error);
+      setMessage('Error loading networks. Please try again.');
+      setMessageType('error');
+      setAvailableNetworks([]);
+    } finally {
+      setLoadingNetworks(false);
+    }
+  };
 
   const checkUserAndLoadData = async () => {
     try {
@@ -169,6 +191,7 @@ export default function CryptoDeposit() {
   const fetchWalletAddress = async () => {
     setLoadingWallet(true);
     setWalletAddress('');
+    setMemo('');
     try {
       console.log('Fetching wallet for:', { 
         userId: user.id, 
@@ -176,66 +199,36 @@ export default function CryptoDeposit() {
         networkType: depositForm.network_type 
       });
 
-      // Query user_crypto_wallets table
-      const { data: wallets, error: walletError } = await supabase
-        .from('user_crypto_wallets')
-        .select('crypto_type, network_type, wallet_address')
-        .eq('user_id', user.id);
+      // Query admin_assigned_wallets table
+      const { data: adminWallets, error: adminError } = await supabase
+        .from('admin_assigned_wallets')
+        .select('crypto_type, network_type, wallet_address, memo')
+        .eq('user_id', user.id)
+        .eq('crypto_type', depositForm.crypto_type)
+        .eq('network_type', depositForm.network_type);
 
-      console.log('All user wallets:', { wallets, walletError });
+      console.log('Admin wallets query result:', { adminWallets, adminError });
 
-      if (walletError) {
-        console.error('Error fetching user wallets:', walletError);
+      if (adminError) {
+        console.error('Error fetching admin wallets:', adminError);
         setMessage('Error loading wallet information. Please contact support.');
         setMessageType('error');
         return;
       }
 
-      if (wallets && wallets.length > 0) {
-        // Find matching wallet based on crypto_type and network_type
-        const matchingWallet = wallets.find(w => 
-          w.crypto_type === depositForm.crypto_type && 
-          w.network_type === depositForm.network_type
-        );
-
-        console.log('Matching wallet:', matchingWallet);
-
-        if (matchingWallet && matchingWallet.wallet_address) {
-          setWalletAddress(matchingWallet.wallet_address);
-          console.log('Wallet address found:', matchingWallet.wallet_address);
-          return;
-        }
-      }
-
-      // If no matching wallet found in user_crypto_wallets, try admin_assigned_wallets as fallback
-      console.log('No user wallet found, checking admin assigned wallets...');
-      const { data: adminWallets, error: adminError } = await supabase
-        .from('admin_assigned_wallets')
-        .select('crypto_type, network_type, wallet_address')
-        .eq('user_id', user.id);
-
-      console.log('All admin wallets:', { adminWallets, adminError });
-
-      if (adminError) {
-        console.error('Error fetching admin wallets:', adminError);
-      }
-
       if (adminWallets && adminWallets.length > 0) {
-        const matchingAdminWallet = adminWallets.find(w => 
-          w.crypto_type === depositForm.crypto_type && 
-          w.network_type === depositForm.network_type
-        );
-
-        console.log('Matching admin wallet:', matchingAdminWallet);
-
-        if (matchingAdminWallet && matchingAdminWallet.wallet_address) {
-          setWalletAddress(matchingAdminWallet.wallet_address);
-          console.log('Admin wallet address found:', matchingAdminWallet.wallet_address);
+        const wallet = adminWallets[0];
+        if (wallet.wallet_address) {
+          setWalletAddress(wallet.wallet_address);
+          setMemo(wallet.memo || '');
+          console.log('Wallet address found:', wallet.wallet_address, 'Memo:', wallet.memo);
           return;
         }
       }
 
       console.log('No wallet assigned for this crypto/network combination');
+      setMessage(`No wallet assigned for ${depositForm.crypto_type} on ${depositForm.network_type}. Please contact support.`);
+      setMessageType('error');
     } catch (error) {
       console.error('Error fetching wallet:', error);
       setMessage('Unexpected error loading wallet. Please try again.');
@@ -263,6 +256,8 @@ export default function CryptoDeposit() {
       network_type: ''
     });
     setWalletAddress('');
+    setMemo('');
+    setAvailableNetworks([]);
   };
 
   const handleNetworkChange = (network) => {
@@ -271,6 +266,7 @@ export default function CryptoDeposit() {
       network_type: network
     });
     setWalletAddress('');
+    setMemo('');
   };
 
   const handleNextStep = () => {
@@ -432,7 +428,7 @@ export default function CryptoDeposit() {
   };
 
   const getAvailableNetworks = () => {
-    return networkConfigs[depositForm.crypto_type] || [];
+    return availableNetworks;
   };
 
   const getSelectedNetwork = () => {
@@ -1102,26 +1098,47 @@ export default function CryptoDeposit() {
             {depositForm.crypto_type && (
               <div style={styles.formGroup}>
                 <label style={styles.label}>Select Network</label>
-                <div style={styles.networkGrid}>
-                  {getAvailableNetworks().map(network => (
-                    <div
-                      key={network.value}
-                      onClick={() => handleNetworkChange(network.value)}
-                      style={{
-                        ...styles.networkCard,
-                        borderColor: depositForm.network_type === network.value ? '#1e40af' : '#e5e7eb',
-                        backgroundColor: depositForm.network_type === network.value ? '#eff6ff' : '#fff'
-                      }}
-                    >
-                      <div style={styles.networkHeader}>
-                        <span style={styles.networkIcon}>{network.icon}</span>
-                        <div style={styles.networkName}>{network.label}</div>
+                {loadingNetworks ? (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                    <div style={{ ...styles.spinner, margin: '0 auto 1rem' }} />
+                    Loading available networks...
+                  </div>
+                ) : availableNetworks.length === 0 ? (
+                  <div style={{
+                    padding: '2rem',
+                    textAlign: 'center',
+                    backgroundColor: '#fef2f2',
+                    border: '2px solid #ef4444',
+                    borderRadius: '12px',
+                    color: '#991b1b'
+                  }}>
+                    No networks available for {depositForm.crypto_type}. Please contact support.
+                  </div>
+                ) : (
+                  <div style={styles.networkGrid}>
+                    {getAvailableNetworks().map(network => (
+                      <div
+                        key={network.value}
+                        onClick={() => handleNetworkChange(network.value)}
+                        style={{
+                          ...styles.networkCard,
+                          borderColor: depositForm.network_type === network.value ? '#1e40af' : '#e5e7eb',
+                          backgroundColor: depositForm.network_type === network.value ? '#eff6ff' : '#fff'
+                        }}
+                      >
+                        <div style={styles.networkHeader}>
+                          <span style={styles.networkIcon}>{network.icon}</span>
+                          <div style={styles.networkName}>{network.label}</div>
+                        </div>
+                        <div style={styles.networkInfo}>{network.confirmations} confirmations</div>
+                        <div style={styles.networkInfo}>Min: {network.minDeposit} {depositForm.crypto_type}</div>
+                        {network.fee > 0 && (
+                          <div style={styles.networkInfo}>Fee: {network.fee}%</div>
+                        )}
                       </div>
-                      <div style={styles.networkInfo}>{network.confirmations} confirmations</div>
-                      <div style={styles.networkInfo}>Min: {network.minDeposit} {depositForm.crypto_type}</div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -1217,11 +1234,45 @@ export default function CryptoDeposit() {
                         ...styles.button,
                         ...styles.primaryButton,
                         flex: 'none',
-                        padding: '0.75rem 1.5rem'
+                        padding: '0.75rem 1.5rem',
+                        marginBottom: memo ? '1rem' : '0'
                       }}
                     >
                       📋 Copy Address
                     </button>
+                    
+                    {memo && (
+                      <div style={{ marginTop: '1rem' }}>
+                        <p style={{ 
+                          fontSize: '0.85rem', 
+                          color: '#64748b',
+                          marginBottom: '0.5rem',
+                          fontWeight: '500'
+                        }}>
+                          MEMO / TAG (REQUIRED)
+                        </p>
+                        <div style={{
+                          ...styles.walletAddress,
+                          backgroundColor: '#fef3c7',
+                          border: '2px solid #fbbf24',
+                          fontWeight: '600'
+                        }}>
+                          {memo}
+                        </div>
+                        <button
+                          onClick={() => copyToClipboard(memo)}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: '#f59e0b',
+                            color: 'white',
+                            flex: 'none',
+                            padding: '0.75rem 1.5rem'
+                          }}
+                        >
+                          📋 Copy Memo
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1232,10 +1283,16 @@ export default function CryptoDeposit() {
                       <h3 style={styles.warningTitle}>Important Instructions</h3>
                       <ul style={styles.warningList}>
                         <li><strong>Make sure you deposit on the {getSelectedNetwork()?.label} network</strong></li>
+                        {memo && (
+                          <li><strong style={{ color: '#dc2626' }}>YOU MUST INCLUDE THE MEMO/TAG OR YOUR DEPOSIT WILL BE LOST</strong></li>
+                        )}
                         <li>Deposits on the wrong chain may be permanently lost</li>
                         <li>Send only {getSelectedCrypto().value} to this address</li>
                         <li>Minimum deposit: {getSelectedNetwork()?.minDeposit} {depositForm.crypto_type}</li>
                         <li>Required confirmations: {getSelectedNetwork()?.confirmations}</li>
+                        {getSelectedNetwork()?.fee > 0 && (
+                          <li>Network fee: {getSelectedNetwork()?.fee}%</li>
+                        )}
                         <li>Once sent, click "I've Sent the Payment" below</li>
                       </ul>
                     </div>

@@ -27,27 +27,24 @@ function LoanDepositCryptoContent() {
     amount: amount || ''
   });
   const [selectedLoanWallet, setSelectedLoanWallet] = useState(null);
+  const [availableNetworks, setAvailableNetworks] = useState([]);
+  const [loadingNetworks, setLoadingNetworks] = useState(false);
 
-  const networkConfigs = {
-    'Tether USD': [
-      { value: 'BNB Smart Chain (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.005, icon: '🟡' },
-      { value: 'Tron (TRC20)', label: 'TRON (TRC20)', confirmations: 20, minDeposit: 0.005, icon: '🔴' },
-      { value: 'Ethereum (ERC20)', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.005, icon: '⚪' }
-    ],
-    'Ethereum': [
-      { value: 'Ethereum (ERC20)', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.00005, icon: '⚪' },
-      { value: 'BNB Smart Chain (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.00005, icon: '🟡' }
-    ],
-    'BNB': [
-      { value: 'BNB Smart Chain (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.0005, icon: '🟡' }
-    ],
-    'Bitcoin': [
-      { value: 'Bitcoin', label: 'Bitcoin Mainnet', confirmations: 1, minDeposit: 0.0001, icon: '🟠' }
-    ],
-    'USD Coin': [
-      { value: 'Ethereum (ERC20)', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.005, icon: '⚪' },
-      { value: 'BNB Smart Chain (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.005, icon: '🟡' }
-    ]
+  const networkIconMap = {
+    'Bitcoin': '🟠',
+    'BNB Smart Chain (BEP20)': '🟡',
+    'Ethereum (ERC20)': '⚪',
+    'Arbitrum One': '🔵',
+    'Optimism': '🔴',
+    'Base': '🔷',
+    'Tron (TRC20)': '🔴',
+    'Solana (SOL)': '🟣',
+    'Polygon (MATIC)': '🟣',
+    'Avalanche (C-Chain)': '🔴',
+    'Litecoin': '⚪',
+    'XRP Ledger': '🔵',
+    'The Open Network (TON)': '🔵',
+    'Cardano': '🔵'
   };
 
   const cryptoTypes = [
@@ -112,10 +109,53 @@ function LoanDepositCryptoContent() {
   }, [amount]);
 
   useEffect(() => {
+    if (depositForm.crypto_type) {
+      fetchAvailableNetworks();
+    }
+  }, [depositForm.crypto_type]);
+
+  useEffect(() => {
     if (depositForm.crypto_type && depositForm.network_type && currentStep >= 2) {
       fetchWalletAddress();
     }
   }, [depositForm.crypto_type, depositForm.network_type, currentStep]);
+
+  const fetchAvailableNetworks = async () => {
+    setLoadingNetworks(true);
+    try {
+      const { data: cryptoAssets, error } = await supabase
+        .from('crypto_assets')
+        .select('network_type, confirmations_required, min_deposit, deposit_fee_percent')
+        .eq('crypto_type', depositForm.crypto_type)
+        .eq('status', 'active')
+        .order('network_type');
+
+      if (error) {
+        console.error('Error fetching networks:', error);
+        setAvailableNetworks([]);
+        return;
+      }
+
+      if (cryptoAssets && cryptoAssets.length > 0) {
+        const networks = cryptoAssets.map(asset => ({
+          value: asset.network_type,
+          label: asset.network_type,
+          confirmations: asset.confirmations_required || 1,
+          minDeposit: asset.min_deposit || 0,
+          fee: asset.deposit_fee_percent || 0,
+          icon: networkIconMap[asset.network_type] || '🔹'
+        }));
+        setAvailableNetworks(networks);
+      } else {
+        setAvailableNetworks([]);
+      }
+    } catch (error) {
+      console.error('Error fetching networks:', error);
+      setAvailableNetworks([]);
+    } finally {
+      setLoadingNetworks(false);
+    }
+  };
 
   const fetchLoanDetails = async () => {
     try {
@@ -358,7 +398,7 @@ function LoanDepositCryptoContent() {
   };
 
   const getAvailableNetworks = () => {
-    return networkConfigs[depositForm.crypto_type] || [];
+    return availableNetworks;
   };
 
   const getSelectedNetwork = () => {
@@ -570,26 +610,48 @@ function LoanDepositCryptoContent() {
             {depositForm.crypto_type && (
               <>
                 <h2 style={styles.sectionTitle}>Select Network</h2>
-                <div style={styles.networkGrid}>
-                  {getAvailableNetworks().map(network => (
-                    <div
-                      key={network.value}
-                      onClick={() => handleNetworkChange(network.value)}
-                      style={{
-                        ...styles.networkCard,
-                        borderColor: depositForm.network_type === network.value ? '#10b981' : '#e5e7eb',
-                        backgroundColor: depositForm.network_type === network.value ? '#f0fdf4' : '#fff'
-                      }}
-                    >
-                      <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
-                        {network.icon} {network.label}
+                {loadingNetworks ? (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                    Loading available networks...
+                  </div>
+                ) : availableNetworks.length === 0 ? (
+                  <div style={{
+                    padding: '2rem',
+                    textAlign: 'center',
+                    backgroundColor: '#fef2f2',
+                    border: '2px solid #ef4444',
+                    borderRadius: '12px',
+                    color: '#991b1b'
+                  }}>
+                    No networks available for {depositForm.crypto_type}. Please contact support.
+                  </div>
+                ) : (
+                  <div style={styles.networkGrid}>
+                    {getAvailableNetworks().map(network => (
+                      <div
+                        key={network.value}
+                        onClick={() => handleNetworkChange(network.value)}
+                        style={{
+                          ...styles.networkCard,
+                          borderColor: depositForm.network_type === network.value ? '#10b981' : '#e5e7eb',
+                          backgroundColor: depositForm.network_type === network.value ? '#f0fdf4' : '#fff'
+                        }}
+                      >
+                        <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
+                          {network.icon} {network.label}
+                        </div>
+                        <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                          {network.confirmations} confirmations
+                        </div>
+                        {network.fee > 0 && (
+                          <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                            Fee: {network.fee}%
+                          </div>
+                        )}
                       </div>
-                      <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                        {network.confirmations} confirmations
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </>
             )}
 
