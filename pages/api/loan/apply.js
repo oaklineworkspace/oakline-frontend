@@ -127,9 +127,9 @@ export default async function handler(req, res) {
         subject: 'Loan Application Received - Oakline Bank',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #10b981;">Loan Application Received</h2>
+            <h2 style="color: #10b981;">Loan Application Received - Deposit Required</h2>
             <p>Dear ${userName},</p>
-            <p>Thank you for applying for a loan with Oakline Bank. We have received your application and it is currently being reviewed.</p>
+            <p>Thank you for applying for a loan with Oakline Bank. We have received your application.</p>
             
             <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="margin-top: 0; color: #1f2937;">Application Details:</h3>
@@ -151,18 +151,29 @@ export default async function handler(req, res) {
                   <td style="padding: 8px 0; font-weight: bold;">${interest_rate}% APR</td>
                 </tr>
                 <tr>
+                  <td style="padding: 8px 0; color: #6b7280;">Required Deposit:</td>
+                  <td style="padding: 8px 0; font-weight: bold; color: #10b981;">$${deposit_required.toLocaleString()} (10%)</td>
+                </tr>
+                <tr>
                   <td style="padding: 8px 0; color: #6b7280;">Status:</td>
-                  <td style="padding: 8px 0; font-weight: bold; color: #f59e0b;">Pending Review</td>
+                  <td style="padding: 8px 0; font-weight: bold; color: #f59e0b;">Awaiting Deposit</td>
                 </tr>
               </table>
             </div>
 
-            <p><strong>What happens next?</strong></p>
-            <ul style="color: #4b5563;">
-              <li>Our loan department will review your application</li>
-              <li>You will receive an email notification once a decision is made</li>
-              <li>You can track your application status in your Loan Dashboard</li>
-            </ul>
+            <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 20px 0;">
+              <p style="color: #1e40af; font-weight: 600; margin: 0 0 8px 0;">📌 Next Steps:</p>
+              <ol style="color: #1e40af; margin: 0; padding-left: 20px;">
+                <li>Complete your 10% deposit ($${deposit_required.toLocaleString()})</li>
+                <li>Our team will verify your deposit on the blockchain (1-3 business days)</li>
+                <li>Once verified, your loan application will be reviewed</li>
+                <li>Upon approval, funds will be disbursed to your account</li>
+              </ol>
+            </div>
+
+            <p><strong>Important:</strong> Your deposit is held securely in our treasury and will be applied to your loan balance upon approval. If your loan is not approved, your deposit will be refunded to your account.</p>
+
+            <p>You can track your deposit verification and application status in your Loan Dashboard.</p>
 
             <p>If you have any questions, please contact our customer support team.</p>
             

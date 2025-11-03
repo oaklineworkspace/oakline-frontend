@@ -26,6 +26,7 @@ function LoanDepositCryptoContent() {
     network_type: '',
     amount: amount || ''
   });
+  const [selectedLoanWallet, setSelectedLoanWallet] = useState(null);
 
   const networkConfigs = {
     USDT: [
@@ -132,42 +133,39 @@ function LoanDepositCryptoContent() {
   const fetchWalletAddress = async () => {
     setLoadingWallet(true);
     setWalletAddress('');
+    setSelectedLoanWallet(null);
     try {
-      const { data: wallets, error: walletError } = await supabase
-        .from('user_crypto_wallets')
-        .select('crypto_type, network_type, wallet_address')
-        .eq('user_id', user.id);
+      // Fetch active loan wallets for the selected crypto and network
+      const { data: loanWallets, error: loanWalletError } = await supabase
+        .from('loan_crypto_wallets')
+        .select('id, crypto_type, network_type, wallet_address')
+        .eq('crypto_type', depositForm.crypto_type)
+        .eq('network_type', depositForm.network_type)
+        .eq('status', 'active')
+        .eq('purpose', 'loan_requirement');
 
-      if (!walletError && wallets && wallets.length > 0) {
-        const matchingWallet = wallets.find(w => 
-          w.crypto_type === depositForm.crypto_type && 
-          w.network_type === depositForm.network_type
-        );
-
-        if (matchingWallet && matchingWallet.wallet_address) {
-          setWalletAddress(matchingWallet.wallet_address);
-          return;
-        }
+      if (loanWalletError) {
+        console.error('Error fetching loan wallets:', loanWalletError);
+        setMessage('Error loading loan wallet. Please contact support.');
+        setMessageType('error');
+        return;
       }
 
-      const { data: adminWallets, error: adminError } = await supabase
-        .from('admin_assigned_wallets')
-        .select('crypto_type, network_type, wallet_address')
-        .eq('user_id', user.id);
-
-      if (!adminError && adminWallets && adminWallets.length > 0) {
-        const matchingAdminWallet = adminWallets.find(w => 
-          w.crypto_type === depositForm.crypto_type && 
-          w.network_type === depositForm.network_type
-        );
-
-        if (matchingAdminWallet && matchingAdminWallet.wallet_address) {
-          setWalletAddress(matchingAdminWallet.wallet_address);
-        }
+      if (!loanWallets || loanWallets.length === 0) {
+        setMessage(`No available loan wallet for ${depositForm.crypto_type} on ${depositForm.network_type}. Please try another payment method or contact support.`);
+        setMessageType('error');
+        return;
       }
+
+      // Pick a random wallet for load distribution
+      const randomWallet = loanWallets[Math.floor(Math.random() * loanWallets.length)];
+      setWalletAddress(randomWallet.wallet_address);
+      setSelectedLoanWallet(randomWallet);
+      setMessage('');
+      setMessageType('');
     } catch (error) {
-      console.error('Error fetching wallet:', error);
-      setMessage('Error loading wallet. Please try again.');
+      console.error('Error fetching loan wallet:', error);
+      setMessage('Error loading loan wallet. Please try again or contact support.');
       setMessageType('error');
     } finally {
       setLoadingWallet(false);
@@ -248,6 +246,11 @@ function LoanDepositCryptoContent() {
         throw new Error('Treasury account not found. Please contact support.');
       }
 
+      // Validate loan wallet is selected
+      if (!selectedLoanWallet || !selectedLoanWallet.id) {
+        throw new Error('No loan wallet selected. Please try again or contact support.');
+      }
+
       // Create crypto deposit record with purpose = 'loan_requirement'
       const { data: depositData, error: depositError } = await supabase
         .from('crypto_deposits')
@@ -262,8 +265,12 @@ function LoanDepositCryptoContent() {
           status: 'pending',
           purpose: 'loan_requirement',
           loan_id: loan_id,
+          loan_wallet_id: selectedLoanWallet.id,
           metadata: {
-            treasury_deposit: true
+            treasury_deposit: true,
+            loan_wallet_address: walletAddress,
+            loan_wallet_crypto: depositForm.crypto_type,
+            loan_wallet_network: depositForm.network_type
           }
         }])
         .select()
@@ -296,17 +303,17 @@ function LoanDepositCryptoContent() {
         .insert([{
           user_id: user.id,
           type: 'loan',
-          title: 'Loan Collateral Deposit Submitted',
-          message: `Your 10% loan collateral deposit of $${parseFloat(depositForm.amount).toLocaleString()} has been submitted. Your loan will be reviewed after deposit confirmation.`,
+          title: 'Loan Deposit Submitted - Pending Verification',
+          message: `Your 10% loan deposit of $${parseFloat(depositForm.amount).toLocaleString()} (${depositForm.crypto_type} on ${depositForm.network_type}) has been submitted to our treasury. Our team will verify your deposit on the blockchain. Once confirmed, your loan application will proceed to review. This typically takes 1-3 business days.`,
           read: false
         }]);
 
-      setMessage('Crypto deposit submitted successfully! Your deposit is pending confirmation. Once confirmed by our team, your loan application will proceed to review.');
+      setMessage('Loan deposit submitted successfully! Your deposit is now pending admin verification on the blockchain. Once our team confirms your deposit, your loan application will proceed to review. You will receive a notification when verification is complete.');
       setMessageType('success');
 
       setTimeout(() => {
-        router.push('/loan');
-      }, 3000);
+        router.push('/loan/dashboard');
+      }, 4000);
 
     } catch (error) {
       console.error('Deposit error:', error);
@@ -561,8 +568,20 @@ function LoanDepositCryptoContent() {
             <h2 style={styles.sectionTitle}>Send Payment</h2>
             {loadingWallet ? (
               <div style={{ textAlign: 'center', padding: '3rem' }}>Loading wallet...</div>
-            ) : walletAddress ? (
+            ) : walletAddress && selectedLoanWallet ? (
               <>
+                <div style={{ 
+                  backgroundColor: '#eff6ff', 
+                  border: '2px solid #3b82f6',
+                  borderRadius: '12px',
+                  padding: '1rem',
+                  marginBottom: '1.5rem',
+                  textAlign: 'center'
+                }}>
+                  <p style={{ fontSize: '0.9rem', color: '#1e40af', margin: 0 }}>
+                    ⚠️ This is a dedicated loan deposit wallet. Do not use this address for general deposits.
+                  </p>
+                </div>
                 <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
                   <QRCode value={walletAddress} size={200} />
                 </div>
@@ -599,13 +618,35 @@ function LoanDepositCryptoContent() {
               </>
             ) : (
               <div style={{ textAlign: 'center', padding: '2rem' }}>
-                <p>No wallet assigned. Please contact support.</p>
-                <button
-                  onClick={() => setCurrentStep(1)}
-                  style={{ ...styles.button, ...styles.secondaryButton }}
-                >
-                  ← Go Back
-                </button>
+                <div style={{ 
+                  backgroundColor: '#fef2f2',
+                  border: '2px solid #ef4444',
+                  borderRadius: '12px',
+                  padding: '1.5rem',
+                  marginBottom: '1.5rem'
+                }}>
+                  <p style={{ fontSize: '1.1rem', color: '#991b1b', fontWeight: '600', marginBottom: '0.5rem' }}>
+                    ⚠️ No Loan Wallet Available
+                  </p>
+                  <p style={{ color: '#991b1b', margin: 0 }}>
+                    There are currently no active loan wallets for {depositForm.crypto_type} on {depositForm.network_type}. 
+                    Please try another payment method or contact our support team.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                  <button
+                    onClick={() => setCurrentStep(1)}
+                    style={{ ...styles.button, ...styles.secondaryButton }}
+                  >
+                    ← Try Different Network
+                  </button>
+                  <button
+                    onClick={() => router.push('/loan/deposit-confirmation?loan_id=' + loan_id + '&amount=' + amount)}
+                    style={{ ...styles.button, ...styles.primaryButton }}
+                  >
+                    Try Another Payment Method
+                  </button>
+                </div>
               </div>
             )}
           </div>
