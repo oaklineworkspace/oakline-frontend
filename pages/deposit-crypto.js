@@ -5,23 +5,7 @@ import Link from 'next/link';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 
-const QRCode = dynamic(() => import('react-qr-code').then(mod => mod.default || mod), { ssr: false });
-
-const useMediaQuery = (query) => {
-  const [matches, setMatches] = useState(false);
-
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    if (media.matches !== matches) {
-      setMatches(media.matches);
-    }
-    const listener = () => setMatches(media.matches);
-    media.addEventListener('change', listener);
-    return () => media.removeEventListener('change', listener);
-  }, [matches, query]);
-
-  return matches;
-};
+const QRCode = dynamic(() => import('react-qr-code'), { ssr: false });
 
 export default function CryptoDeposit() {
   const [user, setUser] = useState(null);
@@ -37,8 +21,18 @@ export default function CryptoDeposit() {
   const [currentStep, setCurrentStep] = useState(1);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
-  const isMobile = useMediaQuery('(max-width: 768px)');
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.matchMedia('(max-width: 768px)').matches);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const [depositForm, setDepositForm] = useState({
     account_id: '',
