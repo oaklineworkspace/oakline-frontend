@@ -405,15 +405,21 @@ function LoanDashboardContent() {
                           </>
                         )}
 
-                        {loan.status === 'pending' && !loan.deposit_paid && loan.deposit_required > 0 && (
+                        {loan.status === 'pending' && !loan.deposit_paid && loan.deposit_required > 0 && loan.deposit_method !== 'crypto' && (
                           <div style={styles.warningNotice}>
                             💰 Deposit Required: Please complete your ${parseFloat(loan.deposit_required).toLocaleString()} deposit to proceed with approval.
                           </div>
                         )}
 
+                        {loan.status === 'pending' && !loan.deposit_paid && loan.deposit_method === 'crypto' && loan.deposit_date && (
+                          <div style={styles.pendingNotice}>
+                            ⏳ Crypto deposit submitted on {new Date(loan.deposit_date).toLocaleDateString()}. Waiting for confirmation from our team.
+                          </div>
+                        )}
+
                         {loan.status === 'pending' && loan.deposit_paid && (
                           <div style={styles.pendingNotice}>
-                            ⏳ Your application is being reviewed. You'll receive a notification once approved.
+                            ✅ Deposit confirmed! Your application is being reviewed. You'll receive a notification once approved.
                           </div>
                         )}
 
@@ -442,7 +448,7 @@ function LoanDashboardContent() {
                         )}
                       </div>
 
-                      {loan.status === 'pending' && !loan.deposit_paid && loan.deposit_required > 0 && (
+                      {loan.status === 'pending' && !loan.deposit_paid && loan.deposit_required > 0 && !loan.deposit_date && (
                         <div style={styles.loanCardActions}>
                           <Link
                             href={`/loan/deposit-confirmation?loan_id=${loan.id}&amount=${loan.deposit_required}`}

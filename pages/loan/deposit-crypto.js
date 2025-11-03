@@ -230,12 +230,15 @@ function LoanDepositCryptoContent() {
         throw new Error(depositError.message || 'Deposit submission failed');
       }
 
-      // Update loan status to deposit_pending_approval
+      // Update loan status and deposit information
       const { error: loanUpdateError } = await supabase
         .from('loans')
         .update({
           deposit_method: 'crypto',
-          status: 'deposit_pending_approval',
+          deposit_amount: parseFloat(depositForm.amount),
+          deposit_date: new Date().toISOString(),
+          deposit_paid: false, // Will be set to true when admin confirms
+          status: 'pending', // Keep as pending until crypto is confirmed
           updated_at: new Date().toISOString()
         })
         .eq('id', loan_id);
@@ -255,7 +258,7 @@ function LoanDepositCryptoContent() {
           read: false
         }]);
 
-      setMessage('Deposit submitted successfully! Your loan will be reviewed after confirmation.');
+      setMessage('Crypto deposit submitted successfully! Your deposit is pending confirmation. Once confirmed by our team, your loan application will proceed to review.');
       setMessageType('success');
 
       setTimeout(() => {
