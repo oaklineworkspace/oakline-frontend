@@ -48,25 +48,50 @@ export default function CryptoDeposit() {
   });
 
   const networkConfigs = {
-    USDT: [
-      { value: 'BEP20', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.005, icon: '🟡' },
-      { value: 'TRC20', label: 'TRON (TRC20)', confirmations: 20, minDeposit: 0.005, icon: '🔴' },
-      { value: 'ERC20', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.005, icon: '⚪' },
-      { value: 'SOL', label: 'Solana (SOL)', confirmations: 200, minDeposit: 0.005, icon: '🟣' },
-      { value: 'TON', label: 'TON (The Open Network)', confirmations: 1, minDeposit: 0.005, icon: '🔵' }
+    'Tether USD': [
+      { value: 'BNB Smart Chain (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.005, icon: '🟡' },
+      { value: 'Tron (TRC20)', label: 'TRON (TRC20)', confirmations: 20, minDeposit: 0.005, icon: '🔴' },
+      { value: 'Ethereum (ERC20)', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.005, icon: '⚪' },
+      { value: 'Solana (SOL)', label: 'Solana (SOL)', confirmations: 200, minDeposit: 0.005, icon: '🟣' },
+      { value: 'The Open Network (TON)', label: 'TON (The Open Network)', confirmations: 1, minDeposit: 0.005, icon: '🔵' }
     ],
-    ETH: [
-      { value: 'ERC20', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.00005, icon: '⚪' },
-      { value: 'BEP20', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.00005, icon: '🟡' },
-      { value: 'ARBITRUM', label: 'Arbitrum One', confirmations: 120, minDeposit: 0.000001, icon: '🔵' },
-      { value: 'BASE', label: 'Base Mainnet', confirmations: 30, minDeposit: 0.000001, icon: '🔷' }
+    'Ethereum': [
+      { value: 'Ethereum (ERC20)', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.00005, icon: '⚪' },
+      { value: 'BNB Smart Chain (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.00005, icon: '🟡' },
+      { value: 'Arbitrum One', label: 'Arbitrum One', confirmations: 120, minDeposit: 0.000001, icon: '🔵' },
+      { value: 'Base', label: 'Base', confirmations: 30, minDeposit: 0.000001, icon: '🔷' }
     ],
-    BNB: [
-      { value: 'BEP20', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.0005, icon: '🟡' }
+    'BNB': [
+      { value: 'BNB Smart Chain (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.0005, icon: '🟡' }
     ],
-    BTC: [
-      { value: 'Bitcoin Mainnet', label: 'Bitcoin Mainnet', confirmations: 1, minDeposit: 0.0001, icon: '🟠' },
-      { value: 'BSC (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.0001, icon: '🟡' }
+    'Bitcoin': [
+      { value: 'Bitcoin', label: 'Bitcoin Mainnet', confirmations: 1, minDeposit: 0.0001, icon: '🟠' }
+    ],
+    'USD Coin': [
+      { value: 'Ethereum (ERC20)', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.005, icon: '⚪' },
+      { value: 'BNB Smart Chain (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.005, icon: '🟡' },
+      { value: 'Solana (SOL)', label: 'Solana (SOL)', confirmations: 200, minDeposit: 0.005, icon: '🟣' }
+    ],
+    'Solana': [
+      { value: 'Solana (SOL)', label: 'Solana (SOL)', confirmations: 200, minDeposit: 0.0001, icon: '🟣' }
+    ],
+    'Cardano': [
+      { value: 'Cardano', label: 'Cardano', confirmations: 15, minDeposit: 0.1, icon: '🔵' }
+    ],
+    'Polygon': [
+      { value: 'Polygon (MATIC)', label: 'Polygon (MATIC)', confirmations: 128, minDeposit: 0.01, icon: '🟣' }
+    ],
+    'Avalanche': [
+      { value: 'Avalanche (C-Chain)', label: 'Avalanche (C-Chain)', confirmations: 35, minDeposit: 0.01, icon: '🔴' }
+    ],
+    'Litecoin': [
+      { value: 'Litecoin', label: 'Litecoin', confirmations: 6, minDeposit: 0.001, icon: '⚪' }
+    ],
+    'XRP': [
+      { value: 'XRP Ledger', label: 'XRP Ledger', confirmations: 1, minDeposit: 1, icon: '🔵' }
+    ],
+    'TON': [
+      { value: 'The Open Network (TON)', label: 'The Open Network (TON)', confirmations: 1, minDeposit: 0.1, icon: '🔵' }
     ]
   };
 
@@ -298,16 +323,32 @@ export default function CryptoDeposit() {
     setMessageType('');
 
     try {
+      // First, get the crypto_asset_id for this crypto_type and network_type
+      const { data: cryptoAsset, error: assetError } = await supabase
+        .from('crypto_assets')
+        .select('id')
+        .eq('crypto_type', depositForm.crypto_type)
+        .eq('network_type', depositForm.network_type)
+        .eq('status', 'active')
+        .single();
+
+      if (assetError || !cryptoAsset) {
+        throw new Error('Crypto asset configuration not found. Please contact support.');
+      }
+
       const { data, error } = await supabase
         .from('crypto_deposits')
         .insert([{
           user_id: user.id,
           account_id: depositForm.account_id,
-          crypto_type: depositForm.crypto_type,
-          network_type: depositForm.network_type,
-          wallet_address: walletAddress,
+          crypto_asset_id: cryptoAsset.id,
           amount: parseFloat(depositForm.amount),
-          status: 'pending'
+          status: 'pending',
+          purpose: 'general_deposit',
+          metadata: {
+            wallet_address: walletAddress,
+            deposit_source: 'user_deposit_page'
+          }
         }])
         .select()
         .single();

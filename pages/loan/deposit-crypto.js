@@ -29,29 +29,33 @@ function LoanDepositCryptoContent() {
   const [selectedLoanWallet, setSelectedLoanWallet] = useState(null);
 
   const networkConfigs = {
-    USDT: [
-      { value: 'BEP20', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.005, icon: '🟡' },
-      { value: 'TRC20', label: 'TRON (TRC20)', confirmations: 20, minDeposit: 0.005, icon: '🔴' },
-      { value: 'ERC20', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.005, icon: '⚪' }
+    'Tether USD': [
+      { value: 'BNB Smart Chain (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.005, icon: '🟡' },
+      { value: 'Tron (TRC20)', label: 'TRON (TRC20)', confirmations: 20, minDeposit: 0.005, icon: '🔴' },
+      { value: 'Ethereum (ERC20)', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.005, icon: '⚪' }
     ],
-    ETH: [
-      { value: 'ERC20', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.00005, icon: '⚪' },
-      { value: 'BEP20', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.00005, icon: '🟡' }
+    'Ethereum': [
+      { value: 'Ethereum (ERC20)', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.00005, icon: '⚪' },
+      { value: 'BNB Smart Chain (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.00005, icon: '🟡' }
     ],
-    BNB: [
-      { value: 'BEP20', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.0005, icon: '🟡' }
+    'BNB': [
+      { value: 'BNB Smart Chain (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.0005, icon: '🟡' }
     ],
-    BTC: [
-      { value: 'Bitcoin Mainnet', label: 'Bitcoin Mainnet', confirmations: 1, minDeposit: 0.0001, icon: '🟠' },
-      { value: 'BSC (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.0001, icon: '🟡' }
+    'Bitcoin': [
+      { value: 'Bitcoin', label: 'Bitcoin Mainnet', confirmations: 1, minDeposit: 0.0001, icon: '🟠' }
+    ],
+    'USD Coin': [
+      { value: 'Ethereum (ERC20)', label: 'Ethereum (ERC20)', confirmations: 6, minDeposit: 0.005, icon: '⚪' },
+      { value: 'BNB Smart Chain (BEP20)', label: 'BSC (BEP20)', confirmations: 60, minDeposit: 0.005, icon: '🟡' }
     ]
   };
 
   const cryptoTypes = [
-    { value: 'BTC', label: 'Bitcoin', icon: '₿', color: '#F7931A', symbol: 'BTC' },
-    { value: 'USDT', label: 'Tether', icon: '₮', color: '#26A17B', symbol: 'USDT' },
-    { value: 'ETH', label: 'Ethereum', icon: 'Ξ', color: '#627EEA', symbol: 'ETH' },
-    { value: 'BNB', label: 'Binance Coin', icon: 'B', color: '#F3BA2F', symbol: 'BNB' }
+    { value: 'Bitcoin', label: 'Bitcoin', icon: '₿', color: '#F7931A', symbol: 'BTC' },
+    { value: 'Tether USD', label: 'Tether', icon: '₮', color: '#26A17B', symbol: 'USDT' },
+    { value: 'Ethereum', label: 'Ethereum', icon: 'Ξ', color: '#627EEA', symbol: 'ETH' },
+    { value: 'BNB', label: 'Binance Coin', icon: 'B', color: '#F3BA2F', symbol: 'BNB' },
+    { value: 'USD Coin', label: 'USD Coin', icon: '$', color: '#007AFF', symbol: 'USDC' }
   ];
 
   useEffect(() => {
@@ -135,12 +139,27 @@ function LoanDepositCryptoContent() {
     setWalletAddress('');
     setSelectedLoanWallet(null);
     try {
-      // Fetch active loan wallets for the selected crypto and network
-      const { data: loanWallets, error: loanWalletError } = await supabase
-        .from('loan_crypto_wallets')
-        .select('id, crypto_type, network_type, wallet_address')
+      // First, get the crypto_asset_id for this crypto_type and network_type
+      const { data: cryptoAsset, error: assetError } = await supabase
+        .from('crypto_assets')
+        .select('id')
         .eq('crypto_type', depositForm.crypto_type)
         .eq('network_type', depositForm.network_type)
+        .eq('status', 'active')
+        .single();
+
+      if (assetError || !cryptoAsset) {
+        console.error('Error fetching crypto asset:', assetError);
+        setMessage(`Crypto asset configuration not found for ${depositForm.crypto_type} on ${depositForm.network_type}. Please contact support.`);
+        setMessageType('error');
+        return;
+      }
+
+      // Fetch active loan wallets for this crypto asset
+      const { data: loanWallets, error: loanWalletError } = await supabase
+        .from('loan_crypto_wallets')
+        .select('id, wallet_address, memo')
+        .eq('crypto_asset_id', cryptoAsset.id)
         .eq('status', 'active')
         .eq('purpose', 'loan_requirement');
 
@@ -251,26 +270,36 @@ function LoanDepositCryptoContent() {
         throw new Error('No loan wallet selected. Please try again or contact support.');
       }
 
+      // Get the crypto_asset_id for this crypto_type and network_type
+      const { data: cryptoAsset, error: assetError } = await supabase
+        .from('crypto_assets')
+        .select('id')
+        .eq('crypto_type', depositForm.crypto_type)
+        .eq('network_type', depositForm.network_type)
+        .eq('status', 'active')
+        .single();
+
+      if (assetError || !cryptoAsset) {
+        throw new Error('Crypto asset configuration not found. Please contact support.');
+      }
+
       // Create crypto deposit record with purpose = 'loan_requirement'
       const { data: depositData, error: depositError } = await supabase
         .from('crypto_deposits')
         .insert([{
           user_id: user.id,
           account_id: treasuryAccount.id,
-          crypto_type: depositForm.crypto_type,
-          network_type: depositForm.network_type,
-          wallet_address: walletAddress,
+          crypto_asset_id: cryptoAsset.id,
+          loan_wallet_id: selectedLoanWallet.id,
           amount: parseFloat(depositForm.amount),
           approved_amount: 0,
           status: 'pending',
           purpose: 'loan_requirement',
-          loan_id: loan_id,
-          loan_wallet_id: selectedLoanWallet.id,
           metadata: {
             treasury_deposit: true,
+            loan_id: loan_id,
             loan_wallet_address: walletAddress,
-            loan_wallet_crypto: depositForm.crypto_type,
-            loan_wallet_network: depositForm.network_type
+            deposit_source: 'loan_deposit_page'
           }
         }])
         .select()
