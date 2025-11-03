@@ -1,0 +1,141 @@
+Project context:
+We already have an existing loan system in the frontend. Enhance and extend it — do not replace the working parts. Add pages, components, and logic below so the user loan experience matches the admin workflows (treasury, loan deposit verification, approvals).
+
+High-level goals
+	•	Provide a complete user-facing loan management interface (apply, dashboard, detail, deposit, repayment, history) that integrates with our Supabase backend and admin logic.
+	•	Ensure crypto deposit for loan collateral is routed to the treasury and is pending admin verification (deposit not counted until admin confirms).
+	•	Use real-time updates so users see status changes immediately once admin confirms.
+
+Design & UX
+	•	Follow an accessible, modern banking UI consistent with existing app theme. Mobile-first, responsive.
+	•	Use card-based loan listings, color-coded badges for statuses (pending, approved, active, rejected, closed), and meaningful CTAs.
+	•	Toast notifications for success/errors; clear loaders and disabled states for async actions.
+
+⸻
+
+Pages / Routes to add or improve
+
+1) /loan — User Loan Dashboard
+	•	Show all loans for user_id.
+	•	For each loan: loan reference, type, principal, remaining balance, interest rate, monthly payment, next payment date, deposit requirement & deposit_status (pending/completed/not_required).
+	•	Filters by status & loan type; search by reference.
+	•	Realtime subscription to loans table (Supabase realtime) to update statuses and balances automatically.
+	•	CTA when status = 'pending' and deposit_required > 0:
+	•	If deposit_status = 'not_required' — show “Wait for approval” message.
+	•	If deposit_status = 'pending' — show “Deposit submitted — pending admin confirmation”
+	•	If deposit_status = 'completed' and admin not yet approved — show “Deposit verified — awaiting admin approval”
+
+2) /loan/apply — Loan Application (Multi-step)
+	•	Multi-step form:
+	1.	Choose loan type (personal, home, auto, business, student)
+	2.	Amount + term months (validate min/max)
+	3.	Purpose + files upload (ID, proof of income)
+	4.	Review (shows calculated monthly payment, total interest, required deposit = 10% of principal)
+	•	Use client-side validation (zod or existing validation pattern). Show helpful error text.
+	•	On submit POST /api/user/apply-loan with payload: { user_id, account_id, loan_type, amount, term_months, purpose, documents }.
+	•	Show success message and redirect to /loan with the new loan entry.
+
+3) /loan/[loanId] — Loan Detail
+	•	Full loan info: reference, type, principal, remaining_balance, schedule, interest rate, status, approved_at, disbursed_at, deposit_status, deposit_date.
+	•	Payment history table (GET /api/user/get-payment-history?loanId=xxx) with principal vs interest breakdown.
+	•	Make payment form (POST /api/user/make-payment) that supports:
+	•	Pay from account balance (deduct from user’s account)
+	•	Upload proof (if offline)
+	•	If deposit_required > 0 and deposit_status != 'completed', show link to deposit page.
+	•	Show downloadable documents.
+
+4) /loan/deposit-crypto — Loan Deposit Page (NEW, critical)
+	•	Use this page exclusively for loan collateral crypto deposits. Do not re-use the general deposit page.
+	•	Show required deposit amount = ceil(loan.principal * 0.10) (display both crypto estimate and fiat).
+	•	Show assigned bank treasury wallet address and QR code.
+	•	When user clicks Complete Deposit:
+	1.	Create a crypto_deposit record (call API or directly use Supabase) with:
+
+{
+  "user_id": "<current_user_id>",
+  "loan_id": "<loanId>",
+  "amount": <amount>,
+  "status": "pending",
+  "purpose": "loan_requirement",
+  "approved_amount": 0
+}
+
+	2.	IMPORTANT: The deposit should be recorded as a crypto_deposits row targeting the treasury account (server/admin code will credit treasury when deposit finalizes). The frontend should send purpose: 'loan_requirement' and loan_id.
+	3.	After API/Supabase call completes, redirect to /loan and show toast: “Deposit submitted — pending admin confirmation.”
+
+	•	Allow users to upload proof of on-chain transfer (tx hash screenshot) to POST /api/user/upload-deposit-proof.
+	•	Do not mark loan deposit_status as completed from frontend. That is admin-only after review.
+
+5) /loan/history — Payment History & Exports
+	•	Pull loan_payments for current user (GET /api/user/get-payment-history?loanId=xxx).
+	•	Allow filtering date ranges and export to PDF (client-side PDF generation ok).
+
+⸻
+
+Data & API integration (Supabase)
+	•	Use the provided endpoints (or create them if missing) and Supabase client:
+	•	GET /api/user/get-loans → returns array of loans for user_id
+	•	POST /api/user/apply-loan → inserts new loan
+	•	GET /api/user/get-loan-detail?loanId=xxx → single loan details
+	•	POST /api/user/make-payment → process payment (call backend to handle accounting)
+	•	POST /api/user/upload-deposit-proof → attach proof files
+	•	GET /api/user/get-payment-history?loanId=xxx
+	•	Real-time: subscribe to loans and crypto_deposits channels for the current user so UI updates when admin confirms deposit or approves/disburses loan.
+	•	When creating crypto deposit, ensure the frontend sets purpose = 'loan_requirement' and loan_id in the created crypto_deposits row. (Server-side will credit treasury or admin will confirm.)
+
+Example request payload for loan deposit creation (frontend → backend or Supabase):
+
+{
+  "user_id": "USER_UUID",
+  "loan_id": "LOAN_UUID",
+  "amount": 500.00,
+  "currency": "USDT",
+  "purpose": "loan_requirement",
+  "status": "pending",
+  "metadata": { "method": "crypto", "wallet": "treasury_wallet_address" }
+
+
+Expected backend/admin lifecycle (do not auto-complete on frontend):
+	1.	Frontend creates crypto_deposits with purpose: loan_requirement and status: pending.
+	2.	Admin reviews deposit proof; when admin confirms, the admin process sets crypto_deposits.status = 'completed' and crypto_deposits.approved_amount = actual_amount. This will (via trigger/function) update loans.deposit_status = 'completed'.
+	3.	Admin then enables Approve Loan or Disburse Loan. Disbursement deducts from treasury and credits user.
+
+⸻
+
+Business Rules & UX behaviors to enforce
+	•	Loans require a 10% deposit before approval if deposit_required > 0.
+	•	Frontend must not mark a deposit as verified. Only admin confirmation should change loan.deposit_status to completed.
+	•	Show a clear banner on loan detail if deposit is missing: “10% deposit required. Please deposit here → [Deposit Now]”
+	•	If deposit_status = 'pending', show message: “Deposit submitted — pending admin confirmation”
+	•	If treasury has insufficient funds (admin-side), user sees a clear message after admin rejects or delays disbursement: “Loan approval delayed due to treasury balance” — ensure real-time update so user sees status change.
+	•	When loan moves to active (disbursed), update user balance and transaction history in real time.
+
+⸻
+
+Validation & calculations
+	•	Payment calculator: monthly payment = P * r / (1 - (1 + r)^-n) where r = monthly interest rate and n = months. Show total interest and monthly breakdown.
+	•	Deposit amount = roundTo2(principal * 0.10). Display both fiat and estimated crypto amount.
+	•	Validate file uploads (max size 5MB, allowed image/pdf types).
+
+⸻
+
+Security & environment
+	•	Use environment variables for Supabase URL/ANON key (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY).
+	•	Ensure only authenticated users can access loan pages and endpoints are filtered by user_id.
+	•	Do not show treasury balance or admin controls in user UI.
+
+⸻
+
+Developer guidance for Replit AI
+	•	Integrate with the existing loan components (modify / extend) — do not rebuild from scratch. If the existing system uses a different pattern (hooks, context), follow the same pattern.
+	•	Add unit test coverage for calculation helpers and form validation if possible.
+	•	Provide clear README notes in the frontend repo describing the new pages, routes, and the crypto_deposit → loan lifecycle.
+	•	Use clear, accessible ARIA labels for forms and buttons.
+
+⸻
+
+Deliverable: A production-ready frontend implementation with the pages above, real-time subscriptions, deposit flow to purpose: 'loan_requirement', correct UX for pending admin confirmation, and integration points to the given API endpoints. Provide a small integration test or manual test steps to verify: (a) apply → (b) deposit collateral via /loan/deposit-crypto → (c) check that deposit row was created with purpose+loan_id → (d) admin confirms deposit → (e) loan deposit_status updates → (f) admin disburses → user balance updates.
+
+If anything in the existing frontend prevents this approach, update code thoughtfully and document changes in the commit message.
+
+}
