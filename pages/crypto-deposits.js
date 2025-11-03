@@ -62,6 +62,11 @@ export default function CryptoDeposits() {
           accounts:account_id (
             account_number,
             account_type
+          ),
+          crypto_assets:crypto_asset_id (
+            crypto_type,
+            symbol,
+            network_type
           )
         `)
         .eq('user_id', session.user.id)
@@ -83,7 +88,7 @@ export default function CryptoDeposits() {
 
     // Apply filters
     if (filters.crypto_type) {
-      result = result.filter(d => d.crypto_type === filters.crypto_type);
+      result = result.filter(d => d.crypto_assets?.symbol === filters.crypto_type);
     }
 
     if (filters.status) {
@@ -149,10 +154,18 @@ export default function CryptoDeposits() {
 
   const getCryptoIcon = (cryptoType) => {
     const icons = {
-      BTC: '₿',
-      ETH: 'Ξ',
-      USDT: '₮',
-      BNB: 'B'
+      'Bitcoin': '₿',
+      'Ethereum': 'Ξ',
+      'Tether USD': '₮',
+      'USD Coin': '$',
+      'BNB': 'B',
+      'Solana': 'S',
+      'Cardano': 'A',
+      'Polygon': 'M',
+      'Avalanche': 'A',
+      'Litecoin': 'Ł',
+      'XRP': 'X',
+      'TON': 'T'
     };
     return icons[cryptoType] || '🪙';
   };
@@ -198,7 +211,7 @@ export default function CryptoDeposits() {
   const endIndex = startIndex + itemsPerPage;
   const currentDeposits = filteredDeposits.slice(startIndex, endIndex);
 
-  const uniqueCryptoTypes = [...new Set(deposits.map(d => d.crypto_type))].filter(Boolean);
+  const uniqueCryptoTypes = [...new Set(deposits.map(d => d.crypto_assets?.symbol))].filter(Boolean);
   const uniqueStatuses = [...new Set(deposits.map(d => d.status))].filter(Boolean);
 
   if (loading) {
@@ -368,11 +381,11 @@ export default function CryptoDeposits() {
                       <tr key={deposit.id} style={styles.tableRow}>
                         <td style={styles.td}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '1.2rem' }}>{getCryptoIcon(deposit.crypto_type)}</span>
-                            <span style={{ fontWeight: '600' }}>{deposit.crypto_type}</span>
+                            <span style={{ fontSize: '1.2rem' }}>{getCryptoIcon(deposit.crypto_assets?.crypto_type)}</span>
+                            <span style={{ fontWeight: '600' }}>{deposit.crypto_assets?.symbol || 'N/A'}</span>
                           </div>
                         </td>
-                        <td style={styles.td}>{deposit.network_type}</td>
+                        <td style={styles.td}>{deposit.crypto_assets?.network_type || 'N/A'}</td>
                         <td style={styles.td}>
                           {deposit.accounts?.account_number ?
                             `****${deposit.accounts.account_number.slice(-4)}` :
@@ -424,10 +437,10 @@ export default function CryptoDeposits() {
                   <div key={deposit.id} style={styles.mobileCard}>
                     <div style={styles.mobileCardHeader}>
                       <div style={styles.cryptoCell}>
-                        <span style={styles.cryptoIconLarge}>{getCryptoIcon(deposit.crypto_type)}</span>
+                        <span style={styles.cryptoIconLarge}>{getCryptoIcon(deposit.crypto_assets?.crypto_type)}</span>
                         <div>
-                          <div style={styles.cryptoNameLarge}>{deposit.crypto_type}</div>
-                          <div style={styles.networkType}>{deposit.network_type}</div>
+                          <div style={styles.cryptoNameLarge}>{deposit.crypto_assets?.symbol || 'N/A'}</div>
+                          <div style={styles.networkType}>{deposit.crypto_assets?.network_type || 'N/A'}</div>
                         </div>
                       </div>
                       {getStatusBadge(deposit.status)}
@@ -537,27 +550,29 @@ export default function CryptoDeposits() {
                   <div style={styles.detailRow}>
                     <span style={styles.detailLabel}>Cryptocurrency:</span>
                     <span style={styles.detailValue}>
-                      {getCryptoIcon(selectedDeposit.crypto_type)} {selectedDeposit.crypto_type}
+                      {getCryptoIcon(selectedDeposit.crypto_assets?.crypto_type)} {selectedDeposit.crypto_assets?.crypto_type || 'N/A'} ({selectedDeposit.crypto_assets?.symbol || 'N/A'})
                     </span>
                   </div>
 
                   <div style={styles.detailRow}>
                     <span style={styles.detailLabel}>Network:</span>
-                    <span style={styles.detailValue}>{selectedDeposit.network_type}</span>
+                    <span style={styles.detailValue}>{selectedDeposit.crypto_assets?.network_type || 'N/A'}</span>
                   </div>
 
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Wallet Address:</span>
-                    <span style={{...styles.detailValue, wordBreak: 'break-all', fontSize: '0.85rem'}}>
-                      {selectedDeposit.wallet_address}
-                    </span>
-                  </div>
+                  {selectedDeposit.memo && (
+                    <div style={styles.detailRow}>
+                      <span style={styles.detailLabel}>Memo/Tag:</span>
+                      <span style={{...styles.detailValue, wordBreak: 'break-all', fontSize: '0.85rem'}}>
+                        {selectedDeposit.memo}
+                      </span>
+                    </div>
+                  )}
 
-                  {selectedDeposit.transaction_hash && (
+                  {selectedDeposit.tx_hash && (
                     <div style={styles.detailRow}>
                       <span style={styles.detailLabel}>Transaction Hash:</span>
                       <span style={{...styles.detailValue, wordBreak: 'break-all', fontSize: '0.85rem'}}>
-                        {selectedDeposit.transaction_hash}
+                        {selectedDeposit.tx_hash}
                       </span>
                     </div>
                   )}
@@ -579,7 +594,7 @@ export default function CryptoDeposits() {
                   <div style={styles.detailRow}>
                     <span style={styles.detailLabel}>Net Amount:</span>
                     <span style={{...styles.detailValue, fontWeight: 'bold', color: '#10b981'}}>
-                      {formatCurrency(selectedDeposit.net_amount || ((selectedDeposit.amount || 0) - (selectedDeposit.fee || 0)))}
+                      {formatCurrency(selectedDeposit.net_amount || 0)}
                     </span>
                   </div>
                 </div>

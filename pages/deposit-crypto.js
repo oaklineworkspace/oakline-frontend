@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -72,10 +71,18 @@ export default function CryptoDeposit() {
   };
 
   const cryptoTypes = [
-    { value: 'BTC', label: 'Bitcoin', icon: '₿', color: '#F7931A' },
-    { value: 'USDT', label: 'Tether', icon: '₮', color: '#26A17B' },
-    { value: 'ETH', label: 'Ethereum', icon: 'Ξ', color: '#627EEA' },
-    { value: 'BNB', label: 'Binance Coin', icon: 'B', color: '#F3BA2F' }
+    { value: 'Bitcoin', label: 'Bitcoin', icon: '₿', color: '#F7931A' },
+    { value: 'Tether USD', label: 'Tether', icon: '₮', color: '#26A17B' },
+    { value: 'Ethereum', label: 'Ethereum', icon: 'Ξ', color: '#627EEA' },
+    { value: 'BNB', label: 'Binance Coin', icon: 'B', color: '#F3BA2F' },
+    { value: 'USD Coin', label: 'USD Coin', icon: '$', color: '#007AFF' },
+    { value: 'Solana', label: 'Solana', icon: 'S', color: '#9945FF' },
+    { value: 'Cardano', label: 'Cardano', icon: 'A', color: '#0077fa' },
+    { value: 'Polygon', label: 'Polygon', icon: 'M', color: '#8247E5' },
+    { value: 'Avalanche', label: 'Avalanche', icon: 'A', color: '#E84142' },
+    { value: 'Litecoin', label: 'Litecoin', icon: 'Ł', color: '#345D9D' },
+    { value: 'XRP', label: 'XRP', icon: 'X', color: '#0070D0' },
+    { value: 'TON', label: 'TON', icon: 'T', color: '#007AFF' }
   ];
 
   useEffect(() => {
@@ -103,11 +110,11 @@ export default function CryptoDeposit() {
         .eq('user_id', session.user.id)
         .eq('status', 'active')
         .order('created_at');
-      
+
       if (accountsError) {
         console.error('Error fetching accounts:', accountsError);
       }
-      
+
       setAccounts(userAccounts || []);
       if (userAccounts && userAccounts.length > 0) {
         setDepositForm(prev => ({ 
@@ -266,14 +273,14 @@ export default function CryptoDeposit() {
         setMessageType('error');
         return;
       }
-      
+
       const selectedNetwork = getAvailableNetworks().find(n => n.value === depositForm.network_type);
       if (selectedNetwork && parseFloat(depositForm.amount) < selectedNetwork.minDeposit) {
         setMessage(`Minimum deposit amount is ${selectedNetwork.minDeposit} ${depositForm.crypto_type}`);
         setMessageType('error');
         return;
       }
-      
+
       setCurrentStep(2);
     } else if (currentStep === 2) {
       if (!walletAddress) {
@@ -409,7 +416,7 @@ export default function CryptoDeposit() {
       }),
       accountNumber: deposit.account_number,
       cryptoType: cryptoTypes.find(c => c.value === deposit.crypto_type)?.label || deposit.crypto_type,
-      cryptoSymbol: deposit.crypto_type,
+      cryptoSymbol: depositForm.crypto_type, // Updated to use the value from depositForm for consistency
       network: deposit.network_type || 'N/A',
       amount: formatCurrency(deposit.amount),
       walletAddress: deposit.wallet_address || 'N/A',

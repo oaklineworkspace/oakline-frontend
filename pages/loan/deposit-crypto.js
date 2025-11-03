@@ -11,7 +11,7 @@ function LoanDepositCryptoContent() {
   const { user } = useAuth();
   const router = useRouter();
   const { loan_id, amount } = router.query;
-  
+
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loanDetails, setLoanDetails] = useState(null);
@@ -48,10 +48,10 @@ function LoanDepositCryptoContent() {
   };
 
   const cryptoTypes = [
-    { value: 'BTC', label: 'Bitcoin', icon: '₿', color: '#F7931A' },
-    { value: 'USDT', label: 'Tether', icon: '₮', color: '#26A17B' },
-    { value: 'ETH', label: 'Ethereum', icon: 'Ξ', color: '#627EEA' },
-    { value: 'BNB', label: 'Binance Coin', icon: 'B', color: '#F3BA2F' }
+    { value: 'BTC', label: 'Bitcoin', icon: '₿', color: '#F7931A', symbol: 'BTC' },
+    { value: 'USDT', label: 'Tether', icon: '₮', color: '#26A17B', symbol: 'USDT' },
+    { value: 'ETH', label: 'Ethereum', icon: 'Ξ', color: '#627EEA', symbol: 'ETH' },
+    { value: 'BNB', label: 'Binance Coin', icon: 'B', color: '#F3BA2F', symbol: 'BNB' }
   ];
 
   useEffect(() => {
@@ -80,7 +80,7 @@ function LoanDepositCryptoContent() {
           console.log('Loan updated:', payload);
           if (payload.new) {
             setLoanDetails(payload.new);
-            
+
             if (payload.new.deposit_status === 'completed') {
               setMessage('Your deposit has been confirmed by our team!');
               setMessageType('success');
@@ -209,14 +209,14 @@ function LoanDepositCryptoContent() {
         setMessageType('error');
         return;
       }
-      
+
       const selectedNetwork = getAvailableNetworks().find(n => n.value === depositForm.network_type);
       if (selectedNetwork && parseFloat(depositForm.amount) < selectedNetwork.minDeposit) {
         setMessage(`Minimum deposit amount is ${selectedNetwork.minDeposit} ${depositForm.crypto_type}`);
         setMessageType('error');
         return;
       }
-      
+
       setCurrentStep(2);
     } else if (currentStep === 2) {
       if (!walletAddress) {
@@ -462,6 +462,24 @@ function LoanDepositCryptoContent() {
       backgroundColor: '#f8fafc',
       color: '#64748b',
       border: '2px solid #e2e8f0'
+    },
+    summaryRow: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '1rem',
+      paddingBottom: '1rem',
+      borderBottom: '1px solid #eee'
+    },
+    summaryLabel: {
+      fontSize: '1rem',
+      color: '#334155',
+      fontWeight: '500'
+    },
+    summaryValue: {
+      fontSize: '1rem',
+      color: '#1e293b',
+      fontWeight: '600'
     }
   };
 
@@ -656,10 +674,24 @@ function LoanDepositCryptoContent() {
           <div style={styles.card}>
             <h2 style={styles.sectionTitle}>Confirm Payment</h2>
             <div style={{ marginBottom: '2rem' }}>
-              <p><strong>Amount:</strong> ${parseFloat(depositForm.amount).toLocaleString()}</p>
-              <p><strong>Cryptocurrency:</strong> {getSelectedCrypto()?.label}</p>
-              <p><strong>Network:</strong> {getSelectedNetwork()?.label}</p>
-              <p><strong>Destination:</strong> Oakline Bank Treasury (9900000001)</p>
+              <div style={styles.summaryRow}>
+                <span style={styles.summaryLabel}>Amount</span>
+                <span style={styles.summaryValue}>${parseFloat(depositForm.amount).toLocaleString()}</span>
+              </div>
+              <div style={styles.summaryRow}>
+                <span style={styles.summaryLabel}>Cryptocurrency</span>
+                <span style={styles.summaryValue}>
+                  {getSelectedCrypto().label} ({getSelectedCrypto().symbol})
+                </span>
+              </div>
+              <div style={styles.summaryRow}>
+                <span style={styles.summaryLabel}>Network</span>
+                <span style={styles.summaryValue}>{getSelectedNetwork()?.label}</span>
+              </div>
+              <div style={styles.summaryRow} >
+                <span style={styles.summaryLabel}>Destination</span>
+                <span style={styles.summaryValue}>Oakline Bank Treasury (9900000001)</span>
+              </div>
             </div>
             <div style={styles.buttonGroup}>
               <button
