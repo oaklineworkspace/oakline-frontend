@@ -1007,7 +1007,7 @@ function DashboardContent() {
                         color: deposit.status === 'completed' ? '#059669' : '#f59e0b'
                       }}>
                         {deposit.status === 'completed' ? '+' : ''}
-                        {formatCurrency(deposit.net_amount || deposit.amount)}
+                        {formatCurrency(parseFloat(deposit.net_amount || deposit.amount || 0))}
                       </div>
                       <div style={{
                         ...styles.statusBadge,
