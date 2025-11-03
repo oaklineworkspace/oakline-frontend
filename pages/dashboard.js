@@ -763,7 +763,8 @@ function DashboardContent() {
                     <div style={styles.transactionRight}>
                       <div style={{
                         ...styles.transactionAmount,
-                        color: isCredit ? '#059669' : '#dc2626'
+                        color: status?.toLowerCase() === 'pending' ? '#f59e0b' : 
+                               (isCredit ? '#059669' : '#dc2626')
                       }}>
                         {isCredit ? '+' : '-'}
                         {formatCurrency(Math.abs(amount))}

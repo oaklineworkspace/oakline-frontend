@@ -406,7 +406,8 @@ export default function TransactionsHistory() {
                   <div style={styles.transactionRight}>
                     <div style={{
                       ...styles.transactionAmount,
-                      color: isCredit ? '#059669' : '#dc2626'
+                      color: status?.toLowerCase() === 'pending' ? '#f59e0b' : 
+                             (isCredit ? '#059669' : '#dc2626')
                     }}>
                       {isCredit ? '+' : '-'}{formatCurrency(Math.abs(amount))}
                     </div>
@@ -761,8 +762,10 @@ const styles = {
     maxWidth: '600px',
     width: '100%',
     maxHeight: '90vh',
-    overflow: 'auto',
-    boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+    display: 'flex',
+    flexDirection: 'column',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+    overflow: 'hidden'
   },
   modalHeader: {
     display: 'flex',
@@ -792,7 +795,9 @@ const styles = {
     transition: 'color 0.2s'
   },
   modalBody: {
-    padding: '1.5rem'
+    padding: '1.5rem',
+    overflowY: 'auto',
+    flex: 1
   },
   detailRow: {
     display: 'flex',
