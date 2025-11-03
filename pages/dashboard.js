@@ -124,6 +124,11 @@ function DashboardContent() {
           accounts:account_id (
             account_number,
             account_type
+          ),
+          crypto_assets:crypto_asset_id (
+            crypto_type,
+            network_type,
+            symbol
           )
         `)
         .eq('user_id', userId)
@@ -143,11 +148,15 @@ function DashboardContent() {
             purposeDisplay = 'Transaction';
           }
 
+          // Get crypto details from crypto_assets if available
+          const cryptoType = crypto.crypto_assets?.crypto_type || crypto.crypto_type || 'Crypto';
+          const networkType = crypto.crypto_assets?.network_type || crypto.network_type || 'Network';
+
           return {
             id: crypto.id,
             type: 'crypto_deposit',
             transaction_type: 'crypto_deposit',
-            description: `${crypto.crypto_type} Deposit via ${crypto.network_type} - ${purposeDisplay}`,
+            description: `${cryptoType} Deposit via ${networkType} - ${purposeDisplay}`,
             amount: crypto.net_amount || crypto.amount,
             status: crypto.status,
             created_at: crypto.created_at,

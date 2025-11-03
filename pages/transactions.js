@@ -73,6 +73,11 @@ export default function TransactionsHistory() {
           accounts:account_id (
             account_number,
             account_type
+          ),
+          crypto_assets:crypto_asset_id (
+            crypto_type,
+            network_type,
+            symbol
           )
         `)
         .eq('user_id', user.id)
@@ -94,8 +99,8 @@ export default function TransactionsHistory() {
             purposeDisplay = 'Deposit';
           }
 
-          const cryptoName = crypto.crypto_type || 'Crypto';
-          const networkName = crypto.network_type || 'Network';
+          const cryptoName = crypto.crypto_assets?.crypto_type || crypto.crypto_type || 'Crypto';
+          const networkName = crypto.crypto_assets?.network_type || crypto.network_type || 'Network';
 
           return {
             id: crypto.id,

@@ -363,6 +363,40 @@ export default function CryptoDeposit() {
         throw new Error('Failed to create deposit record');
       }
 
+      // Send email notification
+      try {
+        const profileResponse = await supabase
+          .from('profiles')
+          .select('first_name, last_name, email')
+          .eq('id', user.id)
+          .single();
+
+        const userProfile = profileResponse.data;
+        const userEmail = userProfile?.email || user.email;
+        const userName = userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'Valued Customer';
+
+        await fetch('/api/send-crypto-deposit-notification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          },
+          body: JSON.stringify({
+            email: userEmail,
+            userName: userName,
+            cryptoType: getSelectedCrypto().label,
+            networkType: getSelectedNetwork()?.label,
+            amount: depositForm.amount,
+            walletAddress: walletAddress,
+            depositId: data.id,
+            accountNumber: depositForm.account_number
+          })
+        });
+      } catch (emailError) {
+        console.error('Error sending email notification:', emailError);
+        // Don't fail the deposit if email fails
+      }
+
       // Create receipt data
       const receipt = {
         referenceNumber: String(data.id).substring(0, 8).toUpperCase(),
