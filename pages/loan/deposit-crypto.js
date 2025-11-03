@@ -130,7 +130,7 @@ function LoanDepositCryptoContent() {
     try {
       const { data: cryptoAssets, error } = await supabase
         .from('crypto_assets')
-        .select('network_type')
+        .select('network_type, confirmations_required, min_deposit, deposit_fee_percent')
         .eq('crypto_type', depositForm.crypto_type)
         .eq('status', 'active')
         .order('network_type');
@@ -145,9 +145,9 @@ function LoanDepositCryptoContent() {
         const networks = cryptoAssets.map(asset => ({
           value: asset.network_type,
           label: asset.network_type,
-          confirmations: 3, // Default value since column doesn't exist
-          minDeposit: 0.001, // Default minimum
-          fee: 0, // Default fee
+          confirmations: asset.confirmations_required || 3,
+          minDeposit: asset.min_deposit || 0.001,
+          fee: asset.deposit_fee_percent || 0,
           icon: networkIconMap[asset.network_type] || '🔹'
         }));
         setAvailableNetworks(networks);
