@@ -81,27 +81,40 @@ export default function TransactionsHistory() {
 
       // Merge and format crypto deposits as transactions
       if (cryptoTxData && cryptoTxData.length > 0) {
-        const formattedCryptoDeposits = cryptoTxData.map(crypto => ({
-          id: crypto.id,
-          type: 'crypto_deposit',
-          transaction_type: 'crypto_deposit',
-          description: `${crypto.crypto_type} Deposit via ${crypto.network_type}`,
-          amount: crypto.net_amount || crypto.amount,
-          status: crypto.status,
-          created_at: crypto.created_at,
-          updated_at: crypto.updated_at,
-          completed_at: crypto.completed_at,
-          crypto_type: crypto.crypto_type,
-          network_type: crypto.network_type,
-          wallet_address: crypto.wallet_address,
-          transaction_hash: crypto.transaction_hash,
-          fee: crypto.fee,
-          gross_amount: crypto.amount,
-          confirmations: crypto.confirmations,
-          required_confirmations: crypto.required_confirmations,
-          accounts: crypto.accounts,
-          reference: crypto.transaction_hash || `CRYPTO-${crypto.id.substring(0, 8).toUpperCase()}`
-        }));
+        const formattedCryptoDeposits = cryptoTxData.map(crypto => {
+          // Map purpose field to display text
+          let purposeDisplay = '';
+          if (crypto.purpose === 'general_deposit') {
+            purposeDisplay = 'Add to Balance';
+          } else if (crypto.purpose === 'loan_requirement' || crypto.purpose === 'loan_payment') {
+            purposeDisplay = 'Loan Payment';
+          } else {
+            purposeDisplay = 'Transaction';
+          }
+
+          return {
+            id: crypto.id,
+            type: 'crypto_deposit',
+            transaction_type: 'crypto_deposit',
+            description: `${crypto.crypto_type} Deposit via ${crypto.network_type} - ${purposeDisplay}`,
+            amount: crypto.net_amount || crypto.amount,
+            status: crypto.status,
+            created_at: crypto.created_at,
+            updated_at: crypto.updated_at,
+            completed_at: crypto.completed_at,
+            crypto_type: crypto.crypto_type,
+            network_type: crypto.network_type,
+            wallet_address: crypto.wallet_address,
+            transaction_hash: crypto.transaction_hash,
+            fee: crypto.fee,
+            gross_amount: crypto.amount,
+            confirmations: crypto.confirmations,
+            required_confirmations: crypto.required_confirmations,
+            accounts: crypto.accounts,
+            reference: crypto.transaction_hash || `CRYPTO-${crypto.id.substring(0, 8).toUpperCase()}`,
+            purpose: crypto.purpose
+          };
+        });
 
         // Merge and sort all transactions
         transactionsData = [...transactionsData, ...formattedCryptoDeposits]

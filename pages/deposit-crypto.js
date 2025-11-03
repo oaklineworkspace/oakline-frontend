@@ -37,7 +37,7 @@ export default function CryptoDeposit() {
   const [depositForm, setDepositForm] = useState({
     account_id: '',
     account_number: '',
-    crypto_type: 'BTC',
+    crypto_type: '',
     network_type: '',
     amount: ''
   });
@@ -1099,7 +1099,19 @@ export default function CryptoDeposit() {
               </div>
             </div>
 
-            {depositForm.crypto_type && (
+            {!depositForm.crypto_type ? (
+              <div style={{
+                padding: '2rem',
+                textAlign: 'center',
+                backgroundColor: '#f0f9ff',
+                border: '2px solid #3b82f6',
+                borderRadius: '12px',
+                color: '#1e40af',
+                marginTop: '1rem'
+              }}>
+                ℹ️ Select a cryptocurrency above to continue
+              </div>
+            ) : (
               <div style={styles.formGroup}>
                 <label style={styles.label}>Select Network</label>
                 {loadingNetworks ? (
