@@ -1,0 +1,71 @@
+ 1. Loan Flow & Loan Department
+	•	Replace “Admin review/approval” with a Loan Department workflow throughout the loan system.
+	•	All loan requests requiring a 10% deposit should remain Pending until the Loan Department confirms the deposit.
+	•	Once approved, the loan should become Active, and the funds should be credited accordingly.
+	•	Add email notifications for all major stages:
+	•	On submission: “Your loan request is being reviewed by the Loan Department.”
+	•	On approval: “Your loan has been approved and activated.”
+	•	On rejection: “Your loan request was not approved. Contact support for clarification.”
+	•	The payment page should load correctly only after the user selects a crypto network (don’t show “BTC not available” before selection).
+	•	When a user completes the 10% deposit, show a professional success page with transaction details.
+
+⸻
+
+⚠️ 2. Prevent Duplicate or Fake Deposits
+	•	Prevent users from submitting the 10% loan deposit multiple times for the same loan.
+	•	Once submitted, disable or hide the “Deposit” button for that loan.
+	•	Ensure the backend validates that the user hasn’t already made the deposit.
+	•	Update the Loan Details Page:
+	•	Detect whether the user already paid the 10% deposit.
+	•	If paid, hide the “10% Required” message and instead show something like:
+✅ Deposit received. Your loan is under review by the Loan Department.
+	•	Maintain strict validation to ensure sincerity and accuracy in all loan deposits.
+
+⸻
+
+⸻
+
+🧾 4. Apply Page (Location Data)
+	•	Extract all countries, states, and cities currently hardcoded in apply.js.
+	•	Replace them with dynamic data fetched from Supabase tables.
+
+•	Update apply.js to fetch and populate dropdowns for country → state → city dynamically.
+	•	Make sure the user can still select locations smoothly without breaking the form logic.
+
+⸻
+
+💼 5. Loan Application Page Redesign
+	•	Make the loan application form professional and easy to understand:
+	•	Step-based form with progress indicators.
+	•	Add tooltips or short explanations under each field.
+	•	Improve typography, spacing, and button alignment.
+	•	Ensure minimum deposits, rates, and loan terms are shown clearly and align with standard U.S. banking practices.
+
+⸻
+
+✉️ 6. Notifications and Confirmations
+	•	Send email and in-app notifications for:
+	•	Loan submission
+	•	Deposit confirmation
+	•	Loan approval/rejection
+	•	Each email should use a professional template with your bank name and logo.
+
+⸻
+
+🔒 7. Optional Enhancements
+
+	When a user submits the 10% loan deposit, automatically tag it as loan_requirement_deposit in Supabase for better tracking.
+	•	Use a consistent loan_status system:
+	•	pending_deposit, under_review, approved, rejected, active, completed
+	•	Make the front-end show status badges accordingly.
+
+⸻
+
+✅ Summary
+
+The goal is to make the loan flow transparent, secure, and professional:
+	•	Prevent duplicate 10% deposits.
+	•	Show correct status after submission.
+	•	Replace Admin with Loan Department workflow.
+	•	Improve UI/UX for loans, apply, and dashboard pages.
+	•	Dynamically fetch countries/states/cities from Supabase.
