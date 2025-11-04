@@ -1,4 +1,3 @@
-
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 import { sendEmail } from '../../../lib/email';
 
@@ -65,7 +64,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Insufficient funds' });
     }
 
-    // Deduct from account
+    // Reserve funds from user's account (optimistic deduction, pending admin approval)
     const newAccountBalance = parseFloat(account.balance) - paymentAmount;
     const { error: updateAccountError } = await supabaseAdmin
       .from('accounts')
@@ -84,22 +83,26 @@ export default async function handler(req, res) {
     const monthlyRate = parseFloat(loan.interest_rate) / 100 / 12;
     const interestAmount = remainingBalance * monthlyRate;
     const principalAmount = paymentAmount - interestAmount;
+    const newRemainingBalance = remainingBalance - paymentAmount;
 
-    // Create payment record with PENDING status for admin approval
-    const { data: payment, error: paymentError } = await supabaseAdmin
+    // Create payment with pending status - admin must approve
+    const referenceNumber = `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+    const { data: paymentRecord, error: paymentError } = await supabaseAdmin
       .from('loan_payments')
       .insert([{
-        loan_id: loan.id,
-        amount: paymentAmount,
-        principal_amount: principalAmount > 0 ? principalAmount : paymentAmount,
+        loan_id: loan_id,
+        amount: parseFloat(amount),
+        principal_amount: principalAmount > 0 ? principalAmount : parseFloat(amount),
         interest_amount: interestAmount > 0 ? interestAmount : 0,
         late_fee: 0,
-        balance_after: remainingBalance - paymentAmount,
-        payment_date: new Date().toISOString(), // Use actual timestamp
+        balance_after: newRemainingBalance,
+        payment_date: new Date().toISOString(),
         payment_type: payment_type || 'manual',
-        status: 'pending', // Changed to pending for admin approval
+        status: 'pending',
         processed_by: user.id,
-        notes: 'Payment submitted - awaiting admin confirmation'
+        reference_number: referenceNumber,
+        notes: `Payment submitted by user. Awaiting admin confirmation.`
       }])
       .select()
       .single();
@@ -114,20 +117,35 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to record payment' });
     }
 
-    // Create transaction record
-    await supabaseAdmin
+    // Create transaction record with pending status
+    const { error: transactionError } = await supabaseAdmin
       .from('transactions')
       .insert([{
-        account_id: account.id,
         user_id: user.id,
+        account_id: account_id,
         type: 'debit',
-        amount: paymentAmount,
+        amount: -parseFloat(amount),
         balance_before: parseFloat(account.balance),
         balance_after: newAccountBalance,
-        description: `Loan payment submitted - ${loan.loan_type?.replace(/_/g, ' ')} (Pending approval)`,
-        status: 'completed',
-        reference: `LOAN-PAY-${payment.reference_number}`,
+        description: `Loan Payment - Pending Admin Approval`,
+        status: 'hold',
+        reference: referenceNumber,
         created_at: new Date().toISOString()
+      }]);
+
+    if (transactionError) {
+      console.error('Error creating transaction record:', transactionError);
+    }
+
+    // Send notification to user
+    await supabaseAdmin
+      .from('notifications')
+      .insert([{
+        user_id: user.id,
+        type: 'loan',
+        title: 'Loan Payment Submitted',
+        message: `Your loan payment of $${parseFloat(amount).toLocaleString()} has been submitted and is pending admin approval. Reference: ${referenceNumber}`,
+        read: false
       }]);
 
     // Get user profile for email
@@ -154,12 +172,12 @@ export default async function handler(req, res) {
             <div style="color: #ffffff; font-size: 32px; margin-bottom: 8px;">🏦</div>
             <div style="color: #ffffff; font-size: 28px; font-weight: 700;">Oakline Bank</div>
           </div>
-          
+
           <div style="padding: 40px 32px;">
             <h1 style="color: #1a365d; font-size: 28px; font-weight: 700; margin: 0 0 16px 0;">
               ✅ Payment Submitted Successfully
             </h1>
-            
+
             <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
               Dear ${userName}, your loan payment has been submitted and is pending admin approval.
             </p>
@@ -169,7 +187,7 @@ export default async function handler(req, res) {
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                   <td style="padding: 8px 0; color: #64748b;">Reference Number:</td>
-                  <td style="padding: 8px 0; color: #1a365d; font-weight: 600; text-align: right; font-family: monospace;">${payment.reference_number}</td>
+                  <td style="padding: 8px 0; color: #1a365d; font-weight: 600; text-align: right; font-family: monospace;">${referenceNumber}</td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; color: #64748b;">Amount Paid:</td>
@@ -228,12 +246,16 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: 'Payment submitted successfully and is pending admin approval',
+      message: 'Payment submitted successfully. Awaiting admin approval.',
       payment: {
-        reference_number: payment.reference_number,
-        amount: paymentAmount,
-        status: 'pending',
-        payment_date: payment.payment_date
+        id: paymentRecord.id,
+        reference_number: paymentRecord.reference_number,
+        amount: paymentRecord.amount,
+        status: paymentRecord.status,
+        created_at: paymentRecord.payment_date,
+        balance_after: paymentRecord.balance_after,
+        principal_amount: paymentRecord.principal_amount,
+        interest_amount: paymentRecord.interest_amount
       }
     });
 

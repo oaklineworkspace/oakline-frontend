@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -244,5 +243,54 @@ const styles = {
     textDecoration: 'none',
     display: 'block',
     transition: 'all 0.2s'
+  },
+  infoIcon: {
+    fontSize: '1.5rem',
+    marginRight: '0.5rem',
+    flexShrink: 0
+  },
+  infoTitle: {
+    fontSize: '1.1rem',
+    fontWeight: '700',
+    color: '#1a365d',
+    marginBottom: '0.5rem'
+  },
+  infoList: {
+    listStyle: 'none',
+    paddingLeft: 0,
+    margin: 0,
+    color: '#4b5563',
+    fontSize: '0.875rem',
+    lineHeight: '1.7'
+  },
+  downloadLink: {
+    display: 'inline-block',
+    marginTop: '1rem',
+    padding: '0.75rem 2rem',
+    backgroundColor: '#fff',
+    color: '#10b981',
+    border: '2px solid #10b981',
+    borderRadius: '8px',
+    textDecoration: 'none',
+    fontWeight: '600',
+    transition: 'all 0.3s'
+  },
+  warningBox: {
+    backgroundColor: '#fffbeb',
+    border: '1px solid #fde68a',
+    borderLeft: '4px solid #f59e0b',
+    borderRadius: '12px',
+    padding: '1.25rem',
+    marginTop: '2rem',
+    display: 'flex',
+    gap: '1rem',
+    alignItems: 'flex-start',
+    fontSize: '0.95rem',
+    color: '#92400e',
+    lineHeight: '1.6'
+  },
+  warningIcon: {
+    fontSize: '1.5rem',
+    flexShrink: 0
   }
 };

@@ -12,7 +12,7 @@ function LoanDetailContent() {
   const { user } = useAuth();
   const router = useRouter();
   const { loanId, action } = router.query;
-  
+
   const [loan, setLoan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -191,7 +191,7 @@ function LoanDetailContent() {
     setProcessing(true);
     try {
       const amount = parseFloat(paymentForm.amount);
-      
+
       if (!amount || amount <= 0) {
         showToast('Please enter a valid payment amount', 'error');
         setProcessing(false);
@@ -278,7 +278,7 @@ function LoanDetailContent() {
       formData.append('loan_id', loanId);
 
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       const response = await fetch('/api/user/upload-deposit-proof', {
         method: 'POST',
         headers: {
@@ -415,6 +415,13 @@ function LoanDetailContent() {
         <div style={styles.successBanner}>
           <strong>✅ Deposit Confirmed</strong>
           <p>Your ${depositRequired.toLocaleString('en-US', { minimumFractionDigits: 2 })} deposit has been confirmed. Your loan application is now under review.</p>
+        </div>
+      )}
+      
+      {loan.status === 'pending' && (
+        <div style={styles.warningBox}>
+          <strong>⚠️ Pending Approval</strong>
+          <p>Your loan application is currently pending review by our team. We will notify you once a decision is made.</p>
         </div>
       )}
 
@@ -572,7 +579,7 @@ function LoanDetailContent() {
         <div style={styles.modal} onClick={() => setPaymentModal(false)}>
           <div style={styles.modalContent} className="loan-detail-modal" onClick={(e) => e.stopPropagation()}>
             <h2 style={styles.modalTitle}>Make Loan Payment</h2>
-            
+
             <div style={styles.formGroup}>
               <label style={styles.label}>Payment Amount ($)</label>
               <input
@@ -625,7 +632,7 @@ function LoanDetailContent() {
             <p style={styles.modalText}>
               Upload proof of your payment (transaction hash, receipt, etc.)
             </p>
-            
+
             <div style={styles.formGroup}>
               <label style={styles.label}>Select File (JPG, PNG, or PDF, max 5MB)</label>
               <input
@@ -1007,4 +1014,20 @@ const styles = {
     textDecoration: 'none',
     fontWeight: '600',
   },
+  notesText: {
+    fontSize: '0.85rem',
+    color: '#78350f',
+    lineHeight: '1.6'
+  },
+  warningBox: {
+    backgroundColor: '#fffbeb',
+    border: '1px solid #fde68a',
+    borderLeft: '4px solid #f59e0b',
+    borderRadius: '8px',
+    padding: '16px 20px',
+    marginBottom: '20px',
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'flex-start'
+  }
 };
