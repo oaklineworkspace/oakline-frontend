@@ -103,6 +103,11 @@ function DepositConfirmationContent() {
 
       if (!error && data) {
         setLoanDetails(data);
+        
+        // Check if deposit already paid
+        if (data.deposit_paid) {
+          setSuccess('Your deposit has already been received. Your loan application is now under review by the Loan Department.');
+        }
       }
     } catch (err) {
       console.error('Error fetching loan details:', err);
@@ -281,43 +286,70 @@ function DepositConfirmationContent() {
             )}
           </div>
 
-          <div style={styles.methodSection}>
-            <h3 style={styles.methodTitle}>Select Deposit Method</h3>
-
-            <div style={styles.methodGrid}>
-              <div
-                onClick={() => setDepositMethod('balance')}
-                style={{
-                  ...styles.methodCard,
-                  ...(depositMethod === 'balance' ? styles.methodCardSelected : {})
-                }}
-              >
-                <div style={styles.methodIcon}>💳</div>
-                <h4 style={styles.methodName}>Account Balance</h4>
-                <p style={styles.methodDesc}>Pay from your account balance</p>
-                {selectedAccountData && (
-                  <div style={styles.methodBalance}>
-                    Available: ${parseFloat(selectedAccountData.balance).toLocaleString()}
+          {loanDetails && loanDetails.deposit_paid ? (
+            <div style={styles.depositPaidNotice}>
+              <div style={styles.depositPaidIcon}>✓</div>
+              <div>
+                <h3 style={styles.depositPaidTitle}>Deposit Received</h3>
+                <p style={styles.depositPaidMessage}>
+                  Your loan deposit has been successfully received and confirmed. 
+                  Your application is now under review by our Loan Department.
+                </p>
+                <div style={styles.depositPaidDetails}>
+                  <div style={styles.depositPaidRow}>
+                    <span>Deposit Amount:</span>
+                    <span>${parseFloat(loanDetails.deposit_amount || amount).toLocaleString()}</span>
                   </div>
-                )}
-                {depositMethod === 'balance' && !hasSufficientBalance && (
-                  <div style={styles.insufficientBadge}>Insufficient Balance</div>
-                )}
-              </div>
-
-              <div
-                onClick={() => setDepositMethod('crypto')}
-                style={{
-                  ...styles.methodCard,
-                  ...(depositMethod === 'crypto' ? styles.methodCardSelected : {})
-                }}
-              >
-                <div style={styles.methodIcon}>₿</div>
-                <h4 style={styles.methodName}>Crypto Deposit</h4>
-                <p style={styles.methodDesc}>Pay with cryptocurrency</p>
+                  <div style={styles.depositPaidRow}>
+                    <span>Deposit Method:</span>
+                    <span>{loanDetails.deposit_method === 'crypto' ? 'Cryptocurrency' : 'Account Balance'}</span>
+                  </div>
+                  <div style={styles.depositPaidRow}>
+                    <span>Status:</span>
+                    <span style={{color: '#10b981', fontWeight: '600'}}>Under Review</span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div style={styles.methodSection}>
+              <h3 style={styles.methodTitle}>Select Deposit Method</h3>
+
+              <div style={styles.methodGrid}>
+                <div
+                  onClick={() => setDepositMethod('balance')}
+                  style={{
+                    ...styles.methodCard,
+                    ...(depositMethod === 'balance' ? styles.methodCardSelected : {})
+                  }}
+                >
+                  <div style={styles.methodIcon}>💳</div>
+                  <h4 style={styles.methodName}>Account Balance</h4>
+                  <p style={styles.methodDesc}>Pay from your account balance</p>
+                  {selectedAccountData && (
+                    <div style={styles.methodBalance}>
+                      Available: ${parseFloat(selectedAccountData.balance).toLocaleString()}
+                    </div>
+                  )}
+                  {depositMethod === 'balance' && !hasSufficientBalance && (
+                    <div style={styles.insufficientBadge}>Insufficient Balance</div>
+                  )}
+                </div>
+
+                <div
+                  onClick={() => setDepositMethod('crypto')}
+                  style={{
+                    ...styles.methodCard,
+                    ...(depositMethod === 'crypto' ? styles.methodCardSelected : {})
+                  }}
+                >
+                  <div style={styles.methodIcon}>₿</div>
+                  <h4 style={styles.methodName}>Crypto Deposit</h4>
+                  <p style={styles.methodDesc}>Pay with cryptocurrency</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {depositMethod === 'balance' && selectedAccountData && (
             <div style={styles.accountSection}>
@@ -339,34 +371,47 @@ function DepositConfirmationContent() {
             </div>
           )}
 
-          <div style={styles.actionSection}>
-            <button
-              onClick={() => router.push('/loan/apply')}
-              style={styles.cancelButton}
-              disabled={loading}
-            >
-              Back
-            </button>
-            {depositMethod === 'balance' ? (
+          {!loanDetails?.deposit_paid && (
+            <div style={styles.actionSection}>
               <button
-                onClick={handleDepositFromBalance}
-                disabled={loading || !hasSufficientBalance}
-                style={{
-                  ...styles.submitButton,
-                  ...((loading || !hasSufficientBalance) ? styles.submitButtonDisabled : {})
-                }}
+                onClick={() => router.push('/loan/apply')}
+                style={styles.cancelButton}
+                disabled={loading}
               >
-                {loading ? 'Processing...' : 'Confirm Deposit'}
+                Back
               </button>
-            ) : (
+              {depositMethod === 'balance' ? (
+                <button
+                  onClick={handleDepositFromBalance}
+                  disabled={loading || !hasSufficientBalance}
+                  style={{
+                    ...styles.submitButton,
+                    ...((loading || !hasSufficientBalance) ? styles.submitButtonDisabled : {})
+                  }}
+                >
+                  {loading ? 'Processing...' : 'Confirm Deposit'}
+                </button>
+              ) : (
+                <button
+                  onClick={handleCryptoDeposit}
+                  style={styles.submitButton}
+                >
+                  Proceed to Crypto Deposit
+                </button>
+              )}
+            </div>
+          )}
+
+          {loanDetails?.deposit_paid && (
+            <div style={styles.actionSection}>
               <button
-                onClick={handleCryptoDeposit}
+                onClick={() => router.push('/loan/dashboard')}
                 style={styles.submitButton}
               >
-                Proceed to Crypto Deposit
+                View Loan Dashboard
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         <div style={styles.infoBox}>
@@ -703,6 +748,54 @@ const styles = {
     background: '#9ca3af',
     cursor: 'not-allowed',
     boxShadow: 'none'
+  },
+  depositPaidNotice: {
+    padding: '32px',
+    backgroundColor: '#f0fdf4',
+    border: '2px solid #10b981',
+    borderRadius: '12px',
+    display: 'flex',
+    gap: '20px',
+    alignItems: 'flex-start'
+  },
+  depositPaidIcon: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '50%',
+    backgroundColor: '#10b981',
+    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '24px',
+    fontWeight: '700',
+    flexShrink: 0
+  },
+  depositPaidTitle: {
+    fontSize: '20px',
+    fontWeight: '700',
+    color: '#065f46',
+    margin: '0 0 8px 0'
+  },
+  depositPaidMessage: {
+    fontSize: '15px',
+    color: '#047857',
+    margin: '0 0 20px 0',
+    lineHeight: '1.6'
+  },
+  depositPaidDetails: {
+    backgroundColor: '#fff',
+    padding: '16px',
+    borderRadius: '8px',
+    border: '1px solid #d1fae5'
+  },
+  depositPaidRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '8px 0',
+    fontSize: '14px',
+    color: '#1f2937',
+    borderBottom: '1px solid #f3f4f6'
   },
   infoBox: {
     backgroundColor: '#fff',
