@@ -3,31 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { supabase } from '../lib/supabaseClient';
 
-const ACCOUNT_TYPES = [
-  { id: 1, name: 'Checking Account', description: 'Perfect for everyday banking needs', icon: '💳', rate: '0.01% APY' },
-  { id: 2, name: 'Savings Account', description: 'Grow your money with competitive rates', icon: '💰', rate: '4.50% APY' },
-  { id: 3, name: 'Business Checking', description: 'Designed for business operations', icon: '🏢', rate: '0.01% APY' },
-  { id: 4, name: 'Business Savings', description: 'Business savings with higher yields', icon: '🏦', rate: '4.25% APY' },
-  { id: 5, name: 'Student Checking', description: 'No-fee checking for students', icon: '🎓', rate: '0.01% APY' },
-  { id: 6, name: 'Money Market Account', description: 'Premium savings with higher yields', icon: '📈', rate: '4.75% APY' },
-  { id: 7, name: 'Certificate of Deposit (CD)', description: 'Secure your future with fixed rates', icon: '🔒', rate: '5.25% APY' },
-  { id: 8, name: 'Retirement Account (IRA)', description: 'Plan for your retirement', icon: '🏖️', rate: '4.80% APY' },
-  { id: 9, name: 'Joint Checking Account', description: 'Shared checking for couples', icon: '👫', rate: '0.01% APY' },
-  { id: 10, name: 'Trust Account', description: 'Manage assets for beneficiaries', icon: '🛡️', rate: '3.50% APY' },
-  { id: 11, name: 'Investment Brokerage Account', description: 'Trade stocks, bonds, and more', icon: '📊', rate: 'Variable' },
-  { id: 12, name: 'High-Yield Savings Account', description: 'Maximum earning potential', icon: '💎', rate: '5.00% APY' },
-  { id: 13, name: 'International Checking', description: 'Banking without borders', icon: '🌍', rate: '0.01% APY' },
-  { id: 14, name: 'Foreign Currency Account', description: 'Hold multiple currencies', icon: '💱', rate: 'Variable' },
-  { id: 15, name: 'Cryptocurrency Wallet', description: 'Digital asset storage', icon: '₿', rate: 'Variable' },
-  { id: 16, name: 'Loan Repayment Account', description: 'Streamline your loan payments', icon: '💳', rate: 'N/A' },
-  { id: 17, name: 'Mortgage Account', description: 'Home financing solutions', icon: '🏠', rate: 'Variable' },
-  { id: 18, name: 'Auto Loan Account', description: 'Vehicle financing made easy', icon: '🚗', rate: 'Variable' },
-  { id: 19, name: 'Credit Card Account', description: 'Flexible spending power', icon: '💳', rate: 'Variable APR' },
-  { id: 20, name: 'Prepaid Card Account', description: 'Controlled spending solution', icon: '🎫', rate: 'N/A' },
-  { id: 21, name: 'Payroll Account', description: 'Direct deposit convenience', icon: '💼', rate: '0.01% APY' },
-  { id: 22, name: 'Nonprofit/Charity Account', description: 'Special rates for nonprofits', icon: '❤️', rate: '2.50% APY' },
-  { id: 23, name: 'Escrow Account', description: 'Secure transaction holding', icon: '🔐', rate: '1.50% APY' },
-];
+// Account types will be fetched from Supabase
 
 const COUNTRIES = [
   { code: 'US', name: 'United States' },
@@ -126,6 +102,8 @@ export default function Apply() {
   const [resendTimer, setResendTimer] = useState(0);
   const [verifiedEmailAddress, setVerifiedEmailAddress] = useState('');
   const [bankDetails, setBankDetails] = useState(null);
+  const [accountTypes, setAccountTypes] = useState([]);
+  const [loadingAccountTypes, setLoadingAccountTypes] = useState(true);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -164,7 +142,24 @@ export default function Apply() {
       }
     };
 
+    const fetchAccountTypes = async () => {
+      setLoadingAccountTypes(true);
+      const { data, error } = await supabase
+        .from('account_types')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (!error && data) {
+        setAccountTypes(data);
+      } else {
+        console.error('Error fetching account types:', error);
+        setErrors({ submit: 'Failed to load account types. Please refresh the page.' });
+      }
+      setLoadingAccountTypes(false);
+    };
+
     fetchBankDetails();
+    fetchAccountTypes();
   }, []);
 
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -492,7 +487,7 @@ export default function Apply() {
       };
 
       const mappedAccountTypes = formData.accountTypes.map(id => {
-        const accountType = ACCOUNT_TYPES.find(at => at.id === id);
+        const accountType = accountTypes.find(at => at.id === id);
         return enumMapping[accountType?.name] || accountType?.name?.toLowerCase().replace(/\s+/g, '_');
       });
 
@@ -564,7 +559,7 @@ export default function Apply() {
             firstName: formData.firstName.trim(),
             lastName: formData.lastName.trim(),
             accountTypes: formData.accountTypes.map(id => {
-              const accountType = ACCOUNT_TYPES.find(at => at.id === id);
+              const accountType = accountTypes.find(at => at.id === id);
               return accountType?.name || '';
             })
           })
@@ -2224,8 +2219,13 @@ export default function Apply() {
                 {errors.accountTypes && (
                   <div style={styles.errorMessage}>⚠️ {errors.accountTypes}</div>
                 )}
-                <div style={styles.accountTypesGrid}>
-                  {ACCOUNT_TYPES.map(account => (
+                {loadingAccountTypes ? (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                    Loading account types...
+                  </div>
+                ) : (
+                  <div style={styles.accountTypesGrid}>
+                    {accountTypes.map(account => (
                     <div
                       key={account.id}
                       onClick={() => toggleAccountType(account.id)}
@@ -2277,8 +2277,9 @@ export default function Apply() {
                         </div>
                       )}
                     </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div style={{...styles.formGrid, ...styles.gridCols2}}>
