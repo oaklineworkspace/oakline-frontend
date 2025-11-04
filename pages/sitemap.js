@@ -174,18 +174,7 @@ export default function Sitemap() {
             </ul>
           </div>
 
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>Admin (Authorized Personnel)</h2>
-            <ul style={styles.linkList}>
-              <li style={styles.linkItem}><Link href="/admin/admin-dashboard" style={styles.link}>Admin Dashboard</Link></li>
-              <li style={styles.linkItem}><Link href="/admin/admin-users" style={styles.link}>User Management</Link></li>
-              <li style={styles.linkItem}><Link href="/admin/admin-transactions" style={styles.link}>Transaction Management</Link></li>
-              <li style={styles.linkItem}><Link href="/admin/admin-approvals" style={styles.link}>Account Approvals</Link></li>
-              <li style={styles.linkItem}><Link href="/admin/admin-reports" style={styles.link}>Reports</Link></li>
-              <li style={styles.linkItem}><Link href="/admin/admin-settings" style={styles.link}>System Settings</Link></li>
-            </ul>
           </div>
-        </div>
 
         <div style={styles.searchNote}>
           <p style={{color: '#e2e8f0', margin: 0, fontSize: '0.95rem'}}>
