@@ -110,14 +110,18 @@ export default async function handler(req, res) {
     const paymentsMadeCount = monthlyPayment > 0 ? Math.floor(amount / monthlyPayment) : 1;
     const totalPaymentsMade = (loan.payments_made || 0) + paymentsMadeCount;
 
-    // Calculate next payment date based on payments made
+    // Calculate next payment date based on remaining balance
     let nextPaymentDate = null;
-    if (loanStatus === 'active' && totalPaymentsMade < loan.term_months) {
+    if (loanStatus === 'active' && newRemainingBalance > 0.01) {
+      // Only set next payment date if there's still balance remaining
       const startDate = new Date(loan.start_date || loan.created_at);
       const monthsToAdd = totalPaymentsMade;
       nextPaymentDate = new Date(startDate);
       nextPaymentDate.setMonth(nextPaymentDate.getMonth() + monthsToAdd + 1);
       nextPaymentDate = nextPaymentDate.toISOString().split('T')[0];
+    } else if (newRemainingBalance <= 0.01) {
+      // Loan is fully paid, no next payment needed
+      nextPaymentDate = null;
     }
 
     const { error: updateLoanError } = await supabaseAdmin

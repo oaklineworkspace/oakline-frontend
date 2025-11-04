@@ -159,18 +159,21 @@ function LoanDashboardContent() {
           loan.status === 'active' || loan.status === 'approved'
         ).length;
 
-        // Find next payment due - only for loans that still have payments remaining
+        // Find next payment due - only for loans that still have balance remaining
         const activeLoansWithPayments = data.loans.filter(loan => 
           (loan.status === 'active' || loan.status === 'approved') && 
-          loan.next_payment_date && 
-          (loan.payments_made || 0) < (loan.term_months || 0)
+          parseFloat(loan.remaining_balance || 0) > 0 &&
+          loan.next_payment_date
         );
         const nextPayment = activeLoansWithPayments.length > 0
-          ? activeLoansWithPayments.reduce((earliest, loan) => 
-              !earliest || new Date(loan.next_payment_date) < new Date(earliest.next_payment_date)
+          ? activeLoansWithPayments.reduce((earliest, loan) => {
+              // Skip if loan is fully paid
+              if (parseFloat(loan.remaining_balance || 0) <= 0) return earliest;
+              
+              return !earliest || new Date(loan.next_payment_date) < new Date(earliest.next_payment_date)
                 ? loan
-                : earliest
-            )
+                : earliest;
+            }, null)
           : null;
 
         setStats({
@@ -442,13 +445,17 @@ Generated: ${new Date().toLocaleString()}
             </div>
           </div>
 
-          {stats.nextPaymentDue && (
+          {stats.nextPaymentDue && stats.remainingBalance > 0 && (
             <div style={{...styles.statCard, gridColumn: 'span 2'}} className="loan-stat-card">
               <div style={styles.statIcon}>📅</div>
               <div style={styles.statContent}>
                 <div style={styles.statLabel}>Next Payment Due</div>
                 <div style={styles.statValue} className="loan-stat-value">
-                  {new Date(stats.nextPaymentDue).toLocaleDateString()}
+                  {new Date(stats.nextPaymentDue).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
                 </div>
                 <div style={styles.statSubtext}>
                   ${stats.nextPaymentAmount.toLocaleString()} • {getDaysUntilPayment(stats.nextPaymentDue)} days
@@ -673,7 +680,7 @@ Generated: ${new Date().toLocaleString()}
                               </span>
                             </div>
                           )}
-                          {selectedLoan.next_payment_date && (
+                          {selectedLoan.next_payment_date && parseFloat(selectedLoan.remaining_balance || 0) > 0 && (
                             <div style={styles.infoItem}>
                               <span style={styles.infoLabel}>Next Payment:</span>
                               <span style={styles.infoValue}>
@@ -682,6 +689,14 @@ Generated: ${new Date().toLocaleString()}
                                   month: 'short', 
                                   day: 'numeric' 
                                 })}
+                              </span>
+                            </div>
+                          )}
+                          {parseFloat(selectedLoan.remaining_balance || 0) <= 0 && selectedLoan.status === 'active' && (
+                            <div style={styles.infoItem}>
+                              <span style={styles.infoLabel}>Status:</span>
+                              <span style={{...styles.infoValue, color: '#10b981', fontWeight: '700'}}>
+                                ✅ Loan Fully Paid!
                               </span>
                             </div>
                           )}
