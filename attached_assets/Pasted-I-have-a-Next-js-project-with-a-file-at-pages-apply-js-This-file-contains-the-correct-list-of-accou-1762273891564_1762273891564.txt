@@ -1,0 +1,48 @@
+I have a Next.js project with a file at pages/apply.js. This file contains the correct list of account types used in the application form.
+
+I want you to:
+
+1. Extract all account types from apply.js, including the following details for each:
+   - Name
+   - Description
+   - Icon
+   - APY or rate
+   - Suggested professional minimum deposit (recommend standard U.S. banking practice for each type)
+   - Category (Personal, Business, Investment, Specialized, Premium, etc.)
+
+2. Generate a SQL file named account_types.sql for Supabase/PostgreSQL that:
+   - Creates a table named account_types with the following columns:
+     - id SERIAL PRIMARY KEY
+     - name TEXT
+     - description TEXT
+     - icon TEXT
+     - rate NUMERIC (or TEXT if the rate is Variable)
+     - min_deposit NUMERIC
+     - category TEXT
+   - Inserts all extracted account types into this table with recommended minimum deposits.
+
+3. For accounts with "Variable" rates (like Investment or Crypto accounts), store the rate as TEXT.
+
+4. For accounts with "N/A" rates (like Prepaid Card or Loan Repayment accounts), set the rate as NULL or 0 and the minimum deposit as $0.
+
+5. Use professional banking standards to recommend reasonable minimum deposits if they are missing or unclear in apply.js. Examples of standard banking practices:
+   - Checking accounts: $25–$100
+   - Savings accounts: $50–$500
+   - Money Market: $2,500+
+   - Certificate of Deposit (CD): $500–$1,000
+   - Retirement accounts (IRA): $500–$1,000
+   - Business accounts: $1,000–$5,000 depending on type
+   - Investment accounts: $1,000–$5,000
+   - Cryptocurrency accounts: $100–$500
+   - Loan repayment accounts or prepaid cards: $0
+
+6. Output the full SQL file content (account_types.sql) with:
+   - CREATE TABLE statement
+   - INSERT statements for all account types from apply.js
+
+7. Ensure the SQL file is ready to run directly in Supabase.
+
+Extra Notes:
+- Users should be able to open any account, but if the account requires a minimum deposit, it will remain in pending status until an admin approves it after confirming the deposit.
+
+Please read the apply.js file to extract accurate account names, descriptions, icons, and rates, and generate professional minimum deposits for each account type.
