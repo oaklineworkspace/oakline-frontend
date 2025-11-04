@@ -1,13 +1,14 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { supabase } from '../lib/supabaseClient';
+import { getCreditScoreTier, getCreditScoreMessage, formatCreditScoreDate } from '../lib/creditScoreUtils';
 
 export default function CreditReport() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [creditScore, setCreditScore] = useState(null);
+  const [creditScoreData, setCreditScoreData] = useState(null);
   const [reportData, setReportData] = useState(null);
   const router = useRouter();
 
@@ -36,18 +37,32 @@ export default function CreditReport() {
 
   const fetchCreditData = async (userId) => {
     try {
-      // Get user profile for additional info
       const { data: profile } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('user_id', userId)
         .single();
 
-      // Simulate credit score (in real app, this would come from credit bureau)
-      const simulatedScore = Math.floor(Math.random() * (850 - 650) + 650);
-      setCreditScore(simulatedScore);
+      const { data: creditScoreRecord, error: creditScoreError } = await supabase
+        .from('credit_scores')
+        .select('*')
+        .eq('user_id', userId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
 
-      // Generate sample credit report data
+      if (creditScoreError && creditScoreError.code !== 'PGRST116') {
+        console.error('Error fetching credit score:', creditScoreError);
+      }
+
+      if (creditScoreRecord && creditScoreRecord.score) {
+        setCreditScore(creditScoreRecord.score);
+        setCreditScoreData(creditScoreRecord);
+      } else {
+        setCreditScore(null);
+        setCreditScoreData(null);
+      }
+
       const sampleReportData = {
         personalInfo: {
           name: profile?.full_name || 'User',
@@ -107,19 +122,21 @@ export default function CreditReport() {
   };
 
   const getCreditScoreColor = (score) => {
-    if (score >= 800) return '#10B981'; // Excellent - Green
-    if (score >= 740) return '#3B82F6'; // Very Good - Blue
-    if (score >= 670) return '#F59E0B'; // Good - Yellow
-    if (score >= 580) return '#F97316'; // Fair - Orange
-    return '#EF4444'; // Poor - Red
+    if (!score || score < 300) return '#94a3b8';
+    if (score >= 750) return '#10b981';
+    if (score >= 700) return '#3b82f6';
+    if (score >= 650) return '#f59e0b';
+    if (score >= 600) return '#f97316';
+    return '#ef4444';
   };
 
   const getCreditScoreLabel = (score) => {
-    if (score >= 800) return 'Excellent';
-    if (score >= 740) return 'Very Good';
-    if (score >= 670) return 'Good';
-    if (score >= 580) return 'Fair';
-    return 'Poor';
+    if (!score || score < 300) return 'No Score Available';
+    if (score >= 750) return 'Excellent';
+    if (score >= 700) return 'Good';
+    if (score >= 650) return 'Fair';
+    if (score >= 600) return 'Poor';
+    return 'Very Poor';
   };
 
   if (loading) {
@@ -148,43 +165,64 @@ export default function CreditReport() {
           <p style={styles.subtitle}>Your comprehensive credit overview</p>
         </div>
 
-        {/* Credit Score Section */}
         <div style={styles.scoreSection}>
           <div style={styles.scoreCard}>
             <div style={styles.scoreHeader}>
               <h2>Credit Score</h2>
-              <div style={styles.scoreDate}>Updated: {new Date().toLocaleDateString()}</div>
+              <div style={styles.scoreDate}>
+                Updated: {creditScoreData ? formatCreditScoreDate(creditScoreData.updated_at) : 'Never'}
+              </div>
             </div>
             <div style={styles.scoreDisplay}>
-              <div 
-                style={{
-                  ...styles.scoreNumber,
-                  color: getCreditScoreColor(creditScore)
-                }}
-              >
-                {creditScore}
-              </div>
-              <div style={styles.scoreLabel}>
-                {getCreditScoreLabel(creditScore)}
-              </div>
+              {creditScore ? (
+                <>
+                  <div 
+                    style={{
+                      ...styles.scoreNumber,
+                      color: getCreditScoreColor(creditScore)
+                    }}
+                  >
+                    {creditScore}
+                  </div>
+                  <div style={styles.scoreLabel}>
+                    {getCreditScoreLabel(creditScore)}
+                  </div>
+                  <div style={styles.scoreMessage}>
+                    {getCreditScoreMessage(creditScore)}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{...styles.scoreNumber, color: '#94a3b8'}}>
+                    --
+                  </div>
+                  <div style={styles.scoreLabel}>
+                    No Score Available
+                  </div>
+                  <div style={styles.scoreMessage}>
+                    Your credit score will be available once approved by our admin team. Please check back later.
+                  </div>
+                </>
+              )}
             </div>
-            <div style={styles.scoreRange}>
-              <span>300</span>
-              <div style={styles.scoreBar}>
-                <div 
-                  style={{
-                    ...styles.scoreProgress,
-                    width: `${((creditScore - 300) / (850 - 300)) * 100}%`,
-                    backgroundColor: getCreditScoreColor(creditScore)
-                  }}
-                />
+            {creditScore && (
+              <div style={styles.scoreRange}>
+                <span>300</span>
+                <div style={styles.scoreBar}>
+                  <div 
+                    style={{
+                      ...styles.scoreProgress,
+                      width: `${((creditScore - 300) / (850 - 300)) * 100}%`,
+                      backgroundColor: getCreditScoreColor(creditScore)
+                    }}
+                  />
+                </div>
+                <span>850</span>
               </div>
-              <span>850</span>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Score Factors */}
         <div style={styles.section}>
           <h3 style={styles.sectionTitle}>Factors Affecting Your Score</h3>
           <div style={styles.factorsGrid}>
@@ -223,7 +261,6 @@ export default function CreditReport() {
           </div>
         </div>
 
-        {/* Credit Accounts */}
         {reportData && (
           <div style={styles.section}>
             <h3 style={styles.sectionTitle}>Credit Accounts</h3>
@@ -264,7 +301,6 @@ export default function CreditReport() {
           </div>
         )}
 
-        {/* Payment History */}
         {reportData && (
           <div style={styles.section}>
             <h3 style={styles.sectionTitle}>Payment History</h3>
@@ -293,7 +329,6 @@ export default function CreditReport() {
           </div>
         )}
 
-        {/* Credit Inquiries */}
         {reportData && (
           <div style={styles.section}>
             <h3 style={styles.sectionTitle}>Recent Credit Inquiries</h3>
@@ -309,7 +344,6 @@ export default function CreditReport() {
           </div>
         )}
 
-        {/* Improvement Tips */}
         <div style={styles.section}>
           <h3 style={styles.sectionTitle}>Ways to Improve Your Score</h3>
           <div style={styles.tipsList}>
@@ -352,10 +386,11 @@ export default function CreditReport() {
           </div>
         </div>
 
-        {/* Disclaimer */}
         <div style={styles.disclaimer}>
           <h4 style={styles.disclaimerTitle}>Important Notice</h4>
           <p style={styles.disclaimerText}>
+            Credit scores displayed are based on your banking activity and loan repayment history with Oakline Bank. 
+            All credit scores are reviewed and approved by our admin team before being displayed. 
             This is a simulated credit report for demonstration purposes. In a real banking application, 
             credit data would be obtained from authorized credit bureaus such as Experian, Equifax, or TransUnion. 
             Always obtain your official credit report from annualcreditreport.com or directly from the credit bureaus.
@@ -453,6 +488,14 @@ const styles = {
     fontSize: '1.2rem',
     color: '#64748b',
     fontWeight: '500'
+  },
+  scoreMessage: {
+    fontSize: '0.95rem',
+    color: '#475569',
+    marginTop: '1rem',
+    lineHeight: '1.6',
+    maxWidth: '600px',
+    margin: '1rem auto 0'
   },
   scoreRange: {
     display: 'flex',
