@@ -224,13 +224,39 @@ function LoansOverviewContent() {
                   </div>
 
                   <div style={styles.loanActions}>
-                    {loan.status === 'pending' && !loan.deposit_paid && loan.deposit_required > 0 && (
+                    {loan.status === 'pending' && !loan.deposit_paid && loan.deposit_required > 0 && !loan.deposit_date && (
                       <Link 
                         href={`/loan/deposit-confirmation?loan_id=${loan.id}&amount=${loan.deposit_required}`}
                         style={styles.actionButton}
                       >
                         💰 Complete Deposit
                       </Link>
+                    )}
+                    {loan.status === 'pending' && !loan.deposit_paid && loan.deposit_method === 'crypto' && loan.deposit_date && (
+                      <div style={{
+                        backgroundColor: '#fef3c7',
+                        border: '1px solid #fde68a',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        fontSize: '14px',
+                        color: '#92400e',
+                        marginBottom: '12px'
+                      }}>
+                        ⏳ Crypto deposit submitted on {new Date(loan.deposit_date).toLocaleDateString()}. Waiting for admin confirmation.
+                      </div>
+                    )}
+                    {loan.status === 'pending' && loan.deposit_paid && (
+                      <div style={{
+                        backgroundColor: '#d1fae5',
+                        border: '1px solid #a7f3d0',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        fontSize: '14px',
+                        color: '#065f46',
+                        marginBottom: '12px'
+                      }}>
+                        ✅ Deposit confirmed! Your application is being reviewed.
+                      </div>
                     )}
                     {(loan.status === 'active' || loan.status === 'approved') && (
                       <Link href="/loan/dashboard" style={styles.actionButton}>
