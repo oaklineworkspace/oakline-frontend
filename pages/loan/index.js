@@ -141,7 +141,7 @@ function LoanDashboardContent() {
         }
       )
       .subscribe();
-      
+
     // Return cleanup functions for channels
     return () => {
       supabase.channel('loans').unsubscribe();

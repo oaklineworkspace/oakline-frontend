@@ -264,7 +264,7 @@ function LoansOverviewContent() {
                         💰 Pay 10% Deposit (${parseFloat(loan.deposit_required).toLocaleString()})
                       </Link>
                     )}
-                    {loan.deposit_required > 0 && loan.deposit_status === 'pending' && loan.status === 'pending' && (
+                    {loan.deposit_required > 0 && loan.deposit_status === 'pending' && !loan.deposit_paid && loan.status === 'pending' && (
                       <div style={{
                         backgroundColor: '#fef3c7',
                         border: '1px solid #fde68a',
@@ -277,7 +277,7 @@ function LoansOverviewContent() {
                         ⏳ 10% Deposit submitted{loan.deposit_date ? ` on ${new Date(loan.deposit_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}` : ''}. Awaiting admin verification.
                       </div>
                     )}
-                    {loan.deposit_status === 'completed' && loan.status === 'pending' && (
+                    {((loan.deposit_status === 'completed' || loan.deposit_paid) && loan.status === 'pending') && (
                       <div style={{
                         backgroundColor: '#d1fae5',
                         border: '1px solid #a7f3d0',

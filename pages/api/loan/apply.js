@@ -92,6 +92,7 @@ export default async function handler(req, res) {
         status: 'pending',
         deposit_required: deposit_required || 0,
         deposit_paid: false,
+        deposit_status: null,
         deposit_method: deposit_method || 'balance'
       }])
       .select()
