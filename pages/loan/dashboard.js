@@ -33,6 +33,31 @@ function LoanDashboardContent() {
     nextPaymentAmount: 0
   });
 
+  // Utility functions for prepayment calculations
+  const getMonthsSinceLoanStart = (disbursedDate) => {
+    if (!disbursedDate) return 0;
+    const start = new Date(disbursedDate);
+    const now = new Date();
+    const monthsDiff = (now.getFullYear() - start.getFullYear()) * 12 + 
+                       (now.getMonth() - start.getMonth());
+    return Math.max(0, monthsDiff);
+  };
+
+  const calculatePaymentStatus = (loan) => {
+    if (!loan) return { monthsAhead: 0, isAhead: false, isBehind: false, isOnTrack: true };
+    
+    const paymentsMade = loan.payments_made || 0;
+    const monthsSinceLoanStart = getMonthsSinceLoanStart(loan.disbursed_at || loan.approved_at || loan.created_at);
+    const monthsAhead = paymentsMade - monthsSinceLoanStart;
+    
+    return {
+      monthsAhead,
+      isAhead: monthsAhead > 0,
+      isBehind: monthsAhead < 0,
+      isOnTrack: monthsAhead === 0
+    };
+  };
+
   useEffect(() => {
     if (user) {
       fetchUserLoans();
@@ -159,20 +184,20 @@ function LoanDashboardContent() {
           loan.status === 'active' || loan.status === 'approved'
         ).length;
 
-        // Find next payment due - only for loans that still have balance remaining
-        const activeLoansWithPayments = data.loans.filter(loan => 
-          (loan.status === 'active' || loan.status === 'approved') && 
-          parseFloat(loan.remaining_balance || 0) > 0 &&
-          loan.next_payment_date
-        );
+        // Find next payment due - only for loans with remaining balance
+        const activeLoansWithPayments = data.loans.filter(loan => {
+          const hasBalance = parseFloat(loan.remaining_balance || 0) > 0.01;
+          const isActiveLoan = loan.status === 'active' || loan.status === 'approved';
+          const hasNextPayment = loan.next_payment_date && loan.next_payment_date !== null;
+          return isActiveLoan && hasBalance && hasNextPayment;
+        });
+        
         const nextPayment = activeLoansWithPayments.length > 0
           ? activeLoansWithPayments.reduce((earliest, loan) => {
-              // Skip if loan is fully paid
-              if (parseFloat(loan.remaining_balance || 0) <= 0) return earliest;
-              
-              return !earliest || new Date(loan.next_payment_date) < new Date(earliest.next_payment_date)
-                ? loan
-                : earliest;
+              if (!earliest) return loan;
+              const currentDate = new Date(loan.next_payment_date);
+              const earliestDate = new Date(earliest.next_payment_date);
+              return currentDate < earliestDate ? loan : earliest;
             }, null)
           : null;
 
@@ -529,6 +554,33 @@ Generated: ${new Date().toLocaleString()}
                     </div>
                   </div>
 
+                  {/* Prepayment Status Badge */}
+                  {(() => {
+                    const paymentStatus = calculatePaymentStatus(selectedLoan);
+                    return paymentStatus.isAhead && (
+                      <div style={{
+                        backgroundColor: '#d1fae5',
+                        border: '1px solid #a7f3d0',
+                        borderRadius: '12px',
+                        padding: '16px',
+                        marginBottom: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                      }}>
+                        <span style={{ fontSize: '24px' }}>✓</span>
+                        <div>
+                          <div style={{ fontWeight: '700', color: '#065f46', fontSize: '16px' }}>
+                            {paymentStatus.monthsAhead} Month{paymentStatus.monthsAhead !== 1 ? 's' : ''} Paid Ahead
+                          </div>
+                          <div style={{ fontSize: '14px', color: '#059669', marginTop: '4px' }}>
+                            You're ahead of schedule on your loan payments!
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   <div style={styles.overviewGrid} className="loan-overview-grid">
                     <div style={styles.overviewItem}>
                       <div style={styles.overviewLabel}>Original Amount</div>
@@ -567,6 +619,35 @@ Generated: ${new Date().toLocaleString()}
                         {selectedLoan.payments_made || 0} / {selectedLoan.term_months}
                       </div>
                     </div>
+
+                    {selectedLoan.next_payment_date && parseFloat(selectedLoan.remaining_balance || 0) > 0.01 && (
+                      <div style={styles.overviewItem}>
+                        <div style={styles.overviewLabel}>Next Payment Due</div>
+                        <div style={{...styles.overviewValue, color: '#1e40af'}}>
+                          {new Date(selectedLoan.next_payment_date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {parseFloat(selectedLoan.remaining_balance || 0) <= 0.01 && selectedLoan.status === 'active' && (
+                      <div style={{...styles.overviewItem, gridColumn: 'span 2'}}>
+                        <div style={{
+                          backgroundColor: '#d1fae5',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          textAlign: 'center',
+                          color: '#065f46',
+                          fontWeight: '700',
+                          fontSize: '16px'
+                        }}>
+                          🎉 Loan Fully Paid! No more payments required.
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Progress Bar */}
@@ -680,10 +761,10 @@ Generated: ${new Date().toLocaleString()}
                               </span>
                             </div>
                           )}
-                          {selectedLoan.next_payment_date && parseFloat(selectedLoan.remaining_balance || 0) > 0 && (
+                          {selectedLoan.next_payment_date && parseFloat(selectedLoan.remaining_balance || 0) > 0.01 && (
                             <div style={styles.infoItem}>
-                              <span style={styles.infoLabel}>Next Payment:</span>
-                              <span style={styles.infoValue}>
+                              <span style={styles.infoLabel}>Next Payment Due:</span>
+                              <span style={{...styles.infoValue, color: '#1e40af', fontWeight: '700'}}>
                                 {new Date(selectedLoan.next_payment_date).toLocaleDateString('en-US', { 
                                   year: 'numeric', 
                                   month: 'short', 
@@ -692,14 +773,28 @@ Generated: ${new Date().toLocaleString()}
                               </span>
                             </div>
                           )}
-                          {parseFloat(selectedLoan.remaining_balance || 0) <= 0 && selectedLoan.status === 'active' && (
+                          {parseFloat(selectedLoan.remaining_balance || 0) <= 0.01 && selectedLoan.status === 'active' && (
                             <div style={styles.infoItem}>
-                              <span style={styles.infoLabel}>Status:</span>
+                              <span style={styles.infoLabel}>Payment Status:</span>
                               <span style={{...styles.infoValue, color: '#10b981', fontWeight: '700'}}>
-                                ✅ Loan Fully Paid!
+                                ✅ Fully Paid - No Payments Due
                               </span>
                             </div>
                           )}
+                          {(() => {
+                            const paymentStatus = calculatePaymentStatus(selectedLoan);
+                            if (paymentStatus.isAhead) {
+                              return (
+                                <div style={styles.infoItem}>
+                                  <span style={styles.infoLabel}>Payment Status:</span>
+                                  <span style={{...styles.infoValue, color: '#059669', fontWeight: '700'}}>
+                                    ✓ {paymentStatus.monthsAhead} Month{paymentStatus.monthsAhead !== 1 ? 's' : ''} Ahead
+                                  </span>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
                           <div style={styles.infoItem}>
                             <span style={styles.infoLabel}>Purpose:</span>
                             <span style={styles.infoValue}>{selectedLoan.purpose || 'N/A'}</span>
