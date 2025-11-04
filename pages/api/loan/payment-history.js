@@ -67,7 +67,8 @@ export default async function handler(req, res) {
           principal_amount: principalAmount,
           interest_amount: interestAmount,
           late_fee: lateFee,
-          payment_type: payment.payment_type || 'manual' // Added payment_type
+          payment_type: payment.payment_type || 'manual',
+          payment_date: payment.payment_date || payment.created_at // Use actual payment_date
         };
       });
 

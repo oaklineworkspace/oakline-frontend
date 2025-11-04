@@ -21,6 +21,7 @@ function LoanDetailContent() {
     amount: '',
     account_id: '',
     payment_type: 'manual'
+  });
 
   useEffect(() => {
     const style = document.createElement('style');
@@ -240,11 +241,8 @@ function LoanDetailContent() {
       const data = await response.json();
 
       if (response.ok) {
-        showToast('Payment processed successfully!', 'success');
-        setPaymentModal(false);
-        setPaymentForm({ amount: '', account_id: accounts[0]?.id || '', payment_type: 'manual' });
-        fetchLoanDetails();
-        fetchUserAccounts();
+        // Redirect to success page with payment details
+        router.push(`/loan/payment-success?reference=${data.payment.reference_number}&amount=${data.payment.amount}&loan_id=${loanId}`);
       } else {
         showToast(data.error || 'Failed to process payment', 'error');
       }
@@ -390,7 +388,7 @@ function LoanDetailContent() {
         </div>
       )}
 
-      {depositRequired > 0 && loan.deposit_status !== 'completed' && loan.status === 'pending' && (
+      {depositRequired > 0 && !loan.deposit_paid && loan.deposit_status !== 'completed' && loan.status === 'pending' && (
         <div style={styles.depositBanner}>
           <div style={styles.depositBannerContent}>
             <div>
@@ -406,10 +404,17 @@ function LoanDetailContent() {
         </div>
       )}
 
-      {loan.deposit_status === 'pending' && (
+      {loan.deposit_status === 'pending' && !loan.deposit_paid && (
         <div style={styles.infoBanner}>
           <strong>⏳ Deposit Submitted</strong>
           <p>Your deposit is pending admin confirmation. You'll be notified once it's verified.</p>
+        </div>
+      )}
+
+      {loan.deposit_paid && loan.deposit_status === 'completed' && loan.status === 'pending' && (
+        <div style={styles.successBanner}>
+          <strong>✅ Deposit Confirmed</strong>
+          <p>Your ${depositRequired.toLocaleString('en-US', { minimumFractionDigits: 2 })} deposit has been confirmed. Your loan application is now under review.</p>
         </div>
       )}
 
@@ -757,6 +762,13 @@ const styles = {
   infoBanner: {
     backgroundColor: '#D1ECF1',
     borderLeft: '4px solid #17A2B8',
+    padding: '16px 20px',
+    borderRadius: '8px',
+    marginBottom: '30px',
+  },
+  successBanner: {
+    backgroundColor: '#D4EDDA',
+    borderLeft: '4px solid #28A745',
     padding: '16px 20px',
     borderRadius: '8px',
     marginBottom: '30px',

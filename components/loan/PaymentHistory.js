@@ -264,13 +264,14 @@ export default function PaymentHistory({ loanId }) {
                     <div style={styles.paymentNumber}>#{filteredPayments.length - index}</div>
                     <div>
                       <div style={styles.paymentDate}>
-                        {new Date(payment.payment_date || payment.created_at).toLocaleDateString('en-US', {
+                        {new Date(payment.payment_date || payment.created_at).toLocaleString('en-US', {
                           weekday: 'short',
                           year: 'numeric',
                           month: 'long',
                           day: 'numeric',
                           hour: '2-digit',
-                          minute: '2-digit'
+                          minute: '2-digit',
+                          second: '2-digit'
                         })}
                       </div>
                       {payment.payment_type && (
