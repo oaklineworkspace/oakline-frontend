@@ -38,8 +38,13 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Loan not found' });
     }
 
-    if (loan.status !== 'pending') {
-      return res.status(400).json({ error: 'Loan deposit already processed or loan is not pending' });
+    // Check if deposit already paid
+    if (loan.deposit_paid) {
+      return res.status(400).json({ error: 'Loan deposit has already been submitted for this loan. Your application is under review by the Loan Department.' });
+    }
+
+    if (loan.status !== 'pending_deposit' && loan.status !== 'pending') {
+      return res.status(400).json({ error: 'Loan deposit cannot be processed at this time. Current status: ' + loan.status });
     }
 
     if (deposit_method === 'balance') {
@@ -96,7 +101,7 @@ export default async function handler(req, res) {
         console.error('Error creating transaction record:', transactionError);
       }
 
-      // Update loan with deposit information
+      // Update loan with deposit information and change status to under_review
       const { error: updateLoanError } = await supabaseAdmin
         .from('loans')
         .update({
@@ -104,7 +109,8 @@ export default async function handler(req, res) {
           deposit_amount: amount,
           deposit_date: new Date().toISOString(),
           deposit_method: 'balance',
-          status: 'pending',
+          deposit_status: 'completed',
+          status: 'under_review',
           updated_at: new Date().toISOString()
         })
         .eq('id', loan_id);
@@ -126,7 +132,7 @@ export default async function handler(req, res) {
           user_id: user.id,
           type: 'loan',
           title: 'Loan Deposit Received',
-          message: `Your deposit of $${amount.toLocaleString()} has been received. Your loan application is now under review.`,
+          message: `Your deposit of $${amount.toLocaleString()} has been received. Your loan application is now under review by our Loan Department.`,
           read: false
         }]);
 
@@ -136,13 +142,13 @@ export default async function handler(req, res) {
         new_balance: newBalance
       });
     } else if (deposit_method === 'crypto') {
-      // For crypto deposits, mark loan as awaiting crypto confirmation
+      // For crypto deposits, keep status as pending_deposit until crypto is confirmed
       // The crypto deposit will be verified through the crypto_deposits table
       const { error: updateLoanError } = await supabaseAdmin
         .from('loans')
         .update({
           deposit_method: 'crypto',
-          status: 'pending',
+          status: 'pending_deposit',
           updated_at: new Date().toISOString()
         })
         .eq('id', loan_id);

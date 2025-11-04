@@ -62,7 +62,7 @@ export default async function handler(req, res) {
     const originalAccountBalance = parseFloat(account.balance);
     const newBalance = originalAccountBalance - amount;
     const newRemainingBalance = loan.remaining_balance - amount;
-    const loanStatus = newRemainingBalance <= 0.01 ? 'closed' : 'active';
+    const loanStatus = newRemainingBalance <= 0.01 ? 'completed' : 'active';
 
     const { error: updateAccountError } = await supabaseAdmin
       .from('accounts')

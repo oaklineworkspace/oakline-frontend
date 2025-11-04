@@ -83,12 +83,17 @@ function LoanDepositCryptoContent() {
             setLoanDetails(payload.new);
 
             if (payload.new.deposit_status === 'completed') {
-              setMessage('Your deposit has been confirmed by our team!');
+              setMessage('Your deposit has been confirmed by our Loan Department!');
+              setMessageType('success');
+            }
+
+            if (payload.new.status === 'under_review') {
+              setMessage('Your deposit has been received and your loan is now under review by the Loan Department.');
               setMessageType('success');
             }
 
             if (payload.new.status === 'approved') {
-              setMessage('Great news! Your loan has been approved!');
+              setMessage('Great news! Your loan has been approved by the Loan Department!');
               setMessageType('success');
               setTimeout(() => {
                 router.push('/loan/dashboard');

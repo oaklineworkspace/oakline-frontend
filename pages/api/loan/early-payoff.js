@@ -170,7 +170,7 @@ export default async function handler(req, res) {
       const { error: updateLoanError } = await supabaseAdmin
         .from('loans')
         .update({ 
-          status: 'closed',
+          status: 'completed',
           remaining_balance: 0,
           updated_at: new Date().toISOString()
         })

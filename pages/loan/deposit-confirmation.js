@@ -51,11 +51,15 @@ function DepositConfirmationContent() {
             setLoanDetails(payload.new);
 
             if (payload.new.deposit_paid) {
-              setSuccess('Deposit confirmed! Your loan application is now under review.');
+              setSuccess('Deposit confirmed! Your loan application is now under review by the Loan Department.');
+            }
+
+            if (payload.new.status === 'under_review') {
+              setSuccess('Your deposit has been received and your loan is now under review by the Loan Department.');
             }
 
             if (payload.new.status === 'approved' || payload.new.status === 'active') {
-              setSuccess('Great news! Your loan has been approved!');
+              setSuccess('Great news! Your loan has been approved by the Loan Department!');
               setTimeout(() => {
                 router.push('/loan/dashboard');
               }, 2000);
@@ -209,7 +213,7 @@ function DepositConfirmationContent() {
               <strong>What happens next?</strong>
             </p>
             <ul style={styles.successInfoList}>
-              <li>Our team will review your application within 24-48 hours</li>
+              <li>Our Loan Department will review your application within 24-48 hours</li>
               <li>You'll receive a notification once your loan is approved</li>
               <li>Funds will be disbursed to your account upon approval</li>
             </ul>

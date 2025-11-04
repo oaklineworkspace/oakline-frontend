@@ -31,11 +31,11 @@ export default async function handler(req, res) {
     }
 
     // Check for existing active or pending loans
-    const { data: existingLoans, error: existingLoansError } = await supabaseAdmin
+    const { data: existingLoans, error: existingLoansError} = await supabaseAdmin
       .from('loans')
       .select('id, status')
       .eq('user_id', user.id)
-      .in('status', ['pending', 'active', 'approved']);
+      .in('status', ['pending_deposit', 'under_review', 'active', 'approved']);
 
     if (!existingLoansError && existingLoans && existingLoans.length > 0) {
       return res.status(400).json({ error: 'You already have an active or pending loan. Please complete your existing loan before applying for a new one.' });
@@ -89,10 +89,10 @@ export default async function handler(req, res) {
         total_amount: totalDue,
         next_payment_date: firstPaymentDate.toISOString().split('T')[0],
         payments_made: 0,
-        status: 'pending',
+        status: 'pending_deposit',
         deposit_required: deposit_required || 0,
         deposit_paid: false,
-        deposit_status: null,
+        deposit_status: 'pending',
         deposit_method: deposit_method || 'balance'
       }])
       .select()
@@ -215,7 +215,7 @@ export default async function handler(req, res) {
                     Required Security Deposit
                   </h3>
                   <p style="color: #92400e; font-size: 14px; margin: 0 0 12px 0; line-height: 1.6;">
-                    To proceed with your loan application, a security deposit of <strong>10%</strong> of the requested loan amount is required. This deposit demonstrates your commitment and helps us process your application efficiently.
+                    To proceed with your loan application, a security deposit of <strong>10%</strong> of the requested loan amount is required. This deposit will be reviewed by our Loan Department and demonstrates your commitment to the application process.
                   </p>
                   <div style="background-color: #fff; padding: 16px; border-radius: 8px; margin-top: 12px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -234,8 +234,8 @@ export default async function handler(req, res) {
                     <li>Log in to your Oakline Bank account</li>
                     <li>Navigate to the Loan Dashboard</li>
                     <li>Complete the required 10% security deposit</li>
-                    <li>Upload proof of payment for verification</li>
-                    <li>Await review and approval from our loan specialists (24-48 hours)</li>
+                    <li>Your deposit will be verified by our Loan Department</li>
+                    <li>Await review and approval from our Loan Department (24-48 hours)</li>
                   </ol>
                 </div>
 
