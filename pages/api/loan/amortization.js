@@ -1,3 +1,4 @@
+
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 
 export default async function handler(req, res) {
@@ -36,86 +37,74 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Loan not found' });
     }
 
+    // Fetch completed payments
+    const { data: payments, error: paymentsError } = await supabaseAdmin
+      .from('loan_payments')
+      .select('principal_amount, interest_amount, payment_date, status')
+      .eq('loan_id', loan_id)
+      .eq('status', 'completed')
+      .order('payment_date', { ascending: true });
+
+    if (paymentsError) {
+      console.error('Error fetching payments:', paymentsError);
+    }
+
     const principal = parseFloat(loan.principal);
-    const annualRate = parseFloat(loan.interest_rate) / 100;
-    const monthlyRate = annualRate / 12;
+    const monthlyRate = parseFloat(loan.interest_rate) / 100 / 12;
     const termMonths = parseInt(loan.term_months);
-    
+    const paymentsMade = parseInt(loan.payments_made || 0);
+
     let monthlyPayment;
     if (monthlyRate === 0) {
       monthlyPayment = principal / termMonths;
     } else {
       monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, termMonths)) / 
-                      (Math.pow(1 + monthlyRate, termMonths) - 1);
+                       (Math.pow(1 + monthlyRate, termMonths) - 1);
     }
 
-    const { data: payments, error: paymentsError } = await supabaseAdmin
-      .from('loan_payments')
-      .select('*')
-      .eq('loan_id', loan_id)
-      .eq('status', 'completed')
-      .order('payment_date', { ascending: true });
-
-    const paymentsMade = payments ? payments.length : 0;
-    const totalPaid = payments ? payments.reduce((sum, p) => sum + parseFloat(p.amount), 0) : 0;
-
+    // Generate amortization schedule
     const schedule = [];
-    let balance = principal;
-    const startDate = new Date(loan.start_date || loan.created_at);
+    let remainingBalance = principal;
 
-    for (let month = 1; month <= termMonths; month++) {
-      const interestPayment = balance * monthlyRate;
+    for (let i = 1; i <= termMonths; i++) {
+      const interestPayment = remainingBalance * monthlyRate;
       const principalPayment = monthlyPayment - interestPayment;
-      balance = Math.max(0, balance - principalPayment);
+      remainingBalance = Math.max(0, remainingBalance - principalPayment);
 
-      const paymentDate = new Date(startDate);
-      paymentDate.setMonth(paymentDate.getMonth() + month);
-
-      const isPaid = month <= paymentsMade;
-      const actualPayment = isPaid && payments[month - 1] ? parseFloat(payments[month - 1].amount) : null;
+      const paymentDate = new Date(loan.start_date || loan.created_at);
+      paymentDate.setMonth(paymentDate.getMonth() + i);
 
       schedule.push({
-        payment_number: month,
+        payment_number: i,
         payment_date: paymentDate.toISOString().split('T')[0],
         payment_amount: parseFloat(monthlyPayment.toFixed(2)),
-        scheduled_payment: parseFloat(monthlyPayment.toFixed(2)),
         principal_amount: parseFloat(principalPayment.toFixed(2)),
-        principal: parseFloat(principalPayment.toFixed(2)),
         interest_amount: parseFloat(interestPayment.toFixed(2)),
-        interest: parseFloat(interestPayment.toFixed(2)),
-        remaining_balance: parseFloat(balance.toFixed(2)),
-        is_paid: isPaid,
-        actual_payment: actualPayment,
-        status: isPaid ? 'paid' : (new Date(paymentDate) < new Date() ? 'overdue' : 'upcoming')
+        remaining_balance: parseFloat(remainingBalance.toFixed(2)),
+        is_paid: i <= paymentsMade
       });
     }
 
-    const totalInterest = schedule.reduce((sum, p) => sum + p.interest, 0);
-    const totalAmount = principal + totalInterest;
+    const totalInterest = (monthlyPayment * termMonths) - principal;
+    const totalPayments = monthlyPayment * termMonths;
 
     return res.status(200).json({
       success: true,
       loan_details: {
         loan_id: loan.id,
         loan_type: loan.loan_type,
-        principal: principal,
-        interest_rate: loan.interest_rate,
+        principal: parseFloat(loan.principal),
+        interest_rate: parseFloat(loan.interest_rate),
         term_months: termMonths,
-        monthly_payment: parseFloat(monthlyPayment.toFixed(2)),
-        total_interest: parseFloat(totalInterest.toFixed(2)),
-        total_amount: parseFloat(totalAmount.toFixed(2)),
         payments_made: paymentsMade,
-        total_paid: parseFloat(totalPaid.toFixed(2)),
-        remaining_balance: parseFloat(loan.remaining_balance || balance),
         status: loan.status
       },
-      schedule: schedule,
+      schedule,
       summary: {
         total_interest: parseFloat(totalInterest.toFixed(2)),
-        total_payments: parseFloat(totalAmount.toFixed(2)),
-        payments_remaining: termMonths - paymentsMade
-      },
-      amortization_schedule: schedule
+        total_payments: parseFloat(totalPayments.toFixed(2)),
+        monthly_payment: parseFloat(monthlyPayment.toFixed(2))
+      }
     });
 
   } catch (error) {

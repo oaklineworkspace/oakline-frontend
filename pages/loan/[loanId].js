@@ -409,7 +409,7 @@ function LoanDetailContent() {
         </div>
       )}
 
-      {depositRequired > 0 && !isDepositPaid && loan.status === 'pending' && (
+      {depositRequired > 0 && loan.deposit_status === 'pending' && !loan.deposit_paid && loan.status === 'pending' && (
         <div style={styles.depositBanner}>
           <div style={styles.depositBannerContent}>
             <div>
@@ -417,8 +417,12 @@ function LoanDetailContent() {
               <p style={styles.depositBannerText}>
                 You need to deposit ${depositRequired.toLocaleString('en-US', { minimumFractionDigits: 2 })} before your loan can be approved.
               </p>
+              {loan.deposit_method && (
+                <p style={styles.depositBannerText}>
+                  Selected method: <strong>{loan.deposit_method.toUpperCase()}</strong>
+                </p>
+              )}
             </div>
-            {/* Link to deposit-crypto page for initiating crypto deposit */}
             <Link href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${depositRequired}`} style={styles.depositNowButton}>
               Deposit Now
             </Link>
@@ -426,17 +430,10 @@ function LoanDetailContent() {
         </div>
       )}
 
-      {loan.deposit_status === 'pending' && !isDepositPaid && (
-        <div style={styles.infoBanner}>
-          <strong>⏳ Deposit Submitted</strong>
-          <p>Your deposit is pending admin confirmation. You'll be notified once it's verified.</p>
-        </div>
-      )}
-
-      {isDepositPaid && loan.deposit_status === 'completed' && loan.status === 'pending' && (
+      {loan.deposit_paid && loan.deposit_status === 'completed' && loan.status === 'pending' && (
         <div style={styles.successBanner}>
           <strong>✅ Deposit Confirmed</strong>
-          <p>Your ${depositRequired.toLocaleString('en-US', { minimumFractionDigits: 2 })} deposit has been confirmed. Your loan application is now under review.</p>
+          <p>Your ${parseFloat(loan.deposit_amount || depositRequired).toLocaleString('en-US', { minimumFractionDigits: 2 })} deposit has been confirmed{loan.deposit_date ? ` on ${new Date(loan.deposit_date).toLocaleDateString()}` : ''}. Your loan application is now under review.</p>
         </div>
       )}
 

@@ -45,7 +45,16 @@ export default function CreditReport() {
 
       const { data: creditScoreRecord, error: creditScoreError } = await supabase
         .from('credit_scores')
-        .select('*')
+        .select(`
+          id,
+          user_id,
+          score,
+          score_source,
+          score_reason,
+          updated_by,
+          created_at,
+          updated_at
+        `)
         .eq('user_id', userId)
         .order('updated_at', { ascending: false })
         .limit(1)
@@ -171,6 +180,11 @@ export default function CreditReport() {
               <h2>Credit Score</h2>
               <div style={styles.scoreDate}>
                 Updated: {creditScoreData ? formatCreditScoreDate(creditScoreData.updated_at) : 'Never'}
+                {creditScoreData && creditScoreData.score_source && (
+                  <span style={{ marginLeft: '8px', fontSize: '0.85rem', opacity: 0.8 }}>
+                    • Source: {creditScoreData.score_source}
+                  </span>
+                )}
               </div>
             </div>
             <div style={styles.scoreDisplay}>
@@ -188,7 +202,9 @@ export default function CreditReport() {
                     {getCreditScoreLabel(creditScore)}
                   </div>
                   <div style={styles.scoreMessage}>
-                    {getCreditScoreMessage(creditScore)}
+                    {creditScoreData && creditScoreData.score_reason 
+                      ? creditScoreData.score_reason 
+                      : getCreditScoreMessage(creditScore)}
                   </div>
                 </>
               ) : (

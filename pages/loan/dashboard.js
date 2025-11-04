@@ -544,13 +544,39 @@ Generated: ${new Date().toLocaleString()}
                       </h2>
                       <div style={styles.loanId}>ID: {selectedLoan.id.substring(0, 8)}</div>
                     </div>
-                    <div
-                      style={{
-                        ...styles.statusBadge,
-                        backgroundColor: getStatusColor(selectedLoan.status)
-                      }}
-                    >
-                      {selectedLoan.status.toUpperCase()}
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      {selectedLoan.is_late && (
+                        <div style={{
+                          padding: '0.5rem 1rem',
+                          backgroundColor: '#fee2e2',
+                          color: '#dc2626',
+                          borderRadius: '8px',
+                          fontSize: '0.875rem',
+                          fontWeight: '700'
+                        }}>
+                          ⚠️ LATE
+                        </div>
+                      )}
+                      {selectedLoan.auto_payment_enabled && (
+                        <div style={{
+                          padding: '0.5rem 1rem',
+                          backgroundColor: '#dbeafe',
+                          color: '#1e40af',
+                          borderRadius: '8px',
+                          fontSize: '0.875rem',
+                          fontWeight: '700'
+                        }}>
+                          🤖 AUTO-PAY
+                        </div>
+                      )}
+                      <div
+                        style={{
+                          ...styles.statusBadge,
+                          backgroundColor: getStatusColor(selectedLoan.status)
+                        }}
+                      >
+                        {selectedLoan.status.toUpperCase()}
+                      </div>
                     </div>
                   </div>
 
@@ -619,6 +645,15 @@ Generated: ${new Date().toLocaleString()}
                         {selectedLoan.payments_made || 0} / {selectedLoan.term_months}
                       </div>
                     </div>
+
+                    {parseFloat(selectedLoan.late_fee_amount || 0) > 0 && (
+                      <div style={styles.overviewItem}>
+                        <div style={styles.overviewLabel}>Late Fees</div>
+                        <div style={{...styles.overviewValue, color: '#dc2626'}}>
+                          ${parseFloat(selectedLoan.late_fee_amount).toLocaleString()}
+                        </div>
+                      </div>
+                    )}
 
                     {selectedLoan.next_payment_date && parseFloat(selectedLoan.remaining_balance || 0) > 0.01 && (
                       <div style={styles.overviewItem}>

@@ -159,7 +159,11 @@ function LoanApplicationContent() {
           interest_rate: parseFloat(formData.interest_rate),
           collateral_description: formData.collateral_description,
           deposit_required: requiredDeposit,
-          deposit_method: formData.deposit_method
+          deposit_method: formData.deposit_method,
+          // Assuming these are also part of the application data that needs to be sent
+          // The backend will then populate deposit_amount and deposit_status
+          // deposit_amount: 0, // This will be handled by the backend based on deposit_required and payment
+          // deposit_status: 'pending', // This will be handled by the backend
         })
       });
 
@@ -171,7 +175,7 @@ function LoanApplicationContent() {
 
       setSuccessData({
         loanId: data.loan.id,
-        amount: requiredDeposit,
+        amount: requiredDeposit, // This is the required deposit amount
         loanType: formData.loan_type
       });
       setSuccess('success');
