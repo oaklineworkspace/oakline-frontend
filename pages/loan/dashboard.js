@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -220,6 +221,30 @@ function LoanDashboardContent() {
     return Math.min(100, (loan.payments_made / loan.term_months) * 100);
   };
 
+  const downloadLoanStatement = (loan) => {
+    // Generate CSV statement
+    const csvContent = [
+      ['Loan Statement'],
+      ['Loan Type', loan.loan_type?.replace('_', ' ').toUpperCase()],
+      ['Loan ID', loan.id],
+      ['Principal Amount', `$${parseFloat(loan.principal).toFixed(2)}`],
+      ['Interest Rate', `${loan.interest_rate}%`],
+      ['Term', `${loan.term_months} months`],
+      ['Monthly Payment', `$${calculateMonthlyPayment(loan).toFixed(2)}`],
+      ['Remaining Balance', `$${parseFloat(loan.remaining_balance || 0).toFixed(2)}`],
+      ['Payments Made', `${loan.payments_made || 0} of ${loan.term_months}`],
+      ['Status', loan.status],
+      ['Next Payment Date', loan.next_payment_date || 'N/A']
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `loan_statement_${loan.id.substring(0, 8)}.csv`;
+    a.click();
+  };
+
   if (loading) {
     return (
       <div style={styles.container}>
@@ -237,7 +262,7 @@ function LoanDashboardContent() {
         <div style={styles.headerContent}>
           <div style={styles.headerLeft}>
             <h1 style={styles.title}>Loan Management Center</h1>
-            <p style={styles.subtitle}>View, manage, and make payments on all your loans</p>
+            <p style={styles.subtitle}>Professional loan servicing and management</p>
           </div>
           <Link href="/loan/apply" style={styles.applyButton}>
             + Apply for New Loan
@@ -275,30 +300,38 @@ function LoanDashboardContent() {
               <div style={styles.portfolioCards}>
                 <div style={styles.portfolioCard}>
                   <div style={styles.portfolioIcon}>💰</div>
-                  <div style={styles.portfolioLabel}>Total Borrowed</div>
-                  <div style={styles.portfolioValue}>
-                    ${loans.reduce((sum, l) => sum + parseFloat(l.principal || 0), 0).toLocaleString()}
+                  <div>
+                    <div style={styles.portfolioLabel}>Total Borrowed</div>
+                    <div style={styles.portfolioValue}>
+                      ${loans.reduce((sum, l) => sum + parseFloat(l.principal || 0), 0).toLocaleString()}
+                    </div>
                   </div>
                 </div>
                 <div style={styles.portfolioCard}>
                   <div style={styles.portfolioIcon}>📊</div>
-                  <div style={styles.portfolioLabel}>Total Remaining</div>
-                  <div style={styles.portfolioValue}>
-                    ${loans.filter(l => l.status === 'active').reduce((sum, l) => sum + parseFloat(l.remaining_balance || 0), 0).toLocaleString()}
+                  <div>
+                    <div style={styles.portfolioLabel}>Total Remaining</div>
+                    <div style={styles.portfolioValue}>
+                      ${loans.filter(l => l.status === 'active').reduce((sum, l) => sum + parseFloat(l.remaining_balance || 0), 0).toLocaleString()}
+                    </div>
                   </div>
                 </div>
                 <div style={styles.portfolioCard}>
                   <div style={styles.portfolioIcon}>🔢</div>
-                  <div style={styles.portfolioLabel}>Active Loans</div>
-                  <div style={styles.portfolioValue}>
-                    {loans.filter(l => l.status === 'active').length}
+                  <div>
+                    <div style={styles.portfolioLabel}>Active Loans</div>
+                    <div style={styles.portfolioValue}>
+                      {loans.filter(l => l.status === 'active').length}
+                    </div>
                   </div>
                 </div>
                 <div style={styles.portfolioCard}>
                   <div style={styles.portfolioIcon}>💳</div>
-                  <div style={styles.portfolioLabel}>Monthly Payments</div>
-                  <div style={styles.portfolioValue}>
-                    ${loans.filter(l => l.status === 'active').reduce((sum, l) => sum + calculateMonthlyPayment(l), 0).toFixed(2)}
+                  <div>
+                    <div style={styles.portfolioLabel}>Monthly Payments</div>
+                    <div style={styles.portfolioValue}>
+                      ${loans.filter(l => l.status === 'active').reduce((sum, l) => sum + calculateMonthlyPayment(l), 0).toFixed(2)}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -306,7 +339,24 @@ function LoanDashboardContent() {
 
             {/* Loan Cards */}
             <div style={styles.loansSection}>
-              <h2 style={styles.sectionTitle}>My Loans</h2>
+              <div style={styles.loansSectionHeader}>
+                <h2 style={styles.sectionTitle}>My Loans</h2>
+                <button 
+                  onClick={() => {
+                    const allStatements = loans.map(loan => ({
+                      id: loan.id,
+                      type: loan.loan_type,
+                      principal: loan.principal,
+                      remaining: loan.remaining_balance,
+                      status: loan.status
+                    }));
+                    console.log('Download all statements:', allStatements);
+                  }}
+                  style={styles.downloadAllButton}
+                >
+                  📥 Download All Statements
+                </button>
+              </div>
               <div style={styles.loanCards}>
                 {loans.map(loan => {
                   const monthlyPayment = calculateMonthlyPayment(loan);
@@ -473,12 +523,11 @@ function LoanDashboardContent() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedLoan(loan);
-                              setActiveTab('overview');
+                              downloadLoanStatement(loan);
                             }}
                             style={styles.secondaryActionButton}
                           >
-                            View Details
+                            Download Statement
                           </button>
                         </div>
                       )}
@@ -960,12 +1009,14 @@ const styles = {
     padding: '1.75rem',
     boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
     border: '1px solid #e5e7eb',
-    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
     transition: 'transform 0.2s, box-shadow 0.2s'
   },
   portfolioIcon: {
     fontSize: '2.5rem',
-    marginBottom: '0.75rem'
+    flexShrink: 0
   },
   portfolioLabel: {
     fontSize: '0.85rem',
@@ -982,6 +1033,25 @@ const styles = {
   },
   loansSection: {
     marginBottom: '2.5rem'
+  },
+  loansSectionHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '1.25rem',
+    flexWrap: 'wrap',
+    gap: '1rem'
+  },
+  downloadAllButton: {
+    padding: '0.75rem 1.5rem',
+    fontSize: '0.9rem',
+    fontWeight: '700',
+    color: '#1a365d',
+    backgroundColor: '#fff',
+    border: '2px solid #1a365d',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    transition: 'all 0.2s'
   },
   loanCards: {
     display: 'grid',
@@ -1165,7 +1235,10 @@ const styles = {
     border: 'none',
     borderRadius: '8px',
     cursor: 'pointer',
-    transition: 'all 0.2s'
+    transition: 'all 0.2s',
+    textAlign: 'center',
+    textDecoration: 'none',
+    display: 'block'
   },
   secondaryActionButton: {
     flex: 1,
