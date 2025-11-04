@@ -21,6 +21,46 @@ function LoanDetailContent() {
     amount: '',
     account_id: '',
     payment_type: 'manual'
+
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @media (max-width: 768px) {
+        .loan-detail-tabs {
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+        .loan-detail-tabs button {
+          white-space: nowrap;
+          min-width: 100px;
+        }
+        .loan-detail-header {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          gap: 1rem !important;
+        }
+        .loan-detail-actions {
+          width: 100%;
+          flex-direction: column !important;
+        }
+        .loan-detail-actions button {
+          width: 100% !important;
+        }
+      }
+      @media (max-width: 414px) {
+        .loan-detail-modal {
+          padding: 1rem !important;
+          margin: 0.5rem !important;
+          max-height: 90vh !important;
+          overflow-y: auto !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
+
+
   });
   const [accounts, setAccounts] = useState([]);
   const [processing, setProcessing] = useState(false);
@@ -332,7 +372,7 @@ function LoanDetailContent() {
 
   return (
     <div style={styles.container}>
-      <div style={styles.header}>
+      <div style={styles.header} className="loan-detail-header">
         <div>
           <Link href="/loan" style={styles.backLink}>← Back to Loans</Link>
           <h1 style={styles.title}>{getLoanTypeLabel(loan.loan_type)}</h1>
@@ -373,7 +413,7 @@ function LoanDetailContent() {
         </div>
       )}
 
-      <div style={styles.tabs}>
+      <div style={styles.tabs} className="loan-detail-tabs">
         <button
           style={activeTab === 'overview' ? { ...styles.tab, ...styles.activeTab } : styles.tab}
           onClick={() => setActiveTab('overview')}
@@ -475,7 +515,7 @@ function LoanDetailContent() {
           )}
 
           {loan.status === 'active' && (
-            <div style={styles.actionButtons}>
+            <div style={styles.actionButtons} className="loan-detail-actions">
               <button onClick={() => setPaymentModal(true)} style={styles.primaryButton}>
                 Make Payment
               </button>
@@ -525,7 +565,7 @@ function LoanDetailContent() {
 
       {paymentModal && (
         <div style={styles.modal} onClick={() => setPaymentModal(false)}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div style={styles.modalContent} className="loan-detail-modal" onClick={(e) => e.stopPropagation()}>
             <h2 style={styles.modalTitle}>Make Loan Payment</h2>
             
             <div style={styles.formGroup}>
@@ -623,10 +663,12 @@ const styles = {
   container: {
     maxWidth: '1200px',
     margin: '0 auto',
-    padding: 'clamp(1.5rem, 3vw, 2.5rem) clamp(1rem, 3vw, 1.25rem)',
+    padding: 'clamp(1rem, 3vw, 2.5rem) clamp(0.75rem, 3vw, 1.25rem)',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     minHeight: '100vh',
-    backgroundColor: '#f8fafc'
+    backgroundColor: '#f8fafc',
+    width: '100%',
+    boxSizing: 'border-box'
   },
   loadingContainer: {
     textAlign: 'center',
@@ -748,28 +790,29 @@ const styles = {
   },
   infoGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
-    gap: 'clamp(1rem, 2vw, 1.25rem)',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',
+    gap: 'clamp(0.75rem, 2vw, 1.25rem)',
     marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
   },
   infoCard: {
-    padding: '20px',
+    padding: 'clamp(0.75rem, 2vw, 1.25rem)',
     backgroundColor: '#f8f9fa',
     borderRadius: '8px',
     border: '1px solid #e0e0e0',
   },
   infoLabel: {
-    fontSize: '13px',
+    fontSize: 'clamp(0.7rem, 2vw, 0.8125rem)',
     color: '#666',
     fontWeight: '500',
-    marginBottom: '8px',
+    marginBottom: '6px',
     textTransform: 'uppercase',
-    letterSpacing: '0.5px',
+    letterSpacing: '0.3px',
   },
   infoValue: {
-    fontSize: '24px',
+    fontSize: 'clamp(1.1rem, 4vw, 1.5rem)',
     fontWeight: '700',
     color: '#333',
+    wordBreak: 'break-word',
   },
   section: {
     marginTop: '30px',
@@ -789,29 +832,35 @@ const styles = {
   },
   actionButtons: {
     display: 'flex',
-    gap: '16px',
+    gap: '12px',
     marginTop: '30px',
+    flexDirection: 'column',
+    '@media (min-width: 600px)': {
+      flexDirection: 'row'
+    }
   },
   primaryButton: {
     flex: 1,
+    width: '100%',
     backgroundColor: '#28A745',
     color: 'white',
-    padding: '14px 28px',
+    padding: 'clamp(0.75rem, 2vw, 0.875rem) clamp(1rem, 3vw, 1.75rem)',
     borderRadius: '8px',
     border: 'none',
-    fontSize: '16px',
+    fontSize: 'clamp(0.9rem, 2.5vw, 1rem)',
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
   },
   secondaryButton: {
     flex: 1,
+    width: '100%',
     backgroundColor: 'white',
     color: '#007BFF',
-    padding: '14px 28px',
+    padding: 'clamp(0.75rem, 2vw, 0.875rem) clamp(1rem, 3vw, 1.75rem)',
     borderRadius: '8px',
     border: '2px solid #007BFF',
-    fontSize: '16px',
+    fontSize: 'clamp(0.9rem, 2.5vw, 1rem)',
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.3s ease',

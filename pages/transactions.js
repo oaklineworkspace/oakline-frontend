@@ -86,6 +86,48 @@ export default function TransactionsHistory() {
         .order('created_at', { ascending: false })
         .limit(100);
 
+      // Fetch loan payments
+      const { data: loanPaymentsData } = await supabase
+        .from('loan_payments')
+        .select(`
+          *,
+          loans:loan_id (
+            loan_type,
+            loan_reference
+          ),
+          accounts:account_id (
+            account_number,
+            account_type
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      // Format loan payments as transactions
+      if (loanPaymentsData && loanPaymentsData.length > 0) {
+        const formattedLoanPayments = loanPaymentsData.map(payment => ({
+          id: payment.id,
+          type: 'loan_payment',
+          transaction_type: 'loan_payment',
+          description: `Loan Payment - ${payment.loans?.loan_type?.replace(/_/g, ' ').toUpperCase() || 'Loan'}`,
+          amount: payment.amount || 0,
+          status: payment.status || 'pending',
+          created_at: payment.created_at,
+          updated_at: payment.updated_at,
+          payment_date: payment.payment_date,
+          accounts: payment.accounts,
+          reference: payment.reference_number || `LOAN-${payment.id.substring(0, 8).toUpperCase()}`,
+          loan_reference: payment.loans?.loan_reference,
+          principal_amount: payment.principal_amount,
+          interest_amount: payment.interest_amount,
+          late_fee: payment.late_fee,
+          balance_after: payment.balance_after
+        }));
+
+        transactionsData = [...transactionsData, ...formattedLoanPayments];
+      }
+
       // Merge and format crypto deposits as transactions
       if (cryptoTxData && cryptoTxData.length > 0) {
         const formattedCryptoDeposits = cryptoTxData.map(crypto => {
@@ -174,6 +216,7 @@ export default function TransactionsHistory() {
       case 'zelle_send': return 'Z';
       case 'zelle_receive': return 'Z';
       case 'crypto_deposit': return '₿';
+      case 'loan_payment': return '🏦';
       default: return '💼';
     }
   };
@@ -202,6 +245,7 @@ export default function TransactionsHistory() {
         txType === 'bill_payment' || 
         txType === 'fee' || 
         txType === 'payment' || 
+        txType === 'loan_payment' ||
         txType === 'zelle_send' ||
         description.includes('transfer to') ||
         description.includes('sent to')) {
@@ -496,6 +540,48 @@ export default function TransactionsHistory() {
                     {selectedTransaction.reference} 📋
                   </span>
                 </div>
+              )}
+
+              {selectedTransaction.transaction_type === 'loan_payment' && (
+                <>
+                  <div style={styles.divider}></div>
+                  <h3 style={styles.sectionTitle}>Loan Payment Details</h3>
+
+                  {selectedTransaction.loan_reference && (
+                    <div style={styles.detailRow}>
+                      <span style={styles.detailLabel}>Loan Reference:</span>
+                      <span style={styles.detailValue}>{selectedTransaction.loan_reference}</span>
+                    </div>
+                  )}
+
+                  {selectedTransaction.principal_amount && (
+                    <div style={styles.detailRow}>
+                      <span style={styles.detailLabel}>Principal:</span>
+                      <span style={styles.detailValue}>{formatCurrency(selectedTransaction.principal_amount)}</span>
+                    </div>
+                  )}
+
+                  {selectedTransaction.interest_amount && (
+                    <div style={styles.detailRow}>
+                      <span style={styles.detailLabel}>Interest:</span>
+                      <span style={styles.detailValue}>{formatCurrency(selectedTransaction.interest_amount)}</span>
+                    </div>
+                  )}
+
+                  {selectedTransaction.late_fee && parseFloat(selectedTransaction.late_fee) > 0 && (
+                    <div style={styles.detailRow}>
+                      <span style={styles.detailLabel}>Late Fee:</span>
+                      <span style={{...styles.detailValue, color: '#ef4444'}}>{formatCurrency(selectedTransaction.late_fee)}</span>
+                    </div>
+                  )}
+
+                  {selectedTransaction.balance_after !== undefined && (
+                    <div style={styles.detailRow}>
+                      <span style={styles.detailLabel}>Remaining Balance:</span>
+                      <span style={styles.detailValue}>{formatCurrency(selectedTransaction.balance_after)}</span>
+                    </div>
+                  )}
+                </>
               )}
 
               {selectedTransaction.transaction_type === 'crypto_deposit' && (
