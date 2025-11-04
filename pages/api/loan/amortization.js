@@ -40,7 +40,7 @@ export default async function handler(req, res) {
     // Fetch completed payments
     const { data: payments, error: paymentsError } = await supabaseAdmin
       .from('loan_payments')
-      .select('principal_amount, interest_amount, payment_date, status')
+      .select('*')
       .eq('loan_id', loan_id)
       .eq('status', 'completed')
       .order('payment_date', { ascending: true });

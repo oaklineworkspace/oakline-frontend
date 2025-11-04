@@ -38,23 +38,7 @@ export default async function handler(req, res) {
 
     const { data: payments, error: paymentsError } = await supabaseAdmin
       .from('loan_payments')
-      .select(`
-        id,
-        loan_id,
-        amount,
-        payment_date,
-        status,
-        created_at,
-        updated_at,
-        payment_type,
-        principal_amount,
-        interest_amount,
-        late_fee,
-        balance_after,
-        reference_number,
-        notes,
-        processed_by
-      `)
+      .select('*')
       .eq('loan_id', loan_id)
       .order('payment_date', { ascending: false });
 

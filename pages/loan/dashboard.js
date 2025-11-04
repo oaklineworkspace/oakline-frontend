@@ -168,7 +168,19 @@ function LoanDashboardContent() {
       const data = await response.json();
 
       if (response.ok && data.loans) {
-        setLoans(data.loans);
+        // Ensure all numeric fields are properly parsed
+        const parsedLoans = data.loans.map(loan => ({
+          ...loan,
+          principal: parseFloat(loan.principal || 0),
+          remaining_balance: parseFloat(loan.remaining_balance || 0),
+          monthly_payment_amount: parseFloat(loan.monthly_payment_amount || 0),
+          total_amount: parseFloat(loan.total_amount || 0),
+          interest_rate: parseFloat(loan.interest_rate || 0),
+          late_fee_amount: parseFloat(loan.late_fee_amount || 0),
+          deposit_required: parseFloat(loan.deposit_required || 0),
+          deposit_amount: parseFloat(loan.deposit_amount || 0)
+        }));
+        setLoans(parsedLoans);
 
         // Calculate comprehensive stats
         const totalBorrowed = data.loans.reduce((sum, loan) => 

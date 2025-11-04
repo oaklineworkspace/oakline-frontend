@@ -104,10 +104,7 @@ function LoanDetailContent() {
 
       const { data, error } = await supabase
         .from('loans')
-        .select(`
-          *,
-          payments:payments(id, amount, created_at, status, payment_method)
-        `)
+        .select('*')
         .eq('id', loanId)
         .eq('user_id', user.id)
         .single();
@@ -387,7 +384,7 @@ function LoanDetailContent() {
   const monthlyPayment = calculateMonthlyPayment(loan);
   const totalInterest = (monthlyPayment * loan.term_months) - parseFloat(loan.principal);
   const depositRequired = parseFloat(loan.deposit_required || 0);
-  const isDepositPaid = loan.deposit_paid || loan.deposit_status === 'completed'; // Consider both fields
+  const isDepositPaid = loan.deposit_paid === true || loan.deposit_status === 'completed';
 
   return (
     <div style={styles.container}>
