@@ -246,15 +246,15 @@ function LoansOverviewContent() {
                   </div>
 
                   <div style={styles.loanActions}>
-                    {loan.status === 'pending' && !loan.deposit_paid && loan.deposit_required > 0 && !loan.deposit_date && (
+                    {loan.status === 'pending' && loan.deposit_required > 0 && !loan.deposit_paid && loan.deposit_status !== 'completed' && (
                       <Link 
-                        href={`/loan/deposit-confirmation?loan_id=${loan.id}&amount=${loan.deposit_required}`}
+                        href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${loan.deposit_required}`}
                         style={styles.actionButton}
                       >
-                        💰 Complete Deposit
+                        💰 Pay 10% Deposit
                       </Link>
                     )}
-                    {loan.status === 'pending' && !loan.deposit_paid && loan.deposit_method === 'crypto' && loan.deposit_date && (
+                    {loan.status === 'pending' && loan.deposit_required > 0 && loan.deposit_status === 'pending' && !loan.deposit_paid && (
                       <div style={{
                         backgroundColor: '#fef3c7',
                         border: '1px solid #fde68a',
@@ -264,10 +264,10 @@ function LoansOverviewContent() {
                         color: '#92400e',
                         marginBottom: '12px'
                       }}>
-                        ⏳ Crypto deposit submitted on {new Date(loan.deposit_date).toLocaleDateString()}. Waiting for admin confirmation.
+                        ⏳ Deposit submitted{loan.deposit_date ? ` on ${new Date(loan.deposit_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}` : ''}. Waiting for admin confirmation.
                       </div>
                     )}
-                    {loan.status === 'pending' && loan.deposit_paid && (
+                    {(loan.deposit_paid || loan.deposit_status === 'completed') && loan.status === 'pending' && (
                       <div style={{
                         backgroundColor: '#d1fae5',
                         border: '1px solid #a7f3d0',
@@ -277,7 +277,20 @@ function LoansOverviewContent() {
                         color: '#065f46',
                         marginBottom: '12px'
                       }}>
-                        ✅ Deposit confirmed! Your application is being reviewed.
+                        ✅ 10% Deposit confirmed! Your loan application is under review.
+                      </div>
+                    )}
+                    {(loan.deposit_paid || loan.deposit_status === 'completed') && (loan.status === 'approved' || loan.status === 'active') && (
+                      <div style={{
+                        backgroundColor: '#d1fae5',
+                        border: '1px solid #a7f3d0',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        fontSize: '14px',
+                        color: '#065f46',
+                        marginBottom: '12px'
+                      }}>
+                        ✅ Loan approved and disbursed!
                       </div>
                     )}
                     {(loan.status === 'active' || loan.status === 'approved') && (

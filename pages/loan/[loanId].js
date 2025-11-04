@@ -20,7 +20,7 @@ function LoanDetailContent() {
   const [paymentForm, setPaymentForm] = useState({
     amount: '',
     account_id: '',
-    payment_type: 'manual'
+    payment_type: 'manual' // Default to manual
   });
 
   useEffect(() => {
@@ -106,12 +106,16 @@ function LoanDetailContent() {
 
       const { data, error } = await supabase
         .from('loans')
-        .select('*')
+        .select(`
+          *,
+          payments:payments(id, amount, created_at, status, payment_method)
+        `)
         .eq('id', loanId)
         .eq('user_id', user.id)
         .single();
 
       if (error) {
+        console.error("Error fetching loan details:", error);
         showToast('Failed to fetch loan details', 'error');
         router.push('/loan');
         return;
@@ -163,13 +167,15 @@ function LoanDetailContent() {
         },
         (payload) => {
           console.log('Loan update received:', payload);
-          setLoan(payload.new);
+          // Merge updated data with existing loan data to preserve related data like payments
+          setLoan(prevLoan => ({ ...prevLoan, ...payload.new }));
         }
       )
       .subscribe();
   };
 
   const calculateMonthlyPayment = (loanData) => {
+    if (!loanData) return 0;
     if (loanData.monthly_payment_amount) {
       return parseFloat(loanData.monthly_payment_amount);
     }
@@ -204,11 +210,28 @@ function LoanDetailContent() {
         return;
       }
 
-      if (!paymentForm.account_id) {
+      if (!paymentForm.account_id && paymentForm.payment_type !== 'crypto') {
         showToast('Please select an account', 'error');
         setProcessing(false);
         return;
       }
+      
+      if (paymentForm.payment_type === 'crypto') {
+          // Handle crypto payment initiation
+          console.log("Initiating crypto payment...");
+          // In a real app, this would involve redirecting to a crypto payment gateway
+          // For now, we'll simulate a success and show a placeholder message
+          showToast('Redirecting to crypto payment gateway...', 'info');
+          // Simulate redirection or further steps
+          setTimeout(() => {
+              setProcessing(false);
+              setPaymentModal(false);
+              showToast('Crypto payment initiated. Please complete it on the gateway.', 'success');
+              fetchLoanDetails(); // Refresh loan details
+          }, 2000);
+          return; // Stop here for crypto
+      }
+
 
       const selectedAccount = accounts.find(acc => acc.id === paymentForm.account_id);
       if (!selectedAccount || parseFloat(selectedAccount.balance) < amount) {
@@ -234,14 +257,13 @@ function LoanDetailContent() {
           loan_id: loanId,
           account_id: paymentForm.account_id,
           amount: amount,
-          payment_type: paymentForm.payment_type
+          payment_type: paymentForm.payment_type // This will be 'manual' for now
         })
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Redirect to success page with payment details
         router.push(`/loan/payment-success?reference=${data.payment.reference_number}&amount=${data.payment.amount}&loan_id=${loanId}`);
       } else {
         showToast(data.error || 'Failed to process payment', 'error');
@@ -367,6 +389,7 @@ function LoanDetailContent() {
   const monthlyPayment = calculateMonthlyPayment(loan);
   const totalInterest = (monthlyPayment * loan.term_months) - parseFloat(loan.principal);
   const depositRequired = parseFloat(loan.deposit_required || 0);
+  const isDepositPaid = loan.deposit_paid || loan.deposit_status === 'completed'; // Consider both fields
 
   return (
     <div style={styles.container}>
@@ -388,7 +411,7 @@ function LoanDetailContent() {
         </div>
       )}
 
-      {depositRequired > 0 && !loan.deposit_paid && loan.deposit_status !== 'completed' && loan.status === 'pending' && (
+      {depositRequired > 0 && !isDepositPaid && loan.status === 'pending' && (
         <div style={styles.depositBanner}>
           <div style={styles.depositBannerContent}>
             <div>
@@ -397,6 +420,7 @@ function LoanDetailContent() {
                 You need to deposit ${depositRequired.toLocaleString('en-US', { minimumFractionDigits: 2 })} before your loan can be approved.
               </p>
             </div>
+            {/* Link to deposit-crypto page for initiating crypto deposit */}
             <Link href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${depositRequired}`} style={styles.depositNowButton}>
               Deposit Now
             </Link>
@@ -404,23 +428,23 @@ function LoanDetailContent() {
         </div>
       )}
 
-      {loan.deposit_status === 'pending' && !loan.deposit_paid && (
+      {loan.deposit_status === 'pending' && !isDepositPaid && (
         <div style={styles.infoBanner}>
           <strong>⏳ Deposit Submitted</strong>
           <p>Your deposit is pending admin confirmation. You'll be notified once it's verified.</p>
         </div>
       )}
 
-      {loan.deposit_paid && loan.deposit_status === 'completed' && loan.status === 'pending' && (
+      {isDepositPaid && loan.deposit_status === 'completed' && loan.status === 'pending' && (
         <div style={styles.successBanner}>
           <strong>✅ Deposit Confirmed</strong>
           <p>Your ${depositRequired.toLocaleString('en-US', { minimumFractionDigits: 2 })} deposit has been confirmed. Your loan application is now under review.</p>
         </div>
       )}
-      
-      {loan.status === 'pending' && (
+
+      {loan.status === 'pending' && isDepositPaid && ( // Show this only if deposit is paid and loan is still pending
         <div style={styles.warningBox}>
-          <strong>⚠️ Pending Approval</strong>
+          <strong>⏳ Pending Approval</strong>
           <p>Your loan application is currently pending review by our team. We will notify you once a decision is made.</p>
         </div>
       )}
@@ -528,7 +552,11 @@ function LoanDetailContent() {
 
           {loan.status === 'active' && (
             <div style={styles.actionButtons} className="loan-detail-actions">
-              <button onClick={() => setPaymentModal(true)} style={styles.primaryButton}>
+              <button onClick={() => {
+                  setPaymentForm(prev => ({...prev, payment_type: 'manual'})); // Ensure manual is selected for regular payments
+                  setPaymentModal(true);
+                }}
+                style={styles.primaryButton}>
                 Make Payment
               </button>
               <button onClick={() => setUploadProofModal(true)} style={styles.secondaryButton}>
@@ -599,26 +627,46 @@ function LoanDetailContent() {
             </div>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>Pay from Account</label>
+              <label style={styles.label}>Payment Method</label>
               <select
-                value={paymentForm.account_id}
-                onChange={(e) => setPaymentForm({ ...paymentForm, account_id: e.target.value })}
+                value={paymentForm.payment_type}
+                onChange={(e) => {
+                  setPaymentForm({ ...paymentForm, payment_type: e.target.value, account_id: '' }); // Reset account_id when payment type changes
+                }}
                 style={styles.select}
               >
-                {accounts.map(account => (
-                  <option key={account.id} value={account.id}>
-                    {account.account_type} - {account.account_number} (Balance: ${parseFloat(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })})
-                  </option>
-                ))}
+                <option value="manual">Manual Bank Transfer</option>
+                <option value="crypto">Cryptocurrency</option>
               </select>
             </div>
+
+            {paymentForm.payment_type === 'manual' && (
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Pay from Account</label>
+                <select
+                  value={paymentForm.account_id}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, account_id: e.target.value })}
+                  style={styles.select}
+                >
+                  {accounts.map(account => (
+                    <option key={account.id} value={account.id}>
+                      {account.account_type} - {account.account_number} (Balance: ${parseFloat(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div style={styles.modalActions}>
               <button onClick={() => setPaymentModal(false)} style={styles.cancelButton} disabled={processing}>
                 Cancel
               </button>
-              <button onClick={handleMakePayment} style={styles.submitButton} disabled={processing}>
-                {processing ? 'Processing...' : 'Confirm Payment'}
+              <button
+                onClick={handleMakePayment}
+                disabled={processing}
+                style={styles.submitButton}
+              >
+                {processing ? 'Processing...' : paymentForm.payment_type === 'crypto' ? 'Continue to Crypto Payment' : 'Confirm Payment'}
               </button>
             </div>
           </div>

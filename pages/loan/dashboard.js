@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -145,7 +144,7 @@ function LoanDashboardContent() {
 
       if (response.ok && data.loans) {
         setLoans(data.loans);
-        
+
         // Calculate comprehensive stats
         const totalBorrowed = data.loans.reduce((sum, loan) => 
           sum + parseFloat(loan.principal || 0), 0
@@ -676,7 +675,11 @@ Generated: ${new Date().toLocaleString()}
                             <div style={styles.infoItem}>
                               <span style={styles.infoLabel}>Next Payment:</span>
                               <span style={styles.infoValue}>
-                                {new Date(selectedLoan.next_payment_date).toLocaleDateString()}
+                                {new Date(selectedLoan.next_payment_date).toLocaleDateString('en-US', { 
+                                  year: 'numeric', 
+                                  month: 'short', 
+                                  day: 'numeric' 
+                                })}
                               </span>
                             </div>
                           )}
@@ -718,7 +721,7 @@ Generated: ${new Date().toLocaleString()}
         <div style={styles.modalOverlay} onClick={() => setShowPaymentModal(false)}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()} className="loan-modal-content">
             <h2 style={styles.modalTitle}>Make a Payment</h2>
-            
+
             <div style={styles.modalLoanInfo}>
               <div>Loan: {selectedLoan?.loan_type.replace(/_/g, ' ').toUpperCase()}</div>
               <div>Current Balance: ${parseFloat(selectedLoan?.remaining_balance || 0).toLocaleString()}</div>
@@ -798,7 +801,7 @@ Generated: ${new Date().toLocaleString()}
         <div style={styles.modalOverlay} onClick={() => setShowEarlyPayoffModal(false)}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()} className="loan-modal-content">
             <h2 style={styles.modalTitle}>Early Loan Payoff</h2>
-            
+
             <div style={styles.modalLoanInfo}>
               <div>Remaining Balance: ${parseFloat(selectedLoan?.remaining_balance || 0).toLocaleString()}</div>
               <div>Early Payoff Amount: ${parseFloat(selectedLoan?.remaining_balance || 0).toLocaleString()}</div>
