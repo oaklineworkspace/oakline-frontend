@@ -360,47 +360,96 @@ function LoanApplicationContent() {
   if (success === 'success' && successData) {
     return (
       <div style={styles.successModalOverlay}>
-        <div style={styles.successModalContent}>
-          <div style={styles.successCheckmark}>
-            <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-              <circle cx="40" cy="40" r="38" stroke="#10b981" strokeWidth="4" fill="#f0fdf4"/>
-              <path d="M25 40L35 50L55 30" stroke="#10b981" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <h2 style={styles.successModalTitle}>Application Submitted!</h2>
-          <p style={styles.successModalMessage}>
-            Your loan application has been successfully submitted. Please complete the required deposit to proceed with your application.
-          </p>
-          <div style={styles.successModalDetails}>
-            <div style={styles.successDetailRow}>
-              <span style={styles.successDetailLabel}>Loan Type:</span>
-              <span style={styles.successDetailValue}>{loanTypes.find(lt => lt.value === successData.loanType)?.label || 'Loan'}</span>
+        <div style={styles.successModalContainer}>
+          <div style={styles.successModalContent}>
+            <div style={styles.successCheckmark}>
+              <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                <circle cx="40" cy="40" r="38" stroke="#10b981" strokeWidth="4" fill="#f0fdf4"/>
+                <path d="M25 40L35 50L55 30" stroke="#10b981" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </div>
-            <div style={styles.successDetailRow}>
-              <span style={styles.successDetailLabel}>Required Deposit:</span>
-              <span style={styles.successDetailValue}>${parseFloat(successData.amount).toLocaleString()}</span>
-            </div>
-            <div style={styles.successDetailRow}>
-              <span style={styles.successDetailLabel}>Application Status:</span>
-              <span style={styles.successDetailValue}>⏳ Awaiting Deposit</span>
-            </div>
-          </div>
-          <div style={styles.successModalInfo}>
-            <p style={styles.successInfoText}>
-              <strong>Next Steps:</strong>
+            
+            <h2 style={styles.successModalTitle}>Application Submitted Successfully!</h2>
+            
+            <p style={styles.successModalMessage}>
+              Dear valued customer, your loan application has been successfully received and is now being processed. 
+              To proceed with your application, please complete the required security deposit.
             </p>
-            <ul style={styles.successInfoList}>
-              <li>Complete your 10% deposit to activate your application</li>
-              <li>Choose your preferred deposit method (Balance or Crypto)</li>
-              <li>Our team will review your application within 24-48 hours</li>
-            </ul>
+
+            <div style={styles.successModalDetails}>
+              <h3 style={styles.detailsHeading}>Application Summary</h3>
+              <div style={styles.successDetailRow}>
+                <span style={styles.successDetailLabel}>Loan Type:</span>
+                <span style={styles.successDetailValue}>{loanTypes.find(lt => lt.value === successData.loanType)?.label || 'Loan'}</span>
+              </div>
+              <div style={styles.successDetailRow}>
+                <span style={styles.successDetailLabel}>Required Deposit (10%):</span>
+                <span style={{...styles.successDetailValue, color: '#10b981', fontSize: '1.25rem', fontWeight: '700'}}>
+                  ${parseFloat(successData.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+              <div style={styles.successDetailRow}>
+                <span style={styles.successDetailLabel}>Application ID:</span>
+                <span style={{...styles.successDetailValue, fontFamily: 'monospace'}}>
+                  {successData.loanId.substring(0, 8).toUpperCase()}
+                </span>
+              </div>
+              <div style={styles.successDetailRow}>
+                <span style={styles.successDetailLabel}>Status:</span>
+                <span style={styles.statusBadge}>⏳ Pending Deposit</span>
+              </div>
+            </div>
+
+            <div style={styles.successModalInfo}>
+              <h3 style={styles.infoHeading}>
+                <span style={styles.infoIcon}>📋</span>
+                Next Steps to Complete Your Application
+              </h3>
+              <ol style={styles.successInfoList}>
+                <li>Complete the required 10% security deposit to activate your application</li>
+                <li>Choose your preferred deposit method (Account Balance, Crypto, Wire Transfer, or Check)</li>
+                <li>Upload proof of payment for verification</li>
+                <li>Our loan specialists will review your application within 24-48 business hours</li>
+                <li>You'll receive email notification once your loan is approved</li>
+              </ol>
+            </div>
+
+            <div style={styles.importantNotice}>
+              <span style={styles.noticeIcon}>⚠️</span>
+              <div>
+                <strong style={styles.noticeTitle}>Important Notice:</strong>
+                <p style={styles.noticeText}>
+                  Your application will remain in pending status until the deposit is received and verified. 
+                  The deposit serves as a security measure and demonstrates your commitment to the loan agreement.
+                </p>
+              </div>
+            </div>
+
+            <div style={styles.successModalActions}>
+              <button
+                onClick={() => router.push(`/loan/deposit-confirmation?loan_id=${successData.loanId}&amount=${successData.amount}`)}
+                style={styles.successModalButton}
+              >
+                Proceed to Deposit Payment
+              </button>
+              <button
+                onClick={() => router.push('/loan/dashboard')}
+                style={styles.successModalSecondaryButton}
+              >
+                View Loan Dashboard
+              </button>
+            </div>
+
+            <div style={styles.supportSection}>
+              <p style={styles.supportText}>
+                Need assistance? Our customer support team is available 24/7
+              </p>
+              <p style={styles.supportContact}>
+                📧 {bankDetails?.contact_email || 'loans@theoaklinebank.com'} | 
+                📞 {bankDetails?.phone || '(636) 635-6122'}
+              </p>
+            </div>
           </div>
-          <button
-            onClick={() => router.push(`/loan/deposit-confirmation?loan_id=${successData.loanId}&amount=${successData.amount}`)}
-            style={styles.successModalButton}
-          >
-            Proceed to Deposit
-          </button>
         </div>
       </div>
     );
@@ -815,21 +864,29 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 9999,
-    padding: '20px'
+    padding: '20px',
+    overflow: 'auto'
+  },
+  successModalContainer: {
+    maxWidth: '700px',
+    width: '100%',
+    maxHeight: '90vh',
+    overflow: 'auto',
+    margin: 'auto'
   },
   successModalContent: {
     backgroundColor: '#fff',
-    borderRadius: '20px',
-    padding: '48px',
-    maxWidth: '600px',
+    borderRadius: '16px',
+    padding: 'clamp(24px, 5vw, 48px)',
     width: '100%',
     textAlign: 'center',
-    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    position: 'relative'
   },
   successCheckmark: {
     marginBottom: '24px',
@@ -837,28 +894,41 @@ const styles = {
     justifyContent: 'center'
   },
   successModalTitle: {
-    fontSize: '32px',
+    fontSize: 'clamp(24px, 4vw, 32px)',
     fontWeight: '700',
     color: '#1e293b',
-    marginBottom: '16px'
+    marginBottom: '16px',
+    lineHeight: '1.2'
   },
   successModalMessage: {
-    fontSize: '18px',
-    color: '#64748b',
+    fontSize: 'clamp(14px, 2.5vw, 16px)',
+    color: '#4b5563',
     marginBottom: '32px',
-    lineHeight: '1.6'
+    lineHeight: '1.7',
+    textAlign: 'left'
+  },
+  detailsHeading: {
+    fontSize: '18px',
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: '16px',
+    textAlign: 'left',
+    borderBottom: '2px solid #e5e7eb',
+    paddingBottom: '8px'
   },
   successModalDetails: {
     backgroundColor: '#f8fafc',
     borderRadius: '12px',
     padding: '24px',
-    marginBottom: '32px',
-    textAlign: 'left'
+    marginBottom: '24px',
+    textAlign: 'left',
+    border: '1px solid #e5e7eb'
   },
   successDetailRow: {
     display: 'flex',
     justifyContent: 'space-between',
-    padding: '12px 0',
+    alignItems: 'center',
+    padding: '14px 0',
     borderBottom: '1px solid #e2e8f0'
   },
   successDetailLabel: {
@@ -867,33 +937,86 @@ const styles = {
     fontWeight: '500'
   },
   successDetailValue: {
-    fontSize: '14px',
+    fontSize: '15px',
     color: '#1e293b',
-    fontWeight: '600'
+    fontWeight: '600',
+    textAlign: 'right'
+  },
+  statusBadge: {
+    fontSize: '13px',
+    color: '#f59e0b',
+    fontWeight: '700',
+    backgroundColor: '#fffbeb',
+    padding: '6px 12px',
+    borderRadius: '20px',
+    border: '1px solid #fde68a'
   },
   successModalInfo: {
-    backgroundColor: '#f0fdf4',
-    border: '1px solid #bbf7d0',
+    backgroundColor: '#eff6ff',
+    border: '1px solid #bfdbfe',
     borderRadius: '12px',
-    padding: '20px',
-    marginBottom: '32px',
+    padding: '24px',
+    marginBottom: '24px',
     textAlign: 'left'
   },
-  successInfoText: {
-    fontSize: '14px',
-    color: '#1e293b',
-    marginBottom: '12px'
+  infoHeading: {
+    fontSize: '16px',
+    fontWeight: '700',
+    color: '#1e40af',
+    marginBottom: '16px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+  },
+  infoIcon: {
+    fontSize: '20px'
   },
   successInfoList: {
     margin: '0',
-    paddingLeft: '24px',
-    color: '#64748b',
+    paddingLeft: '20px',
+    color: '#1e40af',
     fontSize: '14px',
-    lineHeight: '2'
+    lineHeight: '2',
+    textAlign: 'left'
+  },
+  importantNotice: {
+    backgroundColor: '#fef2f2',
+    border: '1px solid #fecaca',
+    borderLeft: '4px solid #dc2626',
+    borderRadius: '8px',
+    padding: '16px',
+    marginBottom: '24px',
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'flex-start',
+    textAlign: 'left'
+  },
+  noticeIcon: {
+    fontSize: '20px',
+    flexShrink: 0,
+    marginTop: '2px'
+  },
+  noticeTitle: {
+    fontSize: '14px',
+    color: '#991b1b',
+    display: 'block',
+    marginBottom: '4px'
+  },
+  noticeText: {
+    fontSize: '13px',
+    color: '#991b1b',
+    margin: 0,
+    lineHeight: '1.6'
+  },
+  successModalActions: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    marginBottom: '24px'
   },
   successModalButton: {
     width: '100%',
-    padding: '16px',
+    padding: '16px 24px',
     fontSize: '16px',
     fontWeight: '600',
     color: '#fff',
@@ -902,7 +1025,37 @@ const styles = {
     borderRadius: '12px',
     cursor: 'pointer',
     boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
-    transition: 'all 0.3s'
+    transition: 'all 0.3s',
+    fontFamily: 'inherit'
+  },
+  successModalSecondaryButton: {
+    width: '100%',
+    padding: '16px 24px',
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#1e293b',
+    backgroundColor: 'transparent',
+    border: '2px solid #e5e7eb',
+    borderRadius: '12px',
+    cursor: 'pointer',
+    transition: 'all 0.3s',
+    fontFamily: 'inherit'
+  },
+  supportSection: {
+    borderTop: '1px solid #e5e7eb',
+    paddingTop: '20px',
+    marginTop: '8px'
+  },
+  supportText: {
+    fontSize: '13px',
+    color: '#64748b',
+    margin: '0 0 8px 0'
+  },
+  supportContact: {
+    fontSize: '14px',
+    color: '#1e293b',
+    fontWeight: '600',
+    margin: 0
   },
   container: {
     minHeight: '100vh',

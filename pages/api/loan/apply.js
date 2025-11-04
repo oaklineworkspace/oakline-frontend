@@ -121,67 +121,163 @@ export default async function handler(req, res) {
     const userName = profile ? `${profile.first_name} ${profile.last_name}` : 'Valued Customer';
     const userEmail = profile?.email || user.email;
 
+    // Fetch bank details for loan email
+    const { data: bankDetails } = await supabaseAdmin
+      .from('bank_details')
+      .select('loan_email, contact_email')
+      .limit(1)
+      .single();
+
+    const loanEmail = bankDetails?.loan_email || bankDetails?.contact_email || process.env.SMTP_FROM;
+
+    // Send confirmation email to user
     try {
       await sendEmail({
         to: userEmail,
-        subject: 'Loan Application Received - Oakline Bank',
+        subject: '✅ Loan Application Received - Oakline Bank',
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #10b981;">Loan Application Received - Deposit Required</h2>
-            <p>Dear ${userName},</p>
-            <p>Thank you for applying for a loan with Oakline Bank. We have received your application.</p>
-            
-            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #1f2937;">Application Details:</h3>
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="padding: 8px 0; color: #6b7280;">Loan Type:</td>
-                  <td style="padding: 8px 0; font-weight: bold;">${loan_type.replace('_', ' ').toUpperCase()}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #6b7280;">Loan Amount:</td>
-                  <td style="padding: 8px 0; font-weight: bold;">$${principal.toLocaleString()}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #6b7280;">Term:</td>
-                  <td style="padding: 8px 0; font-weight: bold;">${term_months} months</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #6b7280;">Interest Rate:</td>
-                  <td style="padding: 8px 0; font-weight: bold;">${interest_rate}% APR</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #6b7280;">Required Deposit:</td>
-                  <td style="padding: 8px 0; font-weight: bold; color: #10b981;">$${deposit_required.toLocaleString()} (10%)</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #6b7280;">Status:</td>
-                  <td style="padding: 8px 0; font-weight: bold; color: #f59e0b;">Awaiting Deposit</td>
-                </tr>
-              </table>
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Loan Application Received</title>
+            <style>
+              body { font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 680px; margin: 0 auto; background-color: #ffffff; padding: 32px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+              .header { text-align: center; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid #e2e8f0; }
+              .header h1 { color: #10b981; font-size: 28px; font-weight: 700; margin: 0; }
+              .content { margin-bottom: 32px; }
+              .details-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              .details-table td { padding: 12px 0; font-size: 14px; }
+              .details-table td:first-child { color: #64748b; font-weight: 500; width: 50%; }
+              .details-table td:last-child { font-weight: 700; font-size: 15px; color: #1e293b; text-align: right; }
+              .deposit-notice { background-color: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #f59e0b; border-radius: 12px; padding: 20px; margin: 24px 0; }
+              .deposit-notice h3 { color: #92400e; font-size: 16px; font-weight: 700; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px; }
+              .deposit-notice p { color: #92400e; font-size: 14px; margin: 0 0 12px 0; line-height: 1.6; }
+              .deposit-amount { background-color: #fff; padding: 16px; border-radius: 8px; margin-top: 12px; }
+              .deposit-amount span:first-child { color: #64748b; font-size: 14px; font-weight: 500; }
+              .deposit-amount span:last-child { color: #059669; font-size: 20px; font-weight: 700; }
+              .next-steps { background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 24px; margin: 24px 0; }
+              .next-steps h3 { color: #1e40af; font-size: 16px; font-weight: 700; margin: 0 0 16px 0; }
+              .next-steps ol { color: #1e40af; font-size: 14px; line-height: 2; margin: 0; padding-left: 20px; }
+              .cta-button { text-align: center; margin: 32px 0; }
+              .cta-button a { display: inline-block; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #ffffff; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); }
+              .footer { background-color: #f7fafc; padding: 32px 24px; text-align: center; border-top: 1px solid #e2e8f0; }
+              .footer p { color: #718096; font-size: 14px; margin: 0 0 16px 0; }
+              .footer p:last-child { font-weight: 600; margin-bottom: 8px; }
+              .footer-bottom p { color: #718096; font-size: 12px; margin: 0; }
+              strong { color: #1e293b; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>Oakline Bank</h1>
+                <p style="color: #64748b; font-size: 16px; margin-top: 8px;">Loan Application Confirmation</p>
+              </div>
+
+              <div class="content">
+                <p style="color: #4a5568; font-size: 15px; line-height: 1.7;">Dear ${userName},</p>
+                <p style="color: #4a5568; font-size: 15px; line-height: 1.7;">
+                  Thank you for choosing Oakline Bank for your financial needs. We're pleased to confirm that your loan application has been successfully received and is now under initial review.
+                </p>
+
+                <!-- Application Details -->
+                <div style="background-color: #f9fafb; border: 1px solid #f3f4f6; border-radius: 12px; padding: 24px; margin-top: 24px;">
+                  <h3 style="color: #1e293b; font-size: 17px; font-weight: 700; margin: 0 0 16px 0;">Your Application Details</h3>
+                  <table class="details-table">
+                    <tr>
+                      <td style="padding: 12px 0; color: #64748b; font-size: 14px; font-weight: 500;">Loan Type:</td>
+                      <td style="padding: 12px 0; font-weight: 700; font-size: 15px; color: #10b981; text-align: right;">${loan_type.replace('_', ' ').toUpperCase()}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 12px 0; color: #64748b; font-size: 14px; font-weight: 500;">Requested Loan Amount:</td>
+                      <td style="padding: 12px 0; font-weight: 700; font-size: 15px; color: #1e293b; text-align: right;">$${principal.toLocaleString()}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 12px 0; color: #64748b; font-size: 14px; font-weight: 500;">Loan Term:</td>
+                      <td style="padding: 12px 0; font-weight: 700; font-size: 15px; color: #1e293b; text-align: right;">${term_months} months</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 12px 0; color: #64748b; font-size: 14px; font-weight: 500;">Interest Rate (APR):</td>
+                      <td style="padding: 12px 0; font-weight: 700; font-size: 15px; color: #10b981; text-align: right;">${interest_rate}%</td>
+                    </tr>
+                    <tr style="border-top: 1px solid #e5e7eb;">
+                      <td style="padding: 12px 0; color: #64748b; font-size: 14px; font-weight: 500;">Estimated Monthly Payment:</td>
+                      <td style="padding: 12px 0; font-weight: 700; font-size: 15px; color: #1e293b; text-align: right;">$${monthlyPayment.toFixed(2)}</td>
+                    </tr>
+                  </table>
+                </div>
+
+                <!-- Required Deposit Notice -->
+                <div style="background-color: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #f59e0b; border-radius: 12px; padding: 20px; margin: 24px 0;">
+                  <h3 style="color: #92400e; font-size: 16px; font-weight: 700; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 20px;">💰</span>
+                    Required Security Deposit
+                  </h3>
+                  <p style="color: #92400e; font-size: 14px; margin: 0 0 12px 0; line-height: 1.6;">
+                    To proceed with your loan application, a security deposit of <strong>10%</strong> of the requested loan amount is required. This deposit demonstrates your commitment and helps us process your application efficiently.
+                  </p>
+                  <div style="background-color: #fff; padding: 16px; border-radius: 8px; margin-top: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <span style="color: #64748b; font-size: 14px; font-weight: 500;">Required Deposit Amount:</span>
+                      <span style="color: #059669; font-size: 20px; font-weight: 700;">$${deposit_required.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Next Steps -->
+                <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 24px; margin: 24px 0;">
+                  <h3 style="color: #1e40af; font-size: 16px; font-weight: 700; margin: 0 0 16px 0;">
+                    📋 Next Steps to Complete Your Application
+                  </h3>
+                  <ol style="color: #1e40af; font-size: 14px; line-height: 2; margin: 0; padding-left: 20px;">
+                    <li>Log in to your Oakline Bank account</li>
+                    <li>Navigate to the Loan Dashboard</li>
+                    <li>Complete the required 10% security deposit</li>
+                    <li>Upload proof of payment for verification</li>
+                    <li>Await review and approval from our loan specialists (24-48 hours)</li>
+                  </ol>
+                </div>
+
+                <!-- CTA Button -->
+                <div style="text-align: center; margin: 32px 0;">
+                  <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://theoaklinebank.com'}/loan/dashboard" 
+                     style="display: inline-block; background: linear-gradient(135deg, #059669 0%, #10b981 100%); 
+                            color: #ffffff; padding: 16px 32px; border-radius: 12px; text-decoration: none; 
+                            font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);">
+                    Complete Your Deposit
+                  </a>
+                </div>
+
+                <p style="color: #4a5568; font-size: 14px; line-height: 1.6; margin: 24px 0 0 0;">
+                  If you have any questions or need assistance, our dedicated loan specialists are here to help you every step of the way.
+                </p>
+              </div>
+
+              <!-- Footer -->
+              <div style="background-color: #f7fafc; padding: 32px 24px; text-align: center; border-top: 1px solid #e2e8f0;">
+                <p style="color: #718096; font-size: 14px; margin: 0 0 16px 0;">
+                  Need assistance? Contact our loan specialists 24/7:
+                </p>
+                <p style="color: #4a5568; font-size: 14px; font-weight: 600; margin: 0 0 8px 0;">
+                  📧 ${loanEmail} | 📞 (636) 635-6122
+                </p>
+
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 20px;">
+                  <p style="color: #718096; font-size: 12px; margin: 0;">
+                    © ${new Date().getFullYear()} Oakline Bank. All rights reserved.<br>
+                    Member FDIC | Equal Housing Lender | Routing: 075915826<br>
+                    12201 N May Avenue, Oklahoma City, OK 73120
+                  </p>
+                </div>
+              </div>
             </div>
-
-            <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 20px 0;">
-              <p style="color: #1e40af; font-weight: 600; margin: 0 0 8px 0;">📌 Next Steps:</p>
-              <ol style="color: #1e40af; margin: 0; padding-left: 20px;">
-                <li>Complete your 10% deposit ($${deposit_required.toLocaleString()})</li>
-                <li>Our team will verify your deposit on the blockchain (1-3 business days)</li>
-                <li>Once verified, your loan application will be reviewed</li>
-                <li>Upon approval, funds will be disbursed to your account</li>
-              </ol>
-            </div>
-
-            <p><strong>Important:</strong> Your deposit is held securely in our treasury and will be applied to your loan balance upon approval. If your loan is not approved, your deposit will be refunded to your account.</p>
-
-            <p>You can track your deposit verification and application status in your Loan Dashboard.</p>
-
-            <p>If you have any questions, please contact our customer support team.</p>
-            
-            <p style="margin-top: 30px;">Best regards,<br>
-            <strong>Oakline Bank Loan Department</strong></p>
-          </div>
+          </body>
+          </html>
         `,
-        from: process.env.SMTP_FROM_NOTIFY
+        from: loanEmail
       });
     } catch (emailError) {
       console.error('Error sending email:', emailError);
