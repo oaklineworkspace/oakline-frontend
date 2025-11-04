@@ -129,7 +129,7 @@ export default async function handler(req, res) {
       .limit(1)
       .single();
 
-    const loanEmail = bankDetails?.loan_email || bankDetails?.contact_email || process.env.SMTP_FROM;
+    const loanEmail = bankDetails?.loan_email || bankDetails?.contact_email || 'loans@theoaklinebank.com';
 
     // Send confirmation email to user
     try {
