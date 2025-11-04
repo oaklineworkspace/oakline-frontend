@@ -64,7 +64,7 @@ export default async function handler(req, res) {
       totalDue = principal;
       monthlyPayment = principal / numPayments;
     } else {
-      monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
+      monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) /
                             (Math.pow(1 + monthlyRate, numPayments) - 1);
       totalDue = monthlyPayment * numPayments;
     }
@@ -133,10 +133,7 @@ export default async function handler(req, res) {
 
     // Send confirmation email to user
     try {
-      await sendEmail({
-        to: userEmail,
-        subject: '✅ Loan Application Received - Oakline Bank',
-        html: `
+      const emailHtml = `
           <!DOCTYPE html>
           <html lang="en">
           <head>
@@ -277,7 +274,12 @@ export default async function handler(req, res) {
             </div>
           </body>
           </html>
-        `,
+        `;
+
+      await sendEmail({
+        to: userEmail,
+        subject: '✅ Loan Application Received - Oakline Bank',
+        html: emailHtml,
         from: loanEmail
       });
     } catch (emailError) {
