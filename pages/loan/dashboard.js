@@ -159,9 +159,11 @@ function LoanDashboardContent() {
           loan.status === 'active' || loan.status === 'approved'
         ).length;
 
-        // Find next payment due
+        // Find next payment due - only for loans that still have payments remaining
         const activeLoansWithPayments = data.loans.filter(loan => 
-          (loan.status === 'active' || loan.status === 'approved') && loan.next_payment_date
+          (loan.status === 'active' || loan.status === 'approved') && 
+          loan.next_payment_date && 
+          (loan.payments_made || 0) < (loan.term_months || 0)
         );
         const nextPayment = activeLoansWithPayments.length > 0
           ? activeLoansWithPayments.reduce((earliest, loan) => 

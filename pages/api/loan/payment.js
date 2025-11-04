@@ -105,13 +105,29 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to record payment' });
     }
 
+    // Calculate how many payments were made with this payment
+    const monthlyPayment = parseFloat(loan.monthly_payment_amount);
+    const paymentsMadeCount = monthlyPayment > 0 ? Math.floor(amount / monthlyPayment) : 1;
+    const totalPaymentsMade = (loan.payments_made || 0) + paymentsMadeCount;
+
+    // Calculate next payment date based on payments made
+    let nextPaymentDate = null;
+    if (loanStatus === 'active' && totalPaymentsMade < loan.term_months) {
+      const startDate = new Date(loan.start_date || loan.created_at);
+      const monthsToAdd = totalPaymentsMade;
+      nextPaymentDate = new Date(startDate);
+      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + monthsToAdd + 1);
+      nextPaymentDate = nextPaymentDate.toISOString().split('T')[0];
+    }
+
     const { error: updateLoanError } = await supabaseAdmin
       .from('loans')
       .update({ 
         remaining_balance: newRemainingBalance,
         status: loanStatus,
-        payments_made: (loan.payments_made || 0) + 1,
+        payments_made: totalPaymentsMade,
         last_payment_date: new Date().toISOString(),
+        next_payment_date: nextPaymentDate,
         updated_at: new Date().toISOString()
       })
       .eq('id', loan.id);
