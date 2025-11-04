@@ -41,6 +41,68 @@ function LoanDashboardContent() {
     }
   }, [user]);
 
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @media (max-width: 768px) {
+        .loan-stats-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .loan-overview-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .loan-info-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .loan-selector {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+        }
+        .loan-selector-select {
+          min-width: 100% !important;
+        }
+        .loan-actions {
+          flex-direction: column !important;
+        }
+        .loan-quick-actions {
+          flex-direction: column !important;
+        }
+        .loan-action-button,
+        .loan-primary-action-button,
+        .loan-secondary-action-button {
+          min-width: 100% !important;
+          width: 100% !important;
+        }
+        .loan-overview-header {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+        }
+        .loan-overview-title {
+          font-size: 1.5rem !important;
+        }
+        .loan-hero-title {
+          font-size: 1.75rem !important;
+        }
+        .loan-stat-card {
+          padding: 1.25rem !important;
+        }
+        .loan-stat-value {
+          font-size: 1.5rem !important;
+        }
+        .loan-overview-card,
+        .loan-tab-content {
+          padding: 1.25rem !important;
+        }
+        .loan-modal-content {
+          padding: 1.25rem !important;
+          margin: 1rem !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
+
   const fetchUserLoans = async () => {
     setLoading(true);
     try {
@@ -319,49 +381,49 @@ Generated: ${new Date().toLocaleString()}
         )}
 
         {/* Stats Dashboard */}
-        <div style={styles.statsGrid}>
-          <div style={styles.statCard}>
+        <div style={styles.statsGrid} className="loan-stats-grid">
+          <div style={styles.statCard} className="loan-stat-card">
             <div style={styles.statIcon}>📊</div>
             <div style={styles.statContent}>
               <div style={styles.statLabel}>Total Loans</div>
-              <div style={styles.statValue}>{stats.totalLoans}</div>
+              <div style={styles.statValue} className="loan-stat-value">{stats.totalLoans}</div>
               <div style={styles.statSubtext}>{stats.activeLoans} active</div>
             </div>
           </div>
 
-          <div style={styles.statCard}>
+          <div style={styles.statCard} className="loan-stat-card">
             <div style={styles.statIcon}>💰</div>
             <div style={styles.statContent}>
               <div style={styles.statLabel}>Total Borrowed</div>
-              <div style={styles.statValue}>${stats.totalBorrowed.toLocaleString()}</div>
+              <div style={styles.statValue} className="loan-stat-value">${stats.totalBorrowed.toLocaleString()}</div>
               <div style={styles.statSubtext}>All time</div>
             </div>
           </div>
 
-          <div style={styles.statCard}>
+          <div style={styles.statCard} className="loan-stat-card">
             <div style={styles.statIcon}>📈</div>
             <div style={styles.statContent}>
               <div style={styles.statLabel}>Total Paid</div>
-              <div style={styles.statValue}>${stats.totalPaid.toLocaleString()}</div>
+              <div style={styles.statValue} className="loan-stat-value">${stats.totalPaid.toLocaleString()}</div>
               <div style={styles.statSubtext}>Principal reduction</div>
             </div>
           </div>
 
-          <div style={styles.statCard}>
+          <div style={styles.statCard} className="loan-stat-card">
             <div style={styles.statIcon}>💳</div>
             <div style={styles.statContent}>
               <div style={styles.statLabel}>Remaining Balance</div>
-              <div style={styles.statValue}>${stats.remainingBalance.toLocaleString()}</div>
+              <div style={styles.statValue} className="loan-stat-value">${stats.remainingBalance.toLocaleString()}</div>
               <div style={styles.statSubtext}>Across all loans</div>
             </div>
           </div>
 
           {stats.nextPaymentDue && (
-            <div style={{...styles.statCard, gridColumn: 'span 2'}}>
+            <div style={{...styles.statCard, gridColumn: 'span 2'}} className="loan-stat-card">
               <div style={styles.statIcon}>📅</div>
               <div style={styles.statContent}>
                 <div style={styles.statLabel}>Next Payment Due</div>
-                <div style={styles.statValue}>
+                <div style={styles.statValue} className="loan-stat-value">
                   {new Date(stats.nextPaymentDue).toLocaleDateString()}
                 </div>
                 <div style={styles.statSubtext}>
@@ -373,14 +435,14 @@ Generated: ${new Date().toLocaleString()}
         </div>
 
         {/* Quick Actions */}
-        <div style={styles.quickActions}>
-          <Link href="/loan/apply" style={styles.actionButton}>
+        <div style={styles.quickActions} className="loan-quick-actions">
+          <Link href="/loan/apply" style={styles.actionButton} className="loan-action-button">
             ➕ Apply for New Loan
           </Link>
-          <button onClick={() => selectedLoan && setShowPaymentModal(true)} style={styles.actionButtonSecondary}>
+          <button onClick={() => selectedLoan && setShowPaymentModal(true)} style={styles.actionButtonSecondary} className="loan-action-button">
             💳 Make Payment
           </button>
-          <button onClick={() => selectedLoan && downloadLoanStatement(selectedLoan)} style={styles.actionButtonSecondary}>
+          <button onClick={() => selectedLoan && downloadLoanStatement(selectedLoan)} style={styles.actionButtonSecondary} className="loan-action-button">
             📥 Download Statement
           </button>
         </div>
@@ -399,12 +461,13 @@ Generated: ${new Date().toLocaleString()}
         ) : (
           <>
             {/* Loan Selector */}
-            <div style={styles.loanSelector}>
+            <div style={styles.loanSelector} className="loan-selector">
               <label style={styles.loanSelectorLabel}>Select Loan:</label>
               <select
                 value={selectedLoan?.id || ''}
                 onChange={(e) => setSelectedLoan(loans.find(l => l.id === e.target.value))}
                 style={styles.loanSelectorSelect}
+                className="loan-selector-select"
               >
                 {loans.map((loan) => (
                   <option key={loan.id} value={loan.id}>
@@ -417,10 +480,10 @@ Generated: ${new Date().toLocaleString()}
             {selectedLoan && (
               <>
                 {/* Loan Overview Card */}
-                <div style={styles.overviewCard}>
-                  <div style={styles.overviewHeader}>
+                <div style={styles.overviewCard} className="loan-overview-card">
+                  <div style={styles.overviewHeader} className="loan-overview-header">
                     <div style={styles.overviewHeaderLeft}>
-                      <h2 style={styles.overviewTitle}>
+                      <h2 style={styles.overviewTitle} className="loan-overview-title">
                         {selectedLoan.loan_type.replace(/_/g, ' ').toUpperCase()}
                       </h2>
                       <div style={styles.loanId}>ID: {selectedLoan.id.substring(0, 8)}</div>
@@ -435,7 +498,7 @@ Generated: ${new Date().toLocaleString()}
                     </div>
                   </div>
 
-                  <div style={styles.overviewGrid}>
+                  <div style={styles.overviewGrid} className="loan-overview-grid">
                     <div style={styles.overviewItem}>
                       <div style={styles.overviewLabel}>Original Amount</div>
                       <div style={styles.overviewValue}>
@@ -496,18 +559,20 @@ Generated: ${new Date().toLocaleString()}
                   )}
 
                   {/* Loan Actions */}
-                  <div style={styles.loanActions}>
+                  <div style={styles.loanActions} className="loan-actions">
                     {(selectedLoan.status === 'active' || selectedLoan.status === 'approved') && (
                       <>
                         <button
                           onClick={() => setShowPaymentModal(true)}
                           style={styles.primaryActionButton}
+                          className="loan-primary-action-button"
                         >
                           💳 Make Payment
                         </button>
                         <button
                           onClick={() => setShowEarlyPayoffModal(true)}
                           style={styles.secondaryActionButton}
+                          className="loan-secondary-action-button"
                         >
                           ⚡ Pay Off Early
                         </button>
@@ -516,6 +581,7 @@ Generated: ${new Date().toLocaleString()}
                     <button
                       onClick={() => downloadLoanStatement(selectedLoan)}
                       style={styles.secondaryActionButton}
+                      className="loan-secondary-action-button"
                     >
                       📥 Download Statement
                     </button>
@@ -563,12 +629,12 @@ Generated: ${new Date().toLocaleString()}
                 </div>
 
                 {/* Tab Content */}
-                <div style={styles.tabContent}>
+                <div style={styles.tabContent} className="loan-tab-content">
                   {activeTab === 'overview' && (
                     <div style={styles.overviewTab}>
                       <div style={styles.infoSection}>
                         <h3 style={styles.infoSectionTitle}>Loan Details</h3>
-                        <div style={styles.infoGrid}>
+                        <div style={styles.infoGrid} className="loan-info-grid">
                           <div style={styles.infoItem}>
                             <span style={styles.infoLabel}>Application Date:</span>
                             <span style={styles.infoValue}>
@@ -627,7 +693,7 @@ Generated: ${new Date().toLocaleString()}
       {/* Payment Modal */}
       {showPaymentModal && (
         <div style={styles.modalOverlay} onClick={() => setShowPaymentModal(false)}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()} className="loan-modal-content">
             <h2 style={styles.modalTitle}>Make a Payment</h2>
             
             <div style={styles.modalLoanInfo}>
@@ -707,7 +773,7 @@ Generated: ${new Date().toLocaleString()}
       {/* Early Payoff Modal */}
       {showEarlyPayoffModal && (
         <div style={styles.modalOverlay} onClick={() => setShowEarlyPayoffModal(false)}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()} className="loan-modal-content">
             <h2 style={styles.modalTitle}>Early Loan Payoff</h2>
             
             <div style={styles.modalLoanInfo}>
@@ -793,7 +859,8 @@ const styles = {
     fontSize: 'clamp(2rem, 5vw, 3rem)',
     fontWeight: '800',
     marginBottom: '1rem',
-    letterSpacing: '-0.02em'
+    letterSpacing: '-0.02em',
+    lineHeight: '1.2'
   },
   heroSubtitle: {
     fontSize: 'clamp(1rem, 2.5vw, 1.25rem)',

@@ -77,8 +77,11 @@ export default async function handler(req, res) {
       schedule.push({
         payment_number: month,
         payment_date: paymentDate.toISOString().split('T')[0],
+        payment_amount: parseFloat(monthlyPayment.toFixed(2)),
         scheduled_payment: parseFloat(monthlyPayment.toFixed(2)),
+        principal_amount: parseFloat(principalPayment.toFixed(2)),
         principal: parseFloat(principalPayment.toFixed(2)),
+        interest_amount: parseFloat(interestPayment.toFixed(2)),
         interest: parseFloat(interestPayment.toFixed(2)),
         remaining_balance: parseFloat(balance.toFixed(2)),
         is_paid: isPaid,
@@ -105,6 +108,12 @@ export default async function handler(req, res) {
         total_paid: parseFloat(totalPaid.toFixed(2)),
         remaining_balance: parseFloat(loan.remaining_balance || balance),
         status: loan.status
+      },
+      schedule: schedule,
+      summary: {
+        total_interest: parseFloat(totalInterest.toFixed(2)),
+        total_payments: parseFloat(totalAmount.toFixed(2)),
+        payments_remaining: termMonths - paymentsMade
       },
       amortization_schedule: schedule
     });

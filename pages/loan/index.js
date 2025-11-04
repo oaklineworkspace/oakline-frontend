@@ -30,6 +30,30 @@ function LoanDashboardContent() {
   }, [user]);
 
   useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @media (max-width: 768px) {
+        .loan-index-filters {
+          grid-template-columns: 1fr !important;
+        }
+        .loan-index-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .loan-index-header {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          gap: 1rem !important;
+        }
+        .loan-index-apply-button {
+          width: 100% !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
+
+  useEffect(() => {
     applyFilters();
   }, [loans, filters]);
 
@@ -241,12 +265,12 @@ function LoanDashboardContent() {
 
   return (
     <div style={styles.container}>
-      <div style={styles.header}>
+      <div style={styles.header} className="loan-index-header">
         <div>
           <h1 style={styles.title}>My Loans</h1>
           <p style={styles.subtitle}>Manage your loan applications and active loans</p>
         </div>
-        <Link href="/loan/apply" style={styles.applyButton}>
+        <Link href="/loan/apply" style={styles.applyButton} className="loan-index-apply-button">
           + Apply for New Loan
         </Link>
       </div>
@@ -260,7 +284,7 @@ function LoanDashboardContent() {
         </div>
       )}
 
-      <div style={styles.filtersContainer}>
+      <div style={styles.filtersContainer} className="loan-index-filters">
         <div style={styles.filterGroup}>
           <label style={styles.filterLabel}>Status</label>
           <select
@@ -326,7 +350,7 @@ function LoanDashboardContent() {
           )}
         </div>
       ) : (
-        <div style={styles.loansGrid}>
+        <div style={styles.loansGrid} className="loan-index-grid">
           {filteredLoans.map(loan => {
             const monthlyPayment = calculateMonthlyPayment(loan);
             const nextPaymentDate = calculateNextPaymentDate(loan);

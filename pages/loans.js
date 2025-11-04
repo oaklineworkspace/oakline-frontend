@@ -23,6 +23,28 @@ function LoansOverviewContent() {
     }
   }, [user]);
 
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @media (max-width: 768px) {
+        .loans-stats-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .loans-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .loans-action-section {
+          flex-direction: column !important;
+        }
+        .loans-action-button {
+          width: 100% !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
+
   const fetchUserLoans = async () => {
     setLoading(true);
     try {
@@ -122,7 +144,7 @@ function LoansOverviewContent() {
 
       <div style={styles.mainContent}>
         {/* Stats Cards */}
-        <div style={styles.statsGrid}>
+        <div style={styles.statsGrid} className="loans-stats-grid">
           <div style={styles.statCard}>
             <div style={styles.statIcon}>📊</div>
             <div style={styles.statValue}>{stats.totalLoans}</div>
@@ -146,11 +168,11 @@ function LoansOverviewContent() {
         </div>
 
         {/* Action Buttons */}
-        <div style={styles.actionSection}>
-          <Link href="/loan/apply" style={styles.primaryButton}>
+        <div style={styles.actionSection} className="loans-action-section">
+          <Link href="/loan/apply" style={styles.primaryButton} className="loans-action-button">
             ➕ Apply for New Loan
           </Link>
-          <Link href="/loan/dashboard" style={styles.secondaryButton}>
+          <Link href="/loan/dashboard" style={styles.secondaryButton} className="loans-action-button">
             📊 View Dashboard
           </Link>
         </div>
@@ -170,7 +192,7 @@ function LoansOverviewContent() {
         ) : (
           <div style={styles.loansSection}>
             <h2 style={styles.sectionTitle}>Your Loans</h2>
-            <div style={styles.loansGrid}>
+            <div style={styles.loansGrid} className="loans-grid">
               {loans.map((loan) => (
                 <div key={loan.id} style={styles.loanCard}>
                   <div style={styles.loanHeader}>
