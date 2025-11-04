@@ -21,7 +21,14 @@ export default async function handler(req, res) {
 
     const { data: loans, error: loansError } = await supabaseAdmin
       .from('loans')
-      .select('*')
+      .select(`
+        *,
+        deposit_paid,
+        deposit_status,
+        deposit_amount,
+        deposit_date,
+        deposit_method
+      `)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 

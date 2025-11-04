@@ -237,13 +237,13 @@ function LoansOverviewContent() {
                     {loan.deposit_required && (
                       <div style={styles.detailRow}>
                         <span style={styles.detailLabel}>Deposit Status:</span>
-                        <span style={{...styles.detailValue, color: (loan.deposit_status === 'completed' || loan.deposit_paid === true) ? '#10b981' : (loan.deposit_status === 'pending' ? '#f59e0b' : '#ef4444')}}>
-                          {(loan.deposit_status === 'completed' || loan.deposit_paid === true) ? (
-                            `$${parseFloat(loan.deposit_required).toLocaleString()} ✓ Paid`
+                        <span style={{...styles.detailValue, color: (loan.deposit_paid === true || loan.deposit_status === 'completed') ? '#10b981' : (loan.deposit_status === 'pending' ? '#f59e0b' : '#ef4444')}}>
+                          {(loan.deposit_paid === true || loan.deposit_status === 'completed') ? (
+                            `$${parseFloat(loan.deposit_required).toLocaleString()} ✓ Confirmed`
                           ) : loan.deposit_status === 'pending' ? (
                             `$${parseFloat(loan.deposit_required).toLocaleString()} ⏳ Pending Confirmation`
                           ) : (
-                            `$${parseFloat(loan.deposit_required).toLocaleString()} Pending`
+                            `$${parseFloat(loan.deposit_required).toLocaleString()} ⚠️ Required`
                           )}
                         </span>
                       </div>
@@ -251,7 +251,7 @@ function LoansOverviewContent() {
                   </div>
 
                   <div style={styles.loanActions}>
-                    {loan.status === 'pending' && loan.deposit_required > 0 && loan.deposit_status !== 'completed' && loan.deposit_paid !== true && loan.deposit_status !== 'pending' && (
+                    {loan.status === 'pending' && loan.deposit_required > 0 && loan.deposit_paid !== true && loan.deposit_status !== 'completed' && loan.deposit_status !== 'pending' && (
                       <Link 
                         href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${loan.deposit_required}`}
                         style={styles.actionButton}
@@ -259,7 +259,7 @@ function LoansOverviewContent() {
                         💰 Pay 10% Deposit
                       </Link>
                     )}
-                    {loan.status === 'pending' && loan.deposit_status === 'pending' && loan.deposit_status !== 'completed' && loan.deposit_paid !== true && (
+                    {loan.status === 'pending' && loan.deposit_status === 'pending' && loan.deposit_paid !== true && loan.deposit_status !== 'completed' && (
                       <div style={{
                         backgroundColor: '#fef3c7',
                         border: '1px solid #fde68a',
@@ -272,7 +272,7 @@ function LoansOverviewContent() {
                         ⏳ Deposit submitted{loan.deposit_date ? ` on ${new Date(loan.deposit_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}` : ''}. Waiting for admin confirmation.
                       </div>
                     )}
-                    {(loan.deposit_status === 'completed' || loan.deposit_paid === true) && loan.status === 'pending' && (
+                    {(loan.deposit_paid === true || loan.deposit_status === 'completed') && loan.status === 'pending' && (
                       <div style={{
                         backgroundColor: '#d1fae5',
                         border: '1px solid #a7f3d0',
@@ -285,7 +285,7 @@ function LoansOverviewContent() {
                         ✅ 10% Deposit confirmed on {loan.deposit_date ? new Date(loan.deposit_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'file'}! Your loan application is under review.
                       </div>
                     )}
-                    {(loan.deposit_status === 'completed' || loan.deposit_paid === true) && (loan.status === 'approved' || loan.status === 'active') && (
+                    {(loan.deposit_paid === true || loan.deposit_status === 'completed') && (loan.status === 'approved' || loan.status === 'active') && (
                       <div style={{
                         backgroundColor: '#d1fae5',
                         border: '1px solid #a7f3d0',
