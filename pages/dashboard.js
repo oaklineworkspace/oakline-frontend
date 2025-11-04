@@ -6,6 +6,7 @@ import DebitCard from '../components/DebitCard';
 import LiveChat from '../components/LiveChat';
 import { useAuth } from '../contexts/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
+import { getCreditScoreTier, getCreditScoreMessage } from '../lib/creditScoreUtils';
 
 function DashboardContent() {
   const { user, signOut } = useAuth();
