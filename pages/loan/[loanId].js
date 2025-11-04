@@ -623,8 +623,10 @@ const styles = {
   container: {
     maxWidth: '1200px',
     margin: '0 auto',
-    padding: '40px 20px',
+    padding: 'clamp(1.5rem, 3vw, 2.5rem) clamp(1rem, 3vw, 1.25rem)',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    minHeight: '100vh',
+    backgroundColor: '#f8fafc'
   },
   loadingContainer: {
     textAlign: 'center',
@@ -746,9 +748,9 @@ const styles = {
   },
   infoGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-    gap: '20px',
-    marginBottom: '30px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+    gap: 'clamp(1rem, 2vw, 1.25rem)',
+    marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
   },
   infoCard: {
     padding: '20px',

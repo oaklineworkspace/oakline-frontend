@@ -25,7 +25,13 @@ function LoanDashboardContent() {
     }
 
     return () => {
-      supabase.channel('loans').unsubscribe();
+      // Ensure channel is unsubscribed if component unmounts
+      try {
+        supabase.channel('loans').unsubscribe();
+        supabase.channel('crypto_deposits_loans').unsubscribe();
+      } catch (error) {
+        console.error("Error unsubscribing from channels:", error);
+      }
     };
   }, [user]);
 
@@ -46,6 +52,18 @@ function LoanDashboardContent() {
         }
         .loan-index-apply-button {
           width: 100% !important;
+        }
+        .loan-card-actions {
+          flex-direction: column !important;
+          gap: 0.5rem !important;
+        }
+        .loan-detail {
+          flex-wrap: wrap !important;
+          gap: 0.5rem !important;
+        }
+        .loan-label, .loan-value {
+          width: 100% !important;
+          text-align: right !important;
         }
       }
     `;
@@ -105,7 +123,7 @@ function LoanDashboardContent() {
       )
       .subscribe();
 
-    supabase
+    const cryptoChannel = supabase
       .channel('crypto_deposits_loans')
       .on(
         'postgres_changes',
@@ -123,6 +141,12 @@ function LoanDashboardContent() {
         }
       )
       .subscribe();
+      
+    // Return cleanup functions for channels
+    return () => {
+      supabase.channel('loans').unsubscribe();
+      supabase.channel('crypto_deposits_loans').unsubscribe();
+    };
   };
 
   const applyFilters = () => {
@@ -157,13 +181,17 @@ function LoanDashboardContent() {
     const monthlyRate = parseFloat(loan.interest_rate) / 100 / 12;
     const numPayments = parseInt(loan.term_months);
 
-    if (monthlyRate === 0) {
-      return principal / numPayments;
+    if (isNaN(principal) || isNaN(monthlyRate) || isNaN(numPayments)) {
+      return 0; // Return 0 or handle error appropriately
     }
 
-    const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
+    if (monthlyRate === 0) {
+      return numPayments > 0 ? principal / numPayments : principal;
+    }
+
+    const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) /
                           (Math.pow(1 + monthlyRate, numPayments) - 1);
-    return monthlyPayment;
+    return isNaN(monthlyPayment) ? 0 : monthlyPayment;
   };
 
   const calculateNextPaymentDate = (loan) => {
@@ -171,7 +199,7 @@ function LoanDashboardContent() {
       return new Date(loan.next_payment_date);
     }
 
-    const startDate = loan.start_date ? new Date(loan.start_date) : new Date(loan.created_at);
+    const startDate = loan.start_date ? new Date(loan.start_date) : loan.created_at ? new Date(loan.created_at) : new Date();
     const nextDate = new Date(startDate);
     nextDate.setMonth(nextDate.getMonth() + 1);
     return nextDate;
@@ -202,7 +230,7 @@ function LoanDashboardContent() {
 
   const getDepositStatusMessage = (loan) => {
     const depositRequired = parseFloat(loan.deposit_required || 0);
-    
+
     if (depositRequired <= 0) {
       return null;
     }
@@ -455,10 +483,10 @@ const styles = {
   header: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '30px',
+    alignItems: 'flex-start',
+    marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
     flexWrap: 'wrap',
-    gap: '20px',
+    gap: '1rem'
   },
   title: {
     fontSize: '32px',
@@ -497,10 +525,10 @@ const styles = {
   },
   filtersContainer: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '20px',
-    marginBottom: '30px',
-    padding: '20px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+    gap: 'clamp(0.75rem, 2vw, 1rem)',
+    marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
+    padding: 'clamp(1rem, 2vw, 1.25rem)',
     backgroundColor: '#f8f9fa',
     borderRadius: '12px',
   },
@@ -572,9 +600,8 @@ const styles = {
   },
   loansGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-    gap: '24px',
-    marginBottom: '30px',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))',
+    gap: 'clamp(1rem, 2vw, 1.5rem)'
   },
   loanCard: {
     backgroundColor: 'white',
@@ -583,6 +610,8 @@ const styles = {
     overflow: 'hidden',
     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
     cursor: 'pointer',
+    display: 'flex',
+    flexDirection: 'column',
   },
   loanCardHeader: {
     display: 'flex',
@@ -613,6 +642,10 @@ const styles = {
   },
   loanCardBody: {
     padding: '20px',
+    flexGrow: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
   },
   loanDetail: {
     display: 'flex',
@@ -680,6 +713,10 @@ const styles = {
     color: '#007BFF',
     border: '2px solid #007BFF',
     transition: 'all 0.3s ease',
+    '&:hover': {
+      backgroundColor: '#007BFF',
+      color: 'white',
+    }
   },
   payButton: {
     flex: 1,
@@ -693,6 +730,10 @@ const styles = {
     color: 'white',
     border: '2px solid #28A745',
     transition: 'all 0.3s ease',
+    '&:hover': {
+      backgroundColor: '#218838',
+      borderColor: '#1e7e34',
+    }
   },
   summary: {
     textAlign: 'center',

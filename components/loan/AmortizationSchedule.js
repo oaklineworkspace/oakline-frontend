@@ -15,6 +15,12 @@ export default function AmortizationSchedule({ loanId }) {
   }, [loanId]);
 
   const fetchSchedule = async () => {
+    if (!loanId) {
+      setError('Invalid loan ID');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError('');
     
@@ -22,6 +28,7 @@ export default function AmortizationSchedule({ loanId }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         setError('Session expired. Please log in again.');
+        setLoading(false);
         return;
       }
 
@@ -31,13 +38,15 @@ export default function AmortizationSchedule({ loanId }) {
         }
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setScheduleData(data);
-      } else {
-        setError(data.error || 'Failed to fetch amortization schedule');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to fetch schedule' }));
+        setError(errorData.error || 'Failed to fetch amortization schedule');
+        setLoading(false);
+        return;
       }
+
+      const data = await response.json();
+      setScheduleData(data);
     } catch (err) {
       console.error('Error fetching schedule:', err);
       setError('An error occurred while fetching the schedule');

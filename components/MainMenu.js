@@ -266,13 +266,15 @@ export default function MainMenu({ user }) {
                       {/* Updated More dropdown to include loan dashboard link */}
                       <div style={styles.dropdownSection}>
                         <h4 style={styles.dropdownHeading}>💼 Loans & Credit</h4>
-                        <Link href="/loan/dashboard" style={styles.dropdownLink}>My Loan Dashboard</Link>
-                        <Link href="/loan/apply" style={styles.dropdownLink}>Apply for New Loan</Link>
-                        <Link href="/loan/apply" style={styles.dropdownLink}>Home Mortgage</Link>
-                        <Link href="/loan/apply" style={styles.dropdownLink}>Personal Loan</Link>
-                        <Link href="/loan/apply" style={styles.dropdownLink}>Auto Loan</Link>
-                        <Link href="/loan/apply" style={styles.dropdownLink}>Business Loan</Link>
-                        <Link href="/cards" style={styles.dropdownLink}>Credit Cards</Link>
+                        <Link href="/loan/dashboard" style={styles.dropdownLink}>💳 My Loan Dashboard</Link>
+                        <Link href="/loan" style={styles.dropdownLink}>📋 All My Loans</Link>
+                        <Link href="/loans" style={styles.dropdownLink}>📊 Loans Overview</Link>
+                        <Link href="/loan/apply" style={styles.dropdownLink}>➕ Apply for New Loan</Link>
+                        <Link href="/loan/apply" style={styles.dropdownLink}>🏠 Home Mortgage</Link>
+                        <Link href="/loan/apply" style={styles.dropdownLink}>👤 Personal Loan</Link>
+                        <Link href="/loan/apply" style={styles.dropdownLink}>🚗 Auto Loan</Link>
+                        <Link href="/loan/apply" style={styles.dropdownLink}>🏢 Business Loan</Link>
+                        <Link href="/cards" style={styles.dropdownLink}>💳 Credit Cards</Link>
                       </div>
                     </div>
                   </div>

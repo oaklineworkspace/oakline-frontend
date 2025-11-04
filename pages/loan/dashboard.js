@@ -47,25 +47,32 @@ function LoanDashboardContent() {
       @media (max-width: 768px) {
         .loan-stats-grid {
           grid-template-columns: 1fr !important;
+          gap: 1rem !important;
         }
         .loan-overview-grid {
           grid-template-columns: 1fr !important;
+          gap: 1rem !important;
         }
         .loan-info-grid {
           grid-template-columns: 1fr !important;
+          gap: 0.75rem !important;
         }
         .loan-selector {
           flex-direction: column !important;
           align-items: flex-start !important;
+          gap: 0.75rem !important;
         }
         .loan-selector-select {
           min-width: 100% !important;
+          width: 100% !important;
         }
         .loan-actions {
           flex-direction: column !important;
+          gap: 0.75rem !important;
         }
         .loan-quick-actions {
           flex-direction: column !important;
+          gap: 0.75rem !important;
         }
         .loan-action-button,
         .loan-primary-action-button,
@@ -76,26 +83,42 @@ function LoanDashboardContent() {
         .loan-overview-header {
           flex-direction: column !important;
           align-items: flex-start !important;
+          gap: 1rem !important;
         }
         .loan-overview-title {
-          font-size: 1.5rem !important;
+          font-size: 1.25rem !important;
         }
         .loan-hero-title {
-          font-size: 1.75rem !important;
+          font-size: 1.5rem !important;
         }
         .loan-stat-card {
-          padding: 1.25rem !important;
+          padding: 1rem !important;
         }
         .loan-stat-value {
-          font-size: 1.5rem !important;
+          font-size: 1.25rem !important;
         }
         .loan-overview-card,
         .loan-tab-content {
-          padding: 1.25rem !important;
+          padding: 1rem !important;
         }
         .loan-modal-content {
-          padding: 1.25rem !important;
-          margin: 1rem !important;
+          padding: 1rem !important;
+          margin: 0.5rem !important;
+          width: calc(100% - 1rem) !important;
+        }
+      }
+      @media (max-width: 480px) {
+        .loan-hero-title {
+          font-size: 1.25rem !important;
+        }
+        .loan-stat-icon {
+          font-size: 2rem !important;
+        }
+        .loan-stat-value {
+          font-size: 1.1rem !important;
+        }
+        .loan-overview-card {
+          padding: 0.75rem !important;
         }
       }
     `;
@@ -672,7 +695,7 @@ Generated: ${new Date().toLocaleString()}
                     </div>
                   )}
 
-                  {activeTab === 'schedule' && (
+                  {activeTab === 'schedule' && selectedLoan && selectedLoan.id && (
                     <AmortizationSchedule loanId={selectedLoan.id} />
                   )}
 
