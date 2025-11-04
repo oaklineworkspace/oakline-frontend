@@ -1,0 +1,42 @@
+Context / goal (short):
+Make the frontend loan system behave like a real bank: loan requests over 10% must be pending admin approval; loan disbursements create proper repayment schedules; repayments (full/part/crypto) create appropriate payment records, immediately deduct selected account balances, credit the bank treasury (pending admin confirmation), reduce future due amounts when part payments happen early, generate receipts, and record correct timestamps (use actual transaction time, not hardcoded). Crypto payments must be pending until admin approves them. All payments should create history entries with correct statuses.
+
+⸻
+
+High-level requirements (must implement)
+	1.	Loan request flow
+	•	If user requests a loan where loan_amount >= 10% (you can interpret as e.g., loan-to-something — if you already have a rule, follow existing server logic; otherwise use a boolean flag requires_admin_approval: true for loans meeting criteria) then the front-end should mark the loan as Pending and NOT allow disbursement until admin approval. Show a clear UI state (Status: Pending admin approval) on loan detail pages.
+	2.	Loan approval & disbursement
+	•	After backend signals loan approved and disbursed, update loan detail view to show disbursement date/time and available balance.
+	•	Trigger refresh of user’s account balances and transactions.
+	3.	Repayment (UI + UX)
+	•	Provide a Repay button on loan details that opens a Repayment modal.
+	•	Modal options: select source (Account dropdown of user’s accounts) or Crypto (list of supported cryptos).
+	•	If Account selected: immediately deduct funds from the selected account in the UI when payment is submitted (optimistic update), showing transaction in the user’s transactions list with status: pending_admin_confirmation.
+	•	If Crypto selected: create a payment record with status: pending_admin_confirmation, do not immediately mark loan as paid until admin confirms. Show user instructions for sending crypto if needed (depending on flow).
+	•	For all payments, create a receipt entry (downloadable/viewable) and show a payment record in loan payment history with accurate timestamp (use server created_at or client Date.now() only if server timestamp not available — prefer server timestamp).
+	4.	Payment history & schedule
+	•	Maintain a payment schedule (upcoming due payments) on loan detail page.
+	•	If user makes a part payment before a due date:
+	•	Reduce the amount due on the scheduled due date by the amount of the part payment.
+	•	Reflect both the part payment record and the updated scheduled payment (show old due amount struck-through and new amount).
+	•	Example UI: Due 11th — $500 → Part paid $300 on 8th → Remaining due: $200.
+	•	Payment history should list: date, amount, method (account/crypto), from_account_id if account, tx_id if available, status (pending_admin_confirmation, confirmed, failed), receipt_url.
+	5.	Treasury accounting
+	•	When a user pays from an account, the frontend must create a payment request that instructs the backend to debit the user account and credit the bank treasury account, but keep it in pending_admin_confirmation until admin approves. Show the appropriate pending state in both the transactions list and loan payments list.
+	6.	Timestamps
+	•	Never display fixed/hardcoded times. Use the server-provided timestamp created_at or confirmed_at. If the backend does not provide timestamps, send request and use the actual client Date.now() as created_at (but prefer server).
+	•	Display times in user’s locale; show absolute dates (e.g., Nov 3, 2025 14:32) in addition to relative (optional).
+	7.	Receipts
+	•	After a payment request is created, generate a link to a receipt (if backend provides it). If backend does not provide one, create a minimal client-side receipt view and a downloadable PDF option (frontend-only) containing: loan id, payment id, amount, method, date/time, from account (last 4 digits), status.
+	•	Receipts for pending_admin_confirmation should clearly state “Pending admin confirmation”.
+	8.	Crypto payments
+	•	Crypto payments must be created as pending_admin_confirmation. UI should show clear instructions (e.g., transaction address, amount in crypto + fiat equivalent) and a status that will update when admin confirms.
+	•	Do not mark the loan as reduced until status becomes confirmed.
+	9.	Edge cases and validations
+	•	If user selects an account with insufficient balance, show error and block the payment.
+	•	Prevent double-submission (disable submit button after click; handle idempotency key).
+	•	If network errors occur, revert optimistic account balance changes and show error to user.
+	•	Handle concurrent payments: if two payments attempt to change the same schedule item, show the updated amounts based on the latest server state after refreshing.
+	10.	Real-time UI updates
+	•	When possible, subscribe to websocket or SSE events (if backend supports) for loan_payment_updated, loan_approved, loan_disbursed to update the loan and balances live. If not supported, poll /loans/:id and /accounts/:id/transactions after actions with exponential backoff.

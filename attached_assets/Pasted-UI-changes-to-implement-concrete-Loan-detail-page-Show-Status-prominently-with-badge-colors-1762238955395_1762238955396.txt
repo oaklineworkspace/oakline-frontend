@@ -1,0 +1,73 @@
+UI changes to implement (concrete)
+	•	Loan detail page:
+	•	Show Status prominently with badge colors (Pending = orange, Active = green, Closed = gray).
+	•	Show Payment schedule table with each installment row showing: due date, original amount, part payments applied (list), remaining due.
+	•	Add Repay button next to each installment and a global Repay loan button.
+	•	Repayment modal:
+	•	Payment method selector (Account / Crypto).
+	•	If Account: dropdown of user accounts (show masked account numbers + balance).
+	•	If Crypto: list cryptos and show fiat equivalent.
+	•	Input amount with validation (min > 0, <= outstanding loan amount).
+	•	Show Preview: how this affects the due date (if part payment reduce due).
+	•	On submit: disable button, show spinner; create payment via API; optimistic update to UI (show pending payment item and reduce account balance locally).
+	•	Payment history component:
+	•	Show payments list with statuses and receipts.
+	•	For pending_admin_confirmation, show tooltip: “Pending admin confirmation — funds are reserved and will be counted when an admin approves.”
+
+⸻
+
+Business logic specifics (must follow)
+	•	Part payment before due date: subtract part payment from the upcoming scheduled installment(s) in chronological order. Do not change the schedule dates — only reduce amounts owed. If part payment exceeds a single installment, apply remainder to next installment(s).
+	•	Payment crediting behavior: on account payments, the account is debited immediately (or shown as reserved/local optimistic change) and the treasury is credited but with pending_admin_confirmation. Only when backend returns confirmed should the payment be considered final (loan principal reduced for amortization, installment remaining reduced accordingly).
+	•	Idempotency: send an idempotency_key for each payment request so backend can avoid duplicates.
+	•	Time display: use server created_at for display. If unavailable, record client created_at but update when server timestamp arrives.
+
+⸻
+
+Acceptance criteria (for QA)
+	1.	Loan requests that meet the 10% rule are shown as Pending and cannot be disbursed by user actions.
+	2.	When a loan is approved by admin, the loan detail shows Disbursed and payment schedule becomes active.
+	3.	When user submits a repayment with account:
+	•	An API POST is made, the account balance reduces optimistically, the payment appears in the loan payment list with pending_admin_confirmation, and a receipt link is created.
+	•	When backend updates payment to confirmed, the payment status updates to confirmed and schedule remaining amounts update accordingly.
+	4.	Part payments before due date reduce the scheduled due amount(s) correctly and show both the part payment record and updated remaining due.
+	5.	Crypto payments create a pending_admin_confirmation payment record and only affect schedule when confirmed by admin.
+	6.	Timestamps are accurate (server created_at) and not hardcoded.
+	7.	If insufficient funds, payment blocked with helpful error message.
+	8.	UI must not allow double submission; idempotency keys present in requests.
+	9.	Tests: unit tests for repayment modal logic (validation, preview reduce logic) and integration test for the repayment submission flow (simulate API responses for pending and confirmed).
+
+⸻
+
+Developer notes / helpful hints
+	•	Use existing state management (Redux / React Context / SWR / React Query) patterns the repo uses to keep caches in sync after mutation (invalidate GET /api/loans/:loanId and GET /api/accounts/:accountId).
+	•	Use optimistic UI updates but ensure rollback on server error.
+	•	For receipts: if backend offers receipt_url, open it in a new tab; otherwise render receipt UI and offer client PDF export (jsPDF or browser print).
+	•	For realtime: prefer websockets if backend exposes them; otherwise poll GET /api/loans/:loanId every 8–15 seconds after a pending payment until status changes.
+	•	Add unit tests for applyPartPaymentToSchedule(schedule, paymentAmount) pure function that consumes schedule array and returns new schedule with payments applied in chronological order.
+
+⸻
+
+Example UI copy / microcopy
+	•	Repayment modal submit: “Submit payment — pending admin confirmation”
+	•	Payment status: Pending admin confirmation, Confirmed, Failed
+	•	Tooltip for pending: “Funds are received but awaiting admin approval. This payment will reduce your loan balance once approved.”
+
+⸻
+
+Files/components likely to change (suggested)
+	•	src/pages/loans/[loanId].tsx or equivalent Loan detail page
+	•	src/components/RepaymentModal/*
+	•	src/components/PaymentHistory/*
+	•	State hooks: useLoan, useAccounts, usePayments
+	•	Tests: __tests__/repayment.test.tsx, __tests__/scheduleUtils.test.ts
+
+⸻
+
+Final note for Replit AI
+
+Make changes incrementally and open a PR with:
+	1.	UI changes & new components
+	2.	Utility functions with unit tests (e.g., part payment application)
+	3.	Integration tests (mock server responses for pending → confirmed flows)
+	4.	A README snippet describing the new repayment flow and the API expectations (endpoints/payloads) so backend and admin flows can be coordinated.
