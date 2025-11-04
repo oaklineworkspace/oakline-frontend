@@ -104,7 +104,10 @@ function LoanDetailContent() {
 
       const { data, error } = await supabase
         .from('loans')
-        .select('*')
+        .select(`
+          *,
+          deposit_transactions(id, amount, status, created_at, tx_hash, network)
+        `)
         .eq('id', loanId)
         .eq('user_id', user.id)
         .single();
@@ -162,7 +165,6 @@ function LoanDetailContent() {
         },
         (payload) => {
           console.log('Loan update received:', payload);
-          // Merge updated data with existing loan data to preserve related data like payments
           setLoan(prevLoan => ({ ...prevLoan, ...payload.new }));
         }
       )
@@ -183,7 +185,7 @@ function LoanDetailContent() {
       return principal / numPayments;
     }
 
-    const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / 
+    const monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) /
                           (Math.pow(1 + monthlyRate, numPayments) - 1);
     return monthlyPayment;
   };
@@ -210,21 +212,17 @@ function LoanDetailContent() {
         setProcessing(false);
         return;
       }
-      
+
       if (paymentForm.payment_type === 'crypto') {
-          // Handle crypto payment initiation
           console.log("Initiating crypto payment...");
-          // In a real app, this would involve redirecting to a crypto payment gateway
-          // For now, we'll simulate a success and show a placeholder message
           showToast('Redirecting to crypto payment gateway...', 'info');
-          // Simulate redirection or further steps
           setTimeout(() => {
               setProcessing(false);
               setPaymentModal(false);
               showToast('Crypto payment initiated. Please complete it on the gateway.', 'success');
-              fetchLoanDetails(); // Refresh loan details
+              fetchLoanDetails();
           }, 2000);
-          return; // Stop here for crypto
+          return;
       }
 
 
@@ -252,7 +250,7 @@ function LoanDetailContent() {
           loan_id: loanId,
           account_id: paymentForm.account_id,
           amount: amount,
-          payment_type: paymentForm.payment_type // This will be 'manual' for now
+          payment_type: paymentForm.payment_type
         })
       });
 
@@ -329,11 +327,12 @@ function LoanDetailContent() {
 
   const getStatusBadge = (status) => {
     const badges = {
-      pending: { color: '#FFA500', bg: '#FFF3CD', text: 'Pending' },
+      pending_deposit: { color: '#FFA500', bg: '#FFF3CD', text: 'Pending Deposit' },
+      under_review: { color: '#007BFF', bg: '#D1ECF1', text: 'Under Review' },
       approved: { color: '#28A745', bg: '#D4EDDA', text: 'Approved' },
-      active: { color: '#007BFF', bg: '#D1ECF1', text: 'Active' },
+      active: { color: '#28A745', bg: '#D4EDDA', text: 'Active' },
       rejected: { color: '#DC3545', bg: '#F8D7DA', text: 'Rejected' },
-      closed: { color: '#6C757D', bg: '#E2E3E5', text: 'Closed' }
+      completed: { color: '#6C757D', bg: '#E2E3E5', text: 'Completed' }
     };
 
     const badge = badges[status] || { color: '#6C757D', bg: '#E2E3E5', text: status };
@@ -384,7 +383,9 @@ function LoanDetailContent() {
   const monthlyPayment = calculateMonthlyPayment(loan);
   const totalInterest = (monthlyPayment * loan.term_months) - parseFloat(loan.principal);
   const depositRequired = parseFloat(loan.deposit_required || 0);
-  const isDepositPaid = loan.deposit_paid === true || loan.deposit_status === 'completed';
+  const isDepositPaid = loan.deposit_transactions && loan.deposit_transactions.some(tx => tx.status === 'completed');
+  const depositTransaction = loan.deposit_transactions && loan.deposit_transactions.find(tx => tx.status === 'completed');
+
 
   return (
     <div style={styles.container}>
@@ -406,38 +407,79 @@ function LoanDetailContent() {
         </div>
       )}
 
-      {depositRequired > 0 && loan.deposit_status === 'pending' && !loan.deposit_paid && loan.status === 'pending' && (
-        <div style={styles.depositBanner}>
-          <div style={styles.depositBannerContent}>
-            <div>
-              <strong>⚠️ 10% Deposit Required</strong>
-              <p style={styles.depositBannerText}>
-                You need to deposit ${depositRequired.toLocaleString('en-US', { minimumFractionDigits: 2 })} before your loan can be approved.
+      {depositRequired > 0 && loan.status === 'pending_deposit' && !isDepositPaid && (
+        <div style={{
+          backgroundColor: '#FEF3C7',
+          border: '1px solid #FDE68A',
+          borderLeft: '4px solid #D9770E',
+          borderRadius: '12px',
+          padding: '16px 20px',
+          marginBottom: '20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+          flexWrap: 'wrap'
+        }}>
+          <div>
+            <strong style={{ color: '#92400E', fontSize: '16px' }}>
+              <span style={{ marginRight: '8px' }}>🏦</span> 10% Deposit Required
+            </strong>
+            <p style={{ color: '#92400E', margin: '8px 0 0 0', lineHeight: '1.6' }}>
+              A deposit of ${depositRequired.toLocaleString('en-US', { minimumFractionDigits: 2 })} is required to proceed with your loan application.
+            </p>
+            {loan.deposit_method && (
+              <p style={{ color: '#92400E', margin: '4px 0 0 0', lineHeight: '1.6' }}>
+                Selected method: <strong>{loan.deposit_method.toUpperCase()}</strong>
               </p>
-              {loan.deposit_method && (
-                <p style={styles.depositBannerText}>
-                  Selected method: <strong>{loan.deposit_method.toUpperCase()}</strong>
-                </p>
-              )}
-            </div>
-            <Link href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${depositRequired}`} style={styles.depositNowButton}>
-              Deposit Now
-            </Link>
+            )}
           </div>
+          <Link href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${depositRequired}`} style={{
+            backgroundColor: '#D9770E',
+            color: 'white',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            textDecoration: 'none',
+            fontWeight: '600',
+            whiteSpace: 'nowrap',
+            fontSize: '14px'
+          }}>
+            Deposit Now
+          </Link>
         </div>
       )}
 
-      {loan.deposit_paid && loan.deposit_status === 'completed' && loan.status === 'pending' && (
-        <div style={styles.successBanner}>
-          <strong>✅ Deposit Confirmed</strong>
-          <p>Your ${parseFloat(loan.deposit_amount || depositRequired).toLocaleString('en-US', { minimumFractionDigits: 2 })} deposit has been confirmed{loan.deposit_date ? ` on ${new Date(loan.deposit_date).toLocaleDateString()}` : ''}. Your loan application is now under review.</p>
+      {depositRequired > 0 && loan.deposit_status === 'pending' && !loan.deposit_paid && loan.status === 'pending' && (
+        <div style={{
+          backgroundColor: '#fffbeb',
+          border: '1px solid #fde68a',
+          borderLeft: '4px solid #f59e0b',
+          borderRadius: '12px',
+          padding: '16px 20px',
+          marginBottom: '20px'
+        }}>
+          <strong style={{ color: '#92400e', fontSize: '16px' }}>⏳ Deposit Submitted - Awaiting Confirmation</strong>
+          <p style={{ color: '#92400e', margin: '8px 0 0 0', lineHeight: '1.6' }}>
+            Your 10% deposit has been submitted{loan.deposit_date ? ` on ${new Date(loan.deposit_date).toLocaleDateString()}` : ''} and is being verified by our Loan Department.
+            Your loan application will proceed to review once the deposit is confirmed. This typically takes 1-3 business days.
+          </p>
         </div>
       )}
 
-      {loan.status === 'pending' && isDepositPaid && ( // Show this only if deposit is paid and loan is still pending
-        <div style={styles.warningBox}>
-          <strong>⏳ Pending Approval</strong>
-          <p>Your loan application is currently pending review by our team. We will notify you once a decision is made.</p>
+      {loan.deposit_paid && loan.deposit_status === 'completed' && (loan.status === 'pending' || loan.status === 'under_review') && (
+        <div style={{
+          backgroundColor: '#d1fae5',
+          border: '1px solid #a7f3d0',
+          borderLeft: '4px solid #10b981',
+          borderRadius: '12px',
+          padding: '16px 20px',
+          marginBottom: '20px'
+        }}>
+          <strong style={{ color: '#065f46', fontSize: '16px' }}>✅ Deposit Confirmed - Under Review</strong>
+          <p style={{ color: '#047857', margin: '8px 0 0 0', lineHeight: '1.6' }}>
+            Your ${parseFloat(loan.deposit_amount || depositRequired).toLocaleString()} deposit has been confirmed by our Loan Department.
+            Your loan application is now under review and you will receive a decision within 24-48 hours.
+          </p>
         </div>
       )}
 
@@ -545,7 +587,7 @@ function LoanDetailContent() {
           {loan.status === 'active' && (
             <div style={styles.actionButtons} className="loan-detail-actions">
               <button onClick={() => {
-                  setPaymentForm(prev => ({...prev, payment_type: 'manual'})); // Ensure manual is selected for regular payments
+                  setPaymentForm(prev => ({...prev, payment_type: 'manual'}));
                   setPaymentModal(true);
                 }}
                 style={styles.primaryButton}>
@@ -613,7 +655,7 @@ function LoanDetailContent() {
                 style={styles.input}
               />
               <small style={styles.helperText}>
-                Monthly payment: ${monthlyPayment.toFixed(2)} | 
+                Monthly payment: ${monthlyPayment.toFixed(2)} |
                 Remaining balance: ${parseFloat(loan.remaining_balance || loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </small>
             </div>
@@ -623,7 +665,7 @@ function LoanDetailContent() {
               <select
                 value={paymentForm.payment_type}
                 onChange={(e) => {
-                  setPaymentForm({ ...paymentForm, payment_type: e.target.value, account_id: '' }); // Reset account_id when payment type changes
+                  setPaymentForm({ ...paymentForm, payment_type: e.target.value, account_id: '' });
                 }}
                 style={styles.select}
               >

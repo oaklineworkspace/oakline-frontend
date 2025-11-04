@@ -303,6 +303,20 @@ function LoanDepositCryptoContent() {
     setMessageType('');
 
     try {
+      // Check if deposit already submitted for this loan
+      const { data: existingDeposit, error: depositCheckError } = await supabase
+        .from('crypto_deposits')
+        .select('id, status')
+        .eq('user_id', user.id)
+        .eq('purpose', 'loan_requirement')
+        .contains('metadata', { loan_id: loan_id })
+        .in('status', ['pending', 'processing', 'completed', 'confirmed', 'awaiting_confirmations'])
+        .single();
+
+      if (existingDeposit && !depositCheckError) {
+        throw new Error('You have already submitted a deposit for this loan. Please wait for confirmation.');
+      }
+
       // Get treasury account
       const { data: treasuryAccount, error: treasuryError } = await supabase
         .from('accounts')
@@ -359,6 +373,22 @@ function LoanDepositCryptoContent() {
         throw new Error(depositError.message || 'Deposit submission failed');
       }
 
+      // Check current loan status before updating
+      const { data: currentLoan, error: loanFetchError } = await supabase
+        .from('loans')
+        .select('deposit_paid, deposit_status')
+        .eq('id', loan_id)
+        .single();
+
+      if (loanFetchError) {
+        console.error('Error fetching loan:', loanFetchError);
+      }
+
+      // Prevent duplicate submissions
+      if (currentLoan && (currentLoan.deposit_paid || currentLoan.deposit_status === 'pending')) {
+        throw new Error('Deposit already submitted for this loan.');
+      }
+
       // Update loan status and deposit information
       const { error: loanUpdateError } = await supabase
         .from('loans')
@@ -366,8 +396,8 @@ function LoanDepositCryptoContent() {
           deposit_method: 'crypto',
           deposit_amount: parseFloat(depositForm.amount),
           deposit_date: new Date().toISOString(),
-          deposit_status: 'pending', // Will be set to 'completed' when admin confirms
-          status: 'pending', // Keep as pending until deposit is confirmed and approved
+          deposit_status: 'pending',
+          status: 'pending',
           updated_at: new Date().toISOString()
         })
         .eq('id', loan_id);

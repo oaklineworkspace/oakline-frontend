@@ -131,7 +131,38 @@ export default async function handler(req, res) {
 
     const loanEmail = bankDetails?.loan_email || bankDetails?.contact_email || 'loans@theoaklinebank.com';
 
-    // Send confirmation email to user
+    // Send loan submission email
+    try {
+      const { sendLoanSubmittedEmail } = require('../../../lib/email');
+      
+      await sendLoanSubmittedEmail({
+        to: userEmail,
+        userName,
+        loanAmount: principal,
+        loanType: loan_type.replace(/_/g, ' ').toUpperCase(),
+        depositRequired: deposit_required || 0
+      });
+    } catch (emailError) {
+      console.error('Error sending loan submission email:', emailError);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Loan application submitted successfully',
+      loan: {
+        id: loan.id,
+        loan_type: loan.loan_type,
+        principal: loan.principal,
+        status: loan.status
+      }
+    });
+
+  } catch (error) {
+    console.error('Error in loan application:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+/* OLD EMAIL CODE REMOVED
     try {
       const emailHtml = `
           <!DOCTYPE html>
