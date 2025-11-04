@@ -61,8 +61,6 @@ function LoanDetailContent() {
     return () => document.head.removeChild(style);
   }, []);
 
-
-  });
   const [accounts, setAccounts] = useState([]);
   const [processing, setProcessing] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
