@@ -20,10 +20,14 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized - Invalid authentication' });
     }
 
-    const { loan_type, principal, term_months, purpose, interest_rate, collateral_description, deposit_required, deposit_method } = req.body;
+    const { loan_type, principal, term_months, purpose, interest_rate, deposit_required, deposit_method, id_documents, collaterals } = req.body;
 
     if (!loan_type || !principal || !term_months || !purpose || !interest_rate) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    if (!id_documents || !id_documents.front || !id_documents.back) {
+      return res.status(400).json({ error: 'ID documents are required' });
     }
 
     if (principal <= 0 || term_months <= 0 || interest_rate < 0) {
@@ -83,7 +87,7 @@ export default async function handler(req, res) {
         interest_rate,
         term_months,
         purpose,
-        collateral_description: collateral_description || null,
+        collateral_description: collaterals && collaterals.length > 0 ? collaterals.map(c => c.description).join('; ') : null,
         remaining_balance: totalDue,
         monthly_payment_amount: monthlyPayment,
         total_amount: totalDue,
@@ -101,6 +105,40 @@ export default async function handler(req, res) {
     if (loanError) {
       console.error('Error creating loan:', loanError);
       return res.status(500).json({ error: 'Failed to create loan application' });
+    }
+
+    // Store ID documents
+    await supabaseAdmin
+      .from('user_id_documents')
+      .insert([
+        {
+          user_id: user.id,
+          document_type: 'id_front',
+          file_path: id_documents.front,
+          verified: false
+        },
+        {
+          user_id: user.id,
+          document_type: 'id_back',
+          file_path: id_documents.back,
+          verified: false
+        }
+      ]);
+
+    // Store collaterals if provided
+    if (collaterals && collaterals.length > 0) {
+      const collateralInserts = collaterals.map(col => ({
+        loan_id: loan.id,
+        collateral_type: col.collateral_type,
+        ownership_type: col.ownership_type,
+        estimated_value: parseFloat(col.estimated_value),
+        description: col.description,
+        photo_urls: col.photos
+      }));
+
+      await supabaseAdmin
+        .from('loan_collaterals')
+        .insert(collateralInserts);
     }
 
     await supabaseAdmin
