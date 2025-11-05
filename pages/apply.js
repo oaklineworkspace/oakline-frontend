@@ -126,8 +126,17 @@ export default function Apply() {
     accountTypes: [],
     employmentStatus: '',
     annualIncome: '',
-    agreeToTerms: false
+    agreeToTerms: false,
+    idFrontPath: '', // Store file path, not URL
+    idBackPath: '' // Store file path, not URL
   });
+
+  const [idFrontFile, setIdFrontFile] = useState(null);
+  const [idBackFile, setIdBackFile] = useState(null);
+  const [idFrontPreview, setIdFrontPreview] = useState(null);
+  const [idBackPreview, setIdBackPreview] = useState(null);
+  const [uploadingFront, setUploadingFront] = useState(false);
+  const [uploadingBack, setUploadingBack] = useState(false);
 
   useEffect(() => {
     const fetchBankDetails = async () => {
@@ -164,6 +173,118 @@ export default function Apply() {
 
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const validatePhone = (phone) => /^\+?[\d\s\-\(\)]{10,}$/.test(phone);
+
+  const handleIdFileChange = async (e, type) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!allowedTypes.includes(file.type)) {
+      setErrors(prev => ({
+        ...prev,
+        [type === 'front' ? 'idFront' : 'idBack']: 'Only JPG and PNG files are allowed'
+      }));
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors(prev => ({
+        ...prev,
+        [type === 'front' ? 'idFront' : 'idBack']: 'File size must be less than 5MB'
+      }));
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (type === 'front') {
+        setIdFrontPreview(reader.result);
+        setIdFrontFile(file);
+      } else {
+        setIdBackPreview(reader.result);
+        setIdBackFile(file);
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // Clear any previous errors
+    setErrors(prev => ({
+      ...prev,
+      [type === 'front' ? 'idFront' : 'idBack']: ''
+    }));
+
+    // Upload immediately
+    await uploadIdDocument(file, type);
+  };
+
+  const uploadIdDocument = async (file, type) => {
+    const setUploading = type === 'front' ? setUploadingFront : setUploadingBack;
+    setUploading(true);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('file', file);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('documentType', type);
+
+      const response = await fetch('/api/upload-id-document', {
+        method: 'POST',
+        body: formDataToSend
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      // Save the file path (not the URL) for secure storage
+      // We already have local preview from FileReader
+      setFormData(prev => ({
+        ...prev,
+        [type === 'front' ? 'idFrontPath' : 'idBackPath']: data.filePath
+      }));
+
+      console.log(`✅ ID ${type} uploaded securely. Path stored: ${data.filePath}`);
+
+    } catch (error) {
+      console.error(`Error uploading ID ${type}:`, error);
+      setErrors(prev => ({
+        ...prev,
+        [type === 'front' ? 'idFront' : 'idBack']: error.message || 'Upload failed. Please try again.'
+      }));
+      
+      // Clear the file and preview on error
+      if (type === 'front') {
+        setIdFrontFile(null);
+        setIdFrontPreview(null);
+      } else {
+        setIdBackFile(null);
+        setIdBackPreview(null);
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeIdDocument = (type) => {
+    if (type === 'front') {
+      setIdFrontFile(null);
+      setIdFrontPreview(null);
+      setFormData(prev => ({ ...prev, idFrontPath: '' }));
+    } else {
+      setIdBackFile(null);
+      setIdBackPreview(null);
+      setFormData(prev => ({ ...prev, idBackPath: '' }));
+    }
+    setErrors(prev => ({
+      ...prev,
+      [type === 'front' ? 'idFront' : 'idBack']: ''
+    }));
+  };
 
   const getEffectiveCountry = () => {
     return formData.country === 'OTHER' ? formData.manualCountry : formData.country;
@@ -325,6 +446,15 @@ export default function Apply() {
     }
 
     if (step === 2) {
+      if (!formData.idFrontPath || !idFrontPreview) {
+        newErrors.idFront = 'Please upload front side of your ID';
+      }
+      if (!formData.idBackPath || !idBackPreview) {
+        newErrors.idBack = 'Please upload back side of your ID';
+      }
+    }
+
+    if (step === 3) {
       if (!formData.address.trim()) newErrors.address = 'Address is required';
 
       const effectiveCity = getEffectiveCity();
@@ -335,7 +465,7 @@ export default function Apply() {
       if (!formData.zipCode.trim()) newErrors.zipCode = 'ZIP/Postal code is required';
     }
 
-    if (step === 3) {
+    if (step === 4) {
       if (formData.accountTypes.length === 0) newErrors.accountTypes = 'Select at least one account type';
       if (!formData.employmentStatus) newErrors.employmentStatus = 'Employment status is required';
       if (!formData.annualIncome) newErrors.annualIncome = 'Annual income is required';
@@ -410,7 +540,7 @@ export default function Apply() {
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(3)) return;
+    if (!validateStep(4)) return;
 
     // Ensure the email hasn't been changed from the verified one
     if (!isEmailVerified || formData.email.trim().toLowerCase() !== verifiedEmailAddress) {
@@ -528,6 +658,8 @@ export default function Apply() {
           annual_income: formData.annualIncome,
           account_types: mappedAccountTypes,
           agree_to_terms: formData.agreeToTerms,
+          id_front_path: formData.idFrontPath || null,
+          id_back_path: formData.idBackPath || null,
           application_status: 'pending',
           submitted_at: new Date().toISOString()
         }])
@@ -577,7 +709,7 @@ export default function Apply() {
 
       // Show success screen
       setSubmitSuccess(true);
-      setCurrentStep(4); // Move to success screen
+      setCurrentStep(5); // Move to success screen
 
     } catch (error) {
       console.error('Application submission error:', error);
@@ -1257,7 +1389,7 @@ export default function Apply() {
             <div style={styles.progressBar}>
               <div style={{
                 ...styles.progressFill,
-                width: currentStep === 0 ? '25%' : currentStep === 1 ? '50%' : currentStep === 2 ? '75%' : currentStep === 4 ? '100%' : '0%'
+                width: currentStep === 0 ? '20%' : currentStep === 1 ? '40%' : currentStep === 2 ? '60%' : currentStep === 3 ? '80%' : currentStep === 5 ? '100%' : '0%'
               }}></div>
             </div>
             <div style={styles.progressSteps}>
@@ -1276,7 +1408,7 @@ export default function Apply() {
                   border: currentStep >= 0 ? '3px solid #0066CC' : '3px solid rgba(0, 102, 204, 0.3)',
                   transition: 'all 0.3s ease'
                 }}>✉</div>
-                <span style={{fontWeight: currentStep === 0 ? '700' : '500'}}>Verify Email</span>
+                <span style={{fontWeight: currentStep === 0 ? '700' : '500', fontSize: 'clamp(0.7rem, 2vw, 0.9rem)'}}>Email</span>
               </div>
               <div style={{...styles.progressStep, ...(currentStep >= 1 ? styles.progressStepActive : {})}}>
                 <div style={{
@@ -1293,7 +1425,7 @@ export default function Apply() {
                   border: currentStep >= 1 ? '3px solid #0066CC' : '3px solid rgba(0, 102, 204, 0.3)',
                   transition: 'all 0.3s ease'
                 }}>👤</div>
-                <span style={{fontWeight: currentStep === 1 ? '700' : '500'}}>Personal Info</span>
+                <span style={{fontWeight: currentStep === 1 ? '700' : '500', fontSize: 'clamp(0.7rem, 2vw, 0.9rem)'}}>Personal</span>
               </div>
               <div style={{...styles.progressStep, ...(currentStep >= 2 ? styles.progressStepActive : {})}}>
                 <div style={{
@@ -1309,8 +1441,8 @@ export default function Apply() {
                   color: currentStep >= 2 ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
                   border: currentStep >= 2 ? '3px solid #0066CC' : '3px solid rgba(0, 102, 204, 0.3)',
                   transition: 'all 0.3s ease'
-                }}>🏠</div>
-                <span style={{fontWeight: currentStep === 2 ? '700' : '500'}}>Address</span>
+                }}>🪪</div>
+                <span style={{fontWeight: currentStep === 2 ? '700' : '500', fontSize: 'clamp(0.7rem, 2vw, 0.9rem)'}}>ID Upload</span>
               </div>
               <div style={{...styles.progressStep, ...(currentStep >= 3 ? styles.progressStepActive : {})}}>
                 <div style={{
@@ -1326,8 +1458,25 @@ export default function Apply() {
                   color: currentStep >= 3 ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
                   border: currentStep >= 3 ? '3px solid #0066CC' : '3px solid rgba(0, 102, 204, 0.3)',
                   transition: 'all 0.3s ease'
+                }}>🏠</div>
+                <span style={{fontWeight: currentStep === 3 ? '700' : '500', fontSize: 'clamp(0.7rem, 2vw, 0.9rem)'}}>Address</span>
+              </div>
+              <div style={{...styles.progressStep, ...(currentStep >= 4 ? styles.progressStepActive : {})}}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  backgroundColor: currentStep >= 4 ? '#0066CC' : 'rgba(0, 102, 204, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: '700',
+                  fontSize: '18px',
+                  color: currentStep >= 4 ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+                  border: currentStep >= 4 ? '3px solid #0066CC' : '3px solid rgba(0, 102, 204, 0.3)',
+                  transition: 'all 0.3s ease'
                 }}>💼</div>
-                <span style={{fontWeight: currentStep === 3 ? '700' : '500'}}>Review</span>
+                <span style={{fontWeight: currentStep === 4 ? '700' : '500', fontSize: 'clamp(0.7rem, 2vw, 0.9rem)'}}>Review</span>
               </div>
             </div>
           </div>
@@ -1348,15 +1497,20 @@ export default function Apply() {
             )}
             {currentStep === 2 && (
               <>
-                <span>🏠</span> Address Details
+                <span>🪪</span> ID Document Upload
               </>
             )}
             {currentStep === 3 && (
               <>
-                <span>💼</span> Account & Employment
+                <span>🏠</span> Address Details
               </>
             )}
             {currentStep === 4 && (
+              <>
+                <span>💼</span> Account & Employment
+              </>
+            )}
+            {currentStep === 5 && (
               <>
                 <span>🎉</span> Application Submitted
               </>
@@ -1745,8 +1899,225 @@ export default function Apply() {
             </div>
           )}
 
-          {/* Step 2: Address Information */}
+          {/* Step 2: ID Document Upload */}
           {currentStep === 2 && (
+            <div style={{maxWidth: '800px', margin: '0 auto'}}>
+              <p style={{
+                textAlign: 'center',
+                color: '#666',
+                fontSize: '16px',
+                marginBottom: '2rem',
+                lineHeight: '1.6'
+              }}>
+                Please upload clear photos of the front and back of your government-issued ID (Driver's License, Passport, or National ID). Files must be JPG or PNG format, maximum 5MB each.
+              </p>
+
+              <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginBottom: '1rem'}}>
+                {/* ID Front Upload */}
+                <div style={styles.inputGroup}>
+                  <label style={{...styles.label, textAlign: 'center', display: 'block', marginBottom: '1rem'}}>
+                    ID Front Side <span style={styles.required}>*</span>
+                  </label>
+                  
+                  {!idFrontPreview ? (
+                    <label style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '2rem',
+                      border: errors.idFront ? '2px dashed #ef4444' : '2px dashed #cbd5e1',
+                      borderRadius: '12px',
+                      cursor: uploadingFront ? 'not-allowed' : 'pointer',
+                      backgroundColor: uploadingFront ? '#f1f5f9' : '#f8fafc',
+                      transition: 'all 0.3s ease',
+                      minHeight: '250px'
+                    }}>
+                      <div style={{fontSize: '48px', marginBottom: '1rem'}}>📄</div>
+                      <div style={{fontSize: '16px', fontWeight: '600', color: '#1A3E6F', marginBottom: '0.5rem'}}>
+                        {uploadingFront ? 'Uploading...' : 'Click to Upload Front'}
+                      </div>
+                      <div style={{fontSize: '13px', color: '#64748b'}}>
+                        JPG or PNG (max 5MB)
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/jpg"
+                        onChange={(e) => handleIdFileChange(e, 'front')}
+                        disabled={uploadingFront}
+                        style={{display: 'none'}}
+                      />
+                    </label>
+                  ) : (
+                    <div style={{position: 'relative'}}>
+                      <img 
+                        src={idFrontPreview} 
+                        alt="ID Front" 
+                        style={{
+                          width: '100%',
+                          height: 'auto',
+                          maxHeight: '300px',
+                          objectFit: 'contain',
+                          borderRadius: '12px',
+                          border: '2px solid #10b981',
+                          backgroundColor: '#f8fafc'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeIdDocument('front')}
+                        disabled={uploadingFront}
+                        style={{
+                          position: 'absolute',
+                          top: '10px',
+                          right: '10px',
+                          backgroundColor: '#ef4444',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '32px',
+                          height: '32px',
+                          fontSize: '18px',
+                          cursor: uploadingFront ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                        }}
+                      >
+                        ×
+                      </button>
+                      <div style={{
+                        marginTop: '0.5rem',
+                        padding: '0.5rem',
+                        backgroundColor: '#f0fdf4',
+                        border: '1px solid #86efac',
+                        borderRadius: '8px',
+                        textAlign: 'center',
+                        color: '#16a34a',
+                        fontSize: '13px',
+                        fontWeight: '600'
+                      }}>
+                        ✅ Front uploaded successfully
+                      </div>
+                    </div>
+                  )}
+                  {errors.idFront && (
+                    <div style={styles.errorMessage}>⚠️ {errors.idFront}</div>
+                  )}
+                </div>
+
+                {/* ID Back Upload */}
+                <div style={styles.inputGroup}>
+                  <label style={{...styles.label, textAlign: 'center', display: 'block', marginBottom: '1rem'}}>
+                    ID Back Side <span style={styles.required}>*</span>
+                  </label>
+                  
+                  {!idBackPreview ? (
+                    <label style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '2rem',
+                      border: errors.idBack ? '2px dashed #ef4444' : '2px dashed #cbd5e1',
+                      borderRadius: '12px',
+                      cursor: uploadingBack ? 'not-allowed' : 'pointer',
+                      backgroundColor: uploadingBack ? '#f1f5f9' : '#f8fafc',
+                      transition: 'all 0.3s ease',
+                      minHeight: '250px'
+                    }}>
+                      <div style={{fontSize: '48px', marginBottom: '1rem'}}>📄</div>
+                      <div style={{fontSize: '16px', fontWeight: '600', color: '#1A3E6F', marginBottom: '0.5rem'}}>
+                        {uploadingBack ? 'Uploading...' : 'Click to Upload Back'}
+                      </div>
+                      <div style={{fontSize: '13px', color: '#64748b'}}>
+                        JPG or PNG (max 5MB)
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/jpg"
+                        onChange={(e) => handleIdFileChange(e, 'back')}
+                        disabled={uploadingBack}
+                        style={{display: 'none'}}
+                      />
+                    </label>
+                  ) : (
+                    <div style={{position: 'relative'}}>
+                      <img 
+                        src={idBackPreview} 
+                        alt="ID Back" 
+                        style={{
+                          width: '100%',
+                          height: 'auto',
+                          maxHeight: '300px',
+                          objectFit: 'contain',
+                          borderRadius: '12px',
+                          border: '2px solid #10b981',
+                          backgroundColor: '#f8fafc'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeIdDocument('back')}
+                        disabled={uploadingBack}
+                        style={{
+                          position: 'absolute',
+                          top: '10px',
+                          right: '10px',
+                          backgroundColor: '#ef4444',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '32px',
+                          height: '32px',
+                          fontSize: '18px',
+                          cursor: uploadingBack ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                        }}
+                      >
+                        ×
+                      </button>
+                      <div style={{
+                        marginTop: '0.5rem',
+                        padding: '0.5rem',
+                        backgroundColor: '#f0fdf4',
+                        border: '1px solid #86efac',
+                        borderRadius: '8px',
+                        textAlign: 'center',
+                        color: '#16a34a',
+                        fontSize: '13px',
+                        fontWeight: '600'
+                      }}>
+                        ✅ Back uploaded successfully
+                      </div>
+                    </div>
+                  )}
+                  {errors.idBack && (
+                    <div style={styles.errorMessage}>⚠️ {errors.idBack}</div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{
+                backgroundColor: '#fff7ed',
+                padding: '1rem',
+                borderRadius: '8px',
+                border: '1px solid #FFC857',
+                marginTop: '1rem'
+              }}>
+                <p style={{margin: 0, color: '#92400e', fontSize: '13px', lineHeight: '1.5'}}>
+                  <strong>📝 Important:</strong> Make sure your ID photo is clear, not blurry, and all information is readable. We use this to verify your identity for security purposes.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Address Information */}
+          {currentStep === 3 && (
             <div style={styles.formGrid}>
               <div style={styles.inputGroup}>
                 <label style={styles.label}>
@@ -1913,8 +2284,8 @@ export default function Apply() {
             </div>
           )}
 
-          {/* Step 4: Success Screen */}
-          {currentStep === 4 && (
+          {/* Step 5: Success Screen */}
+          {currentStep === 5 && (
             <div style={{
               textAlign: 'center',
               padding: '0',
@@ -2209,8 +2580,8 @@ export default function Apply() {
             </div>
           )}
 
-          {/* Step 3: Account & Employment */}
-          {currentStep === 3 && (
+          {/* Step 4: Account & Employment */}
+          {currentStep === 4 && (
             <div style={styles.formGrid}>
               <div style={styles.inputGroup}>
                 <label style={styles.label}>
@@ -2392,24 +2763,34 @@ export default function Apply() {
 
           {/* Navigation Buttons */}
           <div style={styles.buttonContainer}>
-            {currentStep > 0 && currentStep < 4 && (
+            {currentStep > 0 && currentStep < 5 && (
               <button
                 onClick={handleBack}
-                style={{...styles.button, ...styles.outlineButton}}
+                disabled={loading || uploadingFront || uploadingBack}
+                style={{
+                  ...styles.button,
+                  ...styles.outlineButton,
+                  ...(loading || uploadingFront || uploadingBack ? styles.buttonDisabled : {})
+                }}
               >
                 ← Back
               </button>
             )}
 
             <div style={{marginLeft: currentStep === 1 ? 'auto' : currentStep === 0 ? 'auto' : '0'}}>
-              {currentStep < 3 ? (
+              {currentStep < 4 ? (
                 <button
                   onClick={handleNext}
-                  style={{...styles.button, ...styles.primaryButton}}
+                  disabled={loading || uploadingFront || uploadingBack || (currentStep === 2 && (!formData.idFrontPath || !formData.idBackPath))}
+                  style={{
+                    ...styles.button,
+                    ...styles.primaryButton,
+                    ...(loading || uploadingFront || uploadingBack || (currentStep === 2 && (!formData.idFrontPath || !formData.idBackPath)) ? styles.buttonDisabled : {})
+                  }}
                 >
-                  Next Step →
+                  {currentStep === 2 && (uploadingFront || uploadingBack) ? 'Uploading...' : 'Next Step →'}
                 </button>
-              ) : currentStep === 3 ? (
+              ) : currentStep === 4 ? (
                 <button
                   onClick={handleSubmit}
                   disabled={loading || !formData.agreeToTerms}

@@ -1,0 +1,116 @@
+import { supabaseAdmin } from '../../lib/supabaseAdmin';
+import formidable from 'formidable';
+import fs from 'fs';
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+const parseForm = (req) => {
+  return new Promise((resolve, reject) => {
+    const form = formidable({ 
+      multiples: false,
+      maxFileSize: 5 * 1024 * 1024, // 5MB max
+      keepExtensions: true,
+      filter: ({ mimetype }) => {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        return allowedTypes.includes(mimetype);
+      }
+    });
+
+    form.parse(req, (err, fields, files) => {
+      if (err) reject(err);
+      resolve({ fields, files });
+    });
+  });
+};
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { fields, files } = await parseForm(req);
+    const email = Array.isArray(fields.email) ? fields.email[0] : fields.email;
+    const documentType = Array.isArray(fields.documentType) ? fields.documentType[0] : fields.documentType;
+    const file = Array.isArray(files.file) ? files.file[0] : files.file;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Missing email' });
+    }
+
+    if (!documentType || !['front', 'back'].includes(documentType)) {
+      return res.status(400).json({ error: 'Invalid document type. Must be "front" or "back"' });
+    }
+
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Validate file type
+    const allowedMimetypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!allowedMimetypes.includes(file.mimetype)) {
+      return res.status(400).json({ error: 'Invalid file type. Only JPG and PNG are allowed' });
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      return res.status(400).json({ error: 'File size exceeds 5MB limit' });
+    }
+
+    // Read file data
+    const fileData = fs.readFileSync(file.filepath);
+    const fileExt = file.originalFilename?.split('.').pop() || 'jpg';
+    const timestamp = Date.now();
+    const sanitizedEmail = email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const fileName = `id-${documentType}-${sanitizedEmail}-${timestamp}.${fileExt}`;
+    const filePath = `id_documents/${sanitizedEmail}/${fileName}`;
+
+    // Upload to Supabase Storage (private bucket for secure ID storage)
+    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+      .from('documents')
+      .upload(filePath, fileData, {
+        contentType: file.mimetype,
+        upsert: false,
+        cacheControl: '3600'
+      });
+
+    if (uploadError) {
+      console.error('Error uploading file:', uploadError);
+      // Clean up temp file
+      fs.unlinkSync(file.filepath);
+      return res.status(500).json({ error: 'Failed to upload file', details: uploadError.message });
+    }
+
+    // Generate a signed URL for temporary secure access (valid for 1 hour)
+    // This is only used for preview during application submission
+    const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
+      .from('documents')
+      .createSignedUrl(filePath, 3600); // 1 hour expiry
+
+    if (signedUrlError) {
+      console.error('Error creating signed URL:', signedUrlError);
+      // Clean up temp file
+      fs.unlinkSync(file.filepath);
+      return res.status(500).json({ error: 'Failed to create secure URL', details: signedUrlError.message });
+    }
+
+    // Clean up temp file
+    fs.unlinkSync(file.filepath);
+
+    return res.status(200).json({
+      success: true,
+      message: `ID ${documentType} uploaded successfully`,
+      filePath: filePath, // Store only the path reference in database
+      previewUrl: signedUrlData.signedUrl, // Temporary signed URL for preview
+      fileName: fileName
+    });
+
+  } catch (error) {
+    console.error('Error uploading ID document:', error);
+    return res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+}
