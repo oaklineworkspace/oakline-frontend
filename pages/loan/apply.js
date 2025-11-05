@@ -630,27 +630,27 @@ function LoanApplicationContent() {
               ))}
             </div>
 
-            {/* Loan Details Form - Now appears right after loan type selection */}
-            {formData.loan_type && !hasActiveLoan && (
-              <div style={{...styles.selectionIndicator, marginTop: '32px', marginBottom: '24px'}}>
-                <div style={styles.selectionIndicatorContent}>
-                  <span style={styles.selectionIndicatorIcon}>✓</span>
-                  <div>
-                    <span style={styles.selectionIndicatorTitle}>
-                      {loanTypes.find(lt => lt.value === formData.loan_type)?.label} Selected
-                    </span>
-                    <p style={styles.selectionIndicatorDesc}>
-                      Complete the form below to proceed with your application
-                    </p>
+            </div>
+
+          {/* Loan Details Form - Appears immediately after loan type selection */}
+          {formData.loan_type && !hasActiveLoan ? (
+            <>
+              <div style={styles.section}>
+                <div style={{...styles.selectionIndicator, marginBottom: '32px'}}>
+                  <div style={styles.selectionIndicatorContent}>
+                    <span style={styles.selectionIndicatorIcon}>✓</span>
+                    <div>
+                      <span style={styles.selectionIndicatorTitle}>
+                        {loanTypes.find(lt => lt.value === formData.loan_type)?.label} Selected
+                      </span>
+                      <p style={styles.selectionIndicatorDesc}>
+                        Complete the form below to proceed with your application
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            )}
-          </div>
-
-          {/* Loan Details Form */}
-          {formData.loan_type && !hasActiveLoan ? (
-            <>
+            </>
               <div style={styles.section}>
                 <div style={styles.sectionHeader}>
                   <h2 style={styles.sectionTitle}>Loan Amount & Terms</h2>
