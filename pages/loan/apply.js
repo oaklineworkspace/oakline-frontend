@@ -91,6 +91,7 @@ function LoanApplicationContent() {
       if (typesError) {
         console.error('Error fetching loan types:', typesError);
         setError('Failed to load loan types. Please refresh the page.');
+        setFetchingData(false);
         return;
       }
 
@@ -100,13 +101,19 @@ function LoanApplicationContent() {
           value: type.name.toLowerCase().replace(/\s+/g, '_'),
           label: type.name,
           desc: type.description || `Apply for a ${type.name.toLowerCase()}`,
-          minAmount: type.min_amount || 1000,
-          maxAmount: type.max_amount || 5000000,
-          rates: type.loan_interest_rates || [],
+          minAmount: parseFloat(type.min_amount) || 1000,
+          maxAmount: parseFloat(type.max_amount) || 5000000,
+          rates: Array.isArray(type.loan_interest_rates) ? type.loan_interest_rates.map(r => ({
+            rate: parseFloat(r.rate),
+            apr: parseFloat(r.apr),
+            min_term_months: parseInt(r.min_term_months),
+            max_term_months: parseInt(r.max_term_months)
+          })) : [],
           icon: getLoanTypeIcon(type.name)
         }));
         setLoanTypes(formattedTypes);
       } else {
+        console.warn('No loan types found in database, using defaults');
         setLoanTypes(getDefaultLoanTypes());
       }
     } catch (err) {
@@ -229,7 +236,20 @@ function LoanApplicationContent() {
           setFormData(prev => ({ 
             ...prev, 
             interest_rate: defaultRate.toString(),
-            loan_type: value
+            loan_type: value,
+            // Reset term if it's outside the allowed range
+            term_months: prev.term_months && 
+                         parseInt(prev.term_months) >= rates[0].min_term_months && 
+                         parseInt(prev.term_months) <= rates[0].max_term_months 
+                         ? prev.term_months 
+                         : ''
+          }));
+        } else {
+          // No rates available, keep loan type but clear rate
+          setFormData(prev => ({ 
+            ...prev, 
+            loan_type: value,
+            interest_rate: ''
           }));
         }
       }
