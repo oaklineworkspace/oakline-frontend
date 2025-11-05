@@ -1,84 +1,7 @@
 # Oakline Bank Frontend
 
 ## Overview
-Oakline Bank is a comprehensive Next.js/React-based banking web application providing a complete digital banking experience. It serves retail and business clients with features like account management, transactions, card services, loan applications, cryptocurrency trading, bill payments, and investment services. The platform emphasizes security, user experience, and real-time data synchronization. The project includes a professional internationalization page and robust administrative features.
-
-## Recent Updates
-
-### November 2025 - Project Import Complete & New Requirements Received
-- **Project Successfully Imported to Replit** (November 4, 2025):
-  - All npm dependencies installed (408 packages)
-  - Next.js development server running on port 5000 with 0.0.0.0 host
-  - All Supabase environment variables configured in Replit Secrets
-  - Application verified and working correctly
-  - Homepage, navigation, and core features all functioning properly
-- **New Enhancement Requirements Received**:
-  - **Loan Department Workflow**: Replace admin review/approval with dedicated Loan Department workflow for all loan processing
-  - **Duplicate Deposit Prevention**: Prevent users from submitting multiple 10% loan deposits for the same loan
-  - **Loan Status Transparency**: Show clear status messages after deposit submission ("Deposit received. Your loan is under review by the Loan Department")
-  - **Email Notifications**: Add professional email notifications at all loan stages (submission, approval, rejection)
-  - **Dynamic Location Data**: Replace hardcoded countries/states/cities in apply.js with dynamic data from Supabase tables
-  - **Loan Application Redesign**: Create step-based form with progress indicators and professional UI/UX
-  - **Enhanced Notifications**: Implement comprehensive email and in-app notifications for loan lifecycle events
-  - **Loan Status System**: Implement consistent status system: `pending_deposit`, `under_review`, `approved`, `rejected`, `active`, `completed`
-
-### November 2025 - Transaction Type Standardization & Platform Migration
-- **Transaction Type Standardization**: Completed comprehensive migration to standardized transaction types across all transfer functionality:
-  - All transfer operations now use `debit` (money out) and `credit` (money in) transaction types instead of legacy `transfer_out` and `transfer_in`
-  - All transactions now record complete audit trail: `balance_before`, `balance_after`, `reference` number, `user_id`, and `created_at`
-  - Updated transaction categorization logic consistently across `dashboard.js`, `transactions.js`, and `account-details.js`
-  - Added reference number display with copy-to-clipboard functionality (with fallback for browsers without clipboard API)
-  - Transaction icons now properly mapped for all types: deposit, withdrawal, credit, debit, bill_payment, purchase, refund, interest, crypto_deposit, zelle_send/receive
-  - All legacy transaction type references removed from codebase
-- **Platform Migration**: Successfully migrated from Vercel to Replit with proper port configuration (5000), environment variable setup, and workflow configuration.
-  - Removed all admin pages (`pages/admin/` and `pages/api/admin/`) as they belong in separate admin repository
-  - Confirmed all Supabase environment variables configured in Replit Secrets
-  - Development server running on port 5000 with host 0.0.0.0 for Replit compatibility
-  - All npm dependencies installed successfully (407 packages)
-  - Workflow configured with proper autoscale deployment settings
-- **Bug Fixes (November 3, 2025)**:
-  - **Crypto Deposit Initial Load Fix**: Fixed `deposit-crypto.js` to display neutral "Select a cryptocurrency above to continue" message instead of erroneously showing "No network available" when page first loads. Changed default `crypto_type` from 'BTC' to empty string, preventing premature network availability check.
-  - **Transaction Purpose Display Fix**: Updated `dashboard.js` and `transactions.js` to properly map and display crypto deposit purposes. Now correctly shows "Add to Balance" for `general_deposit`, "Loan Payment" for `loan_requirement`/`loan_payment`, and "Transaction" as fallback instead of "undefined".
-  - **Loan Notification Email**: Added `sendLoanNotificationEmail` function to `lib/email.js` for sending professional loan approval/decline notifications with conditional styling (green for approved, red for declined), loan details, optional admin remarks, and next steps guidance. Ready for integration with admin loan management workflows.
-- **Phone Validation Enhancement**: Updated account application form (`pages/apply.js`) to accept international phone numbers with optional `+` prefix. Regex pattern changed from `/^[\d\s\-\(\)]{10,}$/` to `/^\+?[\d\s\-\(\)]{10,}$/` with improved error messaging.
-- **Content Expansion - 10 New Banking Pages**: Added comprehensive informational pages with professional AI-generated hero images:
-  - **Personal Finance Tips** (`/pages/personal-finance-tips.js`): Budgeting strategies, emergency fund guidance, debt management, credit score improvement
-  - **Retirement Planning** (`/pages/retirement-planning.js`): Retirement accounts (401k, IRA, Roth IRA), contribution strategies, catch-up contributions, Social Security optimization
-  - **Green Banking** (`/pages/green-banking.js`): Sustainable banking initiatives, paperless statements, green loans, carbon footprint tracking, eco-friendly products
-  - **Digital Wallets** (`/pages/digital-wallets.js`): Cryptocurrency integration (BTC, ETH, USDT, BNB), digital payment methods, mobile wallet features
-  - **Promotions** (`/pages/promotions.js`): Current banking offers, sign-up bonuses, referral programs, limited-time promotions
-  - **Business Insights** (`/pages/business-insights.js`): Cash flow management, business growth strategies, commercial banking services, financial planning resources
-  - **Community Impact** (`/pages/community-impact.js`): Corporate social responsibility, community investment programs, volunteer initiatives, financial literacy education
-  - **Financial Tools** (`/pages/financial-tools.js`): Mortgage calculator, retirement planner, budget tracker, savings goal calculator, loan comparison tools
-  - **Security Awareness** (`/pages/security-awareness.js`): Fraud prevention, phishing awareness, password security, two-factor authentication, digital safety best practices
-  - **Customer Stories** (`/pages/customer-stories.js`): Testimonials from diverse customer segments (first-time homebuyers, small business owners, retirees, young professionals)
-  - All pages follow consistent design patterns with hero images stored in `public/images/pages/`, professional typography, responsive layouts, and internal navigation links
-- **Zelle Payment System**: Comprehensive Zelle® integration with real-time Supabase data synchronization:
-  - **Main Features** (`/pages/zelle.js`): Send money, manage contacts, view transaction history with tabbed interface
-  - **Zelle Settings** (`/pages/zelle-settings.js`): Contact management, spending limit tracking (daily $2,500, monthly $20,000), security settings
-  - **API Endpoints**: `/api/zelle-transactions.js` for transaction processing, `/api/zelle-send-money.js` for verified transfers
-  - **Database Tables**: `zelle_transactions`, `zelle_contacts`, `zelle_settings`, with integration to `accounts`, `profiles`, `transactions`, `notifications`, `verification_codes`, `system_logs`
-  - **Features**: QR code generation for receiving money, contact quick-select, real-time balance updates, email verification codes, transaction notifications, automatic account debits/credits via `process_zelle_transfer` RPC function
-  - **Security**: Two-factor verification for all transfers, daily/monthly spending limits, transaction audit logging
-- **Button Styling Fix**: Resolved global button styling issue where `styles/button-fixes.css` contained a `button { background: none !important; }` rule that was removing all button backgrounds across the app. This was causing buttons on deposit-crypto and other pages to appear white with invisible text. The fix removed the global override while preserving specific `.serviceCard` styling.
-- **Crypto Wallet Verification**: Verified and confirmed that `/pages/deposit-crypto.js` correctly fetches crypto wallets from **both** `user_crypto_wallets` AND `admin_assigned_wallets` tables. The implementation:
-  - First queries `user_crypto_wallets` for user-specific wallet assignments
-  - Falls back to `admin_assigned_wallets` if no user wallet is found
-  - Displays wallet address with QR code when found from either table
-  - Shows clear "No Wallet Assigned" message when neither table has a matching wallet
-  - Includes comprehensive error handling and permission checking
-  - Filters by `user_id`, `crypto_type`, and `network_type` for precise wallet matching
-
-### October 2025
-**New Features Added:**
-- **Bill Pay System** (`/pages/bill-pay.js`): Full-featured bill payment page with beneficiary management, scheduled payments, payment history tracking, and automatic transaction recording in both `bill_payments` and `transactions` tables.
-- **Investment Portfolio** (`/pages/investment.js`): Comprehensive investment management with product listings, portfolio tracking, transaction history, and real-time portfolio value calculations.
-- **Crypto Deposit System** (`/pages/deposit-crypto.js`): Professional 3-step cryptocurrency deposit flow with account selection, multi-crypto support (BTC, USDT, ETH, BNB with color-coded icons), wallet address display with QR codes (using `react-qr-code`), payment instructions, user payment confirmation, and deposit submission to `crypto_deposits` table with `pending` status. Features include: progress stepper UI, professional gradient header, wallet address copy-to-clipboard, comprehensive validation, and deposit history table. Fetches wallets from both `user_crypto_wallets` and `admin_assigned_wallets` tables.
-
-**Security Enhancements:**
-- All account balance updates now include `user_id` verification to prevent unauthorized account access.
-- Implemented rollback logic for multi-step financial operations to maintain data integrity.
-- All bill payments (immediate and scheduled) create transaction records with appropriate status flags.
+Oakline Bank is a comprehensive Next.js/React-based banking web application offering a full digital banking experience for retail and business clients. Key features include account management, transaction processing, card services, loan applications, cryptocurrency trading, bill payments, and investment services. The platform prioritizes security, user experience, and real-time data synchronization. It also features a professional internationalization page and robust administrative functionalities. The project's ambition is to provide a secure, user-friendly, and feature-rich digital banking solution.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -86,40 +9,43 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Frontend Architecture
-The application uses **Next.js 14.2.3** with React 18.2.0, leveraging SSR/SSG, custom App and Document components with PWA capabilities. State management is handled by **TanStack React Query** for server state and **AuthContext** for global authentication. Form handling uses **React Hook Form** with **Zod** for validation. The architecture is modular, feature-based, and responsive, with file-based routing and protected routes. Performance optimizations include SWC minification, code splitting, image optimization, and HTTP caching. Mobile and PWA features are integrated, including Apple mobile web app capabilities and a PWA manifest.
+The application is built with **Next.js 14.2.3** and React 18.2.0, utilizing SSR/SSG and PWA capabilities. State management employs **TanStack React Query** for server state and **AuthContext** for global authentication. Form handling uses **React Hook Form** with **Zod** for validation. The architecture is modular, feature-based, and responsive, with file-based routing and protected routes. Performance optimizations include SWC minification, code splitting, image optimization, and HTTP caching. Mobile and PWA features, including Apple mobile web app capabilities and a PWA manifest, are integrated.
 
 ### Authentication & Authorization
-**Supabase Auth** manages email/password and magic link authentication, session persistence, and real-time updates. The system supports customer profiles with application-based account creation, and admin profiles with role-based access (admin, super_admin, manager). Authorization checks are implemented throughout the application.
+**Supabase Auth** manages email/password and magic link authentication, session persistence, and real-time updates. The system supports customer profiles with application-based account creation and admin profiles with role-based access (admin, super_admin, manager). Authorization checks are implemented throughout the application, with server-side JWT token verification for admin pages.
 
 ### System Design Choices
-- **UI/UX**: Professional, modern banking interface with smooth hover animations, enhanced shadows, and subtle lift effects. Transaction color coding provides visual differentiation for various transaction types (Credit, Debit, Pending, Reversals, Bonuses). Dates and times are professionally formatted. The UI is mobile-responsive with optimized padding, spacing, font sizes, and touch-friendly hover effects.
-- **Navigation**: Context-aware navigation redirects users based on authentication state, ensuring protected features require login while public pages remain accessible. Application form agreement links open in new tabs to prevent data loss.
-- **Internationalization**: A dedicated page offers multi-language selection (8 languages), an interactive currency converter with real-time exchange rate calculations (demonstrative rates), international banking services showcase, global presence display, and transparent fee structures.
-- **Security**: Hardcoded admin passwords have been removed, replaced by environment variable validation. Role-based access control is implemented using Supabase `admin_profiles` table, with server-side and client-side verification. Sensitive bank information (routing numbers, SWIFT codes) is protected and only visible to authenticated users. All admin pages require server-side JWT token verification.
+- **UI/UX**: Features a professional, modern banking interface with smooth animations, enhanced shadows, and subtle lift effects. Transaction color coding differentiates various transaction types. Dates and times are professionally formatted. The UI is mobile-responsive with optimized styling and touch-friendly hover effects.
+- **Navigation**: Context-aware navigation redirects users based on authentication state. Application form agreement links open in new tabs to prevent data loss.
+- **Internationalization**: A dedicated page provides multi-language selection (8 languages), an interactive currency converter with real-time (demonstrative) rates, international banking services, global presence display, and transparent fee structures.
+- **Security**: Hardcoded admin passwords are removed, replaced by environment variable validation. Role-based access control uses the Supabase `admin_profiles` table. Sensitive bank information is protected and visible only to authenticated users. Features 256-bit SSL encryption, FDIC insurance compliance indicators, and PCI DSS compliance.
 - **Database Schema**: Key tables include `accounts`, `applications`, `admin_profiles`, `enrollments`, `transactions`, `cards`, `card_applications`, `user_profiles`, `bills`, `crypto_deposits`, and `user_crypto_wallets`, integrated with Supabase Auth.
 - **Data Flow**: User enrollment involves KYC, account creation, email notification with magic link, password setup, and account activation. Transaction processing includes real-time balance updates, validation, fraud monitoring, instant notifications, and history synchronization. The system supports multi-account management for 23 account types.
+- **Loan Workflow**: Loan processing involves a dedicated Loan Department workflow, preventing duplicate deposits for the same loan, and providing clear status messages ("Deposit received. Your loan is under review by the Loan Department"). Email notifications are sent at all loan stages. Loan application redesign is step-based with progress indicators.
+- **Transaction Standardization**: All transfer operations use `debit` and `credit` transaction types, with a complete audit trail including `balance_before`, `balance_after`, `reference`, `user_id`, and `created_at`. Transaction icons are mapped for various types, and reference numbers are displayed with copy-to-clipboard functionality.
+- **Zelle Payment System**: Comprehensive Zelle® integration with features like sending money, managing contacts, viewing transaction history, QR code generation, real-time balance updates, email verification codes, and transaction notifications. Security includes two-factor verification and spending limits.
+- **Content Expansion**: Includes 10 new informational banking pages covering personal finance, retirement planning, green banking, digital wallets, promotions, business insights, community impact, financial tools, security awareness, and customer stories.
 
 ## External Dependencies
 
 ### Database & Backend
-- **Supabase**: Provides PostgreSQL database (hosting schema tables like `accounts`, `transactions`, `user_profiles`, `admin_profiles`), authentication, and real-time capabilities via `@supabase/supabase-js`.
+- **Supabase**: Provides PostgreSQL database (for schema tables like `accounts`, `transactions`, `user_profiles`, `admin_profiles`), authentication, and real-time capabilities via `@supabase/supabase-js`.
 
 ### Payment Processing
-- **Stripe**: Used for payment processing, integrated via `@stripe/stripe-js` and `@stripe/react-stripe-js` for secure card tokenization and transactions.
+- **Stripe**: Used for payment processing, integrated via `@stripe/stripe-js` and `@stripe/react-stripe-js`.
 
 ### Email Services
-- **Nodemailer**: Used for transactional emails (enrollment, password reset, notifications) with SMTP configuration and multiple aliases (e.g., `info@theoaklinebank.com`, `welcome@theoaklinebank.com`).
+- **Nodemailer**: Used for transactional emails (enrollment, password reset, notifications) with SMTP configuration and multiple aliases.
 
 ### Security & Validation
 - **Validator**: For input validation.
 - **XSS**: For cross-site scripting prevention.
-- Features 256-bit SSL encryption, FDIC insurance compliance indicators, and PCI DSS compliance.
 
 ### Chart & Visualization
 - **Chart.js**: Integrated via React Chart.js 2 wrappers for financial data visualization (Bar, Line, Doughnut charts).
 
 ### Deployment
-- **Replit**: Primary deployment platform, configured for autoscale deployment with `npm run build` and `npm run start` commands. Environment secrets for Supabase, Plaid, and SMTP are managed through Replit Secrets.
+- **Replit**: Primary deployment platform, configured for autoscale deployment. Environment secrets for Supabase, Plaid, and SMTP are managed through Replit Secrets.
 
 ### API Integration
 - **Internal API Routes**: Used for fetching user-specific data (e.g., `/api/get-user-bills`).
