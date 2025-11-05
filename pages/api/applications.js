@@ -90,12 +90,9 @@ export default async function handler(req, res) {
     try {
       const applicationData = req.body;
 
-      // Extract ID paths and user ID from the request body if available
-      const { idFrontPath, idBackPath, userId, ...restOfApplicationData } = applicationData;
-
       // Validate required fields for the application itself
       const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'dob', 'ssnOrId', 'country', 'state', 'city', 'address', 'zipCode', 'selectedAccountTypes'];
-      const missingFields = requiredFields.filter(field => !restOfApplicationData[field]);
+      const missingFields = requiredFields.filter(field => !applicationData[field]);
 
       if (missingFields.length > 0) {
         return res.status(400).json({ 
@@ -108,16 +105,33 @@ export default async function handler(req, res) {
 
       console.log('Application received:', {
         id: applicationId,
-        email: restOfApplicationData.email,
-        name: `${restOfApplicationData.firstName} ${restOfApplicationData.lastName}`,
-        accountTypes: restOfApplicationData.selectedAccountTypes
+        email: applicationData.email,
+        name: `${applicationData.firstName} ${applicationData.lastName}`,
+        accountTypes: applicationData.selectedAccountTypes
       });
 
-      // Insert application data without ID paths
+      // Insert application data (only fields that exist in the applications table)
       const { data: application, error: appError } = await supabaseAdmin
         .from('applications')
         .insert([{
-          ...restOfApplicationData, // Use restOfApplicationData here
+          first_name: applicationData.firstName,
+          last_name: applicationData.lastName,
+          middle_name: applicationData.middleName,
+          email: applicationData.email,
+          phone: applicationData.phone,
+          date_of_birth: applicationData.dob,
+          country: applicationData.country,
+          ssn: applicationData.ssnOrId,
+          id_number: applicationData.ssnOrId,
+          address: applicationData.address,
+          city: applicationData.city,
+          state: applicationData.state,
+          zip_code: applicationData.zipCode,
+          employment_status: applicationData.employmentStatus,
+          annual_income: applicationData.annualIncome,
+          account_types: applicationData.selectedAccountTypes,
+          mothers_maiden_name: applicationData.mothersMaidenName,
+          agree_to_terms: applicationData.agreeToTerms,
           submitted_at: new Date().toISOString()
         }])
         .select()
@@ -125,32 +139,17 @@ export default async function handler(req, res) {
 
       if (appError) {
         console.error('Error creating application:', appError);
-        return res.status(500).json({ error: 'Failed to create application' });
-      }
-
-      // Store ID documents in user_id_documents table if userId exists and paths are provided
-      if (userId && idFrontPath && idBackPath) {
-        const { error: idDocError } = await supabaseAdmin
-          .from('user_id_documents')
-          .insert([{
-            user_id: userId,
-            document_type: 'ID Card',
-            front_url: idFrontPath,
-            back_url: idBackPath,
-            status: 'pending'
-          }]);
-
-        if (idDocError) {
-          console.error('Error storing ID documents:', idDocError);
-          // Don't fail the application if ID storage fails, just log it
-        }
+        return res.status(500).json({ 
+          error: 'Failed to create application',
+          details: appError.message 
+        });
       }
       
       // Return success response with application details
       res.status(200).json({ 
         id: applicationId, 
         message: 'Application submitted successfully',
-        email: restOfApplicationData.email // Use email from restOfApplicationData
+        email: applicationData.email
       });
 
     } catch (error) {
