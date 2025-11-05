@@ -250,6 +250,14 @@ function LoanApplicationContent() {
             interest_rate: ''
           }));
         }
+        
+        // Scroll to the form section smoothly after selection
+        setTimeout(() => {
+          const formSection = document.querySelector('form');
+          if (formSection) {
+            formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 100);
       }
     }
   };
@@ -481,7 +489,20 @@ function LoanApplicationContent() {
   }
 
   return (
-    <div style={styles.container}>
+    <>
+      <style jsx global>{`
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+      <div style={styles.container}>
       {/* Professional Hero Section */}
       <div style={styles.hero}>
         <div style={styles.heroContent}>
@@ -608,6 +629,23 @@ function LoanApplicationContent() {
                 </div>
               ))}
             </div>
+
+            {/* Loan Details Form - Now appears right after loan type selection */}
+            {formData.loan_type && !hasActiveLoan && (
+              <div style={{...styles.selectionIndicator, marginTop: '32px', marginBottom: '24px'}}>
+                <div style={styles.selectionIndicatorContent}>
+                  <span style={styles.selectionIndicatorIcon}>✓</span>
+                  <div>
+                    <span style={styles.selectionIndicatorTitle}>
+                      {loanTypes.find(lt => lt.value === formData.loan_type)?.label} Selected
+                    </span>
+                    <p style={styles.selectionIndicatorDesc}>
+                      Complete the form below to proceed with your application
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Loan Details Form */}
@@ -1057,6 +1095,7 @@ function LoanApplicationContent() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
@@ -1082,6 +1121,16 @@ const styles = {
     fontSize: '16px',
     color: '#64748b',
     fontWeight: '500'
+  },
+  '@keyframes slideIn': {
+    from: {
+      opacity: 0,
+      transform: 'translateY(-20px)'
+    },
+    to: {
+      opacity: 1,
+      transform: 'translateY(0)'
+    }
   },
   container: {
     minHeight: '100vh',
@@ -2081,6 +2130,43 @@ const styles = {
     fontSize: '14px',
     color: '#1e293b',
     fontWeight: '600',
+    margin: 0
+  },
+  selectionIndicator: {
+    backgroundColor: '#f0fdf4',
+    border: '2px solid #059669',
+    borderRadius: '16px',
+    padding: '24px',
+    animation: 'slideIn 0.4s ease-out'
+  },
+  selectionIndicatorContent: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px'
+  },
+  selectionIndicatorIcon: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '50%',
+    backgroundColor: '#059669',
+    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '24px',
+    fontWeight: '700',
+    flexShrink: 0
+  },
+  selectionIndicatorTitle: {
+    fontSize: '20px',
+    fontWeight: '700',
+    color: '#059669',
+    display: 'block',
+    marginBottom: '4px'
+  },
+  selectionIndicatorDesc: {
+    fontSize: '14px',
+    color: '#064e3b',
     margin: 0
   }
 };
