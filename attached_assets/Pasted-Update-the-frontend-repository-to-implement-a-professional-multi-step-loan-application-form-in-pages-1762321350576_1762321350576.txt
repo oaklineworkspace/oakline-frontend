@@ -1,0 +1,46 @@
+Update the frontend repository to implement a professional multi-step loan application form in pages/apply.js with the following features:
+
+1. Multi-Step Form:
+   - Step 1: Loan Details
+       • loan_type (dropdown, fetch from API)
+       • principal (numeric input, > 0)
+       • term_months (numeric input, >=1)
+       • interest_rate (auto-calculated or user-entered based on loan type)
+       • purpose (dropdown, fetch from loan_purposes table)
+       • Validate all required fields before moving to next step
+   - Step 2: User ID Document Upload
+       • Upload front and back images of ID
+       • Integrate with Supabase Storage (private bucket)
+       • Validate file types (jpg, png) and max size 5MB each
+       • Display upload progress and preview images
+   - Step 3: Collateral Upload (optional)
+       • Collect collateral_type, ownership_type, estimated_value
+       • Allow uploading multiple photos/documents
+       • Store photo URLs in Supabase Storage and save paths in loan_collaterals table
+   - Step 4: Review & Submit
+       • Show all entered data and uploaded files for user review
+       • Allow editing any step before submission
+       • Disable submit button until all required fields/uploads are complete
+
+2. Form Submission:
+   - On submit, send a single API request to backend:
+       • Create loan application in loans table
+       • Save ID document URLs in user_id_documents table
+       • Save collateral data in loan_collaterals table
+   - Show success or error messages based on API response
+
+3. UI/UX:
+   - Clean, responsive, and professional design
+   - Real-time validation and error messages
+   - Clear step indicators and progress bar
+   - Mobile and desktop friendly
+
+4. Integration:
+   - Ensure only logged-in users can apply
+   - Use signed URLs for previewing uploaded images
+   - Store only URLs in database; images remain in Supabase Storage
+
+5. Optional Enhancements:
+   - Allow removing/re-uploading ID or collateral images before submission
+   - Dynamically show loan terms/disclaimers based on loan_type
+   - Persist data when navigating between steps
