@@ -69,6 +69,13 @@ export default async function handler(req, res) {
     const fileName = `id-${documentType}-${sanitizedEmail}-${timestamp}.${fileExt}`;
     const filePath = `id_documents/${sanitizedEmail}/${fileName}`;
 
+    console.log('Preparing upload:', {
+      fileName,
+      filePath,
+      fileSize: fileData.length,
+      mimeType: file.mimetype
+    });
+
     // Upload to Supabase Storage (use the bucket you created)
     // First, try to upload to 'documents' bucket, if it doesn't exist, try 'id-documents'
     let uploadData, uploadError, bucketName = 'documents';
@@ -99,13 +106,20 @@ export default async function handler(req, res) {
     }
 
     if (uploadError) {
-      console.error('Error uploading file to Supabase Storage:', uploadError);
+      console.error('Error uploading file to Supabase Storage:', {
+        error: uploadError,
+        message: uploadError.message,
+        statusCode: uploadError.statusCode,
+        bucket: bucketName,
+        filePath: filePath
+      });
       // Clean up temp file
       fs.unlinkSync(file.filepath);
       return res.status(500).json({ 
         error: 'Failed to upload file to storage', 
-        details: uploadError.message || 'Storage upload failed',
-        bucket: bucketName
+        details: uploadError.message || uploadError.error || JSON.stringify(uploadError) || 'Storage upload failed',
+        bucket: bucketName,
+        hint: 'Check if the bucket exists and storage policies allow service_role uploads'
       });
     }
 
