@@ -69,33 +69,62 @@ export default async function handler(req, res) {
     const fileName = `id-${documentType}-${sanitizedEmail}-${timestamp}.${fileExt}`;
     const filePath = `id_documents/${sanitizedEmail}/${fileName}`;
 
-    // Upload to Supabase Storage (private bucket for secure ID storage)
-    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
-      .from('documents')
+    // Upload to Supabase Storage (use the bucket you created)
+    // First, try to upload to 'documents' bucket, if it doesn't exist, try 'id-documents'
+    let uploadData, uploadError, bucketName = 'documents';
+    
+    const uploadResult = await supabaseAdmin.storage
+      .from(bucketName)
       .upload(filePath, fileData, {
         contentType: file.mimetype,
         upsert: false,
         cacheControl: '3600'
       });
 
+    uploadData = uploadResult.data;
+    uploadError = uploadResult.error;
+
+    // If documents bucket doesn't exist, try id-documents bucket
+    if (uploadError && uploadError.message?.includes('not found')) {
+      bucketName = 'id-documents';
+      const retryResult = await supabaseAdmin.storage
+        .from(bucketName)
+        .upload(filePath, fileData, {
+          contentType: file.mimetype,
+          upsert: false,
+          cacheControl: '3600'
+        });
+      uploadData = retryResult.data;
+      uploadError = retryResult.error;
+    }
+
     if (uploadError) {
-      console.error('Error uploading file:', uploadError);
+      console.error('Error uploading file to Supabase Storage:', uploadError);
       // Clean up temp file
       fs.unlinkSync(file.filepath);
-      return res.status(500).json({ error: 'Failed to upload file', details: uploadError.message });
+      return res.status(500).json({ 
+        error: 'Failed to upload file to storage', 
+        details: uploadError.message || 'Storage upload failed',
+        bucket: bucketName
+      });
     }
+
+    console.log(`File uploaded successfully to bucket: ${bucketName}, path: ${filePath}`);
 
     // Generate a signed URL for temporary secure access (valid for 1 hour)
     // This is only used for preview during application submission
     const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
-      .from('documents')
+      .from(bucketName)
       .createSignedUrl(filePath, 3600); // 1 hour expiry
 
     if (signedUrlError) {
       console.error('Error creating signed URL:', signedUrlError);
       // Clean up temp file
       fs.unlinkSync(file.filepath);
-      return res.status(500).json({ error: 'Failed to create secure URL', details: signedUrlError.message });
+      return res.status(500).json({ 
+        error: 'Failed to create secure URL', 
+        details: signedUrlError.message || 'Signed URL creation failed'
+      });
     }
 
     // Clean up temp file
