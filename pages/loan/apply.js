@@ -14,6 +14,7 @@ function LoanApplicationContent() {
   const [loanTypes, setLoanTypes] = useState([]);
   const [loanPurposes, setLoanPurposes] = useState([]);
   const [selectedLoanTypeData, setSelectedLoanTypeData] = useState(null);
+  const [accountTypes, setAccountTypes] = useState([]);
 
   // Form data state
   const [formData, setFormData] = useState({
@@ -59,6 +60,7 @@ function LoanApplicationContent() {
     fetchBankDetails();
     fetchLoanTypes();
     fetchLoanPurposes();
+    fetchAccountTypes();
     if (user) {
       fetchUserAccounts();
       checkActiveLoan();
@@ -155,6 +157,21 @@ function LoanApplicationContent() {
       }
     } catch (err) {
       console.error('Error fetching loan purposes:', err);
+    }
+  };
+
+  const fetchAccountTypes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('account_types')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (!error && data) {
+        setAccountTypes(data);
+      }
+    } catch (err) {
+      console.error('Error fetching account types:', err);
     }
   };
 
