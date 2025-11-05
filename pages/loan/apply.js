@@ -73,12 +73,8 @@ function LoanApplicationContent() {
       const { data: typesData, error: typesError } = await supabase
         .from('loan_types')
         .select(`
-          id,
-          name,
-          description,
-          min_amount,
-          max_amount,
-          loan_interest_rates (
+          *,
+          loan_interest_rates!loan_type_id (
             id,
             rate,
             apr,
@@ -94,6 +90,8 @@ function LoanApplicationContent() {
         setFetchingData(false);
         return;
       }
+
+      console.log('Fetched loan types data:', typesData);
 
       if (typesData && typesData.length > 0) {
         const formattedTypes = typesData.map(type => ({
