@@ -129,14 +129,12 @@ export default async function handler(req, res) {
           </html>
         `;
 
-      // Use the notify alias for verification codes
-      const notifyEmail = process.env.SMTP_FROM_NOTIFY || process.env.SMTP_FROM || 'notify@theoaklinebank.com';
-
+      // Use the verify email type for verification codes
       await sendEmail({
         to: normalizedEmail,
-        from: notifyEmail,
         subject: '🔐 Your Oakline Bank Verification Code',
-        html: emailHtml
+        html: emailHtml,
+        emailType: 'verify'
       });
 
       console.log('✅ Verification email sent successfully to:', normalizedEmail);

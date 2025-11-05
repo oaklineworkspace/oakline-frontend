@@ -121,7 +121,7 @@ export default async function handler(req, res) {
       to: email,
       subject: '₿ Crypto Deposit Received - Oakline Bank',
       html: emailHtml,
-      from: process.env.SMTP_FROM_NOTIFY || process.env.SMTP_FROM
+      emailType: 'crypto'
     });
 
     // Create notification
