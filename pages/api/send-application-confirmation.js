@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, firstName, lastName, accountTypes } = req.body;
+    const { email, firstName, lastName, accountTypes, minDepositRequired } = req.body;
 
     if (!email || !firstName || !lastName) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -16,6 +16,10 @@ export default async function handler(req, res) {
     const accountTypesList = accountTypes && accountTypes.length > 0
       ? accountTypes.map(type => `• ${type}`).join('\n')
       : '• Account types will be confirmed upon approval';
+    
+    const depositInfo = minDepositRequired && minDepositRequired > 0
+      ? `<strong>Minimum Deposit Required:</strong> $${parseFloat(minDepositRequired).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+      : 'No minimum deposit required';
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -56,9 +60,18 @@ export default async function handler(req, res) {
                 <strong>Applicant:</strong> ${firstName} ${lastName}<br/>
                 <strong>Email:</strong> ${email}<br/>
                 <strong>Account Types Requested:</strong><br/>
-                ${accountTypesList}
+                ${accountTypesList}<br/><br/>
+                ${depositInfo}
               </div>
             </div>
+            
+            ${minDepositRequired && minDepositRequired > 0 ? `
+            <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0; border-radius: 8px;">
+              <p style="color: #92400e; font-size: 14px; font-weight: 500; margin: 0;">
+                💰 <strong>Funding Required:</strong> After your application is approved, you'll need to fund your account with a minimum deposit of $${parseFloat(minDepositRequired).toLocaleString('en-US', { minimumFractionDigits: 2 })} via cryptocurrency before your account becomes fully active.
+              </p>
+            </div>
+            ` : ''}
             
             <!-- Next Steps -->
             <div style="background-color: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 20px; margin: 24px 0; border-radius: 8px;">
@@ -110,7 +123,7 @@ export default async function handler(req, res) {
       to: email,
       subject: '✅ Application Submitted - Welcome to Oakline Bank!',
       html: emailHtml,
-      from: process.env.SMTP_FROM_WELCOME || process.env.SMTP_FROM
+      emailType: 'welcome'
     });
 
     console.log('Application confirmation email sent to:', email);

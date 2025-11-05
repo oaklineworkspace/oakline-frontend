@@ -138,6 +138,12 @@ export default function Apply() {
   const [uploadingFront, setUploadingFront] = useState(false);
   const [uploadingBack, setUploadingBack] = useState(false);
 
+  const selectedAccountMinDeposit = formData.accountTypes.reduce((maxDeposit, accountId) => {
+    const account = accountTypes.find(acc => acc.id === accountId);
+    const minDeposit = parseFloat(account?.min_deposit) || 0;
+    return Math.max(maxDeposit, minDeposit);
+  }, 0);
+
   useEffect(() => {
     const fetchBankDetails = async () => {
       const { data, error } = await supabase
@@ -1949,9 +1955,9 @@ export default function Apply() {
                     </label>
                   ) : (
                     <div style={{position: 'relative'}}>
-                      <img 
-                        src={idFrontPreview} 
-                        alt="ID Front" 
+                      <img
+                        src={idFrontPreview}
+                        alt="ID Front"
                         style={{
                           width: '100%',
                           height: 'auto',
@@ -2043,9 +2049,9 @@ export default function Apply() {
                     </label>
                   ) : (
                     <div style={{position: 'relative'}}>
-                      <img 
-                        src={idBackPreview} 
-                        alt="ID Back" 
+                      <img
+                        src={idBackPreview}
+                        alt="ID Back"
                         style={{
                           width: '100%',
                           height: 'auto',
@@ -2367,7 +2373,9 @@ export default function Apply() {
                     color: '#1A3E6F',
                     marginBottom: 'clamp(1rem, 3vw, 1.5rem)',
                     fontWeight: '700'
-                  }}>📧 What Happens Next?</h3>
+                  }}>
+                    📧 What Happens Next?
+                  </h3>
 
                   <div style={{
                     textAlign: 'left',
@@ -2586,69 +2594,110 @@ export default function Apply() {
                 <label style={styles.label}>
                   Choose Your Account Types <span style={styles.required}>*</span>
                 </label>
-                {errors.accountTypes && (
-                  <div style={styles.errorMessage}>⚠️ {errors.accountTypes}</div>
+
+                {selectedAccountMinDeposit > 0 && (
+                  <div style={{
+                    backgroundColor: '#FEF3C7',
+                    border: '2px solid #FDE68A',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                  }}>
+                    <span style={{ fontSize: '24px' }}>💰</span>
+                    <div>
+                      <strong style={{ color: '#92400E', fontSize: '15px' }}>
+                        Minimum Deposit Required: ${selectedAccountMinDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </strong>
+                      <p style={{ color: '#92400E', margin: '4px 0 0 0', fontSize: '13px' }}>
+                        You'll need to fund your account(s) with this amount via cryptocurrency after approval.
+                      </p>
+                    </div>
+                  </div>
                 )}
+
                 {loadingAccountTypes ? (
                   <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
                     Loading account types...
                   </div>
                 ) : (
                   <div style={styles.accountTypesGrid}>
-                    {accountTypes.map(account => (
-                    <div
-                      key={account.id}
-                      onClick={() => toggleAccountType(account.id)}
-                      style={{
-                        ...styles.accountCard,
-                        ...(formData.accountTypes.includes(account.id) ? styles.accountCardSelected : {})
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!formData.accountTypes.includes(account.id)) {
-                          Object.assign(e.target.style, styles.accountCardHover);
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!formData.accountTypes.includes(account.id)) {
-                          e.target.style.borderColor = '#e5e7eb';
-                          e.target.style.transform = 'translateY(0)';
-                          e.target.style.boxShadow = 'none';
-                        }
-                      }}
-                    >
-                      <div style={styles.accountHeader}>
-                        <div style={{
-                          ...styles.accountIcon,
-                          backgroundColor: formData.accountTypes.includes(account.id) ? '#0066CC' : '#f1f5f9',
-                          color: formData.accountTypes.includes(account.id) ? 'white' : 'inherit'
-                        }}>
-                          {account.icon}
+                    {accountTypes.map(account => {
+                      const minDeposit = parseFloat(account.min_deposit) || 0;
+                      return (
+                        <div
+                          key={account.id}
+                          onClick={() => toggleAccountType(account.id)}
+                          style={{
+                            ...styles.accountCard,
+                            borderColor: formData.accountTypes.includes(account.id) ? '#10b981' : '#e5e7eb',
+                            backgroundColor: formData.accountTypes.includes(account.id) ? '#f0fdf4' : 'white',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!formData.accountTypes.includes(account.id)) {
+                              Object.assign(e.target.style, styles.accountCardHover);
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!formData.accountTypes.includes(account.id)) {
+                              e.target.style.borderColor = '#e5e7eb';
+                              e.target.style.transform = 'translateY(0)';
+                              e.target.style.boxShadow = 'none';
+                            }
+                          }}
+                        >
+                          <div style={styles.accountHeader}>
+                            <div style={{
+                              ...styles.accountIcon,
+                              backgroundColor: formData.accountTypes.includes(account.id) ? '#0066CC' : '#f1f5f9',
+                              color: formData.accountTypes.includes(account.id) ? 'white' : 'inherit'
+                            }}>
+                              {account.icon}
+                            </div>
+                            <div style={styles.accountName}>{account.name}</div>
+                          </div>
+                          <div style={styles.accountDescription}>{account.description}</div>
+                          <div style={styles.accountRate}>{account.rate}</div>
+                          {minDeposit > 0 && (
+                            <div style={{
+                              marginTop: '8px',
+                              padding: '6px 12px',
+                              backgroundColor: '#FEF3C7',
+                              borderRadius: '6px',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              color: '#92400E'
+                            }}>
+                              Min. Deposit: ${minDeposit.toLocaleString()}
+                            </div>
+                          )}
+                          {formData.accountTypes.includes(account.id) && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '12px',
+                              right: '12px',
+                              backgroundColor: '#0066CC',
+                              color: 'white',
+                              borderRadius: '50%',
+                              width: '24px',
+                              height: '24px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '14px'
+                            }}>
+                              ✓
+                            </div>
+                          )}
                         </div>
-                        <div style={styles.accountName}>{account.name}</div>
-                      </div>
-                      <div style={styles.accountDescription}>{account.description}</div>
-                      <div style={styles.accountRate}>{account.rate}</div>
-                      {formData.accountTypes.includes(account.id) && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '12px',
-                          right: '12px',
-                          backgroundColor: '#0066CC',
-                          color: 'white',
-                          borderRadius: '50%',
-                          width: '24px',
-                          height: '24px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '14px'
-                        }}>
-                          ✓
-                        </div>
-                      )}
-                    </div>
-                    ))}
+                      );
+                    })}
                   </div>
+                )}
+                {errors.accountTypes && (
+                  <div style={styles.errorMessage}>⚠️ {errors.accountTypes}</div>
                 )}
               </div>
 

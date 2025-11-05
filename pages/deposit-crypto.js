@@ -42,6 +42,10 @@ export default function CryptoDeposit() {
     amount: ''
   });
 
+  const [fundingMode, setFundingMode] = useState(false);
+  const [accountMinDeposit, setAccountMinDeposit] = useState(0);
+  const [accountCurrentBalance, setAccountCurrentBalance] = useState(0);
+
   const [availableNetworks, setAvailableNetworks] = useState([]);
   const [loadingNetworks, setLoadingNetworks] = useState(false);
 
@@ -155,11 +159,22 @@ export default function CryptoDeposit() {
       }
       setUser(session.user);
 
+      // Check if we're in funding mode from URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const accountId = urlParams.get('account_id');
+      const minDeposit = urlParams.get('min_deposit');
+
+      if (accountId && minDeposit) {
+        setFundingMode(true);
+        setAccountMinDeposit(parseFloat(minDeposit));
+      }
+
+      // Fetch all user accounts (including pending_funding)
       const { data: userAccounts, error: accountsError } = await supabase
         .from('accounts')
         .select('*')
         .eq('user_id', session.user.id)
-        .eq('status', 'active')
+        .in('status', ['active', 'approved', 'pending_funding'])
         .order('created_at');
 
       if (accountsError) {
@@ -167,7 +182,20 @@ export default function CryptoDeposit() {
       }
 
       setAccounts(userAccounts || []);
-      if (userAccounts && userAccounts.length > 0) {
+      
+      // If funding mode, set the specific account
+      if (accountId && userAccounts) {
+        const targetAccount = userAccounts.find(acc => acc.id === accountId);
+        if (targetAccount) {
+          setDepositForm(prev => ({ 
+            ...prev, 
+            account_id: targetAccount.id,
+            account_number: targetAccount.account_number 
+          }));
+          setAccountCurrentBalance(parseFloat(targetAccount.balance) || 0);
+          setAccountMinDeposit(parseFloat(targetAccount.min_deposit) || parseFloat(minDeposit) || 0);
+        }
+      } else if (userAccounts && userAccounts.length > 0) {
         setDepositForm(prev => ({ 
           ...prev, 
           account_id: userAccounts[0].id,
@@ -1036,9 +1064,51 @@ export default function CryptoDeposit() {
 
       <main style={styles.main}>
         <div style={styles.welcomeSection}>
-          <h1 style={styles.welcomeTitle}>Add Funds via Cryptocurrency</h1>
-          <p style={styles.welcomeSubtitle}>Securely deposit funds to your account using cryptocurrency</p>
+          <h1 style={styles.welcomeTitle}>
+            {fundingMode ? 'Fund Your Account via Cryptocurrency' : 'Add Funds via Cryptocurrency'}
+          </h1>
+          <p style={styles.welcomeSubtitle}>
+            {fundingMode 
+              ? 'Complete your minimum deposit requirement to activate your account'
+              : 'Securely deposit funds to your account using cryptocurrency'}
+          </p>
         </div>
+
+        {fundingMode && accountMinDeposit > 0 && (
+          <div style={{
+            maxWidth: '800px',
+            margin: '0 auto 2rem',
+            padding: '0 2rem'
+          }}>
+            <div style={{
+              backgroundColor: '#fef3c7',
+              border: '2px solid #fde68a',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem'
+            }}>
+              <span style={{ fontSize: '2rem' }}>💰</span>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ margin: '0 0 0.5rem 0', color: '#92400e', fontSize: '1.1rem' }}>
+                  Account Activation Required
+                </h3>
+                <div style={{ fontSize: '0.9rem', color: '#92400e', marginBottom: '0.5rem' }}>
+                  <strong>Minimum Deposit:</strong> ${accountMinDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </div>
+                <div style={{ fontSize: '0.9rem', color: '#92400e', marginBottom: '0.5rem' }}>
+                  <strong>Current Balance:</strong> ${accountCurrentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </div>
+                {(accountMinDeposit - accountCurrentBalance) > 0 && (
+                  <div style={{ fontSize: '1rem', color: '#dc2626', fontWeight: '600', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #fde68a' }}>
+                    <strong>Remaining Needed:</strong> ${(accountMinDeposit - accountCurrentBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div style={styles.progressSteps}>
           {[
