@@ -650,7 +650,7 @@ function LoanApplicationContent() {
                   </div>
                 </div>
               </div>
-            </>
+
               <div style={styles.section}>
                 <div style={styles.sectionHeader}>
                   <h2 style={styles.sectionTitle}>Loan Amount & Terms</h2>
