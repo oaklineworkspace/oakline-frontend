@@ -10,7 +10,7 @@ export const config = {
 
 const parseForm = (req) => {
   return new Promise((resolve, reject) => {
-    const form = formidable({ 
+    const form = formidable({
       multiples: false,
       maxFileSize: 5 * 1024 * 1024, // 5MB max
       keepExtensions: true,
@@ -79,7 +79,7 @@ export default async function handler(req, res) {
     // Upload to Supabase Storage (use the bucket you created)
     // First, try to upload to 'documents' bucket, if it doesn't exist, try 'id-documents'
     let uploadData, uploadError, bucketName = 'documents';
-    
+
     const uploadResult = await supabaseAdmin.storage
       .from(bucketName)
       .upload(filePath, fileData, {
@@ -115,8 +115,8 @@ export default async function handler(req, res) {
       });
       // Clean up temp file
       fs.unlinkSync(file.filepath);
-      return res.status(500).json({ 
-        error: 'Failed to upload file to storage', 
+      return res.status(500).json({
+        error: 'Failed to upload file to storage',
         details: uploadError.message || uploadError.error || JSON.stringify(uploadError) || 'Storage upload failed',
         bucket: bucketName,
         hint: 'Check if the bucket exists and storage policies allow service_role uploads'
@@ -135,8 +135,8 @@ export default async function handler(req, res) {
       console.error('Error creating signed URL:', signedUrlError);
       // Clean up temp file
       fs.unlinkSync(file.filepath);
-      return res.status(500).json({ 
-        error: 'Failed to create secure URL', 
+      return res.status(500).json({
+        error: 'Failed to create secure URL',
         details: signedUrlError.message || 'Signed URL creation failed'
       });
     }
@@ -153,7 +153,12 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('Error uploading ID document:', error);
-    return res.status(500).json({ error: 'Internal server error', details: error.message });
+    console.error('Upload error:', error);
+    console.error('Error stack:', error.stack);
+    return res.status(500).json({
+      error: 'Upload failed',
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 }

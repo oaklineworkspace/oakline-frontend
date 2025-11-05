@@ -256,7 +256,7 @@ export default function Apply() {
         ...prev,
         [type === 'front' ? 'idFront' : 'idBack']: error.message || 'Upload failed. Please try again.'
       }));
-      
+
       // Clear the file and preview on error
       if (type === 'front') {
         setIdFrontFile(null);
@@ -658,8 +658,7 @@ export default function Apply() {
           annual_income: formData.annualIncome,
           account_types: mappedAccountTypes,
           agree_to_terms: formData.agreeToTerms,
-          id_front_path: formData.idFrontPath || null,
-          id_back_path: formData.idBackPath || null,
+          // id_front_path and id_back_path are NOT sent here, they are handled by the upload-id-document API
           application_status: 'pending',
           submitted_at: new Date().toISOString()
         }])
@@ -851,7 +850,7 @@ export default function Apply() {
       padding: '0.6rem 1.2rem',
       backgroundColor: 'rgba(255,200,87,0.25)',
       color: 'white',
-      border: '2px solid rgba(255,200,87,0.4)',
+      border: '2px solid rgba(255,200,87, 0.4)',
       borderRadius: '8px',
       fontSize: '0.9rem',
       fontWeight: '600',
@@ -1918,7 +1917,7 @@ export default function Apply() {
                   <label style={{...styles.label, textAlign: 'center', display: 'block', marginBottom: '1rem'}}>
                     ID Front Side <span style={styles.required}>*</span>
                   </label>
-                  
+
                   {!idFrontPreview ? (
                     <label style={{
                       display: 'flex',
@@ -2012,7 +2011,7 @@ export default function Apply() {
                   <label style={{...styles.label, textAlign: 'center', display: 'block', marginBottom: '1rem'}}>
                     ID Back Side <span style={styles.required}>*</span>
                   </label>
-                  
+
                   {!idBackPreview ? (
                     <label style={{
                       display: 'flex',
