@@ -649,7 +649,7 @@ function LoanApplicationContent() {
           </div>
 
           {/* Loan Details Form */}
-          {formData.loan_type && !hasActiveLoan && (
+          {formData.loan_type && !hasActiveLoan ? (
             <>
               <div style={styles.section}>
                 <div style={styles.sectionHeader}>
@@ -973,7 +973,7 @@ function LoanApplicationContent() {
                 </button>
               </div>
             </>
-          )}
+          ) : null}
         </form>
 
         {/* Information Box */}
