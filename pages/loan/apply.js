@@ -467,15 +467,9 @@ function LoanApplicationContent() {
       {/* Professional Hero Section */}
       <div style={styles.hero}>
         <div style={styles.heroContent}>
-          <div style={styles.trustBadges}>
-            <span style={styles.trustBadge}>🔒 Bank-Level Security</span>
-            <span style={styles.trustBadge}>✓ FDIC Insured</span>
-            <span style={styles.trustBadge}>⚡ Fast Approval</span>
-          </div>
-          <h1 style={styles.heroTitle}>Professional Loan Application</h1>
+          <h1 style={styles.heroTitle}>Apply for Your Loan Today</h1>
           <p style={styles.heroSubtitle}>
-            Join thousands of satisfied customers who have achieved their financial goals with Oakline Bank. 
-            Our competitive rates and flexible terms make borrowing simple and affordable.
+            Competitive rates, flexible terms, and fast approvals. Let us help you achieve your financial goals with Oakline Bank.
           </p>
           {creditScore && (
             <div style={styles.creditScoreBadge}>
@@ -488,40 +482,6 @@ function LoanApplicationContent() {
               </span>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Trust Indicators */}
-      <div style={styles.trustSection}>
-        <div style={styles.trustGrid}>
-          <div style={styles.trustItem}>
-            <div style={styles.trustIcon}>🏆</div>
-            <div style={styles.trustContent}>
-              <h4 style={styles.trustTitle}>15+ Years Experience</h4>
-              <p style={styles.trustDesc}>Serving the community since 2008</p>
-            </div>
-          </div>
-          <div style={styles.trustItem}>
-            <div style={styles.trustIcon}>💰</div>
-            <div style={styles.trustContent}>
-              <h4 style={styles.trustTitle}>$2.5B+ Loans Funded</h4>
-              <p style={styles.trustDesc}>Helping dreams become reality</p>
-            </div>
-          </div>
-          <div style={styles.trustItem}>
-            <div style={styles.trustIcon}>⭐</div>
-            <div style={styles.trustContent}>
-              <h4 style={styles.trustTitle}>4.9/5 Customer Rating</h4>
-              <p style={styles.trustDesc}>15,000+ satisfied borrowers</p>
-            </div>
-          </div>
-          <div style={styles.trustItem}>
-            <div style={styles.trustIcon}>🚀</div>
-            <div style={styles.trustContent}>
-              <h4 style={styles.trustTitle}>24-Hour Approval</h4>
-              <p style={styles.trustDesc}>Quick decisions, faster funding</p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -1064,16 +1024,16 @@ function LoanApplicationContent() {
               <p style={styles.supportDesc}>
                 Our loan specialists are available 24/7 to answer your questions and guide you through the application process.
               </p>
-              <div style={styles.contactMethods}>
-                <a href={`tel:${bankDetails?.phone || '+1-636-635-6122'}`} style={styles.contactMethod}>
-                  <span style={styles.contactIcon}>📞</span>
-                  <span style={styles.contactText}>{bankDetails?.phone || '(636) 635-6122'}</span>
-                </a>
-                <a href={`mailto:${bankDetails?.loan_email || 'loans@theoaklinebank.com'}`} style={styles.contactMethod}>
-                  <span style={styles.contactIcon}>📧</span>
-                  <span style={styles.contactText}>{bankDetails?.loan_email || 'loans@theoaklinebank.com'}</span>
-                </a>
-              </div>
+            </div>
+            <div style={styles.contactMethods}>
+              <a href={`tel:${bankDetails?.phone || '+1-636-635-6122'}`} style={styles.contactMethod}>
+                <span style={styles.contactIcon}>📞</span>
+                <span style={styles.contactText}>{bankDetails?.phone || '(636) 635-6122'}</span>
+              </a>
+              <a href={`mailto:${bankDetails?.loan_email || 'loans@theoaklinebank.com'}`} style={styles.contactMethod}>
+                <span style={styles.contactIcon}>📧</span>
+                <span style={styles.contactText}>{bankDetails?.loan_email || 'loans@theoaklinebank.com'}</span>
+              </a>
             </div>
           </div>
         </div>
@@ -1111,8 +1071,8 @@ const styles = {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
   },
   hero: {
-    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
-    padding: '80px 20px',
+    background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+    padding: '60px 20px',
     textAlign: 'center',
     color: '#fff',
     position: 'relative',
@@ -1124,35 +1084,19 @@ const styles = {
     position: 'relative',
     zIndex: 2
   },
-  trustBadges: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '16px',
-    marginBottom: '32px',
-    flexWrap: 'wrap'
-  },
-  trustBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    padding: '8px 20px',
-    borderRadius: '20px',
-    fontSize: '14px',
-    fontWeight: '600',
-    backdropFilter: 'blur(10px)',
-    border: '1px solid rgba(255, 255, 255, 0.2)'
-  },
   heroTitle: {
-    fontSize: 'clamp(36px, 5vw, 56px)',
-    fontWeight: '800',
-    marginBottom: '24px',
+    fontSize: 'clamp(32px, 5vw, 48px)',
+    fontWeight: '700',
+    marginBottom: '20px',
     letterSpacing: '-0.5px',
-    lineHeight: '1.1'
+    lineHeight: '1.2'
   },
   heroSubtitle: {
-    fontSize: 'clamp(16px, 2.5vw, 20px)',
-    lineHeight: '1.7',
+    fontSize: 'clamp(15px, 2.5vw, 18px)',
+    lineHeight: '1.6',
     opacity: '0.95',
     maxWidth: '700px',
-    margin: '0 auto 32px'
+    margin: '0 auto'
   },
   creditScoreBadge: {
     display: 'inline-flex',
@@ -1162,7 +1106,7 @@ const styles = {
     padding: '16px 32px',
     borderRadius: '16px',
     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-    marginTop: '16px'
+    marginTop: '24px'
   },
   creditScoreInfo: {
     display: 'flex',
@@ -1190,45 +1134,7 @@ const styles = {
     backgroundColor: '#d1fae5',
     borderRadius: '12px'
   },
-  trustSection: {
-    backgroundColor: '#fff',
-    padding: '60px 20px',
-    borderBottom: '1px solid #e5e7eb'
-  },
-  trustGrid: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-    gap: '32px'
-  },
-  trustItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-    padding: '24px',
-    backgroundColor: '#f8fafc',
-    borderRadius: '12px',
-    border: '1px solid #e5e7eb'
-  },
-  trustIcon: {
-    fontSize: '36px',
-    flexShrink: 0
-  },
-  trustContent: {
-    flex: 1
-  },
-  trustTitle: {
-    fontSize: '16px',
-    fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: '4px'
-  },
-  trustDesc: {
-    fontSize: '13px',
-    color: '#64748b',
-    margin: 0
-  },
+  
   mainContent: {
     maxWidth: '1100px',
     margin: '0 auto',
@@ -1262,8 +1168,8 @@ const styles = {
     width: '48px',
     height: '48px',
     borderRadius: '50%',
-    backgroundColor: '#e5e7eb',
-    color: '#64748b',
+    backgroundColor: '#d1fae5',
+    color: '#059669',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1667,8 +1573,8 @@ const styles = {
   },
   calculatorSection: {
     padding: '48px',
-    backgroundColor: '#eff6ff',
-    borderTop: '1px solid #bfdbfe'
+    backgroundColor: '#f0fdf4',
+    borderTop: '1px solid #d1fae5'
   },
   calculatorHeader: {
     textAlign: 'center',
@@ -1716,7 +1622,7 @@ const styles = {
   calculatorValue: {
     fontSize: '28px',
     fontWeight: '700',
-    color: '#1e40af',
+    color: '#059669',
     marginBottom: '8px'
   },
   calculatorNote: {
@@ -1802,7 +1708,7 @@ const styles = {
     borderRadius: '12px',
     cursor: 'pointer',
     transition: 'all 0.3s',
-    boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)',
+    boxShadow: '0 4px 12px rgba(5, 150, 105, 0.4)',
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
@@ -1850,15 +1756,15 @@ const styles = {
     width: '48px',
     height: '48px',
     borderRadius: '50%',
-    backgroundColor: '#eff6ff',
-    color: '#1e40af',
+    backgroundColor: '#f0fdf4',
+    color: '#059669',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '20px',
     fontWeight: '700',
     flexShrink: 0,
-    border: '2px solid #bfdbfe'
+    border: '2px solid #d1fae5'
   },
   processContent: {
     flex: 1
@@ -1905,52 +1811,58 @@ const styles = {
   },
   supportBox: {
     display: 'flex',
+    flexDirection: 'column',
     gap: '20px',
-    padding: '28px',
+    padding: '32px',
     backgroundColor: '#f0fdf4',
     borderRadius: '16px',
-    border: '1px solid #d1fae5'
+    border: '1px solid #d1fae5',
+    textAlign: 'center'
   },
   supportIcon: {
-    fontSize: '40px',
-    flexShrink: 0
-  },
-  supportContent: {
-    flex: 1
-  },
-  supportTitle: {
-    fontSize: '18px',
-    fontWeight: '700',
-    color: '#059669',
+    fontSize: '48px',
     marginBottom: '8px'
   },
+  supportContent: {
+    width: '100%'
+  },
+  supportTitle: {
+    fontSize: '20px',
+    fontWeight: '700',
+    color: '#059669',
+    marginBottom: '12px'
+  },
   supportDesc: {
-    fontSize: '14px',
+    fontSize: '15px',
     color: '#64748b',
-    marginBottom: '16px',
-    lineHeight: '1.6'
+    marginBottom: '20px',
+    lineHeight: '1.6',
+    maxWidth: '600px',
+    margin: '0 auto 20px'
   },
   contactMethods: {
     display: 'flex',
-    gap: '20px',
-    flexWrap: 'wrap'
+    gap: '16px',
+    flexWrap: 'wrap',
+    justifyContent: 'center'
   },
   contactMethod: {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    padding: '10px 20px',
+    padding: '12px 24px',
     backgroundColor: '#fff',
-    borderRadius: '10px',
+    borderRadius: '12px',
     textDecoration: 'none',
     color: '#059669',
     fontWeight: '600',
-    fontSize: '14px',
-    border: '1px solid #d1fae5',
-    transition: 'all 0.3s'
+    fontSize: '15px',
+    border: '2px solid #d1fae5',
+    transition: 'all 0.3s',
+    boxShadow: '0 2px 8px rgba(5, 150, 105, 0.1)'
   },
   contactIcon: {
-    fontSize: '18px'
+    fontSize: '20px'
   },
   contactText: {
     
