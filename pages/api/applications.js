@@ -1,4 +1,3 @@
-
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 
 export default async function handler(req, res) {
@@ -10,9 +9,9 @@ export default async function handler(req, res) {
         console.log('Has SUPABASE_URL:', !!process.env.SUPABASE_URL || !!process.env.NEXT_PUBLIC_SUPABASE_URL)
         console.log('Has SERVICE_KEY:', !!process.env.SUPABASE_SERVICE_KEY || !!process.env.SUPABASE_SERVICE_ROLE_KEY)
       }
-      
+
       const { email } = req.query;
-      
+
       if (email) {
         const { data: applications, error } = await supabaseAdmin
           .from('applications')
@@ -58,7 +57,7 @@ export default async function handler(req, res) {
               .from('cards')
               .select('id, card_number, card_type, status, expiry_date, account_id')
               .in('account_id', accountIds);
-            
+
             const cardsByAccountId = {};
             (cards || []).forEach(card => {
               if (!cardsByAccountId[card.account_id]) {
@@ -90,32 +89,70 @@ export default async function handler(req, res) {
   } else if (req.method === 'POST') {
     try {
       const applicationData = req.body;
-      
-      // Validate required fields
+
+      // Extract ID paths and user ID from the request body if available
+      const { idFrontPath, idBackPath, userId, ...restOfApplicationData } = applicationData;
+
+      // Validate required fields for the application itself
       const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'dob', 'ssnOrId', 'country', 'state', 'city', 'address', 'zipCode', 'selectedAccountTypes'];
-      const missingFields = requiredFields.filter(field => !applicationData[field]);
-      
+      const missingFields = requiredFields.filter(field => !restOfApplicationData[field]);
+
       if (missingFields.length > 0) {
         return res.status(400).json({ 
           error: `Missing required fields: ${missingFields.join(', ')}` 
         });
       }
-      
+
       // Generate application ID
       const applicationId = `APP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
+
       console.log('Application received:', {
         id: applicationId,
-        email: applicationData.email,
-        name: `${applicationData.firstName} ${applicationData.lastName}`,
-        accountTypes: applicationData.selectedAccountTypes
+        email: restOfApplicationData.email,
+        name: `${restOfApplicationData.firstName} ${restOfApplicationData.lastName}`,
+        accountTypes: restOfApplicationData.selectedAccountTypes
       });
+
+      // Insert application data without ID paths
+      const { data: application, error: appError } = await supabaseAdmin
+        .from('applications')
+        .insert([{
+          ...restOfApplicationData, // Use restOfApplicationData here
+          submitted_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (appError) {
+        console.error('Error creating application:', appError);
+        return res.status(500).json({ error: 'Failed to create application' });
+      }
+
+      // Store ID documents in user_id_documents table if userId exists and paths are provided
+      if (userId && idFrontPath && idBackPath) {
+        const { error: idDocError } = await supabaseAdmin
+          .from('user_id_documents')
+          .insert([{
+            user_id: userId,
+            document_type: 'ID Card',
+            front_url: idFrontPath,
+            back_url: idBackPath,
+            status: 'pending'
+          }]);
+
+        if (idDocError) {
+          console.error('Error storing ID documents:', idDocError);
+          // Don't fail the application if ID storage fails, just log it
+        }
+      }
       
+      // Return success response with application details
       res.status(200).json({ 
         id: applicationId, 
         message: 'Application submitted successfully',
-        email: applicationData.email
+        email: restOfApplicationData.email // Use email from restOfApplicationData
       });
+
     } catch (error) {
       console.error('Application processing error:', error);
       res.status(500).json({ 
