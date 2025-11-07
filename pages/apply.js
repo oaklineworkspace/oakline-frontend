@@ -138,10 +138,10 @@ export default function Apply() {
   const [uploadingFront, setUploadingFront] = useState(false);
   const [uploadingBack, setUploadingBack] = useState(false);
 
-  const selectedAccountMinDeposit = formData.accountTypes.reduce((maxDeposit, accountId) => {
+  const selectedAccountMinDeposit = formData.accountTypes.reduce((totalDeposit, accountId) => {
     const account = accountTypes.find(acc => acc.id === accountId);
     const minDeposit = parseFloat(account?.min_deposit) || 0;
-    return Math.max(maxDeposit, minDeposit);
+    return totalDeposit + minDeposit;
   }, 0);
 
   useEffect(() => {
@@ -2708,10 +2708,10 @@ export default function Apply() {
                     <span style={{ fontSize: '24px' }}>💰</span>
                     <div>
                       <strong style={{ color: '#92400E', fontSize: '15px' }}>
-                        Minimum Deposit Required: ${selectedAccountMinDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        Total Minimum Deposit Required: ${selectedAccountMinDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </strong>
                       <p style={{ color: '#92400E', margin: '4px 0 0 0', fontSize: '13px' }}>
-                        You'll need to fund your account(s) with this amount via cryptocurrency after approval.
+                        You'll need to fund your account(s) with this amount after approval.
                       </p>
                     </div>
                   </div>
@@ -2822,10 +2822,10 @@ export default function Apply() {
                     📋 Important: Minimum Deposit Required
                   </h4>
                   <p style={{ margin: '0 0 0.5rem 0', fontSize: '14px', color: '#374151', lineHeight: '1.6' }}>
-                    The account type(s) you selected require a minimum deposit of <strong>${selectedAccountMinDeposit.toFixed(2)}</strong> to activate your account.
+                    The account type(s) you selected require a total minimum deposit of <strong>${selectedAccountMinDeposit.toFixed(2)}</strong> to activate your accounts.
                   </p>
                   <p style={{ margin: 0, fontSize: '13px', color: '#6b7280', lineHeight: '1.6' }}>
-                    After submitting your application, an admin will review it. Once approved, you'll need to make the minimum deposit before your account becomes active. You can fund your account via crypto deposit or bank transfer.
+                    After submitting your application, an admin will review it. Once approved, you'll need to make the minimum deposit before your accounts become active.
                   </p>
                 </div>
               )}

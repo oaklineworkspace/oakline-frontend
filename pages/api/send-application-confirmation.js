@@ -24,7 +24,7 @@ export default async function handler(req, res) {
           ? parseFloat(account.min_opening_deposit) 
           : 0;
         
-        totalMinDeposit = Math.max(totalMinDeposit, minDeposit);
+        totalMinDeposit += minDeposit;
         
         if (minDeposit > 0) {
           accountTypesWithDeposits.push(`• ${accountName} - Min. Deposit: $${minDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`);
@@ -89,7 +89,7 @@ export default async function handler(req, res) {
             ${totalMinDeposit > 0 ? `
             <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0; border-radius: 8px;">
               <p style="color: #92400e; font-size: 14px; font-weight: 500; margin: 0;">
-                💰 <strong>Funding Required:</strong> After your application is approved, you'll need to fund your account with a minimum deposit of $${totalMinDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })} via cryptocurrency before your account becomes fully active.
+                💰 <strong>Funding Required:</strong> After your application is approved, you'll need to fund your accounts with a total minimum deposit of $${totalMinDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })} before they become fully active.
               </p>
             </div>
             ` : ''}
