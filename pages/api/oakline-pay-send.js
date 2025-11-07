@@ -67,13 +67,58 @@ export default async function handler(req, res) {
 
       const perTransactionLimit = settings?.per_transaction_limit || 2500;
       const dailyLimit = settings?.daily_limit || 5000;
+      const monthlyLimit = settings?.monthly_limit || 25000;
 
+      // Check per-transaction limit
       if (transferAmount > perTransactionLimit) {
         return res.status(400).json({ error: `Amount exceeds per-transaction limit of $${perTransactionLimit}` });
       }
 
-      if (transferAmount > dailyLimit) {
-        return res.status(400).json({ error: `Amount exceeds daily limit of $${dailyLimit}` });
+      // Calculate total spent today (start of day to now)
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      
+      const { data: todaysTransactions } = await supabaseAdmin
+        .from('oakline_pay_transactions')
+        .select('amount')
+        .eq('sender_id', user.id)
+        .in('status', ['completed', 'processing'])
+        .gte('created_at', todayStart.toISOString());
+
+      const totalSpentToday = (todaysTransactions || []).reduce(
+        (sum, tx) => sum + parseFloat(tx.amount || 0), 
+        0
+      );
+
+      // Check daily limit
+      if (totalSpentToday + transferAmount > dailyLimit) {
+        return res.status(400).json({ 
+          error: `Transaction would exceed daily limit of $${dailyLimit}. You've already sent $${totalSpentToday.toFixed(2)} today.` 
+        });
+      }
+
+      // Calculate total spent this month (start of month to now)
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+      
+      const { data: monthTransactions } = await supabaseAdmin
+        .from('oakline_pay_transactions')
+        .select('amount')
+        .eq('sender_id', user.id)
+        .in('status', ['completed', 'processing'])
+        .gte('created_at', monthStart.toISOString());
+
+      const totalSpentThisMonth = (monthTransactions || []).reduce(
+        (sum, tx) => sum + parseFloat(tx.amount || 0), 
+        0
+      );
+
+      // Check monthly limit
+      if (totalSpentThisMonth + transferAmount > monthlyLimit) {
+        return res.status(400).json({ 
+          error: `Transaction would exceed monthly limit of $${monthlyLimit}. You've already sent $${totalSpentThisMonth.toFixed(2)} this month.` 
+        });
       }
 
       // Find recipient based on type
@@ -279,6 +324,75 @@ export default async function handler(req, res) {
           .eq('id', transaction_id);
         
         return res.status(400).json({ error: 'Insufficient funds' });
+      }
+
+      // Re-check limits at verification time (critical security check)
+      // Get sender's current settings
+      const { data: settings } = await supabaseAdmin
+        .from('oakline_pay_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      const dailyLimit = settings?.daily_limit || 5000;
+      const monthlyLimit = settings?.monthly_limit || 25000;
+      const transferAmount = parseFloat(transaction.amount);
+
+      // Calculate total spent today (exclude this pending transaction)
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      
+      const { data: todaysTransactions } = await supabaseAdmin
+        .from('oakline_pay_transactions')
+        .select('amount')
+        .eq('sender_id', user.id)
+        .in('status', ['completed', 'processing'])
+        .gte('created_at', todayStart.toISOString());
+
+      const totalSpentToday = (todaysTransactions || []).reduce(
+        (sum, tx) => sum + parseFloat(tx.amount || 0), 
+        0
+      );
+
+      // Check if completing this transaction would exceed daily limit
+      if (totalSpentToday + transferAmount > dailyLimit) {
+        await supabaseAdmin
+          .from('oakline_pay_transactions')
+          .update({ status: 'failed', failure_reason: 'Daily limit exceeded' })
+          .eq('id', transaction_id);
+        
+        return res.status(400).json({ 
+          error: `Transaction would exceed daily limit of $${dailyLimit}. You've already sent $${totalSpentToday.toFixed(2)} today.` 
+        });
+      }
+
+      // Calculate total spent this month (exclude this pending transaction)
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+      
+      const { data: monthTransactions } = await supabaseAdmin
+        .from('oakline_pay_transactions')
+        .select('amount')
+        .eq('sender_id', user.id)
+        .in('status', ['completed', 'processing'])
+        .gte('created_at', monthStart.toISOString());
+
+      const totalSpentThisMonth = (monthTransactions || []).reduce(
+        (sum, tx) => sum + parseFloat(tx.amount || 0), 
+        0
+      );
+
+      // Check if completing this transaction would exceed monthly limit
+      if (totalSpentThisMonth + transferAmount > monthlyLimit) {
+        await supabaseAdmin
+          .from('oakline_pay_transactions')
+          .update({ status: 'failed', failure_reason: 'Monthly limit exceeded' })
+          .eq('id', transaction_id);
+        
+        return res.status(400).json({ 
+          error: `Transaction would exceed monthly limit of $${monthlyLimit}. You've already sent $${totalSpentThisMonth.toFixed(2)} this month.` 
+        });
       }
 
       // Get recipient account
