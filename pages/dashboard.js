@@ -827,7 +827,7 @@ function DashboardContent() {
               <span style={styles.quickActionText}>Send with Zelle</span>
             </Link>
             <Link href="/oakline-pay" style={styles.standardActionButton}>
-              <span style={styles.quickActionIcon}>💰</span>
+              <span style={styles.quickActionIcon}>⚡</span>
               <span style={styles.quickActionText}>Oakline Pay</span>
             </Link>
             <Link href="/loan/dashboard" style={styles.standardActionButton}>
