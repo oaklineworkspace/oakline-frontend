@@ -144,6 +144,8 @@ export default async function handler(req, res) {
     // Clean up temp file
     fs.unlinkSync(file.filepath);
 
+    console.log(`✅ ID ${documentType} uploaded successfully to storage: ${filePath}`);
+
     return res.status(200).json({
       success: true,
       message: `ID ${documentType} uploaded successfully`,

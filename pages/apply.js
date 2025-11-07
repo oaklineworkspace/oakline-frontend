@@ -276,6 +276,37 @@ export default function Apply() {
     }
   };
 
+  const saveIdDocumentsToDatabase = async () => {
+    try {
+      console.log('Saving ID documents to database...');
+      
+      const response = await fetch('/api/save-id-document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email.trim().toLowerCase(),
+          documentType: 'ID Card', // You can make this dynamic if needed
+          frontPath: formData.idFrontPath,
+          backPath: formData.idBackPath
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Failed to save ID documents to database:', data.error);
+        // Don't fail the application if this fails, just log it
+        return false;
+      }
+
+      console.log('✅ ID documents saved to database successfully');
+      return true;
+    } catch (error) {
+      console.error('Error saving ID documents to database:', error);
+      return false;
+    }
+  };
+
   const removeIdDocument = (type) => {
     if (type === 'front') {
       setIdFrontFile(null);
@@ -578,6 +609,12 @@ export default function Apply() {
       }
 
       console.log('✅ Email verification confirmed:', verifyResult);
+
+      // Save ID documents to database if both are uploaded
+      if (formData.idFrontPath && formData.idBackPath) {
+        console.log('Saving ID documents to database...');
+        await saveIdDocumentsToDatabase();
+      }
 
       // Debug: Check the actual database state
       const debugResponse = await fetch('/api/debug-email-verification', {
