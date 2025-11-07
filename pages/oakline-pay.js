@@ -13,11 +13,14 @@ export default function OaklinePayPage() {
   const [accounts, setAccounts] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [paymentRequests, setPaymentRequests] = useState([]);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [showQRModal, setShowQRModal] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showSplitModal, setShowSplitModal] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [pendingTransaction, setPendingTransaction] = useState(null);
   const router = useRouter();
@@ -32,6 +35,21 @@ export default function OaklinePayPage() {
 
   const [verifyForm, setVerifyForm] = useState({
     code: ''
+  });
+
+  const [requestForm, setRequestForm] = useState({
+    from_account: '',
+    recipient_contact: '',
+    recipient_type: 'oakline_tag',
+    amount: '',
+    memo: ''
+  });
+
+  const [splitForm, setSplitForm] = useState({
+    from_account: '',
+    recipients: [{ contact: '', amount: '' }],
+    total_amount: '',
+    memo: ''
   });
 
   const [contactForm, setContactForm] = useState({
@@ -114,6 +132,14 @@ export default function OaklinePayPage() {
         .order('created_at', { ascending: false })
         .limit(50);
       setTransactions(payTxns || []);
+
+      // Load payment requests
+      const { data: requests } = await supabase
+        .from('oakline_pay_requests')
+        .select('*')
+        .or(`requester_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
+        .order('created_at', { ascending: false });
+      setPaymentRequests(requests || []);
 
       setLoading(false);
     } catch (error) {
@@ -204,6 +230,99 @@ export default function OaklinePayPage() {
     }
   };
 
+  const handleRequestMoney = async (e) => {
+    e.preventDefault();
+    setMessage('');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const { error } = await supabase
+        .from('oakline_pay_requests')
+        .insert({
+          requester_id: user.id,
+          requester_account_id: requestForm.from_account,
+          recipient_contact: requestForm.recipient_contact,
+          amount: requestForm.amount,
+          memo: requestForm.memo || null
+        });
+
+      if (error) throw error;
+
+      setMessage('Payment request sent successfully!');
+      setShowRequestModal(false);
+      setRequestForm({ from_account: '', recipient_contact: '', recipient_type: 'oakline_tag', amount: '', memo: '' });
+      checkUserAndLoadData();
+    } catch (error) {
+      console.error('Error requesting money:', error);
+      setMessage('Failed to send payment request');
+    }
+  };
+
+  const handleAcceptRequest = async (requestId) => {
+    if (!confirm('Accept this payment request?')) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const request = paymentRequests.find(r => r.id === requestId);
+
+      // Update request status
+      await supabase
+        .from('oakline_pay_requests')
+        .update({ status: 'accepted', responded_at: new Date().toISOString() })
+        .eq('id', requestId);
+
+      // Initiate payment
+      const response = await fetch('/api/oakline-pay-send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          sender_account_id: accounts[0]?.id,
+          recipient_contact: request.requester_id,
+          recipient_type: 'user_id',
+          amount: request.amount,
+          memo: `Payment for request: ${request.memo || 'No memo'}`,
+          step: 'initiate'
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(data.error || 'Payment failed');
+        return;
+      }
+
+      setPendingTransaction(data);
+      setShowVerifyModal(true);
+      setMessage('Request accepted. Complete verification to send payment.');
+      checkUserAndLoadData();
+    } catch (error) {
+      console.error('Error accepting request:', error);
+      setMessage('Failed to accept request');
+    }
+  };
+
+  const handleDeclineRequest = async (requestId) => {
+    if (!confirm('Decline this payment request?')) return;
+
+    try {
+      await supabase
+        .from('oakline_pay_requests')
+        .update({ status: 'declined', responded_at: new Date().toISOString() })
+        .eq('id', requestId);
+
+      setMessage('Request declined');
+      checkUserAndLoadData();
+    } catch (error) {
+      console.error('Error declining request:', error);
+      setMessage('Failed to decline request');
+    }
+  };
+
   const handleAddContact = async (e) => {
     e.preventDefault();
     setMessage('');
@@ -247,6 +366,23 @@ export default function OaklinePayPage() {
     } catch (error) {
       console.error('Error deleting contact:', error);
       setMessage('Failed to remove contact');
+    }
+  };
+
+  const handleToggleFavorite = async (contactId, currentStatus) => {
+    try {
+      const { error } = await supabase
+        .from('oakline_pay_contacts')
+        .update({ is_favorite: !currentStatus })
+        .eq('id', contactId);
+
+      if (error) throw error;
+
+      setMessage(currentStatus ? 'Removed from favorites' : 'Added to favorites');
+      checkUserAndLoadData();
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      setMessage('Failed to update favorite status');
     }
   };
 
@@ -361,6 +497,12 @@ export default function OaklinePayPage() {
             Send Money
           </button>
           <button
+            style={activeTab === 'requests' ? styles.tabActive : styles.tab}
+            onClick={() => setActiveTab('requests')}
+          >
+            Requests {paymentRequests.filter(r => r.recipient_id === user?.id && r.status === 'pending').length > 0 && `(${paymentRequests.filter(r => r.recipient_id === user?.id && r.status === 'pending').length})`}
+          </button>
+          <button
             style={activeTab === 'contacts' ? styles.tabActive : styles.tab}
             onClick={() => setActiveTab('contacts')}
           >
@@ -470,6 +612,88 @@ export default function OaklinePayPage() {
               </button>
               <p style={styles.helpText}>Share your QR code to receive money</p>
             </div>
+
+            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+              <button onClick={() => setShowRequestModal(true)} style={styles.secondaryButton}>
+                💸 Request Money
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Requests Tab */}
+        {activeTab === 'requests' && (
+          <div style={styles.tabContent}>
+            <h3 style={styles.sectionTitle}>Payment Requests</h3>
+            
+            <div style={{ marginBottom: '2rem' }}>
+              <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1A3E6F', marginBottom: '1rem' }}>
+                Received Requests ({paymentRequests.filter(r => r.recipient_id === user?.id && r.status === 'pending').length})
+              </h4>
+              {paymentRequests.filter(r => r.recipient_id === user?.id && r.status === 'pending').length === 0 ? (
+                <p style={styles.emptyState}>No pending requests</p>
+              ) : (
+                paymentRequests.filter(r => r.recipient_id === user?.id && r.status === 'pending').map(request => (
+                  <div key={request.id} style={{ ...styles.contactCard, backgroundColor: '#fffbeb', border: '2px solid #fbbf24' }}>
+                    <div>
+                      <h4 style={styles.contactName}>
+                        ${parseFloat(request.amount).toFixed(2)}
+                      </h4>
+                      <p style={styles.contactDetail}>From: {request.recipient_contact}</p>
+                      {request.memo && <p style={styles.contactDetail}>"{request.memo}"</p>}
+                      <p style={styles.contactDetail}>
+                        {new Date(request.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        onClick={() => handleAcceptRequest(request.id)}
+                        style={{ ...styles.deleteButton, backgroundColor: '#059669' }}
+                      >
+                        Accept
+                      </button>
+                      <button
+                        onClick={() => handleDeclineRequest(request.id)}
+                        style={styles.deleteButton}
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div>
+              <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1A3E6F', marginBottom: '1rem' }}>
+                Sent Requests
+              </h4>
+              {paymentRequests.filter(r => r.requester_id === user?.id).length === 0 ? (
+                <p style={styles.emptyState}>No sent requests</p>
+              ) : (
+                paymentRequests.filter(r => r.requester_id === user?.id).map(request => (
+                  <div key={request.id} style={styles.contactCard}>
+                    <div>
+                      <h4 style={styles.contactName}>
+                        ${parseFloat(request.amount).toFixed(2)}
+                      </h4>
+                      <p style={styles.contactDetail}>To: {request.recipient_contact}</p>
+                      {request.memo && <p style={styles.contactDetail}>"{request.memo}"</p>}
+                      <p style={styles.contactDetail}>
+                        Status: <span style={{ 
+                          color: request.status === 'accepted' ? '#059669' : 
+                                 request.status === 'declined' ? '#dc3545' : '#64748b',
+                          fontWeight: '600'
+                        }}>{request.status}</span>
+                      </p>
+                      <p style={styles.contactDetail}>
+                        {new Date(request.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
 
@@ -557,12 +781,23 @@ export default function OaklinePayPage() {
                         <p style={styles.contactDetail}>{contact.contact_phone}</p>
                       )}
                     </div>
-                    <button
-                      onClick={() => handleDeleteContact(contact.id)}
-                      style={styles.deleteButton}
-                    >
-                      Remove
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        onClick={() => handleToggleFavorite(contact.id, contact.is_favorite)}
+                        style={{ 
+                          ...styles.deleteButton, 
+                          backgroundColor: contact.is_favorite ? '#fbbf24' : '#6b7280' 
+                        }}
+                      >
+                        {contact.is_favorite ? '★' : '☆'}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteContact(contact.id)}
+                        style={styles.deleteButton}
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
@@ -707,6 +942,96 @@ export default function OaklinePayPage() {
                   </button>
                   <button type="submit" style={styles.primaryButton}>
                     Create Tag
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Request Money Modal */}
+        {showRequestModal && (
+          <div style={styles.modalOverlay} onClick={() => setShowRequestModal(false)}>
+            <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+              <h2 style={styles.modalTitle}>Request Money</h2>
+              <p style={styles.modalText}>
+                Send a payment request to another Oakline Pay user
+              </p>
+              <form onSubmit={handleRequestMoney}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Request To (Account to receive)</label>
+                  <select
+                    style={styles.select}
+                    value={requestForm.from_account}
+                    onChange={(e) => setRequestForm({ ...requestForm, from_account: e.target.value })}
+                    required
+                  >
+                    <option value="">Choose account</option>
+                    {accounts.map(acc => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.account_type} - ${parseFloat(acc.balance || 0).toFixed(2)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Recipient Type</label>
+                  <select
+                    style={styles.select}
+                    value={requestForm.recipient_type}
+                    onChange={(e) => setRequestForm({ ...requestForm, recipient_type: e.target.value })}
+                  >
+                    <option value="oakline_tag">Oakline Tag</option>
+                    <option value="email">Email</option>
+                    <option value="phone">Phone</option>
+                  </select>
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Recipient Contact</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={requestForm.recipient_contact}
+                    onChange={(e) => setRequestForm({ ...requestForm, recipient_contact: e.target.value })}
+                    placeholder="@username, email, or phone"
+                    required
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Amount ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    style={styles.input}
+                    value={requestForm.amount}
+                    onChange={(e) => setRequestForm({ ...requestForm, amount: e.target.value })}
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Memo (Optional)</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={requestForm.memo}
+                    onChange={(e) => setRequestForm({ ...requestForm, memo: e.target.value })}
+                    placeholder="What's this for?"
+                    maxLength={100}
+                  />
+                </div>
+
+                <div style={styles.modalButtons}>
+                  <button type="button" onClick={() => setShowRequestModal(false)} style={styles.secondaryButton}>
+                    Cancel
+                  </button>
+                  <button type="submit" style={styles.primaryButton}>
+                    Send Request
                   </button>
                 </div>
               </form>

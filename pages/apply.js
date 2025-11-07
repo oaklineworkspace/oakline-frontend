@@ -298,7 +298,7 @@ export default function Apply() {
 
   const getEffectiveState = () => {
     // Return manual state if manual entry is being used, otherwise return selected state
-    if (showManualState || shouldShowManualState()) {
+    if (shouldShowManualState()) {
       return formData.manualState;
     }
     return formData.state;
@@ -306,7 +306,7 @@ export default function Apply() {
 
   const getEffectiveCity = () => {
     // Return manual city if manual entry is being used, otherwise return selected city
-    if (showManualCity || shouldShowManualCity()) {
+    if (shouldShowManualCity()) {
       return formData.manualCity;
     }
     return formData.city;
@@ -1061,6 +1061,24 @@ export default function Apply() {
       padding: '4px 8px',
       borderRadius: '6px',
       display: 'inline-block'
+    },
+    minDepositBadge: {
+      backgroundColor: '#fef3c7',
+      border: '1px solid #fbbf24',
+      borderRadius: '8px',
+      padding: '0.5rem',
+      marginTop: '0.75rem',
+      fontSize: '13px',
+      fontWeight: '600',
+      color: '#92400e',
+      textAlign: 'center'
+    },
+    depositNotice: {
+      backgroundColor: '#eff6ff',
+      border: '2px solid #3b82f6',
+      borderRadius: '12px',
+      padding: '1.5rem',
+      marginTop: '1.5rem'
     },
     checkboxContainer: {
       display: 'flex',
@@ -2661,16 +2679,8 @@ export default function Apply() {
                           <div style={styles.accountDescription}>{account.description}</div>
                           <div style={styles.accountRate}>{account.rate}</div>
                           {minDeposit > 0 && (
-                            <div style={{
-                              marginTop: '8px',
-                              padding: '6px 12px',
-                              backgroundColor: '#FEF3C7',
-                              borderRadius: '6px',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              color: '#92400E'
-                            }}>
-                              Min. Deposit: ${minDeposit.toLocaleString()}
+                            <div style={styles.minDepositBadge}>
+                              💰 Minimum Deposit: ${minDeposit.toFixed(2)}
                             </div>
                           )}
                           {formData.accountTypes.includes(account.id) && (
@@ -2700,6 +2710,20 @@ export default function Apply() {
                   <div style={styles.errorMessage}>⚠️ {errors.accountTypes}</div>
                 )}
               </div>
+
+              {selectedAccountMinDeposit > 0 && (
+                <div style={styles.depositNotice}>
+                  <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '16px', fontWeight: '600', color: '#1A3E6F' }}>
+                    📋 Important: Minimum Deposit Required
+                  </h4>
+                  <p style={{ margin: '0 0 0.5rem 0', fontSize: '14px', color: '#374151', lineHeight: '1.6' }}>
+                    The account type(s) you selected require a minimum deposit of <strong>${selectedAccountMinDeposit.toFixed(2)}</strong> to activate your account.
+                  </p>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#6b7280', lineHeight: '1.6' }}>
+                    After submitting your application, an admin will review it. Once approved, you'll need to make the minimum deposit before your account becomes active. You can fund your account via crypto deposit or bank transfer.
+                  </p>
+                </div>
+              )}
 
               <div style={{...styles.formGrid, ...styles.gridCols2}}>
                 <div style={styles.inputGroup}>
