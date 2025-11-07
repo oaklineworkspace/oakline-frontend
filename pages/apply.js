@@ -140,7 +140,7 @@ export default function Apply() {
 
   const selectedAccountMinDeposit = formData.accountTypes.reduce((maxDeposit, accountId) => {
     const account = accountTypes.find(acc => acc.id === accountId);
-    const minDeposit = parseFloat(account?.min_opening_deposit) || 0;
+    const minDeposit = parseFloat(account?.min_deposit) || 0;
     return Math.max(maxDeposit, minDeposit);
   }, 0);
 
@@ -699,7 +699,7 @@ export default function Apply() {
               const accountType = accountTypes.find(at => at.id === id);
               return {
                 name: accountType?.name || '',
-                min_opening_deposit: accountType?.min_opening_deposit || 0
+                min_opening_deposit: accountType?.min_deposit || 0
               };
             })
           })
@@ -2724,7 +2724,7 @@ export default function Apply() {
                 ) : (
                   <div style={styles.accountTypesGrid}>
                     {accountTypes.map(account => {
-                      const minDeposit = parseFloat(account.min_opening_deposit) || 0;
+                      const minDeposit = parseFloat(account.min_deposit) || 0;
                       return (
                         <div
                           key={account.id}
