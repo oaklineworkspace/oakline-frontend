@@ -7,19 +7,43 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, firstName, lastName, accountTypes, minDepositRequired } = req.body;
+    const { email, firstName, lastName, accountTypes } = req.body;
 
     if (!email || !firstName || !lastName) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const accountTypesList = accountTypes && accountTypes.length > 0
-      ? accountTypes.map(type => `• ${type}`).join('\n')
+    // Fetch account types from database to get minimum deposit info
+    const { supabase } = await import('../../lib/supabaseClient');
+    const { data: dbAccountTypes } = await supabase
+      .from('account_types')
+      .select('name, min_opening_deposit')
+      .in('name', accountTypes || []);
+
+    // Calculate total minimum deposit required
+    let totalMinDeposit = 0;
+    const accountTypesWithDeposits = [];
+    
+    if (dbAccountTypes && dbAccountTypes.length > 0) {
+      dbAccountTypes.forEach(account => {
+        const minDeposit = parseFloat(account.min_opening_deposit) || 0;
+        totalMinDeposit = Math.max(totalMinDeposit, minDeposit); // Use highest minimum
+        
+        if (minDeposit > 0) {
+          accountTypesWithDeposits.push(`• ${account.name} - Min. Deposit: $${minDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`);
+        } else {
+          accountTypesWithDeposits.push(`• ${account.name} - No minimum deposit`);
+        }
+      });
+    }
+
+    const accountTypesList = accountTypesWithDeposits.length > 0
+      ? accountTypesWithDeposits.join('\n')
       : '• Account types will be confirmed upon approval';
     
-    const depositInfo = minDepositRequired && minDepositRequired > 0
-      ? `<strong>Minimum Deposit Required:</strong> $${parseFloat(minDepositRequired).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
-      : 'No minimum deposit required';
+    const depositInfo = totalMinDeposit > 0
+      ? `<strong>Total Minimum Deposit Required:</strong> $${totalMinDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+      : '<strong>No minimum deposit required</strong>';
 
     const emailHtml = `
       <!DOCTYPE html>

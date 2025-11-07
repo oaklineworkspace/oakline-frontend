@@ -2756,8 +2756,33 @@ export default function Apply() {
                           <div style={styles.accountDescription}>{account.description}</div>
                           <div style={styles.accountRate}>{account.rate}</div>
                           {minDeposit > 0 && (
-                            <div style={styles.minDepositBadge}>
-                              💰 Minimum Deposit: ${minDeposit.toFixed(2)}
+                            <div style={{
+                              marginTop: '12px',
+                              padding: '10px 12px',
+                              backgroundColor: '#fef3c7',
+                              border: '1px solid #fde68a',
+                              borderRadius: '8px',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: '#92400e',
+                              textAlign: 'center'
+                            }}>
+                              💰 Min. Opening Deposit: ${minDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            </div>
+                          )}
+                          {minDeposit === 0 && (
+                            <div style={{
+                              marginTop: '12px',
+                              padding: '10px 12px',
+                              backgroundColor: '#d1fae5',
+                              border: '1px solid #86efac',
+                              borderRadius: '8px',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: '#065f46',
+                              textAlign: 'center'
+                            }}>
+                              ✓ No Minimum Deposit Required
                             </div>
                           )}
                           {formData.accountTypes.includes(account.id) && (
