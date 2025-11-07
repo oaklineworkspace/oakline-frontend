@@ -463,6 +463,7 @@ function DashboardContent() {
                     <Link href="/deposit-crypto" style={styles.dropdownLink}>₿ Deposit Funds via Cryptocurrency</Link>
                     <Link href="/withdrawal" style={styles.dropdownLink}>📤 Withdraw Funds</Link>
                     <Link href="/zelle" style={styles.dropdownLink}>💰 Zelle</Link>
+                    <Link href="/oakline-pay" style={styles.dropdownLink}>⚡ Oakline Pay</Link>
                   </div>
                   <div style={styles.dropdownDivider}></div>
                   <div style={styles.dropdownSection}>
@@ -672,6 +673,7 @@ function DashboardContent() {
                     txType === 'interest' || 
                     txType === 'refund' || 
                     txType === 'zelle_receive' ||
+                    txType === 'oakline_pay_receive' ||
                     txType === 'salary' ||
                     txType === 'payment_received' ||
                     txType === 'crypto_deposit' ||
@@ -686,6 +688,7 @@ function DashboardContent() {
                          txType === 'bill_payment' || 
                          txType === 'fee' || 
                          txType === 'zelle_send' ||
+                         txType === 'oakline_pay_send' ||
                          txType === 'payment_sent' ||
                          isTransferTo) {
                   isCredit = false;
@@ -706,6 +709,8 @@ function DashboardContent() {
                     case 'fee': return '💳';
                     case 'zelle_send': return 'Z';
                     case 'zelle_receive': return 'Z';
+                    case 'oakline_pay_send': return 'O';
+                    case 'oakline_pay_receive': return 'O';
                     case 'crypto_deposit': return '₿';
                     default: return '💼';
                   }
@@ -820,6 +825,10 @@ function DashboardContent() {
             <Link href="/zelle" style={styles.standardActionButton}>
               <span style={styles.quickActionIcon}>⚡</span>
               <span style={styles.quickActionText}>Send with Zelle</span>
+            </Link>
+            <Link href="/oakline-pay" style={styles.standardActionButton}>
+              <span style={styles.quickActionIcon}>💰</span>
+              <span style={styles.quickActionText}>Oakline Pay</span>
             </Link>
             <Link href="/loan/dashboard" style={styles.standardActionButton}>
               <span style={styles.quickActionIcon}>💼</span>

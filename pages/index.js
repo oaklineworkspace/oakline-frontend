@@ -124,6 +124,7 @@ export default function Home() {
     { name: 'Money Transfer', href: user ? '/transfer' : '/login', icon: '💸', desc: 'Send & receive funds', color: '#059669', section: 'core' },
     { name: 'Bill Pay', href: user ? '/bill-pay' : '/login', icon: '🧾', desc: 'Automated payments', color: '#F59E0B', section: 'core' },
     { name: 'Zelle Payments', href: user ? '/zelle' : '/login', icon: '⚡', desc: 'Instant transfers', color: '#6B21A8', section: 'core' },
+    { name: 'Oakline Pay', href: user ? '/oakline-pay' : '/login', icon: '💰', desc: 'Send money with @tags', color: '#1A3E6F', section: 'core' },
     { name: 'Mobile Deposit', href: user ? '/deposit' : '/login', icon: '📸', desc: 'Deposit checks instantly', color: '#14B8A6', section: 'core' },
     { name: 'ATM Network', href: '/atm', icon: '🏧', desc: '24/7 cash access', color: '#8B5CF6', section: 'core' },
     { name: 'Debit & Credit Cards', href: user ? '/cards' : '/login', icon: '💳', desc: 'Manage your cards', color: '#EC4899', section: 'core' },
