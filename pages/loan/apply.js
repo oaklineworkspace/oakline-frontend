@@ -187,38 +187,38 @@ function LoanApplicationContent() {
   };
 
   const getDefaultLoanTypes = () => [
-    { 
-      id: '1', value: 'personal', label: 'Personal Loan', 
+    {
+      id: '1', value: 'personal', label: 'Personal Loan',
       rates: [{ rate: 6.99, apr: 6.99, min_term_months: 12, max_term_months: 84 }],
       icon: '👤', desc: 'Perfect for debt consolidation, home improvements, or major purchases',
       minAmount: 1000, maxAmount: 50000
     },
-    { 
-      id: '2', value: 'home_mortgage', label: 'Home Mortgage', 
+    {
+      id: '2', value: 'home_mortgage', label: 'Home Mortgage',
       rates: [{ rate: 7.25, apr: 7.25, min_term_months: 180, max_term_months: 360 }],
       icon: '🏠', desc: 'Fixed and adjustable-rate mortgages for your dream home',
       minAmount: 50000, maxAmount: 5000000
     },
-    { 
-      id: '3', value: 'auto_loan', label: 'Auto Loan', 
+    {
+      id: '3', value: 'auto_loan', label: 'Auto Loan',
       rates: [{ rate: 5.99, apr: 5.99, min_term_months: 24, max_term_months: 72 }],
       icon: '🚗', desc: 'Finance new or used vehicles with competitive rates',
       minAmount: 5000, maxAmount: 100000
     },
-    { 
-      id: '4', value: 'business', label: 'Business Loan', 
+    {
+      id: '4', value: 'business', label: 'Business Loan',
       rates: [{ rate: 8.50, apr: 8.50, min_term_months: 12, max_term_months: 120 }],
       icon: '🏢', desc: 'Expand your business with flexible financing options',
       minAmount: 10000, maxAmount: 500000
     },
-    { 
-      id: '5', value: 'student', label: 'Student Loan', 
+    {
+      id: '5', value: 'student', label: 'Student Loan',
       rates: [{ rate: 4.99, apr: 4.99, min_term_months: 120, max_term_months: 240 }],
       icon: '🎓', desc: 'Invest in education with competitive student loan rates',
       minAmount: 1000, maxAmount: 100000
     },
-    { 
-      id: '6', value: 'home_equity', label: 'Home Equity Loan', 
+    {
+      id: '6', value: 'home_equity', label: 'Home Equity Loan',
       rates: [{ rate: 7.50, apr: 7.50, min_term_months: 60, max_term_months: 360 }],
       icon: '🏡', desc: 'Leverage your home equity for major expenses',
       minAmount: 10000, maxAmount: 500000
@@ -284,14 +284,14 @@ function LoanApplicationContent() {
         const rates = selectedLoan.rates || [];
         if (rates.length > 0) {
           const defaultRate = rates[0].apr || rates[0].rate;
-          setFormData(prev => ({ 
-            ...prev, 
+          setFormData(prev => ({
+            ...prev,
             interest_rate: defaultRate.toString(),
             loan_type: value,
-            term_months: prev.term_months && 
-                         parseInt(prev.term_months) >= rates[0].min_term_months && 
-                         parseInt(prev.term_months) <= rates[0].max_term_months 
-                         ? prev.term_months 
+            term_months: prev.term_months &&
+                         parseInt(prev.term_months) >= rates[0].min_term_months &&
+                         parseInt(prev.term_months) <= rates[0].max_term_months
+                         ? prev.term_months
                          : ''
           }));
         }
@@ -795,6 +795,18 @@ function LoanApplicationContent() {
                     style={styles.input}
                     disabled={hasActiveLoan}
                   />
+                  {formData.principal && depositAmount > 0 && (
+                    <div style={styles.depositNotice}>
+                      <div style={styles.depositNoticeIcon}>ℹ️</div>
+                      <div style={styles.depositNoticeContent}>
+                        <strong style={styles.depositNoticeTitle}>Minimum Deposit Required</strong>
+                        <p style={styles.depositNoticeText}>
+                          A minimum deposit of <strong>${depositAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong> (10% of loan amount)
+                          is required to activate your account after approval.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div style={styles.formGroup}>
@@ -1564,13 +1576,43 @@ const styles = {
   successModalSecondaryButton: {
     padding: '16px 24px',
     fontSize: '16px',
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1e293b',
     backgroundColor: 'transparent',
     border: '2px solid #e5e7eb',
     borderRadius: '12px',
     cursor: 'pointer',
     fontFamily: 'inherit'
+  },
+  depositNotice: {
+    marginTop: '12px',
+    padding: '16px',
+    backgroundColor: '#eff6ff',
+    border: '2px solid #3b82f6',
+    borderRadius: '12px',
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'flex-start'
+  },
+  depositNoticeIcon: {
+    fontSize: '24px',
+    flexShrink: 0
+  },
+  depositNoticeContent: {
+    flex: 1
+  },
+  depositNoticeTitle: {
+    fontSize: '14px',
+    fontWeight: '700',
+    color: '#1e40af',
+    display: 'block',
+    marginBottom: '4px'
+  },
+  depositNoticeText: {
+    fontSize: '13px',
+    color: '#1e40af',
+    margin: 0,
+    lineHeight: '1.5'
   }
 };
 

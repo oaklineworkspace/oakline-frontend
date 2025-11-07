@@ -136,6 +136,30 @@ export default async function handler(req, res) {
           read: false
         }]);
 
+      // Get user profile for email
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('first_name, last_name, email')
+        .eq('id', user.id)
+        .single();
+
+      const userName = profile ? `${profile.first_name} ${profile.last_name}` : 'Valued Customer';
+      const userEmail = profile?.email || user.email;
+
+      // Send deposit confirmed email
+      try {
+        const { sendDepositConfirmedEmail } = require('../../../lib/email');
+        
+        await sendDepositConfirmedEmail({
+          to: userEmail,
+          userName,
+          depositAmount: amount,
+          loanType: loan.loan_type.replace(/_/g, ' ').toUpperCase()
+        });
+      } catch (emailError) {
+        console.error('Error sending deposit confirmation email:', emailError);
+      }
+
       return res.status(200).json({
         success: true,
         message: 'Deposit processed successfully',

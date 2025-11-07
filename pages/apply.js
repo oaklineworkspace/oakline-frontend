@@ -140,7 +140,7 @@ export default function Apply() {
 
   const selectedAccountMinDeposit = formData.accountTypes.reduce((maxDeposit, accountId) => {
     const account = accountTypes.find(acc => acc.id === accountId);
-    const minDeposit = parseFloat(account?.min_deposit) || 0;
+    const minDeposit = parseFloat(account?.min_opening_deposit) || 0;
     return Math.max(maxDeposit, minDeposit);
   }, 0);
 
@@ -1354,6 +1354,84 @@ export default function Apply() {
       fontSize: '0.95rem',
       fontWeight: '600',
       letterSpacing: '0.5px'
+    },
+    // Styles for account type cards
+    accountTypeCard: {
+      border: '2px solid #e5e7eb',
+      borderRadius: '16px',
+      padding: '1.5rem',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease',
+      backgroundColor: 'white',
+      position: 'relative',
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between'
+    },
+    accountTypeCardSelected: {
+      borderColor: '#10b981',
+      backgroundColor: '#f0f4f4',
+      transform: 'translateY(-2px)',
+      boxShadow: '0 8px 25px rgba(16, 185, 121, 0.2)'
+    },
+    accountTypeCardHover: {
+      borderColor: '#9ca3af',
+      transform: 'translateY(-1px)',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+    },
+    accountTypeName: {
+      fontSize: '16px',
+      fontWeight: '600',
+      color: '#1A3E6F',
+      marginBottom: '8px'
+    },
+    accountTypeDescription: {
+      fontSize: '13px',
+      color: '#64748b',
+      lineHeight: '1.5',
+      flexGrow: 1,
+      marginBottom: '12px'
+    },
+    accountTypeFeatures: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+      marginBottom: '12px'
+    },
+    featureItem: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      fontSize: '14px',
+      color: '#64748b'
+    },
+    featureIcon: {
+      fontSize: '16px'
+    },
+    depositRequiredBadge: {
+      marginTop: '12px',
+      padding: '12px',
+      backgroundColor: '#fef3c7',
+      border: '1px solid #fbbf24',
+      borderRadius: '8px',
+      fontSize: '13px',
+      fontWeight: '600',
+      color: '#92400e',
+      textAlign: 'center'
+    },
+
+    // Step 4 - Account & Employment Styles
+    accountCardSelectedInStep4: {
+      borderColor: '#0066CC',
+      backgroundColor: '#e6f2ff',
+      transform: 'translateY(-2px)',
+      boxShadow: '0 8px 25px rgba(0, 102, 204, 0.2)'
+    },
+    accountCardHoverInStep4: {
+      borderColor: '#9ca3af',
+      transform: 'translateY(-1px)',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
     }
   };
 
@@ -2643,19 +2721,18 @@ export default function Apply() {
                 ) : (
                   <div style={styles.accountTypesGrid}>
                     {accountTypes.map(account => {
-                      const minDeposit = parseFloat(account.min_deposit) || 0;
+                      const minDeposit = parseFloat(account.min_opening_deposit) || 0;
                       return (
                         <div
                           key={account.id}
                           onClick={() => toggleAccountType(account.id)}
                           style={{
                             ...styles.accountCard,
-                            borderColor: formData.accountTypes.includes(account.id) ? '#10b981' : '#e5e7eb',
-                            backgroundColor: formData.accountTypes.includes(account.id) ? '#f0fdf4' : 'white',
+                            ...(formData.accountTypes.includes(account.id) ? styles.accountCardSelectedInStep4 : {}),
                           }}
                           onMouseEnter={(e) => {
                             if (!formData.accountTypes.includes(account.id)) {
-                              Object.assign(e.target.style, styles.accountCardHover);
+                              Object.assign(e.target.style, styles.accountCardHoverInStep4);
                             }
                           }}
                           onMouseLeave={(e) => {
