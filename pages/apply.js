@@ -697,7 +697,10 @@ export default function Apply() {
             lastName: formData.lastName.trim(),
             accountTypes: formData.accountTypes.map(id => {
               const accountType = accountTypes.find(at => at.id === id);
-              return accountType?.name || '';
+              return {
+                name: accountType?.name || '',
+                min_opening_deposit: accountType?.min_opening_deposit || 0
+              };
             })
           })
         });
@@ -2732,14 +2735,14 @@ export default function Apply() {
                           }}
                           onMouseEnter={(e) => {
                             if (!formData.accountTypes.includes(account.id)) {
-                              Object.assign(e.target.style, styles.accountCardHoverInStep4);
+                              Object.assign(e.currentTarget.style, styles.accountCardHoverInStep4);
                             }
                           }}
                           onMouseLeave={(e) => {
                             if (!formData.accountTypes.includes(account.id)) {
-                              e.target.style.borderColor = '#e5e7eb';
-                              e.target.style.transform = 'translateY(0)';
-                              e.target.style.boxShadow = 'none';
+                              e.currentTarget.style.borderColor = '#e5e7eb';
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = 'none';
                             }
                           }}
                         >

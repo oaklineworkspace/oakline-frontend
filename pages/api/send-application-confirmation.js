@@ -13,26 +13,23 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Fetch account types from database to get minimum deposit info
-    const { supabase } = await import('../../lib/supabaseClient');
-    const { data: dbAccountTypes } = await supabase
-      .from('account_types')
-      .select('name, min_opening_deposit')
-      .in('name', accountTypes || []);
-
     // Calculate total minimum deposit required
     let totalMinDeposit = 0;
     const accountTypesWithDeposits = [];
     
-    if (dbAccountTypes && dbAccountTypes.length > 0) {
-      dbAccountTypes.forEach(account => {
-        const minDeposit = parseFloat(account.min_opening_deposit) || 0;
-        totalMinDeposit = Math.max(totalMinDeposit, minDeposit); // Use highest minimum
+    if (accountTypes && accountTypes.length > 0) {
+      accountTypes.forEach(account => {
+        const accountName = typeof account === 'string' ? account : account.name;
+        const minDeposit = typeof account === 'object' && account.min_opening_deposit 
+          ? parseFloat(account.min_opening_deposit) 
+          : 0;
+        
+        totalMinDeposit = Math.max(totalMinDeposit, minDeposit);
         
         if (minDeposit > 0) {
-          accountTypesWithDeposits.push(`• ${account.name} - Min. Deposit: $${minDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`);
+          accountTypesWithDeposits.push(`• ${accountName} - Min. Deposit: $${minDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`);
         } else {
-          accountTypesWithDeposits.push(`• ${account.name} - No minimum deposit`);
+          accountTypesWithDeposits.push(`• ${accountName} - No minimum deposit`);
         }
       });
     }
@@ -89,10 +86,10 @@ export default async function handler(req, res) {
               </div>
             </div>
             
-            ${minDepositRequired && minDepositRequired > 0 ? `
+            ${totalMinDeposit > 0 ? `
             <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0; border-radius: 8px;">
               <p style="color: #92400e; font-size: 14px; font-weight: 500; margin: 0;">
-                💰 <strong>Funding Required:</strong> After your application is approved, you'll need to fund your account with a minimum deposit of $${parseFloat(minDepositRequired).toLocaleString('en-US', { minimumFractionDigits: 2 })} via cryptocurrency before your account becomes fully active.
+                💰 <strong>Funding Required:</strong> After your application is approved, you'll need to fund your account with a minimum deposit of $${totalMinDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })} via cryptocurrency before your account becomes fully active.
               </p>
             </div>
             ` : ''}
