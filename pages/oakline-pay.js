@@ -42,6 +42,13 @@ export default function OaklinePayPage() {
     nickname: ''
   });
 
+  const [showSetupModal, setShowSetupModal] = useState(false);
+  const [setupForm, setSetupForm] = useState({
+    oakline_tag: '',
+    display_name: '',
+    bio: ''
+  });
+
   useEffect(() => {
     checkUserAndLoadData();
   }, []);
@@ -240,6 +247,39 @@ export default function OaklinePayPage() {
     } catch (error) {
       console.error('Error deleting contact:', error);
       setMessage('Failed to remove contact');
+    }
+  };
+
+  const handleSetupProfile = async (e) => {
+    e.preventDefault();
+    setMessage('');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const response = await fetch('/api/oakline-pay-setup-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify(setupForm)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(data.error || 'Failed to setup profile');
+        return;
+      }
+
+      setMessage('Oakline tag created successfully!');
+      setShowSetupModal(false);
+      setSetupForm({ oakline_tag: '', display_name: '', bio: '' });
+      checkUserAndLoadData();
+    } catch (error) {
+      console.error('Error setting up profile:', error);
+      setMessage('Failed to setup profile');
     }
   };
 
@@ -590,7 +630,9 @@ export default function OaklinePayPage() {
               <div style={styles.alertBox}>
                 <p><strong>Set up your Oakline Tag</strong></p>
                 <p>Create a unique @username to make it easier for people to send you money!</p>
-                <button style={styles.primaryButton}>Create Oakline Tag</button>
+                <button onClick={() => setShowSetupModal(true)} style={styles.primaryButton}>
+                  Create Oakline Tag
+                </button>
               </div>
             )}
           </div>
@@ -609,6 +651,65 @@ export default function OaklinePayPage() {
               <button onClick={() => setShowQRModal(false)} style={styles.primaryButton}>
                 Close
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Setup Profile Modal */}
+        {showSetupModal && (
+          <div style={styles.modalOverlay} onClick={() => setShowSetupModal(false)}>
+            <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+              <h2 style={styles.modalTitle}>Create Your Oakline Tag</h2>
+              <p style={styles.modalText}>
+                Choose a unique @username that others can use to send you money
+              </p>
+              <form onSubmit={handleSetupProfile}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Oakline Tag *</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={setupForm.oakline_tag}
+                    onChange={(e) => setSetupForm({ ...setupForm, oakline_tag: e.target.value })}
+                    placeholder="@johndoe"
+                    required
+                    pattern="@[a-zA-Z0-9_]{3,20}"
+                    title="Must start with @ and be 3-20 characters (letters, numbers, underscores)"
+                  />
+                  <small style={{ color: '#666', fontSize: '12px' }}>
+                    3-20 characters, letters, numbers, and underscores only
+                  </small>
+                </div>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Display Name (Optional)</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={setupForm.display_name}
+                    onChange={(e) => setSetupForm({ ...setupForm, display_name: e.target.value })}
+                    placeholder="John Doe"
+                  />
+                </div>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Bio (Optional)</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={setupForm.bio}
+                    onChange={(e) => setSetupForm({ ...setupForm, bio: e.target.value })}
+                    placeholder="A short description"
+                    maxLength={100}
+                  />
+                </div>
+                <div style={styles.modalButtons}>
+                  <button type="button" onClick={() => setShowSetupModal(false)} style={styles.secondaryButton}>
+                    Cancel
+                  </button>
+                  <button type="submit" style={styles.primaryButton}>
+                    Create Tag
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

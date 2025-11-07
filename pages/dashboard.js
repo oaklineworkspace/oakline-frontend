@@ -978,7 +978,7 @@ function DashboardContent() {
                 const cryptoType = deposit.crypto_assets?.crypto_type || 'Cryptocurrency';
                 const cryptoSymbol = deposit.crypto_assets?.symbol || 'CRYPTO';
                 const networkType = deposit.crypto_assets?.network_type || 'Network';
-                
+
                 // Map purpose field to display text
                 let purposeDisplay = '';
                 if (deposit.purpose === 'general_deposit') {
