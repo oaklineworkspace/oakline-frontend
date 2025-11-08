@@ -604,10 +604,22 @@ function DashboardContent() {
                   </button>
                   {addFundsDropdownVisible && (
                     <div style={styles.addFundsDropdown}>
+                      {accounts.some(acc => acc.status === 'pending_funding' && acc.min_deposit > 0) && (
+                        <div style={{
+                          padding: '0.75rem',
+                          backgroundColor: '#fef3c7',
+                          borderBottom: '1px solid #fde68a',
+                          fontSize: '0.75rem',
+                          color: '#92400e',
+                          fontWeight: '600'
+                        }}>
+                          ⚠️ You have account(s) requiring minimum deposit for activation
+                        </div>
+                      )}
                       <Link href={getCryptoDepositLink()} style={styles.addFundsDropdownItem}>
                         <div>
                           <div style={styles.dropdownItemTitle}>
-                            ₿ Deposit Crypto
+                            ₿ Crypto Deposit
                             {accounts.some(acc => acc.status === 'pending_funding' && acc.min_deposit > 0) && (
                               <span style={{ 
                                 marginLeft: '0.5rem', 
@@ -618,21 +630,25 @@ function DashboardContent() {
                                 borderRadius: '0.25rem',
                                 fontWeight: '600'
                               }}>
-                                Funding Required
+                                Minimum Deposit
                               </span>
                             )}
                           </div>
                           <div style={styles.dropdownItemDesc}>
                             {accounts.some(acc => acc.status === 'pending_funding' && acc.min_deposit > 0)
-                              ? `Complete minimum deposit to activate your account`
-                              : 'Add funds using various cryptocurrencies'}
+                              ? `Complete minimum deposit requirement for account activation`
+                              : 'Add funds to your balance using cryptocurrency'}
                           </div>
                         </div>
                       </Link>
                       <Link href="/deposit-real" style={styles.addFundsDropdownItem}>
                         <div>
                           <div style={styles.dropdownItemTitle}>📱 Mobile Check Deposit</div>
-                          <div style={styles.dropdownItemDesc}>Deposit checks using your mobile device</div>
+                          <div style={styles.dropdownItemDesc}>
+                            {accounts.some(acc => acc.status === 'pending_funding' && acc.min_deposit > 0)
+                              ? 'Complete minimum deposit or add to your balance'
+                              : 'Add funds to your balance using mobile check'}
+                          </div>
                         </div>
                       </Link>
                     </div>

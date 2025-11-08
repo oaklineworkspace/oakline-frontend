@@ -1073,8 +1073,8 @@ export default function CryptoDeposit() {
           </h1>
           <p style={styles.welcomeSubtitle}>
             {fundingMode 
-              ? 'Complete your minimum deposit requirement to activate your account'
-              : 'Securely deposit funds to your account using cryptocurrency'}
+              ? 'Complete the minimum deposit requirement below to activate your account'
+              : 'Add funds to your account balance using cryptocurrency'}
           </p>
         </div>
 
@@ -1095,18 +1095,21 @@ export default function CryptoDeposit() {
             }}>
               <span style={{ fontSize: '2rem' }}>💰</span>
               <div style={{ flex: 1 }}>
-                <h3 style={{ margin: '0 0 0.5rem 0', color: '#92400e', fontSize: '1.1rem' }}>
-                  Account Activation Required
+                <h3 style={{ margin: '0 0 0.75rem 0', color: '#92400e', fontSize: '1.2rem' }}>
+                  Minimum Deposit Required for Account Activation
                 </h3>
+                <div style={{ fontSize: '1rem', color: '#92400e', marginBottom: '0.75rem', padding: '0.5rem', backgroundColor: '#fffbeb', borderRadius: '6px' }}>
+                  <strong>Account Number:</strong> {depositForm.account_number || 'Loading...'}
+                </div>
                 <div style={{ fontSize: '0.9rem', color: '#92400e', marginBottom: '0.5rem' }}>
-                  <strong>Minimum Deposit:</strong> ${accountMinDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  <strong>Minimum Deposit Required:</strong> ${accountMinDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </div>
                 <div style={{ fontSize: '0.9rem', color: '#92400e', marginBottom: '0.5rem' }}>
                   <strong>Current Balance:</strong> ${accountCurrentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </div>
                 {(accountMinDeposit - accountCurrentBalance) > 0 && (
                   <div style={{ fontSize: '1rem', color: '#dc2626', fontWeight: '600', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #fde68a' }}>
-                    <strong>Remaining Needed:</strong> ${(accountMinDeposit - accountCurrentBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    <strong>Amount Still Needed:</strong> ${(accountMinDeposit - accountCurrentBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </div>
                 )}
               </div>
