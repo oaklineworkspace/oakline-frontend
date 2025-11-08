@@ -2630,29 +2630,8 @@ export default function Apply() {
                 marginBottom: '2rem'
               }}>
                 <p style={{margin: 0, color: '#92400e', fontSize: '13px', lineHeight: '1.5'}}>
-                  <strong>📝 Important:</strong> Make sure your ID photo is clear, not blurry, and all information is readable. We use this to verify your identity for security purposes.
+                  <strong>📝 Important:</strong> Make sure your ID photo is clear, not blurry, and all information is readable. We use this to verify your identity for security purposes. On mobile devices, you can choose to use your camera directly from the file selector.
                 </p>
-              </div>
-
-              <div style={{
-                backgroundColor: '#eff6ff',
-                padding: '1.5rem',
-                borderRadius: '12px',
-                marginBottom: '2rem',
-                border: '2px solid #3b82f6',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-              }}>
-                <span style={{ fontSize: '32px' }}>📸</span>
-                <div>
-                  <h4 style={{margin: '0 0 0.5rem 0', fontSize: '18px', fontWeight: '700', color: '#1A3E6F'}}>
-                    Use Your Camera to Snap an ID Photo
-                  </h4>
-                  <p style={{margin: 0, color: '#374151', fontSize: '14px', lineHeight: '1.6'}}>
-                    If you prefer, you can use your device's camera to take photos of your ID. Ensure good lighting and a clear view of the document.
-                  </p>
-                </div>
               </div>
 
 
