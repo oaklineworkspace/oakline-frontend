@@ -1,9 +1,11 @@
 import { useRouter } from 'next/router';
 import styles from '../styles/FundingNotice.module.css';
 import Link from 'next/link';
+import { useMediaQuery } from 'react-responsive';
 
 export default function FundingNotice({ accounts }) {
   const router = useRouter();
+  const isMobile = useMediaQuery({ maxWidth: 768 });
 
   const handleDepositClick = (accountId, minDeposit, mode) => {
     router.push(`/deposit-crypto?account_id=${accountId}&min_deposit=${minDeposit}&mode=${mode}`);
@@ -33,46 +35,174 @@ export default function FundingNotice({ accounts }) {
             const remaining = Math.max(0, minDeposit - balance);
 
             return (
-              <div key={account.id} className={styles.noticeBox} style={{ marginBottom: '1rem' }}>
-                <div className={styles.noticeContent}>
-                  <div className={styles.noticeIcon}>💰</div>
-                  <div className={styles.noticeText}>
-                    <strong>Account {account.account_number} requires minimum deposit</strong>
-                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem', color: '#92400e' }}>
-                      Minimum Required: <strong>${minDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
-                      {' • '}
-                      Current Balance: <strong>${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
-                      {' • '}
-                      Still Needed: <strong>${remaining.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
-                    </p>
+              <div 
+                key={account.id} 
+                style={{
+                  background: 'linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%)',
+                  border: '2px solid #1A3E6F',
+                  borderLeft: '6px solid #FFC857',
+                  borderRadius: '12px',
+                  padding: isMobile ? '1.5rem' : '2rem',
+                  marginBottom: '1.5rem',
+                  boxShadow: '0 4px 12px rgba(26, 62, 111, 0.15)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem', flexDirection: isMobile ? 'column' : 'row' }}>
+                  <div style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '28px',
+                    flexShrink: 0,
+                    boxShadow: '0 4px 8px rgba(26, 62, 111, 0.2)'
+                  }}>
+                    💳
+                  </div>
+                  <div style={{ flex: 1, width: '100%' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                      <h3 style={{ 
+                        margin: 0, 
+                        color: '#1A3E6F', 
+                        fontSize: isMobile ? '1.2rem' : '1.4rem',
+                        fontWeight: '700',
+                        flex: 1,
+                        minWidth: '200px'
+                      }}>
+                        Account Activation Required
+                      </h3>
+                      <span style={{
+                        backgroundColor: '#FFC857',
+                        color: '#1A3E6F',
+                        padding: '0.4rem 1rem',
+                        borderRadius: '20px',
+                        fontSize: '0.75rem',
+                        fontWeight: '700',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}>
+                        Pending Funding
+                      </span>
+                    </div>
+
+                    <div style={{ 
+                      backgroundColor: 'white',
+                      borderRadius: '8px',
+                      padding: '1rem',
+                      marginBottom: '1rem',
+                      border: '1px solid #d1e3f5'
+                    }}>
+                      <div style={{ 
+                        fontSize: '0.85rem', 
+                        color: '#64748b', 
+                        marginBottom: '0.5rem',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}>
+                        Account Number
+                      </div>
+                      <div style={{ 
+                        fontSize: '1.1rem', 
+                        color: '#1A3E6F', 
+                        fontFamily: 'monospace',
+                        fontWeight: '700'
+                      }}>
+                        {account.account_number}
+                      </div>
+                    </div>
+
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                      gap: '1rem',
+                      marginBottom: '1rem'
+                    }}>
+                      <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '8px',
+                        padding: '1rem',
+                        border: '1px solid #d1e3f5'
+                      }}>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.25rem' }}>
+                          Minimum Required
+                        </div>
+                        <div style={{ fontSize: '1.2rem', color: '#1A3E6F', fontWeight: '700' }}>
+                          {formatCurrency(minDeposit)}
+                        </div>
+                      </div>
+                      <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '8px',
+                        padding: '1rem',
+                        border: '1px solid #d1e3f5'
+                      }}>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.25rem' }}>
+                          Current Balance
+                        </div>
+                        <div style={{ fontSize: '1.2rem', color: '#64748b', fontWeight: '700' }}>
+                          {formatCurrency(balance)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{
+                      backgroundColor: '#FFC857',
+                      borderRadius: '8px',
+                      padding: '1rem',
+                      textAlign: 'center',
+                      marginBottom: '1rem'
+                    }}>
+                      <div style={{ fontSize: '0.85rem', color: '#1A3E6F', marginBottom: '0.25rem', fontWeight: '600' }}>
+                        Amount Needed to Activate
+                      </div>
+                      <div style={{ fontSize: '1.8rem', color: '#1A3E6F', fontWeight: '700' }}>
+                        {formatCurrency(remaining)}
+                      </div>
+                    </div>
+
+                    <Link
+                      href={`/deposit-crypto?account_id=${account.id}&mode=funding`}
+                      style={{
+                        display: 'block',
+                        backgroundColor: '#1A3E6F',
+                        color: 'white',
+                        padding: '1rem 1.5rem',
+                        borderRadius: '8px',
+                        textAlign: 'center',
+                        textDecoration: 'none',
+                        fontWeight: '700',
+                        fontSize: '1rem',
+                        transition: 'all 0.2s',
+                        boxShadow: '0 2px 4px rgba(26, 62, 111, 0.2)',
+                        marginBottom: '1rem'
+                      }}
+                      onMouseOver={(e) => e.target.style.backgroundColor = '#2A5490'}
+                      onMouseOut={(e) => e.target.style.backgroundColor = '#1A3E6F'}
+                    >
+                      Complete Funding Now
+                    </Link>
+
+                    <div style={{
+                      padding: '0.75rem',
+                      backgroundColor: 'rgba(26, 62, 111, 0.05)',
+                      borderRadius: '6px',
+                      fontSize: '0.85rem',
+                      color: '#1A3E6F',
+                      lineHeight: '1.5'
+                    }}>
+                      ℹ️ Your account will be activated immediately once the minimum deposit is received and confirmed.
+                    </div>
                   </div>
                 </div>
-                <Link
-                  href={`/deposit-crypto?account_id=${account.id}&mode=funding`}
-                  className={styles.depositButton}
-                >
-                  Add Funds via Crypto
-                </Link>
               </div>
             );
           })
       ) : (
-        <div className={styles.notice}>
-          <div className={styles.iconContainer}>
-            <svg className={styles.icon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
-            </svg>
-          </div>
-          <div className={styles.content}>
-            <div className={styles.header}>
-              <h3 className={styles.title}>All Accounts Funded</h3>
-              <span className={styles.badge} style={{ backgroundColor: '#10b981' }}>Complete</span>
-            </div>
-            <p className={styles.message}>
-              All your accounts have met their minimum deposit requirements.
-            </p>
-          </div>
-        </div>
+        <div style={{ display: 'none' }}></div>
       )}
     </div>
   );
