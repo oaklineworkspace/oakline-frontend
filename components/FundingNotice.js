@@ -5,7 +5,7 @@ export default function FundingNotice({ account }) {
   const router = useRouter();
   
   const handleDepositClick = () => {
-    router.push('/crypto-deposit');
+    router.push(`/deposit-crypto?account_id=${account.id}&min_deposit=${account.min_deposit}&mode=funding`);
   };
 
   const formatCurrency = (amount) => {
