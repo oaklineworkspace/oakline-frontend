@@ -317,6 +317,14 @@ function DashboardContent() {
     setAddFundsDropdownVisible(false); // Close add funds dropdown too
   };
 
+  const getCryptoDepositLink = () => {
+    const pendingFundingAccount = accounts.find(account => account.status === 'pending_funding');
+    if (pendingFundingAccount && pendingFundingAccount.min_deposit > 0) {
+      return `/deposit-crypto?account_id=${pendingFundingAccount.id}&min_deposit=${pendingFundingAccount.min_deposit}&mode=funding`;
+    }
+    return '/deposit-crypto';
+  };
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -596,19 +604,37 @@ function DashboardContent() {
                   </button>
                   {addFundsDropdownVisible && (
                     <div style={styles.addFundsDropdown}>
-                      <Link href="/deposit-crypto" style={styles.addFundsDropdownItem}>
+                      <Link href={getCryptoDepositLink()} style={styles.addFundsDropdownItem}>
                         <div>
-                          <div style={styles.dropdownItemTitle}>Deposit Crypto</div>
-                          <div style={styles.dropdownItemDesc}>Add funds using various cryptocurrencies</div>
+                          <div style={styles.dropdownItemTitle}>
+                            ₿ Deposit Crypto
+                            {accounts.some(acc => acc.status === 'pending_funding' && acc.min_deposit > 0) && (
+                              <span style={{ 
+                                marginLeft: '0.5rem', 
+                                fontSize: '0.7rem', 
+                                backgroundColor: '#fef3c7', 
+                                color: '#92400e',
+                                padding: '0.125rem 0.5rem',
+                                borderRadius: '0.25rem',
+                                fontWeight: '600'
+                              }}>
+                                Funding Required
+                              </span>
+                            )}
+                          </div>
+                          <div style={styles.dropdownItemDesc}>
+                            {accounts.some(acc => acc.status === 'pending_funding' && acc.min_deposit > 0)
+                              ? `Complete minimum deposit to activate your account`
+                              : 'Add funds using various cryptocurrencies'}
+                          </div>
                         </div>
                       </Link>
-                      <Link href="/pages/deposit-crypto" style={styles.addFundsDropdownItem}> {/* Assuming /pages/deposit-crypto is the correct path */}
+                      <Link href="/deposit-real" style={styles.addFundsDropdownItem}>
                         <div>
-                          <div style={styles.dropdownItemTitle}>Add via Debit Card</div>
-                          <div style={styles.dropdownItemDesc}>Securely add funds using your debit card</div>
+                          <div style={styles.dropdownItemTitle}>📱 Mobile Check Deposit</div>
+                          <div style={styles.dropdownItemDesc}>Deposit checks using your mobile device</div>
                         </div>
                       </Link>
-                      {/* Add more options as needed */}
                     </div>
                   )}
                 </div>
