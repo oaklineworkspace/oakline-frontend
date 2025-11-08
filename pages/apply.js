@@ -497,7 +497,6 @@ export default function Apply() {
       if (formData.accountTypes.length === 0) newErrors.accountTypes = 'Select at least one account type';
       if (!formData.employmentStatus) newErrors.employmentStatus = 'Employment status is required';
       if (!formData.annualIncome) newErrors.annualIncome = 'Annual income is required';
-      if (!formData.agreeToTerms) newErrors.agreeToTerms = 'You must agree to terms';
     }
 
     if (step === 4) {
@@ -507,6 +506,7 @@ export default function Apply() {
       if (!formData.idBackPath || !idBackPreview) {
         newErrors.idBack = 'Please upload back side of your ID';
       }
+      if (!formData.agreeToTerms) newErrors.agreeToTerms = 'You must agree to terms';
     }
 
     setErrors(newErrors);
@@ -2069,6 +2069,179 @@ export default function Apply() {
                   <label style={styles.label}>
                     City <span style={styles.required}>*</span>
                   </label>
+                  {shouldShowManualCity() ? (
+                    <input
+                      type="text"
+                      name="manualCity"
+                      value={formData.manualCity || ''}
+                      onChange={(e) => {
+                        handleInputChange(e);
+                        if (errors.city) {
+                          setErrors(prev => ({ ...prev, city: '' }));
+                        }
+                      }}
+                      style={{
+                        ...styles.input,
+                        ...(errors.city ? styles.inputError : {})
+                      }}
+                      placeholder="Enter your city"
+                    />
+                  ) : (
+                    <select
+                      name="city"
+                      value={formData.city || ''}
+                      onChange={(e) => {
+                        handleInputChange(e);
+                        if (errors.city) {
+                          setErrors(prev => ({ ...prev, city: '' }));
+                        }
+                      }}
+                      style={{
+                        ...styles.select,
+                        ...(errors.city ? styles.inputError : {})
+                      }}
+                    >
+                      <option value="">Select City</option>
+                      {getAvailableCities().map(city => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </select>
+                  )}
+                  {getAvailableCities().length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowManualCity(!showManualCity);
+                        setFormData(prev => ({ ...prev, city: '', manualCity: '' }));
+                        setErrors(prev => ({ ...prev, city: '' }));
+                      }}
+                      style={styles.toggleButton}
+                    >
+                      {showManualCity ? 'Select from list' : 'Enter manually'}
+                    </button>
+                  )}
+                  {errors.city && (
+                    <div style={styles.errorMessage}>⚠️ {errors.city}</div>
+                  )}
+                </div>
+
+                <div style={styles.inputGroup}>
+                  <label style={styles.label}>
+                    State / Province <span style={styles.required}>*</span>
+                  </label>
+                  {shouldShowManualState() ? (
+                    <input
+                      type="text"
+                      name="manualState"
+                      value={formData.manualState || ''}
+                      onChange={(e) => {
+                        handleInputChange(e);
+                        if (errors.state) {
+                          setErrors(prev => ({ ...prev, state: '' }));
+                        }
+                      }}
+                      style={{
+                        ...styles.input,
+                        ...(errors.state ? styles.inputError : {})
+                      }}
+                      placeholder="Enter your state/province"
+                    />
+                  ) : (
+                    <select
+                      name="state"
+                      value={formData.state || ''}
+                      onChange={(e) => {
+                        handleInputChange(e);
+                        if (errors.state) {
+                          setErrors(prev => ({ ...prev, state: '' }));
+                        }
+                      }}
+                      style={{
+                        ...styles.select,
+                        ...(errors.state ? styles.inputError : {})
+                      }}
+                    >
+                      <option value="">Select State/Province</option>
+                      {getAvailableStates().map(state => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
+                    </select>
+                  )}
+                  {getAvailableStates().length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowManualState(!showManualState);
+                        setFormData(prev => ({ ...prev, state: '', manualState: '', city: '', manualCity: '' }));
+                        setShowManualCity(false);
+                        setErrors(prev => ({ ...prev, state: '', city: '' }));
+                      }}
+                      style={styles.toggleButton}
+                    >
+                      {showManualState ? 'Select from list' : 'Enter manually'}
+                    </button>
+                  )}
+                  {errors.state && (
+                    <div style={styles.errorMessage}>⚠️ {errors.state}</div>
+                  )}
+                </div>
+
+                <div style={styles.inputGroup}>
+                  <label style={styles.label}>
+                    ZIP / Postal Code <span style={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="zipCode"
+                    value={formData.zipCode}
+                    onChange={handleInputChange}
+                    style={{
+                      ...styles.input,
+                      ...(errors.zipCode ? styles.inputError : {})
+                    }}
+                    placeholder="12345"
+                  />
+                  {errors.zipCode && (
+                    <div style={styles.errorMessage}>⚠️ {errors.zipCode}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Account & Employment */}
+          {currentStep === 3 && (
+            <div style={styles.formGrid}>
+
+          {/* Step 4: ID Document Upload */}
+          {currentStep === 4 && (
+            <div style={{maxWidth: '900px', margin: '0 auto'}}>
+              <div style={{
+                backgroundColor: '#eff6ff',
+                padding: '1.5rem',
+                borderRadius: '12px',
+                marginBottom: '2rem',
+                border: '2px solid #3b82f6'
+              }}>
+                <h3 style={{margin: '0 0 0.5rem 0', fontSize: '18px', fontWeight: '700', color: '#1A3E6F'}}>
+                  🪪 Identity Verification Required
+                </h3>
+                <p style={{margin: 0, color: '#374151', fontSize: '14px', lineHeight: '1.6'}}>
+                  Please upload clear photos of both sides of your government-issued ID (Driver's License, Passport, or National ID Card).
+                </p>
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '2rem',
+                marginBottom: '2rem'
+              }}>
+                {/* ID Front Upload */}
+                <div style={styles.inputGroup}>
+                  <label style={{...styles.label, textAlign: 'center', display: 'block', marginBottom: '1rem'}}>
+                    ID Front Side <span style={styles.required}>*</span>
+                  </label>
 
                   {!idFrontPreview ? (
                     <label style={{
@@ -2258,186 +2431,13 @@ export default function Apply() {
                 padding: '1rem',
                 borderRadius: '8px',
                 border: '1px solid #FFC857',
-                marginTop: '1rem'
+                marginBottom: '2rem'
               }}>
                 <p style={{margin: 0, color: '#92400e', fontSize: '13px', lineHeight: '1.5'}}>
                   <strong>📝 Important:</strong> Make sure your ID photo is clear, not blurry, and all information is readable. We use this to verify your identity for security purposes.
                 </p>
               </div>
-            </div>
-          )}
 
-          {/* Step 3: Account & Employment */}
-          {currentStep === 3 && (
-            <div style={styles.formGrid}>
-              <div style={styles.inputGroup}>
-                <label style={styles.label}>
-                  Street Address <span style={styles.required}>*</span>
-                </label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  style={{
-                    ...styles.input,
-                    ...(errors.address ? styles.inputError : {})
-                  }}
-                  placeholder="123 Main Street"
-                />
-                {errors.address && (
-                  <div style={styles.errorMessage}>⚠️ {errors.address}</div>
-                )}
-              </div>
-
-              <div style={{...styles.formGrid, ...styles.gridCols3}}>
-                <div style={styles.inputGroup}>
-                  <label style={styles.label}>
-                    City <span style={styles.required}>*</span>
-                  </label>
-                  {shouldShowManualCity() ? (
-                    <input
-                      type="text"
-                      name="manualCity"
-                      value={formData.manualCity || ''}
-                      onChange={(e) => {
-                        handleInputChange(e);
-                        if (errors.city) {
-                          setErrors(prev => ({ ...prev, city: '' }));
-                        }
-                      }}
-                      style={{
-                        ...styles.input,
-                        ...(errors.city ? styles.inputError : {})
-                      }}
-                      placeholder="Enter your city"
-                    />
-                  ) : (
-                    <select
-                      name="city"
-                      value={formData.city || ''}
-                      onChange={(e) => {
-                        handleInputChange(e);
-                        if (errors.city) {
-                          setErrors(prev => ({ ...prev, city: '' }));
-                        }
-                      }}
-                      style={{
-                        ...styles.select,
-                        ...(errors.city ? styles.inputError : {})
-                      }}
-                    >
-                      <option value="">Select City</option>
-                      {getAvailableCities().map(city => (
-                        <option key={city} value={city}>{city}</option>
-                      ))}
-                    </select>
-                  )}
-                  {getAvailableCities().length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowManualCity(!showManualCity);
-                        setFormData(prev => ({ ...prev, city: '', manualCity: '' }));
-                        setErrors(prev => ({ ...prev, city: '' }));
-                      }}
-                      style={styles.toggleButton}
-                    >
-                      {showManualCity ? 'Select from list' : 'Enter manually'}
-                    </button>
-                  )}
-                  {errors.city && (
-                    <div style={styles.errorMessage}>⚠️ {errors.city}</div>
-                  )}
-                </div>
-
-                <div style={styles.inputGroup}>
-                  <label style={styles.label}>
-                    State / Province <span style={styles.required}>*</span>
-                  </label>
-                  {shouldShowManualState() ? (
-                    <input
-                      type="text"
-                      name="manualState"
-                      value={formData.manualState || ''}
-                      onChange={(e) => {
-                        handleInputChange(e);
-                        if (errors.state) {
-                          setErrors(prev => ({ ...prev, state: '' }));
-                        }
-                      }}
-                      style={{
-                        ...styles.input,
-                        ...(errors.state ? styles.inputError : {})
-                      }}
-                      placeholder="Enter your state/province"
-                    />
-                  ) : (
-                    <select
-                      name="state"
-                      value={formData.state || ''}
-                      onChange={(e) => {
-                        handleInputChange(e);
-                        if (errors.state) {
-                          setErrors(prev => ({ ...prev, state: '' }));
-                        }
-                      }}
-                      style={{
-                        ...styles.select,
-                        ...(errors.state ? styles.inputError : {})
-                      }}
-                    >
-                      <option value="">Select State/Province</option>
-                      {getAvailableStates().map(state => (
-                        <option key={state} value={state}>{state}</option>
-                      ))}
-                    </select>
-                  )}
-                  {getAvailableStates().length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowManualState(!showManualState);
-                        setFormData(prev => ({ ...prev, state: '', manualState: '', city: '', manualCity: '' }));
-                        setShowManualCity(false);
-                        setErrors(prev => ({ ...prev, state: '', city: '' }));
-                      }}
-                      style={styles.toggleButton}
-                    >
-                      {showManualState ? 'Select from list' : 'Enter manually'}
-                    </button>
-                  )}
-                  {errors.state && (
-                    <div style={styles.errorMessage}>⚠️ {errors.state}</div>
-                  )}
-                </div>
-
-                <div style={styles.inputGroup}>
-                  <label style={styles.label}>
-                    ZIP / Postal Code <span style={styles.required}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="zipCode"
-                    value={formData.zipCode}
-                    onChange={handleInputChange}
-                    style={{
-                      ...styles.input,
-                      ...(errors.zipCode ? styles.inputError : {})
-                    }}
-                    placeholder="12345"
-                  />
-                  {errors.zipCode && (
-                    <div style={styles.errorMessage}>⚠️ {errors.zipCode}</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: ID Document Upload */}
-          {currentStep === 4 && (
-            <div style={{maxWidth: '800px', margin: '0 auto'}}>
               <div style={styles.inputGroup}>
                 <label style={styles.label}>
                   Choose Your Account Types <span style={styles.required}>*</span>
@@ -3005,23 +3005,23 @@ export default function Apply() {
               {currentStep < 4 ? (
                 <button
                   onClick={handleNext}
-                  disabled={loading || uploadingFront || uploadingBack || (currentStep === 2 && (!formData.idFrontPath || !formData.idBackPath))}
+                  disabled={loading || uploadingFront || uploadingBack}
                   style={{
                     ...styles.button,
                     ...styles.primaryButton,
-                    ...(loading || uploadingFront || uploadingBack || (currentStep === 2 && (!formData.idFrontPath || !formData.idBackPath)) ? styles.buttonDisabled : {})
+                    ...(loading || uploadingFront || uploadingBack ? styles.buttonDisabled : {})
                   }}
                 >
-                  {currentStep === 2 && (uploadingFront || uploadingBack) ? 'Uploading...' : 'Next Step →'}
+                  Next Step →
                 </button>
               ) : currentStep === 4 ? (
                 <button
                   onClick={handleSubmit}
-                  disabled={loading || !formData.agreeToTerms}
+                  disabled={loading || !formData.agreeToTerms || uploadingFront || uploadingBack}
                   style={{
                     ...styles.button,
                     ...styles.secondaryButton,
-                    ...(loading || !formData.agreeToTerms ? styles.buttonDisabled : {})
+                    ...(loading || !formData.agreeToTerms || uploadingFront || uploadingBack ? styles.buttonDisabled : {})
                   }}
                 >
                   {loading ? (
