@@ -1116,30 +1116,139 @@ export default function CryptoDeposit() {
             padding: '0 2rem'
           }}>
             <div style={{
-              backgroundColor: '#fef3c7',
-              border: '2px solid #fde68a',
+              background: 'linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%)',
+              border: '2px solid #1A3E6F',
+              borderLeft: '6px solid #FFC857',
               borderRadius: '12px',
-              padding: '1.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem'
+              padding: '2rem',
+              boxShadow: '0 4px 12px rgba(26, 62, 111, 0.15)'
             }}>
-              <span style={{ fontSize: '2rem' }}>💰</span>
-              <div style={{ flex: 1 }}>
-                <h3 style={{ margin: '0 0 0.75rem 0', color: '#92400e', fontSize: '1.2rem' }}>
-                  Minimum Deposit Required for Account Activation
-                </h3>
-                <div style={{ fontSize: '1rem', color: '#92400e', marginBottom: '0.75rem', padding: '0.5rem', backgroundColor: '#fffbeb', borderRadius: '6px' }}>
-                  <strong>Account Number:</strong> {depositForm.account_number || 'Loading...'}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem' }}>
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '28px',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 8px rgba(26, 62, 111, 0.2)'
+                }}>
+                  💳
                 </div>
-                <div style={{ fontSize: '0.9rem', color: '#92400e', marginBottom: '0.5rem' }}>
-                  <strong>Minimum Deposit Required:</strong> ${accountMinDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                </div>
-                <div style={{ fontSize: '0.9rem', color: '#92400e', marginBottom: '0.5rem' }}>
-                  <strong>Current Balance:</strong> ${accountCurrentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                </div>
-                <div style={{ fontSize: '1rem', color: '#dc2626', fontWeight: '600', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #fde68a' }}>
-                  <strong>Amount Still Needed:</strong> ${(accountMinDeposit - accountCurrentBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                    <h3 style={{ 
+                      margin: 0, 
+                      color: '#1A3E6F', 
+                      fontSize: '1.4rem',
+                      fontWeight: '700',
+                      flex: 1
+                    }}>
+                      Account Activation Required
+                    </h3>
+                    <span style={{
+                      backgroundColor: '#FFC857',
+                      color: '#1A3E6F',
+                      padding: '0.4rem 1rem',
+                      borderRadius: '20px',
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
+                      Pending Funding
+                    </span>
+                  </div>
+                  
+                  <div style={{ 
+                    backgroundColor: 'white',
+                    borderRadius: '8px',
+                    padding: '1rem',
+                    marginBottom: '1rem',
+                    border: '1px solid #d1e3f5'
+                  }}>
+                    <div style={{ 
+                      fontSize: '0.85rem', 
+                      color: '#64748b', 
+                      marginBottom: '0.5rem',
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
+                      Account Number
+                    </div>
+                    <div style={{ 
+                      fontSize: '1.1rem', 
+                      color: '#1A3E6F', 
+                      fontFamily: 'monospace',
+                      fontWeight: '700'
+                    }}>
+                      {depositForm.account_number || 'Loading...'}
+                    </div>
+                  </div>
+
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                    gap: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <div style={{
+                      backgroundColor: 'white',
+                      borderRadius: '8px',
+                      padding: '1rem',
+                      border: '1px solid #d1e3f5'
+                    }}>
+                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.25rem' }}>
+                        Minimum Required
+                      </div>
+                      <div style={{ fontSize: '1.2rem', color: '#1A3E6F', fontWeight: '700' }}>
+                        ${accountMinDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </div>
+                    </div>
+                    <div style={{
+                      backgroundColor: 'white',
+                      borderRadius: '8px',
+                      padding: '1rem',
+                      border: '1px solid #d1e3f5'
+                    }}>
+                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.25rem' }}>
+                        Current Balance
+                      </div>
+                      <div style={{ fontSize: '1.2rem', color: '#64748b', fontWeight: '700' }}>
+                        ${accountCurrentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    backgroundColor: '#FFC857',
+                    borderRadius: '8px',
+                    padding: '1rem',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ fontSize: '0.85rem', color: '#1A3E6F', marginBottom: '0.25rem', fontWeight: '600' }}>
+                      Amount Needed to Activate
+                    </div>
+                    <div style={{ fontSize: '1.8rem', color: '#1A3E6F', fontWeight: '700' }}>
+                      ${(accountMinDeposit - accountCurrentBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+
+                  <div style={{
+                    marginTop: '1rem',
+                    padding: '0.75rem',
+                    backgroundColor: 'rgba(26, 62, 111, 0.05)',
+                    borderRadius: '6px',
+                    fontSize: '0.85rem',
+                    color: '#1A3E6F',
+                    lineHeight: '1.5'
+                  }}>
+                    ℹ️ Your account will be activated immediately once the minimum deposit is received and confirmed.
+                  </div>
                 </div>
               </div>
             </div>
