@@ -7,6 +7,7 @@ import LiveChat from '../components/LiveChat';
 import { useAuth } from '../contexts/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { getCreditScoreTier, getCreditScoreMessage } from '../lib/creditScoreUtils';
+import FundingNotice from '../components/FundingNotice';
 
 function DashboardContent() {
   const { user, signOut } = useAuth();
@@ -615,6 +616,11 @@ function DashboardContent() {
             </div>
           </div>
         </section>
+
+        {/* Funding Notices for Pending Funding Accounts */}
+        {accounts.filter(account => account.status === 'pending_funding').map(account => (
+          <FundingNotice key={account.id} account={account} />
+        ))}
 
         {/* Account Details Section - Moved below balance */}
         <section style={styles.accountsSection}>

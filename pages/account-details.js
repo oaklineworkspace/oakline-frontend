@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
+import FundingNotice from '../components/FundingNotice';
 
 const useMediaQuery = (query) => {
   const [matches, setMatches] = useState(false);
@@ -483,6 +484,11 @@ export default function AccountDetails() {
           <div style={styles.balanceAmount}>{formatCurrency(getTotalBalance())}</div>
           <div style={styles.balanceAccounts}>{accounts.length} Account{accounts.length !== 1 ? 's' : ''}</div>
         </div>
+
+        {/* Funding Notices for Pending Funding Accounts */}
+        {accounts.filter(account => account.status === 'pending_funding').map(account => (
+          <FundingNotice key={account.id} account={account} />
+        ))}
 
         <div style={styles.contentGrid}>
           <div style={styles.accountsList}>
