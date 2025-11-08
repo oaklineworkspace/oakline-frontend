@@ -166,7 +166,6 @@ export default function CryptoDeposit() {
 
       if (accountId && minDeposit) {
         setFundingMode(true);
-        setAccountMinDeposit(parseFloat(minDeposit));
       }
 
       // Fetch all user accounts (including pending_funding)
@@ -183,17 +182,36 @@ export default function CryptoDeposit() {
 
       setAccounts(userAccounts || []);
       
-      // If funding mode, set the specific account
+      // If funding mode, set the specific account and get its actual min_deposit from DB
       if (accountId && userAccounts) {
         const targetAccount = userAccounts.find(acc => acc.id === accountId);
         if (targetAccount) {
+          // Use the actual min_deposit from the account record
+          const actualMinDeposit = parseFloat(targetAccount.min_deposit) || 0;
+          const currentBalance = parseFloat(targetAccount.balance) || 0;
+          
           setDepositForm(prev => ({ 
             ...prev, 
             account_id: targetAccount.id,
             account_number: targetAccount.account_number 
           }));
-          setAccountCurrentBalance(parseFloat(targetAccount.balance) || 0);
-          setAccountMinDeposit(parseFloat(targetAccount.min_deposit) || parseFloat(minDeposit) || 0);
+          setAccountCurrentBalance(currentBalance);
+          setAccountMinDeposit(actualMinDeposit);
+          
+          // If this account doesn't actually need funding, redirect to dashboard
+          if (actualMinDeposit === 0 || currentBalance >= actualMinDeposit) {
+            setMessage('This account does not require a minimum deposit or is already funded.');
+            setMessageType('info');
+            setTimeout(() => {
+              router.push('/dashboard');
+            }, 2000);
+          }
+        } else {
+          setMessage('Account not found.');
+          setMessageType('error');
+          setTimeout(() => {
+            router.push('/dashboard');
+          }, 2000);
         }
       } else if (userAccounts && userAccounts.length > 0) {
         setDepositForm(prev => ({ 
@@ -1078,7 +1096,7 @@ export default function CryptoDeposit() {
           </p>
         </div>
 
-        {fundingMode && accountMinDeposit > 0 && (
+        {fundingMode && accountMinDeposit > 0 && (accountMinDeposit - accountCurrentBalance) > 0 && (
           <div style={{
             maxWidth: '800px',
             margin: '0 auto 2rem',
@@ -1107,11 +1125,9 @@ export default function CryptoDeposit() {
                 <div style={{ fontSize: '0.9rem', color: '#92400e', marginBottom: '0.5rem' }}>
                   <strong>Current Balance:</strong> ${accountCurrentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </div>
-                {(accountMinDeposit - accountCurrentBalance) > 0 && (
-                  <div style={{ fontSize: '1rem', color: '#dc2626', fontWeight: '600', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #fde68a' }}>
-                    <strong>Amount Still Needed:</strong> ${(accountMinDeposit - accountCurrentBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  </div>
-                )}
+                <div style={{ fontSize: '1rem', color: '#dc2626', fontWeight: '600', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #fde68a' }}>
+                  <strong>Amount Still Needed:</strong> ${(accountMinDeposit - accountCurrentBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </div>
               </div>
             </div>
           </div>
