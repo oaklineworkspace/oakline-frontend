@@ -581,7 +581,7 @@ export default function Apply() {
 
     // Ensure the email hasn't been changed from the verified one
     if (!isEmailVerified || formData.email.trim().toLowerCase() !== verifiedEmailAddress) {
-      setErrors({ submit: 'Please use the verified email address or verify your new email first.' });
+      setErrors({ submit: 'Please use the verified email address or verify your email first.' });
       return;
     }
 
@@ -1919,7 +1919,7 @@ export default function Apply() {
                   style={{
                     ...styles.input,
                     ...(errors.email ? styles.inputError : {}),
-                    ...(isEmailVerified ? { backgroundColor: '#f0fdf4', cursor: 'not-allowed' } : {})
+                    ...(isEmailVerified ? { backgroundColor: '#f0f4f4', cursor: 'not-allowed' } : {})
                   }}
                   placeholder="Enter your email address"
                 />
