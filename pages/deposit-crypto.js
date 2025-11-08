@@ -162,9 +162,9 @@ export default function CryptoDeposit() {
       // Check if we're in funding mode from URL params
       const urlParams = new URLSearchParams(window.location.search);
       const accountId = urlParams.get('account_id');
-      const minDeposit = urlParams.get('min_deposit');
+      const mode = urlParams.get('mode');
 
-      if (accountId && minDeposit) {
+      if (accountId && mode === 'funding') {
         setFundingMode(true);
       }
 
@@ -178,6 +178,8 @@ export default function CryptoDeposit() {
 
       if (accountsError) {
         console.error('Error fetching accounts:', accountsError);
+        setMessage('Error loading accounts. Please try again.');
+        setMessageType('error');
       }
 
       setAccounts(userAccounts || []);
@@ -186,9 +188,17 @@ export default function CryptoDeposit() {
       if (accountId && userAccounts) {
         const targetAccount = userAccounts.find(acc => acc.id === accountId);
         if (targetAccount) {
-          // Use the actual min_deposit from the account record
+          // Use the actual min_deposit from the account record in the database
           const actualMinDeposit = parseFloat(targetAccount.min_deposit) || 0;
           const currentBalance = parseFloat(targetAccount.balance) || 0;
+          
+          console.log('Target account found:', {
+            accountId: targetAccount.id,
+            accountNumber: targetAccount.account_number,
+            minDeposit: actualMinDeposit,
+            currentBalance: currentBalance,
+            status: targetAccount.status
+          });
           
           setDepositForm(prev => ({ 
             ...prev, 
@@ -207,6 +217,7 @@ export default function CryptoDeposit() {
             }, 2000);
           }
         } else {
+          console.error('Account not found with ID:', accountId);
           setMessage('Account not found.');
           setMessageType('error');
           setTimeout(() => {

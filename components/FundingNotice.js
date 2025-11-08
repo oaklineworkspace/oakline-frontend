@@ -48,7 +48,7 @@ export default function FundingNotice({ accounts }) {
                   </div>
                 </div>
                 <Link
-                  href={`/deposit-crypto?account_id=${account.id}&min_deposit=${minDeposit}&mode=funding`}
+                  href={`/deposit-crypto?account_id=${account.id}&mode=funding`}
                   className={styles.depositButton}
                 >
                   Add Funds via Crypto
