@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 
-const QRCode = dynamic(() => import('react-qr-code'), { ssr: false });
+const QRCode = dynamic(() => import('react-qr-code').then(mod => mod.default), { ssr: false });
 
 export default function CryptoDeposit() {
   const [user, setUser] = useState(null);
