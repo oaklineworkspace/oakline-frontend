@@ -1098,16 +1098,18 @@ export default function CryptoDeposit() {
       <main style={styles.main}>
         <div style={styles.welcomeSection}>
           <h1 style={styles.welcomeTitle}>
-            {fundingMode ? 'Fund Your Account via Cryptocurrency' : 'Add Funds via Cryptocurrency'}
+            {fundingMode && depositForm.account_id && accountMinDeposit > 0 && (accountMinDeposit - accountCurrentBalance) > 0
+              ? 'Fund Your Account via Cryptocurrency' 
+              : 'Add Funds via Cryptocurrency'}
           </h1>
           <p style={styles.welcomeSubtitle}>
-            {fundingMode 
+            {fundingMode && depositForm.account_id && accountMinDeposit > 0 && (accountMinDeposit - accountCurrentBalance) > 0
               ? 'Complete the minimum deposit requirement below to activate your account'
               : 'Add funds to your account balance using cryptocurrency'}
           </p>
         </div>
 
-        {fundingMode && accountMinDeposit > 0 && (accountMinDeposit - accountCurrentBalance) > 0 && (
+        {fundingMode && depositForm.account_id && accountMinDeposit > 0 && (accountMinDeposit - accountCurrentBalance) > 0 && (
           <div style={{
             maxWidth: '800px',
             margin: '0 auto 2rem',
@@ -1197,16 +1199,29 @@ export default function CryptoDeposit() {
                 onChange={handleAccountChange}
                 style={styles.select}
                 required
+                disabled={fundingMode}
               >
                 {accounts.length === 0 && (
                   <option value="">No active accounts available</option>
                 )}
-                {accounts.map(account => (
-                  <option key={account.id} value={account.id}>
-                    {account.account_type.toUpperCase()} - {account.account_number} ({formatCurrency(account.balance)})
-                  </option>
-                ))}
+                {accounts.map(account => {
+                  const minDeposit = parseFloat(account.min_deposit) || 0;
+                  const balance = parseFloat(account.balance) || 0;
+                  const needsFunding = minDeposit > 0 && balance < minDeposit;
+                  
+                  return (
+                    <option key={account.id} value={account.id}>
+                      {account.account_type.toUpperCase()} - {account.account_number} ({formatCurrency(account.balance)})
+                      {needsFunding ? ` - Needs $${(minDeposit - balance).toFixed(2)}` : ''}
+                    </option>
+                  );
+                })}
               </select>
+              {fundingMode && (
+                <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem' }}>
+                  Account pre-selected for minimum deposit requirement
+                </p>
+              )}
             </div>
 
             <div style={styles.formGroup}>
@@ -1324,7 +1339,7 @@ export default function CryptoDeposit() {
                   required
                 />
               </div>
-              {fundingMode && accountMinDeposit > 0 && (accountMinDeposit - accountCurrentBalance) > 0 && (
+              {fundingMode && depositForm.account_id && accountMinDeposit > 0 && (accountMinDeposit - accountCurrentBalance) > 0 && (
                 <div style={{ marginTop: '0.75rem' }}>
                   <button
                     type="button"
