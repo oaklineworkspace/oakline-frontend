@@ -701,7 +701,8 @@ export default function Apply() {
           annual_income: formData.annualIncome,
           account_types: mappedAccountTypes,
           agree_to_terms: formData.agreeToTerms,
-          // id_front_path and id_back_path are NOT sent here, they are handled by the upload-id-document API
+          id_front_path: formData.idFrontPath || null,
+          id_back_path: formData.idBackPath || null,
           application_status: 'pending',
           submitted_at: new Date().toISOString()
         }])
