@@ -660,9 +660,7 @@ function DashboardContent() {
         </section>
 
         {/* Funding Notices for Pending Funding Accounts */}
-        {accounts.filter(account => account.status === 'pending_funding').map(account => (
-          <FundingNotice key={account.id} account={account} />
-        ))}
+        <FundingNotice accounts={accounts} />
 
         {/* Account Details Section - Moved below balance */}
         <section style={styles.accountsSection}>
