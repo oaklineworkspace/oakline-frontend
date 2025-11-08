@@ -595,8 +595,8 @@ function LoanApplicationContent() {
           deposit_required: requiredDeposit,
           deposit_method: formData.deposit_method,
           id_documents: {
-            front: idDocuments.front, // This will now be the filePath
-            back: idDocuments.back    // This will now be the filePath
+            front: typeof idDocuments.front === 'string' ? idDocuments.front : null,
+            back: typeof idDocuments.back === 'string' ? idDocuments.back : null
           },
           collaterals: collaterals
         })

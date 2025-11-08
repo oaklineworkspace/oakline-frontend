@@ -97,7 +97,9 @@ export default async function handler(req, res) {
         deposit_required: deposit_required || 0,
         deposit_paid: false,
         deposit_status: 'pending',
-        deposit_method: deposit_method || 'balance'
+        deposit_method: deposit_method || 'balance',
+        id_front_path: id_documents?.front || null,
+        id_back_path: id_documents?.back || null
       }])
       .select()
       .single();
@@ -172,7 +174,7 @@ export default async function handler(req, res) {
     // Send loan submission email
     try {
       const { sendLoanSubmittedEmail } = require('../../../lib/email');
-      
+
       await sendLoanSubmittedEmail({
         to: userEmail,
         userName,
