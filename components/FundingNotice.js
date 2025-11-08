@@ -1,11 +1,27 @@
 import { useRouter } from 'next/router';
 import styles from '../styles/FundingNotice.module.css';
 import Link from 'next/link';
-import { useMediaQuery } from 'react-responsive';
+import { useState, useEffect } from 'react';
+
+const useMediaQuery = (query) => {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) {
+      setMatches(media.matches);
+    }
+    const listener = () => setMatches(media.matches);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, [matches, query]);
+
+  return matches;
+};
 
 export default function FundingNotice({ accounts }) {
   const router = useRouter();
-  const isMobile = useMediaQuery({ maxWidth: 768 });
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const handleDepositClick = (accountId, minDeposit, mode) => {
     router.push(`/deposit-crypto?account_id=${accountId}&min_deposit=${minDeposit}&mode=${mode}`);
