@@ -327,11 +327,15 @@ export default function CryptoDeposit() {
         return;
       }
 
-      const selectedNetwork = getAvailableNetworks().find(n => n.value === depositForm.network_type);
-      if (selectedNetwork && parseFloat(depositForm.amount) < selectedNetwork.minDeposit) {
-        setMessage(`Minimum deposit amount is ${selectedNetwork.minDeposit} ${depositForm.crypto_type}`);
-        setMessageType('error');
-        return;
+      if (fundingMode && accountMinDeposit > 0) {
+        const remainingNeeded = accountMinDeposit - accountCurrentBalance;
+        const depositAmount = parseFloat(depositForm.amount);
+        
+        if (remainingNeeded > 0 && depositAmount < remainingNeeded) {
+          setMessage(`To activate your account, you need to deposit at least $${remainingNeeded.toLocaleString('en-US', { minimumFractionDigits: 2 })}. Current deposit amount is too low.`);
+          setMessageType('error');
+          return;
+        }
       }
 
       setCurrentStep(2);
@@ -1290,10 +1294,36 @@ export default function CryptoDeposit() {
                   required
                 />
               </div>
+              {fundingMode && accountMinDeposit > 0 && (accountMinDeposit - accountCurrentBalance) > 0 && (
+                <div style={{ marginTop: '0.75rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setDepositForm({ ...depositForm, amount: (accountMinDeposit - accountCurrentBalance).toFixed(2) })}
+                    style={{
+                      padding: '0.625rem 1.25rem',
+                      backgroundColor: '#059669',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      boxShadow: '0 2px 4px rgba(5, 150, 105, 0.2)'
+                    }}
+                    onMouseOver={(e) => e.target.style.backgroundColor = '#047857'}
+                    onMouseOut={(e) => e.target.style.backgroundColor = '#059669'}
+                  >
+                    💡 Set Minimum Required: ${(accountMinDeposit - accountCurrentBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </button>
+                  <p style={{ fontSize: '0.8rem', color: '#059669', marginTop: '0.5rem', fontWeight: '500' }}>
+                    ✓ Click to automatically fill the exact USD amount needed to activate your account
+                  </p>
+                </div>
+              )}
               {depositForm.network_type && getSelectedNetwork() && (
                 <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem' }}>
-                  Minimum deposit: {getSelectedNetwork().minDeposit} {depositForm.crypto_type} • 
-                  {getSelectedNetwork().confirmations} network confirmations required
+                  Network: {getSelectedNetwork().label} • {getSelectedNetwork().confirmations} confirmations required
                 </p>
               )}
             </div>

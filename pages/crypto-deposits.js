@@ -404,7 +404,7 @@ export default function CryptoDeposits() {
                         </td>
                         <td style={styles.td}>{formatCurrency(deposit.amount)}</td>
                         <td style={styles.td}>{formatCurrency(deposit.fee || 0)}</td>
-                        <td style={styles.td} style={{ fontWeight: '600' }}>
+                        <td style={{ ...styles.td, fontWeight: '600' }}>
                           {formatCurrency(deposit.net_amount || ((deposit.amount || 0) - (deposit.fee || 0)))}
                         </td>
                         <td style={styles.td}>{getStatusBadge(deposit.status)}</td>
