@@ -1,3 +1,4 @@
+
 -- Add ID document path columns to applications table
 -- Run this in your Supabase SQL Editor
 
