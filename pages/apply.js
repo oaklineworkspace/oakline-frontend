@@ -483,15 +483,6 @@ export default function Apply() {
     }
 
     if (step === 2) {
-      if (!formData.idFrontPath || !idFrontPreview) {
-        newErrors.idFront = 'Please upload front side of your ID';
-      }
-      if (!formData.idBackPath || !idBackPreview) {
-        newErrors.idBack = 'Please upload back side of your ID';
-      }
-    }
-
-    if (step === 3) {
       if (!formData.address.trim()) newErrors.address = 'Address is required';
 
       const effectiveCity = getEffectiveCity();
@@ -502,11 +493,20 @@ export default function Apply() {
       if (!formData.zipCode.trim()) newErrors.zipCode = 'ZIP/Postal code is required';
     }
 
-    if (step === 4) {
+    if (step === 3) {
       if (formData.accountTypes.length === 0) newErrors.accountTypes = 'Select at least one account type';
       if (!formData.employmentStatus) newErrors.employmentStatus = 'Employment status is required';
       if (!formData.annualIncome) newErrors.annualIncome = 'Annual income is required';
       if (!formData.agreeToTerms) newErrors.agreeToTerms = 'You must agree to terms';
+    }
+
+    if (step === 4) {
+      if (!formData.idFrontPath || !idFrontPreview) {
+        newErrors.idFront = 'Please upload front side of your ID';
+      }
+      if (!formData.idBackPath || !idBackPreview) {
+        newErrors.idBack = 'Please upload back side of your ID';
+      }
     }
 
     setErrors(newErrors);
@@ -1582,8 +1582,8 @@ export default function Apply() {
                   color: currentStep >= 2 ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
                   border: currentStep >= 2 ? '3px solid #0066CC' : '3px solid rgba(0, 102, 204, 0.3)',
                   transition: 'all 0.3s ease'
-                }}>🪪</div>
-                <span style={{fontWeight: currentStep === 2 ? '700' : '500', fontSize: 'clamp(0.7rem, 2vw, 0.9rem)'}}>ID Upload</span>
+                }}>🏠</div>
+                <span style={{fontWeight: currentStep === 2 ? '700' : '500', fontSize: 'clamp(0.7rem, 2vw, 0.9rem)'}}>Address</span>
               </div>
               <div style={{...styles.progressStep, ...(currentStep >= 3 ? styles.progressStepActive : {})}}>
                 <div style={{
@@ -1599,8 +1599,8 @@ export default function Apply() {
                   color: currentStep >= 3 ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
                   border: currentStep >= 3 ? '3px solid #0066CC' : '3px solid rgba(0, 102, 204, 0.3)',
                   transition: 'all 0.3s ease'
-                }}>🏠</div>
-                <span style={{fontWeight: currentStep === 3 ? '700' : '500', fontSize: 'clamp(0.7rem, 2vw, 0.9rem)'}}>Address</span>
+                }}>💼</div>
+                <span style={{fontWeight: currentStep === 3 ? '700' : '500', fontSize: 'clamp(0.7rem, 2vw, 0.9rem)'}}>Account</span>
               </div>
               <div style={{...styles.progressStep, ...(currentStep >= 4 ? styles.progressStepActive : {})}}>
                 <div style={{
@@ -1616,8 +1616,8 @@ export default function Apply() {
                   color: currentStep >= 4 ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
                   border: currentStep >= 4 ? '3px solid #0066CC' : '3px solid rgba(0, 102, 204, 0.3)',
                   transition: 'all 0.3s ease'
-                }}>💼</div>
-                <span style={{fontWeight: currentStep === 4 ? '700' : '500', fontSize: 'clamp(0.7rem, 2vw, 0.9rem)'}}>Review</span>
+                }}>🪪</div>
+                <span style={{fontWeight: currentStep === 4 ? '700' : '500', fontSize: 'clamp(0.7rem, 2vw, 0.9rem)'}}>ID Upload</span>
               </div>
             </div>
           </div>
@@ -1638,17 +1638,17 @@ export default function Apply() {
             )}
             {currentStep === 2 && (
               <>
-                <span>🪪</span> ID Document Upload
+                <span>🏠</span> Address Details
               </>
             )}
             {currentStep === 3 && (
               <>
-                <span>🏠</span> Address Details
+                <span>💼</span> Account & Employment
               </>
             )}
             {currentStep === 4 && (
               <>
-                <span>💼</span> Account & Employment
+                <span>🪪</span> ID Document Upload
               </>
             )}
             {currentStep === 5 && (
@@ -2040,24 +2040,33 @@ export default function Apply() {
             </div>
           )}
 
-          {/* Step 2: ID Document Upload */}
+          {/* Step 2: Address Information */}
           {currentStep === 2 && (
-            <div style={{maxWidth: '800px', margin: '0 auto'}}>
-              <p style={{
-                textAlign: 'center',
-                color: '#666',
-                fontSize: '16px',
-                marginBottom: '2rem',
-                lineHeight: '1.6'
-              }}>
-                Please upload clear photos of the front and back of your government-issued ID (Driver's License, Passport, or National ID). Files must be JPG or PNG format, maximum 5MB each.
-              </p>
+            <div style={styles.formGrid}>
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>
+                  Street Address <span style={styles.required}>*</span>
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  style={{
+                    ...styles.input,
+                    ...(errors.address ? styles.inputError : {})
+                  }}
+                  placeholder="123 Main Street"
+                />
+                {errors.address && (
+                  <div style={styles.errorMessage}>⚠️ {errors.address}</div>
+                )}
+              </div>
 
-              <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginBottom: '1rem'}}>
-                {/* ID Front Upload */}
+              <div style={{...styles.formGrid, ...styles.gridCols3}}>
                 <div style={styles.inputGroup}>
-                  <label style={{...styles.label, textAlign: 'center', display: 'block', marginBottom: '1rem'}}>
-                    ID Front Side <span style={styles.required}>*</span>
+                  <label style={styles.label}>
+                    City <span style={styles.required}>*</span>
                   </label>
 
                   {!idFrontPreview ? (
@@ -2257,7 +2266,7 @@ export default function Apply() {
             </div>
           )}
 
-          {/* Step 3: Address Information */}
+          {/* Step 3: Account & Employment */}
           {currentStep === 3 && (
             <div style={styles.formGrid}>
               <div style={styles.inputGroup}>
@@ -2425,9 +2434,9 @@ export default function Apply() {
             </div>
           )}
 
-          {/* Step 4: Account & Employment */}
+          {/* Step 4: ID Document Upload */}
           {currentStep === 4 && (
-            <div style={styles.formGrid}>
+            <div style={{maxWidth: '800px', margin: '0 auto'}}>
               <div style={styles.inputGroup}>
                 <label style={styles.label}>
                   Choose Your Account Types <span style={styles.required}>*</span>

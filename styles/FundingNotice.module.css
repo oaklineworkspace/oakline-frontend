@@ -1,68 +1,60 @@
 .notice {
   display: flex;
-  gap: 1rem;
-  background: linear-gradient(135deg, #fff3cd 0%, #fff8e1 100%);
-  border: 2px solid #ffc107;
-  border-left: 5px solid #ff9800;
-  border-radius: 12px;
-  padding: 1.5rem;
+  align-items: center;
+  gap: 1.25rem;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%);
+  border: 1px solid #2A5490;
+  border-left: 4px solid #FFC857;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.15);
-  animation: slideIn 0.3s ease-out;
+  box-shadow: 0 2px 8px rgba(26, 62, 111, 0.08);
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.iconContainer {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1A3E6F;
+  border-radius: 50%;
+  color: white;
 }
 
 .icon {
-  font-size: 2rem;
-  flex-shrink: 0;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
+  width: 24px;
+  height: 24px;
 }
 
 .content {
   flex: 1;
+  min-width: 0;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
 .title {
   margin: 0;
-  font-size: 1.25rem;
-  color: #d84315;
-  font-weight: 700;
+  font-size: 1.1rem;
+  color: #1A3E6F;
+  font-weight: 600;
 }
 
 .badge {
-  background: #ff9800;
-  color: white;
+  background: #FFC857;
+  color: #1A3E6F;
   padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  border-radius: 16px;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -70,90 +62,72 @@
 
 .message {
   margin: 0 0 1rem 0;
-  color: #5d4037;
-  font-size: 1rem;
+  color: #4A4A4A;
+  font-size: 0.95rem;
   line-height: 1.5;
 }
 
 .message strong {
-  color: #d84315;
+  color: #1A3E6F;
   font-weight: 600;
 }
 
-.details {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 8px;
-}
-
-.detailItem {
+.actions {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.label {
-  font-size: 0.75rem;
-  color: #6d4c41;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.value {
-  font-size: 0.95rem;
-  color: #3e2723;
-  font-weight: 500;
-}
-
-.actionButton {
-  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+.depositButton {
+  background: #1A3E6F;
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-size: 1rem;
+  padding: 0.625rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+  box-shadow: 0 2px 4px rgba(26, 62, 111, 0.2);
 }
 
-.actionButton:hover {
-  background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
-  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
-  transform: translateY(-2px);
+.depositButton:hover {
+  background: #2A5490;
+  box-shadow: 0 4px 8px rgba(26, 62, 111, 0.3);
+  transform: translateY(-1px);
 }
 
-.actionButton:active {
+.depositButton:active {
   transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(255, 152, 0, 0.3);
+  box-shadow: 0 2px 4px rgba(26, 62, 111, 0.2);
 }
 
 @media (max-width: 768px) {
   .notice {
-    flex-direction: column;
     padding: 1rem;
+    gap: 1rem;
+  }
+
+  .iconContainer {
+    width: 36px;
+    height: 36px;
   }
 
   .icon {
-    font-size: 1.5rem;
+    width: 20px;
+    height: 20px;
   }
 
   .title {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
-  .details {
-    grid-template-columns: 1fr;
+  .message {
+    font-size: 0.9rem;
   }
 
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
+  .depositButton {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
   }
 }
