@@ -299,8 +299,8 @@ function LoanApplicationContent() {
     }
   };
 
-  // New handler to manage file selection, storing files locally first
-  const handleFileChange = (e, documentType) => {
+  // New handler to manage file selection and immediate upload
+  const handleFileChange = async (e, documentType) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -316,95 +316,68 @@ function LoanApplicationContent() {
       return;
     }
 
+    // Set preview and uploading state
     const reader = new FileReader();
     reader.onloadend = () => {
       setIdDocuments(prev => ({
         ...prev,
-        [documentType]: file, // Store the actual file object
-        [`${documentType}Preview`]: reader.result, // Set preview URL
-        [`${documentType}Uploading`]: false
+        [`${documentType}Preview`]: reader.result,
       }));
-      setError('');
     };
     reader.readAsDataURL(file);
-  };
 
-  // Modified to upload only on submit
-  const uploadIdDocuments = async () => {
-    let allUploaded = true;
+    // Upload immediately
+    setIdDocuments(prev => ({ ...prev, [`${documentType}Uploading`]: true }));
     setError('');
 
-    // Upload front ID
-    if (idDocuments.front && typeof idDocuments.front === 'object') { // Check if it's a File object
-      setIdDocuments(prev => ({ ...prev, frontUploading: true }));
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) throw new Error('Session expired. Please log in again.');
-
-        const formDataUpload = new FormData();
-        formDataUpload.append('file', idDocuments.front);
-        formDataUpload.append('documentType', 'id_front');
-        formDataUpload.append('email', user.email);
-
-        const response = await fetch('/api/upload-id-document', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`
-          },
-          body: formDataUpload
-        });
-
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || 'Front ID upload failed');
-
-        setIdDocuments(prev => ({
-          ...prev,
-          front: result.filePath, // Store the final path from backend
-          frontUploading: false
-        }));
-      } catch (err) {
-        setError(err.message || 'Failed to upload front ID document');
-        setIdDocuments(prev => ({ ...prev, frontUploading: false }));
-        allUploaded = false;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('Session expired. Please log in again.');
+        setIdDocuments(prev => ({ ...prev, [`${documentType}Uploading`]: false }));
+        return;
       }
-    }
 
-    // Upload back ID
-    if (idDocuments.back && typeof idDocuments.back === 'object') { // Check if it's a File object
-      setIdDocuments(prev => ({ ...prev, backUploading: true }));
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) throw new Error('Session expired. Please log in again.');
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('documentType', `id_${documentType}`);
+      formDataUpload.append('email', user.email);
 
-        const formDataUpload = new FormData();
-        formDataUpload.append('file', idDocuments.back);
-        formDataUpload.append('documentType', 'id_back');
-        formDataUpload.append('email', user.email);
+      const response = await fetch('/api/upload-id-document', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: formDataUpload
+      });
 
-        const response = await fetch('/api/upload-id-document', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`
-          },
-          body: formDataUpload
-        });
-
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || 'Back ID upload failed');
-
-        setIdDocuments(prev => ({
-          ...prev,
-          back: result.filePath, // Store the final path from backend
-          backUploading: false
-        }));
-      } catch (err) {
-        setError(err.message || 'Failed to upload back ID document');
-        setIdDocuments(prev => ({ ...prev, backUploading: false }));
-        allUploaded = false;
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || `Failed to upload ${documentType} ID`);
       }
+
+      // Store the uploaded file path
+      setIdDocuments(prev => ({
+        ...prev,
+        [documentType]: result.filePath,
+        [`${documentType}Uploading`]: false
+      }));
+      
+      setError('');
+    } catch (err) {
+      console.error(`Error uploading ${documentType} ID:`, err);
+      setError(err.message || `Failed to upload ${documentType} ID document`);
+      setIdDocuments(prev => ({ 
+        ...prev, 
+        [documentType]: null,
+        [`${documentType}Preview`]: null,
+        [`${documentType}Uploading`]: false 
+      }));
     }
-    return allUploaded;
   };
+
+  
 
   const handleCollateralPhotoUpload = async (files) => {
     if (!files || files.length === 0) return;
@@ -500,9 +473,13 @@ function LoanApplicationContent() {
         return true;
 
       case 2:
-        // Now checks if the 'front' and 'back' properties in idDocuments are final file paths, not File objects
-        if (!idDocuments.front || !idDocuments.back || typeof idDocuments.front === 'object' || typeof idDocuments.back === 'object') {
+        // Check if both ID documents have been uploaded (should be string paths)
+        if (!idDocuments.front || !idDocuments.back) {
           setError('Please upload both front and back of your ID');
+          return false;
+        }
+        if (typeof idDocuments.front !== 'string' || typeof idDocuments.back !== 'string') {
+          setError('ID documents are still uploading. Please wait.');
           return false;
         }
         return true;
@@ -560,21 +537,13 @@ function LoanApplicationContent() {
         return;
       }
 
-      // --- ID Upload Logic ---
-      // Create the Supabase bucket 'documents' if it doesn't exist.
-      // NOTE: This operation typically needs to be performed via the Supabase dashboard or API outside of a frontend component.
-      // Example for creating bucket (run once):
-      // const { data, error } = await supabase.storage.createBucket('documents');
-      // if (error) console.error('Error creating bucket:', error);
-      // else console.log('Bucket "documents" created successfully or already exists.');
-
-      const allIdsUploaded = await uploadIdDocuments();
-      if (!allIdsUploaded) {
-        setError('Failed to upload one or both ID documents. Please try again.');
+      // Verify ID documents are uploaded (they should already be uploaded from Step 2)
+      if (!idDocuments.front || !idDocuments.back || 
+          typeof idDocuments.front !== 'string' || typeof idDocuments.back !== 'string') {
+        setError('ID documents are missing or not properly uploaded. Please go back to Step 2.');
         setLoading(false);
         return;
       }
-      // --- End ID Upload Logic ---
 
       const principal = parseFloat(formData.principal);
       const requiredDeposit = principal * DEPOSIT_PERCENTAGE;
@@ -907,7 +876,7 @@ function LoanApplicationContent() {
                     id="front-upload"
                   />
                   <label htmlFor="front-upload" style={styles.uploadButton}>
-                    {idDocuments.frontUploading ? 'Uploading...' : idDocuments.front && typeof idDocuments.front !== 'object' ? '✓ Uploaded' : 'Choose File'}
+                    {idDocuments.frontUploading ? 'Uploading...' : (idDocuments.front && typeof idDocuments.front === 'string') ? '✓ Uploaded' : 'Choose File'}
                   </label>
                   {idDocuments.frontPreview && (
                     <img src={idDocuments.frontPreview} alt="ID Front" style={styles.previewImage} />
@@ -925,7 +894,7 @@ function LoanApplicationContent() {
                     id="back-upload"
                   />
                   <label htmlFor="back-upload" style={styles.uploadButton}>
-                    {idDocuments.backUploading ? 'Uploading...' : idDocuments.back && typeof idDocuments.back !== 'object' ? '✓ Uploaded' : 'Choose File'}
+                    {idDocuments.backUploading ? 'Uploading...' : (idDocuments.back && typeof idDocuments.back === 'string') ? '✓ Uploaded' : 'Choose File'}
                   </label>
                   {idDocuments.backPreview && (
                     <img src={idDocuments.backPreview} alt="ID Back" style={styles.previewImage} />
@@ -940,10 +909,14 @@ function LoanApplicationContent() {
                 <button
                   type="button"
                   onClick={nextStep}
-                  disabled={!idDocuments.front || !idDocuments.back || typeof idDocuments.front === 'object' || typeof idDocuments.back === 'object'}
+                  disabled={!idDocuments.front || !idDocuments.back || 
+                           typeof idDocuments.front !== 'string' || typeof idDocuments.back !== 'string' ||
+                           idDocuments.frontUploading || idDocuments.backUploading}
                   style={{
                     ...styles.submitButton,
-                    ...(!idDocuments.front || !idDocuments.back || typeof idDocuments.front === 'object' || typeof idDocuments.back === 'object'
+                    ...(!idDocuments.front || !idDocuments.back || 
+                        typeof idDocuments.front !== 'string' || typeof idDocuments.back !== 'string' ||
+                        idDocuments.frontUploading || idDocuments.backUploading
                       ? styles.submitButtonDisabled
                       : {})
                   }}
@@ -1116,11 +1089,11 @@ function LoanApplicationContent() {
                   <h3 style={styles.reviewTitle}>ID Documents</h3>
                   <div style={styles.reviewRow}>
                     <span>Front of ID:</span>
-                    <strong>{idDocuments.front && typeof idDocuments.front !== 'object' ? '✓ Uploaded' : 'Pending'}</strong>
+                    <strong>{idDocuments.front && typeof idDocuments.front === 'string' ? '✓ Uploaded' : 'Pending'}</strong>
                   </div>
                   <div style={styles.reviewRow}>
                     <span>Back of ID:</span>
-                    <strong>{idDocuments.back && typeof idDocuments.back !== 'object' ? '✓ Uploaded' : 'Pending'}</strong>
+                    <strong>{idDocuments.back && typeof idDocuments.back === 'string' ? '✓ Uploaded' : 'Pending'}</strong>
                   </div>
                 </div>
 
@@ -1143,10 +1116,12 @@ function LoanApplicationContent() {
                 </button>
                 <button
                   type="submit"
-                  disabled={loading || !hasSufficientBalance || !idDocuments.front || !idDocuments.back || typeof idDocuments.front === 'object' || typeof idDocuments.back === 'object'}
+                  disabled={loading || !idDocuments.front || !idDocuments.back || 
+                           typeof idDocuments.front !== 'string' || typeof idDocuments.back !== 'string'}
                   style={{
                     ...styles.submitButton,
-                    ...(loading || !hasSufficientBalance || !idDocuments.front || !idDocuments.back || typeof idDocuments.front === 'object' || typeof idDocuments.back === 'object'
+                    ...(loading || !idDocuments.front || !idDocuments.back || 
+                        typeof idDocuments.front !== 'string' || typeof idDocuments.back !== 'string'
                       ? styles.submitButtonDisabled
                       : {})
                   }}
