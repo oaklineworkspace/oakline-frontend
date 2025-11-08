@@ -2212,6 +2212,202 @@ export default function Apply() {
           {/* Step 3: Account & Employment */}
           {currentStep === 3 && (
             <div style={styles.formGrid}>
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>
+                  Choose Your Account Types <span style={styles.required}>*</span>
+                </label>
+
+                {selectedAccountMinDeposit > 0 && (
+                  <div style={{
+                    backgroundColor: '#FEF3C7',
+                    border: '2px solid #FDE68A',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                  }}>
+                    <span style={{ fontSize: '24px' }}>💰</span>
+                    <div>
+                      <strong style={{ color: '#92400E', fontSize: '15px' }}>
+                        Total Minimum Deposit Required: ${selectedAccountMinDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </strong>
+                      <p style={{ color: '#92400E', margin: '4px 0 0 0', fontSize: '13px' }}>
+                        You'll need to fund your account(s) with this amount after approval.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {loadingAccountTypes ? (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                    Loading account types...
+                  </div>
+                ) : (
+                  <div style={styles.accountTypesGrid}>
+                    {accountTypes.map(account => {
+                      const minDeposit = parseFloat(account.min_deposit) || 0;
+                      return (
+                        <div
+                          key={account.id}
+                          onClick={() => toggleAccountType(account.id)}
+                          style={{
+                            ...styles.accountCard,
+                            ...(formData.accountTypes.includes(account.id) ? styles.accountCardSelectedInStep4 : {}),
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!formData.accountTypes.includes(account.id)) {
+                              Object.assign(e.currentTarget.style, styles.accountCardHoverInStep4);
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!formData.accountTypes.includes(account.id)) {
+                              e.currentTarget.style.borderColor = '#e5e7eb';
+                              e.currentTarget.style.transform = 'translateY(0)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }
+                          }}
+                        >
+                          <div style={styles.accountHeader}>
+                            <div style={{
+                              ...styles.accountIcon,
+                              backgroundColor: formData.accountTypes.includes(account.id) ? '#0066CC' : '#f1f5f9',
+                              color: formData.accountTypes.includes(account.id) ? 'white' : 'inherit'
+                            }}>
+                              {account.icon}
+                            </div>
+                            <div style={styles.accountName}>{account.name}</div>
+                          </div>
+                          <div style={styles.accountDescription}>{account.description}</div>
+                          <div style={styles.accountRate}>{account.rate}</div>
+                          {minDeposit > 0 && (
+                            <div style={{
+                              marginTop: '12px',
+                              padding: '10px 12px',
+                              backgroundColor: '#fef3c7',
+                              border: '1px solid #fde68a',
+                              borderRadius: '8px',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: '#92400e',
+                              textAlign: 'center'
+                            }}>
+                              💰 Min. Opening Deposit: ${minDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            </div>
+                          )}
+                          {minDeposit === 0 && (
+                            <div style={{
+                              marginTop: '12px',
+                              padding: '10px 12px',
+                              backgroundColor: '#d1fae5',
+                              border: '1px solid #86efac',
+                              borderRadius: '8px',
+                              fontSize: '13px',
+                              fontWeight: '600',
+                              color: '#065f46',
+                              textAlign: 'center'
+                            }}>
+                              ✓ No Minimum Deposit Required
+                            </div>
+                          )}
+                          {formData.accountTypes.includes(account.id) && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '12px',
+                              right: '12px',
+                              backgroundColor: '#0066CC',
+                              color: 'white',
+                              borderRadius: '50%',
+                              width: '24px',
+                              height: '24px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '14px'
+                            }}>
+                              ✓
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {errors.accountTypes && (
+                  <div style={styles.errorMessage}>⚠️ {errors.accountTypes}</div>
+                )}
+              </div>
+
+              {selectedAccountMinDeposit > 0 && (
+                <div style={styles.depositNotice}>
+                  <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '16px', fontWeight: '600', color: '#1A3E6F' }}>
+                    📋 Important: Minimum Deposit Required
+                  </h4>
+                  <p style={{ margin: '0 0 0.5rem 0', fontSize: '14px', color: '#374151', lineHeight: '1.6' }}>
+                    The account type(s) you selected require a total minimum deposit of <strong>${selectedAccountMinDeposit.toFixed(2)}</strong> to activate your accounts.
+                  </p>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#6b7280', lineHeight: '1.6' }}>
+                    After submitting your application, an admin will review it. Once approved, you'll need to make the minimum deposit before your accounts become active.
+                  </p>
+                </div>
+              )}
+
+              <div style={{...styles.formGrid, ...styles.gridCols2}}>
+                <div style={styles.inputGroup}>
+                  <label style={styles.label}>
+                    Employment Status <span style={styles.required}>*</span>
+                  </label>
+                  <select
+                    name="employmentStatus"
+                    value={formData.employmentStatus}
+                    onChange={handleInputChange}
+                    style={{
+                      ...styles.select,
+                      ...(errors.employmentStatus ? styles.inputError : {})
+                    }}
+                  >
+                    <option value="">Select Status</option>
+                    <option value="employed_fulltime">Employed Full-time</option>
+                    <option value="employed_parttime">Employed Part-time</option>
+                    <option value="self_employed">Self-employed</option>
+                    <option value="retired">Retired</option>
+                    <option value="student">Student</option>
+                    <option value="unemployed">Unemployed</option>
+                  </select>
+                  {errors.employmentStatus && (
+                    <div style={styles.errorMessage}>⚠️ {errors.employmentStatus}</div>
+                  )}
+                </div>
+
+                <div style={styles.inputGroup}>
+                  <label style={styles.label}>
+                    Annual Income <span style={styles.required}>*</span>
+                  </label>
+                  <select
+                    name="annualIncome"
+                    value={formData.annualIncome}
+                    onChange={handleInputChange}
+                    style={{
+                      ...styles.select,
+                      ...(errors.annualIncome ? styles.inputError : {})
+                    }}
+                  >
+                    <option value="">Select Income Range</option>
+                    <option value="under_25k">Under $25,000</option>
+                    <option value="25k_50k">$25,000 - $50,000</option>
+                    <option value="50k_75k">$50,000 - $75,000</option>
+                    <option value="75k_100k">$75,000 - $100,000</option>
+                    <option value="100k_150k">$100,000 - $150,000</option>
+                    <option value="over_150k">Over $150,000</option>
+                  </select>
+                  {errors.annualIncome && (
+                    <div style={styles.errorMessage}>⚠️ {errors.annualIncome}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Step 4: ID Document Upload */}
           {currentStep === 4 && (
