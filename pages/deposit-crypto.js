@@ -26,12 +26,16 @@ export default function CryptoDeposit() {
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.matchMedia('(max-width: 768px)').matches);
+      setIsMobile(window.innerWidth <= 768);
     };
     
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener('orientationchange', checkMobile);
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('orientationchange', checkMobile);
+    };
   }, []);
 
   const [depositForm, setDepositForm] = useState({
@@ -570,13 +574,18 @@ export default function CryptoDeposit() {
     container: {
       minHeight: '100vh',
       backgroundColor: '#f8fafc',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      width: '100%',
+      maxWidth: '100vw',
+      overflowX: 'hidden'
     },
     header: {
       backgroundColor: '#1e40af',
       color: 'white',
-      padding: isMobile ? '1rem' : '1.5rem 2rem',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+      padding: isMobile ? '0.75rem 1rem' : '1.5rem 2rem',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      width: '100%',
+      boxSizing: 'border-box'
     },
     headerContent: {
       maxWidth: '1400px',
@@ -618,7 +627,9 @@ export default function CryptoDeposit() {
     main: {
       maxWidth: '1200px',
       margin: '0 auto',
-      padding: isMobile ? '1.5rem 1rem' : '2.5rem 2rem'
+      padding: isMobile ? '1rem 0.75rem' : '2.5rem 2rem',
+      width: '100%',
+      boxSizing: 'border-box'
     },
     welcomeSection: {
       marginBottom: '2rem'
@@ -669,10 +680,12 @@ export default function CryptoDeposit() {
     },
     contentCard: {
       backgroundColor: 'white',
-      borderRadius: '16px',
-      padding: isMobile ? '1.5rem' : '2rem',
+      borderRadius: isMobile ? '12px' : '16px',
+      padding: isMobile ? '1rem' : '2rem',
       boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-      marginBottom: '2rem'
+      marginBottom: isMobile ? '1rem' : '2rem',
+      width: '100%',
+      boxSizing: 'border-box'
     },
     sectionTitle: {
       fontSize: isMobile ? '1.2rem' : '1.4rem',
@@ -703,13 +716,15 @@ export default function CryptoDeposit() {
     },
     input: {
       width: '100%',
-      padding: '0.875rem 1rem',
+      padding: isMobile ? '0.75rem 0.875rem' : '0.875rem 1rem',
       borderRadius: '8px',
       border: '2px solid #e5e7eb',
-      fontSize: '0.95rem',
+      fontSize: isMobile ? '16px' : '0.95rem',
       backgroundColor: '#fff',
       outline: 'none',
-      transition: 'border-color 0.2s'
+      transition: 'border-color 0.2s',
+      boxSizing: 'border-box',
+      WebkitAppearance: 'none'
     },
     cryptoGrid: {
       display: 'grid',
@@ -784,14 +799,16 @@ export default function CryptoDeposit() {
       marginTop: '2rem'
     },
     button: {
-      padding: '1rem 2rem',
+      padding: isMobile ? '0.875rem 1.25rem' : '1rem 2rem',
       borderRadius: '8px',
-      fontSize: '1rem',
+      fontSize: isMobile ? '0.9rem' : '1rem',
       fontWeight: '600',
       cursor: 'pointer',
       transition: 'all 0.3s ease',
       border: 'none',
-      flex: 1
+      flex: 1,
+      minHeight: '48px',
+      touchAction: 'manipulation'
     },
     primaryButton: {
       backgroundColor: '#1e40af',
