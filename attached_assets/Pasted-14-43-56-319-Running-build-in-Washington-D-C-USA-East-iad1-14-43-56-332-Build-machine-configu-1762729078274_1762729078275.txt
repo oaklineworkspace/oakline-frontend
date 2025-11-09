@@ -1,0 +1,85 @@
+14:43:56.319 Running build in Washington, D.C., USA (East) – iad1
+14:43:56.332 Build machine configuration: 2 cores, 8 GB
+14:43:56.868 Cloning github.com/oaklineworkspace/oakline-frontend (Branch: main, Commit: f7eb37d)
+14:44:00.105 Cloning completed: 3.237s
+14:44:00.256 Restored build cache from previous deployment (9HvS9E9ejVh7yiQTbQwjDuvUEg1h)
+14:44:00.765 Running "vercel build"
+14:44:01.648 Vercel CLI 48.9.0
+14:44:02.069 Installing dependencies...
+14:44:03.676 
+14:44:03.677 up to date in 1s
+14:44:03.677 
+14:44:03.677 145 packages are looking for funding
+14:44:03.678   run `npm fund` for details
+14:44:03.705 Detected Next.js version: 14.2.3
+14:44:03.709 Running "npm run build"
+14:44:03.815 
+14:44:03.815 > oakline-bank@1.0.0 build
+14:44:03.815 > next build
+14:44:03.815 
+14:44:04.481   ▲ Next.js 14.2.3
+14:44:04.483 
+14:44:04.483    Linting and checking validity of types ...
+14:44:04.697    Creating an optimized production build ...
+14:44:15.810  ✓ Compiled successfully
+14:44:15.812    Collecting page data ...
+14:44:18.198    Generating static pages (0/87) ...
+14:44:20.834    Generating static pages (21/87) 
+14:44:22.812    Generating static pages (43/87) 
+14:44:23.507 ReferenceError: useEffect is not defined
+14:44:23.508     at x (/vercel/path0/.next/server/pages/login.js:26:476)
+14:44:23.508     at Wc (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
+14:44:23.508     at Zc (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+14:44:23.508     at Z (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+14:44:23.508     at $c (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
+14:44:23.508     at bd (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
+14:44:23.509     at Z (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
+14:44:23.509     at Zc (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+14:44:23.509     at Z (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+14:44:23.509     at Zc (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:481)
+14:44:23.509 
+14:44:23.510 Error occurred prerendering page "/login". Read more: https://nextjs.org/docs/messages/prerender-error
+14:44:23.510 
+14:44:23.510 ReferenceError: useEffect is not defined
+14:44:23.510     at x (/vercel/path0/.next/server/pages/login.js:26:476)
+14:44:23.511     at Wc (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
+14:44:23.511     at Zc (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+14:44:23.511     at Z (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+14:44:23.513     at $c (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
+14:44:23.513     at bd (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
+14:44:23.513     at Z (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
+14:44:23.514     at Zc (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+14:44:23.514     at Z (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+14:44:23.514     at Zc (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:481)
+14:44:24.918    Generating static pages (65/87) 
+14:44:25.109 ReferenceError: useEffect is not defined
+14:44:25.110     at m (/vercel/path0/.next/server/pages/sign-in.js:26:5789)
+14:44:25.113     at Wc (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
+14:44:25.114     at Zc (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+14:44:25.114     at Z (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+14:44:25.115     at $c (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
+14:44:25.115     at bd (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
+14:44:25.115     at Z (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
+14:44:25.115     at Zc (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+14:44:25.115     at Z (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+14:44:25.116     at Zc (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:481)
+14:44:25.116 
+14:44:25.116 Error occurred prerendering page "/sign-in". Read more: https://nextjs.org/docs/messages/prerender-error
+14:44:25.116 
+14:44:25.116 ReferenceError: useEffect is not defined
+14:44:25.117     at m (/vercel/path0/.next/server/pages/sign-in.js:26:5789)
+14:44:25.117     at Wc (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
+14:44:25.117     at Zc (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+14:44:25.117     at Z (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+14:44:25.118     at $c (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
+14:44:25.118     at bd (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
+14:44:25.118     at Z (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
+14:44:25.118     at Zc (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+14:44:25.118     at Z (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+14:44:25.119     at Zc (/vercel/path0/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:481)
+14:44:26.929  ✓ Generating static pages (87/87)
+14:44:27.035 
+14:44:27.036 > Export encountered errors on following paths:
+14:44:27.036 	/login
+14:44:27.036 	/sign-in
+14:44:27.086 Error: Command "npm run build" exited with 1
