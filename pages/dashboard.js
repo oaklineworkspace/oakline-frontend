@@ -394,7 +394,7 @@ function DashboardContent() {
     if (transaction.type === 'account_opening_deposit' || transaction.transaction_type === 'crypto_deposit') {
       try {
         let depositDetails = null;
-        
+
         if (transaction.type === 'account_opening_deposit') {
           const { data, error } = await supabase
             .from('account_opening_crypto_deposits')
@@ -412,7 +412,7 @@ function DashboardContent() {
             `)
             .eq('id', transaction.id)
             .single();
-          
+
           if (!error && data) {
             depositDetails = data;
           }
@@ -429,12 +429,12 @@ function DashboardContent() {
             `)
             .eq('id', transaction.id)
             .single();
-          
+
           if (!error && data) {
             depositDetails = data;
           }
         }
-        
+
         setSelectedTransaction({
           ...transaction,
           depositDetails
@@ -995,6 +995,10 @@ function DashboardContent() {
               <span style={styles.quickActionIcon}>📈</span>
               <span style={styles.quickActionText}>Invest</span>
             </Link>
+            <Link href="/request-account" style={styles.quickActionButton}>
+              <span style={styles.quickActionIcon}>➕</span>
+              <span style={styles.quickActionText}>Request Additional Account</span>
+            </Link>
           </div>
         </section>
 
@@ -1240,7 +1244,7 @@ function DashboardContent() {
             >
               ×
             </button>
-            
+
             <div style={{
               borderBottom: '2px solid #e2e8f0',
               paddingBottom: '1rem',
