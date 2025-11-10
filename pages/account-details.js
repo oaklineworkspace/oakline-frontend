@@ -312,16 +312,18 @@ export default function AccountDetails() {
       alignItems: 'center',
       justifyContent: 'center',
       marginTop: '1.5rem',
-      padding: isMobile ? '0.75rem 1.5rem' : '0.875rem 2rem',
-      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      padding: isMobile ? '0.875rem 1.75rem' : '1rem 2.5rem',
+      backgroundColor: '#22c55e',
       color: 'white',
       textDecoration: 'none',
       borderRadius: '12px',
-      fontSize: isMobile ? '0.9rem' : '1rem',
-      fontWeight: '600',
-      border: '2px solid rgba(255, 255, 255, 0.3)',
+      fontSize: isMobile ? '0.95rem' : '1.05rem',
+      fontWeight: '700',
+      border: 'none',
       transition: 'all 0.3s ease',
-      cursor: 'pointer'
+      cursor: 'pointer',
+      boxShadow: '0 4px 16px rgba(22, 163, 74, 0.3)',
+      letterSpacing: '0.3px'
     },
     contentGrid: {
       display: 'grid',
@@ -661,16 +663,18 @@ export default function AccountDetails() {
             href="/request-account" 
             style={styles.requestAccountButton}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
-              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.backgroundColor = '#16a34a';
+              e.target.style.transform = 'translateY(-3px)';
+              e.target.style.boxShadow = '0 8px 24px rgba(22, 163, 74, 0.4)';
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+              e.target.style.backgroundColor = '#22c55e';
               e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 16px rgba(22, 163, 74, 0.3)';
             }}
           >
-            <span style={{ fontSize: '1.2rem', marginRight: '0.5rem' }}>➕</span>
-            Request New Account Type
+            <span style={{ fontSize: '1.15rem', marginRight: '0.6rem' }}>➕</span>
+            Open Additional Account
           </Link>
         </div>
 
