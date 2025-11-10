@@ -517,9 +517,9 @@ export default function CryptoDeposit() {
     setMessage('');
     setMessageType('');
 
-    // Validate transaction hash
-    if (!txHash || txHash.trim().length < 10) {
-      setMessage('Please enter a valid transaction hash');
+    // Validate that either transaction hash OR proof is provided
+    if ((!txHash || txHash.trim().length < 10) && !proofPath) {
+      setMessage('Please provide either a transaction hash OR upload proof of payment');
       setMessageType('error');
       setSubmitting(false);
       return;
@@ -615,7 +615,8 @@ export default function CryptoDeposit() {
             status: 'pending',
             confirmations: 0,
             required_confirmations: cryptoAsset.confirmations_required || 3,
-            tx_hash: txHash.trim(),
+            tx_hash: txHash.trim() || null,
+            proof_path: proofPath || null,
             metadata: {
               wallet_address: walletAddress,
               memo: memo || null,
@@ -624,7 +625,8 @@ export default function CryptoDeposit() {
               crypto_type: depositForm.crypto_type,
               network_type: depositForm.network_type,
               fee_percent: networkFeePercent,
-              proof_path: proofPath || null
+              has_proof: !!proofPath,
+              has_tx_hash: !!txHash
             }
           }])
           .select()
@@ -2032,6 +2034,36 @@ export default function CryptoDeposit() {
 
         {currentStep === 3 && (
           <div style={styles.contentCard}>
+            <div style={{
+              backgroundColor: '#f0fdf4',
+              border: '2px solid #86efac',
+              borderRadius: '12px',
+              padding: '1.25rem',
+              marginBottom: '2rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                <div style={{ fontSize: '28px', flexShrink: 0 }}>ℹ️</div>
+                <div>
+                  <h4 style={{ 
+                    margin: '0 0 0.5rem 0', 
+                    color: '#166534',
+                    fontSize: '1rem',
+                    fontWeight: '700'
+                  }}>
+                    Don't know your transaction hash? No problem!
+                  </h4>
+                  <p style={{ 
+                    margin: 0, 
+                    fontSize: '0.9rem', 
+                    color: '#15803d',
+                    lineHeight: '1.6'
+                  }}>
+                    If you made your payment through an online platform (like Coinbase, Binance, Kraken, etc.) and can't find the transaction hash, simply take a screenshot of your transaction confirmation page showing the payment details and upload it as proof. Our admin team will verify and process your deposit manually.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
               <div style={{
                 width: '80px',
@@ -2048,7 +2080,7 @@ export default function CryptoDeposit() {
               </div>
               <h2 style={styles.sectionTitle}>Confirm Your Payment</h2>
               <p style={{ color: '#64748b', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                Please confirm that you have sent the cryptocurrency payment. Once confirmed, we will begin processing your deposit.
+                Please provide verification of your payment below. You can enter the transaction hash OR upload proof of payment - whichever is easier for you.
               </p>
             </div>
 
@@ -2176,8 +2208,25 @@ export default function CryptoDeposit() {
                 alignItems: 'center',
                 gap: '0.5rem'
               }}>
-                📝 Transaction Verification (Required)
+                📝 Payment Verification
               </h4>
+
+              <div style={{
+                backgroundColor: '#dbeafe',
+                border: '1px solid #60a5fa',
+                borderRadius: '8px',
+                padding: '1rem',
+                marginBottom: '1.5rem'
+              }}>
+                <p style={{
+                  fontSize: '0.85rem',
+                  color: '#1e40af',
+                  margin: 0,
+                  lineHeight: '1.5'
+                }}>
+                  💡 <strong>Flexible Verification:</strong> You can provide either the transaction hash from your crypto wallet <strong>OR</strong> upload a screenshot/proof of your payment. If you paid through an online platform (like Coinbase, Binance, etc.), simply upload a screenshot showing your transaction.
+                </p>
+              </div>
               
               <div style={{ marginBottom: '1.5rem' }}>
                 <label style={{
@@ -2187,36 +2236,46 @@ export default function CryptoDeposit() {
                   fontWeight: '600',
                   color: '#1e293b'
                 }}>
-                  Transaction Hash / ID <span style={{ color: '#dc2626' }}>*</span>
+                  Transaction Hash / TX ID <span style={{ color: '#64748b', fontWeight: 'normal' }}>(Optional if uploading proof)</span>
                 </label>
                 <p style={{
                   fontSize: '0.8rem',
                   color: '#64748b',
                   marginBottom: '0.5rem'
                 }}>
-                  Enter the transaction hash from your wallet (also called TX ID or Transaction ID)
+                  If you have the transaction hash from your wallet, enter it here. This is usually found in your wallet's transaction history and looks like: "0x..." or "bc1..." depending on the blockchain.
                 </p>
                 <input
                   type="text"
                   value={txHash}
                   onChange={(e) => setTxHash(e.target.value)}
-                  placeholder="0x... or bc1... (varies by blockchain)"
+                  placeholder="Example: 0xabc123... or bc1qm4v... (optional if uploading proof)"
                   style={{
                     width: '100%',
                     padding: '0.75rem',
                     fontSize: '0.9rem',
-                    border: txHash.length > 0 && txHash.length < 10 ? '2px solid #dc2626' : '2px solid #e5e7eb',
+                    border: txHash.length > 0 && txHash.length < 10 && !proofPath ? '2px solid #dc2626' : '2px solid #e5e7eb',
                     borderRadius: '8px',
                     fontFamily: 'monospace',
                     boxSizing: 'border-box',
                     outline: 'none'
                   }}
                 />
-                {txHash.length > 0 && txHash.length < 10 && (
+                {txHash.length > 0 && txHash.length < 10 && !proofPath && (
                   <p style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '0.25rem' }}>
-                    Transaction hash is too short
+                    Transaction hash seems too short. Consider uploading proof of payment instead.
                   </p>
                 )}
+              </div>
+
+              <div style={{
+                textAlign: 'center',
+                padding: '0.5rem',
+                fontSize: '0.85rem',
+                color: '#64748b',
+                fontWeight: '600'
+              }}>
+                - OR -
               </div>
 
               <div>
@@ -2227,14 +2286,14 @@ export default function CryptoDeposit() {
                   fontWeight: '600',
                   color: '#1e293b'
                 }}>
-                  Proof of Payment (Optional)
+                  Proof of Payment <span style={{ color: '#64748b', fontWeight: 'normal' }}>(Optional if you provided TX hash)</span>
                 </label>
                 <p style={{
                   fontSize: '0.8rem',
                   color: '#64748b',
                   marginBottom: '0.5rem'
                 }}>
-                  Upload a screenshot of your transaction (PNG, JPG, or PDF, max 5MB)
+                  Upload a screenshot of your payment confirmation from your crypto platform (Coinbase, Binance, etc.). Accepted formats: PNG, JPG, or PDF (max 5MB). This helps our team verify your deposit quickly.
                 </p>
                 {!proofFile ? (
                   <label style={{
@@ -2327,7 +2386,7 @@ export default function CryptoDeposit() {
                     color: '#1e40af',
                     lineHeight: '1.5'
                   }}>
-                    By clicking "Confirm Payment", you certify that you have sent {formatCurrency(depositForm.amount)} worth of {getSelectedCrypto()?.value} to the address shown above via {getSelectedNetwork()?.label} network. Our system will begin monitoring the blockchain for your transaction.
+                    By clicking "Confirm Payment", you certify that you have sent {formatCurrency(depositForm.amount)} worth of {getSelectedCrypto()?.value} to the address shown above via {getSelectedNetwork()?.label} network. Our admin team will verify your {txHash ? 'transaction hash' : 'proof of payment'} and credit your account once confirmed.
                   </p>
                 </div>
               </div>
