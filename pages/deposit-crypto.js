@@ -1021,15 +1021,21 @@ export default function CryptoDeposit() {
     },
     networkGrid: {
       display: 'grid',
-      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
-      gap: '1rem'
+      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(220px, 1fr))',
+      gap: '1rem',
+      marginTop: '0.5rem'
     },
     networkCard: {
-      padding: '1rem',
+      padding: '1.25rem',
       borderRadius: '12px',
       border: '2px solid #e5e7eb',
       cursor: 'pointer',
-      transition: 'all 0.2s'
+      transition: 'all 0.3s ease',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+      '&:hover': {
+        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+        transform: 'translateY(-2px)'
+      }
     },
     networkHeader: {
       display: 'flex',
@@ -1536,21 +1542,11 @@ export default function CryptoDeposit() {
               </div>
             </div>
 
-            {!depositForm.crypto_type ? (
-              <div style={{
-                padding: '2rem',
-                textAlign: 'center',
-                backgroundColor: '#f0f9ff',
-                border: '2px solid #3b82f6',
-                borderRadius: '12px',
-                color: '#1e40af',
-                marginTop: '1rem'
-              }}>
-                ℹ️ Select a cryptocurrency above to continue
-              </div>
-            ) : (
+            {depositForm.crypto_type && (
               <div style={styles.formGroup}>
-                <label style={styles.label}>Select Network</label>
+                <label style={styles.label}>
+                  Select Network <span style={{ color: '#dc2626', fontWeight: '700' }}>*</span>
+                </label>
                 {loadingNetworks ? (
                   <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
                     <div style={{ ...styles.spinner, margin: '0 auto 1rem' }} />
@@ -1568,29 +1564,43 @@ export default function CryptoDeposit() {
                     No networks available for {depositForm.crypto_type}. Please contact support.
                   </div>
                 ) : (
-                  <div style={styles.networkGrid}>
-                    {getAvailableNetworks().map(network => (
-                      <div
-                        key={network.value}
-                        onClick={() => handleNetworkChange(network.value)}
-                        style={{
-                          ...styles.networkCard,
-                          borderColor: depositForm.network_type === network.value ? '#1e40af' : '#e5e7eb',
-                          backgroundColor: depositForm.network_type === network.value ? '#eff6ff' : '#fff'
-                        }}
-                      >
-                        <div style={styles.networkHeader}>
-                          <span style={styles.networkIcon}>{network.icon}</span>
-                          <div style={styles.networkName}>{network.label}</div>
+                  <>
+                    <div style={{
+                      backgroundColor: '#fffbeb',
+                      border: '2px solid #fbbf24',
+                      borderRadius: '8px',
+                      padding: '1rem',
+                      marginBottom: '1rem',
+                      fontSize: '0.9rem',
+                      color: '#92400e'
+                    }}>
+                      ⚠️ <strong>Important:</strong> Select the correct network for your {depositForm.crypto_type} deposit. Using the wrong network may result in permanent loss of funds.
+                    </div>
+                    <div style={styles.networkGrid}>
+                      {getAvailableNetworks().map(network => (
+                        <div
+                          key={network.value}
+                          onClick={() => handleNetworkChange(network.value)}
+                          style={{
+                            ...styles.networkCard,
+                            borderColor: depositForm.network_type === network.value ? '#1e40af' : '#e5e7eb',
+                            backgroundColor: depositForm.network_type === network.value ? '#eff6ff' : '#fff',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <div style={styles.networkHeader}>
+                            <span style={styles.networkIcon}>{network.icon}</span>
+                            <div style={styles.networkName}>{network.label}</div>
+                          </div>
+                          <div style={styles.networkInfo}>{network.confirmations} confirmations</div>
+                          <div style={styles.networkInfo}>Min: {network.minDeposit} {depositForm.crypto_type}</div>
+                          {network.fee > 0 && (
+                            <div style={styles.networkInfo}>Fee: {network.fee}%</div>
+                          )}
                         </div>
-                        <div style={styles.networkInfo}>{network.confirmations} confirmations</div>
-                        <div style={styles.networkInfo}>Min: {network.minDeposit} {depositForm.crypto_type}</div>
-                        {network.fee > 0 && (
-                          <div style={styles.networkInfo}>Fee: {network.fee}%</div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             )}
