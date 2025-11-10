@@ -387,6 +387,14 @@ export default function CryptoDeposit() {
 
     setWalletAddress('');
     setMemo('');
+
+    // Auto-scroll to amount field after selecting network
+    setTimeout(() => {
+      const amountSection = document.getElementById('amount-section');
+      if (amountSection) {
+        amountSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 300);
   };
 
   const handleNextStep = () => {
@@ -1764,7 +1772,7 @@ export default function CryptoDeposit() {
               </div>
             )}
 
-            <div style={styles.formGroup}>
+            <div id="amount-section" style={styles.formGroup}>
               <label style={styles.label}>Amount (USD)</label>
               <div style={{ position: 'relative' }}>
                 <span style={{
