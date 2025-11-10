@@ -22,6 +22,10 @@ export default function CryptoDeposit() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [txHash, setTxHash] = useState('');
+  const [proofFile, setProofFile] = useState(null);
+  const [proofPath, setProofPath] = useState('');
+  const [uploadingProof, setUploadingProof] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -428,10 +432,89 @@ export default function CryptoDeposit() {
     }
   };
 
+  const handleProofUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      setMessage('Please upload a PNG, JPG, or PDF file');
+      setMessageType('error');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage('File size must be less than 5MB');
+      setMessageType('error');
+      return;
+    }
+
+    setProofFile(file);
+    setUploadingProof(true);
+    setMessage('');
+    setMessageType('');
+
+    try {
+      // Upload to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('crypto-deposit-proofs')
+        .upload(fileName, file);
+
+      if (error) {
+        console.error('Upload error:', error);
+        setMessage('Failed to upload proof. You can still submit without it.');
+        setMessageType('error');
+        setProofFile(null);
+      } else {
+        setProofPath(fileName);
+        setMessage('Proof uploaded successfully');
+        setMessageType('success');
+        setTimeout(() => {
+          if (messageType === 'success') {
+            setMessage('');
+            setMessageType('');
+          }
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      setMessage('Failed to upload proof. You can still submit without it.');
+      setMessageType('error');
+      setProofFile(null);
+    } finally {
+      setUploadingProof(false);
+    }
+  };
+
+  const removeProof = async () => {
+    if (proofPath) {
+      try {
+        await supabase.storage.from('crypto-deposit-proofs').remove([proofPath]);
+      } catch (error) {
+        console.error('Error removing proof:', error);
+      }
+    }
+    setProofFile(null);
+    setProofPath('');
+  };
+
   const handleConfirmPayment = async () => {
     setSubmitting(true);
     setMessage('');
     setMessageType('');
+
+    // Validate transaction hash
+    if (!txHash || txHash.trim().length < 10) {
+      setMessage('Please enter a valid transaction hash');
+      setMessageType('error');
+      setSubmitting(false);
+      return;
+    }
 
     try {
       // Check for existing pending deposit in the correct table
@@ -523,6 +606,7 @@ export default function CryptoDeposit() {
             status: 'pending',
             confirmations: 0,
             required_confirmations: cryptoAsset.confirmations_required || 3,
+            tx_hash: txHash.trim(),
             metadata: {
               wallet_address: walletAddress,
               memo: memo || null,
@@ -530,7 +614,8 @@ export default function CryptoDeposit() {
               funding_mode: true,
               crypto_type: depositForm.crypto_type,
               network_type: depositForm.network_type,
-              fee_percent: networkFeePercent
+              fee_percent: networkFeePercent,
+              proof_path: proofPath || null
             }
           }])
           .select()
@@ -553,13 +638,15 @@ export default function CryptoDeposit() {
             purpose: 'general_deposit',
             confirmations: 0,
             required_confirmations: cryptoAsset.confirmations_required || 3,
+            tx_hash: txHash.trim(),
             metadata: {
               wallet_address: walletAddress,
               memo: memo || null,
               deposit_source: 'user_deposit_page',
               crypto_type: depositForm.crypto_type,
               network_type: depositForm.network_type,
-              fee_percent: networkFeePercent
+              fee_percent: networkFeePercent,
+              proof_path: proofPath || null
             }
           }])
           .select()
@@ -1680,6 +1767,97 @@ export default function CryptoDeposit() {
                   </div>
                 </div>
 
+                <div style={{
+                  backgroundColor: '#f0f9ff',
+                  border: '2px solid #3b82f6',
+                  borderRadius: '12px',
+                  padding: '1.5rem',
+                  marginTop: '2rem',
+                  marginBottom: '2rem'
+                }}>
+                  <h3 style={{
+                    margin: '0 0 1rem 0',
+                    fontSize: '1.1rem',
+                    fontWeight: '700',
+                    color: '#1e40af',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    💡 Need to buy cryptocurrency?
+                  </h3>
+                  <p style={{ 
+                    color: '#1e40af', 
+                    marginBottom: '1rem',
+                    fontSize: '0.9rem',
+                    lineHeight: '1.5'
+                  }}>
+                    If you don't have crypto yet, you can purchase it from these trusted exchanges:
+                  </p>
+                  <div style={{
+                    display: 'flex',
+                    gap: '0.75rem',
+                    flexWrap: 'wrap'
+                  }}>
+                    <a
+                      href="https://www.coinbase.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        ...styles.button,
+                        backgroundColor: '#1652f0',
+                        color: 'white',
+                        padding: '0.65rem 1.2rem',
+                        fontSize: '0.9rem',
+                        textDecoration: 'none',
+                        flex: '0 1 auto'
+                      }}
+                    >
+                      🟦 Coinbase
+                    </a>
+                    <a
+                      href="https://www.binance.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        ...styles.button,
+                        backgroundColor: '#f3ba2f',
+                        color: '#000',
+                        padding: '0.65rem 1.2rem',
+                        fontSize: '0.9rem',
+                        textDecoration: 'none',
+                        flex: '0 1 auto'
+                      }}
+                    >
+                      🟨 Binance
+                    </a>
+                    <a
+                      href="https://www.kraken.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        ...styles.button,
+                        backgroundColor: '#5741d9',
+                        color: 'white',
+                        padding: '0.65rem 1.2rem',
+                        fontSize: '0.9rem',
+                        textDecoration: 'none',
+                        flex: '0 1 auto'
+                      }}
+                    >
+                      🟪 Kraken
+                    </a>
+                  </div>
+                  <p style={{ 
+                    color: '#64748b', 
+                    marginTop: '0.75rem',
+                    fontSize: '0.8rem',
+                    fontStyle: 'italic'
+                  }}>
+                    After purchasing, send the crypto to the wallet address shown above.
+                  </p>
+                </div>
+
                 <div style={styles.buttonGroup}>
                   <button
                     onClick={() => setCurrentStep(1)}
@@ -1854,6 +2032,149 @@ export default function CryptoDeposit() {
                     {formatCurrency(calculatedNetAmount)}
                   </span>
                 </div>
+              </div>
+            </div>
+
+            <div style={{
+              backgroundColor: '#fff7ed',
+              border: '2px solid #f59e0b',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              marginTop: '2rem',
+              marginBottom: '1.5rem'
+            }}>
+              <h4 style={{
+                margin: '0 0 1rem 0',
+                fontSize: '1rem',
+                fontWeight: '700',
+                color: '#92400e',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                📝 Transaction Verification (Required)
+              </h4>
+              
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  color: '#1e293b'
+                }}>
+                  Transaction Hash / ID <span style={{ color: '#dc2626' }}>*</span>
+                </label>
+                <p style={{
+                  fontSize: '0.8rem',
+                  color: '#64748b',
+                  marginBottom: '0.5rem'
+                }}>
+                  Enter the transaction hash from your wallet (also called TX ID or Transaction ID)
+                </p>
+                <input
+                  type="text"
+                  value={txHash}
+                  onChange={(e) => setTxHash(e.target.value)}
+                  placeholder="0x... or bc1... (varies by blockchain)"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    fontSize: '0.9rem',
+                    border: txHash.length > 0 && txHash.length < 10 ? '2px solid #dc2626' : '2px solid #e5e7eb',
+                    borderRadius: '8px',
+                    fontFamily: 'monospace',
+                    boxSizing: 'border-box',
+                    outline: 'none'
+                  }}
+                />
+                {txHash.length > 0 && txHash.length < 10 && (
+                  <p style={{ color: '#dc2626', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                    Transaction hash is too short
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  color: '#1e293b'
+                }}>
+                  Proof of Payment (Optional)
+                </label>
+                <p style={{
+                  fontSize: '0.8rem',
+                  color: '#64748b',
+                  marginBottom: '0.5rem'
+                }}>
+                  Upload a screenshot of your transaction (PNG, JPG, or PDF, max 5MB)
+                </p>
+                {!proofFile ? (
+                  <label style={{
+                    display: 'inline-block',
+                    padding: '0.75rem 1.5rem',
+                    backgroundColor: '#f3f4f6',
+                    border: '2px dashed #9ca3af',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    color: '#4b5563',
+                    fontWeight: '500',
+                    transition: 'all 0.2s'
+                  }}>
+                    📎 Choose File
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,application/pdf"
+                      onChange={handleProofUpload}
+                      disabled={uploadingProof}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                ) : (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    padding: '0.75rem',
+                    backgroundColor: '#ecfdf5',
+                    border: '1px solid #10b981',
+                    borderRadius: '8px'
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.9rem', color: '#065f46', fontWeight: '600' }}>
+                        ✓ {proofFile.name}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#047857' }}>
+                        {(proofFile.size / 1024).toFixed(2)} KB
+                      </div>
+                    </div>
+                    <button
+                      onClick={removeProof}
+                      disabled={uploadingProof}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        backgroundColor: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        fontWeight: '500'
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+                {uploadingProof && (
+                  <p style={{ color: '#3b82f6', fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                    Uploading...
+                  </p>
+                )}
               </div>
             </div>
 
