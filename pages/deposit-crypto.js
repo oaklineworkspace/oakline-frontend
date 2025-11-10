@@ -396,11 +396,11 @@ export default function CryptoDeposit() {
     setWalletAddress('');
     setMemo('');
 
-    // Auto-scroll to amount field after selecting network
+    // Auto-scroll to network details section after selecting network
     setTimeout(() => {
-      const amountSection = document.getElementById('amount-section');
-      if (amountSection) {
-        amountSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const networkDetailsSection = document.getElementById('network-details-section');
+      if (networkDetailsSection) {
+        networkDetailsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }, 300);
   };
@@ -1630,7 +1630,7 @@ export default function CryptoDeposit() {
                       <option value="">Choose a network...</option>
                       {getAvailableNetworks().map(network => (
                         <option key={network.value} value={network.value}>
-                          {network.icon} {network.label} - {network.confirmations} conf. - Min: {network.minDeposit} {depositForm.crypto_type}{network.fee > 0 ? ` - Fee: ${network.fee}%` : ''}
+                          {network.icon} {network.label}
                         </option>
                       ))}
                     </select>
@@ -1704,78 +1704,134 @@ export default function CryptoDeposit() {
             </div>
 
             {depositForm.network_type && getSelectedNetwork() && (
-              <div style={{
-                backgroundColor: '#eff6ff',
+              <div id="network-details-section" style={{
+                backgroundColor: '#f0f9ff',
                 border: '2px solid #3b82f6',
-                borderRadius: '12px',
-                padding: '1.25rem',
-                marginBottom: '1.5rem'
+                borderRadius: '16px',
+                padding: '2rem',
+                marginTop: '1.5rem',
+                marginBottom: '1.5rem',
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.15)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
+                <div style={{ 
+                  textAlign: 'center',
+                  marginBottom: '1.5rem',
+                  paddingBottom: '1rem',
+                  borderBottom: '2px solid #bfdbfe'
+                }}>
                   <div style={{
-                    fontSize: '32px',
-                    width: '48px',
-                    height: '48px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#dbeafe',
-                    borderRadius: '50%'
+                    fontSize: '48px',
+                    marginBottom: '0.5rem'
                   }}>
                     {getSelectedNetwork().icon}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{
-                      margin: 0,
-                      fontSize: '1.1rem',
-                      fontWeight: '700',
-                      color: '#1e40af'
-                    }}>
-                      Selected Network
-                    </h3>
-                    <p style={{
-                      margin: '0.25rem 0 0 0',
-                      fontSize: '1.3rem',
-                      fontWeight: '700',
-                      color: '#1e293b'
-                    }}>
-                      {getSelectedNetwork().label}
-                    </p>
-                  </div>
+                  <h3 style={{
+                    margin: 0,
+                    fontSize: '1.3rem',
+                    fontWeight: '700',
+                    color: '#1e40af',
+                    marginBottom: '0.25rem'
+                  }}>
+                    {getSelectedNetwork().label}
+                  </h3>
+                  <p style={{
+                    margin: 0,
+                    fontSize: '0.9rem',
+                    color: '#64748b'
+                  }}>
+                    Network Details & Fees
+                  </p>
                 </div>
+                
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                  gap: '0.75rem',
-                  paddingTop: '0.75rem',
-                  borderTop: '1px solid #bfdbfe'
+                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+                  gap: '1.25rem'
                 }}>
-                  <div>
-                    <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>
+                  <div style={{
+                    backgroundColor: '#fff',
+                    padding: '1.25rem',
+                    borderRadius: '12px',
+                    border: '1px solid #bfdbfe',
+                    textAlign: 'center'
+                  }}>
+                    <p style={{ 
+                      margin: 0, 
+                      fontSize: '0.8rem', 
+                      color: '#64748b', 
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      marginBottom: '0.5rem'
+                    }}>
                       Confirmations Required
                     </p>
-                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '1rem', fontWeight: '700', color: '#1e40af' }}>
+                    <p style={{ 
+                      margin: 0, 
+                      fontSize: '1.75rem', 
+                      fontWeight: '700', 
+                      color: '#1e40af' 
+                    }}>
                       {getSelectedNetwork().confirmations}
                     </p>
                   </div>
-                  <div>
-                    <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>
+                  
+                  <div style={{
+                    backgroundColor: '#fff',
+                    padding: '1.25rem',
+                    borderRadius: '12px',
+                    border: '1px solid #bfdbfe',
+                    textAlign: 'center'
+                  }}>
+                    <p style={{ 
+                      margin: 0, 
+                      fontSize: '0.8rem', 
+                      color: '#64748b', 
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      marginBottom: '0.5rem'
+                    }}>
                       Minimum Deposit
                     </p>
-                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '1rem', fontWeight: '700', color: '#1e40af' }}>
+                    <p style={{ 
+                      margin: 0, 
+                      fontSize: '1.25rem', 
+                      fontWeight: '700', 
+                      color: '#1e40af',
+                      wordBreak: 'break-word'
+                    }}>
                       {getSelectedNetwork().minDeposit} {depositForm.crypto_type}
                     </p>
                   </div>
-                  {getSelectedNetwork().fee > 0 && (
-                    <div>
-                      <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>
-                        Network Fee
-                      </p>
-                      <p style={{ margin: '0.25rem 0 0 0', fontSize: '1rem', fontWeight: '700', color: '#dc2626' }}>
-                        {getSelectedNetwork().fee}%
-                      </p>
-                    </div>
-                  )}
+                  
+                  <div style={{
+                    backgroundColor: getSelectedNetwork().fee > 0 ? '#fef2f2' : '#f0fdf4',
+                    padding: '1.25rem',
+                    borderRadius: '12px',
+                    border: getSelectedNetwork().fee > 0 ? '1px solid #fca5a5' : '1px solid #bbf7d0',
+                    textAlign: 'center'
+                  }}>
+                    <p style={{ 
+                      margin: 0, 
+                      fontSize: '0.8rem', 
+                      color: '#64748b', 
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      marginBottom: '0.5rem'
+                    }}>
+                      Network Fee
+                    </p>
+                    <p style={{ 
+                      margin: 0, 
+                      fontSize: '1.75rem', 
+                      fontWeight: '700', 
+                      color: getSelectedNetwork().fee > 0 ? '#dc2626' : '#16a34a'
+                    }}>
+                      {getSelectedNetwork().fee > 0 ? `${getSelectedNetwork().fee}%` : 'Free'}
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
