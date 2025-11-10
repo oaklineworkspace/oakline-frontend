@@ -14,6 +14,8 @@ export default function RequestAccount() {
   const [selectedAccountType, setSelectedAccountType] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     checkUser();
@@ -107,6 +109,12 @@ export default function RequestAccount() {
         throw new Error(`You already have an active ${selectedType.name}. Please choose a different account type.`);
       }
 
+      // Show processing state
+      setIsProcessing(true);
+
+      // Simulate processing delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
       // Create account request
       const { data, error } = await supabase
         .from('account_requests')
@@ -131,16 +139,20 @@ export default function RequestAccount() {
         read: false
       });
 
-      setMessage(`Account request submitted successfully! Your ${selectedType.name} request is pending admin approval.`);
+      // Hide processing and show success modal
+      setIsProcessing(false);
+      setShowSuccessModal(true);
       setSelectedAccountType('');
       
+      // Redirect after 5 seconds
       setTimeout(() => {
         router.push('/dashboard');
-      }, 3000);
+      }, 5000);
 
     } catch (error) {
       console.error('Error submitting request:', error);
       setError(error.message || 'Failed to submit account request');
+      setIsProcessing(false);
     } finally {
       setSubmitting(false);
     }
@@ -158,9 +170,84 @@ export default function RequestAccount() {
     <>
       <Head>
         <title>Request Additional Account - Oakline Bank</title>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          @keyframes slideIn {
+            from {
+              opacity: 0;
+              transform: translateY(-20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}</style>
       </Head>
 
       <div style={styles.container}>
+        {/* Processing Overlay */}
+        {isProcessing && (
+          <div style={styles.processingOverlay}>
+            <div style={styles.processingCard}>
+              <div style={styles.spinner}></div>
+              <h2 style={styles.processingTitle}>Processing Your Request...</h2>
+              <p style={styles.processingText}>Please wait while we submit your account request</p>
+            </div>
+          </div>
+        )}
+
+        {/* Success Modal */}
+        {showSuccessModal && (
+          <div style={styles.successOverlay} onClick={() => setShowSuccessModal(false)}>
+            <div style={styles.successModal} onClick={(e) => e.stopPropagation()}>
+              <div style={styles.successIcon}>✅</div>
+              <h2 style={styles.successTitle}>Request Submitted Successfully!</h2>
+              <p style={styles.successMessage}>
+                Your account request has been received and is now under review by our admin team.
+              </p>
+              <div style={styles.successInfoBox}>
+                <div style={styles.infoIcon}>📧</div>
+                <p style={styles.infoText}>
+                  <strong>Email Confirmation Sent</strong><br/>
+                  A confirmation email has been sent to your registered email address with details about your request.
+                </p>
+              </div>
+              <div style={styles.successSteps}>
+                <h3 style={styles.stepsTitle}>What's Next?</h3>
+                <ul style={styles.stepsList}>
+                  <li>Our admin team will review your request</li>
+                  <li>You'll receive an email notification once approved</li>
+                  <li>Your new account will be created automatically</li>
+                  <li>Access your account from the dashboard</li>
+                </ul>
+              </div>
+              <div style={styles.successButtons}>
+                <button 
+                  onClick={() => router.push('/dashboard')} 
+                  style={styles.dashboardButton}
+                  onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)'}
+                  onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)'}
+                >
+                  Go to Dashboard
+                </button>
+                <button 
+                  onClick={() => setShowSuccessModal(false)} 
+                  style={styles.closeButton}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                >
+                  Close
+                </button>
+              </div>
+              <p style={styles.autoRedirect}>Redirecting to dashboard in 5 seconds...</p>
+            </div>
+          </div>
+        )}
+
         {/* Professional Header with Gradient */}
         <div style={styles.pageHeader}>
           <div style={styles.headerContent}>
@@ -700,5 +787,163 @@ const styles = {
     padding: '4rem',
     fontSize: '1.2rem',
     color: '#64748b'
+  },
+  processingOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999,
+    backdropFilter: 'blur(4px)'
+  },
+  processingCard: {
+    backgroundColor: 'white',
+    padding: '3rem 4rem',
+    borderRadius: '20px',
+    textAlign: 'center',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    maxWidth: '400px'
+  },
+  spinner: {
+    width: '60px',
+    height: '60px',
+    margin: '0 auto 2rem',
+    border: '6px solid #e2e8f0',
+    borderTop: '6px solid #1e40af',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite'
+  },
+  processingTitle: {
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: '0.5rem'
+  },
+  processingText: {
+    fontSize: '1rem',
+    color: '#64748b'
+  },
+  successOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999,
+    backdropFilter: 'blur(4px)',
+    padding: '1rem'
+  },
+  successModal: {
+    backgroundColor: 'white',
+    padding: '2.5rem',
+    borderRadius: '20px',
+    maxWidth: '600px',
+    width: '100%',
+    maxHeight: '90vh',
+    overflowY: 'auto',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    animation: 'slideIn 0.3s ease-out'
+  },
+  successIcon: {
+    fontSize: '4rem',
+    textAlign: 'center',
+    marginBottom: '1rem'
+  },
+  successTitle: {
+    fontSize: '2rem',
+    fontWeight: 'bold',
+    color: '#059669',
+    textAlign: 'center',
+    marginBottom: '1rem'
+  },
+  successMessage: {
+    fontSize: '1.1rem',
+    color: '#4a5568',
+    textAlign: 'center',
+    lineHeight: '1.6',
+    marginBottom: '2rem'
+  },
+  successInfoBox: {
+    backgroundColor: '#ecfdf5',
+    border: '2px solid #10b981',
+    borderRadius: '12px',
+    padding: '1.5rem',
+    marginBottom: '2rem',
+    display: 'flex',
+    gap: '1rem',
+    alignItems: 'flex-start'
+  },
+  infoIcon: {
+    fontSize: '2rem',
+    flexShrink: 0
+  },
+  infoText: {
+    fontSize: '0.95rem',
+    color: '#065f46',
+    lineHeight: '1.6',
+    margin: 0
+  },
+  successSteps: {
+    backgroundColor: '#f7fafc',
+    borderRadius: '12px',
+    padding: '1.5rem',
+    marginBottom: '2rem'
+  },
+  stepsTitle: {
+    fontSize: '1.2rem',
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: '1rem'
+  },
+  stepsList: {
+    margin: 0,
+    paddingLeft: '1.5rem',
+    color: '#4a5568',
+    fontSize: '0.95rem',
+    lineHeight: '2'
+  },
+  successButtons: {
+    display: 'flex',
+    gap: '1rem',
+    justifyContent: 'center',
+    marginBottom: '1rem'
+  },
+  dashboardButton: {
+    padding: '1rem 2rem',
+    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '1rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)'
+  },
+  closeButton: {
+    padding: '1rem 2rem',
+    backgroundColor: '#f3f4f6',
+    color: '#4a5568',
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '1rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease'
+  },
+  autoRedirect: {
+    textAlign: 'center',
+    fontSize: '0.875rem',
+    color: '#9ca3af',
+    fontStyle: 'italic'
   }
 };
