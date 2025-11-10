@@ -23,12 +23,12 @@ export default async function handler(req, res) {
     const { email, userName, cryptoType, networkType, amount, walletAddress, depositId, accountNumber, isAccountOpening, minDeposit } = req.body;
 
     const emailTitle = isAccountOpening 
-      ? '₿ Account Activation Deposit Submitted' 
-      : '₿ Crypto Deposit Received';
+      ? '💳 Account Activation Deposit Submitted' 
+      : '₿ Crypto Deposit Submitted';
     
     const introMessage = isAccountOpening
-      ? `Thank you for submitting your account activation deposit. We have received your cryptocurrency deposit request for account ${accountNumber} and it is being processed.`
-      : 'We have received your cryptocurrency deposit request and it is being processed.';
+      ? `Thank you for initiating your account activation deposit. Your cryptocurrency payment has been submitted and is awaiting blockchain confirmation for account ${accountNumber}.`
+      : 'Your cryptocurrency deposit has been submitted and is awaiting blockchain confirmation.';
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -81,22 +81,29 @@ export default async function handler(req, res) {
               </div>
             </div>
             
-            <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0;">
-              <p style="color: #92400e; font-size: 14px; font-weight: 500; margin: 0;">
-                ⏱️ <strong>Processing Time:</strong> Your deposit will be credited to your account after network confirmations. This typically takes 15-60 minutes depending on network congestion.
+            <div style="background-color: ${isAccountOpening ? '#eff6ff' : '#fef3c7'}; border-left: 4px solid ${isAccountOpening ? '#3b82f6' : '#f59e0b'}; padding: 16px; margin: 24px 0; border-radius: 4px;">
+              <p style="color: ${isAccountOpening ? '#1e40af' : '#92400e'}; font-size: 14px; font-weight: 500; margin: 0;">
+                ${isAccountOpening ? '🔐 <strong>Blockchain Verification:</strong> Your payment is being verified on the blockchain. This process typically takes 15-60 minutes depending on network activity.' : '⏱️ <strong>Processing Time:</strong> Your deposit will be credited after blockchain confirmations (typically 15-60 minutes).'}
               </p>
             </div>
             
-            <div style="background-color: #eff6ff; border-radius: 12px; padding: 20px; margin: 24px 0;">
+            <div style="background-color: #f8fafc; border-radius: 12px; padding: 20px; margin: 24px 0; border: 1px solid #e2e8f0;">
               <h3 style="color: #1e40af; font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">
-                📋 Next Steps:
+                📋 ${isAccountOpening ? 'Account Activation Process' : 'What Happens Next'}:
               </h3>
               <ul style="color: #4a5568; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
-                <li>Send exactly $${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} worth of ${cryptoType} to the provided wallet address</li>
-                <li>Wait for network confirmations (typically 15-60 minutes)</li>
-                <li>You'll receive another email once your deposit is confirmed${isAccountOpening ? ' and your account is activated' : ' and credited'}</li>
+                ${isAccountOpening ? `
+                <li>Our system monitors the blockchain for your ${cryptoType} transaction</li>
+                <li>Once ${getSelectedNetwork()?.confirmations || 3} confirmations are received, your deposit is verified</li>
+                <li>Your account ${accountNumber} will be automatically activated</li>
+                <li style="font-weight: 600; color: #1e40af;">Minimum deposit required: $${parseFloat(minDeposit || amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</li>
+                <li>You'll receive a confirmation email once your account is active</li>
+                ` : `
+                <li>Blockchain confirmation in progress (typically 15-60 minutes)</li>
+                <li>Funds will be credited automatically after verification</li>
+                <li>You'll receive another confirmation email when complete</li>
                 <li>Track your deposit status in your dashboard</li>
-                ${isAccountOpening && minDeposit ? `<li style="font-weight: 600; color: #1e40af;">Once the $${parseFloat(minDeposit).toLocaleString('en-US', { minimumFractionDigits: 2 })} minimum deposit is confirmed, your account will be activated</li>` : ''}
+                `}
               </ul>
             </div>
             
@@ -127,14 +134,15 @@ export default async function handler(req, res) {
     `;
 
     const emailSubject = isAccountOpening 
-      ? '₿ Account Activation Deposit Submitted - Oakline Bank'
-      : '₿ Crypto Deposit Received - Oakline Bank';
+      ? '💳 Account Activation Payment Submitted - Oakline Bank'
+      : '₿ Crypto Deposit Submitted - Oakline Bank';
 
     await sendEmail({
       to: email,
       subject: emailSubject,
       html: emailHtml,
-      emailType: 'crypto'
+      emailType: 'crypto',
+      from: process.env.SMTP_FROM_CRYPTO || 'crypto@theoaklinebank.com'
     });
 
     // Create notification

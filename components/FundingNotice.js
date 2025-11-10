@@ -22,6 +22,35 @@ const useMediaQuery = (query) => {
 export default function FundingNotice({ accounts }) {
   const router = useRouter();
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const [pendingDeposits, setPendingDeposits] = useState({});
+
+  useEffect(() => {
+    if (!accounts || accounts.length === 0) return;
+
+    const checkPendingDeposits = async () => {
+      const { supabase } = await import('../lib/supabaseClient');
+      
+      for (const account of accounts) {
+        if (account.status !== 'pending_funding') continue;
+        
+        const { data, error } = await supabase
+          .from('crypto_deposits')
+          .select('id, status, amount')
+          .eq('account_id', account.id)
+          .in('status', ['pending', 'processing', 'awaiting_confirmations'])
+          .single();
+
+        if (data && !error) {
+          setPendingDeposits(prev => ({
+            ...prev,
+            [account.id]: data
+          }));
+        }
+      }
+    };
+
+    checkPendingDeposits();
+  }, [accounts]);
 
   const handleDepositClick = (accountId, minDeposit, mode) => {
     router.push(`/deposit-crypto?account_id=${accountId}&min_deposit=${minDeposit}&mode=${mode}`);
@@ -88,14 +117,14 @@ export default function FundingNotice({ accounts }) {
                         Account {account.account_number} requires funding
                       </h3>
                       <span style={{
-                        backgroundColor: '#fef3c7',
-                        color: '#92400e',
+                        backgroundColor: pendingDeposits[account.id] ? '#dbeafe' : '#fef3c7',
+                        color: pendingDeposits[account.id] ? '#1e40af' : '#92400e',
                         padding: '0.25rem 0.75rem',
                         borderRadius: '12px',
                         fontSize: '0.75rem',
                         fontWeight: '600'
                       }}>
-                        Pending
+                        {pendingDeposits[account.id] ? 'Payment Submitted' : 'Action Required'}
                       </span>
                     </div>
                     <p style={{ 
@@ -104,29 +133,48 @@ export default function FundingNotice({ accounts }) {
                       color: '#64748b',
                       lineHeight: '1.5'
                     }}>
-                      Deposit {formatCurrency(remaining)} to activate this account. Current balance: {formatCurrency(balance)}
+                      {pendingDeposits[account.id] 
+                        ? `Payment of ${formatCurrency(pendingDeposits[account.id].amount)} is awaiting confirmation. This typically takes 15-60 minutes.`
+                        : `Deposit ${formatCurrency(remaining)} to activate this account. Current balance: ${formatCurrency(balance)}`
+                      }
                     </p>
                   </div>
-                  <Link
-                    href={`/deposit-crypto?account_id=${account.id}&mode=funding`}
-                    style={{
+                  {!pendingDeposits[account.id] ? (
+                    <Link
+                      href={`/deposit-crypto?account_id=${account.id}&mode=funding`}
+                      style={{
+                        display: 'inline-block',
+                        backgroundColor: '#1e40af',
+                        color: 'white',
+                        padding: '0.625rem 1.25rem',
+                        borderRadius: '6px',
+                        textAlign: 'center',
+                        textDecoration: 'none',
+                        fontWeight: '600',
+                        fontSize: '0.875rem',
+                        transition: 'all 0.2s',
+                        whiteSpace: 'nowrap'
+                      }}
+                      onMouseOver={(e) => e.target.style.backgroundColor = '#1e3a8a'}
+                      onMouseOut={(e) => e.target.style.backgroundColor = '#1e40af'}
+                    >
+                      Add Funds
+                    </Link>
+                  ) : (
+                    <span style={{
                       display: 'inline-block',
-                      backgroundColor: '#1e40af',
-                      color: 'white',
+                      backgroundColor: '#f1f5f9',
+                      color: '#64748b',
                       padding: '0.625rem 1.25rem',
                       borderRadius: '6px',
                       textAlign: 'center',
-                      textDecoration: 'none',
                       fontWeight: '600',
                       fontSize: '0.875rem',
-                      transition: 'all 0.2s',
                       whiteSpace: 'nowrap'
-                    }}
-                    onMouseOver={(e) => e.target.style.backgroundColor = '#1e3a8a'}
-                    onMouseOut={(e) => e.target.style.backgroundColor = '#1e40af'}
-                  >
-                    Add Funds
-                  </Link>
+                    }}>
+                      ⏳ Confirming...
+                    </span>
+                  )}
                 </div>
               </div>
             );

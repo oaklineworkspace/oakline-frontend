@@ -28,7 +28,7 @@ export default function CryptoDeposit() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
     window.addEventListener('orientationchange', checkMobile);
@@ -112,7 +112,7 @@ export default function CryptoDeposit() {
     setLoadingNetworks(true);
     setMessage('');
     setMessageType('');
-    
+
     try {
       const { data: cryptoAssets, error } = await supabase
         .from('crypto_assets')
@@ -187,7 +187,7 @@ export default function CryptoDeposit() {
       }
 
       setAccounts(userAccounts || []);
-      
+
       // If funding mode, set the specific account and get its actual min_deposit from DB
       if (accountId && userAccounts) {
         const targetAccount = userAccounts.find(acc => acc.id === accountId);
@@ -195,7 +195,7 @@ export default function CryptoDeposit() {
           // Use the actual min_deposit from the account record in the database
           const actualMinDeposit = parseFloat(targetAccount.min_deposit) || 0;
           const currentBalance = parseFloat(targetAccount.balance) || 0;
-          
+
           console.log('Target account found:', {
             accountId: targetAccount.id,
             accountNumber: targetAccount.account_number,
@@ -203,7 +203,7 @@ export default function CryptoDeposit() {
             currentBalance: currentBalance,
             status: targetAccount.status
           });
-          
+
           setDepositForm(prev => ({ 
             ...prev, 
             account_id: targetAccount.id,
@@ -211,7 +211,7 @@ export default function CryptoDeposit() {
           }));
           setAccountCurrentBalance(currentBalance);
           setAccountMinDeposit(actualMinDeposit);
-          
+
           // If this account doesn't actually need funding, redirect to dashboard
           if (actualMinDeposit === 0 || currentBalance >= actualMinDeposit) {
             setMessage('This account does not require a minimum deposit or is already funded.');
@@ -276,7 +276,7 @@ export default function CryptoDeposit() {
           .is('user_id', null)
           .eq('crypto_type', depositForm.crypto_type)
           .eq('network_type', depositForm.network_type);
-        
+
         adminWallets = result.data;
         adminError = result.error;
       } else {
@@ -287,7 +287,7 @@ export default function CryptoDeposit() {
           .eq('user_id', user.id)
           .eq('crypto_type', depositForm.crypto_type)
           .eq('network_type', depositForm.network_type);
-        
+
         adminWallets = result.data;
         adminError = result.error;
       }
@@ -305,7 +305,7 @@ export default function CryptoDeposit() {
         const wallet = fundingMode 
           ? adminWallets[Math.floor(Math.random() * adminWallets.length)]
           : adminWallets[0];
-          
+
         if (wallet.wallet_address) {
           setWalletAddress(wallet.wallet_address);
           setMemo(wallet.memo || '');
@@ -387,7 +387,7 @@ export default function CryptoDeposit() {
       if (fundingMode && accountMinDeposit > 0) {
         const remainingNeeded = accountMinDeposit - accountCurrentBalance;
         const depositAmount = parseFloat(depositForm.amount);
-        
+
         if (remainingNeeded > 0 && depositAmount < remainingNeeded) {
           setMessage(`To activate your account, you need to deposit at least $${remainingNeeded.toLocaleString('en-US', { minimumFractionDigits: 2 })}. Current deposit amount is too low.`);
           setMessageType('error');
@@ -412,6 +412,22 @@ export default function CryptoDeposit() {
     setMessageType('');
 
     try {
+      // Check for existing pending deposit
+      const { data: existingDeposit, error: checkError } = await supabase
+        .from('crypto_deposits')
+        .select('id, status')
+        .eq('user_id', user.id)
+        .eq('account_id', depositForm.account_id)
+        .in('status', ['pending', 'processing', 'awaiting_confirmations'])
+        .single();
+
+      if (existingDeposit && !checkError) {
+        setMessage('You already have a pending deposit for this account. Please wait for confirmation.');
+        setMessageType('info');
+        setSubmitting(false);
+        return;
+      }
+
       // First, get the crypto_asset_id for this crypto_type and network_type
       const { data: cryptoAsset, error: assetError } = await supabase
         .from('crypto_assets')
@@ -429,7 +445,7 @@ export default function CryptoDeposit() {
       const walletQuery = fundingMode 
         ? supabase.from('admin_assigned_wallets').select('id').is('user_id', null)
         : supabase.from('admin_assigned_wallets').select('id').eq('user_id', user.id);
-      
+
       const { data: walletData } = await walletQuery
         .eq('crypto_type', depositForm.crypto_type)
         .eq('network_type', depositForm.network_type)
@@ -460,7 +476,7 @@ export default function CryptoDeposit() {
           }])
           .select()
           .single();
-        
+
         data = result.data;
         error = result.error;
       } else {
@@ -481,7 +497,7 @@ export default function CryptoDeposit() {
           }])
           .select()
           .single();
-        
+
         data = result.data;
         error = result.error;
       }
@@ -508,6 +524,15 @@ export default function CryptoDeposit() {
         const userEmail = userProfile?.email || user.email;
         const userName = userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'Valued Customer';
 
+        // Fetch the correct sender email alias
+        const { data: bankDetails, error: bankDetailsError } = await supabase
+          .from('bank_details')
+          .select('sender_email_alias')
+          .eq('key', 'crypto_deposit_notification')
+          .single();
+
+        const senderEmail = bankDetails?.sender_email_alias || 'crypto@theoaklinebank.com';
+
         await fetch('/api/send-crypto-deposit-notification', {
           method: 'POST',
           headers: {
@@ -524,7 +549,8 @@ export default function CryptoDeposit() {
             depositId: data.id,
             accountNumber: depositForm.account_number,
             isAccountOpening: fundingMode,
-            minDeposit: fundingMode ? accountMinDeposit : null
+            minDeposit: fundingMode ? accountMinDeposit : null,
+            senderEmail: senderEmail // Pass the sender email
           })
         });
       } catch (emailError) {
@@ -557,6 +583,12 @@ export default function CryptoDeposit() {
 
       setReceiptData(receipt);
       setShowReceipt(true);
+
+      // Update message and type for confirmation
+      setMessage(fundingMode 
+        ? 'Payment submitted! Your deposit is awaiting blockchain confirmation. You will be notified once confirmed.'
+        : 'Payment submitted! Your deposit is awaiting blockchain confirmation.');
+      setMessageType('success');
 
     } catch (error) {
       console.error('Deposit error:', error);
@@ -1196,98 +1228,48 @@ export default function CryptoDeposit() {
           </p>
         </div>
 
+        {/* Account Funding Banner - shown only in funding mode */}
         {fundingMode && depositForm.account_id && accountMinDeposit > 0 && (accountMinDeposit - accountCurrentBalance) > 0 && (
           <div style={{
-            maxWidth: '800px',
-            margin: '0 auto 1.5rem',
-            padding: '0 1rem'
+            background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+            borderRadius: '8px',
+            padding: '16px 20px',
+            marginBottom: '20px',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            boxShadow: '0 2px 8px rgba(30, 64, 175, 0.15)'
           }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)',
-              border: '1px solid #3b82f6',
-              borderLeft: '4px solid #3b82f6',
-              borderRadius: '8px',
-              padding: isMobile ? '1rem' : '1.25rem',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.75rem' : '1rem', marginBottom: '0.75rem' }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '20px',
-                  flexShrink: 0
-                }}>
-                  💳
-                </div>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ 
-                    margin: 0, 
-                    color: '#1e40af', 
-                    fontSize: isMobile ? '1rem' : '1.1rem',
-                    fontWeight: '600'
-                  }}>
-                    Account Activation Required
-                  </h3>
-                </div>
-                <span style={{
-                  backgroundColor: '#fef3c7',
-                  color: '#92400e',
-                  padding: '0.25rem 0.75rem',
-                  borderRadius: '12px',
-                  fontSize: '0.7rem',
-                  fontWeight: '600',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px'
-                }}>
-                  Pending
-                </span>
-              </div>
-              
-              <p style={{ 
-                margin: '0 0 0.75rem 0', 
-                color: '#64748b', 
-                fontSize: '0.9rem',
-                lineHeight: '1.5'
-              }}>
-                Complete your minimum deposit to activate account {depositForm.account_number}
-              </p>
-
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-                gap: '0.75rem'
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                background: 'rgba(255, 255, 255, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '18px',
+                flexShrink: 0
               }}>
-                <div style={{
-                  backgroundColor: '#f8fafc',
-                  borderRadius: '6px',
-                  padding: '0.75rem',
-                  border: '1px solid #e2e8f0'
+                💳
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ 
+                  color: 'white', 
+                  fontSize: '15px', 
+                  fontWeight: '600',
+                  margin: '0 0 4px 0'
                 }}>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.25rem' }}>
-                    Required
-                  </div>
-                  <div style={{ fontSize: '1.1rem', color: '#1e40af', fontWeight: '700' }}>
-                    ${accountMinDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  </div>
-                </div>
-                <div style={{
-                  backgroundColor: '#f8fafc',
-                  borderRadius: '6px',
-                  padding: '0.75rem',
-                  border: '1px solid #e2e8f0'
+                  Account Activation Deposit
+                </h3>
+                <p style={{ 
+                  color: 'white', 
+                  fontSize: '13px',
+                  margin: 0,
+                  opacity: 0.9,
+                  lineHeight: '1.4'
                 }}>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.25rem' }}>
-                    Current Balance
-                  </div>
-                  <div style={{ fontSize: '1.1rem', color: '#64748b', fontWeight: '700' }}>
-                    ${accountCurrentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  </div>
-                </div>
+                  Minimum required: ${formatCurrency((accountMinDeposit - accountCurrentBalance).toFixed(2))} to activate {depositForm.account_number}
+                </p>
               </div>
             </div>
           </div>
@@ -1355,7 +1337,7 @@ export default function CryptoDeposit() {
                   const minDeposit = parseFloat(account.min_deposit) || 0;
                   const balance = parseFloat(account.balance) || 0;
                   const needsFunding = minDeposit > 0 && balance < minDeposit;
-                  
+
                   return (
                     <option key={account.id} value={account.id}>
                       {account.account_type.toUpperCase()} - {account.account_number} ({formatCurrency(account.balance)})
@@ -1539,9 +1521,9 @@ export default function CryptoDeposit() {
 
         {currentStep === 2 && (
           <div style={styles.contentCard}>
-            <h2 style={styles.sectionTitle}>Send {getSelectedCrypto().label} Payment</h2>
+            <h2 style={styles.sectionTitle}>Send {getSelectedCrypto()?.label} Payment</h2>
             <p style={{ color: '#64748b', marginBottom: '2rem' }}>
-              Send exactly <strong>{formatCurrency(depositForm.amount)}</strong> worth of {getSelectedCrypto().value} via <strong>{getSelectedNetwork()?.label}</strong>
+              Send exactly {formatCurrency(parseFloat(depositForm.amount))} worth of {depositForm.crypto_type} via <strong>{getSelectedNetwork()?.label}</strong>
             </p>
 
             {loadingWallet ? (
@@ -1582,7 +1564,7 @@ export default function CryptoDeposit() {
                     >
                       📋 Copy Address
                     </button>
-                    
+
                     {memo && (
                       <div style={{ marginTop: '1rem' }}>
                         <p style={{ 
@@ -1671,7 +1653,7 @@ export default function CryptoDeposit() {
                 <div style={{ fontSize: '48px', marginBottom: '1rem' }}>⚠️</div>
                 <h3 style={styles.warningTitle}>No Wallet Assigned for This Network</h3>
                 <p style={{ color: '#92400e', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
-                  You don't have a {getSelectedCrypto().value} wallet assigned for {getSelectedNetwork()?.label} yet. Please contact our support team.
+                  You don't have a {getSelectedCrypto()?.value} wallet assigned for {getSelectedNetwork()?.label} yet. Please contact our support team.
                 </p>
                 <button
                   onClick={() => setCurrentStep(1)}
@@ -1725,7 +1707,7 @@ export default function CryptoDeposit() {
               <div style={styles.summaryRow}>
                 <span style={styles.summaryLabel}>Cryptocurrency</span>
                 <span style={styles.summaryValue}>
-                  {getSelectedCrypto().label} ({getSelectedCrypto().value})
+                  {getSelectedCrypto()?.label} ({getSelectedCrypto()?.value})
                 </span>
               </div>
               <div style={styles.summaryRow}>
@@ -1938,8 +1920,12 @@ export default function CryptoDeposit() {
                 <span style={styles.receiptValue}>{receiptData.network}</span>
               </div>
               <div style={styles.receiptRow}>
-                <span style={styles.receiptLabel}>Amount (USD)</span>
-                <span style={{ ...styles.receiptValue, fontSize: '1.25rem', color: '#059669' }}>
+                <span style={styles.summaryLabel}>Amount</span>
+                <span style={{
+                  ...styles.summaryValue,
+                  fontSize: '1.25rem',
+                  color: '#059669'
+                }}>
                   {receiptData.amount}
                 </span>
               </div>
