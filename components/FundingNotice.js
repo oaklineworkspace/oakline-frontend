@@ -84,17 +84,6 @@ export default function FundingNotice({ accounts }) {
             const depositStatus = hasPendingDeposit?.status;
             
             const getStatusDisplay = () => {
-              if (!hasPendingDeposit) {
-                return {
-                  title: 'Account Activation Required',
-                  message: `Deposit ${formatCurrency(remaining)} to activate ${account.account_number}`,
-                  buttonText: '💰 Add Funds',
-                  showButton: true,
-                  background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
-                  icon: '💳'
-                };
-              }
-              
               if (depositStatus === 'pending' || depositStatus === 'awaiting_confirmations') {
                 return {
                   title: 'Account Activation Deposit Submitted',
@@ -117,6 +106,7 @@ export default function FundingNotice({ accounts }) {
                 };
               }
               
+              // Default: No pending deposit or other status
               return {
                 title: 'Account Activation Required',
                 message: `Deposit ${formatCurrency(remaining)} to activate ${account.account_number}`,
