@@ -698,8 +698,8 @@ export default function CryptoDeposit() {
           body: JSON.stringify({
             email: userEmail,
             userName: userName,
-            cryptoType: getSelectedCrypto().label,
-            networkType: getSelectedNetwork()?.label,
+            cryptoType: getSelectedCrypto()?.label || depositForm.crypto_type,
+            networkType: getSelectedNetwork()?.label || depositForm.network_type,
             amount: depositForm.amount,
             walletAddress: walletAddress,
             depositId: data.id,
@@ -726,12 +726,12 @@ export default function CryptoDeposit() {
           hour12: true
         }),
         accountNumber: depositForm.account_number,
-        cryptoType: getSelectedCrypto().label,
+        cryptoType: getSelectedCrypto()?.label || depositForm.crypto_type,
         cryptoSymbol: depositForm.crypto_type,
-        network: getSelectedNetwork()?.label,
+        network: getSelectedNetwork()?.label || depositForm.network_type,
         amount: formatCurrency(depositForm.amount),
         walletAddress: walletAddress,
-        confirmations: getSelectedNetwork()?.confirmations,
+        confirmations: getSelectedNetwork()?.confirmations || 3,
         status: 'Pending Confirmation',
         transactionId: data.id
       };
@@ -1867,14 +1867,14 @@ export default function CryptoDeposit() {
                     <div>
                       <h3 style={styles.warningTitle}>Important Instructions</h3>
                       <ul style={styles.warningList}>
-                        <li><strong>Make sure you deposit on the {getSelectedNetwork()?.label} network</strong></li>
+                        <li><strong>Make sure you deposit on the {getSelectedNetwork()?.label || depositForm.network_type} network</strong></li>
                         {memo && (
                           <li><strong style={{ color: '#dc2626' }}>YOU MUST INCLUDE THE MEMO/TAG OR YOUR DEPOSIT WILL BE LOST</strong></li>
                         )}
                         <li>Deposits on the wrong chain may be permanently lost</li>
-                        <li>Send only {getSelectedCrypto().value} to this address</li>
-                        <li>Minimum deposit: {getSelectedNetwork()?.minDeposit} {depositForm.crypto_type}</li>
-                        <li>Required confirmations: {getSelectedNetwork()?.confirmations}</li>
+                        <li>Send only {getSelectedCrypto()?.value || depositForm.crypto_type} to this address</li>
+                        <li>Minimum deposit: {getSelectedNetwork()?.minDeposit || '0.001'} {depositForm.crypto_type}</li>
+                        <li>Required confirmations: {getSelectedNetwork()?.confirmations || 3}</li>
                         {getSelectedNetwork()?.fee > 0 && (
                           <li>Network fee: {getSelectedNetwork()?.fee}%</li>
                         )}
