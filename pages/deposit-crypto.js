@@ -2035,8 +2035,8 @@ export default function CryptoDeposit() {
         {currentStep === 3 && (
           <div style={styles.contentCard}>
             <div style={{
-              backgroundColor: '#f0fdf4',
-              border: '2px solid #86efac',
+              backgroundColor: '#1e40af',
+              border: '2px solid #3b82f6',
               borderRadius: '12px',
               padding: '1.25rem',
               marginBottom: '2rem'
@@ -2046,19 +2046,19 @@ export default function CryptoDeposit() {
                 <div>
                   <h4 style={{ 
                     margin: '0 0 0.5rem 0', 
-                    color: '#166534',
+                    color: '#ffffff',
                     fontSize: '1rem',
                     fontWeight: '700'
                   }}>
-                    Don't know your transaction hash? No problem!
+                    Transaction Hash Not Available?
                   </h4>
                   <p style={{ 
                     margin: 0, 
                     fontSize: '0.9rem', 
-                    color: '#15803d',
+                    color: '#ffffff',
                     lineHeight: '1.6'
                   }}>
-                    If you made your payment through an online platform (like Coinbase, Binance, Kraken, etc.) and can't find the transaction hash, simply take a screenshot of your transaction confirmation page showing the payment details and upload it as proof. Our admin team will verify and process your deposit manually.
+                    If you made your payment through an online cryptocurrency exchange platform (such as Coinbase, Binance, Kraken, etc.) and are unable to locate the transaction hash, you may upload a screenshot of your transaction confirmation page displaying the payment details. Our Cryptocurrency Verification Department will review and process your deposit accordingly.
                   </p>
                 </div>
               </div>
@@ -2212,19 +2212,19 @@ export default function CryptoDeposit() {
               </h4>
 
               <div style={{
-                backgroundColor: '#dbeafe',
-                border: '1px solid #60a5fa',
+                backgroundColor: '#1e40af',
+                border: '1px solid #3b82f6',
                 borderRadius: '8px',
                 padding: '1rem',
                 marginBottom: '1.5rem'
               }}>
                 <p style={{
                   fontSize: '0.85rem',
-                  color: '#1e40af',
+                  color: '#ffffff',
                   margin: 0,
                   lineHeight: '1.5'
                 }}>
-                  💡 <strong>Flexible Verification:</strong> You can provide either the transaction hash from your crypto wallet <strong>OR</strong> upload a screenshot/proof of your payment. If you paid through an online platform (like Coinbase, Binance, etc.), simply upload a screenshot showing your transaction.
+                  💡 <strong>Flexible Verification Options:</strong> You may provide either the transaction hash from your cryptocurrency wallet <strong>OR</strong> upload a screenshot or confirmation document of your payment. For transactions initiated through online exchange platforms (such as Coinbase, Binance, etc.), a screenshot displaying your transaction details is acceptable.
                 </p>
               </div>
               
@@ -2243,7 +2243,7 @@ export default function CryptoDeposit() {
                   color: '#64748b',
                   marginBottom: '0.5rem'
                 }}>
-                  If you have the transaction hash from your wallet, enter it here. This is usually found in your wallet's transaction history and looks like: "0x..." or "bc1..." depending on the blockchain.
+                  Please enter your transaction hash if available. This identifier can typically be located in your wallet's transaction history and appears in formats such as "0x..." or "bc1..." depending on the blockchain network.
                 </p>
                 <input
                   type="text"
@@ -2293,7 +2293,7 @@ export default function CryptoDeposit() {
                   color: '#64748b',
                   marginBottom: '0.5rem'
                 }}>
-                  Upload a screenshot of your payment confirmation from your crypto platform (Coinbase, Binance, etc.). Accepted formats: PNG, JPG, or PDF (max 5MB). This helps our team verify your deposit quickly.
+                  Upload a screenshot or confirmation document from your cryptocurrency exchange platform (Coinbase, Binance, etc.). Accepted file formats: PNG, JPG, or PDF (maximum file size: 5MB). This documentation enables our Verification Department to efficiently process your deposit.
                 </p>
                 {!proofFile ? (
                   <label style={{
@@ -2362,7 +2362,7 @@ export default function CryptoDeposit() {
             </div>
 
             <div style={{
-              backgroundColor: '#eff6ff',
+              backgroundColor: '#1e40af',
               border: '2px solid #3b82f6',
               borderRadius: '12px',
               padding: '1.25rem',
@@ -2374,7 +2374,7 @@ export default function CryptoDeposit() {
                 <div>
                   <h4 style={{ 
                     margin: '0 0 0.5rem 0', 
-                    color: '#1e40af',
+                    color: '#ffffff',
                     fontSize: '0.95rem',
                     fontWeight: '700'
                   }}>
@@ -2383,10 +2383,10 @@ export default function CryptoDeposit() {
                   <p style={{ 
                     margin: 0, 
                     fontSize: '0.85rem', 
-                    color: '#1e40af',
+                    color: '#ffffff',
                     lineHeight: '1.5'
                   }}>
-                    By clicking "Confirm Payment", you certify that you have sent {formatCurrency(depositForm.amount)} worth of {getSelectedCrypto()?.value} to the address shown above via {getSelectedNetwork()?.label} network. Our admin team will verify your {txHash ? 'transaction hash' : 'proof of payment'} and credit your account once confirmed.
+                    By clicking "Confirm Payment", you certify that you have transmitted {formatCurrency(depositForm.amount)} worth of {getSelectedCrypto()?.value} to the designated address above via the {getSelectedNetwork()?.label} network. Our Cryptocurrency Verification Department will authenticate your {txHash ? 'transaction hash' : 'proof of payment'} and credit your account upon confirmation.
                   </p>
                 </div>
               </div>
