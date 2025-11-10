@@ -29,10 +29,10 @@ export default function FundingNotice({ accounts }) {
 
     const checkPendingDeposits = async () => {
       const { supabase } = await import('../lib/supabaseClient');
-      
+
       for (const account of accounts) {
         if (account.status !== 'pending_funding') continue;
-        
+
         // Check account_opening_crypto_deposits table for account activation deposits
         const { data, error } = await supabase
           .from('account_opening_crypto_deposits')
@@ -81,101 +81,85 @@ export default function FundingNotice({ accounts }) {
             const remaining = Math.max(0, minDeposit - balance);
 
             return (
-              <div 
-                key={account.id} 
+              <div
+                key={account.id}
                 style={{
-                  background: 'white',
-                  border: '1px solid #e2e8f0',
-                  borderLeft: '4px solid #f59e0b',
+                  background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
                   borderRadius: '8px',
-                  padding: isMobile ? '1rem' : '1.25rem',
-                  marginBottom: '1rem',
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                  padding: '16px 20px',
+                  marginBottom: '20px',
+                  color: 'white',
+                  boxShadow: '0 2px 8px rgba(30, 64, 175, 0.15)',
+                  border: '1px solid rgba(59, 130, 246, 0.3)'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    background: '#fef3c7',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '20px',
-                    flexShrink: 0
-                  }}>
-                    ⚠️
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '18px',
+                      flexShrink: 0
+                    }}
+                  >
+                    💳
                   </div>
-                  <div style={{ flex: 1, minWidth: '200px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-                      <h3 style={{ 
-                        margin: 0, 
-                        color: '#1e293b', 
-                        fontSize: '1rem',
-                        fontWeight: '600'
-                      }}>
-                        Account {account.account_number} requires funding
-                      </h3>
-                      <span style={{
-                        backgroundColor: pendingDeposits[account.id] ? '#dbeafe' : '#fef3c7',
-                        color: pendingDeposits[account.id] ? '#1e40af' : '#92400e',
-                        padding: '0.25rem 0.75rem',
-                        borderRadius: '12px',
-                        fontSize: '0.75rem',
-                        fontWeight: '600'
-                      }}>
-                        {pendingDeposits[account.id] ? 'Payment Submitted' : 'Action Required'}
-                      </span>
-                    </div>
-                    <p style={{ 
-                      margin: 0, 
-                      fontSize: '0.875rem', 
-                      color: '#64748b',
-                      lineHeight: '1.5'
-                    }}>
-                      {pendingDeposits[account.id] 
-                        ? `Payment of ${formatCurrency(pendingDeposits[account.id].amount)} is awaiting confirmation. This typically takes 15-60 minutes.`
-                        : `Deposit ${formatCurrency(remaining)} to activate this account. Current balance: ${formatCurrency(balance)}`
-                      }
+                  <div style={{ flex: 1 }}>
+                    <h3
+                      style={{
+                        margin: 0,
+                        fontSize: '15px',
+                        fontWeight: '600',
+                        color: 'white',
+                        marginBottom: '4px'
+                      }}
+                    >
+                      Account Activation Required
+                    </h3>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: '13px',
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        lineHeight: '1.4'
+                      }}
+                    >
+                      Deposit {formatCurrency(remaining)} to activate {account.account_number}
                     </p>
                   </div>
-                  {!pendingDeposits[account.id] ? (
-                    <Link
-                      href={`/deposit-crypto?account_id=${account.id}&mode=funding`}
-                      style={{
-                        display: 'inline-block',
-                        backgroundColor: '#1e40af',
-                        color: 'white',
-                        padding: '0.625rem 1.25rem',
-                        borderRadius: '6px',
-                        textAlign: 'center',
-                        textDecoration: 'none',
-                        fontWeight: '600',
-                        fontSize: '0.875rem',
-                        transition: 'all 0.2s',
-                        whiteSpace: 'nowrap'
-                      }}
-                      onMouseOver={(e) => e.target.style.backgroundColor = '#1e3a8a'}
-                      onMouseOut={(e) => e.target.style.backgroundColor = '#1e40af'}
-                    >
-                      Add Funds
-                    </Link>
-                  ) : (
-                    <span style={{
-                      display: 'inline-block',
-                      backgroundColor: '#f1f5f9',
-                      color: '#64748b',
-                      padding: '0.625rem 1.25rem',
+                  <button
+                    onClick={() => handleDepositClick(account.id, minDeposit, 'funding')}
+                    style={{
+                      padding: '8px 16px',
+                      background: 'rgba(255, 255, 255, 0.95)',
+                      color: '#1e40af',
+                      border: 'none',
                       borderRadius: '6px',
-                      textAlign: 'center',
+                      fontSize: '13px',
                       fontWeight: '600',
-                      fontSize: '0.875rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
                       whiteSpace: 'nowrap'
-                    }}>
-                      ⏳ Confirming...
-                    </span>
-                  )}
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = 'white';
+                      e.target.style.transform = 'translateY(-1px)';
+                      e.target.style.boxShadow = '0 3px 8px rgba(0, 0, 0, 0.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'rgba(255, 255, 255, 0.95)';
+                      e.target.style.transform = 'translateY(0)';
+                      e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                    }}
+                  >
+                    💰 Add Funds
+                  </button>
                 </div>
               </div>
             );
