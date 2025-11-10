@@ -307,6 +307,22 @@ export default function AccountDetails() {
       fontSize: isMobile ? '0.85rem' : '0.95rem',
       opacity: 0.8
     },
+    requestAccountButton: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: '1.5rem',
+      padding: isMobile ? '0.75rem 1.5rem' : '0.875rem 2rem',
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      color: 'white',
+      textDecoration: 'none',
+      borderRadius: '12px',
+      fontSize: isMobile ? '0.9rem' : '1rem',
+      fontWeight: '600',
+      border: '2px solid rgba(255, 255, 255, 0.3)',
+      transition: 'all 0.3s ease',
+      cursor: 'pointer'
+    },
     contentGrid: {
       display: 'grid',
       gridTemplateColumns: isMobile ? '1fr' : '350px 1fr',
@@ -641,6 +657,21 @@ export default function AccountDetails() {
           <div style={styles.balanceLabel}>Total Balance Across All Accounts</div>
           <div style={styles.balanceAmount}>{formatCurrency(getTotalBalance())}</div>
           <div style={styles.balanceAccounts}>{accounts.length} Account{accounts.length !== 1 ? 's' : ''}</div>
+          <Link 
+            href="/request-account" 
+            style={styles.requestAccountButton}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+              e.target.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+              e.target.style.transform = 'translateY(0)';
+            }}
+          >
+            <span style={{ fontSize: '1.2rem', marginRight: '0.5rem' }}>➕</span>
+            Request New Account Type
+          </Link>
         </div>
 
         {/* Funding Notices for Pending Funding Accounts */}
