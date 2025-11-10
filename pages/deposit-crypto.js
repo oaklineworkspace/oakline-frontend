@@ -357,6 +357,11 @@ export default function CryptoDeposit() {
   };
 
   const handleCryptoChange = (crypto) => {
+    // Don't do anything if clicking the same crypto type again
+    if (depositForm.crypto_type === crypto) {
+      return;
+    }
+    
     setDepositForm({
       ...depositForm,
       crypto_type: crypto,
@@ -1585,19 +1590,17 @@ export default function CryptoDeposit() {
                   );
                 })}
               </div>
-            </div>
-
-            {depositForm.crypto_type && (
-              <div style={{
-                ...styles.formGroup,
-                backgroundColor: '#f8fafc',
-                border: '2px solid #3b82f6',
-                borderRadius: '16px',
-                padding: '1.75rem',
-                marginTop: '1.5rem',
-                marginBottom: '1.5rem',
-                boxShadow: '0 8px 20px rgba(59, 130, 246, 0.15)'
-              }}>
+              
+              {/* Network Selection - appears right after crypto grid when crypto is selected */}
+              {depositForm.crypto_type && (
+                <div style={{
+                  backgroundColor: '#f8fafc',
+                  border: '2px solid #3b82f6',
+                  borderRadius: '16px',
+                  padding: '1.75rem',
+                  marginTop: '1.5rem',
+                  boxShadow: '0 8px 20px rgba(59, 130, 246, 0.15)'
+                }}>
                 <div style={{ 
                   textAlign: 'center',
                   marginBottom: '1.25rem',
@@ -1679,8 +1682,9 @@ export default function CryptoDeposit() {
                     </select>
                   </>
                 ) : null}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
 
             {depositForm.network_type && getSelectedNetwork() && (
               <div style={{
