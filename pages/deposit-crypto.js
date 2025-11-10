@@ -161,8 +161,6 @@ export default function CryptoDeposit() {
         setAvailableNetworks(networks);
       } else {
         setAvailableNetworks([]);
-        setMessage(`No networks available for ${depositForm.crypto_type}. Please contact support.`);
-        setMessageType('error');
       }
     } catch (error) {
       console.error('Error fetching networks:', error);
@@ -1590,10 +1588,41 @@ export default function CryptoDeposit() {
             </div>
 
             {depositForm.crypto_type && (
-              <div style={styles.formGroup}>
-                <label style={styles.label}>
-                  Select Network <span style={{ color: '#dc2626', fontWeight: '700' }}>*</span>
-                </label>
+              <div style={{
+                ...styles.formGroup,
+                backgroundColor: '#f8fafc',
+                border: '2px solid #3b82f6',
+                borderRadius: '16px',
+                padding: '1.75rem',
+                marginTop: '1.5rem',
+                marginBottom: '1.5rem',
+                boxShadow: '0 8px 20px rgba(59, 130, 246, 0.15)'
+              }}>
+                <div style={{ 
+                  textAlign: 'center',
+                  marginBottom: '1.25rem',
+                  paddingBottom: '1rem',
+                  borderBottom: '1px solid #e2e8f0'
+                }}>
+                  <label style={{
+                    ...styles.label,
+                    fontSize: '1.1rem',
+                    color: '#1e40af',
+                    fontWeight: '700',
+                    display: 'block',
+                    marginBottom: '0.5rem'
+                  }}>
+                    Select Network <span style={{ color: '#dc2626' }}>*</span>
+                  </label>
+                  <p style={{
+                    fontSize: '0.85rem',
+                    color: '#64748b',
+                    margin: '0.5rem 0 0 0'
+                  }}>
+                    Choose the blockchain network for your {depositForm.crypto_type} deposit
+                  </p>
+                </div>
+                
                 {loadingNetworks ? (
                   <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
                     <div style={{ ...styles.spinner, margin: '0 auto 1rem' }} />
@@ -1632,8 +1661,11 @@ export default function CryptoDeposit() {
                       onChange={(e) => handleNetworkChange(e.target.value)}
                       style={{
                         ...styles.select,
-                        fontSize: '1rem',
-                        fontWeight: '500',
+                        fontSize: '1.05rem',
+                        fontWeight: '600',
+                        padding: '1rem',
+                        border: '2px solid #3b82f6',
+                        backgroundColor: '#fff',
                         color: depositForm.network_type ? '#1e293b' : '#94a3b8'
                       }}
                       required
