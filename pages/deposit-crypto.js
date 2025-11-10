@@ -1792,12 +1792,12 @@ export default function CryptoDeposit() {
                     fontSize: '0.9rem',
                     lineHeight: '1.5'
                   }}>
-                    If you don't have crypto yet, you can purchase it from these trusted exchanges:
+                    If you don't have crypto yet, you can purchase it from these trusted providers:
                   </p>
                   <div style={{
-                    display: 'flex',
-                    gap: '0.75rem',
-                    flexWrap: 'wrap'
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                    gap: '0.75rem'
                   }}>
                     <a
                       href="https://www.coinbase.com"
@@ -1807,10 +1807,10 @@ export default function CryptoDeposit() {
                         ...styles.button,
                         backgroundColor: '#1652f0',
                         color: 'white',
-                        padding: '0.65rem 1.2rem',
-                        fontSize: '0.9rem',
+                        padding: '0.65rem 1rem',
+                        fontSize: '0.85rem',
                         textDecoration: 'none',
-                        flex: '0 1 auto'
+                        textAlign: 'center'
                       }}
                     >
                       🟦 Coinbase
@@ -1823,10 +1823,10 @@ export default function CryptoDeposit() {
                         ...styles.button,
                         backgroundColor: '#f3ba2f',
                         color: '#000',
-                        padding: '0.65rem 1.2rem',
-                        fontSize: '0.9rem',
+                        padding: '0.65rem 1rem',
+                        fontSize: '0.85rem',
                         textDecoration: 'none',
-                        flex: '0 1 auto'
+                        textAlign: 'center'
                       }}
                     >
                       🟨 Binance
@@ -1839,13 +1839,109 @@ export default function CryptoDeposit() {
                         ...styles.button,
                         backgroundColor: '#5741d9',
                         color: 'white',
-                        padding: '0.65rem 1.2rem',
-                        fontSize: '0.9rem',
+                        padding: '0.65rem 1rem',
+                        fontSize: '0.85rem',
                         textDecoration: 'none',
-                        flex: '0 1 auto'
+                        textAlign: 'center'
                       }}
                     >
                       🟪 Kraken
+                    </a>
+                    <a
+                      href="https://www.moonpay.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        ...styles.button,
+                        backgroundColor: '#7B3FE4',
+                        color: 'white',
+                        padding: '0.65rem 1rem',
+                        fontSize: '0.85rem',
+                        textDecoration: 'none',
+                        textAlign: 'center'
+                      }}
+                    >
+                      🟣 MoonPay
+                    </a>
+                    <a
+                      href="https://global.transak.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        ...styles.button,
+                        backgroundColor: '#1A5AFF',
+                        color: 'white',
+                        padding: '0.65rem 1rem',
+                        fontSize: '0.85rem',
+                        textDecoration: 'none',
+                        textAlign: 'center'
+                      }}
+                    >
+                      🔵 Transak
+                    </a>
+                    <a
+                      href="https://alchemypay.org"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        ...styles.button,
+                        backgroundColor: '#00C3FF',
+                        color: 'white',
+                        padding: '0.65rem 1rem',
+                        fontSize: '0.85rem',
+                        textDecoration: 'none',
+                        textAlign: 'center'
+                      }}
+                    >
+                      💠 AlchemyPay
+                    </a>
+                    <a
+                      href="https://ramp.network"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        ...styles.button,
+                        backgroundColor: '#05C77E',
+                        color: 'white',
+                        padding: '0.65rem 1rem',
+                        fontSize: '0.85rem',
+                        textDecoration: 'none',
+                        textAlign: 'center'
+                      }}
+                    >
+                      🟢 Ramp
+                    </a>
+                    <a
+                      href="https://www.mercuryo.io"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        ...styles.button,
+                        backgroundColor: '#00D4AA',
+                        color: 'white',
+                        padding: '0.65rem 1rem',
+                        fontSize: '0.85rem',
+                        textDecoration: 'none',
+                        textAlign: 'center'
+                      }}
+                    >
+                      🌐 Mercuryo
+                    </a>
+                    <a
+                      href="https://www.simplex.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        ...styles.button,
+                        backgroundColor: '#3D5AFE',
+                        color: 'white',
+                        padding: '0.65rem 1rem',
+                        fontSize: '0.85rem',
+                        textDecoration: 'none',
+                        textAlign: 'center'
+                      }}
+                    >
+                      🔷 Simplex
                     </a>
                   </div>
                   <p style={{ 
