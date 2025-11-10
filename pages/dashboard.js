@@ -491,7 +491,7 @@ function DashboardContent() {
 
   return (
     <div style={styles.container} onClick={closeAllDropdowns}>
-      {/* Professional Banking Header */}
+      {/* Professional Banking Header - KEPT AS IS */}
       <header style={styles.header}>
         <div style={styles.headerContainer}>
           <div style={styles.headerLeft}>
@@ -600,10 +600,71 @@ function DashboardContent() {
         </div>
       </header>
 
-      {/* Main Dashboard Content */}
+      {/* Main Dashboard Content - REDESIGNED */}
       <main style={styles.main}>
+        {/* Dashboard Title Header */}
+        <header style={styles.dashboardHeader}>
+          <div>
+            <h1 style={styles.dashboardTitle}>
+              📊 My Dashboard
+            </h1>
+            <p style={styles.dashboardSubtitle}>
+              Manage your accounts, transactions, and financial activities
+            </p>
+          </div>
+          <div style={styles.dashboardActions}>
+            <button 
+              onClick={() => loadUserData(user.id)}
+              style={styles.refreshButton}
+            >
+              🔄 Refresh
+            </button>
+          </div>
+        </header>
+
+        {/* Statistics Cards Grid */}
+        <div style={styles.statsGrid}>
+          <div style={styles.statCard}>
+            <h3 style={styles.statLabel}>Total Balance</h3>
+            <p style={styles.statValue}>{formatCurrency(getTotalBalance())}</p>
+          </div>
+          <div style={styles.statCard}>
+            <h3 style={styles.statLabel}>Active Accounts</h3>
+            <p style={styles.statValue}>{accounts.length}</p>
+          </div>
+          <div style={styles.statCard}>
+            <h3 style={styles.statLabel}>Recent Transactions</h3>
+            <p style={styles.statValue}>{transactions.length}</p>
+          </div>
+          <div style={styles.statCard}>
+            <h3 style={styles.statLabel}>Active Cards</h3>
+            <p style={styles.statValue}>{cards.length}</p>
+          </div>
+        </div>
+
+        {/* Funding Notices */}
+        <FundingNotice accounts={accounts} />
+
+        {/* Tab Navigation */}
+        <div style={styles.tabNavigation}>
+          {['overview', 'accounts', 'transactions', 'cards'].map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                ...styles.tabButton,
+                ...(activeTab === tab ? styles.tabButtonActive : {})
+              }}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
+
         {/* Account Summary Section */}
-        <section style={styles.summarySection}>
+        {activeTab === 'overview' && (
+          <>
+            <section style={styles.summarySection}>
           <div style={styles.summaryHeader}>
             <h2 style={styles.sectionTitle}>Account Summary</h2>
             <span style={styles.lastUpdated}>Last updated: {new Date().toLocaleDateString()}</span>
@@ -1124,10 +1185,11 @@ export default function Dashboard() {
 const styles = {
   container: {
     minHeight: '100vh',
-    background: '#f7f9fc',
+    background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     width: '100%',
-    overflowX: 'hidden'
+    overflowX: 'hidden',
+    paddingBottom: '100px'
   },
   loadingContainer: {
     display: 'flex',
@@ -1434,21 +1496,110 @@ const styles = {
   main: {
     maxWidth: '100%',
     margin: '0',
-    padding: '1rem 0.75rem',
+    padding: 'clamp(1rem, 3vw, 20px)',
     display: 'flex',
     flexDirection: 'column',
-    gap: '1.5rem',
+    gap: 'clamp(1rem, 3vw, 20px)',
     width: '100%',
     boxSizing: 'border-box'
   },
+  dashboardHeader: {
+    background: 'white',
+    padding: 'clamp(1.5rem, 4vw, 24px)',
+    borderRadius: '12px',
+    marginBottom: '20px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: '16px'
+  },
+  dashboardTitle: {
+    margin: '0 0 8px 0',
+    fontSize: 'clamp(1.5rem, 4vw, 28px)',
+    color: '#1A3E6F',
+    fontWeight: '700'
+  },
+  dashboardSubtitle: {
+    margin: 0,
+    color: '#718096',
+    fontSize: 'clamp(0.85rem, 2vw, 14px)'
+  },
+  dashboardActions: {
+    display: 'flex',
+    gap: '12px',
+    flexWrap: 'wrap'
+  },
+  refreshButton: {
+    padding: 'clamp(0.5rem, 2vw, 10px) clamp(1rem, 3vw, 20px)',
+    background: '#4299e1',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: 'clamp(0.85rem, 2vw, 14px)',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.3s'
+  },
+  statsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '16px',
+    marginBottom: '20px'
+  },
+  statCard: {
+    background: 'white',
+    padding: '20px',
+    borderRadius: '12px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    transition: 'transform 0.2s, box-shadow 0.2s'
+  },
+  statLabel: {
+    margin: '0 0 8px 0',
+    fontSize: 'clamp(0.85rem, 2vw, 14px)',
+    color: '#718096',
+    fontWeight: '500'
+  },
+  statValue: {
+    margin: 0,
+    fontSize: 'clamp(1.5rem, 4vw, 28px)',
+    color: '#1A3E6F',
+    fontWeight: '700'
+  },
+  tabNavigation: {
+    display: 'flex',
+    background: 'white',
+    borderRadius: '12px',
+    padding: '5px',
+    marginBottom: '20px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    gap: '5px',
+    flexWrap: 'wrap'
+  },
+  tabButton: {
+    flex: 1,
+    minWidth: '100px',
+    padding: '12px 20px',
+    border: 'none',
+    background: 'transparent',
+    color: '#666',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: 'clamp(0.85rem, 2vw, 14px)',
+    fontWeight: '500',
+    transition: 'all 0.3s'
+  },
+  tabButtonActive: {
+    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+    color: 'white'
+  },
   summarySection: {
     background: 'white',
-    borderRadius: '16px',
-    padding: '2.5rem',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-    border: '1px solid #e2e8f0',
-    position: 'relative',
-    overflow: 'hidden',
+    borderRadius: '12px',
+    padding: 'clamp(1.5rem, 4vw, 24px)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    marginBottom: '20px'
   },
   summaryHeader: {
     display: 'flex',
@@ -1715,13 +1866,14 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '1rem',
-    background: '#f8fafc',
-    borderRadius: '8px',
+    padding: 'clamp(12px, 3vw, 20px)',
+    background: '#ffffff',
+    borderRadius: 'clamp(6px, 1.5vw, 12px)',
     border: '1px solid #e2e8f0',
-    transition: 'all 0.3s ease',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
     cursor: 'pointer',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+    transition: 'transform 0.2s, box-shadow 0.2s',
+    marginBottom: '12px'
   },
   accountInfo: {
     display: 'flex',
