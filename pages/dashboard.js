@@ -1047,7 +1047,7 @@ function DashboardContent() {
                 // Map purpose field to display text
                 let purposeDisplay = '';
                 if (deposit.purpose === 'general_deposit') {
-                  purposeDisplay = 'Add to Balance';
+                  purposeDisplay = 'Crypto Deposit';
                 } else if (deposit.purpose === 'loan_requirement') {
                   purposeDisplay = 'Loan Deposit (10% Collateral)';
                 } else if (deposit.purpose === 'loan_payment') {

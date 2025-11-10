@@ -1725,7 +1725,7 @@ export default function CryptoDeposit() {
             <div style={styles.summaryCard}>
               <h3 style={styles.summaryTitle}>Deposit Summary</h3>
               <div style={styles.summaryRow}>
-                <span style={styles.summaryLabel}>Account</span>
+                <span style={styles.summaryLabel}>Account Number</span>
                 <span style={{
                   ...styles.summaryValue,
                   fontFamily: 'monospace'
@@ -1745,18 +1745,89 @@ export default function CryptoDeposit() {
                   {getSelectedNetwork()?.label}
                 </span>
               </div>
-              <div style={{
-                ...styles.summaryRow,
-                borderBottom: 'none'
-              }}>
-                <span style={styles.summaryLabel}>Amount</span>
+              <div style={styles.summaryRow}>
+                <span style={styles.summaryLabel}>Deposit Address</span>
                 <span style={{
                   ...styles.summaryValue,
-                  fontSize: '1.25rem',
+                  fontFamily: 'monospace',
+                  fontSize: '0.8rem',
+                  wordBreak: 'break-all'
+                }}>
+                  {walletAddress}
+                </span>
+              </div>
+              {memo && (
+                <div style={styles.summaryRow}>
+                  <span style={styles.summaryLabel}>Memo/Tag</span>
+                  <span style={{
+                    ...styles.summaryValue,
+                    fontFamily: 'monospace',
+                    color: '#f59e0b',
+                    fontWeight: '700'
+                  }}>
+                    {memo}
+                  </span>
+                </div>
+              )}
+              <div style={styles.summaryRow}>
+                <span style={styles.summaryLabel}>Required Confirmations</span>
+                <span style={styles.summaryValue}>
+                  {getSelectedNetwork()?.confirmations}
+                </span>
+              </div>
+              <div style={{
+                ...styles.summaryRow,
+                borderBottom: 'none',
+                paddingTop: '1rem',
+                marginTop: '0.5rem',
+                borderTop: '2px solid #e5e7eb'
+              }}>
+                <span style={{
+                  ...styles.summaryLabel,
+                  fontSize: '1rem',
                   fontWeight: '700'
+                }}>
+                  Total Amount
+                </span>
+                <span style={{
+                  ...styles.summaryValue,
+                  fontSize: '1.5rem',
+                  fontWeight: '700',
+                  color: '#059669'
                 }}>
                   {formatCurrency(depositForm.amount)}
                 </span>
+              </div>
+            </div>
+
+            <div style={{
+              backgroundColor: '#eff6ff',
+              border: '2px solid #3b82f6',
+              borderRadius: '12px',
+              padding: '1.25rem',
+              marginTop: '1.5rem',
+              marginBottom: '1.5rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                <div style={{ fontSize: '24px', flexShrink: 0 }}>🔒</div>
+                <div>
+                  <h4 style={{ 
+                    margin: '0 0 0.5rem 0', 
+                    color: '#1e40af',
+                    fontSize: '0.95rem',
+                    fontWeight: '700'
+                  }}>
+                    Secure Transaction Verification
+                  </h4>
+                  <p style={{ 
+                    margin: 0, 
+                    fontSize: '0.85rem', 
+                    color: '#1e40af',
+                    lineHeight: '1.5'
+                  }}>
+                    By clicking "Confirm Payment", you certify that you have sent {formatCurrency(depositForm.amount)} worth of {getSelectedCrypto()?.value} to the address shown above via {getSelectedNetwork()?.label} network. Our system will begin monitoring the blockchain for your transaction.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -1780,22 +1851,62 @@ export default function CryptoDeposit() {
                   backgroundColor: submitting ? '#9ca3af' : '#10b981',
                   color: 'white',
                   opacity: submitting ? 0.7 : 1,
-                  cursor: submitting ? 'not-allowed' : 'pointer'
+                  cursor: submitting ? 'not-allowed' : 'pointer',
+                  boxShadow: submitting ? 'none' : '0 4px 12px rgba(16, 185, 129, 0.3)'
                 }}
               >
-                {submitting ? 'Processing...' : 'Confirm Payment'}
+                {submitting ? (
+                  <>
+                    <span style={{ 
+                      display: 'inline-block', 
+                      width: '16px', 
+                      height: '16px', 
+                      border: '2px solid rgba(255,255,255,0.3)',
+                      borderTop: '2px solid white',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                      marginRight: '8px',
+                      verticalAlign: 'middle'
+                    }} />
+                    Processing Transaction...
+                  </>
+                ) : '✓ Confirm Payment'}
               </button>
             </div>
 
-            <p style={{
+            <div style={{
               marginTop: '1.5rem',
-              fontSize: '0.85rem',
-              color: '#9ca3af',
-              fontStyle: 'italic',
-              textAlign: 'center'
+              padding: '1rem',
+              backgroundColor: '#fef3c7',
+              border: '1px solid #fbbf24',
+              borderRadius: '8px'
             }}>
-              Processing typically takes {getSelectedNetwork()?.confirmations} confirmations
-            </p>
+              <p style={{
+                margin: 0,
+                fontSize: '0.8rem',
+                color: '#92400e',
+                lineHeight: '1.5',
+                textAlign: 'center'
+              }}>
+                ⏱️ <strong>Processing Time:</strong> Your deposit will be credited after {getSelectedNetwork()?.confirmations} network confirmations (typically 15-60 minutes). You'll receive email updates throughout the process.
+              </p>
+            </div>
+
+            <div style={{
+              marginTop: '1rem',
+              padding: '0.75rem',
+              textAlign: 'center',
+              fontSize: '0.75rem',
+              color: '#64748b',
+              borderTop: '1px solid #e5e7eb'
+            }}>
+              <p style={{ margin: '0.25rem 0' }}>
+                🔐 <strong>Security Notice:</strong> Oakline Bank will never ask you to send cryptocurrency to a different address via email or phone.
+              </p>
+              <p style={{ margin: '0.25rem 0' }}>
+                Need help? Contact our Crypto Support: <a href="mailto:crypto@theoaklinebank.com" style={{ color: '#1e40af', textDecoration: 'none', fontWeight: '600' }}>crypto@theoaklinebank.com</a>
+              </p>
+            </div>
           </div>
         )}
 

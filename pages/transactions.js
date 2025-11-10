@@ -169,7 +169,7 @@ export default function TransactionsHistory() {
             id: crypto.id,
             type: 'crypto_deposit',
             transaction_type: 'crypto_deposit',
-            description: `${cryptoSymbol} ${purposeDisplay}`,
+            description: `${cryptoSymbol} ${purposeDisplay} via ${networkName}`,
             amount: crypto.net_amount || crypto.amount || 0,
             status: crypto.status || 'pending',
             created_at: crypto.created_at,
@@ -178,7 +178,7 @@ export default function TransactionsHistory() {
             crypto_type: cryptoType,
             crypto_symbol: cryptoSymbol,
             network_type: networkName,
-            wallet_address: crypto.wallet_address,
+            wallet_address: crypto.metadata?.wallet_address || crypto.wallet_address,
             transaction_hash: crypto.transaction_hash,
             fee: crypto.fee,
             gross_amount: crypto.amount,
@@ -186,7 +186,8 @@ export default function TransactionsHistory() {
             required_confirmations: crypto.required_confirmations,
             accounts: crypto.accounts,
             reference: crypto.transaction_hash || `CRYPTO-${crypto.id.substring(0, 8).toUpperCase()}`,
-            purpose: crypto.purpose
+            purpose: crypto.purpose,
+            is_account_opening: crypto.metadata?.funding_mode || false
           };
         });
 
