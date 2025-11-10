@@ -370,6 +370,14 @@ export default function CryptoDeposit() {
     setWalletAddress('');
     setMemo('');
     setAvailableNetworks([]);
+
+    // Auto-scroll to network section after selecting crypto type
+    setTimeout(() => {
+      const networkSection = document.getElementById('network-section');
+      if (networkSection) {
+        networkSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 300);
   };
 
   const handleNetworkChange = (network) => {
@@ -1539,7 +1547,7 @@ export default function CryptoDeposit() {
               
               {/* Network Selection - appears first when crypto is selected */}
               {depositForm.crypto_type && (
-                <div style={{
+                <div id="network-section" style={{
                   backgroundColor: '#f8fafc',
                   border: '2px solid #3b82f6',
                   borderRadius: '16px',
