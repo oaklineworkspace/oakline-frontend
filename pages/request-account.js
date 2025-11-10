@@ -67,12 +67,17 @@ export default function RequestAccount() {
     try {
       const { data, error } = await supabase
         .from('accounts')
-        .select('account_type')
-        .eq('user_id', userId)
-        .in('status', ['active', 'pending_funding', 'pending']);
+        .select('account_type, status')
+        .eq('user_id', userId);
 
       if (error) throw error;
-      setExistingAccounts(data || []);
+      
+      // Filter to only show accounts that are not closed or rejected
+      const activeAccounts = (data || []).filter(acc => 
+        acc.status !== 'closed' && acc.status !== 'rejected'
+      );
+      
+      setExistingAccounts(activeAccounts);
     } catch (error) {
       console.error('Error fetching existing accounts:', error);
     }
