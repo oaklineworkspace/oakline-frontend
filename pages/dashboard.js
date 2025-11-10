@@ -2107,6 +2107,26 @@ const styles = {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     fontSize: 'inherit'
   },
+  quickActionButton: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '1.75rem 1.25rem',
+    background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f97316 100%)',
+    color: 'white',
+    borderRadius: '12px',
+    border: '3px solid rgba(220, 38, 38, 0.3)',
+    textDecoration: 'none',
+    transition: 'all 0.3s ease',
+    cursor: 'pointer',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    fontSize: 'inherit',
+    boxShadow: '0 6px 20px rgba(220, 38, 38, 0.4)',
+    position: 'relative',
+    overflow: 'hidden',
+    transform: 'scale(1.05)'
+  },
   quickActionIcon: {
     fontSize: '1.5rem'
   },
