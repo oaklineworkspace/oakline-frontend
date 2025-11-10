@@ -55,8 +55,8 @@ export default function FundingNotice({ accounts }) {
 
   const handleDepositClick = (accountId, minDeposit, mode, hasPending) => {
     if (hasPending) {
-      // If there's a pending deposit, go to crypto deposits page to view status
-      router.push(`/crypto-deposits`);
+      // If there's a pending deposit, go to account details to view status
+      router.push(`/account-details?id=${accountId}&show_deposit=true`);
     } else {
       // Otherwise, go to deposit page
       router.push(`/deposit-crypto?account_id=${accountId}&min_deposit=${minDeposit}&mode=${mode}`);

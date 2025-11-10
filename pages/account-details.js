@@ -91,6 +91,7 @@ export default function AccountDetails() {
 
   const fetchTransactions = async (accountId) => {
     try {
+      // Fetch regular transactions
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
         .select('*')
@@ -100,11 +101,44 @@ export default function AccountDetails() {
 
       if (transactionsError) {
         console.error('Error fetching transactions:', transactionsError);
-        setTransactions([]);
-      } else {
-        // Show all transactions for this specific account
-        setTransactions(transactionsData || []);
       }
+
+      // Fetch account opening crypto deposits
+      const { data: openingDeposits, error: depositsError } = await supabase
+        .from('account_opening_crypto_deposits')
+        .select(`
+          *,
+          crypto_assets:crypto_asset_id (
+            crypto_type,
+            symbol
+          )
+        `)
+        .eq('account_id', accountId)
+        .order('created_at', { ascending: false });
+
+      if (depositsError) {
+        console.error('Error fetching opening deposits:', depositsError);
+      }
+
+      // Combine and format transactions
+      const regularTx = transactionsData || [];
+      const depositTx = (openingDeposits || []).map(deposit => ({
+        id: deposit.id,
+        account_id: deposit.account_id,
+        type: 'crypto_deposit',
+        transaction_type: 'crypto_deposit',
+        description: `Account Opening Deposit - ${deposit.crypto_assets?.crypto_type || 'Crypto'} (${deposit.status})`,
+        amount: deposit.amount,
+        created_at: deposit.created_at,
+        status: deposit.status
+      }));
+
+      // Merge and sort by date
+      const allTransactions = [...regularTx, ...depositTx].sort((a, b) => 
+        new Date(b.created_at) - new Date(a.created_at)
+      );
+
+      setTransactions(allTransactions);
     } catch (error) {
       console.error('Error fetching transactions:', error);
       setTransactions([]);
@@ -487,7 +521,7 @@ export default function AccountDetails() {
 
         {/* Funding Notices for Pending Funding Accounts */}
         {accounts.filter(account => account.status === 'pending_funding').map(account => (
-          <FundingNotice key={account.id} account={account} />
+          <FundingNotice key={account.id} accounts={[account]} />
         ))}
 
         <div style={styles.contentGrid}>
