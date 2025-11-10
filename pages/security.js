@@ -25,6 +25,9 @@ export default function Security() {
     confirmPassword: ''
   });
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const router = useRouter();
 
@@ -348,39 +351,66 @@ export default function Security() {
             <form onSubmit={(e) => { e.preventDefault(); handlePasswordChange(); }}>
               <div style={styles.formGroup}>
                 <label style={styles.label}>Current Password</label>
-                <input
-                  type="password"
-                  required
-                  value={passwordData.currentPassword}
-                  onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
-                  style={styles.input}
-                  placeholder="Enter your current password"
-                />
+                <div style={styles.passwordInputWrapper}>
+                  <input
+                    type={showCurrentPassword ? 'text' : 'password'}
+                    required
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                    style={styles.input}
+                    placeholder="Enter your current password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    style={styles.togglePassword}
+                  >
+                    {showCurrentPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
               </div>
 
               <div style={styles.formGroup}>
                 <label style={styles.label}>New Password</label>
-                <input
-                  type="password"
-                  required
-                  minLength={8}
-                  value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                  style={styles.input}
-                  placeholder="Enter new password (minimum 8 characters)"
-                />
+                <div style={styles.passwordInputWrapper}>
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    required
+                    minLength={8}
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                    style={styles.input}
+                    placeholder="Enter new password (minimum 8 characters)"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    style={styles.togglePassword}
+                  >
+                    {showNewPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
               </div>
 
               <div style={styles.formGroup}>
                 <label style={styles.label}>Confirm New Password</label>
-                <input
-                  type="password"
-                  required
-                  value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                  style={styles.input}
-                  placeholder="Confirm your new password"
-                />
+                <div style={styles.passwordInputWrapper}>
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                    style={styles.input}
+                    placeholder="Confirm your new password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={styles.togglePassword}
+                  >
+                    {showConfirmPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
               </div>
 
               <div style={styles.modalActions}>
@@ -692,6 +722,11 @@ const styles = {
     color: '#1e40af',
     fontSize: '14px'
   },
+  passwordInputWrapper: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center'
+  },
   input: {
     width: '100%',
     padding: '12px 15px',
@@ -703,6 +738,20 @@ const styles = {
     outline: 'none',
     backgroundColor: '#ffffff',
     color: '#1f2937'
+  },
+  togglePassword: {
+    position: 'absolute',
+    right: '15px',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '20px',
+    padding: '5px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#64748b',
+    transition: 'color 0.3s ease'
   },
   modalActions: {
     display: 'flex',
