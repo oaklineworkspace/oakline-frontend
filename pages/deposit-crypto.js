@@ -115,10 +115,10 @@ export default function CryptoDeposit() {
   useEffect(() => {
     const amount = parseFloat(depositForm.amount) || 0;
     const feePercent = networkFeePercent || 0;
-    
+
     const fee = amount * (feePercent / 100);
     const netAmount = amount - fee;
-    
+
     setCalculatedFee(fee);
     setCalculatedNetAmount(Math.max(0, netAmount));
   }, [depositForm.amount, networkFeePercent]);
@@ -374,14 +374,14 @@ export default function CryptoDeposit() {
       ...depositForm,
       network_type: network
     });
-    
+
     const selectedNetwork = availableNetworks.find(n => n.value === network);
     if (selectedNetwork) {
       setNetworkFeePercent(selectedNetwork.fee || 0);
     } else {
       setNetworkFeePercent(0);
     }
-    
+
     setWalletAddress('');
     setMemo('');
   };
@@ -419,7 +419,7 @@ export default function CryptoDeposit() {
         if (remainingNeeded > 0 && netAmount < remainingNeeded) {
           const feePercent = networkFeePercent || 0;
           const requiredGrossAmount = remainingNeeded / (1 - feePercent / 100);
-          
+
           setInsufficientMessage(
             `To activate your account, you need to deposit at least $${remainingNeeded.toLocaleString('en-US', { minimumFractionDigits: 2 })} after fees. ` +
             `Your current net amount ($${netAmount.toFixed(2)}) is too low. ` +
@@ -469,7 +469,7 @@ export default function CryptoDeposit() {
       // Upload to Supabase Storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      
+
       const { data, error } = await supabase.storage
         .from('crypto-deposit-proofs')
         .upload(fileName, file);
@@ -591,7 +591,7 @@ export default function CryptoDeposit() {
           .select('application_id')
           .eq('id', depositForm.account_id)
           .single();
-        
+
         applicationId = accountData?.application_id;
       }
 
@@ -2137,7 +2137,7 @@ export default function CryptoDeposit() {
                   {getSelectedNetwork()?.confirmations}
                 </span>
               </div>
-              
+
               <div style={{
                 borderTop: '2px solid #e5e7eb',
                 marginTop: '1rem',
@@ -2158,10 +2158,10 @@ export default function CryptoDeposit() {
                   </span>
                 </div>
                 <div style={styles.summaryRow}>
-                  <span style={{...styles.summaryLabel, color: '#dc2626'}}>
+                  <span style={{...styles.summaryLabel, color: '#dc2626' }}>
                     Network Fee ({networkFeePercent}%)
                   </span>
-                  <span style={{...styles.summaryValue, color: '#dc2626'}}>
+                  <span style={{...styles.summaryValue, color: '#dc2626' }}>
                     -{formatCurrency(calculatedFee)}
                   </span>
                 </div>
@@ -2227,7 +2227,7 @@ export default function CryptoDeposit() {
                   💡 <strong>Flexible Verification Options:</strong> You may provide either the transaction hash from your cryptocurrency wallet <strong>OR</strong> upload a screenshot or confirmation document of your payment. For transactions initiated through online exchange platforms (such as Coinbase, Binance, etc.), a screenshot displaying your transaction details is acceptable.
                 </p>
               </div>
-              
+
               <div style={{ marginBottom: '1.5rem' }}>
                 <label style={{
                   display: 'block',
