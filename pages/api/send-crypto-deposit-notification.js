@@ -247,9 +247,36 @@ export default async function handler(req, res) {
       read: false
     }]);
 
+    // Create transaction history entry for account opening deposits
+    if (isAccountOpening && depositData) {
+      const { data: accountData } = await supabaseAdmin
+        .from('accounts')
+        .select('id, balance')
+        .eq('id', depositData.account_id)
+        .single();
+
+      if (accountData) {
+        const transactionAmount = depositData.net_amount || depositData.amount || 0;
+        
+        await supabaseAdmin.from('transactions').insert([{
+          user_id: user.id,
+          account_id: accountData.id,
+          type: 'crypto_deposit',
+          amount: transactionAmount,
+          description: `Account Opening Crypto Deposit - ${depositData.crypto_assets?.symbol || 'Crypto'} via ${depositData.crypto_assets?.network_type || 'Network'}`,
+          status: depositData.status === 'completed' || depositData.status === 'approved' ? 'completed' : 'pending',
+          balance_before: accountData.balance,
+          balance_after: depositData.status === 'completed' || depositData.status === 'approved' 
+            ? parseFloat(accountData.balance) + parseFloat(transactionAmount)
+            : accountData.balance,
+          reference: depositData.tx_hash || `CRYPTO-${depositData.id.substring(0, 8).toUpperCase()}`
+        }]);
+      }
+    }
+
     return res.status(200).json({ success: true });
   } catch (error) {
     console.error('Error sending crypto deposit notification:', error);
-    return res.status(500).json({ error: 'Failed to send notification' });
+    return res.status(500).json({ error: 'Failed to send notification' });ification' });
   }
 }

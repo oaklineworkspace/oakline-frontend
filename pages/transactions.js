@@ -86,6 +86,25 @@ export default function TransactionsHistory() {
         .order('created_at', { ascending: false })
         .limit(100);
 
+      // Fetch account opening crypto deposits
+      const { data: accountOpeningDeposits } = await supabase
+        .from('account_opening_crypto_deposits')
+        .select(`
+          *,
+          accounts:account_id (
+            account_number,
+            account_type
+          ),
+          crypto_assets:crypto_asset_id (
+            crypto_type,
+            network_type,
+            symbol
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
       // Fetch loan payments
       const { data: loanPaymentsData } = await supabase
         .from('loan_payments')
@@ -171,10 +190,46 @@ export default function TransactionsHistory() {
           };
         });
 
-        // Merge and sort all transactions
-        transactionsData = [...transactionsData, ...formattedCryptoDeposits]
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        transactionsData = [...transactionsData, ...formattedCryptoDeposits];
       }
+
+      // Format account opening crypto deposits as transactions
+      if (accountOpeningDeposits && accountOpeningDeposits.length > 0) {
+        const formattedAccountOpeningDeposits = accountOpeningDeposits.map(deposit => {
+          const cryptoSymbol = deposit.crypto_assets?.symbol || 'CRYPTO';
+          const cryptoType = deposit.crypto_assets?.crypto_type || 'Cryptocurrency';
+          const networkName = deposit.crypto_assets?.network_type || 'Network';
+
+          return {
+            id: deposit.id,
+            type: 'account_opening_deposit',
+            transaction_type: 'crypto_deposit',
+            description: `${cryptoSymbol} Account Opening Deposit`,
+            amount: deposit.net_amount || deposit.amount || 0,
+            status: deposit.status || 'pending',
+            created_at: deposit.created_at,
+            updated_at: deposit.updated_at,
+            completed_at: deposit.completed_at,
+            crypto_type: cryptoType,
+            crypto_symbol: cryptoSymbol,
+            network_type: networkName,
+            transaction_hash: deposit.tx_hash,
+            fee: deposit.fee,
+            gross_amount: deposit.amount,
+            confirmations: deposit.confirmations,
+            required_confirmations: deposit.required_confirmations,
+            accounts: deposit.accounts,
+            reference: deposit.tx_hash || `OPENING-${deposit.id.substring(0, 8).toUpperCase()}`,
+            purpose: 'account_activation'
+          };
+        });
+
+        transactionsData = [...transactionsData, ...formattedAccountOpeningDeposits];
+      }
+
+      // Sort all transactions
+      transactionsData = transactionsData
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
       setTransactions(transactionsData);
     } catch (error) {
