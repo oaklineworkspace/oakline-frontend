@@ -152,7 +152,35 @@ export default function RequestAccount() {
           </button>
         </div>
 
-        <div style={styles.card}>
+        {/* Prominent Call-to-Action Section */}
+        <div style={styles.ctaSection}>
+          <div style={styles.ctaIcon}>🏦</div>
+          <h2 style={styles.ctaTitle}>Need Another Account?</h2>
+          <p style={styles.ctaDescription}>
+            Request a new account type today! Get approved quickly and start managing multiple accounts with ease.
+          </p>
+          <button 
+            onClick={() => {
+              const formSection = document.getElementById('account-request-form');
+              if (formSection) {
+                formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }}
+            style={styles.ctaButton}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 8px 20px rgba(30, 64, 175, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 12px rgba(30, 64, 175, 0.3)';
+            }}
+          >
+            📝 Request New Account Type Now
+          </button>
+        </div>
+
+        <div style={styles.card} id="account-request-form">
           <div style={styles.infoSection}>
             <h2 style={styles.subtitle}>Open a New Account</h2>
             <p style={styles.description}>
@@ -287,6 +315,50 @@ const styles = {
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: '1rem'
+  },
+  ctaSection: {
+    maxWidth: '800px',
+    margin: '0 auto 2rem',
+    padding: '3rem 2rem',
+    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+    borderRadius: '20px',
+    textAlign: 'center',
+    boxShadow: '0 10px 30px rgba(30, 64, 175, 0.3)',
+    color: 'white'
+  },
+  ctaIcon: {
+    fontSize: '4rem',
+    marginBottom: '1rem',
+    animation: 'bounce 2s infinite'
+  },
+  ctaTitle: {
+    fontSize: '2rem',
+    fontWeight: 'bold',
+    marginBottom: '1rem',
+    color: 'white'
+  },
+  ctaDescription: {
+    fontSize: '1.1rem',
+    marginBottom: '2rem',
+    color: 'rgba(255, 255, 255, 0.95)',
+    lineHeight: '1.6',
+    maxWidth: '600px',
+    margin: '0 auto 2rem'
+  },
+  ctaButton: {
+    padding: '1.25rem 3rem',
+    backgroundColor: 'white',
+    color: '#1e40af',
+    border: 'none',
+    borderRadius: '12px',
+    fontSize: '1.2rem',
+    fontWeight: '700',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.5rem'
   },
   title: {
     fontSize: '2rem',
