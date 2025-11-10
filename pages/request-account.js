@@ -145,19 +145,55 @@ export default function RequestAccount() {
       </Head>
 
       <div style={styles.container}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>Request Additional Account</h1>
-          <button onClick={() => router.push('/dashboard')} style={styles.backButton}>
-            ← Back to Dashboard
-          </button>
+        {/* Professional Header with Gradient */}
+        <div style={styles.pageHeader}>
+          <div style={styles.headerContent}>
+            <div style={styles.headerLeft}>
+              <div style={styles.headerIcon}>🏦</div>
+              <div>
+                <h1 style={styles.pageTitle}>Request Additional Account</h1>
+                <p style={styles.pageSubtitle}>Expand your banking options with Oakline Bank</p>
+              </div>
+            </div>
+            <button onClick={() => router.push('/dashboard')} style={styles.backButton}>
+              ← Dashboard
+            </button>
+          </div>
+        </div>
+
+        {/* Benefits Section */}
+        <div style={styles.benefitsContainer}>
+          <h2 style={styles.benefitsTitle}>Why Open Additional Accounts?</h2>
+          <div style={styles.benefitsGrid}>
+            <div style={styles.benefitCard}>
+              <div style={styles.benefitIcon}>💰</div>
+              <h3 style={styles.benefitTitle}>Better Organization</h3>
+              <p style={styles.benefitDescription}>Separate your funds for different purposes - savings, investments, or daily expenses</p>
+            </div>
+            <div style={styles.benefitCard}>
+              <div style={styles.benefitIcon}>📊</div>
+              <h3 style={styles.benefitTitle}>Maximize Returns</h3>
+              <p style={styles.benefitDescription}>Take advantage of different interest rates and account benefits</p>
+            </div>
+            <div style={styles.benefitCard}>
+              <div style={styles.benefitIcon}>🔒</div>
+              <h3 style={styles.benefitTitle}>Enhanced Security</h3>
+              <p style={styles.benefitDescription}>Keep your funds secure across multiple account types with individual protection</p>
+            </div>
+            <div style={styles.benefitCard}>
+              <div style={styles.benefitIcon}>⚡</div>
+              <h3 style={styles.benefitTitle}>Quick Approval</h3>
+              <p style={styles.benefitDescription}>Fast processing with our admin team - get your new account ready in no time</p>
+            </div>
+          </div>
         </div>
 
         {/* Prominent Call-to-Action Section */}
         <div style={styles.ctaSection}>
-          <div style={styles.ctaIcon}>🏦</div>
-          <h2 style={styles.ctaTitle}>Need Another Account?</h2>
+          <div style={styles.ctaIcon}>✨</div>
+          <h2 style={styles.ctaTitle}>Ready to Get Started?</h2>
           <p style={styles.ctaDescription}>
-            Request a new account type today! Get approved quickly and start managing multiple accounts with ease.
+            Choose from our available account types below and submit your request. Our team will review and approve it quickly!
           </p>
           <button 
             onClick={() => {
@@ -169,14 +205,14 @@ export default function RequestAccount() {
             style={styles.ctaButton}
             onMouseEnter={(e) => {
               e.target.style.transform = 'translateY(-2px)';
-              e.target.style.boxShadow = '0 8px 20px rgba(30, 64, 175, 0.4)';
+              e.target.style.boxShadow = '0 10px 25px rgba(30, 64, 175, 0.5)';
             }}
             onMouseLeave={(e) => {
               e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = '0 4px 12px rgba(30, 64, 175, 0.3)';
+              e.target.style.boxShadow = '0 6px 16px rgba(30, 64, 175, 0.4)';
             }}
           >
-            📝 Request New Account Type Now
+            📝 Submit Account Request
           </button>
         </div>
 
@@ -225,21 +261,34 @@ export default function RequestAccount() {
                 disabled={submitting}
               >
                 <option value="">-- Choose an account type --</option>
-                {accountTypes.map((type) => {
-                  const hasType = existingAccounts.some(
-                    acc => acc.account_type === type.name.toLowerCase().replace(/\s+/g, '_')
-                  );
-                  return (
+                {accountTypes
+                  .filter((type) => {
+                    // Only show account types the user doesn't have
+                    const hasType = existingAccounts.some(
+                      acc => acc.account_type === type.name.toLowerCase().replace(/\s+/g, '_')
+                    );
+                    return !hasType; // Filter out accounts user already has
+                  })
+                  .map((type) => (
                     <option 
                       key={type.id} 
                       value={type.id}
-                      disabled={hasType}
                     >
-                      {type.name} {type.rate ? `- ${type.rate}` : ''} {hasType ? '(Already have)' : ''}
+                      {type.name} {type.rate ? `- ${type.rate}` : ''}
                     </option>
-                  );
-                })}
+                  ))
+                }
               </select>
+              {accountTypes.filter((type) => {
+                const hasType = existingAccounts.some(
+                  acc => acc.account_type === type.name.toLowerCase().replace(/\s+/g, '_')
+                );
+                return !hasType;
+              }).length === 0 && (
+                <p style={styles.noAccountsMessage}>
+                  🎉 You already have all available account types!
+                </p>
+              )}
             </div>
 
             {selectedAccountType && (
@@ -304,8 +353,87 @@ const styles = {
   container: {
     minHeight: '100vh',
     backgroundColor: '#f8fafc',
-    padding: '2rem',
+    paddingBottom: '2rem',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+  },
+  pageHeader: {
+    background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%)',
+    padding: '2.5rem 2rem',
+    marginBottom: '2rem',
+    boxShadow: '0 4px 20px rgba(30, 64, 175, 0.2)'
+  },
+  headerContent: {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: '1.5rem'
+  },
+  headerLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1.5rem',
+    flex: 1
+  },
+  headerIcon: {
+    fontSize: '3.5rem',
+    animation: 'pulse 2s infinite'
+  },
+  pageTitle: {
+    fontSize: '2.5rem',
+    fontWeight: 'bold',
+    color: 'white',
+    margin: 0,
+    textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  },
+  pageSubtitle: {
+    fontSize: '1.1rem',
+    color: 'rgba(255, 255, 255, 0.9)',
+    margin: '0.5rem 0 0 0'
+  },
+  benefitsContainer: {
+    maxWidth: '1200px',
+    margin: '0 auto 2rem',
+    padding: '0 2rem'
+  },
+  benefitsTitle: {
+    fontSize: '2rem',
+    fontWeight: 'bold',
+    color: '#1e293b',
+    textAlign: 'center',
+    marginBottom: '2rem'
+  },
+  benefitsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gap: '1.5rem',
+    marginBottom: '2rem'
+  },
+  benefitCard: {
+    background: 'white',
+    padding: '2rem',
+    borderRadius: '12px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    border: '1px solid #e2e8f0',
+    transition: 'all 0.3s ease',
+    cursor: 'default'
+  },
+  benefitIcon: {
+    fontSize: '2.5rem',
+    marginBottom: '1rem'
+  },
+  benefitTitle: {
+    fontSize: '1.2rem',
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: '0.5rem'
+  },
+  benefitDescription: {
+    fontSize: '0.95rem',
+    color: '#64748b',
+    lineHeight: '1.6'
   },
   header: {
     maxWidth: '800px',
@@ -320,10 +448,10 @@ const styles = {
     maxWidth: '800px',
     margin: '0 auto 2rem',
     padding: '3rem 2rem',
-    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+    background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f97316 100%)',
     borderRadius: '20px',
     textAlign: 'center',
-    boxShadow: '0 10px 30px rgba(30, 64, 175, 0.3)',
+    boxShadow: '0 10px 30px rgba(220, 38, 38, 0.3)',
     color: 'white'
   },
   ctaIcon: {
@@ -348,14 +476,14 @@ const styles = {
   ctaButton: {
     padding: '1.25rem 3rem',
     backgroundColor: 'white',
-    color: '#1e40af',
+    color: '#dc2626',
     border: 'none',
     borderRadius: '12px',
     fontSize: '1.2rem',
     fontWeight: '700',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)',
+    boxShadow: '0 6px 16px rgba(30, 64, 175, 0.4)',
     display: 'inline-flex',
     alignItems: 'center',
     gap: '0.5rem'
@@ -368,13 +496,26 @@ const styles = {
   },
   backButton: {
     padding: '0.75rem 1.5rem',
-    backgroundColor: '#64748b',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     color: 'white',
-    border: 'none',
+    border: '2px solid rgba(255, 255, 255, 0.3)',
     borderRadius: '8px',
     fontSize: '1rem',
     cursor: 'pointer',
-    transition: 'all 0.2s'
+    transition: 'all 0.2s',
+    fontWeight: '600',
+    backdropFilter: 'blur(10px)'
+  },
+  noAccountsMessage: {
+    marginTop: '1rem',
+    padding: '1rem',
+    backgroundColor: '#dcfce7',
+    color: '#059669',
+    borderRadius: '8px',
+    fontSize: '1rem',
+    fontWeight: '600',
+    border: '2px solid #86efac',
+    textAlign: 'center'
   },
   card: {
     maxWidth: '800px',
