@@ -139,6 +139,34 @@ export default function RequestAccount() {
         read: false
       });
 
+      // Get user profile for email
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, email')
+        .eq('id', user.id)
+        .single();
+
+      // Send email confirmation
+      try {
+        await fetch('/api/send-account-request-confirmation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: profile?.email || user.email,
+            firstName: profile?.first_name || 'Valued',
+            lastName: profile?.last_name || 'Customer',
+            accountType: selectedType.name,
+            accountDescription: selectedType.description,
+            minDeposit: selectedType.min_deposit
+          })
+        });
+      } catch (emailError) {
+        console.error('Error sending confirmation email:', emailError);
+        // Don't fail the request if email fails
+      }
+
       // Hide processing and show success modal
       setIsProcessing(false);
       setShowSuccessModal(true);

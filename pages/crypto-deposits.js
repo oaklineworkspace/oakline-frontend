@@ -12,6 +12,8 @@ export default function CryptoDeposits() {
   const [loading, setLoading] = useState(true);
   const [selectedDeposit, setSelectedDeposit] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successData, setSuccessData] = useState(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -212,8 +214,25 @@ export default function CryptoDeposits() {
   };
 
   const viewDetails = (deposit) => {
-    setSelectedDeposit(deposit);
-    setShowDetailModal(true);
+    const depositData = {
+      referenceNumber: String(deposit.id).substring(0, 8).toUpperCase(),
+      date: formatDate(deposit.created_at),
+      accountNumber: deposit.accounts?.account_number || 'N/A',
+      cryptoType: getCryptoData(deposit).type,
+      cryptoSymbol: getCryptoData(deposit).symbol,
+      network: getCryptoData(deposit).network,
+      amount: formatCurrency(deposit.amount),
+      fee: formatCurrency(deposit.fee || 0),
+      netAmount: formatCurrency(deposit.net_amount || ((deposit.amount || 0) - (deposit.fee || 0))),
+      status: deposit.status,
+      confirmations: deposit.confirmations || 0,
+      requiredConfirmations: deposit.required_confirmations || 3,
+      transactionId: deposit.id,
+      completedAt: deposit.completed_at ? formatDate(deposit.completed_at) : null
+    };
+    
+    setSuccessData(depositData);
+    setShowSuccessModal(true);
   };
 
   // Pagination
@@ -540,15 +559,106 @@ export default function CryptoDeposits() {
           )}
         </div>
 
-        {/* Detail Modal */}
-        {showDetailModal && selectedDeposit && (
+        {/* Success Modal */}
+        {showSuccessModal && successData && (
+          <div style={styles.successOverlay} onClick={() => setShowSuccessModal(false)}>
+            <div style={styles.successModal} onClick={(e) => e.stopPropagation()}>
+              <div style={styles.successIcon}>
+                {successData.status === 'completed' || successData.status === 'approved' ? '✅' : 
+                 successData.status === 'pending' || successData.status === 'awaiting_confirmations' ? '⏳' : '❌'}
+              </div>
+              <h2 style={styles.successTitle}>
+                {successData.status === 'completed' || successData.status === 'approved' ? 'Deposit Completed!' :
+                 successData.status === 'pending' || successData.status === 'awaiting_confirmations' ? 'Deposit Pending' : 'Deposit Status'}
+              </h2>
+              
+              {/* Receipt Details */}
+              <div style={styles.successInfoBox}>
+                <h3 style={styles.receiptSectionTitle}>📋 Deposit Receipt</h3>
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Reference Number:</span>
+                  <span style={styles.receiptValue}>{successData.referenceNumber}</span>
+                </div>
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Date & Time:</span>
+                  <span style={styles.receiptValue}>{successData.date}</span>
+                </div>
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Account:</span>
+                  <span style={styles.receiptValue}>{successData.accountNumber}</span>
+                </div>
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Cryptocurrency:</span>
+                  <span style={styles.receiptValue}>{successData.cryptoType} ({successData.cryptoSymbol})</span>
+                </div>
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Network:</span>
+                  <span style={styles.receiptValue}>{successData.network}</span>
+                </div>
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Deposit Amount:</span>
+                  <span style={styles.receiptValue}>{successData.amount}</span>
+                </div>
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Network Fee:</span>
+                  <span style={styles.receiptValue}>-{successData.fee}</span>
+                </div>
+                <div style={{...styles.receiptRow, borderTop: '2px solid #e2e8f0', paddingTop: '1rem', marginTop: '0.5rem'}}>
+                  <span style={{...styles.receiptLabel, fontWeight: '700', fontSize: '1rem'}}>Net Amount:</span>
+                  <span style={{...styles.receiptValue, fontWeight: '700', fontSize: '1.25rem', color: '#059669'}}>{successData.netAmount}</span>
+                </div>
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Status:</span>
+                  <span style={{...styles.receiptValue, 
+                    color: successData.status === 'completed' || successData.status === 'approved' ? '#059669' :
+                           successData.status === 'pending' || successData.status === 'awaiting_confirmations' ? '#f59e0b' : '#dc2626',
+                    fontWeight: '600', textTransform: 'capitalize'}}>
+                    {successData.status.replace(/_/g, ' ')}
+                  </span>
+                </div>
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Confirmations:</span>
+                  <span style={styles.receiptValue}>{successData.confirmations} / {successData.requiredConfirmations}</span>
+                </div>
+                {successData.completedAt && (
+                  <div style={styles.receiptRow}>
+                    <span style={styles.receiptLabel}>Completed:</span>
+                    <span style={styles.receiptValue}>{successData.completedAt}</span>
+                  </div>
+                )}
+              </div>
+
+              <div style={styles.successButtons}>
+                <button 
+                  onClick={() => router.push('/dashboard')} 
+                  style={styles.dashboardButton}
+                  onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)'}
+                  onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)'}
+                >
+                  Go to Dashboard
+                </button>
+                <button 
+                  onClick={() => setShowSuccessModal(false)} 
+                  style={styles.closeButton}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#f3f4f6'}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Old Detail Modal - Keep for backward compatibility but hidden */}
+        {showDetailModal && selectedDeposit && false && (
           <div style={styles.modalOverlay} onClick={() => setShowDetailModal(false)}>
             <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
               <div style={styles.modalHeader}>
                 <h2 style={styles.modalTitle}>Deposit Details</h2>
                 <button
                   onClick={() => setShowDetailModal(false)}
-                  style={styles.closeButton}
+                  style={styles.oldCloseButton}
                 >
                   ×
                 </button>
@@ -1106,6 +1216,103 @@ const styles = {
     width: '50px',
     height: '50px',
     animation: 'spin 1s linear infinite'
+  },
+  successOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999,
+    backdropFilter: 'blur(4px)',
+    padding: '1rem'
+  },
+  successModal: {
+    backgroundColor: 'white',
+    padding: '2.5rem',
+    borderRadius: '20px',
+    maxWidth: '600px',
+    width: '100%',
+    maxHeight: '90vh',
+    overflowY: 'auto',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    animation: 'slideIn 0.3s ease-out'
+  },
+  successIcon: {
+    fontSize: '4rem',
+    textAlign: 'center',
+    marginBottom: '1rem'
+  },
+  successTitle: {
+    fontSize: '2rem',
+    fontWeight: 'bold',
+    color: '#059669',
+    textAlign: 'center',
+    marginBottom: '1rem'
+  },
+  successInfoBox: {
+    backgroundColor: '#f7fafc',
+    borderRadius: '12px',
+    padding: '1.5rem',
+    marginBottom: '1.5rem'
+  },
+  receiptSectionTitle: {
+    fontSize: '1.1rem',
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: '1rem',
+    paddingBottom: '0.75rem',
+    borderBottom: '2px solid #e2e8f0'
+  },
+  receiptRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '0.75rem 0',
+    borderBottom: '1px solid #f1f5f9'
+  },
+  receiptLabel: {
+    fontSize: '0.9rem',
+    color: '#64748b',
+    fontWeight: '500'
+  },
+  receiptValue: {
+    fontSize: '0.9rem',
+    color: '#1e293b',
+    fontWeight: '600',
+    textAlign: 'right',
+    maxWidth: '60%',
+    wordBreak: 'break-word'
+  },
+  successButtons: {
+    display: 'flex',
+    gap: '1rem',
+    justifyContent: 'center',
+    marginTop: '1.5rem'
+  },
+  dashboardButton: {
+    padding: '1rem 2rem',
+    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '1rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)'
+  },
+  oldCloseButton: {
+    background: 'none',
+    border: 'none',
+    fontSize: '1.5rem',
+    cursor: 'pointer',
+    color: '#64748b',
+    padding: '0.25rem',
+    lineHeight: 1
   }
 };
 

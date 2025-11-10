@@ -30,6 +30,10 @@ export default function CryptoDeposit() {
   const [insufficientMessage, setInsufficientMessage] = useState('');
   const router = useRouter();
 
+  // New states for processing and success modals
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -361,7 +365,7 @@ export default function CryptoDeposit() {
     if (depositForm.crypto_type === crypto) {
       return;
     }
-    
+
     setDepositForm({
       ...depositForm,
       crypto_type: crypto,
@@ -533,6 +537,7 @@ export default function CryptoDeposit() {
 
   const handleConfirmPayment = async () => {
     setSubmitting(true);
+    setIsProcessing(true); // Show processing overlay
     setMessage('');
     setMessageType('');
 
@@ -541,6 +546,7 @@ export default function CryptoDeposit() {
       setMessage('Please provide either a transaction hash OR upload proof of payment');
       setMessageType('error');
       setSubmitting(false);
+      setIsProcessing(false); // Hide processing overlay
       return;
     }
 
@@ -559,6 +565,7 @@ export default function CryptoDeposit() {
           setMessage('You already have a pending account activation deposit. Please wait for confirmation.');
           setMessageType('info');
           setSubmitting(false);
+          setIsProcessing(false);
           return;
         }
       } else {
@@ -574,6 +581,7 @@ export default function CryptoDeposit() {
           setMessage('You already have a pending deposit for this account. Please wait for confirmation.');
           setMessageType('info');
           setSubmitting(false);
+          setIsProcessing(false);
           return;
         }
       }
@@ -747,6 +755,8 @@ export default function CryptoDeposit() {
         cryptoSymbol: depositForm.crypto_type,
         network: getSelectedNetwork()?.label || depositForm.network_type,
         amount: formatCurrency(depositForm.amount),
+        fee: formatCurrency(calculatedFee), // Include fee in receipt
+        netAmount: formatCurrency(calculatedNetAmount), // Include net amount in receipt
         walletAddress: walletAddress,
         confirmations: getSelectedNetwork()?.confirmations || 3,
         status: 'Pending Confirmation',
@@ -754,7 +764,10 @@ export default function CryptoDeposit() {
       };
 
       setReceiptData(receipt);
-      setShowReceipt(true);
+      // Removed setShowReceipt(true); to use the new success modal
+      // Instead, set state to show the success modal
+      setShowSuccessModal(true);
+      setIsProcessing(false); // Hide processing overlay
 
       // Update message and type for confirmation
       setMessage(fundingMode 
@@ -766,6 +779,7 @@ export default function CryptoDeposit() {
       console.error('Deposit error:', error);
       setMessage(error.message || 'Deposit submission failed. Please try again.');
       setMessageType('error');
+      setIsProcessing(false); // Hide processing overlay on error
     } finally {
       setSubmitting(false);
     }
@@ -1341,6 +1355,138 @@ export default function CryptoDeposit() {
       cursor: 'pointer',
       transition: 'all 0.3s',
       border: 'none'
+    },
+
+    // New styles for processing and success modals
+    processingOverlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999,
+      backdropFilter: 'blur(4px)'
+    },
+    processingCard: {
+      backgroundColor: 'white',
+      padding: '3rem 4rem',
+      borderRadius: '20px',
+      textAlign: 'center',
+      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+      maxWidth: '400px'
+    },
+    processingTitle: {
+      fontSize: '1.5rem',
+      fontWeight: 'bold',
+      color: '#1e293b',
+      marginBottom: '0.5rem'
+    },
+    processingText: {
+      fontSize: '1rem',
+      color: '#64748b'
+    },
+    successOverlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999,
+      backdropFilter: 'blur(4px)',
+      padding: '1rem'
+    },
+    successModal: {
+      backgroundColor: 'white',
+      padding: '2.5rem',
+      borderRadius: '20px',
+      maxWidth: '600px',
+      width: '100%',
+      maxHeight: '90vh',
+      overflowY: 'auto',
+      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+      animation: 'slideIn 0.3s ease-out'
+    },
+    successIcon: {
+      fontSize: '4rem',
+      textAlign: 'center',
+      marginBottom: '1rem'
+    },
+    successTitle: {
+      fontSize: '2rem',
+      fontWeight: 'bold',
+      color: '#059669',
+      textAlign: 'center',
+      marginBottom: '1rem'
+    },
+    successMessage: {
+      fontSize: '1.1rem',
+      color: '#4a5568',
+      textAlign: 'center',
+      lineHeight: '1.6',
+      marginBottom: '2rem'
+    },
+    successInfoBox: {
+      backgroundColor: '#f7fafc',
+      borderRadius: '12px',
+      padding: '1.5rem',
+      marginBottom: '1.5rem'
+    },
+    receiptSectionTitle: {
+      fontSize: '1.1rem',
+      fontWeight: '700',
+      color: '#1e293b',
+      marginBottom: '1rem',
+      paddingBottom: '0.75rem',
+      borderBottom: '2px solid #e2e8f0'
+    },
+    successSteps: {
+      backgroundColor: '#ecfdf5',
+      borderRadius: '12px',
+      padding: '1.5rem',
+      marginBottom: '2rem',
+      border: '2px solid #10b981'
+    },
+    stepsTitle: {
+      fontSize: '1.2rem',
+      fontWeight: 'bold',
+      color: '#065f46',
+      marginBottom: '1rem'
+    },
+    successButtons: {
+      display: 'flex',
+      gap: '1rem',
+      justifyContent: 'center'
+    },
+    dashboardButton: {
+      padding: '1rem 2rem',
+      background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+      color: 'white',
+      border: 'none',
+      borderRadius: '10px',
+      fontSize: '1rem',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease',
+      boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)'
+    },
+    closeButton: {
+      padding: '1rem 2rem',
+      backgroundColor: '#f3f4f6',
+      color: '#4a5568',
+      border: 'none',
+      borderRadius: '10px',
+      fontSize: '1rem',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease'
     }
   };
 
@@ -1372,6 +1518,10 @@ export default function CryptoDeposit() {
           @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+          }
+          @keyframes slideIn {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
           }
           @media print {
             body * {
@@ -1542,7 +1692,7 @@ export default function CryptoDeposit() {
 
             <div style={styles.formGroup}>
               <label style={styles.label}>Select Cryptocurrency</label>
-              
+
               {/* Network Selection - appears first when crypto is selected */}
               {depositForm.crypto_type && (
                 <div id="network-section" style={{
@@ -1577,7 +1727,7 @@ export default function CryptoDeposit() {
                     Choose the blockchain network for your {depositForm.crypto_type} deposit
                   </p>
                 </div>
-                
+
                 {loadingNetworks ? (
                   <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
                     <div style={{ ...styles.spinner, margin: '0 auto 1rem' }} />
@@ -1740,7 +1890,7 @@ export default function CryptoDeposit() {
                     Network Details & Fees
                   </p>
                 </div>
-                
+
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
@@ -1773,7 +1923,7 @@ export default function CryptoDeposit() {
                       {getSelectedNetwork().confirmations}
                     </p>
                   </div>
-                  
+
                   <div style={{
                     backgroundColor: '#fff',
                     padding: '1.25rem',
@@ -1802,7 +1952,7 @@ export default function CryptoDeposit() {
                       {getSelectedNetwork().minDeposit} {depositForm.crypto_type}
                     </p>
                   </div>
-                  
+
                   <div style={{
                     backgroundColor: getSelectedNetwork().fee > 0 ? '#fef2f2' : '#f0fdf4',
                     padding: '1.25rem',
@@ -2293,7 +2443,7 @@ export default function CryptoDeposit() {
                   </h4>
                   <p style={{ 
                     margin: 0, 
-                    fontSize: '0.9rem', 
+                    fontSize: '0.85rem', 
                     color: '#ffffff',
                     lineHeight: '1.6'
                   }}>
@@ -2904,151 +3054,88 @@ export default function CryptoDeposit() {
         </div>
       )}
 
-      {/* Comprehensive Receipt Modal */}
-      {showReceipt && receiptData && (
-        <div style={styles.receiptOverlay}>
-          <div style={styles.receipt} className="receipt-print">
-            <div style={styles.receiptHeader}>
-              <h2 style={styles.receiptTitle}>Cryptocurrency Deposit Receipt</h2>
-              <p style={styles.receiptSubtitle}>Oakline Bank - Digital Asset Services</p>
-              <div style={styles.receiptSuccessBadge}>
-                ✓ Transaction Submitted Successfully
-              </div>
-            </div>
+      {/* Comprehensive Receipt Modal - Using the new Success Modal */}
+      {showSuccessModal && receiptData && (
+        <div style={styles.successOverlay} onClick={() => setShowSuccessModal(false)}>
+          <div style={styles.successModal} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.successIcon}>✅</div>
+            <h2 style={styles.successTitle}>Deposit Submitted Successfully!</h2>
+            <p style={styles.successMessage}>
+              Your cryptocurrency deposit has been received and is awaiting blockchain confirmation.
+            </p>
 
-            <div style={{ marginBottom: '1.5rem' }}>
+            {/* Receipt Details */}
+            <div style={styles.successInfoBox}>
+              <h3 style={styles.receiptSectionTitle}>📋 Deposit Receipt</h3>
               <div style={styles.receiptRow}>
-                <span style={styles.receiptLabel}>Reference Number</span>
+                <span style={styles.receiptLabel}>Reference Number:</span>
                 <span style={{ ...styles.receiptValue, fontFamily: 'monospace', fontWeight: '700' }}>
                   {receiptData.referenceNumber}
                 </span>
               </div>
               <div style={styles.receiptRow}>
-                <span style={styles.receiptLabel}>Transaction ID</span>
-                <span style={{ ...styles.receiptValue, fontFamily: 'monospace', fontSize: '0.8rem' }}>
-                  {receiptData.transactionId}
-                </span>
-              </div>
-              <div style={styles.receiptRow}>
-                <span style={styles.receiptLabel}>Date & Time</span>
+                <span style={styles.receiptLabel}>Date & Time:</span>
                 <span style={styles.receiptValue}>{receiptData.date}</span>
               </div>
-            </div>
-
-            <div style={styles.receiptHighlight}>
               <div style={styles.receiptRow}>
-                <span style={styles.receiptLabel}>Account Number</span>
-                <span style={{ ...styles.receiptValue, fontFamily: 'monospace' }}>
-                  {receiptData.accountNumber}
-                </span>
+                <span style={styles.receiptLabel}>Account:</span>
+                <span style={styles.receiptValue}>{receiptData.accountNumber}</span>
               </div>
               <div style={styles.receiptRow}>
-                <span style={styles.receiptLabel}>Cryptocurrency</span>
-                <span style={styles.receiptValue}>
-                  {receiptData.cryptoType} ({receiptData.cryptoSymbol})
-                </span>
+                <span style={styles.receiptLabel}>Cryptocurrency:</span>
+                <span style={styles.receiptValue}>{receiptData.cryptoType}</span>
               </div>
               <div style={styles.receiptRow}>
-                <span style={styles.receiptLabel}>Network</span>
+                <span style={styles.receiptLabel}>Network:</span>
                 <span style={styles.receiptValue}>{receiptData.network}</span>
               </div>
               <div style={styles.receiptRow}>
-                <span style={styles.summaryLabel}>Amount</span>
-                <span style={{
-                  ...styles.summaryValue,
-                  fontSize: '1.25rem',
-                  color: '#059669'
-                }}>
-                  {receiptData.amount}
-                </span>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '1.5rem' }}>
-              <div style={styles.receiptRow}>
-                <span style={styles.receiptLabel}>Deposit Address</span>
-                <span style={{ ...styles.receiptValue, fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                  {receiptData.walletAddress}
-                </span>
+                <span style={styles.receiptLabel}>Deposit Amount:</span>
+                <span style={styles.receiptValue}>{receiptData.amount}</span>
               </div>
               <div style={styles.receiptRow}>
-                <span style={styles.receiptLabel}>Required Confirmations</span>
+                <span style={styles.receiptLabel}>Network Fee:</span>
+                <span style={styles.receiptValue}>{receiptData.fee}</span>
+              </div>
+              <div style={{...styles.receiptRow, borderTop: '2px solid #e2e8f0', paddingTop: '1rem', marginTop: '0.5rem'}}>
+                <span style={{...styles.receiptLabel, fontWeight: '700', fontSize: '1rem'}}>You Will Receive:</span>
+                <span style={{...styles.receiptValue, fontWeight: '700', fontSize: '1.25rem', color: '#059669'}}>{receiptData.netAmount}</span>
+              </div>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Status:</span>
+                <span style={{...styles.receiptValue, color: '#f59e0b', fontWeight: '600'}}>{receiptData.status}</span>
+              </div>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Required Confirmations:</span>
                 <span style={styles.receiptValue}>{receiptData.confirmations}</span>
               </div>
-              <div style={styles.receiptRow}>
-                <span style={styles.receiptLabel}>Status</span>
-                <span style={{ 
-                  ...styles.receiptValue, 
-                  color: '#f59e0b',
-                  backgroundColor: '#fef3c7',
-                  padding: '0.25rem 0.75rem',
-                  borderRadius: '6px'
-                }}>
-                  {receiptData.status}
-                </span>
-              </div>
             </div>
 
-            <div style={{
-              backgroundColor: '#fef3c7',
-              padding: '1rem',
-              borderRadius: '8px',
-              marginBottom: '1.5rem',
-              border: '1px solid #fbbf24'
-            }}>
-              <p style={{ fontSize: '0.85rem', color: '#92400e', margin: 0, lineHeight: '1.6' }}>
-                <strong>⏱️ Processing Time:</strong> Your deposit will be credited to your account after {receiptData.confirmations} network confirmations. This typically takes 15-60 minutes depending on network congestion.
+            <div style={styles.successSteps}>
+              <h3 style={styles.stepsTitle}>📧 Email Confirmation Sent</h3>
+              <p style={{fontSize: '0.95rem', color: '#4a5568', lineHeight: '1.6', margin: 0}}>
+                A confirmation email has been sent to your registered email address with all deposit details. 
+                You'll receive another email once your deposit is confirmed on the blockchain (typically 15-60 minutes).
               </p>
             </div>
 
-            <div style={{
-              backgroundColor: '#eff6ff',
-              padding: '1rem',
-              borderRadius: '8px',
-              marginBottom: '1.5rem',
-              border: '1px solid #bfdbfe'
-            }}>
-              <p style={{ fontSize: '0.85rem', color: '#1e40af', margin: 0, lineHeight: '1.6' }}>
-                <strong>📧 Email Confirmation:</strong> You will receive an email notification once your deposit has been confirmed and credited to your account.
-              </p>
-            </div>
-
-            <div style={styles.receiptButtons}>
-              <button
-                onClick={printReceipt}
-                style={{
-                  ...styles.receiptButton,
-                  backgroundColor: '#1e40af',
-                  color: 'white'
-                }}
+            <div style={styles.successButtons}>
+              <button 
+                onClick={() => router.push('/dashboard')} 
+                style={styles.dashboardButton}
+                onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)'}
+                onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)'}
               >
-                🖨️ Print Receipt
+                Go to Dashboard
               </button>
-              <button
-                onClick={() => {
-                  setShowReceipt(false);
-                  router.push('/dashboard');
-                }}
-                style={{
-                  ...styles.receiptButton,
-                  backgroundColor: '#10b981',
-                  color: 'white'
-                }}
+              <button 
+                onClick={() => setShowSuccessModal(false)} 
+                style={styles.closeButton}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#f3f4f6'}
               >
-                ✓ Done
+                Close
               </button>
-            </div>
-
-            <div style={{
-              marginTop: '1.5rem',
-              paddingTop: '1.5rem',
-              borderTop: '1px solid #e5e7eb',
-              textAlign: 'center'
-            }}>
-              <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: 0 }}>
-                This is an official receipt from Oakline Bank.<br />
-                For support, contact us at support@theoaklinebank.com
-              </p>
             </div>
           </div>
         </div>
