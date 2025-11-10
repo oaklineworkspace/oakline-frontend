@@ -396,8 +396,8 @@ function DashboardContent() {
     );
   }
 
-  // Add hover effects for dropdown items and dashboard elements
-  if (typeof document !== 'undefined') {
+  // Add professional dashboard styles
+  useEffect(() => {
     const existingStyle = document.querySelector('#dropdown-styles');
     if (!existingStyle) {
       const dropdownStyles = document.createElement('style');
@@ -410,46 +410,37 @@ function DashboardContent() {
       }
 
       .nav-button:hover {
-        background-color: rgba(255, 255, 255, 0.2) !important;
+        background: rgba(255, 255, 255, 0.2) !important;
         transform: translateY(-2px);
       }
 
       /* Professional Dashboard Hover Effects */
       @media (hover: hover) {
-        div[style*="accountItem"]:hover,
-        div[style*="background: rgb(248, 250, 252)"]:hover {
+        .account-item:hover {
           transform: translateY(-2px) !important;
           box-shadow: 0 4px 12px rgba(0,0,0,0.12) !important;
           background: #ffffff !important;
           border-color: #cbd5e1 !important;
         }
 
-        div[style*="transactionItem"]:hover {
+        .transaction-item:hover {
           transform: translateY(-2px) !important;
           box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
           border-color: #cbd5e1 !important;
         }
 
-        div[style*="primaryBalanceCard"]:hover {
+        .primary-balance-card:hover {
           box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
           transform: translateY(-2px) !important;
         }
 
-        a[style*="standardActionButton"]:hover,
-        button[style*="standardActionButton"]:hover {
+        .standard-action-button:hover {
           transform: translateY(-2px) !important;
           box-shadow: 0 6px 20px rgba(26, 54, 93, 0.3) !important;
-          background-color: #2c5282 !important;
+          background: #2c5282 !important;
         }
 
-        a[style*="quickAction"]:hover {
-          transform: translateY(-2px) !important;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
-          border-color: #1e40af !important;
-          background: #ffffff !important;
-        }
-
-        a[style*="viewAllLink"]:hover {
+        .view-all-link:hover {
           text-decoration: underline !important;
           color: #1e3a8a !important;
         }
@@ -457,36 +448,28 @@ function DashboardContent() {
 
       /* Mobile Optimizations */
       @media (max-width: 768px) {
-        div[style*="padding: 2.5rem"] {
+        .responsive-padding {
           padding: 1.5rem !important;
         }
 
-        div[style*="padding: 2rem"] {
-          padding: 1.25rem !important;
-        }
-
-        div[style*="fontSize: 1.7rem"] {
+        .responsive-title {
           font-size: 1.4rem !important;
-        }
-
-        div[style*="fontSize: 2.5rem"] {
-          font-size: 1.8rem !important;
         }
       }
 
       @media (max-width: 480px) {
-        div[style*="padding: 1.5rem"] {
+        .responsive-padding-small {
           padding: 1rem !important;
         }
 
-        div[style*="gap: 1.5rem"] {
+        .responsive-gap {
           gap: 1rem !important;
         }
       }
     `;
       document.head.appendChild(dropdownStyles);
     }
-  }
+  }, []);
 
 
   return (
@@ -610,7 +593,7 @@ function DashboardContent() {
           </div>
 
           <div style={styles.summaryCards}>
-            <div style={styles.primaryBalanceCard}>
+            <div className="primary-balance-card" style={styles.primaryBalanceCard}>
               <div style={styles.balanceCardHeader}>
                 <div style={styles.balanceHeaderInfo}>
                   <h3 style={styles.balanceCardLabel}>Total Available Balance</h3>
@@ -690,7 +673,7 @@ function DashboardContent() {
 
           <div style={styles.accountsList}>
             {accounts.map(account => (
-              <div key={account.id} style={styles.accountItem}>
+              <div key={account.id} className="account-item" style={styles.accountItem}>
                 <div style={styles.accountInfo}>
                   <div style={styles.accountTypeIcon}>
                     {account.account_type === 'checking' ? '🏦' : 
@@ -800,7 +783,7 @@ function DashboardContent() {
                 const statusColors = getStatusColor(status);
 
                 return (
-                  <div key={tx.id} style={styles.transactionItem}>
+                  <div key={tx.id} className="transaction-item" style={styles.transactionItem}>
                     <div style={styles.transactionLeft}>
                       <span style={styles.transactionIcon}>
                         {getTransactionIcon(tx.transaction_type)}
@@ -867,7 +850,7 @@ function DashboardContent() {
         <section style={styles.quickActionsSection}>
           <h3 style={styles.sectionTitle}>Quick Actions</h3>
           <div style={styles.quickActions}>
-            <Link href="/transfer" style={styles.standardActionButton}>
+            <Link href="/transfer" className="standard-action-button" style={styles.standardActionButton}>
               <span style={styles.quickActionIcon}>💸</span>
               <span style={styles.quickActionText}>Transfer Money</span>
             </Link>
@@ -2029,7 +2012,7 @@ const styles = {
     alignItems: 'center',
     gap: '0.5rem',
     padding: '0.75rem 1.25rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    background: 'rgba(255, 255, 255, 0.95)',
     color: '#1e40af',
     border: '1px solid rgba(255, 255, 255, 0.3)',
     borderRadius: '8px',
@@ -2041,10 +2024,10 @@ const styles = {
   },
   addFundsDropdown: {
     position: 'absolute',
-    bottom: '100%', // Position above the button
+    bottom: '100%',
     right: '0',
-    marginBottom: '0.5rem', // Space between button and dropdown
-    backgroundColor: 'white',
+    marginBottom: '0.5rem',
+    background: 'white',
     borderRadius: '12px',
     boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
     border: '1px solid #e5e7eb',
