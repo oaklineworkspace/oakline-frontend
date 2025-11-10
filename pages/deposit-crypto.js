@@ -261,18 +261,38 @@ export default function CryptoDeposit() {
       console.log('Fetching wallet for:', { 
         userId: user.id, 
         cryptoType: depositForm.crypto_type, 
-        networkType: depositForm.network_type 
+        networkType: depositForm.network_type,
+        fundingMode: fundingMode
       });
 
-      // Query admin_assigned_wallets table
-      const { data: adminWallets, error: adminError } = await supabase
-        .from('admin_assigned_wallets')
-        .select('crypto_type, network_type, wallet_address, memo')
-        .eq('user_id', user.id)
-        .eq('crypto_type', depositForm.crypto_type)
-        .eq('network_type', depositForm.network_type);
+      let adminWallets;
+      let adminError;
 
-      console.log('Admin wallets query result:', { adminWallets, adminError });
+      if (fundingMode) {
+        console.log('Funding mode: Fetching from generic wallet pool (user_id IS NULL)');
+        const result = await supabase
+          .from('admin_assigned_wallets')
+          .select('crypto_type, network_type, wallet_address, memo')
+          .is('user_id', null)
+          .eq('crypto_type', depositForm.crypto_type)
+          .eq('network_type', depositForm.network_type);
+        
+        adminWallets = result.data;
+        adminError = result.error;
+      } else {
+        console.log('Regular mode: Fetching user-specific wallet');
+        const result = await supabase
+          .from('admin_assigned_wallets')
+          .select('crypto_type, network_type, wallet_address, memo')
+          .eq('user_id', user.id)
+          .eq('crypto_type', depositForm.crypto_type)
+          .eq('network_type', depositForm.network_type);
+        
+        adminWallets = result.data;
+        adminError = result.error;
+      }
+
+      console.log('Admin wallets query result:', { adminWallets, adminError, fundingMode });
 
       if (adminError) {
         console.error('Error fetching admin wallets:', adminError);
@@ -282,7 +302,10 @@ export default function CryptoDeposit() {
       }
 
       if (adminWallets && adminWallets.length > 0) {
-        const wallet = adminWallets[0];
+        const wallet = fundingMode 
+          ? adminWallets[Math.floor(Math.random() * adminWallets.length)]
+          : adminWallets[0];
+          
         if (wallet.wallet_address) {
           setWalletAddress(wallet.wallet_address);
           setMemo(wallet.memo || '');
@@ -291,7 +314,8 @@ export default function CryptoDeposit() {
         }
       }
 
-      console.log('No wallet assigned for this crypto/network combination');
+      const walletType = fundingMode ? 'generic account opening' : 'user-specific';
+      console.log(`No ${walletType} wallet assigned for this crypto/network combination`);
       setMessage(`No wallet assigned for ${depositForm.crypto_type} on ${depositForm.network_type}. Please contact support.`);
       setMessageType('error');
     } catch (error) {
