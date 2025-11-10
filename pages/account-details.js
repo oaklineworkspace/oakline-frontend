@@ -27,6 +27,8 @@ export default function AccountDetails() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
   const router = useRouter();
   const { id } = router.query;
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -194,6 +196,16 @@ export default function AccountDetails() {
 
   const getTotalBalance = () => {
     return accounts.reduce((sum, acc) => sum + (parseFloat(acc.balance) || 0), 0);
+  };
+
+  const handleTransactionClick = (transaction) => {
+    setSelectedTransaction(transaction);
+    setShowReceiptModal(true);
+  };
+
+  const closeReceiptModal = () => {
+    setShowReceiptModal(false);
+    setSelectedTransaction(null);
   };
 
   const styles = {
@@ -406,7 +418,14 @@ export default function AccountDetails() {
       backgroundColor: '#f8fafc',
       borderRadius: '12px',
       marginBottom: '0.75rem',
-      border: '1px solid #e2e8f0'
+      border: '1px solid #e2e8f0',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease'
+    },
+    transactionItemHover: {
+      backgroundColor: '#f1f5f9',
+      transform: 'translateY(-2px)',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
     },
     transactionLeft: {
       display: 'flex',
@@ -432,7 +451,103 @@ export default function AccountDetails() {
     },
     transactionAmount: {
       fontSize: isMobile ? '0.95rem' : '1.05rem',
-      fontWeight: '700'
+      fontWeight: '700',
+      marginBottom: '0.25rem'
+    },
+    transactionRight: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-end',
+      gap: '0.5rem'
+    },
+    statusBadge: {
+      fontSize: '0.75rem',
+      fontWeight: '600',
+      padding: '0.25rem 0.75rem',
+      borderRadius: '12px',
+      textTransform: 'capitalize'
+    },
+    receiptModal: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: isMobile ? '1rem' : '2rem'
+    },
+    receiptContainer: {
+      backgroundColor: 'white',
+      borderRadius: '16px',
+      padding: isMobile ? '1.5rem' : '2rem',
+      maxWidth: '500px',
+      width: '100%',
+      maxHeight: '90vh',
+      overflowY: 'auto',
+      position: 'relative'
+    },
+    receiptHeader: {
+      borderBottom: '2px solid #e2e8f0',
+      paddingBottom: '1rem',
+      marginBottom: '1.5rem',
+      textAlign: 'center'
+    },
+    receiptTitle: {
+      fontSize: isMobile ? '1.3rem' : '1.5rem',
+      fontWeight: '700',
+      color: '#1e293b',
+      marginBottom: '0.5rem'
+    },
+    receiptClose: {
+      position: 'absolute',
+      top: '1rem',
+      right: '1rem',
+      background: 'none',
+      border: 'none',
+      fontSize: '1.5rem',
+      cursor: 'pointer',
+      color: '#64748b',
+      padding: '0.25rem 0.5rem'
+    },
+    receiptRow: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      padding: '0.75rem 0',
+      borderBottom: '1px solid #f1f5f9'
+    },
+    receiptLabel: {
+      fontSize: '0.9rem',
+      color: '#64748b',
+      fontWeight: '500'
+    },
+    receiptValue: {
+      fontSize: '0.9rem',
+      color: '#1e293b',
+      fontWeight: '600',
+      textAlign: 'right',
+      maxWidth: '60%',
+      wordBreak: 'break-word'
+    },
+    receiptAmountSection: {
+      backgroundColor: '#f0f9ff',
+      padding: '1.5rem',
+      borderRadius: '12px',
+      margin: '1.5rem 0',
+      textAlign: 'center'
+    },
+    receiptAmountLabel: {
+      fontSize: '0.9rem',
+      color: '#64748b',
+      marginBottom: '0.5rem'
+    },
+    receiptAmountValue: {
+      fontSize: isMobile ? '1.8rem' : '2rem',
+      fontWeight: '700',
+      color: '#1e40af'
     },
     emptyState: {
       textAlign: 'center',
@@ -615,6 +730,7 @@ export default function AccountDetails() {
                     const txType = (tx.type || tx.transaction_type || '').toLowerCase();
                     const description = (tx.description || '').toLowerCase();
                     const amount = parseFloat(tx.amount) || 0;
+                    const txStatus = tx.status || 'completed';
 
                     // Determine if it's a credit (money in) or debit (money out)
                     let isCredit = false;
@@ -650,26 +766,62 @@ export default function AccountDetails() {
                       isCredit = amount >= 0;
                     }
 
+                    // Get status color
+                    const getStatusStyle = (status) => {
+                      const statusLower = status.toLowerCase();
+                      if (statusLower === 'completed' || statusLower === 'approved' || statusLower === 'confirmed') {
+                        return { backgroundColor: '#d1fae5', color: '#065f46' };
+                      } else if (statusLower === 'pending' || statusLower === 'awaiting_confirmations' || statusLower === 'processing') {
+                        return { backgroundColor: '#fef3c7', color: '#92400e' };
+                      } else if (statusLower === 'failed' || statusLower === 'rejected') {
+                        return { backgroundColor: '#fee2e2', color: '#991b1b' };
+                      }
+                      return { backgroundColor: '#f3f4f6', color: '#4b5563' };
+                    };
+
                     return (
-                      <div key={tx.id} style={styles.transactionItem}>
+                      <div 
+                        key={tx.id} 
+                        style={styles.transactionItem}
+                        onClick={() => handleTransactionClick(tx)}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f1f5f9';
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f8fafc';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
                         <div style={styles.transactionLeft}>
                           <span style={styles.transactionIcon}>
                             {getTransactionIcon(tx.type || tx.transaction_type)}
                           </span>
                           <div style={styles.transactionInfo}>
                             <div style={styles.transactionDescription}>
-                              {tx.description || (tx.type || tx.transaction_type)?.replace(/_/g, ' ').toUpperCase()}</div>
+                              {tx.description || (tx.type || tx.transaction_type)?.replace(/_/g, ' ').toUpperCase()}
+                            </div>
                             <div style={styles.transactionDate}>
                               {formatDate(tx.created_at)}
                             </div>
                           </div>
                         </div>
-                        <div style={{
-                          ...styles.transactionAmount,
-                          color: isCredit ? '#059669' : '#dc2626'
-                        }}>
-                          {isCredit ? '+' : '-'}
-                          {formatCurrency(Math.abs(amount))}
+                        <div style={styles.transactionRight}>
+                          <div style={{
+                            ...styles.transactionAmount,
+                            color: isCredit ? '#059669' : '#dc2626'
+                          }}>
+                            {isCredit ? '+' : '-'}
+                            {formatCurrency(Math.abs(amount))}
+                          </div>
+                          <span style={{
+                            ...styles.statusBadge,
+                            ...getStatusStyle(txStatus)
+                          }}>
+                            {txStatus.replace(/_/g, ' ')}
+                          </span>
                         </div>
                       </div>
                     );
@@ -684,6 +836,136 @@ export default function AccountDetails() {
           )}
         </div>
       </main>
+
+      {/* Transaction Receipt Modal */}
+      {showReceiptModal && selectedTransaction && (
+        <div style={styles.receiptModal} onClick={closeReceiptModal}>
+          <div style={styles.receiptContainer} onClick={(e) => e.stopPropagation()}>
+            <button style={styles.receiptClose} onClick={closeReceiptModal}>×</button>
+            
+            <div style={styles.receiptHeader}>
+              <h2 style={styles.receiptTitle}>Transaction Receipt</h2>
+              <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                {selectedAccount?.account_type?.replace(/_/g, ' ').toUpperCase()} Account
+              </p>
+            </div>
+
+            <div style={styles.receiptAmountSection}>
+              <div style={styles.receiptAmountLabel}>Amount</div>
+              <div style={{
+                ...styles.receiptAmountValue,
+                color: (selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('deposit') || 
+                       (selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('credit') ? 
+                       '#059669' : '#dc2626'
+              }}>
+                {((selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('deposit') || 
+                  (selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('credit')) ? '+' : '-'}
+                {formatCurrency(Math.abs(parseFloat(selectedTransaction.amount) || 0))}
+              </div>
+            </div>
+
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Transaction Type</span>
+              <span style={styles.receiptValue}>
+                {(selectedTransaction.type || selectedTransaction.transaction_type || 'Transaction')
+                  .replace(/_/g, ' ')
+                  .toUpperCase()}
+              </span>
+            </div>
+
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Description</span>
+              <span style={styles.receiptValue}>
+                {selectedTransaction.description || 'N/A'}
+              </span>
+            </div>
+
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Status</span>
+              <span style={{
+                ...styles.receiptValue,
+                ...(() => {
+                  const status = (selectedTransaction.status || 'completed').toLowerCase();
+                  if (status === 'completed' || status === 'approved' || status === 'confirmed') {
+                    return { color: '#065f46', backgroundColor: '#d1fae5', padding: '0.25rem 0.75rem', borderRadius: '12px' };
+                  } else if (status === 'pending' || status === 'awaiting_confirmations' || status === 'processing') {
+                    return { color: '#92400e', backgroundColor: '#fef3c7', padding: '0.25rem 0.75rem', borderRadius: '12px' };
+                  } else if (status === 'failed' || status === 'rejected') {
+                    return { color: '#991b1b', backgroundColor: '#fee2e2', padding: '0.25rem 0.75rem', borderRadius: '12px' };
+                  }
+                  return { color: '#4b5563' };
+                })()
+              }}>
+                {(selectedTransaction.status || 'Completed').replace(/_/g, ' ').toUpperCase()}
+              </span>
+            </div>
+
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Date & Time</span>
+              <span style={styles.receiptValue}>
+                {formatDate(selectedTransaction.created_at)}
+              </span>
+            </div>
+
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Reference Number</span>
+              <span style={{ ...styles.receiptValue, fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                {selectedTransaction.id?.slice(0, 8).toUpperCase() || 'N/A'}
+              </span>
+            </div>
+
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Account Number</span>
+              <span style={{ ...styles.receiptValue, fontFamily: 'monospace' }}>
+                •••• {selectedAccount?.account_number?.slice(-4)}
+              </span>
+            </div>
+
+            {selectedTransaction.transaction_type === 'crypto_deposit' && (
+              <>
+                <div style={{ 
+                  marginTop: '1.5rem', 
+                  paddingTop: '1rem', 
+                  borderTop: '2px solid #e2e8f0' 
+                }}>
+                  <h3 style={{ 
+                    fontSize: '1rem', 
+                    fontWeight: '700', 
+                    color: '#1e293b', 
+                    marginBottom: '1rem' 
+                  }}>
+                    Crypto Deposit Details
+                  </h3>
+                </div>
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Network</span>
+                  <span style={styles.receiptValue}>
+                    {selectedTransaction.description?.includes('BEP20') ? 'BNB Smart Chain (BEP20)' :
+                     selectedTransaction.description?.includes('Bitcoin') ? 'Bitcoin' :
+                     selectedTransaction.description?.includes('Ethereum') ? 'Ethereum (ERC20)' : 'N/A'}
+                  </span>
+                </div>
+              </>
+            )}
+
+            <div style={{ 
+              marginTop: '2rem', 
+              padding: '1rem', 
+              backgroundColor: '#f8fafc', 
+              borderRadius: '8px',
+              textAlign: 'center'
+            }}>
+              <p style={{ 
+                fontSize: '0.8rem', 
+                color: '#64748b', 
+                margin: 0 
+              }}>
+                Thank you for banking with Oakline Bank
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
