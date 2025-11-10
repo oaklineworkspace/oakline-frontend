@@ -1595,6 +1595,83 @@ export default function CryptoDeposit() {
               </div>
             )}
 
+            {depositForm.network_type && getSelectedNetwork() && (
+              <div style={{
+                backgroundColor: '#eff6ff',
+                border: '2px solid #3b82f6',
+                borderRadius: '12px',
+                padding: '1.25rem',
+                marginBottom: '1.5rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
+                  <div style={{
+                    fontSize: '32px',
+                    width: '48px',
+                    height: '48px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#dbeafe',
+                    borderRadius: '50%'
+                  }}>
+                    {getSelectedNetwork().icon}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{
+                      margin: 0,
+                      fontSize: '1.1rem',
+                      fontWeight: '700',
+                      color: '#1e40af'
+                    }}>
+                      Selected Network
+                    </h3>
+                    <p style={{
+                      margin: '0.25rem 0 0 0',
+                      fontSize: '1.3rem',
+                      fontWeight: '700',
+                      color: '#1e293b'
+                    }}>
+                      {getSelectedNetwork().label}
+                    </p>
+                  </div>
+                </div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                  gap: '0.75rem',
+                  paddingTop: '0.75rem',
+                  borderTop: '1px solid #bfdbfe'
+                }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>
+                      Confirmations Required
+                    </p>
+                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '1rem', fontWeight: '700', color: '#1e40af' }}>
+                      {getSelectedNetwork().confirmations}
+                    </p>
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>
+                      Minimum Deposit
+                    </p>
+                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '1rem', fontWeight: '700', color: '#1e40af' }}>
+                      {getSelectedNetwork().minDeposit} {depositForm.crypto_type}
+                    </p>
+                  </div>
+                  {getSelectedNetwork().fee > 0 && (
+                    <div>
+                      <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>
+                        Network Fee
+                      </p>
+                      <p style={{ margin: '0.25rem 0 0 0', fontSize: '1rem', fontWeight: '700', color: '#dc2626' }}>
+                        {getSelectedNetwork().fee}%
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div style={styles.formGroup}>
               <label style={styles.label}>Amount (USD)</label>
               <div style={{ position: 'relative' }}>
