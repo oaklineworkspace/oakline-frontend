@@ -1,6 +1,13 @@
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 import { sendEmail } from '../../lib/email';
 
+// Define EMAIL_TYPES if it's not globally available or imported elsewhere.
+// Assuming it's an object like { VERIFY: 'verify' }
+const EMAIL_TYPES = {
+  VERIFY: 'verify',
+  // Add other types if they exist, e.g., PASSWORD_RESET: 'password-reset'
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -134,7 +141,7 @@ export default async function handler(req, res) {
         to: normalizedEmail,
         subject: '🔐 Your Oakline Bank Verification Code',
         html: emailHtml,
-        emailType: 'verify'
+        emailType: EMAIL_TYPES.VERIFY // Using the defined constant
       });
 
       console.log('✅ Verification email sent successfully to:', normalizedEmail);

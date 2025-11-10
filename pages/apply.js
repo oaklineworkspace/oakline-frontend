@@ -2728,7 +2728,8 @@ export default function Apply() {
                   <div style={{
                     fontSize: 'clamp(1.25rem, 4vw, 2rem)',
                     fontWeight: '700',
-                    letterSpacing: '0.5px'
+                    letterSpacing: '0.5px',
+                    color: 'white'
                   }}>
                     {bankDetails?.name || 'Oakline Bank'}
                   </div>
@@ -2737,14 +2738,16 @@ export default function Apply() {
                 <div style={{
                   fontSize: 'clamp(50px, 15vw, 80px)',
                   marginBottom: 'clamp(0.5rem, 2vw, 1rem)',
-                  animation: 'bounce 1s ease'
+                  animation: 'bounce 1s ease',
+                  color: 'white'
                 }}>✅</div>
 
                 <h2 style={{
                   fontSize: 'clamp(1.5rem, 5vw, 2.25rem)',
                   marginBottom: 'clamp(0.75rem, 2vw, 1rem)',
                   fontWeight: '700',
-                  lineHeight: '1.2'
+                  lineHeight: '1.2',
+                  color: 'white'
                 }}>
                   Application Submitted Successfully!
                 </h2>
@@ -2753,7 +2756,8 @@ export default function Apply() {
                   fontSize: 'clamp(0.9rem, 3vw, 1.125rem)',
                   marginBottom: '0',
                   lineHeight: '1.6',
-                  opacity: 0.95
+                  opacity: 0.95,
+                  color: 'white'
                 }}>
                   Welcome to the Oakline Bank family
                 </p>
