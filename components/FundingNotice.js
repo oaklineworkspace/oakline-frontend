@@ -80,11 +80,60 @@ export default function FundingNotice({ accounts }) {
             const balance = parseFloat(account.balance) || 0;
             const remaining = Math.max(0, minDeposit - balance);
 
+            const hasPendingDeposit = pendingDeposits[account.id];
+            const depositStatus = hasPendingDeposit?.status;
+            
+            const getStatusDisplay = () => {
+              if (!hasPendingDeposit) {
+                return {
+                  title: 'Account Activation Required',
+                  message: `Deposit ${formatCurrency(remaining)} to activate ${account.account_number}`,
+                  buttonText: '💰 Add Funds',
+                  showButton: true,
+                  background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+                  icon: '💳'
+                };
+              }
+              
+              if (depositStatus === 'pending' || depositStatus === 'awaiting_confirmations') {
+                return {
+                  title: 'Account Activation Deposit Submitted',
+                  message: `Your deposit of ${formatCurrency(hasPendingDeposit.amount)} is pending blockchain confirmation`,
+                  buttonText: '📋 View Status',
+                  showButton: true,
+                  background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
+                  icon: '⏱️'
+                };
+              }
+              
+              if (depositStatus === 'under_review' || depositStatus === 'confirmed') {
+                return {
+                  title: 'Deposit Under Review',
+                  message: `Your deposit of ${formatCurrency(hasPendingDeposit.amount)} is being verified by our team`,
+                  buttonText: '📋 View Status',
+                  showButton: true,
+                  background: 'linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)',
+                  icon: '🔍'
+                };
+              }
+              
+              return {
+                title: 'Account Activation Required',
+                message: `Deposit ${formatCurrency(remaining)} to activate ${account.account_number}`,
+                buttonText: '💰 Add Funds',
+                showButton: true,
+                background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+                icon: '💳'
+              };
+            };
+            
+            const statusDisplay = getStatusDisplay();
+
             return (
               <div
                 key={account.id}
                 style={{
-                  background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+                  background: statusDisplay.background,
                   borderRadius: '8px',
                   padding: '16px 20px',
                   marginBottom: '20px',
@@ -107,7 +156,7 @@ export default function FundingNotice({ accounts }) {
                       flexShrink: 0
                     }}
                   >
-                    💳
+                    {statusDisplay.icon}
                   </div>
                   <div style={{ flex: 1 }}>
                     <h3
@@ -119,7 +168,7 @@ export default function FundingNotice({ accounts }) {
                         marginBottom: '4px'
                       }}
                     >
-                      Account Activation Required
+                      {statusDisplay.title}
                     </h3>
                     <p
                       style={{
@@ -129,37 +178,39 @@ export default function FundingNotice({ accounts }) {
                         lineHeight: '1.4'
                       }}
                     >
-                      Deposit {formatCurrency(remaining)} to activate {account.account_number}
+                      {statusDisplay.message}
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleDepositClick(account.id, minDeposit, 'funding')}
-                    style={{
-                      padding: '8px 16px',
-                      background: 'rgba(255, 255, 255, 0.95)',
-                      color: '#1e40af',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                      whiteSpace: 'nowrap'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.background = 'white';
-                      e.target.style.transform = 'translateY(-1px)';
-                      e.target.style.boxShadow = '0 3px 8px rgba(0, 0, 0, 0.15)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background = 'rgba(255, 255, 255, 0.95)';
-                      e.target.style.transform = 'translateY(0)';
-                      e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-                    }}
-                  >
-                    💰 Add Funds
-                  </button>
+                  {statusDisplay.showButton && (
+                    <button
+                      onClick={() => handleDepositClick(account.id, minDeposit, 'funding')}
+                      style={{
+                        padding: '8px 16px',
+                        background: 'rgba(255, 255, 255, 0.95)',
+                        color: hasPendingDeposit ? '#0891b2' : '#1e40af',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                        whiteSpace: 'nowrap'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = 'white';
+                        e.target.style.transform = 'translateY(-1px)';
+                        e.target.style.boxShadow = '0 3px 8px rgba(0, 0, 0, 0.15)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'rgba(255, 255, 255, 0.95)';
+                        e.target.style.transform = 'translateY(0)';
+                        e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                      }}
+                    >
+                      {statusDisplay.buttonText}
+                    </button>
+                  )}
                 </div>
               </div>
             );
