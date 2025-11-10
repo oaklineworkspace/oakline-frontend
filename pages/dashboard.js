@@ -387,16 +387,7 @@ function DashboardContent() {
     }
   };
 
-  if (loading) {
-    return (
-      <div style={styles.loadingContainer}>
-        <div style={styles.loadingSpinner}></div>
-        <div style={styles.loadingText}>Loading your dashboard...</div>
-      </div>
-    );
-  }
-
-  // Add professional dashboard styles
+  // Add professional dashboard styles - MUST be before conditional return
   useEffect(() => {
     const existingStyle = document.querySelector('#dropdown-styles');
     if (!existingStyle) {
@@ -471,6 +462,14 @@ function DashboardContent() {
     }
   }, []);
 
+  if (loading) {
+    return (
+      <div style={styles.loadingContainer}>
+        <div style={styles.loadingSpinner}></div>
+        <div style={styles.loadingText}>Loading your dashboard...</div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container} onClick={closeAllDropdowns}>
