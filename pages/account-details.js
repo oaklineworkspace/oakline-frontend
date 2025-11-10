@@ -127,12 +127,13 @@ export default function AccountDetails() {
       const depositTx = (openingDeposits || []).map(deposit => ({
         id: deposit.id,
         account_id: deposit.account_id,
-        type: 'crypto_deposit',
-        transaction_type: 'crypto_deposit',
+        type: 'crypto_deposit', // Ensure type is consistent for display logic
+        transaction_type: 'crypto_deposit', // Added for consistency
         description: `Account Opening Deposit - ${deposit.crypto_assets?.crypto_type || 'Crypto'} (${deposit.status})`,
         amount: deposit.amount,
         created_at: deposit.created_at,
-        status: deposit.status
+        status: deposit.status,
+        confirmations: deposit.confirmations // Assuming confirmations is available
       }));
 
       // Merge and sort by date
@@ -449,16 +450,16 @@ export default function AccountDetails() {
       fontSize: '0.8rem',
       color: '#64748b'
     },
-    transactionAmount: {
-      fontSize: isMobile ? '0.95rem' : '1.05rem',
-      fontWeight: '700',
-      marginBottom: '0.25rem'
-    },
     transactionRight: {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'flex-end',
       gap: '0.5rem'
+    },
+    transactionAmount: {
+      fontSize: isMobile ? '0.95rem' : '1.05rem',
+      fontWeight: '700',
+      marginBottom: '0.25rem'
     },
     statusBadge: {
       fontSize: '0.75rem',
@@ -780,9 +781,7 @@ export default function AccountDetails() {
                     };
 
                     return (
-                      <div 
-                        key={tx.id} 
-                        style={styles.transactionItem}
+                      <div key={tx.id} style={styles.transactionItem}
                         onClick={() => handleTransactionClick(tx)}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.backgroundColor = '#f1f5f9';
@@ -806,6 +805,11 @@ export default function AccountDetails() {
                             <div style={styles.transactionDate}>
                               {formatDate(tx.created_at)}
                             </div>
+                            {(tx.type === 'account_opening_deposit' || tx.transaction_type === 'crypto_deposit') && (
+                              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>
+                                Confirmations: {tx.confirmations || 0}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div style={styles.transactionRight}>
@@ -842,7 +846,7 @@ export default function AccountDetails() {
         <div style={styles.receiptModal} onClick={closeReceiptModal}>
           <div style={styles.receiptContainer} onClick={(e) => e.stopPropagation()}>
             <button style={styles.receiptClose} onClick={closeReceiptModal}>×</button>
-            
+
             <div style={styles.receiptHeader}>
               <h2 style={styles.receiptTitle}>Transaction Receipt</h2>
               <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
