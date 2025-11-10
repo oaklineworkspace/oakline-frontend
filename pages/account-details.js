@@ -112,7 +112,8 @@ export default function AccountDetails() {
           *,
           crypto_assets:crypto_asset_id (
             crypto_type,
-            symbol
+            symbol,
+            network_type
           )
         `)
         .eq('account_id', accountId)
@@ -127,15 +128,20 @@ export default function AccountDetails() {
       const depositTx = (openingDeposits || []).map(deposit => ({
         id: deposit.id,
         account_id: deposit.account_id,
-        type: 'crypto_deposit', // Ensure type is consistent for display logic
-        transaction_type: 'crypto_deposit', // Added for consistency
-        description: `Account Opening Deposit - ${deposit.crypto_assets?.crypto_type || 'Crypto'} (${deposit.status})`,
-        amount: deposit.amount,
+        type: 'account_opening_deposit',
+        transaction_type: 'crypto_deposit',
+        description: `${deposit.crypto_assets?.symbol || 'CRYPTO'} Account Opening Deposit via ${deposit.crypto_assets?.network_type || 'Network'}`,
+        amount: deposit.net_amount || deposit.amount,
         created_at: deposit.created_at,
         status: deposit.status,
-        confirmations: deposit.confirmations, // Assuming confirmations is available
-        fee: deposit.fee, // Assuming fee is available
-        transaction_hash: deposit.transaction_hash // Assuming transaction_hash is available
+        confirmations: deposit.confirmations || 0,
+        required_confirmations: deposit.required_confirmations || 3,
+        fee: deposit.fee || 0,
+        transaction_hash: deposit.tx_hash,
+        crypto_type: deposit.crypto_assets?.crypto_type,
+        crypto_symbol: deposit.crypto_assets?.symbol,
+        network_type: deposit.crypto_assets?.network_type,
+        gross_amount: deposit.amount
       }));
 
       // Merge and sort by date
@@ -808,7 +814,7 @@ export default function AccountDetails() {
                             <div style={styles.transactionDate}>
                               {formatDate(tx.created_at)}
                             </div>
-                            {(tx.type === 'account_opening_deposit' || tx.transaction_type === 'crypto_deposit') && tx.fee && (
+                            {(tx.type === 'account_opening_deposit' || tx.transaction_type === 'crypto_deposit') && tx.fee && parseFloat(tx.fee) > 0 && (
                               <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
                                 Fee: ${parseFloat(tx.fee).toFixed(2)} • Net: ${parseFloat(tx.amount).toFixed(2)}
                               </div>
@@ -825,6 +831,11 @@ export default function AccountDetails() {
                                 maxWidth: '200px'
                               }}>
                                 Hash: {tx.transaction_hash.substring(0, 16)}...
+                              </div>
+                            )}
+                            {(tx.type === 'account_opening_deposit' || tx.transaction_type === 'crypto_deposit') && tx.confirmations !== undefined && (
+                              <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+                                Confirmations: {tx.confirmations}/{tx.required_confirmations || 3}
                               </div>
                             )}
                           </div>

@@ -237,6 +237,9 @@ export default function Notifications() {
   };
 
   const handleNotificationClick = async (notification) => {
+    // Mark as read first
+    await handleMarkAsRead(notification.id);
+    
     // Check if it's a crypto deposit notification
     if (notification.title?.includes('Crypto') || notification.title?.includes('Deposit')) {
       try {
@@ -263,7 +266,6 @@ export default function Notifications() {
         if (openingDeposit) {
           setSelectedDeposit(openingDeposit);
           setShowReceiptModal(true);
-          await handleMarkAsRead(notification.id);
           return;
         }
 
@@ -290,7 +292,6 @@ export default function Notifications() {
         if (cryptoDeposit) {
           setSelectedDeposit(cryptoDeposit);
           setShowReceiptModal(true);
-          await handleMarkAsRead(notification.id);
         }
       } catch (error) {
         console.error('Error fetching deposit details:', error);
