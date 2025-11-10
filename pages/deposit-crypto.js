@@ -1528,70 +1528,8 @@ export default function CryptoDeposit() {
 
             <div style={styles.formGroup}>
               <label style={styles.label}>Select Cryptocurrency</label>
-              <div style={styles.cryptoGrid}>
-                {cryptoTypes.map(crypto => {
-                  const isSelected = depositForm.crypto_type === crypto.value;
-                  return (
-                    <div
-                      key={crypto.value}
-                      onClick={() => handleCryptoChange(crypto.value)}
-                      style={{
-                        ...styles.cryptoCard,
-                        borderColor: isSelected ? '#1e40af' : '#e5e7eb',
-                        backgroundColor: isSelected ? '#eff6ff' : '#fff',
-                        boxShadow: isSelected 
-                          ? '0 4px 12px rgba(30, 64, 175, 0.2)' 
-                          : '0 2px 6px rgba(0,0,0,0.05)',
-                        transform: isSelected ? 'scale(1.02)' : 'scale(1)'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.borderColor = '#94a3b8';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.borderColor = '#e5e7eb';
-                          e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.05)';
-                          e.currentTarget.style.transform = 'translateY(0)';
-                        }
-                      }}
-                    >
-                      <div style={{
-                        ...styles.cryptoIcon,
-                        backgroundColor: crypto.color,
-                        boxShadow: `0 2px 8px ${crypto.color}40`
-                      }}>
-                        {crypto.icon}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={styles.cryptoName}>{crypto.label}</div>
-                        <div style={styles.cryptoSymbol}>{crypto.value}</div>
-                      </div>
-                      {isSelected && (
-                        <div style={{
-                          width: '24px',
-                          height: '24px',
-                          borderRadius: '50%',
-                          backgroundColor: '#1e40af',
-                          color: 'white',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.8rem',
-                          fontWeight: '700'
-                        }}>
-                          ✓
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
               
-              {/* Network Selection - appears right after crypto grid when crypto is selected */}
+              {/* Network Selection - appears first when crypto is selected */}
               {depositForm.crypto_type && (
                 <div style={{
                   backgroundColor: '#f8fafc',
@@ -1684,6 +1622,69 @@ export default function CryptoDeposit() {
                 ) : null}
                 </div>
               )}
+
+              <div style={styles.cryptoGrid}>
+                {cryptoTypes.map(crypto => {
+                  const isSelected = depositForm.crypto_type === crypto.value;
+                  return (
+                    <div
+                      key={crypto.value}
+                      onClick={() => handleCryptoChange(crypto.value)}
+                      style={{
+                        ...styles.cryptoCard,
+                        borderColor: isSelected ? '#1e40af' : '#e5e7eb',
+                        backgroundColor: isSelected ? '#eff6ff' : '#fff',
+                        boxShadow: isSelected 
+                          ? '0 4px 12px rgba(30, 64, 175, 0.2)' 
+                          : '0 2px 6px rgba(0,0,0,0.05)',
+                        transform: isSelected ? 'scale(1.02)' : 'scale(1)'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = '#94a3b8';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = '#e5e7eb';
+                          e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.05)';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }
+                      }}
+                    >
+                      <div style={{
+                        ...styles.cryptoIcon,
+                        backgroundColor: crypto.color,
+                        boxShadow: `0 2px 8px ${crypto.color}40`
+                      }}>
+                        {crypto.icon}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={styles.cryptoName}>{crypto.label}</div>
+                        <div style={styles.cryptoSymbol}>{crypto.value}</div>
+                      </div>
+                      {isSelected && (
+                        <div style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          backgroundColor: '#1e40af',
+                          color: 'white',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.8rem',
+                          fontWeight: '700'
+                        }}>
+                          ✓
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {depositForm.network_type && getSelectedNetwork() && (
