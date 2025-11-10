@@ -26,6 +26,8 @@ export default function CryptoDeposit() {
   const [proofFile, setProofFile] = useState(null);
   const [proofPath, setProofPath] = useState('');
   const [uploadingProof, setUploadingProof] = useState(false);
+  const [showInsufficientModal, setShowInsufficientModal] = useState(false);
+  const [insufficientMessage, setInsufficientMessage] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -415,8 +417,15 @@ export default function CryptoDeposit() {
         const netAmount = calculatedNetAmount;
 
         if (remainingNeeded > 0 && netAmount < remainingNeeded) {
-          setMessage(`To activate your account, you need to deposit at least $${remainingNeeded.toLocaleString('en-US', { minimumFractionDigits: 2 })} after fees. Your net amount after network fees ($${netAmount.toFixed(2)}) is too low. Please increase your deposit amount to cover the fee.`);
-          setMessageType('error');
+          const feePercent = networkFeePercent || 0;
+          const requiredGrossAmount = remainingNeeded / (1 - feePercent / 100);
+          
+          setInsufficientMessage(
+            `To activate your account, you need to deposit at least $${remainingNeeded.toLocaleString('en-US', { minimumFractionDigits: 2 })} after fees. ` +
+            `Your current net amount ($${netAmount.toFixed(2)}) is too low. ` +
+            `\n\nYou need to deposit $${requiredGrossAmount.toFixed(2)} to cover the ${feePercent}% network fee and meet the minimum requirement.`
+          );
+          setShowInsufficientModal(true);
           return;
         }
       }
@@ -1616,26 +1625,45 @@ export default function CryptoDeposit() {
                 <div style={{ marginTop: '0.75rem' }}>
                   <button
                     type="button"
-                    onClick={() => setDepositForm({ ...depositForm, amount: (accountMinDeposit - accountCurrentBalance).toFixed(2) })}
+                    onClick={() => {
+                      const remainingNeeded = accountMinDeposit - accountCurrentBalance;
+                      const feePercent = networkFeePercent || 0;
+                      // Calculate gross amount needed to get the net amount after fees
+                      const requiredGrossAmount = remainingNeeded / (1 - feePercent / 100);
+                      setDepositForm({ ...depositForm, amount: requiredGrossAmount.toFixed(2) });
+                    }}
+                    disabled={!depositForm.network_type}
                     style={{
                       padding: '0.625rem 1.25rem',
-                      backgroundColor: '#059669',
+                      backgroundColor: depositForm.network_type ? '#059669' : '#9ca3af',
                       color: 'white',
                       border: 'none',
                       borderRadius: '6px',
                       fontSize: '0.875rem',
                       fontWeight: '600',
-                      cursor: 'pointer',
+                      cursor: depositForm.network_type ? 'pointer' : 'not-allowed',
                       transition: 'all 0.2s',
-                      boxShadow: '0 2px 4px rgba(5, 150, 105, 0.2)'
+                      boxShadow: depositForm.network_type ? '0 2px 4px rgba(5, 150, 105, 0.2)' : 'none',
+                      opacity: depositForm.network_type ? 1 : 0.6
                     }}
-                    onMouseOver={(e) => e.target.style.backgroundColor = '#047857'}
-                    onMouseOut={(e) => e.target.style.backgroundColor = '#059669'}
+                    onMouseOver={(e) => {
+                      if (depositForm.network_type) {
+                        e.target.style.backgroundColor = '#047857';
+                      }
+                    }}
+                    onMouseOut={(e) => {
+                      if (depositForm.network_type) {
+                        e.target.style.backgroundColor = '#059669';
+                      }
+                    }}
                   >
-                    💡 Set Minimum Required: ${(accountMinDeposit - accountCurrentBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    💡 Auto-Fill Amount (Includes Fees)
                   </button>
-                  <p style={{ fontSize: '0.8rem', color: '#059669', marginTop: '0.5rem', fontWeight: '500' }}>
-                    ✓ Click to automatically fill the exact USD amount needed to activate your account
+                  <p style={{ fontSize: '0.8rem', color: depositForm.network_type ? '#059669' : '#6b7280', marginTop: '0.5rem', fontWeight: '500' }}>
+                    {depositForm.network_type 
+                      ? `✓ Click to auto-fill the amount needed including ${networkFeePercent}% network fee`
+                      : '⚠️ Please select a network first to calculate the required amount with fees'
+                    }
                   </p>
                 </div>
               )}
@@ -2484,6 +2512,99 @@ export default function CryptoDeposit() {
           </div>
         )}
       </main>
+
+      {/* Insufficient Deposit Modal */}
+      {showInsufficientModal && (
+        <div style={styles.receiptOverlay}>
+          <div style={{
+            ...styles.receipt,
+            maxWidth: '500px',
+            padding: '2rem'
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                backgroundColor: '#fef2f2',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1rem',
+                fontSize: '40px'
+              }}>
+                ⚠️
+              </div>
+              <h2 style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                color: '#dc2626',
+                marginBottom: '0.5rem'
+              }}>
+                Insufficient Deposit Amount
+              </h2>
+            </div>
+
+            <div style={{
+              backgroundColor: '#fef2f2',
+              border: '2px solid #fca5a5',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              marginBottom: '1.5rem'
+            }}>
+              <p style={{
+                color: '#991b1b',
+                fontSize: '0.95rem',
+                lineHeight: '1.6',
+                margin: 0,
+                whiteSpace: 'pre-line'
+              }}>
+                {insufficientMessage}
+              </p>
+            </div>
+
+            <div style={{
+              backgroundColor: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              borderRadius: '8px',
+              padding: '1rem',
+              marginBottom: '1.5rem'
+            }}>
+              <p style={{
+                color: '#1e40af',
+                fontSize: '0.85rem',
+                margin: 0,
+                lineHeight: '1.5'
+              }}>
+                💡 <strong>Tip:</strong> Use the "Auto-Fill Amount (Includes Fees)" button below the amount field to automatically set the correct deposit amount.
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowInsufficientModal(false);
+                setInsufficientMessage('');
+              }}
+              style={{
+                width: '100%',
+                padding: '1rem',
+                backgroundColor: '#1e40af',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s'
+              }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#1e3a8a'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#1e40af'}
+            >
+              Got It - Adjust Amount
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Comprehensive Receipt Modal */}
       {showReceipt && receiptData && (
