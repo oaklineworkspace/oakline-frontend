@@ -802,15 +802,15 @@ function DashboardContent() {
                 return (
                   <div key={tx.id} style={styles.transactionItem}>
                     <div style={styles.transactionLeft}>
-                      <span style={styles.transactionIcon}>
-                        {getTransactionIcon(tx.transaction_type)}
-                      </span>
+                      <div style={styles.transactionIcon}>
+                        {getTransactionIcon(tx.type || tx.transaction_type)}
+                      </div>
                       <div style={styles.transactionInfo}>
                         <div style={styles.transactionDescription}>
-                          {tx.description || tx.transaction_type?.replace(/_/g, ' ').toUpperCase()}
+                          {tx.description || (tx.type || tx.transaction_type)?.replace(/_/g, ' ').toUpperCase()}
                         </div>
                         <div style={styles.transactionDate}>
-                          {formatDate(tx.created_at)}
+                          {formatDate(tx.created_at || tx.transaction_date)}
                         </div>
                         {tx.transaction_type === 'crypto_deposit' && tx.fee && (
                           <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
