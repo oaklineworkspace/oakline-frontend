@@ -819,6 +819,11 @@ export default function AccountDetails() {
                                 Fee: ${parseFloat(tx.fee).toFixed(2)} • Net: ${parseFloat(tx.amount).toFixed(2)}
                               </div>
                             )}
+                            {(tx.type === 'account_opening_deposit' || tx.transaction_type === 'crypto_deposit') && tx.confirmations !== undefined && tx.confirmations !== null && (
+                              <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+                                Confirmations: {tx.confirmations}/{tx.required_confirmations || 3}
+                              </div>
+                            )}
                             {(tx.type === 'account_opening_deposit' || tx.transaction_type === 'crypto_deposit') && tx.transaction_hash && (
                               <div style={{ 
                                 fontSize: '0.65rem', 
@@ -831,11 +836,6 @@ export default function AccountDetails() {
                                 maxWidth: '200px'
                               }}>
                                 Hash: {tx.transaction_hash.substring(0, 16)}...
-                              </div>
-                            )}
-                            {(tx.type === 'account_opening_deposit' || tx.transaction_type === 'crypto_deposit') && tx.confirmations !== undefined && (
-                              <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
-                                Confirmations: {tx.confirmations}/{tx.required_confirmations || 3}
                               </div>
                             )}
                           </div>
@@ -950,34 +950,88 @@ export default function AccountDetails() {
             <div style={styles.receiptRow}>
               <span style={styles.receiptLabel}>Account Number</span>
               <span style={{ ...styles.receiptValue, fontFamily: 'monospace' }}>
-                •••• {selectedAccount?.account_number?.slice(-4)}
+                {selectedAccount?.account_number || 'N/A'}
               </span>
             </div>
 
-            {selectedTransaction.transaction_type === 'crypto_deposit' && (
+            {(selectedTransaction.type === 'account_opening_deposit' || selectedTransaction.transaction_type === 'crypto_deposit') && (
               <>
                 <div style={{ 
                   marginTop: '1.5rem', 
-                  paddingTop: '1rem', 
+                  paddingTop: '1.5rem', 
                   borderTop: '2px solid #e2e8f0' 
                 }}>
                   <h3 style={{ 
-                    fontSize: '1rem', 
+                    fontSize: '1.1rem', 
                     fontWeight: '700', 
                     color: '#1e293b', 
                     marginBottom: '1rem' 
                   }}>
-                    Crypto Deposit Details
+                    Cryptocurrency Details
                   </h3>
+                </div>
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Cryptocurrency</span>
+                  <span style={styles.receiptValue}>
+                    {selectedTransaction.crypto_symbol || 'BTC'} - {selectedTransaction.crypto_type || 'Bitcoin'}
+                  </span>
                 </div>
                 <div style={styles.receiptRow}>
                   <span style={styles.receiptLabel}>Network</span>
                   <span style={styles.receiptValue}>
-                    {selectedTransaction.description?.includes('BEP20') ? 'BNB Smart Chain (BEP20)' :
-                     selectedTransaction.description?.includes('Bitcoin') ? 'Bitcoin' :
-                     selectedTransaction.description?.includes('Ethereum') ? 'Ethereum (ERC20)' : 'N/A'}
+                    {selectedTransaction.network_type || 'N/A'}
                   </span>
                 </div>
+                {selectedTransaction.wallet_address && (
+                  <div style={styles.receiptRow}>
+                    <span style={styles.receiptLabel}>Wallet Address</span>
+                    <span style={{ 
+                      ...styles.receiptValue,
+                      fontFamily: 'monospace',
+                      fontSize: '0.75rem',
+                      wordBreak: 'break-all'
+                    }}>
+                      {selectedTransaction.wallet_address}
+                    </span>
+                  </div>
+                )}
+                {selectedTransaction.transaction_hash && (
+                  <div style={styles.receiptRow}>
+                    <span style={styles.receiptLabel}>Transaction Hash</span>
+                    <span style={{ 
+                      ...styles.receiptValue,
+                      fontFamily: 'monospace',
+                      fontSize: '0.75rem',
+                      wordBreak: 'break-all'
+                    }}>
+                      {selectedTransaction.transaction_hash}
+                    </span>
+                  </div>
+                )}
+                {selectedTransaction.confirmations !== undefined && selectedTransaction.confirmations !== null && (
+                  <div style={styles.receiptRow}>
+                    <span style={styles.receiptLabel}>Confirmations</span>
+                    <span style={styles.receiptValue}>
+                      {selectedTransaction.confirmations} / {selectedTransaction.required_confirmations || 3}
+                    </span>
+                  </div>
+                )}
+                {selectedTransaction.fee && parseFloat(selectedTransaction.fee) > 0 && (
+                  <>
+                    <div style={styles.receiptRow}>
+                      <span style={styles.receiptLabel}>Network Fee</span>
+                      <span style={{ ...styles.receiptValue, color: '#dc2626' }}>
+                        -{formatCurrency(parseFloat(selectedTransaction.fee))}
+                      </span>
+                    </div>
+                    <div style={styles.receiptRow}>
+                      <span style={styles.receiptLabel}>Gross Amount</span>
+                      <span style={styles.receiptValue}>
+                        {formatCurrency(parseFloat(selectedTransaction.gross_amount) || 0)}
+                      </span>
+                    </div>
+                  </>
+                )}
               </>
             )}
 

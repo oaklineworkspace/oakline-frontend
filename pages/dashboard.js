@@ -891,9 +891,14 @@ function DashboardContent() {
                         <div style={styles.transactionDate}>
                           {formatDate(tx.created_at || tx.transaction_date)}
                         </div>
-                        {tx.transaction_type === 'crypto_deposit' && tx.fee && (
+                        {tx.transaction_type === 'crypto_deposit' && tx.fee && parseFloat(tx.fee) > 0 && (
                           <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
                             Fee: ${parseFloat(tx.fee).toFixed(2)} • Net: ${parseFloat(tx.amount).toFixed(2)}
+                          </div>
+                        )}
+                        {tx.transaction_type === 'crypto_deposit' && tx.confirmations !== undefined && (
+                          <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+                            Confirmations: {tx.confirmations}/{tx.required_confirmations || 3}
                           </div>
                         )}
                         {tx.transaction_type === 'crypto_deposit' && tx.transaction_hash && (
