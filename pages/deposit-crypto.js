@@ -52,6 +52,9 @@ export default function CryptoDeposit() {
 
   const [availableNetworks, setAvailableNetworks] = useState([]);
   const [loadingNetworks, setLoadingNetworks] = useState(false);
+  const [networkFeePercent, setNetworkFeePercent] = useState(0);
+  const [calculatedFee, setCalculatedFee] = useState(0);
+  const [calculatedNetAmount, setCalculatedNetAmount] = useState(0);
 
   const networkIconMap = {
     'Bitcoin': '🟠',
@@ -102,6 +105,17 @@ export default function CryptoDeposit() {
       fetchWalletAddress();
     }
   }, [depositForm.crypto_type, depositForm.network_type, user, currentStep]);
+
+  useEffect(() => {
+    const amount = parseFloat(depositForm.amount) || 0;
+    const feePercent = networkFeePercent || 0;
+    
+    const fee = amount * (feePercent / 100);
+    const netAmount = amount - fee;
+    
+    setCalculatedFee(fee);
+    setCalculatedNetAmount(Math.max(0, netAmount));
+  }, [depositForm.amount, networkFeePercent]);
 
   const fetchAvailableNetworks = async () => {
     if (!depositForm.crypto_type) {
@@ -354,6 +368,14 @@ export default function CryptoDeposit() {
       ...depositForm,
       network_type: network
     });
+    
+    const selectedNetwork = availableNetworks.find(n => n.value === network);
+    if (selectedNetwork) {
+      setNetworkFeePercent(selectedNetwork.fee || 0);
+    } else {
+      setNetworkFeePercent(0);
+    }
+    
     setWalletAddress('');
     setMemo('');
   };
@@ -386,10 +408,10 @@ export default function CryptoDeposit() {
 
       if (fundingMode && accountMinDeposit > 0) {
         const remainingNeeded = accountMinDeposit - accountCurrentBalance;
-        const depositAmount = parseFloat(depositForm.amount);
+        const netAmount = calculatedNetAmount;
 
-        if (remainingNeeded > 0 && depositAmount < remainingNeeded) {
-          setMessage(`To activate your account, you need to deposit at least $${remainingNeeded.toLocaleString('en-US', { minimumFractionDigits: 2 })}. Current deposit amount is too low.`);
+        if (remainingNeeded > 0 && netAmount < remainingNeeded) {
+          setMessage(`To activate your account, you need to deposit at least $${remainingNeeded.toLocaleString('en-US', { minimumFractionDigits: 2 })} after fees. Your net amount after network fees ($${netAmount.toFixed(2)}) is too low. Please increase your deposit amount to cover the fee.`);
           setMessageType('error');
           return;
         }
@@ -495,6 +517,8 @@ export default function CryptoDeposit() {
             crypto_asset_id: cryptoAsset.id,
             assigned_wallet_id: walletData?.id,
             amount: parseFloat(depositForm.amount),
+            fee: parseFloat(calculatedFee.toFixed(2)),
+            net_amount: parseFloat(calculatedNetAmount.toFixed(2)),
             required_amount: accountMinDeposit,
             status: 'pending',
             confirmations: 0,
@@ -505,7 +529,8 @@ export default function CryptoDeposit() {
               deposit_source: 'account_opening_page',
               funding_mode: true,
               crypto_type: depositForm.crypto_type,
-              network_type: depositForm.network_type
+              network_type: depositForm.network_type,
+              fee_percent: networkFeePercent
             }
           }])
           .select()
@@ -522,6 +547,8 @@ export default function CryptoDeposit() {
             account_id: depositForm.account_id,
             crypto_asset_id: cryptoAsset.id,
             amount: parseFloat(depositForm.amount),
+            fee: parseFloat(calculatedFee.toFixed(2)),
+            net_amount: parseFloat(calculatedNetAmount.toFixed(2)),
             status: 'pending',
             purpose: 'general_deposit',
             confirmations: 0,
@@ -531,7 +558,8 @@ export default function CryptoDeposit() {
               memo: memo || null,
               deposit_source: 'user_deposit_page',
               crypto_type: depositForm.crypto_type,
-              network_type: depositForm.network_type
+              network_type: depositForm.network_type,
+              fee_percent: networkFeePercent
             }
           }])
           .select()
@@ -1775,28 +1803,57 @@ export default function CryptoDeposit() {
                   {getSelectedNetwork()?.confirmations}
                 </span>
               </div>
+              
               <div style={{
-                ...styles.summaryRow,
-                borderBottom: 'none',
-                paddingTop: '1rem',
-                marginTop: '0.5rem',
-                borderTop: '2px solid #e5e7eb'
+                borderTop: '2px solid #e5e7eb',
+                marginTop: '1rem',
+                paddingTop: '1rem'
               }}>
-                <span style={{
-                  ...styles.summaryLabel,
-                  fontSize: '1rem',
-                  fontWeight: '700'
-                }}>
-                  Total Amount
-                </span>
-                <span style={{
-                  ...styles.summaryValue,
-                  fontSize: '1.5rem',
+                <h4 style={{
+                  margin: '0 0 0.75rem 0',
+                  fontSize: '0.9rem',
                   fontWeight: '700',
-                  color: '#059669'
+                  color: '#1e293b'
                 }}>
-                  {formatCurrency(depositForm.amount)}
-                </span>
+                  Transaction Breakdown
+                </h4>
+                <div style={styles.summaryRow}>
+                  <span style={styles.summaryLabel}>Deposit Amount</span>
+                  <span style={styles.summaryValue}>
+                    {formatCurrency(depositForm.amount)}
+                  </span>
+                </div>
+                <div style={styles.summaryRow}>
+                  <span style={{...styles.summaryLabel, color: '#dc2626'}}>
+                    Network Fee ({networkFeePercent}%)
+                  </span>
+                  <span style={{...styles.summaryValue, color: '#dc2626'}}>
+                    -{formatCurrency(calculatedFee)}
+                  </span>
+                </div>
+                <div style={{
+                  ...styles.summaryRow,
+                  borderBottom: 'none',
+                  paddingTop: '0.75rem',
+                  marginTop: '0.5rem',
+                  borderTop: '2px solid #e5e7eb'
+                }}>
+                  <span style={{
+                    ...styles.summaryLabel,
+                    fontSize: '1rem',
+                    fontWeight: '700'
+                  }}>
+                    You Will Receive
+                  </span>
+                  <span style={{
+                    ...styles.summaryValue,
+                    fontSize: '1.5rem',
+                    fontWeight: '700',
+                    color: '#059669'
+                  }}>
+                    {formatCurrency(calculatedNetAmount)}
+                  </span>
+                </div>
               </div>
             </div>
 

@@ -29,6 +29,9 @@ function LoanDepositCryptoContent() {
   const [selectedLoanWallet, setSelectedLoanWallet] = useState(null);
   const [availableNetworks, setAvailableNetworks] = useState([]);
   const [loadingNetworks, setLoadingNetworks] = useState(false);
+  const [networkFeePercent, setNetworkFeePercent] = useState(0);
+  const [calculatedFee, setCalculatedFee] = useState(0);
+  const [calculatedNetAmount, setCalculatedNetAmount] = useState(0);
 
   const networkIconMap = {
     'Bitcoin': '🟠',
@@ -124,6 +127,17 @@ function LoanDepositCryptoContent() {
       fetchWalletAddress();
     }
   }, [depositForm.crypto_type, depositForm.network_type, currentStep]);
+
+  useEffect(() => {
+    const depositAmount = parseFloat(depositForm.amount) || 0;
+    const feePercent = networkFeePercent || 0;
+    
+    const fee = depositAmount * (feePercent / 100);
+    const netAmount = depositAmount - fee;
+    
+    setCalculatedFee(fee);
+    setCalculatedNetAmount(Math.max(0, netAmount));
+  }, [depositForm.amount, networkFeePercent]);
 
   const fetchAvailableNetworks = async () => {
     if (!depositForm.crypto_type) {
@@ -255,6 +269,14 @@ function LoanDepositCryptoContent() {
       ...depositForm,
       network_type: network
     });
+    
+    const selectedNetwork = availableNetworks.find(n => n.value === network);
+    if (selectedNetwork) {
+      setNetworkFeePercent(selectedNetwork.fee || 0);
+    } else {
+      setNetworkFeePercent(0);
+    }
+    
     setWalletAddress('');
   };
 
@@ -280,8 +302,8 @@ function LoanDepositCryptoContent() {
       }
 
       const selectedNetwork = getAvailableNetworks().find(n => n.value === depositForm.network_type);
-      if (selectedNetwork && parseFloat(depositForm.amount) < selectedNetwork.minDeposit) {
-        setMessage(`Minimum deposit amount is ${selectedNetwork.minDeposit} ${depositForm.crypto_type}`);
+      if (selectedNetwork && calculatedNetAmount < selectedNetwork.minDeposit) {
+        setMessage(`After network fees, your net amount ($${calculatedNetAmount.toFixed(2)}) is below the minimum deposit of ${selectedNetwork.minDeposit} ${depositForm.crypto_type}. Please increase your deposit amount to cover the fee.`);
         setMessageType('error');
         return;
       }
@@ -356,6 +378,8 @@ function LoanDepositCryptoContent() {
           crypto_asset_id: cryptoAsset.id,
           loan_wallet_id: selectedLoanWallet.id,
           amount: parseFloat(depositForm.amount),
+          fee: parseFloat(calculatedFee.toFixed(2)),
+          net_amount: parseFloat(calculatedNetAmount.toFixed(2)),
           approved_amount: 0,
           status: 'pending',
           purpose: 'loan_requirement',
@@ -363,7 +387,8 @@ function LoanDepositCryptoContent() {
             treasury_deposit: true,
             loan_id: loan_id,
             loan_wallet_address: walletAddress,
-            deposit_source: 'loan_deposit_page'
+            deposit_source: 'loan_deposit_page',
+            fee_percent: networkFeePercent
           }
         }])
         .select()
@@ -805,11 +830,40 @@ function LoanDepositCryptoContent() {
           <div style={styles.card}>
             <h2 style={styles.sectionTitle}>Confirm Payment</h2>
             <div style={{ marginBottom: '2rem' }}>
+              <h4 style={{
+                margin: '0 0 0.75rem 0',
+                fontSize: '0.9rem',
+                fontWeight: '700',
+                color: '#1e293b'
+              }}>
+                Transaction Breakdown
+              </h4>
               <div style={styles.summaryRow}>
-                <span style={styles.summaryLabel}>Amount</span>
+                <span style={styles.summaryLabel}>Deposit Amount</span>
                 <span style={styles.summaryValue}>${parseFloat(depositForm.amount).toLocaleString()}</span>
               </div>
               <div style={styles.summaryRow}>
+                <span style={{...styles.summaryLabel, color: '#dc2626'}}>
+                  Network Fee ({networkFeePercent}%)
+                </span>
+                <span style={{...styles.summaryValue, color: '#dc2626'}}>
+                  -${calculatedFee.toFixed(2)}
+                </span>
+              </div>
+              <div style={{
+                ...styles.summaryRow,
+                borderTop: '2px solid #e5e7eb',
+                paddingTop: '0.75rem',
+                marginTop: '0.5rem'
+              }}>
+                <span style={{...styles.summaryLabel, fontSize: '1rem', fontWeight: '700'}}>
+                  You Will Receive
+                </span>
+                <span style={{...styles.summaryValue, fontSize: '1.25rem', fontWeight: '700', color: '#059669'}}>
+                  ${calculatedNetAmount.toFixed(2)}
+                </span>
+              </div>
+              <div style={{...styles.summaryRow, marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb'}}>
                 <span style={styles.summaryLabel}>Cryptocurrency</span>
                 <span style={styles.summaryValue}>
                   {getSelectedCrypto().label} ({getSelectedCrypto().symbol})
