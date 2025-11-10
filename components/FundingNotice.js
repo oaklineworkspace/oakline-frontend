@@ -33,11 +33,12 @@ export default function FundingNotice({ accounts }) {
       for (const account of accounts) {
         if (account.status !== 'pending_funding') continue;
         
+        // Check account_opening_crypto_deposits table for account activation deposits
         const { data, error } = await supabase
-          .from('crypto_deposits')
+          .from('account_opening_crypto_deposits')
           .select('id, status, amount')
           .eq('account_id', account.id)
-          .in('status', ['pending', 'processing', 'awaiting_confirmations'])
+          .in('status', ['pending', 'awaiting_confirmations', 'under_review', 'confirmed'])
           .single();
 
         if (data && !error) {

@@ -412,26 +412,43 @@ export default function CryptoDeposit() {
     setMessageType('');
 
     try {
-      // Check for existing pending deposit
-      const { data: existingDeposit, error: checkError } = await supabase
-        .from('crypto_deposits')
-        .select('id, status')
-        .eq('user_id', user.id)
-        .eq('account_id', depositForm.account_id)
-        .in('status', ['pending', 'processing', 'awaiting_confirmations'])
-        .single();
+      // Check for existing pending deposit in the correct table
+      if (fundingMode) {
+        const { data: existingDeposit, error: checkError } = await supabase
+          .from('account_opening_crypto_deposits')
+          .select('id, status')
+          .eq('user_id', user.id)
+          .eq('account_id', depositForm.account_id)
+          .in('status', ['pending', 'awaiting_confirmations', 'under_review'])
+          .single();
 
-      if (existingDeposit && !checkError) {
-        setMessage('You already have a pending deposit for this account. Please wait for confirmation.');
-        setMessageType('info');
-        setSubmitting(false);
-        return;
+        if (existingDeposit && !checkError) {
+          setMessage('You already have a pending account activation deposit. Please wait for confirmation.');
+          setMessageType('info');
+          setSubmitting(false);
+          return;
+        }
+      } else {
+        const { data: existingDeposit, error: checkError } = await supabase
+          .from('crypto_deposits')
+          .select('id, status')
+          .eq('user_id', user.id)
+          .eq('account_id', depositForm.account_id)
+          .in('status', ['pending', 'processing', 'awaiting_confirmations'])
+          .single();
+
+        if (existingDeposit && !checkError) {
+          setMessage('You already have a pending deposit for this account. Please wait for confirmation.');
+          setMessageType('info');
+          setSubmitting(false);
+          return;
+        }
       }
 
       // First, get the crypto_asset_id for this crypto_type and network_type
       const { data: cryptoAsset, error: assetError } = await supabase
         .from('crypto_assets')
-        .select('id')
+        .select('id, confirmations_required')
         .eq('crypto_type', depositForm.crypto_type)
         .eq('network_type', depositForm.network_type)
         .eq('status', 'active')
@@ -452,6 +469,18 @@ export default function CryptoDeposit() {
         .eq('wallet_address', walletAddress)
         .single();
 
+      // Get application_id if in funding mode
+      let applicationId = null;
+      if (fundingMode) {
+        const { data: accountData } = await supabase
+          .from('accounts')
+          .select('application_id')
+          .eq('id', depositForm.account_id)
+          .single();
+        
+        applicationId = accountData?.application_id;
+      }
+
       let data;
       let error;
 
@@ -461,6 +490,7 @@ export default function CryptoDeposit() {
           .from('account_opening_crypto_deposits')
           .insert([{
             user_id: user.id,
+            application_id: applicationId,
             account_id: depositForm.account_id,
             crypto_asset_id: cryptoAsset.id,
             assigned_wallet_id: walletData?.id,
@@ -468,10 +498,14 @@ export default function CryptoDeposit() {
             required_amount: accountMinDeposit,
             status: 'pending',
             confirmations: 0,
+            required_confirmations: cryptoAsset.confirmations_required || 3,
             metadata: {
               wallet_address: walletAddress,
+              memo: memo || null,
               deposit_source: 'account_opening_page',
-              funding_mode: true
+              funding_mode: true,
+              crypto_type: depositForm.crypto_type,
+              network_type: depositForm.network_type
             }
           }])
           .select()
@@ -490,9 +524,14 @@ export default function CryptoDeposit() {
             amount: parseFloat(depositForm.amount),
             status: 'pending',
             purpose: 'general_deposit',
+            confirmations: 0,
+            required_confirmations: cryptoAsset.confirmations_required || 3,
             metadata: {
               wallet_address: walletAddress,
-              deposit_source: 'user_deposit_page'
+              memo: memo || null,
+              deposit_source: 'user_deposit_page',
+              crypto_type: depositForm.crypto_type,
+              network_type: depositForm.network_type
             }
           }])
           .select()
@@ -524,15 +563,6 @@ export default function CryptoDeposit() {
         const userEmail = userProfile?.email || user.email;
         const userName = userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'Valued Customer';
 
-        // Fetch the correct sender email alias
-        const { data: bankDetails, error: bankDetailsError } = await supabase
-          .from('bank_details')
-          .select('sender_email_alias')
-          .eq('key', 'crypto_deposit_notification')
-          .single();
-
-        const senderEmail = bankDetails?.sender_email_alias || 'crypto@theoaklinebank.com';
-
         await fetch('/api/send-crypto-deposit-notification', {
           method: 'POST',
           headers: {
@@ -549,8 +579,7 @@ export default function CryptoDeposit() {
             depositId: data.id,
             accountNumber: depositForm.account_number,
             isAccountOpening: fundingMode,
-            minDeposit: fundingMode ? accountMinDeposit : null,
-            senderEmail: senderEmail // Pass the sender email
+            minDeposit: fundingMode ? accountMinDeposit : null
           })
         });
       } catch (emailError) {

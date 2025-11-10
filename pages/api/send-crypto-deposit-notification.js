@@ -137,12 +137,20 @@ export default async function handler(req, res) {
       ? '💳 Account Activation Payment Submitted - Oakline Bank'
       : '₿ Crypto Deposit Submitted - Oakline Bank';
 
+    // Fetch correct sender email from bank_details
+    const { data: bankDetails } = await supabaseAdmin
+      .from('bank_details')
+      .select('email_crypto')
+      .single();
+
+    const senderEmail = bankDetails?.email_crypto || process.env.SMTP_FROM_CRYPTO || 'crypto@theoaklinebank.com';
+
     await sendEmail({
       to: email,
       subject: emailSubject,
       html: emailHtml,
       emailType: 'crypto',
-      from: process.env.SMTP_FROM_CRYPTO || 'crypto@theoaklinebank.com'
+      from: senderEmail
     });
 
     // Create notification
