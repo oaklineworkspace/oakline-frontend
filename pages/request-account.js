@@ -19,6 +19,15 @@ export default function RequestAccount() {
     checkUser();
   }, []);
 
+  // Helper function to normalize account type names for comparison
+  const normalizeAccountType = (name) => {
+    // Convert to lowercase, replace any non-alphanumeric character with underscore, then collapse multiple underscores
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')  // Replace any sequence of non-alphanumeric chars with a single underscore
+      .replace(/^_+|_+$/g, '');      // Trim leading/trailing underscores
+  };
+
   const checkUser = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -60,7 +69,7 @@ export default function RequestAccount() {
         .from('accounts')
         .select('account_type')
         .eq('user_id', userId)
-        .eq('status', 'active');
+        .in('status', ['active', 'pending_funding', 'pending']);
 
       if (error) throw error;
       setExistingAccounts(data || []);
@@ -83,12 +92,14 @@ export default function RequestAccount() {
       }
 
       // Check if user already has this account type
-      const hasAccountType = existingAccounts.some(
-        acc => acc.account_type === selectedType.name.toLowerCase().replace(/\s+/g, '_')
-      );
+      const normalizedSelectedType = normalizeAccountType(selectedType.name);
+      const hasAccountType = existingAccounts.some(acc => {
+        const normalizedExistingType = normalizeAccountType(acc.account_type);
+        return normalizedExistingType === normalizedSelectedType;
+      });
 
       if (hasAccountType) {
-        throw new Error('You already have this account type. Please choose a different one.');
+        throw new Error(`You already have an active ${selectedType.name}. Please choose a different account type.`);
       }
 
       // Create account request
@@ -264,9 +275,11 @@ export default function RequestAccount() {
                 {accountTypes
                   .filter((type) => {
                     // Only show account types the user doesn't have
-                    const hasType = existingAccounts.some(
-                      acc => acc.account_type === type.name.toLowerCase().replace(/\s+/g, '_')
-                    );
+                    const normalizedTypeName = normalizeAccountType(type.name);
+                    const hasType = existingAccounts.some(acc => {
+                      const normalizedExistingType = normalizeAccountType(acc.account_type);
+                      return normalizedExistingType === normalizedTypeName;
+                    });
                     return !hasType; // Filter out accounts user already has
                   })
                   .map((type) => (
@@ -280,9 +293,11 @@ export default function RequestAccount() {
                 }
               </select>
               {accountTypes.filter((type) => {
-                const hasType = existingAccounts.some(
-                  acc => acc.account_type === type.name.toLowerCase().replace(/\s+/g, '_')
-                );
+                const normalizedTypeName = normalizeAccountType(type.name);
+                const hasType = existingAccounts.some(acc => {
+                  const normalizedExistingType = normalizeAccountType(acc.account_type);
+                  return normalizedExistingType === normalizedTypeName;
+                });
                 return !hasType;
               }).length === 0 && (
                 <p style={styles.noAccountsMessage}>
