@@ -425,22 +425,66 @@ export default function CryptoDeposit() {
         throw new Error('Crypto asset configuration not found. Please contact support.');
       }
 
-      const { data, error } = await supabase
-        .from('crypto_deposits')
-        .insert([{
-          user_id: user.id,
-          account_id: depositForm.account_id,
-          crypto_asset_id: cryptoAsset.id,
-          amount: parseFloat(depositForm.amount),
-          status: 'pending',
-          purpose: 'general_deposit',
-          metadata: {
-            wallet_address: walletAddress,
-            deposit_source: 'user_deposit_page'
-          }
-        }])
-        .select()
+      // Get the wallet ID from admin_assigned_wallets
+      const walletQuery = fundingMode 
+        ? supabase.from('admin_assigned_wallets').select('id').is('user_id', null)
+        : supabase.from('admin_assigned_wallets').select('id').eq('user_id', user.id);
+      
+      const { data: walletData } = await walletQuery
+        .eq('crypto_type', depositForm.crypto_type)
+        .eq('network_type', depositForm.network_type)
+        .eq('wallet_address', walletAddress)
         .single();
+
+      let data;
+      let error;
+
+      if (fundingMode) {
+        // For account opening, save to account_opening_crypto_deposits
+        const result = await supabase
+          .from('account_opening_crypto_deposits')
+          .insert([{
+            user_id: user.id,
+            account_id: depositForm.account_id,
+            crypto_asset_id: cryptoAsset.id,
+            assigned_wallet_id: walletData?.id,
+            amount: parseFloat(depositForm.amount),
+            required_amount: accountMinDeposit,
+            status: 'pending',
+            confirmations: 0,
+            metadata: {
+              wallet_address: walletAddress,
+              deposit_source: 'account_opening_page',
+              funding_mode: true
+            }
+          }])
+          .select()
+          .single();
+        
+        data = result.data;
+        error = result.error;
+      } else {
+        // For regular deposits, save to crypto_deposits
+        const result = await supabase
+          .from('crypto_deposits')
+          .insert([{
+            user_id: user.id,
+            account_id: depositForm.account_id,
+            crypto_asset_id: cryptoAsset.id,
+            amount: parseFloat(depositForm.amount),
+            status: 'pending',
+            purpose: 'general_deposit',
+            metadata: {
+              wallet_address: walletAddress,
+              deposit_source: 'user_deposit_page'
+            }
+          }])
+          .select()
+          .single();
+        
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) {
         console.error('Deposit insertion error:', error);
@@ -478,7 +522,9 @@ export default function CryptoDeposit() {
             amount: depositForm.amount,
             walletAddress: walletAddress,
             depositId: data.id,
-            accountNumber: depositForm.account_number
+            accountNumber: depositForm.account_number,
+            isAccountOpening: fundingMode,
+            minDeposit: fundingMode ? accountMinDeposit : null
           })
         });
       } catch (emailError) {
@@ -1153,142 +1199,93 @@ export default function CryptoDeposit() {
         {fundingMode && depositForm.account_id && accountMinDeposit > 0 && (accountMinDeposit - accountCurrentBalance) > 0 && (
           <div style={{
             maxWidth: '800px',
-            margin: '0 auto 2rem',
-            padding: '0 2rem'
+            margin: '0 auto 1.5rem',
+            padding: '0 1rem'
           }}>
             <div style={{
-              background: 'linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%)',
-              border: '2px solid #1A3E6F',
-              borderLeft: '6px solid #FFC857',
-              borderRadius: '12px',
-              padding: '2rem',
-              boxShadow: '0 4px 12px rgba(26, 62, 111, 0.15)'
+              background: 'linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)',
+              border: '1px solid #3b82f6',
+              borderLeft: '4px solid #3b82f6',
+              borderRadius: '8px',
+              padding: isMobile ? '1rem' : '1.25rem',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.75rem' : '1rem', marginBottom: '0.75rem' }}>
                 <div style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '28px',
-                  flexShrink: 0,
-                  boxShadow: '0 4px 8px rgba(26, 62, 111, 0.2)'
+                  fontSize: '20px',
+                  flexShrink: 0
                 }}>
                   💳
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                    <h3 style={{ 
-                      margin: 0, 
-                      color: '#1A3E6F', 
-                      fontSize: '1.4rem',
-                      fontWeight: '700',
-                      flex: 1
-                    }}>
-                      Account Activation Required
-                    </h3>
-                    <span style={{
-                      backgroundColor: '#FFC857',
-                      color: '#1A3E6F',
-                      padding: '0.4rem 1rem',
-                      borderRadius: '20px',
-                      fontSize: '0.75rem',
-                      fontWeight: '700',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      Pending Funding
-                    </span>
-                  </div>
-                  
-                  <div style={{ 
-                    backgroundColor: 'white',
-                    borderRadius: '8px',
-                    padding: '1rem',
-                    marginBottom: '1rem',
-                    border: '1px solid #d1e3f5'
+                  <h3 style={{ 
+                    margin: 0, 
+                    color: '#1e40af', 
+                    fontSize: isMobile ? '1rem' : '1.1rem',
+                    fontWeight: '600'
                   }}>
-                    <div style={{ 
-                      fontSize: '0.85rem', 
-                      color: '#64748b', 
-                      marginBottom: '0.5rem',
-                      fontWeight: '600',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      Account Number
-                    </div>
-                    <div style={{ 
-                      fontSize: '1.1rem', 
-                      color: '#1A3E6F', 
-                      fontFamily: 'monospace',
-                      fontWeight: '700'
-                    }}>
-                      {depositForm.account_number || 'Loading...'}
-                    </div>
-                  </div>
+                    Account Activation Required
+                  </h3>
+                </div>
+                <span style={{
+                  backgroundColor: '#fef3c7',
+                  color: '#92400e',
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '12px',
+                  fontSize: '0.7rem',
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px'
+                }}>
+                  Pending
+                </span>
+              </div>
+              
+              <p style={{ 
+                margin: '0 0 0.75rem 0', 
+                color: '#64748b', 
+                fontSize: '0.9rem',
+                lineHeight: '1.5'
+              }}>
+                Complete your minimum deposit to activate account {depositForm.account_number}
+              </p>
 
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-                    gap: '1rem',
-                    marginBottom: '1rem'
-                  }}>
-                    <div style={{
-                      backgroundColor: 'white',
-                      borderRadius: '8px',
-                      padding: '1rem',
-                      border: '1px solid #d1e3f5'
-                    }}>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.25rem' }}>
-                        Minimum Required
-                      </div>
-                      <div style={{ fontSize: '1.2rem', color: '#1A3E6F', fontWeight: '700' }}>
-                        ${accountMinDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </div>
-                    </div>
-                    <div style={{
-                      backgroundColor: 'white',
-                      borderRadius: '8px',
-                      padding: '1rem',
-                      border: '1px solid #d1e3f5'
-                    }}>
-                      <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.25rem' }}>
-                        Current Balance
-                      </div>
-                      <div style={{ fontSize: '1.2rem', color: '#64748b', fontWeight: '700' }}>
-                        ${accountCurrentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </div>
-                    </div>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                gap: '0.75rem'
+              }}>
+                <div style={{
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '6px',
+                  padding: '0.75rem',
+                  border: '1px solid #e2e8f0'
+                }}>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.25rem' }}>
+                    Required
                   </div>
-
-                  <div style={{
-                    backgroundColor: '#FFC857',
-                    borderRadius: '8px',
-                    padding: '1rem',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontSize: '0.85rem', color: '#1A3E6F', marginBottom: '0.25rem', fontWeight: '600' }}>
-                      Amount Needed to Activate
-                    </div>
-                    <div style={{ fontSize: '1.8rem', color: '#1A3E6F', fontWeight: '700' }}>
-                      ${(accountMinDeposit - accountCurrentBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </div>
+                  <div style={{ fontSize: '1.1rem', color: '#1e40af', fontWeight: '700' }}>
+                    ${accountMinDeposit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </div>
-
-                  <div style={{
-                    marginTop: '1rem',
-                    padding: '0.75rem',
-                    backgroundColor: 'rgba(26, 62, 111, 0.05)',
-                    borderRadius: '6px',
-                    fontSize: '0.85rem',
-                    color: '#1A3E6F',
-                    lineHeight: '1.5'
-                  }}>
-                    ℹ️ Your account will be activated immediately once the minimum deposit is received and confirmed.
+                </div>
+                <div style={{
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '6px',
+                  padding: '0.75rem',
+                  border: '1px solid #e2e8f0'
+                }}>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.25rem' }}>
+                    Current Balance
+                  </div>
+                  <div style={{ fontSize: '1.1rem', color: '#64748b', fontWeight: '700' }}>
+                    ${accountCurrentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </div>
                 </div>
               </div>

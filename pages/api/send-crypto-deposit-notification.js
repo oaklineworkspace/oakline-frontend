@@ -20,7 +20,15 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { email, userName, cryptoType, networkType, amount, walletAddress, depositId, accountNumber } = req.body;
+    const { email, userName, cryptoType, networkType, amount, walletAddress, depositId, accountNumber, isAccountOpening, minDeposit } = req.body;
+
+    const emailTitle = isAccountOpening 
+      ? '₿ Account Activation Deposit Submitted' 
+      : '₿ Crypto Deposit Received';
+    
+    const introMessage = isAccountOpening
+      ? `Thank you for submitting your account activation deposit. We have received your cryptocurrency deposit request for account ${accountNumber} and it is being processed.`
+      : 'We have received your cryptocurrency deposit request and it is being processed.';
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -32,7 +40,7 @@ export default async function handler(req, res) {
       <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #f8fafc;">
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
           <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 32px 24px; text-align: center;">
-            <h1 style="color: #ffffff; font-size: 28px; font-weight: 700; margin: 0;">₿ Crypto Deposit Received</h1>
+            <h1 style="color: #ffffff; font-size: 28px; font-weight: 700; margin: 0;">${emailTitle}</h1>
             <p style="color: #ffffff; opacity: 0.9; font-size: 16px; margin: 8px 0 0 0;">Oakline Bank</p>
           </div>
           
@@ -42,7 +50,7 @@ export default async function handler(req, res) {
             </h2>
             
             <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
-              We have received your cryptocurrency deposit request and it is being processed.
+              ${introMessage}
             </p>
             
             <div style="background-color: #f0f9ff; border-left: 4px solid #1e40af; padding: 20px; margin: 24px 0; border-radius: 4px;">
@@ -86,8 +94,9 @@ export default async function handler(req, res) {
               <ul style="color: #4a5568; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
                 <li>Send exactly $${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} worth of ${cryptoType} to the provided wallet address</li>
                 <li>Wait for network confirmations (typically 15-60 minutes)</li>
-                <li>You'll receive another email once your deposit is confirmed and credited</li>
+                <li>You'll receive another email once your deposit is confirmed${isAccountOpening ? ' and your account is activated' : ' and credited'}</li>
                 <li>Track your deposit status in your dashboard</li>
+                ${isAccountOpening && minDeposit ? `<li style="font-weight: 600; color: #1e40af;">Once the $${parseFloat(minDeposit).toLocaleString('en-US', { minimumFractionDigits: 2 })} minimum deposit is confirmed, your account will be activated</li>` : ''}
               </ul>
             </div>
             
@@ -101,7 +110,7 @@ export default async function handler(req, res) {
               Need help? Contact our support team 24/7:
             </p>
             <p style="color: #4a5568; font-size: 14px; font-weight: 600; margin: 0 0 8px 0;">
-              📧 contact-us@theoaklinebank.com | 📞 (636) 635-6122
+              📧 crypto@theoaklinebank.com | 📞 (636) 635-6122
             </p>
             
             <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 20px;">
@@ -117,19 +126,28 @@ export default async function handler(req, res) {
       </html>
     `;
 
+    const emailSubject = isAccountOpening 
+      ? '₿ Account Activation Deposit Submitted - Oakline Bank'
+      : '₿ Crypto Deposit Received - Oakline Bank';
+
     await sendEmail({
       to: email,
-      subject: '₿ Crypto Deposit Received - Oakline Bank',
+      subject: emailSubject,
       html: emailHtml,
       emailType: 'crypto'
     });
 
     // Create notification
+    const notificationTitle = isAccountOpening ? 'Account Activation Deposit Submitted' : 'Crypto Deposit Received';
+    const notificationMessage = isAccountOpening
+      ? `Your ${cryptoType} deposit of $${parseFloat(amount).toFixed(2)} for account activation is being processed.`
+      : `Your ${cryptoType} deposit of $${parseFloat(amount).toFixed(2)} is being processed.`;
+
     await supabaseAdmin.from('notifications').insert([{
       user_id: user.id,
-      type: 'crypto_deposit',
-      title: 'Crypto Deposit Received',
-      message: `Your ${cryptoType} deposit of $${parseFloat(amount).toFixed(2)} is being processed.`,
+      type: isAccountOpening ? 'account_activation_deposit' : 'crypto_deposit',
+      title: notificationTitle,
+      message: notificationMessage,
       read: false
     }]);
 
