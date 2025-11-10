@@ -53,8 +53,14 @@ export default function FundingNotice({ accounts }) {
     checkPendingDeposits();
   }, [accounts]);
 
-  const handleDepositClick = (accountId, minDeposit, mode) => {
-    router.push(`/deposit-crypto?account_id=${accountId}&min_deposit=${minDeposit}&mode=${mode}`);
+  const handleDepositClick = (accountId, minDeposit, mode, hasPending) => {
+    if (hasPending) {
+      // If there's a pending deposit, go to account details to view status
+      router.push(`/account-details?id=${accountId}`);
+    } else {
+      // Otherwise, go to deposit page
+      router.push(`/deposit-crypto?account_id=${accountId}&min_deposit=${minDeposit}&mode=${mode}`);
+    }
   };
 
   const formatCurrency = (amount) => {
@@ -173,7 +179,7 @@ export default function FundingNotice({ accounts }) {
                   </div>
                   {statusDisplay.showButton && (
                     <button
-                      onClick={() => handleDepositClick(account.id, minDeposit, 'funding')}
+                      onClick={() => handleDepositClick(account.id, minDeposit, 'funding', hasPendingDeposit)}
                       style={{
                         padding: '8px 16px',
                         background: 'rgba(255, 255, 255, 0.95)',
