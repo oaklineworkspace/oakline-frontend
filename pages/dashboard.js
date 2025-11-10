@@ -1168,7 +1168,6 @@ function DashboardContent() {
             </div>
           </section>
         )}
-        </>
       </main>
       <LiveChat />
     </div>
