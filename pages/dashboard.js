@@ -396,8 +396,8 @@ function DashboardContent() {
     );
   }
 
-  // Add hover effects for dropdown items and dashboard elements
-  if (typeof document !== 'undefined') {
+  // Add professional dashboard styles
+  useEffect(() => {
     const existingStyle = document.querySelector('#dropdown-styles');
     if (!existingStyle) {
       const dropdownStyles = document.createElement('style');
@@ -410,46 +410,37 @@ function DashboardContent() {
       }
 
       .nav-button:hover {
-        background-color: rgba(255, 255, 255, 0.2) !important;
+        background: rgba(255, 255, 255, 0.2) !important;
         transform: translateY(-2px);
       }
 
       /* Professional Dashboard Hover Effects */
       @media (hover: hover) {
-        div[style*="accountItem"]:hover,
-        div[style*="background: rgb(248, 250, 252)"]:hover {
+        .account-item:hover {
           transform: translateY(-2px) !important;
           box-shadow: 0 4px 12px rgba(0,0,0,0.12) !important;
           background: #ffffff !important;
           border-color: #cbd5e1 !important;
         }
 
-        div[style*="transactionItem"]:hover {
+        .transaction-item:hover {
           transform: translateY(-2px) !important;
           box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
           border-color: #cbd5e1 !important;
         }
 
-        div[style*="primaryBalanceCard"]:hover {
+        .primary-balance-card:hover {
           box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
           transform: translateY(-2px) !important;
         }
 
-        a[style*="standardActionButton"]:hover,
-        button[style*="standardActionButton"]:hover {
+        .standard-action-button:hover {
           transform: translateY(-2px) !important;
           box-shadow: 0 6px 20px rgba(26, 54, 93, 0.3) !important;
-          background-color: #2c5282 !important;
+          background: #2c5282 !important;
         }
 
-        a[style*="quickAction"]:hover {
-          transform: translateY(-2px) !important;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
-          border-color: #1e40af !important;
-          background: #ffffff !important;
-        }
-
-        a[style*="viewAllLink"]:hover {
+        .view-all-link:hover {
           text-decoration: underline !important;
           color: #1e3a8a !important;
         }
@@ -457,41 +448,33 @@ function DashboardContent() {
 
       /* Mobile Optimizations */
       @media (max-width: 768px) {
-        div[style*="padding: 2.5rem"] {
+        .responsive-padding {
           padding: 1.5rem !important;
         }
 
-        div[style*="padding: 2rem"] {
-          padding: 1.25rem !important;
-        }
-
-        div[style*="fontSize: 1.7rem"] {
+        .responsive-title {
           font-size: 1.4rem !important;
-        }
-
-        div[style*="fontSize: 2.5rem"] {
-          font-size: 1.8rem !important;
         }
       }
 
       @media (max-width: 480px) {
-        div[style*="padding: 1.5rem"] {
+        .responsive-padding-small {
           padding: 1rem !important;
         }
 
-        div[style*="gap: 1.5rem"] {
+        .responsive-gap {
           gap: 1rem !important;
         }
       }
     `;
       document.head.appendChild(dropdownStyles);
     }
-  }
+  }, []);
 
 
   return (
     <div style={styles.container} onClick={closeAllDropdowns}>
-      {/* Professional Banking Header - KEPT AS IS */}
+      {/* Professional Banking Header */}
       <header style={styles.header}>
         <div style={styles.headerContainer}>
           <div style={styles.headerLeft}>
@@ -600,78 +583,17 @@ function DashboardContent() {
         </div>
       </header>
 
-      {/* Main Dashboard Content - REDESIGNED */}
+      {/* Main Dashboard Content */}
       <main style={styles.main}>
-        {/* Dashboard Title Header */}
-        <header style={styles.dashboardHeader}>
-          <div>
-            <h1 style={styles.dashboardTitle}>
-              📊 My Dashboard
-            </h1>
-            <p style={styles.dashboardSubtitle}>
-              Manage your accounts, transactions, and financial activities
-            </p>
-          </div>
-          <div style={styles.dashboardActions}>
-            <button 
-              onClick={() => loadUserData(user.id)}
-              style={styles.refreshButton}
-            >
-              🔄 Refresh
-            </button>
-          </div>
-        </header>
-
-        {/* Statistics Cards Grid */}
-        <div style={styles.statsGrid}>
-          <div style={styles.statCard}>
-            <h3 style={styles.statLabel}>Total Balance</h3>
-            <p style={styles.statValue}>{formatCurrency(getTotalBalance())}</p>
-          </div>
-          <div style={styles.statCard}>
-            <h3 style={styles.statLabel}>Active Accounts</h3>
-            <p style={styles.statValue}>{accounts.length}</p>
-          </div>
-          <div style={styles.statCard}>
-            <h3 style={styles.statLabel}>Recent Transactions</h3>
-            <p style={styles.statValue}>{transactions.length}</p>
-          </div>
-          <div style={styles.statCard}>
-            <h3 style={styles.statLabel}>Active Cards</h3>
-            <p style={styles.statValue}>{cards.length}</p>
-          </div>
-        </div>
-
-        {/* Funding Notices */}
-        <FundingNotice accounts={accounts} />
-
-        {/* Tab Navigation */}
-        <div style={styles.tabNavigation}>
-          {['overview', 'accounts', 'transactions', 'cards'].map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              style={{
-                ...styles.tabButton,
-                ...(activeTab === tab ? styles.tabButtonActive : {})
-              }}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </div>
-
         {/* Account Summary Section */}
-        {activeTab === 'overview' && (
-          <>
-            <section style={styles.summarySection}>
+        <section style={styles.summarySection}>
           <div style={styles.summaryHeader}>
             <h2 style={styles.sectionTitle}>Account Summary</h2>
             <span style={styles.lastUpdated}>Last updated: {new Date().toLocaleDateString()}</span>
           </div>
 
           <div style={styles.summaryCards}>
-            <div style={styles.primaryBalanceCard}>
+            <div className="primary-balance-card" style={styles.primaryBalanceCard}>
               <div style={styles.balanceCardHeader}>
                 <div style={styles.balanceHeaderInfo}>
                   <h3 style={styles.balanceCardLabel}>Total Available Balance</h3>
@@ -751,7 +673,7 @@ function DashboardContent() {
 
           <div style={styles.accountsList}>
             {accounts.map(account => (
-              <div key={account.id} style={styles.accountItem}>
+              <div key={account.id} className="account-item" style={styles.accountItem}>
                 <div style={styles.accountInfo}>
                   <div style={styles.accountTypeIcon}>
                     {account.account_type === 'checking' ? '🏦' : 
@@ -861,7 +783,7 @@ function DashboardContent() {
                 const statusColors = getStatusColor(status);
 
                 return (
-                  <div key={tx.id} style={styles.transactionItem}>
+                  <div key={tx.id} className="transaction-item" style={styles.transactionItem}>
                     <div style={styles.transactionLeft}>
                       <span style={styles.transactionIcon}>
                         {getTransactionIcon(tx.transaction_type)}
@@ -928,7 +850,7 @@ function DashboardContent() {
         <section style={styles.quickActionsSection}>
           <h3 style={styles.sectionTitle}>Quick Actions</h3>
           <div style={styles.quickActions}>
-            <Link href="/transfer" style={styles.standardActionButton}>
+            <Link href="/transfer" className="standard-action-button" style={styles.standardActionButton}>
               <span style={styles.quickActionIcon}>💸</span>
               <span style={styles.quickActionText}>Transfer Money</span>
             </Link>
@@ -1185,11 +1107,10 @@ export default function Dashboard() {
 const styles = {
   container: {
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+    background: '#f7f9fc',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     width: '100%',
-    overflowX: 'hidden',
-    paddingBottom: '100px'
+    overflowX: 'hidden'
   },
   loadingContainer: {
     display: 'flex',
@@ -1496,110 +1417,21 @@ const styles = {
   main: {
     maxWidth: '100%',
     margin: '0',
-    padding: 'clamp(1rem, 3vw, 20px)',
+    padding: '1rem 0.75rem',
     display: 'flex',
     flexDirection: 'column',
-    gap: 'clamp(1rem, 3vw, 20px)',
+    gap: '1.5rem',
     width: '100%',
     boxSizing: 'border-box'
   },
-  dashboardHeader: {
-    background: 'white',
-    padding: 'clamp(1.5rem, 4vw, 24px)',
-    borderRadius: '12px',
-    marginBottom: '20px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: '16px'
-  },
-  dashboardTitle: {
-    margin: '0 0 8px 0',
-    fontSize: 'clamp(1.5rem, 4vw, 28px)',
-    color: '#1A3E6F',
-    fontWeight: '700'
-  },
-  dashboardSubtitle: {
-    margin: 0,
-    color: '#718096',
-    fontSize: 'clamp(0.85rem, 2vw, 14px)'
-  },
-  dashboardActions: {
-    display: 'flex',
-    gap: '12px',
-    flexWrap: 'wrap'
-  },
-  refreshButton: {
-    padding: 'clamp(0.5rem, 2vw, 10px) clamp(1rem, 3vw, 20px)',
-    background: '#4299e1',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: 'clamp(0.85rem, 2vw, 14px)',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.3s'
-  },
-  statsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '16px',
-    marginBottom: '20px'
-  },
-  statCard: {
-    background: 'white',
-    padding: '20px',
-    borderRadius: '12px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    transition: 'transform 0.2s, box-shadow 0.2s'
-  },
-  statLabel: {
-    margin: '0 0 8px 0',
-    fontSize: 'clamp(0.85rem, 2vw, 14px)',
-    color: '#718096',
-    fontWeight: '500'
-  },
-  statValue: {
-    margin: 0,
-    fontSize: 'clamp(1.5rem, 4vw, 28px)',
-    color: '#1A3E6F',
-    fontWeight: '700'
-  },
-  tabNavigation: {
-    display: 'flex',
-    background: 'white',
-    borderRadius: '12px',
-    padding: '5px',
-    marginBottom: '20px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    gap: '5px',
-    flexWrap: 'wrap'
-  },
-  tabButton: {
-    flex: 1,
-    minWidth: '100px',
-    padding: '12px 20px',
-    border: 'none',
-    background: 'transparent',
-    color: '#666',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: 'clamp(0.85rem, 2vw, 14px)',
-    fontWeight: '500',
-    transition: 'all 0.3s'
-  },
-  tabButtonActive: {
-    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
-    color: 'white'
-  },
   summarySection: {
     background: 'white',
-    borderRadius: '12px',
-    padding: 'clamp(1.5rem, 4vw, 24px)',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    marginBottom: '20px'
+    borderRadius: '16px',
+    padding: '2.5rem',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    border: '1px solid #e2e8f0',
+    position: 'relative',
+    overflow: 'hidden',
   },
   summaryHeader: {
     display: 'flex',
@@ -1866,14 +1698,13 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 'clamp(12px, 3vw, 20px)',
-    background: '#ffffff',
-    borderRadius: 'clamp(6px, 1.5vw, 12px)',
+    padding: '1rem',
+    background: '#f8fafc',
+    borderRadius: '8px',
     border: '1px solid #e2e8f0',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    transition: 'all 0.3s ease',
     cursor: 'pointer',
-    transition: 'transform 0.2s, box-shadow 0.2s',
-    marginBottom: '12px'
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
   },
   accountInfo: {
     display: 'flex',
@@ -2181,7 +2012,7 @@ const styles = {
     alignItems: 'center',
     gap: '0.5rem',
     padding: '0.75rem 1.25rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    background: 'rgba(255, 255, 255, 0.95)',
     color: '#1e40af',
     border: '1px solid rgba(255, 255, 255, 0.3)',
     borderRadius: '8px',
@@ -2193,10 +2024,10 @@ const styles = {
   },
   addFundsDropdown: {
     position: 'absolute',
-    bottom: '100%', // Position above the button
+    bottom: '100%',
     right: '0',
-    marginBottom: '0.5rem', // Space between button and dropdown
-    backgroundColor: 'white',
+    marginBottom: '0.5rem',
+    background: 'white',
     borderRadius: '12px',
     boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
     border: '1px solid #e5e7eb',
