@@ -10,6 +10,8 @@ export default function Notifications() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [bankDetails, setBankDetails] = useState(null);
+  const [selectedDeposit, setSelectedDeposit] = useState(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
 
   useEffect(() => {
     checkUserAndFetchData();
@@ -234,6 +236,97 @@ export default function Notifications() {
     }
   };
 
+  const handleNotificationClick = async (notification) => {
+    // Check if it's a crypto deposit notification
+    if (notification.title?.includes('Crypto') || notification.title?.includes('Deposit')) {
+      try {
+        // Try to fetch from account_opening_crypto_deposits
+        const { data: openingDeposit } = await supabase
+          .from('account_opening_crypto_deposits')
+          .select(`
+            *,
+            accounts:account_id (
+              account_number,
+              account_type
+            ),
+            crypto_assets:crypto_asset_id (
+              crypto_type,
+              symbol,
+              network_type
+            )
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (openingDeposit) {
+          setSelectedDeposit(openingDeposit);
+          setShowReceiptModal(true);
+          await handleMarkAsRead(notification.id);
+          return;
+        }
+
+        // Try to fetch from crypto_deposits
+        const { data: cryptoDeposit } = await supabase
+          .from('crypto_deposits')
+          .select(`
+            *,
+            accounts:account_id (
+              account_number,
+              account_type
+            ),
+            crypto_assets:crypto_asset_id (
+              crypto_type,
+              symbol,
+              network_type
+            )
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (cryptoDeposit) {
+          setSelectedDeposit(cryptoDeposit);
+          setShowReceiptModal(true);
+          await handleMarkAsRead(notification.id);
+        }
+      } catch (error) {
+        console.error('Error fetching deposit details:', error);
+      }
+    }
+  };
+
+  const closeReceiptModal = () => {
+    setShowReceiptModal(false);
+    setSelectedDeposit(null);
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(Math.abs(amount || 0));
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const dateStr = date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    const timeStr = date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+    return `${dateStr} – ${timeStr}`;
+  };
+
   const filteredNotifications = notifications.filter(notif => {
     if (filter === 'unread') return !notif.read;
     if (filter === 'all') return true;
@@ -361,6 +454,7 @@ export default function Notifications() {
                     ...styles.notificationItem,
                     ...(notification.read ? {} : styles.unreadNotification)
                   }}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div style={styles.notificationIcon}>
                     {notification.icon}
@@ -419,6 +513,305 @@ export default function Notifications() {
             )}
           </div>
         </main>
+
+        {/* Crypto Deposit Receipt Modal */}
+        {showReceiptModal && selectedDeposit && (
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '2rem'
+            }} 
+            onClick={closeReceiptModal}
+          >
+            <div 
+              style={{
+                backgroundColor: 'white',
+                borderRadius: '16px',
+                padding: '2rem',
+                maxWidth: '500px',
+                width: '100%',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                position: 'relative'
+              }} 
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button 
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  color: '#64748b',
+                  padding: '0.25rem 0.5rem'
+                }} 
+                onClick={closeReceiptModal}
+              >
+                ×
+              </button>
+              
+              <div style={{
+                borderBottom: '2px solid #e2e8f0',
+                paddingBottom: '1rem',
+                marginBottom: '1.5rem',
+                textAlign: 'center'
+              }}>
+                <h2 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '700',
+                  color: '#1e293b',
+                  marginBottom: '0.5rem'
+                }}>
+                  Transaction Receipt
+                </h2>
+                <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                  {selectedDeposit.accounts?.account_type?.replace(/_/g, ' ').toUpperCase() || 'Account'}
+                </p>
+              </div>
+
+              <div style={{
+                backgroundColor: '#f0f9ff',
+                padding: '1.5rem',
+                borderRadius: '12px',
+                margin: '1.5rem 0',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  fontSize: '0.9rem',
+                  color: '#64748b',
+                  marginBottom: '0.5rem'
+                }}>
+                  Amount
+                </div>
+                <div style={{
+                  fontSize: '2rem',
+                  fontWeight: '700',
+                  color: '#059669'
+                }}>
+                  +{formatCurrency(parseFloat(selectedDeposit.net_amount || selectedDeposit.amount) || 0)}
+                </div>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '0.75rem 0',
+                borderBottom: '1px solid #f1f5f9'
+              }}>
+                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                  Transaction Type
+                </span>
+                <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                  CRYPTOCURRENCY DEPOSIT
+                </span>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '0.75rem 0',
+                borderBottom: '1px solid #f1f5f9'
+              }}>
+                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                  Status
+                </span>
+                <span style={{
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  textAlign: 'right',
+                  color: selectedDeposit.status === 'completed' || selectedDeposit.status === 'approved' ? '#065f46' : '#92400e',
+                  backgroundColor: selectedDeposit.status === 'completed' || selectedDeposit.status === 'approved' ? '#d1fae5' : '#fef3c7',
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '12px'
+                }}>
+                  {(selectedDeposit.status || 'Pending').replace(/_/g, ' ').toUpperCase()}
+                </span>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '0.75rem 0',
+                borderBottom: '1px solid #f1f5f9'
+              }}>
+                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                  Date & Time
+                </span>
+                <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                  {formatDate(selectedDeposit.created_at)}
+                </span>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '0.75rem 0',
+                borderBottom: '1px solid #f1f5f9'
+              }}>
+                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                  Reference Number
+                </span>
+                <span style={{ fontSize: '0.8rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right' }}>
+                  {selectedDeposit.id?.slice(0, 8).toUpperCase() || 'N/A'}
+                </span>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '0.75rem 0',
+                borderBottom: '1px solid #f1f5f9'
+              }}>
+                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                  Account Number
+                </span>
+                <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right' }}>
+                  {selectedDeposit.accounts?.account_number || 'N/A'}
+                </span>
+              </div>
+
+              <div style={{ 
+                marginTop: '1.5rem', 
+                paddingTop: '1.5rem', 
+                borderTop: '2px solid #e2e8f0' 
+              }}>
+                <h3 style={{ 
+                  fontSize: '1.1rem', 
+                  fontWeight: '700', 
+                  color: '#1e293b', 
+                  marginBottom: '1rem' 
+                }}>
+                  Cryptocurrency Details
+                </h3>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '0.75rem 0',
+                borderBottom: '1px solid #f1f5f9'
+              }}>
+                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                  Cryptocurrency
+                </span>
+                <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                  {selectedDeposit.crypto_assets?.symbol || 'BTC'} - {selectedDeposit.crypto_assets?.crypto_type || 'Bitcoin'}
+                </span>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '0.75rem 0',
+                borderBottom: '1px solid #f1f5f9'
+              }}>
+                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                  Network
+                </span>
+                <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                  {selectedDeposit.crypto_assets?.network_type || 'N/A'}
+                </span>
+              </div>
+
+              {selectedDeposit.tx_hash && (
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '0.75rem 0',
+                  borderBottom: '1px solid #f1f5f9'
+                }}>
+                  <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                    Transaction Hash
+                  </span>
+                  <span style={{ 
+                    fontSize: '0.75rem', 
+                    color: '#1e293b', 
+                    fontWeight: '600', 
+                    fontFamily: 'monospace',
+                    wordBreak: 'break-all',
+                    textAlign: 'right',
+                    maxWidth: '60%'
+                  }}>
+                    {selectedDeposit.tx_hash}
+                  </span>
+                </div>
+              )}
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '0.75rem 0',
+                borderBottom: '1px solid #f1f5f9'
+              }}>
+                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                  Confirmations
+                </span>
+                <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                  {selectedDeposit.confirmations || 0} / {selectedDeposit.required_confirmations || 3}
+                </span>
+              </div>
+
+              {selectedDeposit.fee && parseFloat(selectedDeposit.fee) > 0 && (
+                <>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 0',
+                    borderBottom: '1px solid #f1f5f9'
+                  }}>
+                    <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                      Network Fee
+                    </span>
+                    <span style={{ fontSize: '0.9rem', color: '#dc2626', fontWeight: '600', textAlign: 'right' }}>
+                      -{formatCurrency(parseFloat(selectedDeposit.fee))}
+                    </span>
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 0',
+                    borderBottom: '1px solid #f1f5f9'
+                  }}>
+                    <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                      Gross Amount
+                    </span>
+                    <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                      {formatCurrency(parseFloat(selectedDeposit.amount) || 0)}
+                    </span>
+                  </div>
+                </>
+              )}
+
+              <div style={{ 
+                marginTop: '2rem', 
+                padding: '1rem', 
+                backgroundColor: '#f8fafc', 
+                borderRadius: '8px',
+                textAlign: 'center'
+              }}>
+                <p style={{ 
+                  fontSize: '0.8rem', 
+                  color: '#64748b', 
+                  margin: 0 
+                }}>
+                  Thank you for banking with Oakline Bank
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

@@ -133,7 +133,9 @@ export default function AccountDetails() {
         amount: deposit.amount,
         created_at: deposit.created_at,
         status: deposit.status,
-        confirmations: deposit.confirmations // Assuming confirmations is available
+        confirmations: deposit.confirmations, // Assuming confirmations is available
+        fee: deposit.fee, // Assuming fee is available
+        transaction_hash: deposit.transaction_hash // Assuming transaction_hash is available
       }));
 
       // Merge and sort by date
@@ -746,6 +748,7 @@ export default function AccountDetails() {
                         txType === 'cashback' ||
                         txType === 'zelle_receive' ||
                         txType === 'crypto_deposit' ||
+                        txType === 'account_opening_deposit' ||
                         description.includes('received from') ||
                         description.includes('transfer from')) {
                       isCredit = true;
@@ -805,9 +808,23 @@ export default function AccountDetails() {
                             <div style={styles.transactionDate}>
                               {formatDate(tx.created_at)}
                             </div>
-                            {(tx.type === 'account_opening_deposit' || tx.transaction_type === 'crypto_deposit') && (
-                              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>
-                                Confirmations: {tx.confirmations || 0}
+                            {(tx.type === 'account_opening_deposit' || tx.transaction_type === 'crypto_deposit') && tx.fee && (
+                              <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+                                Fee: ${parseFloat(tx.fee).toFixed(2)} • Net: ${parseFloat(tx.amount).toFixed(2)}
+                              </div>
+                            )}
+                            {(tx.type === 'account_opening_deposit' || tx.transaction_type === 'crypto_deposit') && tx.transaction_hash && (
+                              <div style={{ 
+                                fontSize: '0.65rem', 
+                                color: '#1e40af', 
+                                marginTop: '0.2rem',
+                                fontFamily: 'monospace',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                maxWidth: '200px'
+                              }}>
+                                Hash: {tx.transaction_hash.substring(0, 16)}...
                               </div>
                             )}
                           </div>
@@ -815,7 +832,8 @@ export default function AccountDetails() {
                         <div style={styles.transactionRight}>
                           <div style={{
                             ...styles.transactionAmount,
-                            color: isCredit ? '#059669' : '#dc2626'
+                            color: txStatus.toLowerCase() === 'pending' ? '#f59e0b' : 
+                                   (isCredit ? '#059669' : '#dc2626')
                           }}>
                             {isCredit ? '+' : '-'}
                             {formatCurrency(Math.abs(amount))}
