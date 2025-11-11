@@ -569,11 +569,19 @@ export default function Apply() {
   const handleNext = () => {
     if (validateStep(currentStep)) {
       setCurrentStep(prev => prev + 1);
+      // Scroll to top of form card smoothly
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
     }
   };
 
   const handleBack = () => {
     setCurrentStep(prev => prev - 1);
+    // Scroll to top of form card smoothly
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
 
   const handleSubmit = async () => {
@@ -610,11 +618,9 @@ export default function Apply() {
 
       console.log('✅ Email verification confirmed:', verifyResult);
 
-      // Save ID documents to database if both are uploaded
-      if (formData.idFrontPath && formData.idBackPath) {
-        console.log('Saving ID documents to database...');
-        await saveIdDocumentsToDatabase();
-      }
+      // Note: ID documents will be saved by admin during approval process
+      // since user_id is not yet created at this stage
+      console.log('ID documents uploaded to storage, will be linked during approval');
 
       // Debug: Check the actual database state
       const debugResponse = await fetch('/api/debug-email-verification', {
@@ -753,9 +759,37 @@ export default function Apply() {
         // Don't fail the application if email fails
       }
 
+      // Send admin notification email
+      try {
+        console.log('Sending admin notification email...');
+        const adminNotificationResponse = await fetch('/api/send-admin-application-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            applicationId: applicationData.id,
+            applicantName: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+            applicantEmail: normalizedEmail
+          })
+        });
+
+        if (adminNotificationResponse.ok) {
+          console.log('✅ Admin notification email sent successfully');
+        } else {
+          console.warn('⚠️ Failed to send admin notification, but application was created');
+        }
+      } catch (adminEmailError) {
+        console.error('Error sending admin notification:', adminEmailError);
+        // Don't fail the application if admin email fails
+      }
+
       // Show success screen
       setSubmitSuccess(true);
       setCurrentStep(5); // Move to success screen
+      
+      // Scroll to top to show success message
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
 
     } catch (error) {
       console.error('Application submission error:', error);
@@ -952,11 +986,14 @@ export default function Apply() {
     formCard: {
       background: 'white',
       borderRadius: '24px',
-      padding: '3rem',
+      padding: 'clamp(1.5rem, 5vw, 3rem)',
       boxShadow: '0 20px 60px rgba(0,0,0,0.08)',
       border: '1px solid #e0e0e0',
       marginBottom: '2rem',
-      animation: 'fadeInUp 0.6s ease'
+      animation: 'fadeInUp 0.6s ease',
+      maxWidth: '1200px',
+      margin: '0 auto 2rem',
+      width: '100%'
     },
     sectionTitle: {
       fontSize: '24px',
@@ -974,10 +1011,10 @@ export default function Apply() {
       gap: '1.5rem'
     },
     gridCols2: {
-      gridTemplateColumns: 'repeat(2, 1fr)'
+      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))'
     },
     gridCols3: {
-      gridTemplateColumns: 'repeat(3, 1fr)'
+      gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))'
     },
     inputGroup: {
       display: 'flex',
