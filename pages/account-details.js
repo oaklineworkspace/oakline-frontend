@@ -105,9 +105,31 @@ export default function AccountDetails() {
         console.error('Error fetching transactions:', transactionsError);
       }
 
-      // Fetch account opening crypto deposits
+      // Fetch account opening crypto deposits with wallet info
       const { data: openingDeposits, error: depositsError } = await supabase
         .from('account_opening_crypto_deposits')
+        .select(`
+          *,
+          crypto_assets:crypto_asset_id (
+            crypto_type,
+            symbol,
+            network_type
+          ),
+          admin_assigned_wallets:assigned_wallet_id (
+            wallet_address,
+            memo
+          )
+        `)
+        .eq('account_id', accountId)
+        .order('created_at', { ascending: false });
+
+      if (depositsError) {
+        console.error('Error fetching opening deposits:', depositsError);
+      }
+
+      // Fetch regular crypto deposits (wallet_address is stored directly in this table)
+      const { data: cryptoDeposits, error: cryptoError } = await supabase
+        .from('crypto_deposits')
         .select(`
           *,
           crypto_assets:crypto_asset_id (
@@ -119,12 +141,14 @@ export default function AccountDetails() {
         .eq('account_id', accountId)
         .order('created_at', { ascending: false });
 
-      if (depositsError) {
-        console.error('Error fetching opening deposits:', depositsError);
+      if (cryptoError) {
+        console.error('Error fetching crypto deposits:', cryptoError);
       }
 
       // Combine and format transactions
       const regularTx = transactionsData || [];
+      
+      // Format account opening deposits
       const depositTx = (openingDeposits || []).map(deposit => ({
         id: deposit.id,
         account_id: deposit.account_id,
@@ -141,11 +165,33 @@ export default function AccountDetails() {
         crypto_type: deposit.crypto_assets?.crypto_type,
         crypto_symbol: deposit.crypto_assets?.symbol,
         network_type: deposit.crypto_assets?.network_type,
+        wallet_address: deposit.admin_assigned_wallets?.wallet_address,
+        gross_amount: deposit.amount
+      }));
+
+      // Format regular crypto deposits (wallet_address is already in the deposit record)
+      const cryptoTx = (cryptoDeposits || []).map(deposit => ({
+        id: deposit.id,
+        account_id: deposit.account_id,
+        type: 'crypto_deposit',
+        transaction_type: 'crypto_deposit',
+        description: `${deposit.crypto_assets?.symbol || 'CRYPTO'} Deposit via ${deposit.crypto_assets?.network_type || 'Network'}`,
+        amount: deposit.net_amount || deposit.amount,
+        created_at: deposit.created_at,
+        status: deposit.status,
+        confirmations: deposit.confirmations || 0,
+        required_confirmations: deposit.required_confirmations || 3,
+        fee: deposit.fee || 0,
+        transaction_hash: deposit.tx_hash,
+        crypto_type: deposit.crypto_assets?.crypto_type,
+        crypto_symbol: deposit.crypto_assets?.symbol,
+        network_type: deposit.crypto_assets?.network_type,
+        wallet_address: deposit.wallet_address,
         gross_amount: deposit.amount
       }));
 
       // Merge and sort by date
-      const allTransactions = [...regularTx, ...depositTx].sort((a, b) => 
+      const allTransactions = [...regularTx, ...depositTx, ...cryptoTx].sort((a, b) => 
         new Date(b.created_at) - new Date(a.created_at)
       );
 
