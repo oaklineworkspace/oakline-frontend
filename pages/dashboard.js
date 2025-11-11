@@ -450,6 +450,10 @@ function DashboardContent() {
                 crypto_type,
                 symbol,
                 network_type
+              ),
+              admin_assigned_wallets:assigned_wallet_id (
+                wallet_address,
+                memo
               )
             `)
             .eq('id', transaction.id)
@@ -1522,7 +1526,10 @@ function DashboardContent() {
                     textAlign: 'right',
                     maxWidth: '60%'
                   }}>
-                    {selectedTransaction.depositDetails.crypto_wallets?.wallet_address || selectedTransaction.wallet_address || 'N/A'}
+                    {selectedTransaction.depositDetails?.crypto_wallets?.wallet_address || 
+                     selectedTransaction.depositDetails?.admin_assigned_wallets?.wallet_address || 
+                     selectedTransaction.wallet_address || 
+                     'N/A'}
                   </span>
                 </div>
                 {(selectedTransaction.depositDetails.tx_hash || selectedTransaction.transaction_hash) && (
