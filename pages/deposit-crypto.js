@@ -838,14 +838,21 @@ export default function CryptoDeposit() {
   };
 
   const viewDepositReceipt = (deposit) => {
-    // Extract crypto and network type from metadata if not directly available
+    // Extract crypto and network info from metadata if not directly available
     const cryptoType = deposit.metadata?.crypto_type || deposit.crypto_type || 'Bitcoin';
     const networkType = deposit.metadata?.network_type || deposit.network_type || 'N/A';
     const walletAddress = deposit.metadata?.wallet_address || deposit.wallet_address || 'N/A';
-    
+
     // Get crypto and network details
     const cryptoInfo = cryptoTypes.find(c => c.value === cryptoType);
-    
+
+    // Get the account number from the deposit or from the accounts list
+    let accountNumber = deposit.account_number;
+    if (!accountNumber && deposit.account_id) {
+      const account = accounts.find(acc => acc.id === deposit.account_id);
+      accountNumber = account?.account_number || 'N/A';
+    }
+
     const receipt = {
       referenceNumber: String(deposit.id).substring(0, 8).toUpperCase(),
       date: new Date(deposit.created_at).toLocaleString('en-US', {
@@ -857,7 +864,7 @@ export default function CryptoDeposit() {
         second: '2-digit',
         hour12: true
       }),
-      accountNumber: deposit.account_number,
+      accountNumber: accountNumber || 'N/A',
       cryptoType: cryptoInfo?.label || cryptoType,
       cryptoSymbol: cryptoType,
       network: networkType,
@@ -2133,7 +2140,7 @@ export default function CryptoDeposit() {
                       marginBottom: '0.5rem',
                       fontWeight: '500'
                     }}>
-                      {getSelectedNetwork()?.label} WALLET ADDRESS
+                      {getSelectedNetwork()?.label || depositForm.network_type} WALLET ADDRESS
                     </p>
                     <div style={styles.walletAddress}>
                       {walletAddress}
@@ -2215,7 +2222,7 @@ export default function CryptoDeposit() {
                   borderRadius: '12px',
                   padding: '1.5rem',
                   marginTop: '2rem',
-                  marginBottom: '2rem'
+                  marginBottom: '1.5rem'
                 }}>
                   <h3 style={{
                     margin: '0 0 1rem 0',
@@ -2911,10 +2918,10 @@ export default function CryptoDeposit() {
                     // Extract crypto and network info from metadata if not directly available
                     const cryptoType = deposit.metadata?.crypto_type || deposit.crypto_type || 'Bitcoin';
                     const networkType = deposit.metadata?.network_type || deposit.network_type || 'N/A';
-                    
+
                     const cryptoInfo = cryptoTypes.find(c => c.value === cryptoType);
                     const networkIcon = networkIconMap[networkType] || '🔹';
-                    
+
                     return (
                       <tr 
                         key={deposit.id}
