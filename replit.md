@@ -36,6 +36,7 @@ The application is built with **Next.js 14.2.3** and React 18.2.0, utilizing SSR
 
 ### Email Services
 - **Nodemailer**: Used for transactional emails (enrollment, password reset, notifications) with SMTP configuration and multiple aliases.
+- **Email Logging**: Comprehensive email audit system logs all outbound emails to the `email_logs` table, capturing recipient, subject, type, status, provider, message ID, and full message body (HTML/text). Integrated directly into `lib/email.js` for automatic tracking across all 21+ API endpoints. Resilient error handling ensures logging failures don't prevent email delivery. Admin panel at `/admin/email-logs` provides full visibility into email communications.
 
 ### Security & Validation
 - **Validator**: For input validation.
