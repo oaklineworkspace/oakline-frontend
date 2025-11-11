@@ -62,7 +62,7 @@ export default function AccountTypes() {
         <header style={styles.header}>
           <div style={styles.headerContent}>
             <Link href="/" style={styles.logoContainer}>
-              <img src="/images/logo-primary.png.jpg" alt="Oakline Bank" style={styles.logo} />
+              <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.logo} />
               <span style={styles.brandName}>Oakline Bank</span>
             </Link>
             <Link href="/" style={styles.backButton}>← Back to Home</Link>
@@ -159,7 +159,22 @@ export default function AccountTypes() {
                       <span style={styles.accountRate}>{account.rate || 'N/A'}</span>
                     </div>
                     
-                    <p style={styles.accountDescription}>{account.description || 'A premium banking account designed for your needs.'}</p>
+                    <p style={styles.accountDescription}>
+                      {account.description || 'A premium banking account designed for your needs.'}
+                    </p>
+                    
+                    {account.detailed_description && (
+                      <div style={styles.detailedDescription}>
+                        <p style={styles.detailedDescriptionText}>{account.detailed_description}</p>
+                      </div>
+                    )}
+                    
+                    {account.ideal_for && (
+                      <div style={styles.idealForSection}>
+                        <h4 style={styles.idealForTitle}>Ideal For:</h4>
+                        <p style={styles.idealForText}>{account.ideal_for}</p>
+                      </div>
+                    )}
                     
                     <div style={styles.accountDetails}>
                       <div style={styles.detailItem}>
@@ -212,10 +227,24 @@ export default function AccountTypes() {
                       </div>
                     )}
 
+                    {account.requirements && (
+                      <div style={styles.requirementsSection}>
+                        <h4 style={styles.requirementsTitle}>Requirements</h4>
+                        <p style={styles.requirementsText}>{account.requirements}</p>
+                      </div>
+                    )}
+
                     {account.eligibility && (
                       <div style={styles.eligibilitySection}>
                         <h4 style={styles.eligibilityTitle}>Eligibility</h4>
                         <p style={styles.eligibilityText}>{account.eligibility}</p>
+                      </div>
+                    )}
+
+                    {account.additional_info && (
+                      <div style={styles.additionalInfoSection}>
+                        <h4 style={styles.additionalInfoTitle}>Additional Information</h4>
+                        <p style={styles.additionalInfoText}>{account.additional_info}</p>
                       </div>
                     )}
 
@@ -255,8 +284,9 @@ const styles = {
   },
   header: {
     backgroundColor: '#1a365d',
-    padding: '1rem 0',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+    padding: '1.5rem 0',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    borderBottom: '3px solid #FFC857'
   },
   headerContent: {
     maxWidth: '1200px',
@@ -273,13 +303,15 @@ const styles = {
     textDecoration: 'none'
   },
   logo: {
-    height: '40px',
-    width: 'auto'
+    height: '50px',
+    width: 'auto',
+    objectFit: 'contain'
   },
   brandName: {
     color: 'white',
-    fontSize: '1.5rem',
-    fontWeight: 'bold'
+    fontSize: '1.75rem',
+    fontWeight: 'bold',
+    letterSpacing: '0.5px'
   },
   backButton: {
     color: 'white',
@@ -418,9 +450,82 @@ const styles = {
   accountDescription: {
     color: '#374151',
     lineHeight: '1.7',
-    marginBottom: '1.5rem',
+    marginBottom: '1rem',
     fontSize: '1rem',
-    fontWeight: '400'
+    fontWeight: '500'
+  },
+  detailedDescription: {
+    backgroundColor: '#f8fafc',
+    padding: '1.25rem',
+    borderRadius: '10px',
+    marginBottom: '1.5rem',
+    borderLeft: '4px solid #1e40af'
+  },
+  detailedDescriptionText: {
+    color: '#475569',
+    lineHeight: '1.8',
+    fontSize: '0.95rem',
+    margin: 0
+  },
+  idealForSection: {
+    backgroundColor: '#eff6ff',
+    padding: '1rem',
+    borderRadius: '8px',
+    marginBottom: '1.5rem',
+    border: '1px solid #bfdbfe'
+  },
+  idealForTitle: {
+    fontSize: '0.95rem',
+    fontWeight: 'bold',
+    color: '#1e40af',
+    marginBottom: '0.5rem',
+    margin: '0 0 0.5rem 0'
+  },
+  idealForText: {
+    fontSize: '0.9rem',
+    color: '#1e40af',
+    lineHeight: '1.6',
+    margin: 0
+  },
+  requirementsSection: {
+    marginBottom: '1.5rem',
+    padding: '1rem',
+    backgroundColor: '#fef3c7',
+    borderRadius: '8px',
+    border: '1px solid #fcd34d'
+  },
+  requirementsTitle: {
+    fontSize: '1rem',
+    fontWeight: 'bold',
+    color: '#92400e',
+    marginBottom: '0.5rem',
+    margin: '0 0 0.5rem 0'
+  },
+  requirementsText: {
+    fontSize: '0.9rem',
+    color: '#78350f',
+    lineHeight: '1.5',
+    margin: 0
+  },
+  additionalInfoSection: {
+    marginBottom: '1.5rem',
+    padding: '1rem',
+    backgroundColor: '#f0fdf4',
+    borderRadius: '8px',
+    border: '1px solid #86efac'
+  },
+  additionalInfoTitle: {
+    fontSize: '1rem',
+    fontWeight: 'bold',
+    color: '#166534',
+    marginBottom: '0.5rem',
+    margin: '0 0 0.5rem 0'
+  },
+  additionalInfoText: {
+    fontSize: '0.9rem',
+    color: '#15803d',
+    lineHeight: '1.5',
+    margin: 0
   },
   accountDetails: {
     display: 'grid',
