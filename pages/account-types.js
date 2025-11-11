@@ -38,41 +38,7 @@ export default function AccountTypes() {
     }
   };
 
-  // Legacy data structure - no longer needed as we fetch from DB
-  const legacyAccountTypes = [
-    {
-      id: 1,
-      name: 'Checking Account',
-      category: 'Personal',
-      description: 'Our flagship checking account is designed for everyday banking with unmatched convenience and security. Enjoy unlimited transactions, comprehensive digital banking tools, and 24/7 access to your funds. This account features no minimum balance requirements and includes premium benefits like ATM fee reimbursement and overdraft protection. Perfect for individuals who want a reliable, full-service banking experience with no hidden fees.',
-      icon: '💳',
-      rate: '0.25% APY',
-      minBalance: '$0',
-      monthlyFee: '$0',
-      features: [
-        'No minimum balance required',
-        'Free online and mobile banking with advanced features',
-        'Premium debit card with enhanced security chip',
-        'Unlimited transactions nationwide',
-        'Direct deposit with early access',
-        'Mobile check deposit with instant availability',
-        'ATM fee reimbursement up to $10/month nationwide',
-        'Overdraft protection with multiple coverage options',
-        'Free wire transfers (domestic)',
-        'Automatic bill pay with scheduling',
-        'Real-time fraud monitoring and alerts',
-        'FDIC insured up to $250,000'
-      ],
-      benefits: [
-        'Perfect for daily expenses and financial management',
-        'Easy bill payments with automatic scheduling',
-        'Quick money transfers with Zelle integration',
-        'Real-time notifications for all transactions',
-        'Access to exclusive member benefits and discounts'
-      ],
-      eligibility: 'Age 18+ with valid government-issued ID, Social Security Number, and proof of address'
-    },
-    ];
+  
 
   // Extract unique categories from fetched account types
   const categories = ['all', ...new Set(accountTypes.map(account => account.category))];
@@ -177,37 +143,88 @@ export default function AccountTypes() {
             </div>
           ) : (
             <div style={styles.accountsGrid}>
-              {filteredAccounts.map(account => (
-                <div key={account.id} style={styles.accountCard}>
-                <div style={styles.accountHeader}>
-                  <span style={styles.accountIcon}>{account.icon}</span>
-                  <div>
-                    <h3 style={styles.accountName}>{account.name}</h3>
-                    <span style={styles.accountCategory}>{account.category}</span>
-                  </div>
-                  <span style={styles.accountRate}>{account.rate}</span>
-                </div>
+              {filteredAccounts.map(account => {
+                const minDeposit = parseFloat(account.min_deposit || 0);
+                const features = account.features || [];
+                const benefits = account.benefits || [];
                 
-                <p style={styles.accountDescription}>{account.description}</p>
-                
-                <div style={styles.accountDetails}>
-                  <div style={styles.detailItem}>
-                    <span style={styles.detailLabel}>Minimum Deposit:</span>
-                    <span style={styles.detailValue}>
-                      ${parseFloat(account.min_deposit || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  <div style={styles.detailItem}>
-                    <span style={styles.detailLabel}>Rate:</span>
-                    <span style={styles.detailValue}>{account.rate}</span>
-                  </div>
-                </div>
+                return (
+                  <div key={account.id} style={styles.accountCard}>
+                    <div style={styles.accountHeader}>
+                      <span style={styles.accountIcon}>{account.icon || '💳'}</span>
+                      <div>
+                        <h3 style={styles.accountName}>{account.name}</h3>
+                        <span style={styles.accountCategory}>{account.category || 'Banking'}</span>
+                      </div>
+                      <span style={styles.accountRate}>{account.rate || 'N/A'}</span>
+                    </div>
+                    
+                    <p style={styles.accountDescription}>{account.description || 'A premium banking account designed for your needs.'}</p>
+                    
+                    <div style={styles.accountDetails}>
+                      <div style={styles.detailItem}>
+                        <span style={styles.detailLabel}>Minimum Deposit:</span>
+                        <span style={styles.detailValue}>
+                          ${minDeposit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      <div style={styles.detailItem}>
+                        <span style={styles.detailLabel}>Rate:</span>
+                        <span style={styles.detailValue}>{account.rate || 'N/A'}</span>
+                      </div>
+                      {account.monthly_fee !== undefined && (
+                        <div style={styles.detailItem}>
+                          <span style={styles.detailLabel}>Monthly Fee:</span>
+                          <span style={styles.detailValue}>
+                            ${parseFloat(account.monthly_fee || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      )}
+                      {account.min_balance !== undefined && (
+                        <div style={styles.detailItem}>
+                          <span style={styles.detailLabel}>Min Balance:</span>
+                          <span style={styles.detailValue}>
+                            ${parseFloat(account.min_balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      )}
+                    </div>
 
-                <Link href="/apply" style={styles.applyButton}>
-                  Apply Now
-                </Link>
-              </div>
-              ))}
+                    {features.length > 0 && (
+                      <div style={styles.featuresSection}>
+                        <h4 style={styles.featuresTitle}>Key Features</h4>
+                        <ul style={styles.featuresList}>
+                          {features.slice(0, 5).map((feature, idx) => (
+                            <li key={idx} style={styles.featureItem}>{feature}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {benefits.length > 0 && (
+                      <div style={styles.benefitsSection}>
+                        <h4 style={styles.benefitsTitle}>Benefits</h4>
+                        <div style={styles.benefitsList}>
+                          {benefits.slice(0, 4).map((benefit, idx) => (
+                            <span key={idx} style={styles.benefitTag}>{benefit}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {account.eligibility && (
+                      <div style={styles.eligibilitySection}>
+                        <h4 style={styles.eligibilityTitle}>Eligibility</h4>
+                        <p style={styles.eligibilityText}>{account.eligibility}</p>
+                      </div>
+                    )}
+
+                    <Link href="/apply" style={styles.applyButton}>
+                      Apply Now
+                    </Link>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>
