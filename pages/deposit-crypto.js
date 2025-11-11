@@ -679,7 +679,8 @@ export default function CryptoDeposit() {
             purpose: 'general_deposit',
             confirmations: 0,
             required_confirmations: cryptoAsset.confirmations_required || 3,
-            tx_hash: txHash.trim(),
+            tx_hash: txHash.trim() || null,
+            proof_path: proofPath || null,
             metadata: {
               wallet_address: walletAddress,
               memo: memo || null,
@@ -687,7 +688,8 @@ export default function CryptoDeposit() {
               crypto_type: depositForm.crypto_type,
               network_type: depositForm.network_type,
               fee_percent: networkFeePercent,
-              proof_path: proofPath || null
+              has_proof: !!proofPath,
+              has_tx_hash: !!txHash
             }
           }])
           .select()

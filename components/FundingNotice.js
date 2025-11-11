@@ -88,12 +88,13 @@ export default function FundingNotice({ accounts }) {
 
             const hasPendingDeposit = pendingDeposits[account.id];
             const depositStatus = hasPendingDeposit?.status;
+            const accountTypeName = account.account_type ? account.account_type.toUpperCase().replace(/_/g, ' ') : 'Account';
             
             const getStatusDisplay = () => {
               if (depositStatus === 'pending' || depositStatus === 'awaiting_confirmations') {
                 return {
                   title: 'Account Activation Deposit Submitted',
-                  message: `Your deposit of ${formatCurrency(hasPendingDeposit.amount)} is pending blockchain confirmation`,
+                  message: `Your deposit of ${formatCurrency(hasPendingDeposit.amount)} for ${accountTypeName} (${account.account_number}) is pending blockchain confirmation`,
                   buttonText: '📋 View Status',
                   showButton: true,
                   background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
@@ -104,7 +105,7 @@ export default function FundingNotice({ accounts }) {
               if (depositStatus === 'under_review' || depositStatus === 'confirmed') {
                 return {
                   title: 'Deposit Under Review',
-                  message: `Your deposit of ${formatCurrency(hasPendingDeposit.amount)} is being verified by our team`,
+                  message: `Your deposit of ${formatCurrency(hasPendingDeposit.amount)} for ${accountTypeName} (${account.account_number}) is being verified by our team`,
                   buttonText: '📋 View Status',
                   showButton: true,
                   background: 'linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)',
@@ -115,7 +116,7 @@ export default function FundingNotice({ accounts }) {
               // Default: No pending deposit or other status
               return {
                 title: 'Account Activation Required',
-                message: `Deposit ${formatCurrency(remaining)} to activate ${account.account_number}`,
+                message: `Deposit ${formatCurrency(remaining)} to activate ${accountTypeName} - ${account.account_number}`,
                 buttonText: '💰 Add Funds',
                 showButton: true,
                 background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
