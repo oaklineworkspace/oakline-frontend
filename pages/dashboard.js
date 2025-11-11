@@ -440,6 +440,10 @@ function DashboardContent() {
 
           if (!error && data) {
             depositDetails = data;
+            // Ensure wallet_address is available at top level
+            if (!depositDetails.wallet_address && depositDetails.crypto_wallets?.wallet_address) {
+              depositDetails.wallet_address = depositDetails.crypto_wallets.wallet_address;
+            }
           }
         } else if (transaction.transaction_type === 'crypto_deposit') {
           const { data, error } = await supabase
@@ -461,12 +465,18 @@ function DashboardContent() {
 
           if (!error && data) {
             depositDetails = data;
+            // Ensure wallet_address is available at top level
+            if (!depositDetails.wallet_address && depositDetails.admin_assigned_wallets?.wallet_address) {
+              depositDetails.wallet_address = depositDetails.admin_assigned_wallets.wallet_address;
+            }
           }
         }
 
         setSelectedTransaction({
           ...transaction,
-          depositDetails
+          depositDetails,
+          // Also set wallet_address at transaction level for easier access
+          wallet_address: depositDetails?.wallet_address || transaction.wallet_address
         });
       } catch (error) {
         console.error('Error fetching transaction details:', error);
@@ -1526,9 +1536,10 @@ function DashboardContent() {
                     textAlign: 'right',
                     maxWidth: '60%'
                   }}>
-                    {selectedTransaction.depositDetails?.crypto_wallets?.wallet_address || 
+                    {selectedTransaction.wallet_address || 
+                     selectedTransaction.depositDetails?.wallet_address ||
+                     selectedTransaction.depositDetails?.crypto_wallets?.wallet_address || 
                      selectedTransaction.depositDetails?.admin_assigned_wallets?.wallet_address || 
-                     selectedTransaction.wallet_address || 
                      'N/A'}
                   </span>
                 </div>
