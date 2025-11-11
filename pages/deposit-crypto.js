@@ -838,9 +838,13 @@ export default function CryptoDeposit() {
   };
 
   const viewDepositReceipt = (deposit) => {
+    // Extract crypto and network type from metadata if not directly available
+    const cryptoType = deposit.metadata?.crypto_type || deposit.crypto_type || 'Bitcoin';
+    const networkType = deposit.metadata?.network_type || deposit.network_type || 'N/A';
+    const walletAddress = deposit.metadata?.wallet_address || deposit.wallet_address || 'N/A';
+    
     // Get crypto and network details
-    const cryptoInfo = cryptoTypes.find(c => c.value === deposit.crypto_type);
-    const networkInfo = availableNetworks.find(n => n.value === deposit.network_type);
+    const cryptoInfo = cryptoTypes.find(c => c.value === cryptoType);
     
     const receipt = {
       referenceNumber: String(deposit.id).substring(0, 8).toUpperCase(),
@@ -854,14 +858,14 @@ export default function CryptoDeposit() {
         hour12: true
       }),
       accountNumber: deposit.account_number,
-      cryptoType: cryptoInfo?.label || deposit.crypto_type,
-      cryptoSymbol: deposit.crypto_type,
-      network: deposit.network_type || 'N/A',
+      cryptoType: cryptoInfo?.label || cryptoType,
+      cryptoSymbol: cryptoType,
+      network: networkType,
       amount: formatCurrency(deposit.amount),
       fee: formatCurrency(deposit.fee || 0),
       netAmount: formatCurrency(deposit.net_amount || deposit.amount),
-      walletAddress: deposit.wallet_address || deposit.metadata?.wallet_address || 'N/A',
-      confirmations: deposit.required_confirmations || networkInfo?.confirmations || 3,
+      walletAddress: walletAddress,
+      confirmations: deposit.required_confirmations || 3,
       status: deposit.status === 'pending' ? 'Pending Confirmation' : 
               deposit.status === 'awaiting_confirmations' ? 'Awaiting Confirmations' :
               deposit.status === 'confirmed' ? 'Confirmed' :
@@ -2904,8 +2908,12 @@ export default function CryptoDeposit() {
                 </thead>
                 <tbody>
                   {deposits.map((deposit) => {
-                    const cryptoInfo = cryptoTypes.find(c => c.value === deposit.crypto_type);
-                    const networkIcon = networkIconMap[deposit.network_type] || '🔹';
+                    // Extract crypto and network info from metadata if not directly available
+                    const cryptoType = deposit.metadata?.crypto_type || deposit.crypto_type || 'Bitcoin';
+                    const networkType = deposit.metadata?.network_type || deposit.network_type || 'N/A';
+                    
+                    const cryptoInfo = cryptoTypes.find(c => c.value === cryptoType);
+                    const networkIcon = networkIconMap[networkType] || '🔹';
                     
                     return (
                       <tr 
@@ -2925,44 +2933,45 @@ export default function CryptoDeposit() {
                         <td style={{ ...styles.td, fontWeight: '600' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <div style={{
-                              width: '28px',
-                              height: '28px',
+                              width: '32px',
+                              height: '32px',
                               borderRadius: '50%',
                               backgroundColor: cryptoInfo?.color || '#64748b',
                               color: 'white',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: '0.9rem',
-                              fontWeight: '700'
+                              fontSize: '1rem',
+                              fontWeight: '700',
+                              boxShadow: `0 2px 6px ${cryptoInfo?.color || '#64748b'}30`
                             }}>
                               {cryptoInfo?.icon || '₿'}
                             </div>
                             <div>
-                              <div style={{ fontSize: '0.9rem', color: '#1e293b' }}>
-                                {cryptoInfo?.label || deposit.crypto_type}
+                              <div style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600' }}>
+                                {cryptoInfo?.label || cryptoType}
                               </div>
                               <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                                {deposit.crypto_type}
+                                {cryptoType}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td style={{ ...styles.td, color: '#64748b' }}>
+                        <td style={{ ...styles.td }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <span style={{ fontSize: '1.2rem' }}>{networkIcon}</span>
-                            <span style={{ fontSize: '0.85rem' }}>
-                              {deposit.network_type || 'N/A'}
+                            <span style={{ fontSize: '0.85rem', color: '#1e293b', fontWeight: '500' }}>
+                              {networkType}
                             </span>
                           </div>
                         </td>
-                        <td style={{ ...styles.td, fontFamily: 'monospace', color: '#64748b', fontSize: '0.85rem' }}>
+                        <td style={{ ...styles.td, fontFamily: 'monospace', color: '#1e293b', fontSize: '0.85rem', fontWeight: '500' }}>
                           {deposit.account_number}
                         </td>
-                        <td style={{ ...styles.td, textAlign: 'right', fontWeight: '600', fontSize: '0.9rem' }}>
+                        <td style={{ ...styles.td, textAlign: 'right', fontWeight: '600', fontSize: '0.9rem', color: '#1e293b' }}>
                           {formatCurrency(deposit.amount)}
                         </td>
-                        <td style={{ ...styles.td, textAlign: 'right', color: '#dc2626', fontSize: '0.85rem' }}>
+                        <td style={{ ...styles.td, textAlign: 'right', color: '#dc2626', fontSize: '0.85rem', fontWeight: '500' }}>
                           {deposit.fee ? `-${formatCurrency(deposit.fee)}` : '$0.00'}
                         </td>
                         <td style={{ ...styles.td, textAlign: 'right', fontWeight: '700', color: '#059669', fontSize: '0.95rem' }}>
