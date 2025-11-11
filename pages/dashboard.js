@@ -273,7 +273,32 @@ function DashboardContent() {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      setCryptoDeposits(cryptoDepositsData || []);
+      // Fetch account opening crypto deposits
+      const { data: accountOpeningDepositsData } = await supabase
+        .from('account_opening_crypto_deposits')
+        .select(`
+          *,
+          accounts:account_id (
+            account_number,
+            account_type
+          ),
+          crypto_assets:crypto_asset_id (
+            crypto_type,
+            network_type,
+            symbol
+          )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      // Merge both types of crypto deposits and sort by date
+      const allCryptoDeposits = [
+        ...(cryptoDepositsData || []).map(d => ({ ...d, deposit_source: 'general' })),
+        ...(accountOpeningDepositsData || []).map(d => ({ ...d, deposit_source: 'account_opening' }))
+      ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 10);
+
+      setCryptoDeposits(allCryptoDeposits);
 
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -1132,9 +1157,11 @@ function DashboardContent() {
                 const cryptoSymbol = deposit.crypto_assets?.symbol || 'CRYPTO';
                 const networkType = deposit.crypto_assets?.network_type || 'Network';
 
-                // Map purpose field to display text
+                // Determine purpose display based on deposit source
                 let purposeDisplay = '';
-                if (deposit.purpose === 'general_deposit') {
+                if (deposit.deposit_source === 'account_opening') {
+                  purposeDisplay = 'Account Opening Deposit';
+                } else if (deposit.purpose === 'general_deposit') {
                   purposeDisplay = 'Crypto Deposit';
                 } else if (deposit.purpose === 'loan_requirement') {
                   purposeDisplay = 'Loan Deposit (10% Collateral)';
@@ -1155,7 +1182,7 @@ function DashboardContent() {
                         <div style={styles.transactionDate}>
                           {formatDate(deposit.created_at)}
                         </div>
-                        {deposit.fee && (
+                        {deposit.fee && parseFloat(deposit.fee) > 0 && (
                           <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
                             Fee: ${parseFloat(deposit.fee).toFixed(2)} • Net: ${parseFloat(deposit.net_amount || deposit.amount).toFixed(2)}
                           </div>
@@ -1165,25 +1192,32 @@ function DashboardContent() {
                             Confirmations: {deposit.confirmations}/{deposit.required_confirmations || 3}
                           </div>
                         )}
+                        {deposit.deposit_source === 'account_opening' && deposit.required_amount && (
+                          <div style={{ fontSize: '0.65rem', color: '#1e40af', marginTop: '0.2rem' }}>
+                            Required: ${parseFloat(deposit.required_amount).toFixed(2)}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div style={styles.transactionRight}>
                       <div style={{
                         ...styles.transactionAmount,
-                        color: deposit.status === 'completed' ? '#059669' : '#f59e0b'
+                        color: (deposit.status === 'completed' || deposit.status === 'approved') ? '#059669' : '#f59e0b'
                       }}>
-                        {deposit.status === 'completed' ? '+' : ''}
+                        {(deposit.status === 'completed' || deposit.status === 'approved') ? '+' : ''}
                         {formatCurrency(parseFloat(deposit.net_amount || deposit.amount || 0))}
                       </div>
                       <div style={{
                         ...styles.statusBadge,
                         backgroundColor: 
-                          deposit.status === 'pending' ? '#fef3c7' :
-                          deposit.status === 'completed' ? '#d1fae5' :
+                          deposit.status === 'pending' || deposit.status === 'awaiting_confirmations' ? '#fef3c7' :
+                          deposit.status === 'completed' || deposit.status === 'approved' ? '#d1fae5' :
+                          deposit.status === 'under_review' ? '#dbeafe' :
                           '#fee2e2',
                         color:
-                          deposit.status === 'pending' ? '#92400e' :
-                          deposit.status === 'completed' ? '#065f46' :
+                          deposit.status === 'pending' || deposit.status === 'awaiting_confirmations' ? '#92400e' :
+                          deposit.status === 'completed' || deposit.status === 'approved' ? '#065f46' :
+                          deposit.status === 'under_review' ? '#1e40af' :
                           '#991b1b'
                       }}>
                         {deposit.status}
