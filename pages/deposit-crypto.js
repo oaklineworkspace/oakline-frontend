@@ -438,15 +438,20 @@ export default function CryptoDeposit() {
       if (fundingMode && accountMinDeposit > 0) {
         const remainingNeeded = accountMinDeposit - accountCurrentBalance;
         const netAmount = calculatedNetAmount;
+        const feePercent = networkFeePercent || 0;
 
-        if (remainingNeeded > 0 && netAmount < remainingNeeded) {
-          const feePercent = networkFeePercent || 0;
+        // Only show error if net amount is truly insufficient (with small tolerance for rounding)
+        if (remainingNeeded > 0 && netAmount < (remainingNeeded - 0.01)) {
           const requiredGrossAmount = remainingNeeded / (1 - feePercent / 100);
 
           setInsufficientMessage(
-            `To activate your account, you need to deposit at least $${remainingNeeded.toLocaleString('en-US', { minimumFractionDigits: 2 })} after fees. ` +
-            `Your current net amount ($${netAmount.toFixed(2)}) is too low. ` +
-            `\n\nYou need to deposit $${requiredGrossAmount.toFixed(2)} to cover the ${feePercent}% network fee and meet the minimum requirement.`
+            `To activate your account, you need at least $${remainingNeeded.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} to be credited after fees.\n\n` +
+            `Your entered amount: $${parseFloat(depositForm.amount).toFixed(2)}\n` +
+            `Network fee (${feePercent}%): -$${calculatedFee.toFixed(2)}\n` +
+            `Amount after fees: $${netAmount.toFixed(2)}\n\n` +
+            `Required: $${remainingNeeded.toFixed(2)}\n` +
+            `Shortage: $${(remainingNeeded - netAmount).toFixed(2)}\n\n` +
+            `You need to deposit at least $${requiredGrossAmount.toFixed(2)} (including the ${feePercent}% fee) to meet the minimum requirement.`
           );
           setShowInsufficientModal(true);
           return;
@@ -2020,8 +2025,9 @@ export default function CryptoDeposit() {
                       const remainingNeeded = accountMinDeposit - accountCurrentBalance;
                       const feePercent = networkFeePercent || 0;
                       // Calculate gross amount needed to get the net amount after fees
-                      const requiredGrossAmount = remainingNeeded / (1 - feePercent / 100);
-                      setDepositForm({ ...depositForm, amount: requiredGrossAmount.toFixed(2) });
+                      // Add a tiny buffer (0.01) to ensure we meet the minimum even with rounding
+                      const requiredGrossAmount = (remainingNeeded / (1 - feePercent / 100)) + 0.01;
+                      setDepositForm({ ...depositForm, amount: Math.ceil(requiredGrossAmount * 100) / 100 });
                     }}
                     disabled={!depositForm.network_type}
                     style={{
