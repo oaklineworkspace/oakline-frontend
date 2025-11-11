@@ -1171,8 +1171,44 @@ function DashboardContent() {
                   purposeDisplay = 'Deposit';
                 }
 
+                // Format as transaction object for receipt modal
+                const transactionObj = {
+                  id: deposit.id,
+                  type: deposit.deposit_source === 'account_opening' ? 'account_opening_deposit' : 'crypto_deposit',
+                  transaction_type: 'crypto_deposit',
+                  description: `${cryptoSymbol} ${purposeDisplay} via ${networkType}`,
+                  amount: deposit.net_amount || deposit.amount || 0,
+                  status: deposit.status || 'pending',
+                  created_at: deposit.created_at,
+                  updated_at: deposit.updated_at,
+                  completed_at: deposit.completed_at,
+                  crypto_type: cryptoType,
+                  crypto_symbol: cryptoSymbol,
+                  network_type: networkType,
+                  wallet_address: deposit.wallet_address,
+                  transaction_hash: deposit.tx_hash || deposit.transaction_hash,
+                  fee: deposit.fee || 0,
+                  gross_amount: deposit.amount || 0,
+                  confirmations: deposit.confirmations || 0,
+                  required_confirmations: deposit.required_confirmations || 3,
+                  accounts: deposit.accounts,
+                  purpose: deposit.purpose || 'account_activation'
+                };
+
                 return (
-                  <div key={deposit.id} style={styles.transactionItem}>
+                  <div 
+                    key={deposit.id} 
+                    style={styles.transactionItem}
+                    onClick={() => handleTransactionClick(transactionObj)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
                     <div style={styles.transactionLeft}>
                       <span style={styles.transactionIcon}>₿</span>
                       <div style={styles.transactionInfo}>
