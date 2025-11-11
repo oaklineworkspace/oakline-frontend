@@ -995,7 +995,7 @@ function DashboardContent() {
               <span style={styles.quickActionIcon}>📈</span>
               <span style={styles.quickActionText}>Invest</span>
             </Link>
-            <Link href="/request-account" style={styles.quickActionButton}>
+            <Link href="/request-account" style={styles.standardActionButton}>
               <span style={styles.quickActionIcon}>➕</span>
               <span style={styles.quickActionText}>Request Additional Account</span>
             </Link>
