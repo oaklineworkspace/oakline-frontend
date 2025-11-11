@@ -2898,148 +2898,120 @@ export default function CryptoDeposit() {
                 💡 Click any row to view full receipt
               </p>
             </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={styles.transactionsTable}>
-                <thead style={styles.tableHeader}>
-                  <tr>
-                    <th style={styles.th}>Date & Time</th>
-                    <th style={styles.th}>Cryptocurrency</th>
-                    <th style={styles.th}>Network</th>
-                    <th style={styles.th}>Account</th>
-                    <th style={{ ...styles.th, textAlign: 'right' }}>Gross Amount</th>
-                    <th style={{ ...styles.th, textAlign: 'right' }}>Fee</th>
-                    <th style={{ ...styles.th, textAlign: 'right' }}>Net Amount</th>
-                    <th style={{ ...styles.th, textAlign: 'center' }}>Status</th>
-                    <th style={{ ...styles.th, textAlign: 'center' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {deposits.map((deposit) => {
-                    // Extract crypto and network info from metadata if not directly available
-                    const cryptoType = deposit.metadata?.crypto_type || deposit.crypto_type || 'Bitcoin';
-                    const networkType = deposit.metadata?.network_type || deposit.network_type || 'N/A';
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {deposits.map((deposit) => {
+                const cryptoType = deposit.metadata?.crypto_type || deposit.crypto_type || 'Bitcoin';
+                const networkType = deposit.metadata?.network_type || deposit.network_type || 'N/A';
+                const cryptoInfo = cryptoTypes.find(c => c.value === cryptoType);
+                const networkIcon = networkIconMap[networkType] || '🔹';
+                
+                const getStatusColor = (status) => {
+                  switch (status?.toLowerCase()) {
+                    case 'completed':
+                    case 'confirmed':
+                    case 'approved':
+                      return { bg: '#d1fae5', color: '#059669' };
+                    case 'pending':
+                    case 'on_hold':
+                    case 'awaiting_confirmations':
+                    case 'processing':
+                      return { bg: '#fef3c7', color: '#f59e0b' };
+                    case 'failed':
+                    case 'reversed':
+                      return { bg: '#fee2e2', color: '#dc2626' };
+                    default:
+                      return { bg: '#e0e7ff', color: '#4f46e5' };
+                  }
+                };
+                
+                const statusColors = getStatusColor(deposit.status);
+                const netAmount = deposit.net_amount || deposit.amount;
 
-                    const cryptoInfo = cryptoTypes.find(c => c.value === cryptoType);
-                    const networkIcon = networkIconMap[networkType] || '🔹';
-
-                    return (
-                      <tr 
-                        key={deposit.id}
-                        onClick={() => viewDepositReceipt(deposit)}
-                        style={{ 
-                          cursor: 'pointer',
-                          transition: 'background-color 0.2s',
-                          borderBottom: '1px solid #f1f5f9'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
-                        <td style={{ ...styles.td, fontSize: '0.85rem' }}>
+                return (
+                  <div
+                    key={deposit.id}
+                    onClick={() => viewDepositReceipt(deposit)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '1rem',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '12px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      gap: '1rem'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                      e.currentTarget.style.borderColor = '#cbd5e1';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                      e.currentTarget.style.borderColor = '#e5e7eb';
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        backgroundColor: cryptoInfo?.color || '#64748b',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.25rem',
+                        fontWeight: '700',
+                        flexShrink: 0,
+                        boxShadow: `0 2px 8px ${cryptoInfo?.color || '#64748b'}40`
+                      }}>
+                        {cryptoInfo?.icon || '₿'}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ 
+                          fontSize: '0.95rem', 
+                          fontWeight: '600', 
+                          color: '#1e293b',
+                          marginBottom: '0.25rem',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {cryptoInfo?.label || cryptoType} Deposit
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
                           {formatDate(deposit.created_at)}
-                        </td>
-                        <td style={{ ...styles.td, fontWeight: '600' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <div style={{
-                              width: '32px',
-                              height: '32px',
-                              borderRadius: '50%',
-                              backgroundColor: cryptoInfo?.color || '#64748b',
-                              color: 'white',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '1rem',
-                              fontWeight: '700',
-                              boxShadow: `0 2px 6px ${cryptoInfo?.color || '#64748b'}30`
-                            }}>
-                              {cryptoInfo?.icon || '₿'}
-                            </div>
-                            <div>
-                              <div style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600' }}>
-                                {cryptoInfo?.label || cryptoType}
-                              </div>
-                              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                                {cryptoType}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td style={{ ...styles.td }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '1.2rem' }}>{networkIcon}</span>
-                            <span style={{ fontSize: '0.85rem', color: '#1e293b', fontWeight: '500' }}>
-                              {networkType}
-                            </span>
-                          </div>
-                        </td>
-                        <td style={{ ...styles.td, fontFamily: 'monospace', color: '#1e293b', fontSize: '0.85rem', fontWeight: '500' }}>
-                          {deposit.account_number}
-                        </td>
-                        <td style={{ ...styles.td, textAlign: 'right', fontWeight: '600', fontSize: '0.9rem', color: '#1e293b' }}>
-                          {formatCurrency(deposit.amount)}
-                        </td>
-                        <td style={{ ...styles.td, textAlign: 'right', color: '#dc2626', fontSize: '0.85rem', fontWeight: '500' }}>
-                          {deposit.fee ? `-${formatCurrency(deposit.fee)}` : '$0.00'}
-                        </td>
-                        <td style={{ ...styles.td, textAlign: 'right', fontWeight: '700', color: '#059669', fontSize: '0.95rem' }}>
-                          {formatCurrency(deposit.net_amount || deposit.amount)}
-                        </td>
-                        <td style={{ ...styles.td, textAlign: 'center' }}>
-                          <span style={{
-                            ...styles.statusBadge,
-                            backgroundColor: 
-                              deposit.status === 'pending' ? '#fef3c7' :
-                              deposit.status === 'on_hold' ? '#fef3c7' :
-                              deposit.status === 'awaiting_confirmations' ? '#fef3c7' :
-                              deposit.status === 'processing' ? '#fef3c7' :
-                              deposit.status === 'confirmed' ? '#d1fae5' :
-                              deposit.status === 'completed' ? '#d1fae5' :
-                              deposit.status === 'approved' ? '#d1fae5' :
-                              deposit.status === 'failed' ? '#fee2e2' :
-                              deposit.status === 'reversed' ? '#fee2e2' : '#fee2e2',
-                            color:
-                              deposit.status === 'pending' ? '#92400e' :
-                              deposit.status === 'on_hold' ? '#92400e' :
-                              deposit.status === 'awaiting_confirmations' ? '#92400e' :
-                              deposit.status === 'processing' ? '#92400e' :
-                              deposit.status === 'confirmed' ? '#065f46' :
-                              deposit.status === 'completed' ? '#065f46' :
-                              deposit.status === 'approved' ? '#065f46' :
-                              deposit.status === 'failed' ? '#991b1b' :
-                              deposit.status === 'reversed' ? '#991b1b' : '#991b1b'
-                          }}>
-                            {deposit.status.replace(/_/g, ' ')}
-                          </span>
-                        </td>
-                        <td style={{ ...styles.td, textAlign: 'center' }}>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              viewDepositReceipt(deposit);
-                            }}
-                            style={{
-                              padding: '0.5rem 1rem',
-                              backgroundColor: '#1e40af',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '6px',
-                              fontSize: '0.8rem',
-                              fontWeight: '600',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s',
-                              whiteSpace: 'nowrap'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e3a8a'}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1e40af'}
-                          >
-                            📄 View Receipt
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+                      <div style={{ 
+                        fontSize: '0.95rem', 
+                        fontWeight: '700',
+                        color: '#059669'
+                      }}>
+                        +{formatCurrency(netAmount)}
+                      </div>
+                      <span style={{
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '20px',
+                        fontSize: '0.7rem',
+                        fontWeight: '600',
+                        textTransform: 'capitalize',
+                        backgroundColor: statusColors.bg,
+                        color: statusColors.color,
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {deposit.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
