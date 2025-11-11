@@ -247,9 +247,32 @@ export default async function handler(req, res) {
       read: false
     }]);
 
-    // Note: Transaction will be created when admin approves the deposit
-    // This prevents duplicate transaction entries in the user's history
+    // Create a pending transaction entry immediately
+    const transactionData = {
+      user_id: user.id,
+      account_id: req.body.accountId,
+      type: 'crypto_deposit',
+      amount: parseFloat(amount),
+      status: 'pending',
+      description: isAccountOpening 
+        ? `${cryptoType} Account Activation Deposit (Pending Confirmation)`
+        : `${cryptoType} Deposit (Pending Confirmation)`,
+      reference_number: depositId,
+      metadata: {
+        crypto_type: cryptoType,
+        network_type: networkType,
+        deposit_id: depositId,
+        is_account_opening: isAccountOpening
       }
+    };
+
+    const { error: txError } = await supabaseAdmin
+      .from('transactions')
+      .insert([transactionData]);
+
+    if (txError) {
+      console.error('Error creating pending transaction:', txError);
+      // Don't fail the entire request if transaction creation fails
     }
 
     return res.status(200).json({ success: true });
