@@ -838,6 +838,10 @@ export default function CryptoDeposit() {
   };
 
   const viewDepositReceipt = (deposit) => {
+    // Get crypto and network details
+    const cryptoInfo = cryptoTypes.find(c => c.value === deposit.crypto_type);
+    const networkInfo = availableNetworks.find(n => n.value === deposit.network_type);
+    
     const receipt = {
       referenceNumber: String(deposit.id).substring(0, 8).toUpperCase(),
       date: new Date(deposit.created_at).toLocaleString('en-US', {
@@ -850,14 +854,21 @@ export default function CryptoDeposit() {
         hour12: true
       }),
       accountNumber: deposit.account_number,
-      cryptoType: cryptoTypes.find(c => c.value === deposit.crypto_type)?.label || deposit.crypto_type,
-      cryptoSymbol: depositForm.crypto_type, // Updated to use the value from depositForm for consistency
+      cryptoType: cryptoInfo?.label || deposit.crypto_type,
+      cryptoSymbol: deposit.crypto_type,
       network: deposit.network_type || 'N/A',
       amount: formatCurrency(deposit.amount),
-      walletAddress: deposit.wallet_address || 'N/A',
-      confirmations: networkConfigs[deposit.crypto_type]?.find(n => n.value === deposit.network_type)?.confirmations || 'N/A',
+      fee: formatCurrency(deposit.fee || 0),
+      netAmount: formatCurrency(deposit.net_amount || deposit.amount),
+      walletAddress: deposit.wallet_address || deposit.metadata?.wallet_address || 'N/A',
+      confirmations: deposit.required_confirmations || networkInfo?.confirmations || 3,
       status: deposit.status === 'pending' ? 'Pending Confirmation' : 
-              deposit.status === 'approved' ? 'Approved & Credited' : 'Rejected',
+              deposit.status === 'awaiting_confirmations' ? 'Awaiting Confirmations' :
+              deposit.status === 'confirmed' ? 'Confirmed' :
+              deposit.status === 'completed' ? 'Completed & Credited' :
+              deposit.status === 'approved' ? 'Approved & Credited' : 
+              deposit.status === 'failed' ? 'Failed' :
+              deposit.status === 'reversed' ? 'Reversed' : 'Under Review',
       transactionId: deposit.id
     };
 
@@ -2870,47 +2881,94 @@ export default function CryptoDeposit() {
 
         {deposits.length > 0 && (
           <div style={styles.contentCard}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={styles.sectionTitle}>Recent Deposits</h2>
               <p style={{ fontSize: '0.85rem', color: '#64748b', fontStyle: 'italic' }}>
-                💡 Click any row to view receipt
+                💡 Click any row to view full receipt
               </p>
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table style={styles.transactionsTable}>
                 <thead style={styles.tableHeader}>
                   <tr>
-                    <th style={styles.th}>Date</th>
-                    <th style={styles.th}>Crypto</th>
+                    <th style={styles.th}>Date & Time</th>
+                    <th style={styles.th}>Cryptocurrency</th>
                     <th style={styles.th}>Network</th>
                     <th style={styles.th}>Account</th>
-                    <th style={{ ...styles.th, textAlign: 'right' }}>Amount</th>
+                    <th style={{ ...styles.th, textAlign: 'right' }}>Gross Amount</th>
+                    <th style={{ ...styles.th, textAlign: 'right' }}>Fee</th>
+                    <th style={{ ...styles.th, textAlign: 'right' }}>Net Amount</th>
                     <th style={{ ...styles.th, textAlign: 'center' }}>Status</th>
+                    <th style={{ ...styles.th, textAlign: 'center' }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {deposits.map((deposit) => (
-                    <tr 
-                      key={deposit.id}
-                      onClick={() => viewDepositReceipt(deposit)}
-                      style={{ 
-                        cursor: 'pointer',
-                        transition: 'background-color 0.2s'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    >
-                      <td style={styles.td}>{formatDate(deposit.created_at)}</td>
-                      <td style={{ ...styles.td, fontWeight: '600' }}>{deposit.crypto_type}</td>
-                      <td style={{ ...styles.td, color: '#64748b' }}>{deposit.network_type || 'N/A'}</td>
-                      <td style={{ ...styles.td, fontFamily: 'monospace', color: '#64748b' }}>
-                        {deposit.account_number}
-                      </td>
-                      <td style={{ ...styles.td, textAlign: 'right', fontWeight: '600' }}>
-                        {formatCurrency(deposit.amount)}
-                      </td>
-                      <td style={{ ...styles.td, textAlign: 'center' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                  {deposits.map((deposit) => {
+                    const cryptoInfo = cryptoTypes.find(c => c.value === deposit.crypto_type);
+                    const networkIcon = networkIconMap[deposit.network_type] || '🔹';
+                    
+                    return (
+                      <tr 
+                        key={deposit.id}
+                        onClick={() => viewDepositReceipt(deposit)}
+                        style={{ 
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s',
+                          borderBottom: '1px solid #f1f5f9'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        <td style={{ ...styles.td, fontSize: '0.85rem' }}>
+                          {formatDate(deposit.created_at)}
+                        </td>
+                        <td style={{ ...styles.td, fontWeight: '600' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div style={{
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '50%',
+                              backgroundColor: cryptoInfo?.color || '#64748b',
+                              color: 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.9rem',
+                              fontWeight: '700'
+                            }}>
+                              {cryptoInfo?.icon || '₿'}
+                            </div>
+                            <div>
+                              <div style={{ fontSize: '0.9rem', color: '#1e293b' }}>
+                                {cryptoInfo?.label || deposit.crypto_type}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                {deposit.crypto_type}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ ...styles.td, color: '#64748b' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '1.2rem' }}>{networkIcon}</span>
+                            <span style={{ fontSize: '0.85rem' }}>
+                              {deposit.network_type || 'N/A'}
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ ...styles.td, fontFamily: 'monospace', color: '#64748b', fontSize: '0.85rem' }}>
+                          {deposit.account_number}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontWeight: '600', fontSize: '0.9rem' }}>
+                          {formatCurrency(deposit.amount)}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', color: '#dc2626', fontSize: '0.85rem' }}>
+                          {deposit.fee ? `-${formatCurrency(deposit.fee)}` : '$0.00'}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'right', fontWeight: '700', color: '#059669', fontSize: '0.95rem' }}>
+                          {formatCurrency(deposit.net_amount || deposit.amount)}
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'center' }}>
                           <span style={{
                             ...styles.statusBadge,
                             backgroundColor: 
@@ -2934,20 +2992,22 @@ export default function CryptoDeposit() {
                               deposit.status === 'failed' ? '#991b1b' :
                               deposit.status === 'reversed' ? '#991b1b' : '#991b1b'
                           }}>
-                            {deposit.status}
+                            {deposit.status.replace(/_/g, ' ')}
                           </span>
+                        </td>
+                        <td style={{ ...styles.td, textAlign: 'center' }}>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               viewDepositReceipt(deposit);
                             }}
                             style={{
-                              padding: '0.4rem 0.8rem',
+                              padding: '0.5rem 1rem',
                               backgroundColor: '#1e40af',
                               color: 'white',
                               border: 'none',
                               borderRadius: '6px',
-                              fontSize: '0.75rem',
+                              fontSize: '0.8rem',
                               fontWeight: '600',
                               cursor: 'pointer',
                               transition: 'all 0.2s',
@@ -2958,10 +3018,10 @@ export default function CryptoDeposit() {
                           >
                             📄 View Receipt
                           </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -3058,6 +3118,128 @@ export default function CryptoDeposit() {
             >
               Got It - Adjust Amount
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Receipt Modal for Recent Deposits */}
+      {showReceipt && receiptData && (
+        <div style={styles.receiptOverlay} onClick={() => setShowReceipt(false)}>
+          <div className="receipt-print" style={styles.receipt} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.receiptHeader}>
+              <h2 style={styles.receiptTitle}>Deposit Receipt</h2>
+              <p style={styles.receiptSubtitle}>Oakline Bank</p>
+              <div style={styles.receiptSuccessBadge}>
+                {receiptData.status === 'Completed & Credited' || receiptData.status === 'Approved & Credited' ? '✓' : '⏱️'} {receiptData.status}
+              </div>
+            </div>
+
+            <div style={styles.receiptHighlight}>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Reference Number</span>
+                <span style={{ ...styles.receiptValue, fontFamily: 'monospace', fontWeight: '700' }}>
+                  {receiptData.referenceNumber}
+                </span>
+              </div>
+            </div>
+
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Date & Time</span>
+              <span style={styles.receiptValue}>{receiptData.date}</span>
+            </div>
+
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Account Number</span>
+              <span style={{ ...styles.receiptValue, fontFamily: 'monospace' }}>
+                {receiptData.accountNumber}
+              </span>
+            </div>
+
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Cryptocurrency</span>
+              <span style={styles.receiptValue}>
+                {receiptData.cryptoType} ({receiptData.cryptoSymbol})
+              </span>
+            </div>
+
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Network</span>
+              <span style={styles.receiptValue}>{receiptData.network}</span>
+            </div>
+
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Wallet Address</span>
+              <span style={{ 
+                ...styles.receiptValue, 
+                fontFamily: 'monospace',
+                fontSize: '0.75rem',
+                wordBreak: 'break-all'
+              }}>
+                {receiptData.walletAddress}
+              </span>
+            </div>
+
+            <div style={{
+              borderTop: '2px solid #e5e7eb',
+              marginTop: '1rem',
+              paddingTop: '1rem'
+            }}>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Deposit Amount</span>
+                <span style={styles.receiptValue}>{receiptData.amount}</span>
+              </div>
+
+              {receiptData.fee && parseFloat(receiptData.fee.replace(/[$,]/g, '')) > 0 && (
+                <div style={styles.receiptRow}>
+                  <span style={{ ...styles.receiptLabel, color: '#dc2626' }}>Network Fee</span>
+                  <span style={{ ...styles.receiptValue, color: '#dc2626' }}>
+                    -{receiptData.fee}
+                  </span>
+                </div>
+              )}
+
+              <div style={{
+                ...styles.receiptRow,
+                borderTop: '2px solid #e5e7eb',
+                paddingTop: '0.75rem',
+                marginTop: '0.5rem'
+              }}>
+                <span style={{ ...styles.receiptLabel, fontSize: '1rem', fontWeight: '700' }}>
+                  Net Amount Credited
+                </span>
+                <span style={{ ...styles.receiptValue, fontSize: '1.25rem', fontWeight: '700', color: '#059669' }}>
+                  {receiptData.netAmount}
+                </span>
+              </div>
+            </div>
+
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Confirmations Required</span>
+              <span style={styles.receiptValue}>{receiptData.confirmations}</span>
+            </div>
+
+            <div style={styles.receiptButtons}>
+              <button
+                onClick={printReceipt}
+                style={{
+                  ...styles.receiptButton,
+                  backgroundColor: '#1e40af',
+                  color: 'white'
+                }}
+              >
+                🖨️ Print
+              </button>
+              <button
+                onClick={() => setShowReceipt(false)}
+                style={{
+                  ...styles.receiptButton,
+                  backgroundColor: '#f3f4f6',
+                  color: '#1e293b'
+                }}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
