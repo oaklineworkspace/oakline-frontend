@@ -362,7 +362,7 @@ export default function Home() {
         onClick={(e) => e.stopPropagation()}
       >
         <div style={styles.headerContainer}>
-          <div style={styles.topHeaderRow}>
+          <div style={styles.topHeaderRow} className="top-header-responsive">
             {/* Logo Section */}
             <Link href="/" style={styles.logoSection}>
               <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.headerLogo} />
@@ -373,19 +373,19 @@ export default function Home() {
             </Link>
 
             {/* Scrolling Welcome Message */}
-            <div style={styles.scrollingWelcomeContainer}>
+            <div style={styles.scrollingWelcomeContainer} className="scrolling-welcome-container">
               <div style={styles.scrollingWelcomeText}>
                 Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $500,000 • Rated #1 Customer Service
               </div>
             </div>
 
             {/* Language Selector - Left Side */}
-            <div style={styles.languageSelectorWrapper}>
+            <div style={styles.languageSelectorWrapper} className="language-selector-wrapper">
               <LanguageSelector compact={true} />
             </div>
 
             {/* Banking+ Dropdown Button - Right Side */}
-            <div style={styles.bankingPlusContainer}>
+            <div style={styles.bankingPlusContainer} className="banking-plus-container">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -410,7 +410,7 @@ export default function Home() {
                     setShowBankingDropdown(false);
                   }}
                 ></div>
-                <div style={styles.bankingDropdown} onClick={(e) => e.stopPropagation()}>
+                <div style={styles.bankingDropdown} className="banking-dropdown" onClick={(e) => e.stopPropagation()}>
                   <div style={styles.bankingDropdownHeader}>
                     <h4 style={styles.bankingDropdownTitle}>Complete Banking Solutions</h4>
                     <p style={styles.bankingDropdownSubtitle}>Access all your banking services in one place</p>
@@ -1628,8 +1628,9 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    flexWrap: 'nowrap',
-    gap: '0.5rem'
+    flexWrap: 'wrap',
+    columnGap: '0.5rem',
+    rowGap: '0.75rem'
   },
   authButtonsRow: {
     display: 'flex',
@@ -1756,11 +1757,12 @@ const styles = {
   // Banking+ Dropdown Styles
   bankingPlusContainer: {
     display: 'flex',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     alignItems: 'center',
-    width: 'auto',
     position: 'relative',
-    flex: '0 0 auto'
+    flex: '0 0 auto',
+    minWidth: '200px',
+    maxWidth: '240px'
   },
   bankingPlusButton: {
     display: 'flex',
@@ -1801,17 +1803,16 @@ const styles = {
   bankingDropdown: {
     position: 'absolute',
     top: 'calc(100% + 0.75rem)',
-    left: '50%',
-    transform: 'translateX(-50%)',
+    right: '1rem',
     backgroundColor: 'white',
     borderRadius: '20px',
     boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
     border: '1px solid #e2e8f0',
     padding: '1.5rem',
-    width: '420px',
-    maxWidth: '90vw',
+    width: '520px',
+    maxWidth: 'calc(100vw - 2rem)',
     zIndex: 10001,
-    maxHeight: '75vh',
+    maxHeight: 'calc(100vh - 120px)',
     overflowY: 'auto',
     overflowX: 'hidden'
   },
@@ -4150,7 +4151,7 @@ const styles = {
 
   // Scrolling Welcome Message Styles
   scrollingWelcomeContainer: {
-    flex: 1,
+    flex: '1 1 100%',
     overflow: 'hidden',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: '20px',
@@ -4158,14 +4159,15 @@ const styles = {
     margin: '0 1rem',
     position: 'relative',
     minWidth: '300px',
-    maxWidth: '600px'
+    maxWidth: '100%'
   },
   languageSelectorWrapper: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     flex: '0 0 auto',
-    minWidth: '120px',
+    minWidth: '200px',
+    maxWidth: '240px',
     marginLeft: 'auto',
     marginRight: '0.5rem'
   },
@@ -5378,8 +5380,11 @@ if (typeof window !== 'undefined') {
 
 // Add CSS animations to the document
 if (typeof document !== 'undefined') {
-  const styleSheet = document.createElement('style');
-  styleSheet.textContent = `
+  const existingOaklineStyles = document.querySelector('#oakline-home-styles');
+  if (!existingOaklineStyles) {
+    const styleSheet = document.createElement('style');
+    styleSheet.id = 'oakline-home-styles';
+    styleSheet.textContent = `
     /* Dropdown positioning fix */
     .dropdown-container {
       position: relative;
@@ -5601,6 +5606,44 @@ if (typeof document !== 'undefined') {
         grid-template-columns: 1fr !important;
         gap: 1rem !important;
       }
+
+      .top-header-responsive {
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        row-gap: 0.75rem !important;
+      }
+
+      .top-header-responsive .scrolling-welcome-container {
+        order: 3;
+        flex: 1 1 100%;
+        width: 100%;
+        max-width: 100%;
+        text-align: center;
+      }
+
+      .top-header-responsive .language-selector-wrapper,
+      .top-header-responsive .banking-plus-container {
+        order: unset;
+        flex: 1 1 220px;
+        max-width: 260px;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .top-header-responsive .language-selector-wrapper {
+        order: 1;
+      }
+
+      .top-header-responsive .banking-plus-container {
+        order: 2;
+      }
+
+      .top-header-responsive .banking-dropdown {
+        width: min(360px, 92vw) !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%);
+      }
     }
 
     .accountCard:hover {
@@ -5673,5 +5716,6 @@ if (typeof document !== 'undefined') {
       transform: translateY(-3px);
     }
   `;
-  document.head.appendChild(styleSheet);
+    document.head.appendChild(styleSheet);
+  }
 }
