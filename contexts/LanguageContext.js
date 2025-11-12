@@ -96,10 +96,17 @@ export function LanguageProvider({ children }) {
 
   // Translation function
   const t = async (text) => {
-    if (currentLanguage === DEFAULT_LANGUAGE) {
+    if (!text || currentLanguage === DEFAULT_LANGUAGE) {
       return text;
     }
-    return await translateText(text, currentLanguage, DEFAULT_LANGUAGE);
+    
+    try {
+      const translated = await translateText(text, currentLanguage, DEFAULT_LANGUAGE);
+      return translated || text;
+    } catch (error) {
+      console.error('Translation function error:', error);
+      return text;
+    }
   };
 
   const value = {

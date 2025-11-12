@@ -81,6 +81,8 @@ export default async function handler(req, res) {
     let provider = null;
 
     try {
+      console.log('Attempting LibreTranslate translation:', { source, target, textLength: text.length });
+      
       const libreResponse = await fetch('https://libretranslate.com/translate', {
         method: 'POST',
         headers: {
@@ -92,18 +94,22 @@ export default async function handler(req, res) {
           target: target,
           format: 'text',
           api_key: process.env.LIBRETRANSLATE_API_KEY || '' // Use env variable or empty for public
-        }),
-        timeout: 10000 // 10 second timeout
+        })
       });
+
+      console.log('LibreTranslate response status:', libreResponse.status);
 
       if (libreResponse.ok) {
         const libreData = await libreResponse.json();
+        console.log('LibreTranslate response:', libreData);
+        
         if (libreData.translatedText) {
           translatedText = libreData.translatedText;
           provider = 'libretranslate';
         }
       } else {
-        console.error('LibreTranslate HTTP error:', libreResponse.status);
+        const errorText = await libreResponse.text();
+        console.error('LibreTranslate HTTP error:', libreResponse.status, errorText);
       }
     } catch (libreError) {
       console.error('LibreTranslate error:', libreError.message);
