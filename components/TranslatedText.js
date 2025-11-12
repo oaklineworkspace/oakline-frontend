@@ -6,40 +6,26 @@ export default function TranslatedText({ text, children, as = 'span', style, cla
   const sourceText = String(text || children || '');
   const { currentLanguage, t } = useLanguage();
   const [translatedText, setTranslatedText] = useState(sourceText);
-  const [isTranslating, setIsTranslating] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     
+    // Return immediately for English or empty text
+    if (!sourceText || sourceText.trim() === '' || currentLanguage === 'en') {
+      setTranslatedText(sourceText);
+      return;
+    }
+    
     async function translate() {
-      if (!sourceText || sourceText.trim() === '') {
-        return;
-      }
-      
-      // Return immediately for English
-      if (currentLanguage === 'en') {
-        if (isMounted) {
-          setTranslatedText(sourceText);
-          setIsTranslating(false);
-        }
-        return;
-      }
-      
-      setIsTranslating(true);
-      
       try {
         const translated = await t(sourceText);
-        if (isMounted && translated) {
-          setTranslatedText(translated);
+        if (isMounted) {
+          setTranslatedText(translated || sourceText);
         }
       } catch (error) {
         console.error('Translation error:', error);
         if (isMounted) {
           setTranslatedText(sourceText);
-        }
-      } finally {
-        if (isMounted) {
-          setIsTranslating(false);
         }
       }
     }

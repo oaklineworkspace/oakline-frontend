@@ -94,9 +94,10 @@ export function LanguageProvider({ children }) {
     }
   };
 
-  // Translation function
+  // Translation function with proper error handling
   const t = async (text) => {
-    if (!text || currentLanguage === DEFAULT_LANGUAGE) {
+    // Return immediately if no text or already in default language
+    if (!text || typeof text !== 'string' || currentLanguage === DEFAULT_LANGUAGE) {
       return text;
     }
     
@@ -104,7 +105,8 @@ export function LanguageProvider({ children }) {
       const translated = await translateText(text, currentLanguage, DEFAULT_LANGUAGE);
       return translated || text;
     } catch (error) {
-      console.error('Translation function error:', error);
+      console.error('Translation error in context:', error);
+      // Always return original text on error
       return text;
     }
   };
