@@ -1,6 +1,7 @@
-import { useState, useEffect, memo, lazy, Suspense } from 'react';
+import { useState, useEffect, memo, lazy, Suspense, useCallback } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabaseClient';
+import { useLanguage } from '../contexts/LanguageContext';
 import MainMenu from '../components/MainMenu';
 import WelcomeBanner from '../components/WelcomeBanner';
 import HeroSection from '../components/HeroSection';
@@ -17,6 +18,7 @@ const LoanApprovalSection = lazy(() => import('../components/LoanApprovalSection
 const CTA = lazy(() => import('../components/CTA'));
 
 export default function Home() {
+  const { currentLanguage, t: translateFn } = useLanguage();
   const [user, setUser] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [currentAccountSlide, setCurrentAccountSlide] = useState(0);
@@ -25,6 +27,35 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [showBankingDropdown, setShowBankingDropdown] = useState(false);
+  const [translations, setTranslations] = useState({});
+
+  // Optimized translation function with caching
+  const t = useCallback(async (text) => {
+    if (!text) return '';
+    if (currentLanguage === 'en') return text;
+    
+    const cacheKey = `${currentLanguage}:${text}`;
+    if (translations[cacheKey]) {
+      return translations[cacheKey];
+    }
+    
+    try {
+      const translated = await translateFn(text);
+      setTranslations(prev => ({ ...prev, [cacheKey]: translated }));
+      return translated;
+    } catch (error) {
+      console.error('Translation error:', error);
+      return text;
+    }
+  }, [currentLanguage, translations, translateFn]);
+
+  // Synchronous translation for immediate rendering (uses cache)
+  const ts = useCallback((text) => {
+    if (!text) return '';
+    if (currentLanguage === 'en') return text;
+    const cacheKey = `${currentLanguage}:${text}`;
+    return translations[cacheKey] || text;
+  }, [currentLanguage, translations]);
 
   useEffect(() => {
     // Get initial session and set up auth listener
@@ -116,6 +147,39 @@ export default function Home() {
       cleanup();
     };
   }, []);
+
+  // Pre-translate critical content when language changes
+  useEffect(() => {
+    if (currentLanguage === 'en') return;
+
+    const criticalTexts = [
+      // Header & Navigation
+      'Oakline Bank', 'Your Financial Partner', 'Banking+', 'Welcome',
+      'Complete Banking Solutions', 'Access all your banking services in one place',
+      'Core Banking', 'Premium Services', 'Enroll Now', 'Explore All Banking Services', 'Contact Support',
+      
+      // Loading screen
+      'Welcome to Oakline Bank', 'Loading your premium banking experience...',
+      
+      // Hero carousel
+      'Mobile Banking Excellence', 'Complete banking control right in your pocket with our award-winning app',
+      'Expert Financial Consultation', 'Professional advice from certified banking specialists in our modern branches',
+      'Modern Banking Facilities', 'Experience premium banking in our state-of-the-art branch locations',
+      
+      //Common buttons & CTAs
+      'Learn More', 'Get Started', 'Apply Now', 'Open Account', 'View Details',
+      'Download App', 'Request Demo', 'Schedule Consultation'
+    ];
+
+    // Preload all critical translations
+    const preloadTranslations = async () => {
+      for (const text of criticalTexts) {
+        await t(text);
+      }
+    };
+
+    preloadTranslations();
+  }, [currentLanguage, t]);
 
   const premiumFeatures = [
     // Core Banking Services
@@ -340,8 +404,8 @@ export default function Home() {
           <div style={styles.spinner}>
             </div>
           <div style={styles.loadingContent}>
-            <h2 style={styles.loadingTitle}>Welcome to Oakline Bank</h2>
-            <p style={styles.loadingText}>Loading your premium banking experience...</p>
+            <h2 style={styles.loadingTitle}>{ts('Welcome to Oakline Bank')}</h2>
+            <p style={styles.loadingText}>{ts('Loading your premium banking experience...')}</p>
             <div style={styles.loadingProgress}>
               <div style={styles.progressBar}></div>
             </div>
@@ -367,8 +431,8 @@ export default function Home() {
             <Link href="/" style={styles.logoSection}>
               <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.headerLogo} />
               <div style={styles.brandSection}>
-                <span style={styles.bankName}>Oakline Bank</span>
-                <span style={styles.bankTagline}>Your Financial Partner</span>
+                <span style={styles.bankName}>{ts('Oakline Bank')}</span>
+                <span style={styles.bankTagline}>{ts('Your Financial Partner')}</span>
               </div>
             </Link>
 
@@ -398,7 +462,7 @@ export default function Home() {
                 <div style={styles.iconLine}></div>
                 <div style={styles.iconLine}></div>
               </div>
-              <span style={styles.bankingPlusText}>Banking+</span>
+              <span style={styles.bankingPlusText}>{ts('Banking+')}</span>
             </button>
 
             {showBankingDropdown && (
@@ -412,8 +476,8 @@ export default function Home() {
                 ></div>
                 <div style={styles.bankingDropdown} className="banking-dropdown" onClick={(e) => e.stopPropagation()}>
                   <div style={styles.bankingDropdownHeader}>
-                    <h4 style={styles.bankingDropdownTitle}>Complete Banking Solutions</h4>
-                    <p style={styles.bankingDropdownSubtitle}>Access all your banking services in one place</p>
+                    <h4 style={styles.bankingDropdownTitle}>{ts('Complete Banking Solutions')}</h4>
+                    <p style={styles.bankingDropdownSubtitle}>{ts('Access all your banking services in one place')}</p>
                   </div>
 
                   <div style={styles.bankingTwoColumnGrid}>
@@ -421,7 +485,7 @@ export default function Home() {
                     <div style={styles.bankingSection}>
                       <div style={styles.bankingSectionHeader}>
                         <span style={styles.bankingSectionIcon}>🏦</span>
-                        <h5 style={styles.bankingSectionTitle}>Core Banking</h5>
+                        <h5 style={styles.bankingSectionTitle}>{ts('Core Banking')}</h5>
                       </div>
                       <div style={styles.bankingFeaturesGrid}>
                         {coreFeatures.map((feature) => (
@@ -439,8 +503,8 @@ export default function Home() {
                               {feature.icon}
                             </div>
                             <div style={styles.bankingFeatureContent}>
-                              <div style={styles.bankingFeatureName}>{feature.name}</div>
-                              <div style={styles.bankingFeatureDesc}>{feature.desc}</div>
+                              <div style={styles.bankingFeatureName}>{ts(feature.name)}</div>
+                              <div style={styles.bankingFeatureDesc}>{ts(feature.desc)}</div>
                             </div>
                             <div style={{ ...styles.bankingFeatureArrow, color: feature.color }}>→</div>
                           </Link>
@@ -452,7 +516,7 @@ export default function Home() {
                     <div style={styles.bankingSection}>
                       <div style={styles.bankingSectionHeader}>
                         <span style={styles.bankingSectionIcon}>⭐</span>
-                        <h5 style={styles.bankingSectionTitle}>Premium Services</h5>
+                        <h5 style={styles.bankingSectionTitle}>{ts('Premium Services')}</h5>
                       </div>
                       <div style={styles.bankingFeaturesGrid}>
                         {premiumServices.map((feature) => (
@@ -470,8 +534,8 @@ export default function Home() {
                               {feature.icon}
                             </div>
                             <div style={styles.bankingFeatureContent}>
-                              <div style={styles.bankingFeatureName}>{feature.name}</div>
-                              <div style={styles.bankingFeatureDesc}>{feature.desc}</div>
+                              <div style={styles.bankingFeatureName}>{ts(feature.name)}</div>
+                              <div style={styles.bankingFeatureDesc}>{ts(feature.desc)}</div>
                             </div>
                             <div style={{ ...styles.bankingFeatureArrow, color: feature.color }}>→</div>
                           </Link>
@@ -487,7 +551,7 @@ export default function Home() {
                         onClick={() => setShowBankingDropdown(false)}
                         style={styles.viewAllServicesButtonEnroll}
                       >
-                        🔐 Enroll Now
+                        🔐 {ts('Enroll Now')}
                       </Link>
                     )}
                     <Link
@@ -495,14 +559,14 @@ export default function Home() {
                       onClick={() => setShowBankingDropdown(false)}
                       style={styles.viewAllServicesButton}
                     >
-                      Explore All Banking Services
+                      {ts('Explore All Banking Services')}
                     </Link>
                     <Link
                       href="/support"
                       onClick={() => setShowBankingDropdown(false)}
                       style={styles.viewAllServicesButtonSecondary}
                     >
-                      Contact Support
+                      {ts('Contact Support')}
                     </Link>
                   </div>
                 </div>
