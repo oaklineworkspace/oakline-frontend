@@ -482,6 +482,15 @@ export default function Home() {
                   </div>
 
                   <div style={styles.bankingDropdownFooter}>
+                    {!user && (
+                      <Link
+                        href="/signup"
+                        onClick={() => setShowBankingDropdown(false)}
+                        style={styles.viewAllServicesButtonEnroll}
+                      >
+                        🔐 Enroll Now
+                      </Link>
+                    )}
                     <Link
                       href="/account-types"
                       onClick={() => setShowBankingDropdown(false)}
@@ -1961,6 +1970,22 @@ const styles = {
     border: '2px solid #1e40af',
     cursor: 'pointer',
     textAlign: 'center'
+  },
+  viewAllServicesButtonEnroll: {
+    display: 'block',
+    width: '100%',
+    padding: '0.875rem 1.5rem',
+    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+    color: 'white',
+    textDecoration: 'none',
+    borderRadius: '12px',
+    fontSize: '0.875rem',
+    fontWeight: '700',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 12px rgba(5, 150, 105, 0.4)',
+    cursor: 'pointer',
+    textAlign: 'center',
+    marginBottom: '0.75rem'
   },
 
   navigationDropdown: {
