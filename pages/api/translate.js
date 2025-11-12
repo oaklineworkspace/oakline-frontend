@@ -76,60 +76,62 @@ export default async function handler(req, res) {
       }
     }
 
-    // Step 3: Try LibreTranslate first (supports 200+ languages)
+    // Step 3: Use MyMemory Translation API (Free, no API key required)
     let translatedText = null;
     let provider = null;
 
     try {
-      console.log('Attempting LibreTranslate translation:', { source, target, textLength: text.length });
+      console.log('Attempting MyMemory translation:', { source, target, textLength: text.length });
       
-      const libreResponse = await fetch('https://libretranslate.com/translate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          q: text,
-          source: source === 'auto' ? 'auto' : source,
-          target: target,
-          format: 'text',
-          api_key: process.env.LIBRETRANSLATE_API_KEY || '' // Use env variable or empty for public
-        })
-      });
-
-      console.log('LibreTranslate response status:', libreResponse.status);
-
-      if (libreResponse.ok) {
-        const libreData = await libreResponse.json();
-        console.log('LibreTranslate response:', libreData);
+      const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}`;
+      const myMemoryResponse = await fetch(myMemoryUrl);
+      
+      console.log('MyMemory response status:', myMemoryResponse.status);
+      
+      if (myMemoryResponse.ok) {
+        const myMemoryData = await myMemoryResponse.json();
+        console.log('MyMemory response:', myMemoryData);
         
-        if (libreData.translatedText) {
-          translatedText = libreData.translatedText;
-          provider = 'libretranslate';
+        if (myMemoryData.responseData && myMemoryData.responseData.translatedText) {
+          translatedText = myMemoryData.responseData.translatedText;
+          provider = 'mymemory';
         }
       } else {
-        const errorText = await libreResponse.text();
-        console.error('LibreTranslate HTTP error:', libreResponse.status, errorText);
+        const errorText = await myMemoryResponse.text();
+        console.error('MyMemory HTTP error:', myMemoryResponse.status, errorText);
       }
-    } catch (libreError) {
-      console.error('LibreTranslate error:', libreError.message);
+    } catch (myMemoryError) {
+      console.error('MyMemory error:', myMemoryError.message);
     }
 
-    // Step 4: Fallback to MyMemory Translation API
-    if (!translatedText) {
+    // Step 4: If MyMemory fails, try LibreTranslate (requires API key)
+    if (!translatedText && process.env.LIBRETRANSLATE_API_KEY) {
       try {
-        const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}`;
-        const myMemoryResponse = await fetch(myMemoryUrl);
+        console.log('Attempting LibreTranslate translation:', { source, target, textLength: text.length });
         
-        if (myMemoryResponse.ok) {
-          const myMemoryData = await myMemoryResponse.json();
-          if (myMemoryData.responseData && myMemoryData.responseData.translatedText) {
-            translatedText = myMemoryData.responseData.translatedText;
-            provider = 'mymemory';
+        const libreResponse = await fetch('https://libretranslate.com/translate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            q: text,
+            source: source === 'auto' ? 'auto' : source,
+            target: target,
+            format: 'text',
+            api_key: process.env.LIBRETRANSLATE_API_KEY
+          })
+        });
+
+        if (libreResponse.ok) {
+          const libreData = await libreResponse.json();
+          if (libreData.translatedText) {
+            translatedText = libreData.translatedText;
+            provider = 'libretranslate';
           }
         }
-      } catch (myMemoryError) {
-        console.error('MyMemory error:', myMemoryError);
+      } catch (libreError) {
+        console.error('LibreTranslate error:', libreError.message);
       }
     }
 
