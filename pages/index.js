@@ -8,6 +8,7 @@ import ServicesSection from '../components/ServicesSection';
 import FeaturesSection from '../components/FeaturesSection';
 import Footer from '../components/Footer';
 import LiveChat from '../components/LiveChat';
+import LanguageSelector from '../components/LanguageSelector';
 
 // Lazy load heavy components
 const Testimonials = lazy(() => import('../components/Testimonials'));
@@ -376,6 +377,11 @@ export default function Home() {
               <div style={styles.scrollingWelcomeText}>
                 Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $500,000 • Rated #1 Customer Service
               </div>
+            </div>
+
+            {/* Language Selector for Public Users */}
+            <div style={styles.languageSelectorWrapper}>
+              <LanguageSelector compact={true} />
             </div>
           </div>
 
@@ -1563,103 +1569,6 @@ export default function Home() {
       <Suspense fallback={<div style={styles.loadingComponent}>Loading testimonials...</div>}>
         <TestimonialsSection />
       </Suspense>
-
-      {/* Request Enrollment Link Section - Only for non-authenticated users */}
-      {!user && (
-        <section style={styles.requestEnrollmentSection} id="request-enrollment" data-animate>
-          <div style={styles.container}>
-            <div style={{
-              ...styles.sectionHeader,
-              ...(isVisible['request-enrollment'] ? styles.fadeInUp : {})
-            }}>
-              <h2 style={styles.sectionTitle}>Already Applied?</h2>
-              <p style={styles.sectionSubtitle}>
-                Request a new enrollment link to complete your account setup
-              </p>
-              <div style={styles.titleUnderline}></div>
-            </div>
-
-            <div style={styles.requestEnrollmentCard}>
-              <div style={styles.requestEnrollmentIcon}>📧</div>
-              <h3 style={styles.requestEnrollmentTitle}>Get Your Enrollment Link</h3>
-              <p style={styles.requestEnrollmentDescription}>
-                If you've already submitted an application but haven't completed enrollment,
-                request a new enrollment link below. We'll send it to the email address you used during application.
-              </p>
-
-              <div style={styles.requestEnrollmentForm}>
-                <input
-                  type="email"
-                  placeholder="Enter your email address"
-                  id="request-email-input"
-                  style={styles.requestEnrollmentInput}
-                />
-                <button
-                  onClick={async () => {
-                    const emailInput = document.getElementById('request-email-input');
-                    const messageDiv = document.getElementById('request-message');
-                    const email = emailInput.value.trim();
-
-                    if (!email) {
-                      messageDiv.textContent = '❌ Please enter your email address';
-                      messageDiv.style.color = '#dc2626';
-                      return;
-                    }
-
-                    try {
-                      messageDiv.textContent = '⏳ Sending enrollment link...';
-                      messageDiv.style.color = '#64748b';
-
-                      const response = await fetch('/api/user-request-enrollment', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email })
-                      });
-
-                      const result = await response.json();
-
-                      if (response.ok) {
-                        messageDiv.textContent = '✅ ' + result.message;
-                        messageDiv.style.color = '#059669';
-                        emailInput.value = '';
-                      } else {
-                        messageDiv.textContent = '❌ ' + (result.error || 'Failed to send enrollment link');
-                        messageDiv.style.color = '#dc2626';
-                      }
-                    } catch (error) {
-                      console.error('Error requesting enrollment link:', error);
-                      messageDiv.textContent = '❌ An error occurred. Please try again.';
-                      messageDiv.style.color = '#dc2626';
-                    }
-                  }}
-                  style={styles.requestEnrollmentButton}
-                  onMouseEnter={(e) => {
-                    e.target.style.transform = 'translateY(-2px)';
-                    e.target.style.boxShadow = '0 8px 20px rgba(30, 64, 175, 0.4)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.transform = 'translateY(0)';
-                    e.target.style.boxShadow = '0 4px 12px rgba(30, 64, 175, 0.3)';
-                  }}
-                >
-                  <span style={{ fontSize: '16px' }}>📧</span>
-                  Request Enrollment Link
-                </button>
-                <div id="request-message" style={styles.requestEnrollmentMessage}></div>
-              </div>
-
-              <div style={styles.requestEnrollmentHelp}>
-                <p style={styles.requestEnrollmentHelpText}>
-                  <strong>Need help?</strong> Contact our support team at{' '}
-                  <a href="mailto:support@theoaklinebank.com" style={styles.requestEnrollmentHelpLink}>
-                    support@theoaklinebank.com
-                  </a>
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Enhanced Final CTA */}
       <div id="final-cta" data-animate style={{
@@ -4223,6 +4132,11 @@ const styles = {
     position: 'relative',
     minWidth: '300px',
     maxWidth: '600px'
+  },
+  languageSelectorWrapper: {
+    display: 'flex',
+    alignItems: 'center',
+    marginLeft: '1rem'
   },
   scrollingWelcomeText: {
     whiteSpace: 'nowrap',

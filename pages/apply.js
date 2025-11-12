@@ -2880,7 +2880,7 @@ export default function Apply() {
                       <div style={{ flex: 1 }}>
                         <strong style={{ color: '#1A3E6F', fontSize: 'clamp(0.9rem, 3vw, 1.125rem)', display: 'block' }}>Approval Email</strong>
                         <p style={{ margin: '0.5rem 0 0 0', color: '#64748b', fontSize: 'clamp(0.8rem, 2.5vw, 0.9375rem)', lineHeight: '1.6', wordBreak: 'break-word' }}>
-                          Once approved, you'll receive an email at <strong style={{ color: '#1A3E6F' }}>{formData.email}</strong> with your login credentials
+                          Once approved, you'll receive an email at <strong style={{ color: '#1A3E6F' }}>{bankDetails?.email_welcome || 'welcome@theoaklinebank.com'}</strong> with your login credentials
                         </p>
                       </div>
                     </div>
