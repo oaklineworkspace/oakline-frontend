@@ -7,6 +7,7 @@ import Head from 'next/head';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { AuthProvider } from '../contexts/AuthContext';
+import { LanguageProvider } from '../contexts/LanguageContext';
 import StickyFooter from '../components/StickyFooter';
 
 
@@ -23,8 +24,10 @@ const App = function App({ Component, pageProps }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Component {...pageProps} />
-        <StickyFooter />
+        <LanguageProvider>
+          <Component {...pageProps} />
+          <StickyFooter />
+        </LanguageProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
