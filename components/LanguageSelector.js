@@ -24,6 +24,14 @@ export default function LanguageSelector({ compact = false }) {
     }
   };
 
+  // Ensure hooks are called at the top level
+  useEffect(() => {
+    // Cleanup on unmount
+    return () => {
+      setIsOpen(false);
+    };
+  }, []);
+
   if (compact) {
     return (
       <select

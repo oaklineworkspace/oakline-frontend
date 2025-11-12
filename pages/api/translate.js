@@ -158,19 +158,21 @@ export default async function handler(req, res) {
 
     // Update stats - use language code as name if not in list
     const langName = target.toUpperCase();
-    await supabase.rpc('increment_translation_count', {
+    const { error: rpcError } = await supabase.rpc('increment_translation_count', {
       lang_code: target,
       lang_name: langName
-    }).catch(() => {
-      // Create stats entry if it doesn't exist
-      supabase.from('translation_stats').upsert({
+    });
+    
+    // If RPC fails, try to create/update the stats entry directly
+    if (rpcError) {
+      await supabase.from('translation_stats').upsert({
         language_code: target,
         language_name: langName,
         total_translations: 1
       }, {
         onConflict: 'language_code'
       });
-    });
+    }
 
     return res.status(200).json({
       translatedText,
