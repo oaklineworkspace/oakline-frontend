@@ -124,10 +124,9 @@ a {
 
 button {
   cursor: pointer;
-  border: none;
-  background: none;
   transition: all 0.3s ease;
-  font-family: inherit;
+  background: none; /* Use background instead of backgroundColor */
+  border: none;
 }
 
 img {
@@ -640,15 +639,6 @@ button:focus, a:focus, input:focus {
   }
   100% {
     transform: scale(1);
-  }
-}
-
-@keyframes spin {
-  0% { 
-    transform: rotate(0deg); 
-  }
-  100% { 
-    transform: rotate(360deg); 
   }
 }
 

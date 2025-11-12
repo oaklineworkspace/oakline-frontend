@@ -1,43 +1,9 @@
 
 import { supabase } from '../../lib/supabaseClient';
 
-// Supported languages configuration
-const SUPPORTED_LANGUAGES = {
-  // Major languages
-  'en': 'English',
-  'es': 'Spanish',
-  'fr': 'French',
-  'de': 'German',
-  'it': 'Italian',
-  'pt': 'Portuguese',
-  'ru': 'Russian',
-  'zh': 'Chinese',
-  'ja': 'Japanese',
-  'ko': 'Korean',
-  'ar': 'Arabic',
-  'hi': 'Hindi',
-  'bn': 'Bengali',
-  'ur': 'Urdu',
-  'he': 'Hebrew',
-  'tr': 'Turkish',
-  'pl': 'Polish',
-  'nl': 'Dutch',
-  'sv': 'Swedish',
-  'da': 'Danish',
-  'fi': 'Finnish',
-  'no': 'Norwegian',
-  'cs': 'Czech',
-  'hu': 'Hungarian',
-  'ro': 'Romanian',
-  'th': 'Thai',
-  'vi': 'Vietnamese',
-  'id': 'Indonesian',
-  'ms': 'Malay',
-  'fa': 'Persian',
-  'uk': 'Ukrainian',
-  'el': 'Greek',
-  // Add more as needed - LibreTranslate supports 200+ languages
-};
+// LibreTranslate supports 200+ languages automatically
+// No need to list them all - the API will handle language detection
+const SUPPORTED_LANGUAGES = {};
 
 // RTL languages
 const RTL_LANGUAGES = ['ar', 'he', 'ur', 'fa', 'yi'];
@@ -110,7 +76,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // Step 3: Try LibreTranslate first (no API key needed)
+    // Step 3: Try LibreTranslate first (supports 200+ languages)
     let translatedText = null;
     let provider = null;
 
@@ -122,19 +88,25 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           q: text,
-          source: source,
+          source: source === 'auto' ? 'auto' : source,
           target: target,
-          format: 'text'
-        })
+          format: 'text',
+          api_key: '' // Public instance, no key needed
+        }),
+        timeout: 10000 // 10 second timeout
       });
 
       if (libreResponse.ok) {
         const libreData = await libreResponse.json();
-        translatedText = libreData.translatedText;
-        provider = 'libretranslate';
+        if (libreData.translatedText) {
+          translatedText = libreData.translatedText;
+          provider = 'libretranslate';
+        }
+      } else {
+        console.error('LibreTranslate HTTP error:', libreResponse.status);
       }
     } catch (libreError) {
-      console.error('LibreTranslate error:', libreError);
+      console.error('LibreTranslate error:', libreError.message);
     }
 
     // Step 4: Fallback to MyMemory Translation API
@@ -178,15 +150,16 @@ export default async function handler(req, res) {
       onConflict: 'source_text,source_language,target_language'
     });
 
-    // Update stats
+    // Update stats - use language code as name if not in list
+    const langName = target.toUpperCase();
     await supabase.rpc('increment_translation_count', {
       lang_code: target,
-      lang_name: SUPPORTED_LANGUAGES[target] || target
+      lang_name: langName
     }).catch(() => {
       // Create stats entry if it doesn't exist
       supabase.from('translation_stats').upsert({
         language_code: target,
-        language_name: SUPPORTED_LANGUAGES[target] || target,
+        language_name: langName,
         total_translations: 1
       }, {
         onConflict: 'language_code'

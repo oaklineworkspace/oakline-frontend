@@ -15,7 +15,7 @@
     z-index: 1000;
     margin-left: auto;
   }
-  
+
   .language-selector-container select {
     display: block !important;
     visibility: visible !important;
@@ -356,7 +356,7 @@
     min-width: 110px !important;
     position: relative !important;
   }
-  
+
   /* Prevent language selector from being hidden */
   .language-selector-container * {
     display: block !important;
