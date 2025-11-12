@@ -379,14 +379,13 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Language Selector for Public Users */}
+            {/* Language Selector - Left Side */}
             <div style={styles.languageSelectorWrapper}>
               <LanguageSelector compact={true} />
             </div>
-          </div>
 
-          {/* Banking+ Dropdown Button - Centered */}
-          <div style={styles.bankingPlusContainer}>
+            {/* Banking+ Dropdown Button - Right Side */}
+            <div style={styles.bankingPlusContainer}>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -1629,8 +1628,8 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    flexWrap: 'wrap',
-    gap: '1rem'
+    flexWrap: 'nowrap',
+    gap: '0.5rem'
   },
   authButtonsRow: {
     display: 'flex',
@@ -1641,12 +1640,12 @@ const styles = {
   logoSection: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1rem',
+    gap: '0.75rem',
     textDecoration: 'none',
-    order: 1
+    flex: '0 0 auto'
   },
   headerLogo: {
-    height: '50px',
+    height: '45px',
     width: 'auto'
   },
   brandSection: {
@@ -1654,22 +1653,22 @@ const styles = {
     flexDirection: 'column'
   },
   bankName: {
-    fontSize: '1.6rem',
+    fontSize: '1.4rem',
     fontWeight: '800',
     color: 'white',
     lineHeight: '1'
   },
   bankTagline: {
-    fontSize: '0.8rem',
+    fontSize: '0.75rem',
     color: '#cbd5e1',
     fontWeight: '500'
   },
   headerActions: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1.5rem',
+    gap: '1rem',
     flex: 1,
-    justifyContent: 'space-between'
+    justifyContent: 'flex-end'
   },
   modernMenuButton: {
     display: 'flex',
@@ -1757,11 +1756,11 @@ const styles = {
   // Banking+ Dropdown Styles
   bankingPlusContainer: {
     display: 'flex',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    width: '100%',
-    marginTop: '0.5rem',
-    position: 'relative'
+    width: 'auto',
+    position: 'relative',
+    flex: '0 0 auto'
   },
   bankingPlusButton: {
     display: 'flex',
@@ -4164,10 +4163,11 @@ const styles = {
   languageSelectorWrapper: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
-    flex: '1 1 auto',
-    minWidth: '150px',
-    order: 2
+    justifyContent: 'flex-start',
+    flex: '0 0 auto',
+    minWidth: '120px',
+    marginLeft: 'auto',
+    marginRight: '0.5rem'
   },
   scrollingWelcomeText: {
     whiteSpace: 'nowrap',

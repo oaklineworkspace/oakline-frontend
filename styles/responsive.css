@@ -8,19 +8,19 @@
   width: 100%;
 }
 
-/* Mobile portrait - ensure language selector is prominent and centered */
+/* Mobile portrait - ensure language selector is prominent on left side */
 @media (max-width: 768px) and (orientation: portrait) {
   .language-selector-container {
     display: flex !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
     align-items: center !important;
     visibility: visible !important;
     opacity: 1 !important;
     position: relative !important;
     z-index: 1000;
-    margin: 0.5rem auto !important;
-    width: 100% !important;
-    order: 3 !important;
+    margin: 0 !important;
+    width: auto !important;
+    min-width: 100px !important;
   }
 
   .language-selector-container select {
