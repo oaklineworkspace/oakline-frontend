@@ -1,12 +1,25 @@
-/* Language Selector Mobile Styles */
+/* Language Selector Mobile Styles - Always visible */
+.language-selector-container {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Mobile portrait - ensure language selector is prominent */
 @media (max-width: 768px) and (orientation: portrait) {
-  /* Show language selector in portrait mode */
   .language-selector-container {
     display: block !important;
-    position: fixed;
-    top: 10px;
-    right: 10px;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
     z-index: 1000;
+    margin-left: auto;
+  }
+  
+  .language-selector-container select {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 }
 
@@ -331,8 +344,9 @@
 }
 
 /* iPhone portrait specific styles */
-@media (max-width: 414px) and (orientation: portrait) {
-  /* Ensure language selector is always visible */
+@media (max-width: 430px) and (orientation: portrait) {
+  /* Ensure language selector is always visible on all iPhones */
+  .language-selector-container,
   .languageSelectorWrapper,
   [class*="languageSelector"],
   select[class*="compactSelect"] {
@@ -340,6 +354,13 @@
     visibility: visible !important;
     opacity: 1 !important;
     min-width: 110px !important;
+    position: relative !important;
+  }
+  
+  /* Prevent language selector from being hidden */
+  .language-selector-container * {
+    display: block !important;
+    visibility: visible !important;
   }
 
   .mobileNavigationRow {

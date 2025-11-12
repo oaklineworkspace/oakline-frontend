@@ -52,23 +52,23 @@ export default function Header() {
       const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Valued Customer';
       const messages = getPersonalizedWelcomeMessages(userName);
       let currentIndex = 0;
-      
+
       const updateMessage = () => {
         setScrollingWelcomeMessage(messages[currentIndex]);
         currentIndex = (currentIndex + 1) % messages.length;
       };
-      
+
       updateMessage();
       const interval = setInterval(updateMessage, 6000);
       return () => clearInterval(interval);
     } else {
       let currentIndex = 0;
-      
+
       const updateMessage = () => {
         setScrollingWelcomeMessage(publicWelcomeMessages[currentIndex]);
         currentIndex = (currentIndex + 1) % publicWelcomeMessages.length;
       };
-      
+
       updateMessage();
       const interval = setInterval(updateMessage, 6000);
       return () => clearInterval(interval);
@@ -97,7 +97,10 @@ export default function Header() {
           <Link href="/faq" style={styles.topLink}>FAQ</Link>
           <span style={styles.phone}>📞 1-800-OAKLINE</span>
           <div style={styles.languageSelectorWrapper}>
-            <LanguageSelector compact={true} />
+            {/* Language Selector - Always Visible */}
+            <div className="language-selector-container" style={{ display: 'block', minWidth: '130px' }}>
+              <LanguageSelector compact />
+            </div>
           </div>
         </div>
       </div>

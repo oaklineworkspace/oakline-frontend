@@ -2,36 +2,50 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 
-export default function TranslatedText({ text, children }) {
+export default function TranslatedText({ text, children, as = 'span' }) {
   const { currentLanguage, t } = useLanguage();
-  const [translatedText, setTranslatedText] = useState(text || children);
+  const [translatedText, setTranslatedText] = useState(text || children || '');
   const [isLoading, setIsLoading] = useState(false);
+  
+  const sourceText = text || children || '';
 
   useEffect(() => {
+    let isMounted = true;
+    
     async function translate() {
-      if (currentLanguage === 'en') {
-        setTranslatedText(text || children);
+      if (!sourceText || currentLanguage === 'en') {
+        if (isMounted) {
+          setTranslatedText(sourceText);
+        }
         return;
       }
       
       setIsLoading(true);
       try {
-        const translated = await t(text || children);
-        setTranslatedText(translated);
+        const translated = await t(sourceText);
+        if (isMounted) {
+          setTranslatedText(translated || sourceText);
+        }
       } catch (error) {
         console.error('Translation error:', error);
-        setTranslatedText(text || children);
+        if (isMounted) {
+          setTranslatedText(sourceText);
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
     translate();
-  }, [currentLanguage, text, children, t]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [currentLanguage, sourceText, t]);
 
-  if (isLoading) {
-    return <span>{text || children}</span>;
-  }
-
-  return <span>{translatedText}</span>;
+  const Component = as;
+  
+  return <Component>{translatedText}</Component>;
 }
