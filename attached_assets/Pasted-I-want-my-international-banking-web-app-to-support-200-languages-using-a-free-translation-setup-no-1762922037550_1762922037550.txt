@@ -1,0 +1,49 @@
+I want my international banking web app to support 200+ languages using a free translation setup (no Google Cloud billing).
+Please implement a complete multilingual (i18n) system with these requirements:
+
+⸻
+
+🌍 Language Features
+	1.	Detect user’s browser language automatically on first visit.
+	2.	Store preferred language in Supabase in the users table (preferred_language column).
+	3.	Use free translation APIs such as:
+	•	LibreTranslate
+	•	MyMemory Translation API
+	4.	Cache translations (using Redis or Supabase Edge Function) to avoid re-calling the API for the same phrases.
+	5.	Provide static JSON translation files for core UI keys (English, French, Spanish, etc.).
+	6.	Build an API route /api/translate that:
+	•	Accepts { text, target }
+	•	Checks cache → if not found → uses the free API → stores the translated text → returns translation.
+	7.	Add support for right-to-left (RTL) languages like Arabic, Hebrew, Urdu.
+	8.	Allow users to change language from a dropdown or settings page — save this preference.
+
+⸻
+
+🏦 Integration with Existing System
+	9.	Use Next.js internationalization with i18next or next-intl.
+	10.	Localize all UI pages (login, dashboard, transactions, notifications, etc.) automatically based on the user’s language.
+	11.	Update the email sending system (Brevo or Resend) so that all outgoing emails use the user’s preferred language.
+
+⸻
+
+🧩 Admin Tools
+	12.	Create an Admin Translation Manager page that:
+	•	Shows all cached translated phrases.
+	•	Lets me edit or override translations manually.
+	•	Tracks how many translations exist per language.
+
+⸻
+
+🧠 Technical Details
+	•	Use free translation APIs (no API key needed if possible).
+	•	Use local caching (Redis or Supabase KV Store).
+	•	Include fallback: if translation fails, show English text.
+	•	Support at least 200 languages (from LibreTranslate & MyMemory combined).
+	•	Write clean, modular code that can later switch to Google Translate API if needed.
+
+⸻
+
+Finally, explain how to:
+	•	Add new languages manually.
+	•	Sync translations between frontend and backend.
+	•	Test that each language works correctly.
