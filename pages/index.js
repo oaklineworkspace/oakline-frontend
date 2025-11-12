@@ -5334,6 +5334,15 @@ const styles = {
   //   50% { transform: translateX(0%); }
   //   100% { transform: translateX(100%); }
   // `;
+  loadingComponent: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100px',
+    fontSize: '1.2rem',
+    color: '#64748b',
+    fontWeight: '500'
+  }
 };
 
 // Add hover effects for dropdown items
