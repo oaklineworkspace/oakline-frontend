@@ -5623,19 +5623,22 @@ if (typeof document !== 'undefined') {
 
       .top-header-responsive .language-selector-wrapper,
       .top-header-responsive .banking-plus-container {
-        order: unset;
-        flex: 1 1 220px;
-        max-width: 260px;
-        width: 100%;
-        margin: 0 auto;
+        flex: 0 1 auto;
+        max-width: none;
+        width: auto;
+        margin: 0 0.5rem;
       }
 
       .top-header-responsive .language-selector-wrapper {
-        order: 1;
+        order: 2;
       }
 
       .top-header-responsive .banking-plus-container {
-        order: 2;
+        order: 3;
+      }
+      
+      .top-header-responsive .scrolling-welcome-container {
+        margin: 0.5rem;
       }
 
       .top-header-responsive .banking-dropdown {
