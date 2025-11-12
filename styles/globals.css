@@ -13,6 +13,27 @@
   opacity: 1 !important;
 }
 
+/* Force visibility on all mobile portrait screens */
+@media (max-width: 768px) and (orientation: portrait) {
+  .language-selector-container,
+  .languageSelectorWrapper,
+  .navigationDropdown {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 100 !important;
+  }
+
+  /* Ensure dropdown buttons are visible */
+  button[style*="dropdownBtn"],
+  .modernMenuButton,
+  .navigationDropdown button {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
+
 html {
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
