@@ -166,9 +166,35 @@ export default function Home() {
       'Expert Financial Consultation', 'Professional advice from certified banking specialists in our modern branches',
       'Modern Banking Facilities', 'Experience premium banking in our state-of-the-art branch locations',
       
+      // Account Types Section
+      'All 23 Account Types Available to You', 'Featured Banking Accounts',
+      'Find the perfect account for your financial needs and goals',
+      'Sign in to unlock all 23 premium account types',
+      '23 Account Types Available', 'From basic checking to premium investment accounts',
+      'Personal Banking', 'Checking, Savings, Student accounts',
+      'Business Banking', 'Professional solutions for businesses',
+      'Investment Accounts', 'Grow your wealth with premium options',
+      'Specialized Accounts', 'HSA, Trust, International options',
+      'View All 23 Account Types', 'Sign In to Apply',
+      
+      // Banking Experience Section
+      'Modern Banking Experience', 'Experience the future of banking with our state-of-the-art facilities and services',
+      'Your Complete Banking Solution',
+      'Discover a comprehensive range of banking services designed to meet all your financial needs. From everyday transactions to long-term investments, we provide innovative solutions backed by exceptional customer service.',
+      'Advanced Digital Platform', 'Personalized Financial Services', 'Secure and Reliable Banking', '24/7 Customer Support',
+      
+      // Cards Section
+      'Professional Banking Cards', 'Discover our comprehensive range of premium banking cards designed for every financial need',
+      'Premium Cards', 'Complete Card Solutions',
+      'From everyday debit cards to premium credit cards, we offer a complete suite of banking cards with advanced features, security, and rewards tailored to your lifestyle.',
+      'Advanced Security', 'EMV chip, contactless technology, and fraud protection',
+      'Rewards Program', 'Earn points, cashback, and exclusive benefits',
+      'Global Acceptance', 'Use your card anywhere worldwide',
+      'Flexible Options', 'Debit, credit, and prepaid card solutions',
+      
       //Common buttons & CTAs
       'Learn More', 'Get Started', 'Apply Now', 'Open Account', 'View Details',
-      'Download App', 'Request Demo', 'Schedule Consultation'
+      'Download App', 'Request Demo', 'Schedule Consultation', 'View All Cards', 'Compare Cards'
     ];
 
     // Preload all critical translations
@@ -641,15 +667,15 @@ export default function Home() {
             ...(isVisible['account-types'] ? styles.zoomIn : {})
           }}>
             <h2 style={styles.sectionTitle}>
-              {user ? 'All 23 Account Types Available to You' : 'Featured Banking Accounts'}
+              {user ? ts('All 23 Account Types Available to You') : ts('Featured Banking Accounts')}
             </h2>
             <p style={styles.sectionSubtitle}>
-              Find the perfect account for your financial needs and goals
+              {ts('Find the perfect account for your financial needs and goals')}
               {!user && (
                 <span style={styles.loginPrompt}>
                   <br />
                   <Link href="/sign-in" style={styles.loginLink}>
-                    🔓 Sign in to unlock all 23 premium account types
+                    🔓 {ts('Sign in to unlock all 23 premium account types')}
                   </Link>
                 </span>
               )}
@@ -671,8 +697,8 @@ export default function Home() {
               <div style={{...styles.bannerImageFallback, display: 'none'}}>
                 <div style={styles.fallbackContent}>
                   <span style={styles.fallbackIcon}>🏦</span>
-                  <h3 style={styles.fallbackTitle}>23 Account Types Available</h3>
-                  <p style={styles.fallbackText}>From basic checking to premium investment accounts</p>
+                  <h3 style={styles.fallbackTitle}>{ts('23 Account Types Available')}</h3>
+                  <p style={styles.fallbackText}>{ts('From basic checking to premium investment accounts')}</p>
                 </div>
               </div>
             </div>
@@ -682,29 +708,29 @@ export default function Home() {
                 <div style={styles.highlightItem}>
                   <span style={styles.highlightIcon}>💳</span>
                   <div>
-                    <h4 style={styles.highlightTitle}>Personal Banking</h4>
-                    <p style={styles.highlightDesc}>Checking, Savings, Student accounts</p>
+                    <h4 style={styles.highlightTitle}>{ts('Personal Banking')}</h4>
+                    <p style={styles.highlightDesc}>{ts('Checking, Savings, Student accounts')}</p>
                   </div>
                 </div>
                 <div style={styles.highlightItem}>
                   <span style={styles.highlightIcon}>🏢</span>
                   <div>
-                    <h4 style={styles.highlightTitle}>Business Banking</h4>
-                    <p style={styles.highlightDesc}>Professional solutions for businesses</p>
+                    <h4 style={styles.highlightTitle}>{ts('Business Banking')}</h4>
+                    <p style={styles.highlightDesc}>{ts('Professional solutions for businesses')}</p>
                   </div>
                 </div>
                 <div style={styles.highlightItem}>
                   <span style={styles.highlightIcon}>📈</span>
                   <div>
-                    <h4 style={styles.highlightTitle}>Investment Accounts</h4>
-                    <p style={styles.highlightDesc}>Grow your wealth with premium options</p>
+                    <h4 style={styles.highlightTitle}>{ts('Investment Accounts')}</h4>
+                    <p style={styles.highlightDesc}>{ts('Grow your wealth with premium options')}</p>
                   </div>
                 </div>
                 <div style={styles.highlightItem}>
                   <span style={styles.highlightIcon}>🎯</span>
                   <div>
-                    <h4 style={styles.highlightTitle}>Specialized Accounts</h4>
-                    <p style={styles.highlightDesc}>HSA, Trust, International options</p>
+                    <h4 style={styles.highlightTitle}>{ts('Specialized Accounts')}</h4>
+                    <p style={styles.highlightDesc}>{ts('HSA, Trust, International options')}</p>
                   </div>
                 </div>
               </div>
@@ -712,17 +738,17 @@ export default function Home() {
               <div style={styles.accountBannerActions}>
                 <Link href="/account-types" style={styles.viewAllAccountsButton}>
                   <span style={styles.buttonIcon}>🔍</span>
-                  View All 23 Account Types
+                  {ts('View All 23 Account Types')}
                 </Link>
                 {user ? (
                   <Link href="/apply" style={styles.applyNowButton}>
                     <span style={styles.buttonIcon}>⚡</span>
-                    Apply Now
+                    {ts('Apply Now')}
                   </Link>
                 ) : (
                   <Link href="/sign-in" style={styles.signInButton}>
                     <span style={styles.buttonIcon}>👤</span>
-                    Sign In to Apply
+                    {ts('Sign In to Apply')}
                   </Link>
                 )}
               </div>
@@ -740,9 +766,9 @@ export default function Home() {
             ...styles.sectionHeader,
             ...(isVisible['banking-image'] ? styles.fadeInUp : {})
           }}>
-            <h2 style={styles.sectionTitle}>Modern Banking Experience</h2>
+            <h2 style={styles.sectionTitle}>{ts('Modern Banking Experience')}</h2>
             <p style={styles.sectionSubtitle}>
-              Experience the future of banking with our state-of-the-art facilities and services
+              {ts('Experience the future of banking with our state-of-the-art facilities and services')}
             </p>
             <div style={styles.titleUnderline}></div>
           </div>
@@ -760,40 +786,38 @@ export default function Home() {
             </div>
 
             <div style={styles.newBankingImageContent}>
-              <h3 style={styles.newBankingImageTitle}>Your Complete Banking Solution</h3>
+              <h3 style={styles.newBankingImageTitle}>{ts('Your Complete Banking Solution')}</h3>
               <p style={styles.newBankingImageDescription}>
-                Discover a comprehensive range of banking services designed to meet all your financial needs.
-                From everyday transactions to long-term investments, we provide innovative solutions backed by
-                exceptional customer service.
+                {ts('Discover a comprehensive range of banking services designed to meet all your financial needs. From everyday transactions to long-term investments, we provide innovative solutions backed by exceptional customer service.')}
               </p>
 
               <div style={styles.newBankingImageFeatures}>
                 <div style={styles.newBankingImageFeature}>
                   <span style={styles.newBankingImageFeatureIcon}>✓</span>
-                  <span>Advanced Digital Platform</span>
+                  <span>{ts('Advanced Digital Platform')}</span>
                 </div>
                 <div style={styles.newBankingImageFeature}>
                   <span style={styles.newBankingImageFeatureIcon}>✓</span>
-                  <span>Personalized Financial Services</span>
+                  <span>{ts('Personalized Financial Services')}</span>
                 </div>
                 <div style={styles.newBankingImageFeature}>
                   <span style={styles.newBankingImageFeatureIcon}>✓</span>
-                  <span>Secure and Reliable Banking</span>
+                  <span>{ts('Secure and Reliable Banking')}</span>
                 </div>
                 <div style={styles.newBankingImageFeature}>
                   <span style={styles.newBankingImageFeatureIcon}>✓</span>
-                  <span>24/7 Customer Support</span>
+                  <span>{ts('24/7 Customer Support')}</span>
                 </div>
               </div>
 
               <div style={styles.newBankingImageActions}>
                 <Link href="/apply" style={styles.newBankingImageButtonPrimary}>
                   <span style={styles.buttonIcon}>🚀</span>
-                  Get Started
+                  {ts('Get Started')}
                 </Link>
                 <Link href="/about" style={styles.newBankingImageButtonSecondary}>
                   <span style={styles.buttonIcon}>ℹ️</span>
-                  Learn More
+                  {ts('Learn More')}
                 </Link>
               </div>
             </div>
@@ -808,9 +832,9 @@ export default function Home() {
             ...styles.sectionHeader,
             ...(isVisible['professional-cards'] ? styles.fadeInUp : {})
           }}>
-            <h2 style={styles.sectionTitle}>Professional Banking Cards</h2>
+            <h2 style={styles.sectionTitle}>{ts('Professional Banking Cards')}</h2>
             <p style={styles.sectionSubtitle}>
-              Discover our comprehensive range of premium banking cards designed for every financial need
+              {ts('Discover our comprehensive range of premium banking cards designed for every financial need')}
             </p>
             <div style={styles.titleUnderline}></div>
           </div>
@@ -827,14 +851,14 @@ export default function Home() {
               />
               <div style={styles.professionalCardsBadge}>
                 <span style={styles.badgeIcon}>💳</span>
-                <span>Premium Cards</span>
+                <span>{ts('Premium Cards')}</span>
               </div>
             </div>
 
             <div style={styles.professionalCardsContent}>
-              <h3 style={styles.professionalCardsTitle}>Complete Card Solutions</h3>
+              <h3 style={styles.professionalCardsTitle}>{ts('Complete Card Solutions')}</h3>
               <p style={styles.professionalCardsDescription}>
-                From everyday debit cards to premium credit cards, we offer a complete suite of banking cards with advanced features, security, and rewards tailored to your lifestyle.
+                {ts('From everyday debit cards to premium credit cards, we offer a complete suite of banking cards with advanced features, security, and rewards tailored to your lifestyle.')}
               </p>
 
               <div style={styles.professionalCardsFeatures}>
