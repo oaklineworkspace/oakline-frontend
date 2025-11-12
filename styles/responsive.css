@@ -1,19 +1,26 @@
-/* Language Selector Mobile Styles - Always visible */
+/* Language Selector Mobile Styles - Always visible and centered */
 .language-selector-container {
-  display: block !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
   visibility: visible !important;
   opacity: 1 !important;
+  width: 100%;
 }
 
-/* Mobile portrait - ensure language selector is prominent */
+/* Mobile portrait - ensure language selector is prominent and centered */
 @media (max-width: 768px) and (orientation: portrait) {
   .language-selector-container {
-    display: block !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
     visibility: visible !important;
     opacity: 1 !important;
     position: relative !important;
     z-index: 1000;
-    margin-left: auto;
+    margin: 0.5rem auto !important;
+    width: 100% !important;
+    order: 3 !important;
   }
 
   .language-selector-container select {

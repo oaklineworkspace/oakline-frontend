@@ -1628,7 +1628,9 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%'
+    width: '100%',
+    flexWrap: 'wrap',
+    gap: '1rem'
   },
   authButtonsRow: {
     display: 'flex',
@@ -1640,7 +1642,8 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '1rem',
-    textDecoration: 'none'
+    textDecoration: 'none',
+    order: 1
   },
   headerLogo: {
     height: '50px',
@@ -4161,7 +4164,10 @@ const styles = {
   languageSelectorWrapper: {
     display: 'flex',
     alignItems: 'center',
-    marginLeft: '1rem'
+    justifyContent: 'center',
+    flex: '1 1 auto',
+    minWidth: '150px',
+    order: 2
   },
   scrollingWelcomeText: {
     whiteSpace: 'nowrap',

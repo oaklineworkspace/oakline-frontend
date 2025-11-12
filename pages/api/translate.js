@@ -91,7 +91,7 @@ export default async function handler(req, res) {
           source: source === 'auto' ? 'auto' : source,
           target: target,
           format: 'text',
-          api_key: '' // Public instance, no key needed
+          api_key: process.env.LIBRETRANSLATE_API_KEY || '' // Use env variable or empty for public
         }),
         timeout: 10000 // 10 second timeout
       });
