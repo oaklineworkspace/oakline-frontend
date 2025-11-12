@@ -15,9 +15,13 @@ export default function LanguageSelector({ compact = false }) {
   );
 
   const handleLanguageChange = async (languageCode) => {
-    await changeLanguage(languageCode);
-    setIsOpen(false);
-    setSearchTerm('');
+    try {
+      await changeLanguage(languageCode);
+      setIsOpen(false);
+      setSearchTerm('');
+    } catch (error) {
+      console.error('Language change error:', error);
+    }
   };
 
   if (compact) {
@@ -184,16 +188,17 @@ const styles = {
     fontWeight: 'bold'
   },
   compactSelect: {
-    padding: '0.4rem 0.6rem',
+    padding: '0.5rem 0.7rem',
     border: '1px solid rgba(255, 255, 255, 0.3)',
     borderRadius: '6px',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     color: '#ffffff',
-    fontSize: '0.85rem',
+    fontSize: '0.9rem',
     cursor: 'pointer',
     fontWeight: '500',
     outline: 'none',
     transition: 'all 0.2s ease',
-    minWidth: '120px'
+    minWidth: '130px',
+    display: 'block'
   }
 };

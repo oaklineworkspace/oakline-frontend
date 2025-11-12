@@ -1,4 +1,12 @@
 @media (max-width: 768px) {
+  /* Language Selector Mobile Visibility */
+  .languageSelectorWrapper,
+  [class*="languageSelector"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
   /* Apply.js Form Responsiveness */
   .formCard {
     padding: 1.5rem 1rem !important;
@@ -311,6 +319,16 @@
 
 /* iPhone portrait specific styles */
 @media (max-width: 414px) and (orientation: portrait) {
+  /* Ensure language selector is always visible */
+  .languageSelectorWrapper,
+  [class*="languageSelector"],
+  select[class*="compactSelect"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-width: 110px !important;
+  }
+
   .mobileNavigationRow {
     display: flex !important;
     visibility: visible !important;

@@ -54,17 +54,23 @@ export function LanguageProvider({ children }) {
 
   // Change language
   const changeLanguage = (languageCode) => {
-    setCurrentLanguage(languageCode);
-    setDirection(getLanguageDirection(languageCode));
-    
-    // Update document direction
-    if (typeof document !== 'undefined') {
-      document.documentElement.dir = getLanguageDirection(languageCode);
-      document.documentElement.lang = languageCode;
+    try {
+      setCurrentLanguage(languageCode);
+      setDirection(getLanguageDirection(languageCode));
+      
+      // Update document direction
+      if (typeof document !== 'undefined') {
+        document.documentElement.dir = getLanguageDirection(languageCode);
+        document.documentElement.lang = languageCode;
+      }
+      
+      // Save to localStorage
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('preferredLanguage', languageCode);
+      }
+    } catch (error) {
+      console.error('Error changing language:', error);
     }
-    
-    // Save to localStorage
-    localStorage.setItem('preferredLanguage', languageCode);
   };
 
   // Save language preference to database
@@ -72,10 +78,12 @@ export function LanguageProvider({ children }) {
     if (!user) return;
 
     try {
-      await supabase
+      const { error } = await supabase
         .from('profiles')
         .update({ preferred_language: languageCode })
         .eq('id', user.id);
+      
+      if (error) throw error;
     } catch (error) {
       console.error('Error saving language preference:', error);
     }
@@ -83,8 +91,12 @@ export function LanguageProvider({ children }) {
 
   // Update language with database save
   const updateLanguage = async (languageCode) => {
-    changeLanguage(languageCode);
-    await saveLanguagePreference(languageCode);
+    try {
+      changeLanguage(languageCode);
+      await saveLanguagePreference(languageCode);
+    } catch (error) {
+      console.error('Error updating language:', error);
+    }
   };
 
   // Translation function

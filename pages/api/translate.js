@@ -47,22 +47,27 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { text, target, source = 'en', forceRefresh = false } = req.body;
+  try {
+    const { text, target, source = 'en', forceRefresh = false } = req.body;
 
-  if (!text || !target) {
-    return res.status(400).json({ error: 'Missing text or target language' });
-  }
+    if (!text || !target) {
+      return res.status(400).json({ 
+        error: 'Missing text or target language',
+        translatedText: text || '',
+        fallback: true
+      });
+    }
 
-  // If source and target are the same, return original text
-  if (source === target) {
-    return res.status(200).json({
-      translatedText: text,
-      sourceLanguage: source,
-      targetLanguage: target,
-      cached: false,
-      provider: 'none'
-    });
-  }
+    // If source and target are the same, return original text
+    if (source === target) {
+      return res.status(200).json({
+        translatedText: text,
+        sourceLanguage: source,
+        targetLanguage: target,
+        cached: false,
+        provider: 'none'
+      });
+    }
 
   try {
     // Step 1: Check for admin override
@@ -198,10 +203,12 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Translation error:', error);
-    return res.status(500).json({
+    return res.status(200).json({
       error: 'Translation failed',
-      translatedText: text,
-      fallback: true
+      translatedText: req.body?.text || '',
+      fallback: true,
+      sourceLanguage: req.body?.source || 'en',
+      targetLanguage: req.body?.target || 'en'
     });
   }
 }

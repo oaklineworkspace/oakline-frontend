@@ -216,6 +216,7 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
 
     // Validate passwords
     if (formData.password.length < 8) {
@@ -251,6 +252,7 @@ export default function SignupPage() {
         setError(data.error || 'Failed to complete enrollment');
       }
     } catch (err) {
+      console.error('Enrollment error:', err);
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
