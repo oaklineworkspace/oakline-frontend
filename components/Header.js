@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabaseClient';
+import LanguageSelector from './LanguageSelector';
 
 export default function Header() {
   const [scrollText, setScrollText] = useState("Welcome to Oakline Bank – Secure, Convenient, and Innovative Banking Solutions for Everyone!");
@@ -95,6 +96,9 @@ export default function Header() {
           <Link href="/support" style={styles.topLink}>Support</Link>
           <Link href="/faq" style={styles.topLink}>FAQ</Link>
           <span style={styles.phone}>📞 1-800-OAKLINE</span>
+          <div style={styles.languageSelectorWrapper}>
+            <LanguageSelector compact={true} />
+          </div>
         </div>
       </div>
 
@@ -272,6 +276,11 @@ const styles = {
   phone: {
     fontWeight: 'bold',
     fontSize: '13px',
+  },
+  languageSelectorWrapper: {
+    display: 'flex',
+    alignItems: 'center',
+    marginLeft: '10px',
   },
   nav: {
     backgroundColor: '#ffffff',
