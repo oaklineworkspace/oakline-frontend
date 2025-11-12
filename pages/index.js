@@ -380,7 +380,7 @@ export default function Home() {
             </div>
 
             {/* Language Selector - Left Side */}
-            <div style={styles.languageSelectorWrapper} className="language-selector-container">
+            <div style={styles.languageSelectorWrapper}>
               <LanguageSelector compact={true} />
             </div>
 
@@ -3670,8 +3670,7 @@ const styles = {
     padding: '10px 16px',
     borderRadius: '12px',
     fontSize: '0.85rem',
-    fontWeight:```javascript
-    '700',
+    fontWeight: '700',
     boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
     display: 'flex',
     alignItems: 'center',
@@ -3909,12 +3908,12 @@ const styles = {
     gap: '0.8rem',
     padding: 'clamp(1rem, 2.5vw, 1.3rem) clamp(1.5rem, 4vw, 2.5rem)',
     backgroundColor: 'transparent',
-    color: '#059669',
+    color: '#1e293b',
     textDecoration: 'none',
     borderRadius: '12px',
     fontSize: 'clamp(1rem, 2.2vw, 1.1rem)',
     fontWeight: '700',
-    border: '2px solid #059669',
+    border: '2px solid #1e293b',
     transition: 'all 0.3s ease'
   },
 
@@ -4164,10 +4163,11 @@ const styles = {
   languageSelectorWrapper: {
     display: 'flex',
     alignItems: 'center',
-    marginLeft: '10px',
-    visibility: 'visible !important',
-    opacity: '1 !important',
-    minWidth: '130px',
+    justifyContent: 'flex-start',
+    flex: '0 0 auto',
+    minWidth: '120px',
+    marginLeft: 'auto',
+    marginRight: '0.5rem'
   },
   scrollingWelcomeText: {
     whiteSpace: 'nowrap',
