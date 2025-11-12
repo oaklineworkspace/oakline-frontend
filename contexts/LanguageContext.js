@@ -53,7 +53,7 @@ export function LanguageProvider({ children }) {
   }, [user]);
 
   // Change language
-  const changeLanguage = (languageCode) => {
+  const changeLanguage = async (languageCode) => {
     try {
       setCurrentLanguage(languageCode);
       setDirection(getLanguageDirection(languageCode));
@@ -67,6 +67,11 @@ export function LanguageProvider({ children }) {
       // Save to localStorage
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('preferredLanguage', languageCode);
+      }
+
+      // Save to database if user is logged in
+      if (user) {
+        await saveLanguagePreference(languageCode);
       }
     } catch (error) {
       console.error('Error changing language:', error);
@@ -89,16 +94,6 @@ export function LanguageProvider({ children }) {
     }
   };
 
-  // Update language with database save
-  const updateLanguage = async (languageCode) => {
-    try {
-      changeLanguage(languageCode);
-      await saveLanguagePreference(languageCode);
-    } catch (error) {
-      console.error('Error updating language:', error);
-    }
-  };
-
   // Translation function
   const t = async (text) => {
     if (currentLanguage === DEFAULT_LANGUAGE) {
@@ -110,7 +105,7 @@ export function LanguageProvider({ children }) {
   const value = {
     currentLanguage,
     direction,
-    changeLanguage: updateLanguage,
+    changeLanguage,
     t,
     loading
   };

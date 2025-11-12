@@ -211,4 +211,12 @@ export default async function handler(req, res) {
       targetLanguage: req.body?.target || 'en'
     });
   }
+  } catch (error) {
+    console.error('Translation error:', error);
+    return res.status(500).json({ 
+      error: 'Translation service error',
+      translatedText: text || '',
+      fallback: true
+    });
+  }
 }

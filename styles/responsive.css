@@ -1,3 +1,16 @@
+/* Language Selector Mobile Styles */
+@media (max-width: 768px) and (orientation: portrait) {
+  /* Show language selector in portrait mode */
+  .language-selector-container {
+    display: block !important;
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+  }
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
   /* Language Selector Mobile Visibility */
   .languageSelectorWrapper,
