@@ -3,9 +3,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import TranslatedText from './TranslatedText';
 
 export default function StickyFooter() {
   const { user, loading } = useAuth();
+  const { currentLanguage } = useLanguage();
   const [isVisible, setIsVisible] = useState(true);
   const [showFeatures, setShowFeatures] = useState(false);
   const router = useRouter();
@@ -117,7 +120,9 @@ export default function StickyFooter() {
                 }}
               >
                 <span style={styles.navIcon}>{navItem.icon}</span>
-                <span style={styles.navText}>{navItem.name}</span>
+                <span style={styles.navText}>
+                  <TranslatedText>{navItem.name}</TranslatedText>
+                </span>
               </Link>
             ))}
             
@@ -128,7 +133,9 @@ export default function StickyFooter() {
                 style={styles.featuresButton}
               >
                 <span style={styles.navIcon}>💰</span>
-                <span style={styles.navText}>Banking+</span>
+                <span style={styles.navText}>
+                  <TranslatedText>Banking+</TranslatedText>
+                </span>
               </button>
               
               {showFeatures && (
@@ -136,20 +143,30 @@ export default function StickyFooter() {
                   <div style={styles.backdrop} onClick={() => setShowFeatures(false)}></div>
                   <div style={styles.featuresDropdown}>
                     <div style={styles.dropdownHeader}>
-                      <h4 style={styles.dropdownTitle}>Banking+ Premium Services</h4>
-                      <p style={styles.dropdownSubtitle}>Complete suite of professional banking solutions</p>
+                      <h4 style={styles.dropdownTitle}>
+                        <TranslatedText>Banking+ Premium Services</TranslatedText>
+                      </h4>
+                      <p style={styles.dropdownSubtitle}>
+                        <TranslatedText>Complete suite of professional banking solutions</TranslatedText>
+                      </p>
                       <div style={styles.statsRow}>
                         <div style={styles.statItem}>
                           <span style={styles.statNumber}>26+</span>
-                          <span style={styles.statLabel}>Services</span>
+                          <span style={styles.statLabel}>
+                            <TranslatedText>Services</TranslatedText>
+                          </span>
                         </div>
                         <div style={styles.statItem}>
                           <span style={styles.statNumber}>24/7</span>
-                          <span style={styles.statLabel}>Support</span>
+                          <span style={styles.statLabel}>
+                            <TranslatedText>Support</TranslatedText>
+                          </span>
                         </div>
                         <div style={styles.statItem}>
                           <span style={styles.statNumber}>500K+</span>
-                          <span style={styles.statLabel}>Customers</span>
+                          <span style={styles.statLabel}>
+                            <TranslatedText>Customers</TranslatedText>
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -161,7 +178,9 @@ export default function StickyFooter() {
                         
                         return (
                           <div key={category} style={styles.featureCategory}>
-                            <h5 style={styles.categoryTitle}>{category}</h5>
+                            <h5 style={styles.categoryTitle}>
+                              <TranslatedText>{category}</TranslatedText>
+                            </h5>
                             <div style={styles.featuresGrid}>
                               {categoryFeatures.map((feature) => (
                                 <button
@@ -180,8 +199,12 @@ export default function StickyFooter() {
                                     {feature.icon}
                                   </div>
                                   <div style={styles.featureContent}>
-                                    <div style={styles.featureName}>{feature.name}</div>
-                                    <div style={styles.featureDesc}>{feature.desc}</div>
+                                    <div style={styles.featureName}>
+                                      <TranslatedText>{feature.name}</TranslatedText>
+                                    </div>
+                                    <div style={styles.featureDesc}>
+                                      <TranslatedText>{feature.desc}</TranslatedText>
+                                    </div>
                                   </div>
                                   <div style={{ ...styles.featureArrow, color: feature.color }}>→</div>
                                 </button>
@@ -200,7 +223,7 @@ export default function StickyFooter() {
                         }}
                         style={styles.viewAllButton}
                       >
-                        View All Banking Services
+                        <TranslatedText>View All Banking Services</TranslatedText>
                       </button>
                       <button 
                         onClick={() => {
@@ -209,7 +232,7 @@ export default function StickyFooter() {
                         }}
                         style={styles.contactSupportButton}
                       >
-                        Contact Support
+                        <TranslatedText>Contact Support</TranslatedText>
                       </button>
                     </div>
                   </div>
@@ -228,7 +251,9 @@ export default function StickyFooter() {
                 }}
               >
                 <span style={styles.navIcon}>{navItem.icon}</span>
-                <span style={styles.navText}>{navItem.name}</span>
+                <span style={styles.navText}>
+                  <TranslatedText>{navItem.name}</TranslatedText>
+                </span>
               </Link>
             ))}
 
