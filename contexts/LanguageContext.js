@@ -102,7 +102,13 @@ export function LanguageProvider({ children }) {
     }
     
     try {
-      const translated = await translateText(text, currentLanguage, DEFAULT_LANGUAGE);
+      // Add a race condition with timeout
+      const translationPromise = translateText(text, currentLanguage, DEFAULT_LANGUAGE);
+      const timeoutPromise = new Promise((resolve) => 
+        setTimeout(() => resolve(text), 10000) // 10 second timeout for context
+      );
+      
+      const translated = await Promise.race([translationPromise, timeoutPromise]);
       return translated || text;
     } catch (error) {
       console.error('Translation error in context:', error);
