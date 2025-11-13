@@ -84,15 +84,7 @@ export default async function handler(req, res) {
       console.log('Attempting MyMemory translation:', { source, target, textLength: text.length });
       
       const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}`;
-      
-      // Add timeout to fetch request
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-      
-      const myMemoryResponse = await fetch(myMemoryUrl, {
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
+      const myMemoryResponse = await fetch(myMemoryUrl);
       
       console.log('MyMemory response status:', myMemoryResponse.status);
       
