@@ -3138,7 +3138,7 @@ const styles = {
     right: '20px',
     background: 'rgba(255,255,255,0.95)',
     color: '#1e40af',
-    padding: '8px 16px',
+    padding: '10px 16px',
     borderRadius: '20px',
     fontSize: '0.85rem',
     fontWeight: '700',
@@ -5051,8 +5051,7 @@ const styles = {
     lineHeight: '1.7',
     fontWeight: '400'
   },
-  mobileBankingFeatures: {
-    display: 'flex',
+  mobileBankingFeatures: {display: 'flex',
     flexDirection: 'column',
     gap: '1.5rem',
     marginBottom: '2.5rem'
