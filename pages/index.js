@@ -472,12 +472,6 @@ export default function Home() {
                 </div>
                 <div style={styles.bankTagline}>Your Financial Partner</div>
               </div>
-              {/* Scrolling Welcome Message - Right after brand name */}
-              <div style={styles.scrollingWelcomeInline} className="scrolling-welcome-inline">
-                <div style={styles.scrollingWelcomeText}>
-                  Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $500,000 • Rated #1 Customer Service
-                </div>
-              </div>
             </Link>
 
             {/* Banking+ and Language Selector - Right Side */}
@@ -502,6 +496,13 @@ export default function Home() {
               {/* Language Selector beside Banking+ */}
               <div style={styles.languageSelectorInline} className="language-selector-inline">
                 <LanguageSelector compact={true} />
+              </div>
+            </div>
+
+            {/* Scrolling Welcome Message - Separate row for mobile portrait */}
+            <div style={styles.scrollingWelcomeInline} className="scrolling-welcome-inline">
+              <div style={styles.scrollingWelcomeText}>
+                Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $500,000 • Rated #1 Customer Service
               </div>
             </div>
 
