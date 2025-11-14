@@ -10,6 +10,7 @@ import FeaturesSection from '../components/FeaturesSection';
 import Footer from '../components/Footer';
 import LiveChat from '../components/LiveChat';
 import LanguageSelector from '../components/LanguageSelector';
+import LocalizedImage from '../components/LocalizedImage';
 
 // Lazy load heavy components
 const Testimonials = lazy(() => import('../components/Testimonials'));
@@ -618,18 +619,11 @@ export default function Home() {
                   zIndex: currentSlide === index ? 2 : 1,
                 }}
               >
-                <img
+                <LocalizedImage
                   src={image.src}
                   alt={image.title}
                   style={styles.heroImage}
-                  onError={(e) => {
-                    console.warn('Hero image failed to load:', image.src);
-                    if (image.fallback) {
-                      e.target.src = image.fallback;
-                    } else {
-                      e.target.style.display = 'none';
-                    }
-                  }}
+                  fallbackSrc="/images/hero-fallback.png" // Provide a fallback image path
                 />
                 <div style={styles.heroOverlay}></div>
               </div>
@@ -685,73 +679,17 @@ export default function Home() {
 
           <div style={styles.accountBannerContainer}>
             <div style={styles.accountBannerImage}>
-              <img
+              <LocalizedImage
                 src="/images/bank-discussion.png"
                 alt="Banking Discussion - Account Types Available"
                 style={styles.bannerImage}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'flex';
-                }}
+                fallbackSrc="/images/fallback-banking-discussion.png"
               />
-              <div style={{...styles.bannerImageFallback, display: 'none'}}>
-                <div style={styles.fallbackContent}>
-                  <span style={styles.fallbackIcon}>🏦</span>
-                  <h3 style={styles.fallbackTitle}>{ts('23 Account Types Available')}</h3>
-                  <p style={styles.fallbackText}>{ts('From basic checking to premium investment accounts')}</p>
-                </div>
-              </div>
             </div>
 
             <div style={styles.accountBannerContent}>
-              <div style={styles.accountHighlights}>
-                <div style={styles.highlightItem}>
-                  <span style={styles.highlightIcon}>💳</span>
-                  <div>
-                    <h4 style={styles.highlightTitle}>{ts('Personal Banking')}</h4>
-                    <p style={styles.highlightDesc}>{ts('Checking, Savings, Student accounts')}</p>
-                  </div>
-                </div>
-                <div style={styles.highlightItem}>
-                  <span style={styles.highlightIcon}>🏢</span>
-                  <div>
-                    <h4 style={styles.highlightTitle}>{ts('Business Banking')}</h4>
-                    <p style={styles.highlightDesc}>{ts('Professional solutions for businesses')}</p>
-                  </div>
-                </div>
-                <div style={styles.highlightItem}>
-                  <span style={styles.highlightIcon}>📈</span>
-                  <div>
-                    <h4 style={styles.highlightTitle}>{ts('Investment Accounts')}</h4>
-                    <p style={styles.highlightDesc}>{ts('Grow your wealth with premium options')}</p>
-                  </div>
-                </div>
-                <div style={styles.highlightItem}>
-                  <span style={styles.highlightIcon}>🎯</span>
-                  <div>
-                    <h4 style={styles.highlightTitle}>{ts('Specialized Accounts')}</h4>
-                    <p style={styles.highlightDesc}>{ts('HSA, Trust, International options')}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.accountBannerActions}>
-                <Link href="/account-types" style={styles.viewAllAccountsButton}>
-                  <span style={styles.buttonIcon}>🔍</span>
-                  {ts('View All 23 Account Types')}
-                </Link>
-                {user ? (
-                  <Link href="/apply" style={styles.applyNowButton}>
-                    <span style={styles.buttonIcon}>⚡</span>
-                    {ts('Apply Now')}
-                  </Link>
-                ) : (
-                  <Link href="/sign-in" style={styles.signInButton}>
-                    <span style={styles.buttonIcon}>👤</span>
-                    {ts('Sign In to Apply')}
-                  </Link>
-                )}
-              </div>
+              <h3 style={styles.accountTitle}>{ts('Personal Banking')}</h3>
+              <p style={styles.accountDesc}>{ts('Checking, Savings, Student accounts')}</p>
             </div>
           </div>
         </div>
@@ -775,13 +713,11 @@ export default function Home() {
 
           <div style={styles.newBankingImageGrid}>
             <div style={styles.newBankingImageContainer}>
-              <img
+              <LocalizedImage
                 src="/images/oakline-bank-branded-1.jpeg"
                 alt="Oakline Bank Modern Banking Experience"
                 style={styles.newBankingImage}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
+                fallbackSrc="/images/fallback-oakline-bank-branded-1.jpeg"
               />
             </div>
 
@@ -841,13 +777,11 @@ export default function Home() {
 
           <div style={styles.professionalCardsGrid}>
             <div style={styles.professionalCardsImageContainer}>
-              <img
+              <LocalizedImage
                 src="/images/Professional_bank_cards_e0d28d7c.png"
                 alt="Professional Banking Cards Collection"
                 style={styles.professionalCardsImage}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
+                fallbackSrc="/images/fallback-professional-bank-cards.png"
               />
               <div style={styles.professionalCardsBadge}>
                 <span style={styles.badgeIcon}>💳</span>
@@ -924,10 +858,11 @@ export default function Home() {
           <div style={styles.debitCardsGrid}>
             <div style={styles.debitCardItem}>
               <div style={styles.debitCardImageContainer}>
-                <img
+                <LocalizedImage
                   src="/images/realistic-debit-card-1.svg"
                   alt="Premium Debit Card"
                   style={styles.debitCardImage}
+                  fallbackSrc="/images/fallback-realistic-debit-card-1.svg"
                 />
                 <div style={styles.debitCardBadge}>
                   <span style={styles.badgeIcon}>💳</span>
@@ -961,10 +896,11 @@ export default function Home() {
 
             <div style={styles.debitCardItem}>
               <div style={styles.debitCardImageContainer}>
-                <img
+                <LocalizedImage
                   src="/images/premium-debit-card.svg"
                   alt="Premium Debit Card"
                   style={styles.debitCardImage}
+                  fallbackSrc="/images/fallback-premium-debit-card.svg"
                 />
                 <div style={styles.debitCardBadge}>
                   <span style={styles.badgeIcon}>💎</span>
@@ -1037,10 +973,11 @@ export default function Home() {
           <div style={styles.professionalServicesGrid}>
             <div style={styles.professionalServiceCard}>
               <div style={styles.serviceImageContainer}>
-                <img
+                <LocalizedImage
                   src="/images/Professional_banking_team_36e79456.png"
                   alt="Professional Banking Team"
                   style={styles.serviceImage}
+                  fallbackSrc="/images/fallback-professional-banking-team.png"
                 />
                 <div style={styles.serviceBadge}>
                   <span style={styles.badgeIcon}>👥</span>
@@ -1067,10 +1004,11 @@ export default function Home() {
 
             <div style={styles.professionalServiceCard}>
               <div style={styles.serviceImageContainer}>
-                <img
+                <LocalizedImage
                   src="/images/Digital_investment_dashboard_36d35f19.png"
                   alt="Digital Investment Dashboard"
                   style={styles.serviceImage}
+                  fallbackSrc="/images/fallback-digital-investment-dashboard.png"
                 />
                 <div style={styles.serviceBadge}>
                   <span style={styles.badgeIcon}>📊</span>
@@ -1156,10 +1094,11 @@ export default function Home() {
             </div>
 
             <div style={styles.studentBankingImageContainer}>
-              <img
+              <LocalizedImage
                 src="/images/Student_banking_services_ee1b5d89.png"
                 alt="Student Banking Services"
                 style={styles.studentBankingImage}
+                fallbackSrc="/images/fallback-student-banking-services.png"
               />
               <div style={styles.studentBankingBadge}>
                 <span style={styles.badgeIcon}>🎓</span>
@@ -1186,13 +1125,11 @@ export default function Home() {
 
           <div style={styles.consultationGrid}>
             <div style={styles.consultationImageSide}>
-              <img
+              <LocalizedImage
                 src="/images/Bank_hall_business_discussion_72f98bbe.png"
                 alt="Professional Banking Hall Discussion"
                 style={styles.consultationImage}
-                onError={(e) => {
-                  e.target.src = "/images/Banking_executive_team_meeting_c758f3ec.png";
-                }}
+                fallbackSrc="/images/fallback-bank-hall-business-discussion.png"
               />
             </div>
             <div style={styles.consultationContent}>
@@ -1282,13 +1219,11 @@ export default function Home() {
               </div>
             </div>
             <div style={styles.executiveImageSide}>
-              <img
+              <LocalizedImage
                 src="/images/Banking_executive_team_meeting_c758f3ec.png"
                 alt="Banking Executive Team Meeting"
                 style={styles.executiveImage}
-                onError={(e) => {
-                  e.target.src = "/images/Professional_banking_team_36e79456.png";
-                }}
+                fallbackSrc="/images/fallback-banking-executive-team-meeting.png"
               />
             </div>
           </div>
@@ -1369,13 +1304,11 @@ export default function Home() {
 
           <div style={styles.facilityGrid}>
             <div style={styles.facilityImageContainer}>
-              <img
+              <LocalizedImage
                 src="/images/Modern_bank_lobby_interior_d535acc7.png"
                 alt="Modern Bank Lobby Interior"
                 style={styles.facilityImage}
-                onError={(e) => {
-                  e.target.src = "/images/Modern_bank_lobby_interior_27efc3bf.png";
-                }}
+                fallbackSrc="/images/fallback-modern-bank-lobby-interior.png"
               />
               <div style={styles.facilityOverlay}>
                 <div style={styles.facilityBadge}>
@@ -1446,13 +1379,11 @@ export default function Home() {
 
           <div style={styles.mobileBankingGrid}>
             <div style={styles.mobileBankingImageContainer}>
-              <img
+              <LocalizedImage
                 src="/images/Mobile_banking_user_d80a1b31.png"
                 alt="Mobile Banking Excellence"
                 style={styles.mobileBankingImage}
-                onError={(e) => {
-                  e.target.src = '/images/Mobile_banking_user_experience_576bb7a3.png';
-                }}
+                fallbackSrc="/images/fallback-mobile-banking-user.png"
               />
               <div style={styles.mobileBankingBadge}>
                 <span style={styles.badgeIcon}>📱</span>
@@ -1529,13 +1460,11 @@ export default function Home() {
 
           <div style={styles.atmGrid}>
             <div style={styles.atmImageContainer}>
-              <img
+              <LocalizedImage
                 src="/images/Modern_bank_lobby_interior_27efc3bf.png"
                 alt="Modern Bank Lobby - ATM Services"
                 style={styles.atmImage}
-                onError={(e) => {
-                  e.target.src = "/images/Modern_bank_lobby_interior_d535acc7.png";
-                }}
+                fallbackSrc="/images/fallback-modern-bank-lobby-interior-2.png"
               />
               <div style={styles.atmBadge}>
                 <span style={styles.badgeIcon}>🏧</span>
@@ -1648,13 +1577,11 @@ export default function Home() {
             </div>
 
             <div style={styles.loanBannerImageContainer}>
-              <img
+              <LocalizedImage
                 src="/images/Loan_approval_celebration_a079ff82.png"
                 alt="Loan Approval Success"
                 style={styles.loanBannerImage}
-                onError={(e) => {
-                  e.target.src = '/images/Loan_approval_celebration_banner_919a886f.png';
-                }}
+                fallbackSrc="/images/fallback-loan-approval-celebration.png"
               />
             </div>
           </div>
@@ -4810,7 +4737,7 @@ const styles = {
   exploreButton: {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '0.8rem',
+    gap:'0.8rem',
     padding: '1.1rem 2.2rem',
     background: 'linear-gradient(135deg, #1e40af 0%, #0ea5e9 100%)',
     color: 'white',
