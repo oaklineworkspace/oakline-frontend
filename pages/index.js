@@ -780,8 +780,9 @@ export default function Home() {
               <LocalizedImage
                 src="/images/Professional_bank_cards_e0d28d7c.png"
                 alt="Professional Banking Cards Collection"
+                width={800}
+                height={600}
                 style={styles.professionalCardsImage}
-                fallbackSrc="/images/fallback-professional-bank-cards.png"
               />
               <div style={styles.professionalCardsBadge}>
                 <span style={styles.badgeIcon}>💳</span>
@@ -3410,8 +3411,7 @@ const styles = {
     background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
     color: 'white',
     borderRadius: '50%',
-    flexShrink: 0,
-    boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)'
+    flexShrink: 0
   },
   featureDropdownTitle: {
     fontSize: '1rem',
@@ -5143,7 +5143,7 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '0.8rem',
-    padding: '1rem 2rem',
+    padding: '1rem2rem',
     backgroundColor: 'transparent',
     color: '#059669',
     textDecoration: 'none',

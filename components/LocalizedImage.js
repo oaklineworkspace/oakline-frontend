@@ -5,8 +5,8 @@ import Image from 'next/image';
 export default function LocalizedImage({ 
   src, 
   alt, 
-  width, 
-  height, 
+  width = 800, 
+  height = 600, 
   className,
   style,
   priority = false,
