@@ -11,6 +11,7 @@ import Footer from '../components/Footer';
 import LiveChat from '../components/LiveChat';
 import LanguageSelector from '../components/LanguageSelector';
 import LocalizedImage from '../components/LocalizedImage';
+import TranslatedText from '../components/TranslatedText'; // Import TranslatedText
 
 // Lazy load heavy components
 const Testimonials = lazy(() => import('../components/Testimonials'));
@@ -439,8 +440,8 @@ export default function Home() {
           <div style={styles.spinner}>
             </div>
           <div style={styles.loadingContent}>
-            <h2 style={styles.loadingTitle}>{ts('Welcome to Oakline Bank')}</h2>
-            <p style={styles.loadingText}>{ts('Loading your premium banking experience...')}</p>
+            <h2 style={styles.loadingTitle}><TranslatedText>Welcome to Oakline Bank</TranslatedText></h2>
+            <p style={styles.loadingText}><TranslatedText>Loading your premium banking experience...</TranslatedText></p>
             <div style={styles.loadingProgress}>
               <div style={styles.progressBar}></div>
             </div>
@@ -470,7 +471,7 @@ export default function Home() {
                   <div>Oakline</div>
                   <div>Bank</div>
                 </div>
-                <div style={styles.bankTagline}>Your Financial Partner</div>
+                <div style={styles.bankTagline}><TranslatedText>Your Financial Partner</TranslatedText></div>
               </div>
             </Link>
 
@@ -489,7 +490,7 @@ export default function Home() {
                 <div style={styles.iconLine}></div>
                 <div style={styles.iconLine}></div>
               </div>
-              <span style={styles.bankingPlusText}>{ts('Banking+')}</span>
+              <span style={styles.bankingPlusText}><TranslatedText>Banking+</TranslatedText></span>
                 </button>
               </div>
 
@@ -502,7 +503,7 @@ export default function Home() {
             {/* Scrolling Welcome Message - Separate row for mobile portrait */}
             <div style={styles.scrollingWelcomeInline} className="scrolling-welcome-inline">
               <div style={styles.scrollingWelcomeText}>
-                Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $500,000 • Rated #1 Customer Service
+                <TranslatedText>Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $500,000 • Rated #1 Customer Service</TranslatedText>
               </div>
             </div>
 
@@ -518,10 +519,10 @@ export default function Home() {
                 <div style={styles.bankingDropdown} className="banking-dropdown" onClick={(e) => e.stopPropagation()}>
                   <div style={styles.bankingDropdownHeader}>
                     <h4 style={styles.bankingDropdownTitle}>
-                      {user ? ts('Welcome Back!') : ts('Complete Banking Solutions')}
+                      {user ? <TranslatedText>Welcome Back!</TranslatedText> : <TranslatedText>Complete Banking Solutions</TranslatedText>}
                     </h4>
                     <p style={styles.bankingDropdownSubtitle}>
-                      {user ? ts('Quick access to your banking services') : ts('Access all your banking services in one place')}
+                      {user ? <TranslatedText>Quick access to your banking services</TranslatedText> : <TranslatedText>Access all your banking services in one place</TranslatedText>}
                     </p>
                   </div>
 
@@ -529,7 +530,7 @@ export default function Home() {
                     {/* Explore Section */}
                     <div style={styles.bankingSection}>
                       <div style={styles.dropdownSectionTitle}>
-                        {user ? '🏠 ' + ts('MY BANKING') : '🔍 ' + ts('EXPLORE')}
+                        {user ? '🏠 ' + <TranslatedText>MY BANKING</TranslatedText> : '🔍 ' + <TranslatedText>EXPLORE</TranslatedText>}
                       </div>
                       {exploreFeatures.map((feature) => (
                         <Link
@@ -539,7 +540,7 @@ export default function Home() {
                           style={styles.dropdownLink}
                           className="dropdown-link"
                         >
-                          {feature.icon} {ts(feature.name)}
+                          {feature.icon} <TranslatedText>{feature.name}</TranslatedText>
                         </Link>
                       ))}
                     </div>
@@ -547,7 +548,7 @@ export default function Home() {
                     {/* Services & Resources Section */}
                     <div style={styles.bankingSection}>
                       <div style={styles.dropdownSectionTitle}>
-                        {user ? '💼 ' + ts('MY SERVICES') : '💼 ' + ts('BANKING SERVICES')}
+                        {user ? '💼 ' + <TranslatedText>MY SERVICES</TranslatedText> : '💼 ' + <TranslatedText>BANKING SERVICES</TranslatedText>}
                       </div>
                       {servicesFeatures.map((feature) => (
                         <Link
@@ -557,14 +558,14 @@ export default function Home() {
                           style={styles.dropdownLink}
                           className="dropdown-link"
                         >
-                          {feature.icon} {ts(feature.name)}
+                          {feature.icon} <TranslatedText>{feature.name}</TranslatedText>
                         </Link>
                       ))}
 
                       <div style={styles.dropdownDivider}></div>
 
                       <div style={styles.dropdownSectionTitle}>
-                        {user ? '⚙️ ' + ts('ACCOUNT TOOLS') : '📚 ' + ts('RESOURCES')}
+                        {user ? '⚙️ ' + <TranslatedText>ACCOUNT TOOLS</TranslatedText> : '📚 ' + <TranslatedText>RESOURCES</TranslatedText>}
                       </div>
                       {resourcesFeatures.map((feature) => (
                         <Link
@@ -574,7 +575,7 @@ export default function Home() {
                           style={styles.dropdownLink}
                           className="dropdown-link"
                         >
-                          {feature.icon} {ts(feature.name)}
+                          {feature.icon} <TranslatedText>{feature.name}</TranslatedText>
                         </Link>
                       ))}
                     </div>
@@ -588,14 +589,14 @@ export default function Home() {
                           onClick={() => setShowBankingDropdown(false)}
                           style={styles.viewAllServicesButtonEnroll}
                         >
-                          📊 {ts('Go to Dashboard')}
+                          📊 <TranslatedText>Go to Dashboard</TranslatedText>
                         </Link>
                         <Link
                           href="/account-types"
                           onClick={() => setShowBankingDropdown(false)}
                           style={styles.viewAllServicesButtonSecondary}
                         >
-                          ➕ {ts('Add New Account')}
+                          ➕ <TranslatedText>Add New Account</TranslatedText>
                         </Link>
                       </>
                     ) : (
@@ -605,14 +606,14 @@ export default function Home() {
                           onClick={() => setShowBankingDropdown(false)}
                           style={styles.viewAllServicesButtonEnroll}
                         >
-                          🚀 {ts('Open Account')}
+                          🚀 <TranslatedText>Open Account</TranslatedText>
                         </Link>
                         <Link
                           href="/support"
                           onClick={() => setShowBankingDropdown(false)}
                           style={styles.viewAllServicesButtonSecondary}
                         >
-                          💬 {ts('Contact Us')}
+                          💬 <TranslatedText>Contact Us</TranslatedText>
                         </Link>
                       </>
                     )}
@@ -621,1021 +622,1021 @@ export default function Home() {
               </>
             )}
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Professional Banking Hero Section */}
-      <section style={styles.heroSection} id="hero" data-animate>
-        <div style={styles.heroParallax}>
-          {/* Hero Slider - Updated for better slide transition */}
-          <div style={styles.heroSlider}>
-            {bankingImages.map((image, index) => (
-              <div
-                key={index}
-                style={{
-                  ...styles.heroSlide,
-                  opacity: currentSlide === index ? 1 : 0,
-                  transform: `translateX(${(index - currentSlide) * 100}%)`,
-                  zIndex: currentSlide === index ? 2 : 1,
-                }}
-              >
-                <LocalizedImage
-                  src={image.src}
-                  alt={image.title}
-                  style={styles.heroImage}
-                  fallbackSrc="/images/hero-fallback.png" // Provide a fallback image path
+        {/* Professional Banking Hero Section */}
+        <section style={styles.heroSection} id="hero" data-animate>
+          <div style={styles.heroParallax}>
+            {/* Hero Slider - Updated for better slide transition */}
+            <div style={styles.heroSlider}>
+              {bankingImages.map((image, index) => (
+                <div
+                  key={index}
+                  style={{
+                    ...styles.heroSlide,
+                    opacity: currentSlide === index ? 1 : 0,
+                    transform: `translateX(${(index - currentSlide) * 100}%)`,
+                    zIndex: currentSlide === index ? 2 : 1,
+                  }}
+                >
+                  <LocalizedImage
+                    src={image.src}
+                    alt={image.title}
+                    style={styles.heroImage}
+                    fallbackSrc="/images/hero-fallback.png" // Provide a fallback image path
+                  />
+                  <div style={styles.heroOverlay}></div>
+                </div>
+              ))}
+            </div>
+            <div style={{
+              ...styles.heroContent,
+              ...(isVisible.hero ? styles.heroAnimated : {})
+            }}>
+              {/* Hero buttons removed as requested */}
+            </div>
+
+            <div style={styles.slideIndicators}>
+              {bankingImages.map((_, index) => (
+                <button
+                  key={index}
+                  style={{
+                    ...styles.indicator,
+                    ...(currentSlide === index ? styles.indicatorActive : {})
+                  }}
+                  onClick={() => setCurrentSlide(index)}
                 />
-                <div style={styles.heroOverlay}></div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+
+
+        {/* Account Types Banner Section */}
+        <section style={styles.accountTypesBanner} id="account-types" data-animate>
+          <div style={styles.container}>
+            <div style={{
+              ...styles.sectionHeader,
+              ...(isVisible['account-types'] ? styles.zoomIn : {})
+            }}>
+              <h2 style={styles.sectionTitle}>
+                {user ? <TranslatedText>All 23 Account Types Available to You</TranslatedText> : <TranslatedText>Featured Banking Accounts</TranslatedText>}
+              </h2>
+              <p style={styles.sectionSubtitle}>
+                <TranslatedText>Find the perfect account for your financial needs and goals</TranslatedText>
+                {!user && (
+                  <span style={styles.loginPrompt}>
+                    <br />
+                    <Link href="/sign-in" style={styles.loginLink}>
+                      🔓 <TranslatedText>Sign in to unlock all 23 premium account types</TranslatedText>
+                    </Link>
+                  </span>
+                )}
+              </p>
+              <div style={styles.titleUnderline}></div>
+            </div>
+
+            <div style={styles.accountBannerContainer}>
+              <div style={styles.accountBannerImage}>
+                <LocalizedImage
+                  src="/images/bank-discussion.png"
+                  alt="Banking Discussion - Account Types Available"
+                  style={styles.bannerImage}
+                  fallbackSrc="/images/fallback-banking-discussion.png"
+                />
               </div>
-            ))}
+
+              <div style={styles.accountBannerContent}>
+                <h3 style={styles.accountTitle}><TranslatedText>Personal Banking</TranslatedText></h3>
+                <p style={styles.accountDesc}><TranslatedText>Checking, Savings, Student accounts</TranslatedText></p>
+              </div>
+            </div>
           </div>
-          <div style={{
-            ...styles.heroContent,
-            ...(isVisible.hero ? styles.heroAnimated : {})
-          }}>
-            {/* Hero buttons removed as requested */}
-          </div>
-
-          <div style={styles.slideIndicators}>
-            {bankingImages.map((_, index) => (
-              <button
-                key={index}
-                style={{
-                  ...styles.indicator,
-                  ...(currentSlide === index ? styles.indicatorActive : {})
-                }}
-                onClick={() => setCurrentSlide(index)}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
 
 
 
-      {/* Account Types Banner Section */}
-      <section style={styles.accountTypesBanner} id="account-types" data-animate>
-        <div style={styles.container}>
-          <div style={{
-            ...styles.sectionHeader,
-            ...(isVisible['account-types'] ? styles.zoomIn : {})
-          }}>
-            <h2 style={styles.sectionTitle}>
-              {user ? ts('All 23 Account Types Available to You') : ts('Featured Banking Accounts')}
-            </h2>
-            <p style={styles.sectionSubtitle}>
-              {ts('Find the perfect account for your financial needs and goals')}
-              {!user && (
-                <span style={styles.loginPrompt}>
-                  <br />
-                  <Link href="/sign-in" style={styles.loginLink}>
-                    🔓 {ts('Sign in to unlock all 23 premium account types')}
+        {/* New Banking Image Section */}
+        <section style={styles.newBankingImageSection} id="banking-image" data-animate>
+          <div style={styles.container}>
+            <div style={{
+              ...styles.sectionHeader,
+              ...(isVisible['banking-image'] ? styles.fadeInUp : {})
+            }}>
+              <h2 style={styles.sectionTitle}><TranslatedText>Modern Banking Experience</TranslatedText></h2>
+              <p style={styles.sectionSubtitle}>
+                <TranslatedText>Experience the future of banking with our state-of-the-art facilities and services</TranslatedText>
+              </p>
+              <div style={styles.titleUnderline}></div>
+            </div>
+
+            <div style={styles.newBankingImageGrid}>
+              <div style={styles.newBankingImageContainer}>
+                <LocalizedImage
+                  src="/images/oakline-bank-branded-1.jpeg"
+                  alt="Oakline Bank Modern Banking Experience"
+                  style={styles.newBankingImage}
+                  fallbackSrc="/images/fallback-oakline-bank-branded-1.jpeg"
+                />
+              </div>
+
+              <div style={styles.newBankingImageContent}>
+                <h3 style={styles.newBankingImageTitle}><TranslatedText>Your Complete Banking Solution</TranslatedText></h3>
+                <p style={styles.newBankingImageDescription}>
+                  <TranslatedText>Discover a comprehensive range of banking services designed to meet all your financial needs. From everyday transactions to long-term investments, we provide innovative solutions backed by exceptional customer service.</TranslatedText>
+                </p>
+
+                <div style={styles.newBankingImageFeatures}>
+                  <div style={styles.newBankingImageFeature}>
+                    <span style={styles.newBankingImageFeatureIcon}>✓</span>
+                    <span><TranslatedText>Advanced Digital Platform</TranslatedText></span>
+                  </div>
+                  <div style={styles.newBankingImageFeature}>
+                    <span style={styles.newBankingImageFeatureIcon}>✓</span>
+                    <span><TranslatedText>Personalized Financial Services</TranslatedText></span>
+                  </div>
+                  <div style={styles.newBankingImageFeature}>
+                    <span style={styles.newBankingImageFeatureIcon}>✓</span>
+                    <span><TranslatedText>Secure and Reliable Banking</TranslatedText></span>
+                  </div>
+                  <div style={styles.newBankingImageFeature}>
+                    <span style={styles.newBankingImageFeatureIcon}>✓</span>
+                    <span><TranslatedText>24/7 Customer Support</TranslatedText></span>
+                  </div>
+                </div>
+
+                <div style={styles.newBankingImageActions}>
+                  <Link href="/apply" style={styles.newBankingImageButtonPrimary}>
+                    <span style={styles.buttonIcon}>🚀</span>
+                    <TranslatedText>Get Started</TranslatedText>
                   </Link>
-                </span>
-              )}
-            </p>
-            <div style={styles.titleUnderline}></div>
-          </div>
-
-          <div style={styles.accountBannerContainer}>
-            <div style={styles.accountBannerImage}>
-              <LocalizedImage
-                src="/images/bank-discussion.png"
-                alt="Banking Discussion - Account Types Available"
-                style={styles.bannerImage}
-                fallbackSrc="/images/fallback-banking-discussion.png"
-              />
-            </div>
-
-            <div style={styles.accountBannerContent}>
-              <h3 style={styles.accountTitle}>{ts('Personal Banking')}</h3>
-              <p style={styles.accountDesc}>{ts('Checking, Savings, Student accounts')}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
-
-      {/* New Banking Image Section */}
-      <section style={styles.newBankingImageSection} id="banking-image" data-animate>
-        <div style={styles.container}>
-          <div style={{
-            ...styles.sectionHeader,
-            ...(isVisible['banking-image'] ? styles.fadeInUp : {})
-          }}>
-            <h2 style={styles.sectionTitle}>{ts('Modern Banking Experience')}</h2>
-            <p style={styles.sectionSubtitle}>
-              {ts('Experience the future of banking with our state-of-the-art facilities and services')}
-            </p>
-            <div style={styles.titleUnderline}></div>
-          </div>
-
-          <div style={styles.newBankingImageGrid}>
-            <div style={styles.newBankingImageContainer}>
-              <LocalizedImage
-                src="/images/oakline-bank-branded-1.jpeg"
-                alt="Oakline Bank Modern Banking Experience"
-                style={styles.newBankingImage}
-                fallbackSrc="/images/fallback-oakline-bank-branded-1.jpeg"
-              />
-            </div>
-
-            <div style={styles.newBankingImageContent}>
-              <h3 style={styles.newBankingImageTitle}>{ts('Your Complete Banking Solution')}</h3>
-              <p style={styles.newBankingImageDescription}>
-                {ts('Discover a comprehensive range of banking services designed to meet all your financial needs. From everyday transactions to long-term investments, we provide innovative solutions backed by exceptional customer service.')}
-              </p>
-
-              <div style={styles.newBankingImageFeatures}>
-                <div style={styles.newBankingImageFeature}>
-                  <span style={styles.newBankingImageFeatureIcon}>✓</span>
-                  <span>{ts('Advanced Digital Platform')}</span>
-                </div>
-                <div style={styles.newBankingImageFeature}>
-                  <span style={styles.newBankingImageFeatureIcon}>✓</span>
-                  <span>{ts('Personalized Financial Services')}</span>
-                </div>
-                <div style={styles.newBankingImageFeature}>
-                  <span style={styles.newBankingImageFeatureIcon}>✓</span>
-                  <span>{ts('Secure and Reliable Banking')}</span>
-                </div>
-                <div style={styles.newBankingImageFeature}>
-                  <span style={styles.newBankingImageFeatureIcon}>✓</span>
-                  <span>{ts('24/7 Customer Support')}</span>
+                  <Link href="/about" style={styles.newBankingImageButtonSecondary}>
+                    <span style={styles.buttonIcon}>ℹ️</span>
+                    <TranslatedText>Learn More</TranslatedText>
+                  </Link>
                 </div>
               </div>
-
-              <div style={styles.newBankingImageActions}>
-                <Link href="/apply" style={styles.newBankingImageButtonPrimary}>
-                  <span style={styles.buttonIcon}>🚀</span>
-                  {ts('Get Started')}
-                </Link>
-                <Link href="/about" style={styles.newBankingImageButtonSecondary}>
-                  <span style={styles.buttonIcon}>ℹ️</span>
-                  {ts('Learn More')}
-                </Link>
-              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Professional Banking Cards Section */}
-      <section style={styles.professionalCardsSection} id="professional-cards" data-animate>
-        <div style={styles.container}>
-          <div style={{
-            ...styles.sectionHeader,
-            ...(isVisible['professional-cards'] ? styles.fadeInUp : {})
-          }}>
-            <h2 style={styles.sectionTitle}>{ts('Professional Banking Cards')}</h2>
-            <p style={styles.sectionSubtitle}>
-              {ts('Discover our comprehensive range of premium banking cards designed for every financial need')}
-            </p>
-            <div style={styles.titleUnderline}></div>
-          </div>
-
-          <div style={styles.professionalCardsGrid}>
-            <div style={styles.professionalCardsImageContainer}>
-              <LocalizedImage
-                src="/images/Professional_bank_cards_e0d28d7c.png"
-                alt="Professional Banking Cards Collection"
-                width={800}
-                height={600}
-                style={styles.professionalCardsImage}
-              />
-              <div style={styles.professionalCardsBadge}>
-                <span style={styles.badgeIcon}>💳</span>
-                <span>{ts('Premium Cards')}</span>
-              </div>
+        {/* Professional Banking Cards Section */}
+        <section style={styles.professionalCardsSection} id="professional-cards" data-animate>
+          <div style={styles.container}>
+            <div style={{
+              ...styles.sectionHeader,
+              ...(isVisible['professional-cards'] ? styles.fadeInUp : {})
+            }}>
+              <TranslatedText as="h2" style={styles.sectionTitle}>Professional Banking Cards</TranslatedText>
+              <TranslatedText as="p" style={styles.sectionSubtitle}>
+                Discover our comprehensive range of premium banking cards designed for every financial need
+              </TranslatedText>
+              <div style={styles.titleUnderline}></div>
             </div>
 
-            <div style={styles.professionalCardsContent}>
-              <h3 style={styles.professionalCardsTitle}>{ts('Complete Card Solutions')}</h3>
-              <p style={styles.professionalCardsDescription}>
-                {ts('From everyday debit cards to premium credit cards, we offer a complete suite of banking cards with advanced features, security, and rewards tailored to your lifestyle.')}
-              </p>
-
-              <div style={styles.professionalCardsFeatures}>
-                <div style={styles.professionalCardsFeature}>
-                  <span style={styles.professionalCardsFeatureIcon}>🛡️</span>
-                  <div>
-                    <h4 style={styles.professionalCardsFeatureTitle}>Advanced Security</h4>
-                    <p style={styles.professionalCardsFeatureDesc}>EMV chip, contactless technology, and fraud protection</p>
-                  </div>
-                </div>
-                <div style={styles.professionalCardsFeature}>
-                  <span style={styles.professionalCardsFeatureIcon}>🎁</span>
-                  <div>
-                    <h4 style={styles.professionalCardsFeatureTitle}>Rewards Program</h4>
-                    <p style={styles.professionalCardsFeatureDesc}>Earn cashback and points on every purchase</p>
-                  </div>
-                </div>
-                <div style={styles.professionalCardsFeature}>
-                  <span style={styles.professionalCardsFeatureIcon}>🌍</span>
-                  <div>
-                    <h4 style={styles.professionalCardsFeatureTitle}>Global Acceptance</h4>
-                    <p style={styles.professionalCardsFeatureDesc}>Use your cards worldwide with no foreign transaction fees</p>
-                  </div>
-                </div>
-                <div style={styles.professionalCardsFeature}>
-                  <span style={styles.professionalCardsFeatureIcon}>📲</span>
-                  <div>
-                    <h4 style={styles.professionalCardsFeatureTitle}>Digital Wallet Ready</h4>
-                    <p style={styles.professionalCardsFeatureDesc}>Apple Pay, Google Pay, and Samsung Pay compatible</p>
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.professionalCardsActions}>
-                <Link href="/cards" style={styles.professionalCardsButtonPrimary}>
-                  <span style={styles.buttonIcon}>💳</span>
-                  Explore All Cards
-                </Link>
-                <Link href="/apply" style={styles.professionalCardsButtonSecondary}>
-                  <span style={styles.buttonIcon}>📝</span>
-                  Apply Now
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Debit Card Showcase Section */}
-      <section style={styles.debitCardShowcase} id="debit-cards" data-animate>
-        <div style={styles.container}>
-          <div style={{
-            ...styles.sectionHeader,
-            ...(isVisible['debit-cards'] ? styles.fadeInUp : {})
-          }}>
-            <h2 style={styles.sectionTitle}>Premium Debit Cards</h2>
-            <p style={styles.sectionSubtitle}>
-              Experience modern banking with our premium debit card collection featuring advanced security and contactless technology
-            </p>
-            <div style={styles.titleUnderline}></div>
-          </div>
-
-          <div style={styles.debitCardsGrid}>
-            <div style={styles.debitCardItem}>
-              <div style={styles.debitCardImageContainer}>
+            <div style={styles.professionalCardsGrid}>
+              <div style={styles.professionalCardsImageContainer}>
                 <LocalizedImage
-                  src="/images/realistic-debit-card-1.svg"
-                  alt="Premium Debit Card"
-                  style={styles.debitCardImage}
-                  fallbackSrc="/images/fallback-realistic-debit-card-1.svg"
+                  src="/images/Professional_bank_cards_e0d28d7c.png"
+                  alt="Professional Banking Cards Collection"
+                  width={800}
+                  height={600}
+                  style={styles.professionalCardsImage}
                 />
-                <div style={styles.debitCardBadge}>
+                <div style={styles.professionalCardsBadge}>
                   <span style={styles.badgeIcon}>💳</span>
-                  <span>Premium</span>
+                  <span><TranslatedText>Premium Cards</TranslatedText></span>
                 </div>
               </div>
-              <div style={styles.debitCardContent}>
-                <h3 style={styles.debitCardTitle}>Premium Debit Card</h3>
-                <p style={styles.debitCardDescription}>
-                  Get instant access to your funds with our premium debit card featuring contactless payments and global acceptance.
+
+              <div style={styles.professionalCardsContent}>
+                <h3 style={styles.professionalCardsTitle}><TranslatedText>Complete Card Solutions</TranslatedText></h3>
+                <p style={styles.professionalCardsDescription}>
+                  <TranslatedText>From everyday debit cards to premium credit cards, we offer a complete suite of banking cards with advanced features, security, and rewards tailored to your lifestyle.</TranslatedText>
                 </p>
-                <div style={styles.debitCardFeatures}>
-                  <div style={styles.featureTag}>Contactless Payments</div>
-                  <div style={styles.featureTag}>Real-time Fraud Protection</div>
-                  <div style={styles.featureTag}>Global Acceptance</div>
-                  <div style={styles.featureTag}>Mobile Card Controls</div>
+
+                <div style={styles.professionalCardsFeatures}>
+                  <div style={styles.professionalCardsFeature}>
+                    <span style={styles.professionalCardsFeatureIcon}>🛡️</span>
+                    <div>
+                      <h4 style={styles.professionalCardsFeatureTitle}><TranslatedText>Advanced Security</TranslatedText></h4>
+                      <p style={styles.professionalCardsFeatureDesc}><TranslatedText>EMV chip, contactless technology, and fraud protection</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.professionalCardsFeature}>
+                    <span style={styles.professionalCardsFeatureIcon}>🎁</span>
+                    <div>
+                      <h4 style={styles.professionalCardsFeatureTitle}><TranslatedText>Rewards Program</TranslatedText></h4>
+                      <p style={styles.professionalCardsFeatureDesc}><TranslatedText>Earn cashback and points on every purchase</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.professionalCardsFeature}>
+                    <span style={styles.professionalCardsFeatureIcon}>🌍</span>
+                    <div>
+                      <h4 style={styles.professionalCardsFeatureTitle}><TranslatedText>Global Acceptance</TranslatedText></h4>
+                      <p style={styles.professionalCardsFeatureDesc}><TranslatedText>Use your cards worldwide with no foreign transaction fees</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.professionalCardsFeature}>
+                    <span style={styles.professionalCardsFeatureIcon}>📲</span>
+                    <div>
+                      <h4 style={styles.professionalCardsFeatureTitle}><TranslatedText>Digital Wallet Ready</TranslatedText></h4>
+                      <p style={styles.professionalCardsFeatureDesc}><TranslatedText>Apple Pay, Google Pay, and Samsung Pay compatible</TranslatedText></p>
+                    </div>
+                  </div>
                 </div>
-                {user ? (
-                  <Link href="/cards" style={{...styles.debitCardButton, backgroundColor: undefined}}>
-                    <span style={styles.buttonIcon}>⚡</span>
-                    Apply for Card
+
+                <div style={styles.professionalCardsActions}>
+                  <Link href="/cards" style={styles.professionalCardsButtonPrimary}>
+                    <span style={styles.buttonIcon}>💳</span>
+                    <TranslatedText>Explore All Cards</TranslatedText>
                   </Link>
-                ) : (
-                  <Link href="/apply" style={styles.debitCardButton}>
-                    <span style={styles.buttonIcon}>🚀</span>
-                    Open Account First
+                  <Link href="/apply" style={styles.professionalCardsButtonSecondary}>
+                    <span style={styles.buttonIcon}>📝</span>
+                    <TranslatedText>Apply Now</TranslatedText>
                   </Link>
-                )}
-              </div>
-            </div>
-
-            <div style={styles.debitCardItem}>
-              <div style={styles.debitCardImageContainer}>
-                <LocalizedImage
-                  src="/images/premium-debit-card.svg"
-                  alt="Premium Debit Card"
-                  style={styles.debitCardImage}
-                  fallbackSrc="/images/fallback-premium-debit-card.svg"
-                />
-                <div style={styles.debitCardBadge}>
-                  <span style={styles.badgeIcon}>💎</span>
-                  <span>Premium</span>
                 </div>
-              </div>
-              <div style={styles.debitCardContent}>
-                <h3 style={styles.debitCardTitle}>Premium Debit Card</h3>
-                <p style={styles.debitCardDescription}>
-                  Experience luxury banking with our exclusive premium debit card featuring gold accents and elite benefits.
-                </p>
-                <div style={styles.debitCardFeatures}>
-                  <div style={styles.featureTag}>Premium Member Benefits</div>
-                  <div style={styles.featureTag}>Gold Card Design</div>
-                  <div style={styles.featureTag}>Concierge Service</div>
-                  <div style={styles.featureTag}>Priority Support</div>
-                </div>
-                {user ? (
-                  <Link href="/cards" style={{...styles.debitCardButton, backgroundColor: undefined}}>
-                    <span style={styles.buttonIcon}>⚡</span>
-                    Apply for Card
-                  </Link>
-                ) : (
-                  <Link href="/apply" style={styles.debitCardButton}>
-                    <span style={styles.buttonIcon}>🚀</span>
-                    Open Account First
-                  </Link>
-                )}
               </div>
             </div>
           </div>
+        </section>
 
-          <div style={styles.debitCardCTA}>
-            <h3 style={styles.debitCardCTATitle}>Ready to Get Your Premium Debit Card?</h3>
-            <p style={styles.debitCardCTASubtitle}>
-              Join thousands of customers who enjoy the convenience and security of our premium debit cards
-            </p>
-            <div style={styles.debitCardCTAButtons}>
-              <Link href={user ? "/cards" : "/apply"} style={styles.debitCardCTAPrimary}>
-                <span style={styles.buttonIcon}>💳</span>
-                {user ? "View My Cards" : "Open Account Today"}
-              </Link>
-              <Link href="/account-types" style={styles.debitCardCTASecondary}>
-                <span style={styles.buttonIcon}>ℹ️</span>
-                Learn More
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
-
-
-
-      {/* Professional Banking Services Section */}
-      <section style={styles.professionalServicesSection} id="professional-services" data-animate>
-        <div style={styles.container}>
-          <div style={{
-            ...styles.sectionHeader,
-            ...(isVisible['professional-services'] ? styles.fadeInUp : {})
-          }}>
-            <h2 style={styles.sectionTitle}>Professional Banking Services</h2>
-            <p style={styles.sectionSubtitle}>
-              Comprehensive financial solutions designed for your success with personalized service and expert guidance
-            </p>
-            <div style={styles.titleUnderline}></div>
-          </div>
-
-          <div style={styles.professionalServicesGrid}>
-            <div style={styles.professionalServiceCard}>
-              <div style={styles.serviceImageContainer}>
-                <LocalizedImage
-                  src="/images/Professional_banking_team_36e79456.png"
-                  alt="Professional Banking Team"
-                  style={styles.serviceImage}
-                  fallbackSrc="/images/fallback-professional-banking-team.png"
-                />
-                <div style={styles.serviceBadge}>
-                  <span style={styles.badgeIcon}>👥</span>
-                  <span>Expert Team</span>
-                </div>
-              </div>
-              <div style={styles.serviceContent}>
-                <h3 style={styles.serviceTitle}>Expert Banking Professionals</h3>
-                <p style={styles.serviceDescription}>
-                  Our certified banking professionals provide personalized financial guidance and comprehensive solutions tailored to your unique needs and goals.
-                </p>
-                <div style={styles.serviceFeatures}>
-                  <div style={styles.serviceFeature}>✓ Certified Financial Advisors</div>
-                  <div style={styles.serviceFeature}>✓ Personalized Consultation</div>
-                  <div style={styles.serviceFeature}>✓ 24/7 Professional Support</div>
-                  <div style={styles.serviceFeature}>✓ Strategic Financial Planning</div>
-                </div>
-                <Link href="/financial-advisory" style={styles.serviceButton}>
-                  <span style={styles.buttonIcon}>💼</span>
-                  Schedule Consultation
-                </Link>
-              </div>
+        {/* Debit Card Showcase Section */}
+        <section style={styles.debitCardShowcase} id="debit-cards" data-animate>
+          <div style={styles.container}>
+            <div style={{
+              ...styles.sectionHeader,
+              ...(isVisible['debit-cards'] ? styles.fadeInUp : {})
+            }}>
+              <TranslatedText as="h2" style={styles.sectionTitle}>Premium Debit Cards</TranslatedText>
+              <TranslatedText as="p" style={styles.sectionSubtitle}>
+                Experience modern banking with our premium debit card collection featuring advanced security and contactless technology
+              </TranslatedText>
+              <div style={styles.titleUnderline}></div>
             </div>
 
-            <div style={styles.professionalServiceCard}>
-              <div style={styles.serviceImageContainer}>
-                <LocalizedImage
-                  src="/images/Digital_investment_dashboard_36d35f19.png"
-                  alt="Digital Investment Dashboard"
-                  style={styles.serviceImage}
-                  fallbackSrc="/images/fallback-digital-investment-dashboard.png"
-                />
-                <div style={styles.serviceBadge}>
-                  <span style={styles.badgeIcon}>📊</span>
-                  <span>Investment Tools</span>
+            <div style={styles.debitCardsGrid}>
+              <div style={styles.debitCardItem}>
+                <div style={styles.debitCardImageContainer}>
+                  <LocalizedImage
+                    src="/images/realistic-debit-card-1.svg"
+                    alt="Premium Debit Card"
+                    style={styles.debitCardImage}
+                    fallbackSrc="/images/fallback-realistic-debit-card-1.svg"
+                  />
+                  <div style={styles.debitCardBadge}>
+                    <span style={styles.badgeIcon}>💳</span>
+                    <span><TranslatedText>Premium</TranslatedText></span>
+                  </div>
+                </div>
+                <div style={styles.debitCardContent}>
+                  <h3 style={styles.debitCardTitle}><TranslatedText>Premium Debit Card</TranslatedText></h3>
+                  <p style={styles.debitCardDescription}>
+                    <TranslatedText>Get instant access to your funds with our premium debit card featuring contactless payments and global acceptance.</TranslatedText>
+                  </p>
+                  <div style={styles.debitCardFeatures}>
+                    <div style={styles.featureTag}><TranslatedText>Contactless Payments</TranslatedText></div>
+                    <div style={styles.featureTag}><TranslatedText>Real-time Fraud Protection</TranslatedText></div>
+                    <div style={styles.featureTag}><TranslatedText>Global Acceptance</TranslatedText></div>
+                    <div style={styles.featureTag}><TranslatedText>Mobile Card Controls</TranslatedText></div>
+                  </div>
+                  {user ? (
+                    <Link href="/cards" style={{...styles.debitCardButton, backgroundColor: undefined}}>
+                      <span style={styles.buttonIcon}>⚡</span>
+                      <TranslatedText>Apply for Card</TranslatedText>
+                    </Link>
+                  ) : (
+                    <Link href="/apply" style={styles.debitCardButton}>
+                      <span style={styles.buttonIcon}>🚀</span>
+                      <TranslatedText>Open Account First</TranslatedText>
+                    </Link>
+                  )}
                 </div>
               </div>
-              <div style={styles.serviceContent}>
-                <h3 style={styles.serviceTitle}>Advanced Investment Platform</h3>
-                <p style={styles.serviceDescription}>
-                  Access sophisticated investment tools and real-time market data through our advanced digital platform designed for serious investors.
-                </p>
-                <div style={styles.serviceFeatures}>
-                  <div style={styles.serviceFeature}>✓ Real-time Market Data</div>
-                  <div style={styles.serviceFeature}>✓ Portfolio Analytics</div>
-                  <div style={styles.serviceFeature}>✓ Advanced Trading Tools</div>
-                  <div style={styles.serviceFeature}>✓ Investment Research</div>
+
+              <div style={styles.debitCardItem}>
+                <div style={styles.debitCardImageContainer}>
+                  <LocalizedImage
+                    src="/images/premium-debit-card.svg"
+                    alt="Premium Debit Card"
+                    style={styles.debitCardImage}
+                    fallbackSrc="/images/fallback-premium-debit-card.svg"
+                  />
+                  <div style={styles.debitCardBadge}>
+                    <span style={styles.badgeIcon}>💎</span>
+                    <span><TranslatedText>Premium</TranslatedText></span>
+                  </div>
                 </div>
-                <Link href="/investments" style={styles.serviceButton}>
-                  <span style={styles.buttonIcon}>📈</span>
-                  Explore Investments
-                </Link>
+                <div style={styles.debitCardContent}>
+                  <h3 style={styles.debitCardTitle}><TranslatedText>Premium Debit Card</TranslatedText></h3>
+                  <p style={styles.debitCardDescription}>
+                    <TranslatedText>Experience luxury banking with our exclusive premium debit card featuring gold accents and elite benefits.</TranslatedText>
+                  </p>
+                  <div style={styles.debitCardFeatures}>
+                    <div style={styles.featureTag}><TranslatedText>Premium Member Benefits</TranslatedText></div>
+                    <div style={styles.featureTag}><TranslatedText>Gold Card Design</TranslatedText></div>
+                    <div style={styles.featureTag}><TranslatedText>Concierge Service</TranslatedText></div>
+                    <div style={styles.featureTag}><TranslatedText>Priority Support</TranslatedText></div>
+                  </div>
+                  {user ? (
+                    <Link href="/cards" style={{...styles.debitCardButton, backgroundColor: undefined}}>
+                      <span style={styles.buttonIcon}>⚡</span>
+                      <TranslatedText>Apply for Card</TranslatedText>
+                    </Link>
+                  ) : (
+                    <Link href="/apply" style={styles.debitCardButton}>
+                      <span style={styles.buttonIcon}>🚀</span>
+                      <TranslatedText>Open Account First</TranslatedText>
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Student Banking Solutions Section */}
-      <section style={styles.studentBankingSection} id="student-banking" data-animate>
-        <div style={styles.container}>
-          <div style={{
-            ...styles.sectionHeader,
-            ...(isVisible['student-banking'] ? styles.fadeInUp : {})
-          }}>
-            <h2 style={styles.sectionTitle}>Student Banking Solutions</h2>
-            <p style={styles.sectionSubtitle}>
-              Specialized banking services and financial education designed to support students throughout their academic journey
-            </p>
-            <div style={styles.titleUnderline}></div>
-          </div>
-
-          <div style={styles.studentBankingGrid}>
-            <div style={styles.studentBankingContent}>
-              <h3 style={styles.studentBankingTitle}>Banking Made Simple for Students</h3>
-              <p style={styles.studentBankingDescription}>
-                Start your financial journey with confidence. Our student banking solutions offer no-fee accounts, financial literacy resources, and tools designed specifically for students.
+            <div style={styles.debitCardCTA}>
+              <h3 style={styles.debitCardCTATitle}><TranslatedText>Ready to Get Your Premium Debit Card?</TranslatedText></h3>
+              <p style={styles.debitCardCTASubtitle}>
+                <TranslatedText>Join thousands of customers who enjoy the convenience and security of our premium debit cards</TranslatedText>
               </p>
-
-              <div style={styles.studentBankingFeatures}>
-                <div style={styles.studentFeature}>
-                  <span style={styles.studentFeatureIcon}>🎓</span>
-                  <div>
-                    <h4 style={styles.studentFeatureTitle}>Student Checking Account</h4>
-                    <p style={styles.studentFeatureDesc}>No monthly fees, free online banking, and mobile check deposit</p>
-                  </div>
-                </div>
-                <div style={styles.studentFeature}>
-                  <span style={styles.studentFeatureIcon}>💡</span>
-                  <div>
-                    <h4 style={styles.studentFeatureTitle}>Financial Education</h4>
-                    <p style={styles.studentFeatureDesc}>Free workshops and resources to build financial literacy</p>
-                  </div>
-                </div>
-                <div style={styles.studentFeature}>
-                  <span style={styles.studentFeatureIcon}>🏦</span>
-                  <div>
-                    <h4 style={styles.studentFeatureTitle}>Student Savings Plans</h4>
-                    <p style={styles.studentFeatureDesc}>High-yield savings accounts with goal-setting tools</p>
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.studentBankingActions}>
-                <Link href="/apply" style={styles.studentButtonPrimary}>
-                  <span style={styles.buttonIcon}>🚀</span>
-                  Open Student Account
-                </Link>
-                <Link href="/financial-education" style={styles.studentButtonSecondary}>
-                  <span style={styles.buttonIcon}>📚</span>
-                  Financial Resources
-                </Link>
-              </div>
-            </div>
-
-            <div style={styles.studentBankingImageContainer}>
-              <LocalizedImage
-                src="/images/Student_banking_services_ee1b5d89.png"
-                alt="Student Banking Services"
-                style={styles.studentBankingImage}
-                fallbackSrc="/images/fallback-student-banking-services.png"
-              />
-              <div style={styles.studentBankingBadge}>
-                <span style={styles.badgeIcon}>🎓</span>
-                <span>Student Focused</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Professional Banking Hall Discussion Section */}
-      <section style={styles.consultationSection} id="consultation" data-animate>
-        <div style={styles.container}>
-          <div style={{
-            ...styles.sectionHeader,
-            ...(isVisible['consultation'] ? styles.fadeInUp : {})
-          }}>
-            <h2 style={styles.sectionTitle}>Professional Banking Consultation</h2>
-            <p style={styles.sectionSubtitle}>
-              Experience world-class banking service with our dedicated professionals in modern banking facilities
-            </p>
-            <div style={styles.titleUnderline}></div>
-          </div>
-
-          <div style={styles.consultationGrid}>
-            <div style={styles.consultationImageSide}>
-              <LocalizedImage
-                src="/images/Bank_hall_business_discussion_72f98bbe.png"
-                alt="Professional Banking Hall Discussion"
-                style={styles.consultationImage}
-                fallbackSrc="/images/fallback-bank-hall-business-discussion.png"
-              />
-            </div>
-            <div style={styles.consultationContent}>
-              <h3 style={styles.consultationTitle}>Expert Financial Guidance</h3>
-              <p style={styles.consultationSubtitle}>
-                Meet with our certified banking professionals in our state-of-the-art facilities. Get personalized advice and solutions tailored to your financial goals.
-              </p>
-              <div style={styles.consultationFeatures}>
-                <div style={styles.consultationFeature}>
-                  <span style={styles.consultationFeatureIcon}>👥</span>
-                  <div>
-                    <h4 style={styles.consultationFeatureTitle}>Professional Banking Team</h4>
-                    <p style={styles.consultationFeatureDesc}>Certified financial experts with decades of experience</p>
-                  </div>
-                </div>
-                <div style={styles.consultationFeature}>
-                  <span style={styles.consultationFeatureIcon}>🏦</span>
-                  <div>
-                    <h4 style={styles.consultationFeatureTitle}>Modern Banking Facilities</h4>
-                    <p style={styles.consultationFeatureDesc}>Premium locations designed for your comfort and privacy</p>
-                  </div>
-                </div>
-                <div style={styles.consultationFeature}>
-                  <span style={styles.consultationFeatureIcon}>🎯</span>
-                  <div>
-                    <h4 style={styles.consultationFeatureTitle}>Personalized Solutions</h4>
-                    <p style={styles.consultationFeatureDesc}>Custom financial strategies for your unique needs</p>
-                  </div>
-                </div>
-              </div>
-              <div style={styles.consultationActions}>
-                <Link href="/apply" style={styles.consultationButtonPrimary}>
-                  <span style={styles.buttonIcon}>📅</span>
-                  Schedule Meeting
-                </Link>
-                <Link href="/support" style={styles.consultationButtonSecondary}>
-                  <span style={styles.buttonIcon}>💬</span>
-                  Contact Expert
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Banking Executive Team Section */}
-      <section style={styles.executiveSection} id="executive-team" data-animate>
-        <div style={styles.container}>
-          <div style={styles.executiveGrid}>
-            <div style={styles.executiveContent}>
-              <h2 style={styles.executiveTitle}>Leadership Excellence</h2>
-              <p style={styles.executiveSubtitle}>
-                Our experienced leadership team brings together decades of banking expertise to guide your financial journey with proven strategies and innovative solutions.
-              </p>
-              <div style={styles.executiveFeatures}>
-                <div style={styles.executiveFeature}>
-                  <span style={styles.executiveFeatureIcon}>👨‍💼</span>
-                  <div>
-                    <h4 style={styles.executiveFeatureTitle}>Executive Leadership</h4>
-                    <p style={styles.executiveFeatureDesc}>Senior executives with proven track records in banking excellence</p>
-                  </div>
-                </div>
-                <div style={styles.executiveFeature}>
-                  <span style={styles.executiveFeatureIcon}>📈</span>
-                  <div>
-                    <h4 style={styles.executiveFeatureTitle}>Strategic Vision</h4>
-                    <p style={styles.executiveFeatureDesc}>Forward-thinking approach to modern banking challenges</p>
-                  </div>
-                </div>
-                <div style={styles.executiveFeature}>
-                  <span style={styles.executiveFeatureIcon}>🤝</span>
-                  <div>
-                    <h4 style={styles.executiveFeatureTitle}>Client Commitment</h4>
-                    <p style={styles.executiveFeatureDesc}>Dedicated to delivering exceptional customer experiences</p>
-                  </div>
-                </div>
-              </div>
-              <div style={styles.executiveActions}>
-                <Link href="/about" style={styles.executiveButtonPrimary}>
-                  <span style={styles.buttonIcon}>👥</span>
-                  Meet Our Team
-                </Link>
-                <Link href="/financial-advisory" style={styles.executiveButtonSecondary}>
-                  <span style={styles.buttonIcon}>💼</span>
-                  Advisory Services
-                </Link>
-              </div>
-            </div>
-            <div style={styles.executiveImageSide}>
-              <LocalizedImage
-                src="/images/Banking_executive_team_meeting_c758f3ec.png"
-                alt="Banking Executive Team Meeting"
-                style={styles.executiveImage}
-                fallbackSrc="/images/fallback-banking-executive-team-meeting.png"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-
-
-      {/* Account Types Discovery Section */}
-      <section style={styles.accountTypesDiscovery} id="account-types-discovery" data-animate>
-        <div style={styles.container}>
-          <div style={{
-            ...styles.sectionHeader,
-            ...(isVisible['account-types-discovery'] ? styles.fadeInUp : {})
-          }}>
-            <h2 style={styles.sectionTitle}>Explore All Our Account Types</h2>
-            <p style={styles.sectionSubtitle}>
-              Discover detailed information about all 23 account types we offer.
-              Find comprehensive features, benefits, and eligibility requirements.
-            </p>
-            <div style={styles.titleUnderline}></div>
-          </div>
-
-          <div style={styles.accountTypesPreview}>
-            {[
-              { icon: '💳', title: 'Personal Banking', desc: 'Checking, Savings, Student, Senior accounts and more', color: '#3b82f6' },
-              { icon: '🏢', title: 'Business Banking', desc: 'Small Business, Corporate, and Professional accounts', color: '#10b981' },
-              { icon: '📈', title: 'Investment Accounts', desc: 'Retirement, Investment, and Wealth Management options', color: '#f59e0b' },
-              { icon: '🎯', title: 'Specialized Accounts', desc: 'HSA, Education, Trust, and International accounts', color: '#8b5cf6' }
-            ].map((item, index) => (
-              <div
-                key={index}
-                style={{
-                  ...styles.previewCard,
-                  ...(isVisible['account-types-discovery'] ? {
-                    ...styles.slideInFromBottom,
-                    animationDelay: `${index * 0.2}s`
-                  } : {})
-                }}
-              >
-                <div style={{...styles.previewIconContainer, backgroundColor: item.color}}>
-                  <span style={styles.previewIcon}>{item.icon}</span>
-                </div>
-                <h3 style={styles.previewTitle}>{item.title}</h3>
-                <p style={styles.previewDesc}>{item.desc}</p>
-                <div style={{...styles.previewAccent, backgroundColor: item.color}}></div>
-              </div>
-            ))}
-          </div>
-
-          <div style={styles.accountTypesAction}>
-            <Link href="/account-types" style={styles.exploreButton}>
-              <span style={styles.buttonIcon}>🔍</span>
-              Explore All 23 Account Types
-            </Link>
-            <p style={styles.actionNote}>
-              Get detailed comparisons, features, and eligibility requirements
-            </p>
-          </div>
-        </div>
-      </section>
-
-
-
-      {/* Modern Banking Facility Section */}
-      <section style={styles.facilitySection} id="modern-facility" data-animate>
-        <div style={styles.container}>
-          <div style={{
-            ...styles.sectionHeader,
-            ...(isVisible['modern-facility'] ? styles.fadeInUp : {})
-          }}>
-            <h2 style={styles.sectionTitle}>State-of-the-Art Banking Facilities</h2>
-            <p style={styles.sectionSubtitle}>
-              Experience banking in our modern, secure, and comfortable branch locations designed for your convenience
-            </p>
-            <div style={styles.titleUnderline}></div>
-          </div>
-
-          <div style={styles.facilityGrid}>
-            <div style={styles.facilityImageContainer}>
-              <LocalizedImage
-                src="/images/Modern_bank_lobby_interior_d535acc7.png"
-                alt="Modern Bank Lobby Interior"
-                style={styles.facilityImage}
-                fallbackSrc="/images/fallback-modern-bank-lobby-interior.png"
-              />
-              <div style={styles.facilityOverlay}>
-                <div style={styles.facilityBadge}>
-                  <span style={styles.facilityBadgeIcon}>🏆</span>
-                  <span>Award-Winning Design</span>
-                </div>
-              </div>
-            </div>
-
-            <div style={styles.facilityContent}>
-              <h3 style={styles.facilityTitle}>Premium Banking Environment</h3>
-              <p style={styles.facilityDescription}>
-                Our modern branches combine cutting-edge technology with elegant design to create a premium banking experience. Every location is designed with your comfort, privacy, and security in mind.
-              </p>
-
-              <div style={styles.facilityFeatures}>
-                <div style={styles.facilityFeature}>
-                  <span style={styles.facilityFeatureIcon}>🔒</span>
-                  <div>
-                    <h4 style={styles.facilityFeatureTitle}>Advanced Security</h4>
-                    <p style={styles.facilityFeatureDesc}>Multi-layer security systems protect your transactions</p>
-                  </div>
-                </div>
-                <div style={styles.facilityFeature}>
-                  <span style={styles.facilityFeatureIcon}>💺</span>
-                  <div>
-                    <h4 style={styles.facilityFeatureTitle}>Comfortable Environment</h4>
-                    <p style={styles.facilityFeatureDesc}>Luxurious seating and private consultation areas</p>
-                  </div>
-                </div>
-                <div style={styles.facilityFeature}>
-                  <span style={styles.facilityFeatureIcon}>📱</span>
-                  <div>
-                    <h4 style={styles.facilityFeatureTitle}>Digital Integration</h4>
-                    <p style={styles.facilityFeatureDesc}>Seamless blend of digital and personal banking</p>
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.facilityActions}>
-                <Link href="/branch-locator" style={styles.facilityButtonPrimary}>
-                  <span style={styles.buttonIcon}>📍</span>
-                  Find Nearest Branch
-                </Link>
-                <Link href="/apply" style={styles.facilityButtonSecondary}>
-                  <span style={styles.buttonIcon}>📅</span>
-                  Schedule Visit
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Mobile Banking Excellence Section */}
-      <section style={styles.mobileBankingSection} id="mobile-banking" data-animate>
-        <div style={styles.container}>
-          <div style={{
-            ...styles.sectionHeader,
-            ...(isVisible['mobile-banking'] ? styles.fadeInUp : {})
-          }}>
-            <h2 style={styles.sectionTitle}>Award-Winning Mobile Banking</h2>
-            <p style={styles.sectionSubtitle}>
-              Bank anywhere, anytime with our powerful mobile app featuring cutting-edge technology
-            </p>
-            <div style={styles.titleUnderline}></div>
-          </div>
-
-          <div style={styles.mobileBankingGrid}>
-            <div style={styles.mobileBankingImageContainer}>
-              <LocalizedImage
-                src="/images/Mobile_banking_user_d80a1b31.png"
-                alt="Mobile Banking Excellence"
-                style={styles.mobileBankingImage}
-                fallbackSrc="/images/fallback-mobile-banking-user.png"
-              />
-              <div style={styles.mobileBankingBadge}>
-                <span style={styles.badgeIcon}>📱</span>
-                <span>Mobile First</span>
-              </div>
-            </div>
-
-            <div style={styles.mobileBankingContent}>
-              <h3 style={styles.mobileBankingTitle}>Complete Control in Your Pocket</h3>
-              <p style={styles.mobileBankingDescription}>
-                Experience the future of banking with our award-winning mobile app. Manage all your accounts,
-                transfer funds, pay bills, and access financial insights - all from your smartphone.
-              </p>
-
-              <div style={styles.mobileBankingFeatures}>
-                <div style={styles.mobileBankingFeature}>
-                  <span style={styles.mobileBankingFeatureIcon}>⚡</span>
-                  <div>
-                    <h4 style={styles.mobileBankingFeatureTitle}>Instant Transfers</h4>
-                    <p style={styles.mobileBankingFeatureDesc}>Send money in seconds with Zelle and instant transfers</p>
-                  </div>
-                </div>
-                <div style={styles.mobileBankingFeature}>
-                  <span style={styles.mobileBankingFeatureIcon}>📸</span>
-                  <div>
-                    <h4 style={styles.mobileBankingFeatureTitle}>Mobile Check Deposit</h4>
-                    <p style={styles.mobileBankingFeatureDesc}>Deposit checks instantly by taking a photo</p>
-                  </div>
-                </div>
-                <div style={styles.mobileBankingFeature}>
-                  <span style={styles.mobileBankingFeatureIcon}>🔔</span>
-                  <div>
-                    <h4 style={styles.mobileBankingFeatureTitle}>Real-time Alerts</h4>
-                    <p style={styles.mobileBankingFeatureDesc}>Stay informed with instant transaction notifications</p>
-                  </div>
-                </div>
-                <div style={styles.mobileBankingFeature}>
-                  <span style={styles.mobileBankingFeatureIcon}>🔐</span>
-                  <div>
-                    <h4 style={styles.mobileBankingFeatureTitle}>Biometric Security</h4>
-                    <p style={styles.mobileBankingFeatureDesc}>Face ID and fingerprint authentication for secure access</p>
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.mobileBankingActions}>
-                <Link href="/apply" style={styles.mobileBankingButtonPrimary}>
-                  <span style={styles.buttonIcon}>📲</span>
-                  Download App
-                </Link>
-                <Link href="/account-types" style={styles.mobileBankingButtonSecondary}>
-                  <span style={styles.buttonIcon}>ℹ️</span>
-                  Learn More
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ATM Services Section */}
-      <section style={styles.atmSection} id="atm-services" data-animate>
-        <div style={styles.container}>
-          <div style={{
-            ...styles.sectionHeader,
-            ...(isVisible['atm-services'] ? styles.fadeInUp : {})
-          }}>
-            <h2 style={styles.sectionTitle}>Convenient ATM Access</h2>
-            <p style={styles.sectionSubtitle}>
-              Access your money 24/7 with our extensive ATM network and advanced transaction capabilities
-            </p>
-            <div style={styles.titleUnderline}></div>
-          </div>
-
-          <div style={styles.atmGrid}>
-            <div style={styles.atmImageContainer}>
-              <LocalizedImage
-                src="/images/Modern_bank_lobby_interior_27efc3bf.png"
-                alt="Modern Bank Lobby - ATM Services"
-                style={styles.atmImage}
-                fallbackSrc="/images/fallback-modern-bank-lobby-interior-2.png"
-              />
-              <div style={styles.atmBadge}>
-                <span style={styles.badgeIcon}>🏧</span>
-                <span>24/7 Access</span>
-              </div>
-            </div>
-
-            <div style={styles.atmContent}>
-              <h3 style={styles.atmTitle}>Advanced ATM Services</h3>
-              <p style={styles.atmDescription}>
-                Experience modern banking with our state-of-the-art ATM network featuring advanced security,
-                multiple transaction types, and convenient locations nationwide.
-              </p>
-
-              <div style={styles.atmFeatures}>
-                <div style={styles.atmFeature}>
-                  <span style={styles.atmFeatureIcon}>💰</span>
-                  <div>
-                    <h4 style={styles.atmFeatureTitle}>Cash Withdrawals</h4>
-                    <p style={styles.atmFeatureDesc}>Quick and secure cash access anytime</p>
-                  </div>
-                </div>
-                <div style={styles.atmFeature}>
-                  <span style={styles.atmFeatureIcon}>📄</span>
-                  <div>
-                    <h4 style={styles.atmFeatureTitle}>Balance Inquiries</h4>
-                    <p style={styles.atmFeatureDesc}>Check your account balance instantly</p>
-                  </div>
-                </div>
-                <div style={styles.atmFeature}>
-                  <span style={styles.atmFeatureIcon}>📱</span>
-                  <div>
-                    <h4 style={styles.atmFeatureTitle}>Cardless Transactions</h4>
-                    <p style={styles.atmFeatureDesc}>Access using your mobile app</p>
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.atmActions}>
-                <Link href="/atm" style={styles.atmButtonPrimary}>
-                  <span style={styles.buttonIcon}>🗺️</span>
-                  Find ATM Locations
-                </Link>
-                <Link href="/cards" style={styles.atmButtonSecondary}>
+              <div style={styles.debitCardCTAButtons}>
+                <Link href={user ? "/cards" : "/apply"} style={styles.debitCardCTAPrimary}>
                   <span style={styles.buttonIcon}>💳</span>
-                  Get Debit Card
+                  {user ? <TranslatedText>View My Cards</TranslatedText> : <TranslatedText>Open Account Today</TranslatedText>}
+                </Link>
+                <Link href="/account-types" style={styles.debitCardCTASecondary}>
+                  <span style={styles.buttonIcon}>ℹ️</span>
+                  <TranslatedText>Learn More</TranslatedText>
                 </Link>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Loan Approval Banner Section */}
-      <section style={styles.loanBannerSection} id="loan-banner" data-animate>
-        <div style={styles.container}>
-          <div style={{
-            ...styles.sectionHeader,
-            ...(isVisible['loan-banner'] ? styles.fadeInUp : {})
-          }}>
-            <h2 style={styles.sectionTitle}>Fast Loan Approvals</h2>
-            <p style={styles.sectionSubtitle}>
-              Get approved for loans quickly with our streamlined application process and competitive rates
-            </p>
-            <div style={styles.titleUnderline}></div>
+
+
+
+
+        {/* Professional Banking Services Section */}
+        <section style={styles.professionalServicesSection} id="professional-services" data-animate>
+          <div style={styles.container}>
+            <div style={{
+              ...styles.sectionHeader,
+              ...(isVisible['professional-services'] ? styles.fadeInUp : {})
+            }}>
+              <TranslatedText as="h2" style={styles.sectionTitle}>Professional Banking Services</TranslatedText>
+              <TranslatedText as="p" style={styles.sectionSubtitle}>
+                Comprehensive financial solutions designed for your success with personalized service and expert guidance
+              </TranslatedText>
+              <div style={styles.titleUnderline}></div>
+            </div>
+
+            <div style={styles.professionalServicesGrid}>
+              <div style={styles.professionalServiceCard}>
+                <div style={styles.serviceImageContainer}>
+                  <LocalizedImage
+                    src="/images/Professional_banking_team_36e79456.png"
+                    alt="Professional Banking Team"
+                    style={styles.serviceImage}
+                    fallbackSrc="/images/fallback-professional-banking-team.png"
+                  />
+                  <div style={styles.serviceBadge}>
+                    <span style={styles.badgeIcon}>👥</span>
+                    <span><TranslatedText>Expert Team</TranslatedText></span>
+                  </div>
+                </div>
+                <div style={styles.serviceContent}>
+                  <h3 style={styles.serviceTitle}><TranslatedText>Expert Banking Professionals</TranslatedText></h3>
+                  <p style={styles.serviceDescription}>
+                    <TranslatedText>Our certified banking professionals provide personalized financial guidance and comprehensive solutions tailored to your unique needs and goals.</TranslatedText>
+                  </p>
+                  <div style={styles.serviceFeatures}>
+                    <div style={styles.serviceFeature}>✓ <TranslatedText>Certified Financial Advisors</TranslatedText></div>
+                    <div style={styles.serviceFeature}>✓ <TranslatedText>Personalized Consultation</TranslatedText></div>
+                    <div style={styles.serviceFeature}>✓ <TranslatedText>24/7 Professional Support</TranslatedText></div>
+                    <div style={styles.serviceFeature}>✓ <TranslatedText>Strategic Financial Planning</TranslatedText></div>
+                  </div>
+                  <Link href="/financial-advisory" style={styles.serviceButton}>
+                    <span style={styles.buttonIcon}>💼</span>
+                    <TranslatedText>Schedule Consultation</TranslatedText>
+                  </Link>
+                </div>
+              </div>
+
+              <div style={styles.professionalServiceCard}>
+                <div style={styles.serviceImageContainer}>
+                  <LocalizedImage
+                    src="/images/Digital_investment_dashboard_36d35f19.png"
+                    alt="Digital Investment Dashboard"
+                    style={styles.serviceImage}
+                    fallbackSrc="/images/fallback-digital-investment-dashboard.png"
+                  />
+                  <div style={styles.serviceBadge}>
+                    <span style={styles.badgeIcon}>📊</span>
+                    <span><TranslatedText>Investment Tools</TranslatedText></span>
+                  </div>
+                </div>
+                <div style={styles.serviceContent}>
+                  <h3 style={styles.serviceTitle}><TranslatedText>Advanced Investment Platform</TranslatedText></h3>
+                  <p style={styles.serviceDescription}>
+                    <TranslatedText>Access sophisticated investment tools and real-time market data through our advanced digital platform designed for serious investors.</TranslatedText>
+                  </p>
+                  <div style={styles.serviceFeatures}>
+                    <div style={styles.serviceFeature}>✓ <TranslatedText>Real-time Market Data</TranslatedText></div>
+                    <div style={styles.serviceFeature}>✓ <TranslatedText>Portfolio Analytics</TranslatedText></div>
+                    <div style={styles.serviceFeature}>✓ <TranslatedText>Advanced Trading Tools</TranslatedText></div>
+                    <div style={styles.serviceFeature}>✓ <TranslatedText>Investment Research</TranslatedText></div>
+                  </div>
+                  <Link href="/investments" style={styles.serviceButton}>
+                    <span style={styles.buttonIcon}>📈</span>
+                    <TranslatedText>Explore Investments</TranslatedText>
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
+        </section>
 
-          <div style={styles.loanBannerGrid}>
-            <div style={styles.loanBannerContent}>
-              <h3 style={styles.loanBannerTitle}>Quick & Easy Loan Process</h3>
-              <p style={styles.loanBannerDescription}>
-                Experience fast loan approvals with our digital-first approach. Whether you need a personal loan,
-                auto financing, or a mortgage, we make the process simple and transparent.
+        {/* Student Banking Solutions Section */}
+        <section style={styles.studentBankingSection} id="student-banking" data-animate>
+          <div style={styles.container}>
+            <div style={{
+              ...styles.sectionHeader,
+              ...(isVisible['student-banking'] ? styles.fadeInUp : {})
+            }}>
+              <TranslatedText as="h2" style={styles.sectionTitle}>Student Banking Solutions</TranslatedText>
+              <TranslatedText as="p" style={styles.sectionSubtitle}>
+                Specialized banking services and financial education designed to support students throughout their academic journey
+              </TranslatedText>
+              <div style={styles.titleUnderline}></div>
+            </div>
+
+            <div style={styles.studentBankingGrid}>
+              <div style={styles.studentBankingContent}>
+                <h3 style={styles.studentBankingTitle}><TranslatedText>Banking Made Simple for Students</TranslatedText></h3>
+                <p style={styles.studentBankingDescription}>
+                  <TranslatedText>Start your financial journey with confidence. Our student banking solutions offer no-fee accounts, financial literacy resources, and tools designed specifically for students.</TranslatedText>
+                </p>
+
+                <div style={styles.studentBankingFeatures}>
+                  <div style={styles.studentFeature}>
+                    <span style={styles.studentFeatureIcon}>🎓</span>
+                    <div>
+                      <h4 style={styles.studentFeatureTitle}><TranslatedText>Student Checking Account</TranslatedText></h4>
+                      <p style={styles.studentFeatureDesc}><TranslatedText>No monthly fees, free online banking, and mobile check deposit</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.studentFeature}>
+                    <span style={styles.studentFeatureIcon}>💡</span>
+                    <div>
+                      <h4 style={styles.studentFeatureTitle}><TranslatedText>Financial Education</TranslatedText></h4>
+                      <p style={styles.studentFeatureDesc}><TranslatedText>Free workshops and resources to build financial literacy</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.studentFeature}>
+                    <span style={styles.studentFeatureIcon}>🏦</span>
+                    <div>
+                      <h4 style={styles.studentFeatureTitle}><TranslatedText>Student Savings Plans</TranslatedText></h4>
+                      <p style={styles.studentFeatureDesc}><TranslatedText>High-yield savings accounts with goal-setting tools</TranslatedText></p>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={styles.studentBankingActions}>
+                  <Link href="/apply" style={styles.studentButtonPrimary}>
+                    <span style={styles.buttonIcon}>🚀</span>
+                    <TranslatedText>Open Student Account</TranslatedText>
+                  </Link>
+                  <Link href="/financial-education" style={styles.studentButtonSecondary}>
+                    <span style={styles.buttonIcon}>📚</span>
+                    <TranslatedText>Financial Resources</TranslatedText>
+                  </Link>
+                </div>
+              </div>
+
+              <div style={styles.studentBankingImageContainer}>
+                <LocalizedImage
+                  src="/images/Student_banking_services_ee1b5d89.png"
+                  alt="Student Banking Services"
+                  style={styles.studentBankingImage}
+                  fallbackSrc="/images/fallback-student-banking-services.png"
+                />
+                <div style={styles.studentBankingBadge}>
+                  <span style={styles.badgeIcon}>🎓</span>
+                  <span><TranslatedText>Student Focused</TranslatedText></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Professional Banking Hall Discussion Section */}
+        <section style={styles.consultationSection} id="consultation" data-animate>
+          <div style={styles.container}>
+            <div style={{
+              ...styles.sectionHeader,
+              ...(isVisible['consultation'] ? styles.fadeInUp : {})
+            }}>
+              <TranslatedText as="h2" style={styles.sectionTitle}>Professional Banking Consultation</TranslatedText>
+              <TranslatedText as="p" style={styles.sectionSubtitle}>
+                Experience world-class banking service with our dedicated professionals in modern banking facilities
+              </TranslatedText>
+              <div style={styles.titleUnderline}></div>
+            </div>
+
+            <div style={styles.consultationGrid}>
+              <div style={styles.consultationImageSide}>
+                <LocalizedImage
+                  src="/images/Bank_hall_business_discussion_72f98bbe.png"
+                  alt="Professional Banking Hall Discussion"
+                  style={styles.consultationImage}
+                  fallbackSrc="/images/fallback-bank-hall-business-discussion.png"
+                />
+              </div>
+              <div style={styles.consultationContent}>
+                <h3 style={styles.consultationTitle}><TranslatedText>Expert Financial Guidance</TranslatedText></h3>
+                <p style={styles.consultationSubtitle}>
+                  <TranslatedText>Meet with our certified banking professionals in our state-of-the-art facilities. Get personalized advice and solutions tailored to your financial goals.</TranslatedText>
+                </p>
+                <div style={styles.consultationFeatures}>
+                  <div style={styles.consultationFeature}>
+                    <span style={styles.consultationFeatureIcon}>👥</span>
+                    <div>
+                      <h4 style={styles.consultationFeatureTitle}><TranslatedText>Professional Banking Team</TranslatedText></h4>
+                      <p style={styles.consultationFeatureDesc}><TranslatedText>Certified financial experts with decades of experience</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.consultationFeature}>
+                    <span style={styles.consultationFeatureIcon}>🏦</span>
+                    <div>
+                      <h4 style={styles.consultationFeatureTitle}><TranslatedText>Modern Banking Facilities</TranslatedText></h4>
+                      <p style={styles.consultationFeatureDesc}><TranslatedText>Premium locations designed for your comfort and privacy</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.consultationFeature}>
+                    <span style={styles.consultationFeatureIcon}>🎯</span>
+                    <div>
+                      <h4 style={styles.consultationFeatureTitle}><TranslatedText>Personalized Solutions</TranslatedText></h4>
+                      <p style={styles.consultationFeatureDesc}><TranslatedText>Custom financial strategies for your unique needs</TranslatedText></p>
+                    </div>
+                  </div>
+                </div>
+                <div style={styles.consultationActions}>
+                  <Link href="/apply" style={styles.consultationButtonPrimary}>
+                    <span style={styles.buttonIcon}>📅</span>
+                    <TranslatedText>Schedule Meeting</TranslatedText>
+                  </Link>
+                  <Link href="/support" style={styles.consultationButtonSecondary}>
+                    <span style={styles.buttonIcon}>💬</span>
+                    <TranslatedText>Contact Expert</TranslatedText>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Banking Executive Team Section */}
+        <section style={styles.executiveSection} id="executive-team" data-animate>
+          <div style={styles.container}>
+            <div style={styles.executiveGrid}>
+              <div style={styles.executiveContent}>
+                <h2 style={styles.executiveTitle}><TranslatedText>Leadership Excellence</TranslatedText></h2>
+                <p style={styles.executiveSubtitle}>
+                  <TranslatedText>Our experienced leadership team brings together decades of banking expertise to guide your financial journey with proven strategies and innovative solutions.</TranslatedText>
+                </p>
+                <div style={styles.executiveFeatures}>
+                  <div style={styles.executiveFeature}>
+                    <span style={styles.executiveFeatureIcon}>👨‍💼</span>
+                    <div>
+                      <h4 style={styles.executiveFeatureTitle}><TranslatedText>Executive Leadership</TranslatedText></h4>
+                      <p style={styles.executiveFeatureDesc}><TranslatedText>Senior executives with proven track records in banking excellence</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.executiveFeature}>
+                    <span style={styles.executiveFeatureIcon}>📈</span>
+                    <div>
+                      <h4 style={styles.executiveFeatureTitle}><TranslatedText>Strategic Vision</TranslatedText></h4>
+                      <p style={styles.executiveFeatureDesc}><TranslatedText>Forward-thinking approach to modern banking challenges</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.executiveFeature}>
+                    <span style={styles.executiveFeatureIcon}>🤝</span>
+                    <div>
+                      <h4 style={styles.executiveFeatureTitle}><TranslatedText>Client Commitment</TranslatedText></h4>
+                      <p style={styles.executiveFeatureDesc}><TranslatedText>Dedicated to delivering exceptional customer experiences</TranslatedText></p>
+                    </div>
+                  </div>
+                </div>
+                <div style={styles.executiveActions}>
+                  <Link href="/about" style={styles.executiveButtonPrimary}>
+                    <span style={styles.buttonIcon}>👥</span>
+                    <TranslatedText>Meet Our Team</TranslatedText>
+                  </Link>
+                  <Link href="/financial-advisory" style={styles.executiveButtonSecondary}>
+                    <span style={styles.buttonIcon}>💼</span>
+                    <TranslatedText>Advisory Services</TranslatedText>
+                  </Link>
+                </div>
+              </div>
+              <div style={styles.executiveImageSide}>
+                <LocalizedImage
+                  src="/images/Banking_executive_team_meeting_c758f3ec.png"
+                  alt="Banking Executive Team Meeting"
+                  style={styles.executiveImage}
+                  fallbackSrc="/images/fallback-banking-executive-team-meeting.png"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+
+        {/* Account Types Discovery Section */}
+        <section style={styles.accountTypesDiscovery} id="account-types-discovery" data-animate>
+          <div style={styles.container}>
+            <div style={{
+              ...styles.sectionHeader,
+              ...(isVisible['account-types-discovery'] ? styles.fadeInUp : {})
+            }}>
+              <TranslatedText as="h2" style={styles.sectionTitle}>Explore All Our Account Types</TranslatedText>
+              <TranslatedText as="p" style={styles.sectionSubtitle}>
+                Discover detailed information about all 23 account types we offer.
+                Find comprehensive features, benefits, and eligibility requirements.
+              </TranslatedText>
+              <div style={styles.titleUnderline}></div>
+            </div>
+
+            <div style={styles.accountTypesPreview}>
+              {[
+                { icon: '💳', title: 'Personal Banking', desc: 'Checking, Savings, Student, Senior accounts and more', color: '#3b82f6' },
+                { icon: '🏢', title: 'Business Banking', desc: 'Small Business, Corporate, and Professional accounts', color: '#10b981' },
+                { icon: '📈', title: 'Investment Accounts', desc: 'Retirement, Investment, and Wealth Management options', color: '#f59e0b' },
+                { icon: '🎯', title: 'Specialized Accounts', desc: 'HSA, Education, Trust, and International accounts', color: '#8b5cf6' }
+              ].map((item, index) => (
+                <div
+                  key={index}
+                  style={{
+                    ...styles.previewCard,
+                    ...(isVisible['account-types-discovery'] ? {
+                      ...styles.slideInFromBottom,
+                      animationDelay: `${index * 0.2}s`
+                    } : {})
+                  }}
+                >
+                  <div style={{...styles.previewIconContainer, backgroundColor: item.color}}>
+                    <span style={styles.previewIcon}>{item.icon}</span>
+                  </div>
+                  <h3 style={styles.previewTitle}><TranslatedText>{item.title}</TranslatedText></h3>
+                  <p style={styles.previewDesc}><TranslatedText>{item.desc}</TranslatedText></p>
+                  <div style={{...styles.previewAccent, backgroundColor: item.color}}></div>
+                </div>
+              ))}
+            </div>
+
+            <div style={styles.accountTypesAction}>
+              <Link href="/account-types" style={styles.exploreButton}>
+                <span style={styles.buttonIcon}>🔍</span>
+                <TranslatedText>Explore All 23 Account Types</TranslatedText>
+              </Link>
+              <p style={styles.actionNote}>
+                <TranslatedText>Get detailed comparisons, features, and eligibility requirements</TranslatedText>
               </p>
-
-              <div style={styles.loanBannerFeatures}>
-                <div style={styles.loanBannerFeature}>
-                  <span style={styles.loanBannerFeatureIcon}>⚡</span>
-                  <div>
-                    <h4 style={styles.loanBannerFeatureTitle}>Fast Approval</h4>
-                    <p style={styles.loanBannerFeatureDesc}>Get approved in as little as 24 hours</p>
-                  </div>
-                </div>
-                <div style={styles.loanBannerFeature}>
-                  <span style={styles.loanBannerFeatureIcon}>💰</span>
-                  <div>
-                    <h4 style={styles.loanBannerFeatureTitle}>Competitive Rates</h4>
-                    <p style={styles.loanBannerFeatureDesc}>Best rates in the market</p>
-                  </div>
-                </div>
-                <div style={styles.loanBannerFeature}>
-                  <span style={styles.loanBannerFeatureIcon}>📱</span>
-                  <div>
-                    <h4 style={styles.loanBannerFeatureTitle}>Digital Process</h4>
-                    <p style={styles.loanBannerFeatureDesc}>Apply online from anywhere</p>
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.loanBannerActions}>
-                <Link href="/loans" style={styles.loanBannerButtonPrimary}>
-                  <span style={styles.buttonIcon}>🚀</span>
-                  Apply for Loan
-                </Link>
-                <Link href="/calculators" style={styles.loanBannerButtonSecondary}>
-                  <span style={styles.buttonIcon}>🧮</span>
-                  Loan Calculator
-                </Link>
-              </div>
-            </div>
-
-            <div style={styles.loanBannerImageContainer}>
-              <LocalizedImage
-                src="/images/Loan_approval_celebration_a079ff82.png"
-                alt="Loan Approval Success"
-                style={styles.loanBannerImage}
-                fallbackSrc="/images/fallback-loan-approval-celebration.png"
-              />
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Testimonials Section */}
-      <Suspense fallback={<div style={styles.loadingComponent}>Loading testimonials...</div>}>
-        <TestimonialsSection />
-      </Suspense>
 
-      {/* Enhanced Final CTA */}
-      <div id="final-cta" data-animate style={{
-        ...(isVisible['final-cta'] ? styles.pulseGlow : {})
-      }}>
-        <Suspense fallback={<div style={styles.loadingComponent}>Loading...</div>}>
-          <CTA
-            title={user ? "Ready to Expand Your Banking?" : "Ready to Start Your Financial Journey?"}
-            subtitle={user ?
-              "Access premium banking services and explore all account options." :
-              "Join over 500,000 customers who trust Oakline Bank. Open your account today."
-            }
-            buttonText={user ? "View Account Types" : "Open Account Now"}
-            buttonLink={user ? "/account-types" : "/apply"}
-            variant="primary"
-          />
+
+        {/* Modern Banking Facility Section */}
+        <section style={styles.facilitySection} id="modern-facility" data-animate>
+          <div style={styles.container}>
+            <div style={{
+              ...styles.sectionHeader,
+              ...(isVisible['modern-facility'] ? styles.fadeInUp : {})
+            }}>
+              <TranslatedText as="h2" style={styles.sectionTitle}>State-of-the-Art Banking Facilities</TranslatedText>
+              <TranslatedText as="p" style={styles.sectionSubtitle}>
+                Experience banking in our modern, secure, and comfortable branch locations designed for your convenience
+              </TranslatedText>
+              <div style={styles.titleUnderline}></div>
+            </div>
+
+            <div style={styles.facilityGrid}>
+              <div style={styles.facilityImageContainer}>
+                <LocalizedImage
+                  src="/images/Modern_bank_lobby_interior_d535acc7.png"
+                  alt="Modern Bank Lobby Interior"
+                  style={styles.facilityImage}
+                  fallbackSrc="/images/fallback-modern-bank-lobby-interior.png"
+                />
+                <div style={styles.facilityOverlay}>
+                  <div style={styles.facilityBadge}>
+                    <span style={styles.facilityBadgeIcon}>🏆</span>
+                    <span><TranslatedText>Award-Winning Design</TranslatedText></span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={styles.facilityContent}>
+                <h3 style={styles.facilityTitle}><TranslatedText>Premium Banking Environment</TranslatedText></h3>
+                <p style={styles.facilityDescription}>
+                  <TranslatedText>Our modern branches combine cutting-edge technology with elegant design to create a premium banking experience. Every location is designed with your comfort, privacy, and security in mind.</TranslatedText>
+                </p>
+
+                <div style={styles.facilityFeatures}>
+                  <div style={styles.facilityFeature}>
+                    <span style={styles.facilityFeatureIcon}>🔒</span>
+                    <div>
+                      <h4 style={styles.facilityFeatureTitle}><TranslatedText>Advanced Security</TranslatedText></h4>
+                      <p style={styles.facilityFeatureDesc}><TranslatedText>Multi-layer security systems protect your transactions</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.facilityFeature}>
+                    <span style={styles.facilityFeatureIcon}>💺</span>
+                    <div>
+                      <h4 style={styles.facilityFeatureTitle}><TranslatedText>Comfortable Environment</TranslatedText></h4>
+                      <p style={styles.facilityFeatureDesc}><TranslatedText>Luxurious seating and private consultation areas</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.facilityFeature}>
+                    <span style={styles.facilityFeatureIcon}>📱</span>
+                    <div>
+                      <h4 style={styles.facilityFeatureTitle}><TranslatedText>Digital Integration</TranslatedText></h4>
+                      <p style={styles.facilityFeatureDesc}><TranslatedText>Seamless blend of digital and personal banking</TranslatedText></p>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={styles.facilityActions}>
+                  <Link href="/branch-locator" style={styles.facilityButtonPrimary}>
+                    <span style={styles.buttonIcon}>📍</span>
+                    <TranslatedText>Find Nearest Branch</TranslatedText>
+                  </Link>
+                  <Link href="/apply" style={styles.facilityButtonSecondary}>
+                    <span style={styles.buttonIcon}>📅</span>
+                    <TranslatedText>Schedule Visit</TranslatedText>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Mobile Banking Excellence Section */}
+        <section style={styles.mobileBankingSection} id="mobile-banking" data-animate>
+          <div style={styles.container}>
+            <div style={{
+              ...styles.sectionHeader,
+              ...(isVisible['mobile-banking'] ? styles.fadeInUp : {})
+            }}>
+              <TranslatedText as="h2" style={styles.sectionTitle}>Award-Winning Mobile Banking</TranslatedText>
+              <TranslatedText as="p" style={styles.sectionSubtitle}>
+                Bank anywhere, anytime with our powerful mobile app featuring cutting-edge technology
+              </TranslatedText>
+              <div style={styles.titleUnderline}></div>
+            </div>
+
+            <div style={styles.mobileBankingGrid}>
+              <div style={styles.mobileBankingImageContainer}>
+                <LocalizedImage
+                  src="/images/Mobile_banking_user_d80a1b31.png"
+                  alt="Mobile Banking Excellence"
+                  style={styles.mobileBankingImage}
+                  fallbackSrc="/images/fallback-mobile-banking-user.png"
+                />
+                <div style={styles.mobileBankingBadge}>
+                  <span style={styles.badgeIcon}>📱</span>
+                  <span><TranslatedText>Mobile First</TranslatedText></span>
+                </div>
+              </div>
+
+              <div style={styles.mobileBankingContent}>
+                <h3 style={styles.mobileBankingTitle}><TranslatedText>Complete Control in Your Pocket</TranslatedText></h3>
+                <p style={styles.mobileBankingDescription}>
+                  <TranslatedText>Experience the future of banking with our award-winning mobile app. Manage all your accounts,
+                  transfer funds, pay bills, and access financial insights - all from your smartphone.</TranslatedText>
+                </p>
+
+                <div style={styles.mobileBankingFeatures}>
+                  <div style={styles.mobileBankingFeature}>
+                    <span style={styles.mobileBankingFeatureIcon}>⚡</span>
+                    <div>
+                      <h4 style={styles.mobileBankingFeatureTitle}><TranslatedText>Instant Transfers</TranslatedText></h4>
+                      <p style={styles.mobileBankingFeatureDesc}><TranslatedText>Send money in seconds with Zelle and instant transfers</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.mobileBankingFeature}>
+                    <span style={styles.mobileBankingFeatureIcon}>📸</span>
+                    <div>
+                      <h4 style={styles.mobileBankingFeatureTitle}><TranslatedText>Mobile Check Deposit</TranslatedText></h4>
+                      <p style={styles.mobileBankingFeatureDesc}><TranslatedText>Deposit checks instantly by taking a photo</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.mobileBankingFeature}>
+                    <span style={styles.mobileBankingFeatureIcon}>🔔</span>
+                    <div>
+                      <h4 style={styles.mobileBankingFeatureTitle}><TranslatedText>Real-time Alerts</TranslatedText></h4>
+                      <p style={styles.mobileBankingFeatureDesc}><TranslatedText>Stay informed with instant transaction notifications</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.mobileBankingFeature}>
+                    <span style={styles.mobileBankingFeatureIcon}>🔐</span>
+                    <div>
+                      <h4 style={styles.mobileBankingFeatureTitle}><TranslatedText>Biometric Security</TranslatedText></h4>
+                      <p style={styles.mobileBankingFeatureDesc}><TranslatedText>Face ID and fingerprint authentication for secure access</TranslatedText></p>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={styles.mobileBankingActions}>
+                  <Link href="/apply" style={styles.mobileBankingButtonPrimary}>
+                    <span style={styles.buttonIcon}>📲</span>
+                    <TranslatedText>Download App</TranslatedText>
+                  </Link>
+                  <Link href="/account-types" style={styles.mobileBankingButtonSecondary}>
+                    <span style={styles.buttonIcon}>ℹ️</span>
+                    <TranslatedText>Learn More</TranslatedText>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ATM Services Section */}
+        <section style={styles.atmSection} id="atm-services" data-animate>
+          <div style={styles.container}>
+            <div style={{
+              ...styles.sectionHeader,
+              ...(isVisible['atm-services'] ? styles.fadeInUp : {})
+            }}>
+              <TranslatedText as="h2" style={styles.sectionTitle}>Convenient ATM Access</TranslatedText>
+              <TranslatedText as="p" style={styles.sectionSubtitle}>
+                Access your money 24/7 with our extensive ATM network and advanced transaction capabilities
+              </TranslatedText>
+              <div style={styles.titleUnderline}></div>
+            </div>
+
+            <div style={styles.atmGrid}>
+              <div style={styles.atmImageContainer}>
+                <LocalizedImage
+                  src="/images/Modern_bank_lobby_interior_27efc3bf.png"
+                  alt="Modern Bank Lobby - ATM Services"
+                  style={styles.atmImage}
+                  fallbackSrc="/images/fallback-modern-bank-lobby-interior-2.png"
+                />
+                <div style={styles.atmBadge}>
+                  <span style={styles.badgeIcon}>🏧</span>
+                  <span><TranslatedText>24/7 Access</TranslatedText></span>
+                </div>
+              </div>
+
+              <div style={styles.atmContent}>
+                <h3 style={styles.atmTitle}><TranslatedText>Advanced ATM Services</TranslatedText></h3>
+                <p style={styles.atmDescription}>
+                  <TranslatedText>Experience modern banking with our state-of-the-art ATM network featuring advanced security,
+                  multiple transaction types, and convenient locations nationwide.</TranslatedText>
+                </p>
+
+                <div style={styles.atmFeatures}>
+                  <div style={styles.atmFeature}>
+                    <span style={styles.atmFeatureIcon}>💰</span>
+                    <div>
+                      <h4 style={styles.atmFeatureTitle}><TranslatedText>Cash Withdrawals</TranslatedText></h4>
+                      <p style={styles.atmFeatureDesc}><TranslatedText>Quick and secure cash access anytime</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.atmFeature}>
+                    <span style={styles.atmFeatureIcon}>📄</span>
+                    <div>
+                      <h4 style={styles.atmFeatureTitle}><TranslatedText>Balance Inquiries</TranslatedText></h4>
+                      <p style={styles.atmFeatureDesc}><TranslatedText>Check your account balance instantly</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.atmFeature}>
+                    <span style={styles.atmFeatureIcon}>📱</span>
+                    <div>
+                      <h4 style={styles.atmFeatureTitle}><TranslatedText>Cardless Transactions</TranslatedText></h4>
+                      <p style={styles.atmFeatureDesc}><TranslatedText>Access using your mobile app</TranslatedText></p>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={styles.atmActions}>
+                  <Link href="/atm" style={styles.atmButtonPrimary}>
+                    <span style={styles.buttonIcon}>🗺️</span>
+                    <TranslatedText>Find ATM Locations</TranslatedText>
+                  </Link>
+                  <Link href="/cards" style={styles.atmButtonSecondary}>
+                    <span style={styles.buttonIcon}>💳</span>
+                    <TranslatedText>Get Debit Card</TranslatedText>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Loan Approval Banner Section */}
+        <section style={styles.loanBannerSection} id="loan-banner" data-animate>
+          <div style={styles.container}>
+            <div style={{
+              ...styles.sectionHeader,
+              ...(isVisible['loan-banner'] ? styles.fadeInUp : {})
+            }}>
+              <TranslatedText as="h2" style={styles.sectionTitle}>Fast Loan Approvals</TranslatedText>
+              <TranslatedText as="p" style={styles.sectionSubtitle}>
+                Get approved for loans quickly with our streamlined application process and competitive rates
+              </TranslatedText>
+              <div style={styles.titleUnderline}></div>
+            </div>
+
+            <div style={styles.loanBannerGrid}>
+              <div style={styles.loanBannerContent}>
+                <h3 style={styles.loanBannerTitle}><TranslatedText>Quick & Easy Loan Process</TranslatedText></h3>
+                <p style={styles.loanBannerDescription}>
+                  <TranslatedText>Experience fast loan approvals with our digital-first approach. Whether you need a personal loan,
+                  auto financing, or a mortgage, we make the process simple and transparent.</TranslatedText>
+                </p>
+
+                <div style={styles.loanBannerFeatures}>
+                  <div style={styles.loanBannerFeature}>
+                    <span style={styles.loanBannerFeatureIcon}>⚡</span>
+                    <div>
+                      <h4 style={styles.loanBannerFeatureTitle}><TranslatedText>Fast Approval</TranslatedText></h4>
+                      <p style={styles.loanBannerFeatureDesc}><TranslatedText>Get approved in as little as 24 hours</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.loanBannerFeature}>
+                    <span style={styles.loanBannerFeatureIcon}>💰</span>
+                    <div>
+                      <h4 style={styles.loanBannerFeatureTitle}><TranslatedText>Competitive Rates</TranslatedText></h4>
+                      <p style={styles.loanBannerFeatureDesc}><TranslatedText>Best rates in the market</TranslatedText></p>
+                    </div>
+                  </div>
+                  <div style={styles.loanBannerFeature}>
+                    <span style={styles.loanBannerFeatureIcon}>📱</span>
+                    <div>
+                      <h4 style={styles.loanBannerFeatureTitle}><TranslatedText>Digital Process</TranslatedText></h4>
+                      <p style={styles.loanBannerFeatureDesc}><TranslatedText>Apply online from anywhere</TranslatedText></p>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={styles.loanBannerActions}>
+                  <Link href="/loans" style={styles.loanBannerButtonPrimary}>
+                    <span style={styles.buttonIcon}>🚀</span>
+                    <TranslatedText>Apply for Loan</TranslatedText>
+                  </Link>
+                  <Link href="/calculators" style={styles.loanBannerButtonSecondary}>
+                    <span style={styles.buttonIcon}>🧮</span>
+                    <TranslatedText>Loan Calculator</TranslatedText>
+                  </Link>
+                </div>
+              </div>
+
+              <div style={styles.loanBannerImageContainer}>
+                <LocalizedImage
+                  src="/images/Loan_approval_celebration_a079ff82.png"
+                  alt="Loan Approval Success"
+                  style={styles.loanBannerImage}
+                  fallbackSrc="/images/fallback-loan-approval-celebration.png"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials Section */}
+        <Suspense fallback={<div style={styles.loadingComponent}><TranslatedText>Loading testimonials...</TranslatedText></div>}>
+          <TestimonialsSection />
         </Suspense>
-      </div>
 
-      {/* Live Chat Component */}
-      <LiveChat />
+        {/* Enhanced Final CTA */}
+        <div id="final-cta" data-animate style={{
+          ...(isVisible['final-cta'] ? styles.pulseGlow : {})
+        }}>
+          <Suspense fallback={<div style={styles.loadingComponent}><TranslatedText>Loading...</TranslatedText></div>}>
+            <CTA
+              title={user ? <TranslatedText>Ready to Expand Your Banking?</TranslatedText> : <TranslatedText>Ready to Start Your Financial Journey?</TranslatedText>}
+              subtitle={user ?
+                <TranslatedText>Access premium banking services and explore all account options.</TranslatedText> :
+                <TranslatedText>Join over 500,000 customers who trust Oakline Bank. Open your account today.</TranslatedText>
+              }
+              buttonText={user ? <TranslatedText>View Account Types</TranslatedText> : <TranslatedText>Open Account Now</TranslatedText>}
+              buttonLink={user ? "/account-types" : "/apply"}
+              variant="primary"
+            />
+          </Suspense>
+        </div>
 
-      <Footer />
+        {/* Live Chat Component */}
+        <LiveChat />
+
+        <Footer />
+      </main>
     </div>
   );
 }
@@ -2214,14 +2215,15 @@ const styles = {
   bankingDropdownLink: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.75rem',
-    padding: '0.6rem',
+    justifyContent: 'space-between',
+    padding: '0.875rem 1rem',
     borderRadius: '8px',
-    backgroundColor: '#f8fafc',
-    border: '1px solid #e2e8f0',
+    backgroundColor: 'white',
+    border: 'none',
     textDecoration: 'none',
-    transition: 'all 0.3s ease',
-    cursor: 'pointer'
+    transition: 'all 0.2s ease',
+    cursor: 'pointer',
+    minHeight: '56px'
   },
   bankingDropdownIcon: {
     fontSize: '1.3rem',
@@ -2240,7 +2242,7 @@ const styles = {
     fontSize: '0.95rem',
     fontWeight: '700',
     color: '#1a365d',
-    marginBottom: '0.25rem'
+    marginBottom: '0.2rem'
   },
   bankingDropdownDesc: {
     fontSize: '0.8rem',
