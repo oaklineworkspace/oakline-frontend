@@ -513,69 +513,62 @@ export default function Home() {
                   </div>
 
                   <div style={styles.bankingTwoColumnGrid}>
-                    {/* Core Banking Services Section */}
+                    {/* Public Banking Information Section */}
                     <div style={styles.bankingSection}>
-                      <div style={styles.dropdownSectionTitle}>🏦 {ts('MY BANKING')}</div>
-                      {coreFeatures.map((feature) => (
-                        <Link
-                          key={feature.name}
-                          href={feature.href}
-                          onClick={() => setShowBankingDropdown(false)}
-                          style={styles.dropdownLink}
-                          className="dropdown-link"
-                        >
-                          {feature.icon} {ts(feature.name)}
-                        </Link>
-                      ))}
+                      <div style={styles.dropdownSectionTitle}>🏦 {ts('ACCOUNTS & SERVICES')}</div>
+                      <Link href="/account-types" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">🏦 {ts('Account Types')}</Link>
+                      <Link href="/apply" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">📝 {ts('Open Account')}</Link>
+                      <Link href="/loans" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">💰 {ts('Loan Products')}</Link>
+                      <Link href="/cards" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">💳 {ts('Credit & Debit Cards')}</Link>
+                      <Link href="/current-rates" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">📈 {ts('Current Rates')}</Link>
+                      
+                      <div style={styles.dropdownDivider}></div>
+                      
+                      <div style={styles.dropdownSectionTitle}>💼 {ts('BUSINESS SOLUTIONS')}</div>
+                      <Link href="/account-types" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">🏢 {ts('Business Banking')}</Link>
+                      <Link href="/business-insights" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">📊 {ts('Business Insights')}</Link>
+                      <Link href="/loans" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">💼 {ts('Business Loans')}</Link>
                     </div>
 
-                    {/* Premium & Advanced Services Section */}
+                    {/* Resources & Support Section */}
                     <div style={styles.bankingSection}>
-                      <div style={styles.dropdownSectionTitle}>💼 {ts('LOANS & CREDIT')}</div>
-                      <Link href="/loan/dashboard" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">💼 {ts('My Loan Dashboard')}</Link>
-                      <Link href="/loan/apply" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">💰 {ts('Apply for New Loan')}</Link>
-                      <Link href="/credit-report" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">📊 {ts('Credit Report')}</Link>
-                      <Link href="/apply-card" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">💳 {ts('Apply for Card')}</Link>
-                      
-                      <div style={styles.dropdownDivider}></div>
-                      
-                      <div style={styles.dropdownSectionTitle}>📈 {ts('INVESTMENTS')}</div>
-                      <Link href="/investment" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">📊 {ts('Portfolio')}</Link>
-                      <Link href="/crypto" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">₿ {ts('Crypto Trading')}</Link>
+                      <div style={styles.dropdownSectionTitle}>📚 {ts('RESOURCES')}</div>
+                      <Link href="/financial-education" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">🎓 {ts('Financial Education')}</Link>
+                      <Link href="/calculators" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">🧮 {ts('Financial Calculators')}</Link>
                       <Link href="/market-news" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">📰 {ts('Market News')}</Link>
+                      <Link href="/personal-finance-tips" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">💡 {ts('Finance Tips')}</Link>
                       
                       <div style={styles.dropdownDivider}></div>
                       
-                      <div style={styles.dropdownSectionTitle}>🛡️ {ts('SECURITY & SETTINGS')}</div>
-                      <Link href="/security" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">🔒 {ts('Security Settings')}</Link>
-                      <Link href="/profile" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">👤 {ts('Edit Profile')}</Link>
+                      <div style={styles.dropdownSectionTitle}>🤝 {ts('ABOUT US')}</div>
+                      <Link href="/about" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">ℹ️ {ts('About Oakline Bank')}</Link>
+                      <Link href="/branch-locator" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">📍 {ts('Branch Locations')}</Link>
+                      <Link href="/atm" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">🏧 {ts('ATM Locator')}</Link>
                       <Link href="/support" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">🎧 {ts('Customer Support')}</Link>
                     </div>
                   </div>
 
                   <div style={styles.bankingDropdownFooter}>
-                    {!user && (
-                      <Link
-                        href="/signup"
-                        onClick={() => setShowBankingDropdown(false)}
-                        style={styles.viewAllServicesButtonEnroll}
-                      >
-                        🔐 {ts('Enroll Now')}
-                      </Link>
-                    )}
                     <Link
-                      href="/account-types"
+                      href="/apply"
+                      onClick={() => setShowBankingDropdown(false)}
+                      style={styles.viewAllServicesButtonEnroll}
+                    >
+                      ✨ {ts('Open Account Today')}
+                    </Link>
+                    <Link
+                      href="/sign-in"
                       onClick={() => setShowBankingDropdown(false)}
                       style={styles.viewAllServicesButton}
                     >
-                      {ts('Explore All Banking Services')}
+                      🔐 {ts('Online Banking Login')}
                     </Link>
                     <Link
                       href="/support"
                       onClick={() => setShowBankingDropdown(false)}
                       style={styles.viewAllServicesButtonSecondary}
                     >
-                      {ts('Contact Support')}
+                      💬 {ts('Contact Us')}
                     </Link>
                   </div>
                 </div>
@@ -1604,9 +1597,9 @@ export default function Home() {
 const styles = {
   // Main Header Styles
   mainHeader: {
-    backgroundColor: '#1A3E6F',
-    borderBottom: 'none',
-    boxShadow: '0 4px 12px rgba(26, 62, 111, 0.2)',
+    backgroundColor: '#FFFFFF',
+    borderBottom: '1px solid #E5E7EB',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
     position: 'sticky',
     top: 0,
     zIndex: 1000,
@@ -1615,10 +1608,10 @@ const styles = {
   headerContainer: {
     maxWidth: '1400px',
     margin: '0 auto',
-    padding: '1rem 1.5rem',
+    padding: '1.25rem 1.5rem',
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.75rem'
+    gap: '1rem'
   },
   topHeaderRow: {
     display: 'flex',
@@ -1650,17 +1643,17 @@ const styles = {
     justifyContent: 'center'
   },
   bankName: {
-    fontSize: '3.5rem',
-    fontWeight: '900',
-    color: 'white',
+    fontSize: '2rem',
+    fontWeight: '800',
+    color: '#1A3E6F',
     lineHeight: '1',
     letterSpacing: '-0.02em'
   },
   bankTagline: {
-    fontSize: '1.5rem',
-    color: '#cbd5e1',
+    fontSize: '0.875rem',
+    color: '#64748B',
     fontWeight: '500',
-    marginTop: '0.5rem',
+    marginTop: '0.25rem',
     letterSpacing: '0.01em'
   },
   bankingPlusAndLanguageWrapper: {
@@ -1676,12 +1669,13 @@ const styles = {
   scrollingWelcomeInline: {
     flex: '1 1 auto',
     overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: '20px',
-    padding: '0.5rem 1rem',
+    backgroundColor: '#F3F4F6',
+    borderRadius: '8px',
+    padding: '0.625rem 1rem',
     position: 'relative',
     minWidth: '200px',
-    maxWidth: '100%'
+    maxWidth: '100%',
+    border: '1px solid #E5E7EB'
   },
   headerActions: {
     display: 'flex',
@@ -1784,19 +1778,18 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    padding: '0.6rem 1.2rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#1A3E6F',
     color: '#ffffff',
-    border: '2px solid rgba(255, 255, 255, 0.3)',
-    borderRadius: '10px',
-    fontSize: '0.85rem',
-    fontWeight: '700',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '0.875rem',
+    fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    boxShadow: '0 2px 4px rgba(26, 62, 111, 0.15)',
     position: 'relative',
-    overflow: 'hidden',
-    backdropFilter: 'blur(10px)'
+    overflow: 'hidden'
   },
   bankingPlusIconLines: {
     display: 'flex',
@@ -1806,9 +1799,9 @@ const styles = {
   },
   iconLine: {
     width: '100%',
-    height: '2px',
+    height: '2.5px',
     backgroundColor: '#ffffff',
-    borderRadius: '1px',
+    borderRadius: '2px',
     transition: 'all 0.3s ease'
   },
   bankingPlusText: {
@@ -1834,9 +1827,9 @@ const styles = {
   },
   bankingDropdownHeader: {
     textAlign: 'center',
-    marginBottom: '1rem',
-    paddingBottom: '0.75rem',
-    borderBottom: '1px solid #e2e8f0',
+    marginBottom: '1.25rem',
+    paddingBottom: '1rem',
+    borderBottom: '2px solid #E5E7EB',
     position: 'sticky',
     top: '-1rem',
     backgroundColor: 'white',
@@ -1846,20 +1839,20 @@ const styles = {
     marginRight: '-1rem',
     paddingLeft: '1rem',
     paddingRight: '1rem',
-    paddingTop: '1rem'
+    paddingTop: '1.25rem'
   },
   bankingDropdownTitle: {
-    fontSize: '1rem',
+    fontSize: '1.25rem',
     fontWeight: '700',
-    color: '#1e293b',
+    color: '#1A3E6F',
     margin: '0 0 0.5rem 0',
     letterSpacing: '-0.01em'
   },
   bankingDropdownSubtitle: {
-    fontSize: '0.8rem',
-    color: '#64748b',
+    fontSize: '0.875rem',
+    color: '#64748B',
     margin: 0,
-    lineHeight: '1.4'
+    lineHeight: '1.5'
   },
   bankingTwoColumnGrid: {
     display: 'grid',
@@ -4221,10 +4214,10 @@ const styles = {
   scrollingWelcomeText: {
     whiteSpace: 'nowrap',
     animation: 'scrollWelcome 30s linear infinite',
-    color: '#e2e8f0',
-    fontSize: '0.9rem',
+    color: '#1A3E6F',
+    fontSize: '0.875rem',
     fontWeight: '500',
-    letterSpacing: '0.5px'
+    letterSpacing: '0.25px'
   },
 
   // Mobile Navigation Row Styles
