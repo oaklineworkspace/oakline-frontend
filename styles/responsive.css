@@ -19,7 +19,7 @@
   font-size: 0.75rem !important;
 }
 
-/* Mobile portrait - logo on left, Banking+ in center, Language selector on far right */
+/* Mobile portrait - logo on left, Banking+ and Language selector on right */
 @media (max-width: 768px) and (orientation: portrait) {
   .topHeaderRow {
     display: flex !important;
@@ -35,27 +35,27 @@
   .logoSection {
     order: 1 !important;
     flex-shrink: 1 !important;
-    flex: 0 0 auto !important;
+    margin-right: auto !important;
   }
 
-  /* Banking+ in center/middle */
-  .banking-plus-container {
+  /* Banking+ and Language selector container on right side */
+  .banking-plus-right-section {
     order: 2 !important;
     display: flex !important;
-    flex: 0 0 auto !important;
-    margin: 0 auto !important;
-  }
-
-  /* Language selector on far right */
-  .language-selector-inline {
-    order: 3 !important;
-    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
     margin-left: auto !important;
-    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
   }
 
-  .banking-plus-right-section {
-    display: contents !important;
+  .banking-plus-container {
+    display: flex !important;
+    order: 1 !important;
+  }
+
+  .language-selector-inline {
+    display: flex !important;
+    order: 2 !important;
   }
 
   .language-selector-container {
@@ -89,7 +89,7 @@
   /* Language selector wrapper on right side */
   .languageSelectorWrapper,
   .language-selector-wrapper {
-    order: 3 !important;
+    order: 2 !important;
     margin-left: auto !important;
     flex-shrink: 0 !important;
   }
