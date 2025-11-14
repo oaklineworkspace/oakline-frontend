@@ -454,18 +454,22 @@ export default function Home() {
       >
         <div style={styles.headerContainer}>
           <div style={styles.topHeaderRow} className="top-header-responsive">
-            {/* Logo Section - Left Side */}
-            <Link href="/" style={styles.logoSection}>
+            {/* Logo - Left Side */}
+            <Link href="/" style={styles.logoWrapper}>
               <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.headerLogo} />
-              <div style={styles.brandSection}>
-                <span style={styles.bankName}>{ts('Oakline Bank')}</span>
-                <span style={styles.bankTagline}>{ts('Your Financial Partner')}</span>
-              </div>
             </Link>
+
+            {/* Brand Text - Center */}
+            <div style={styles.brandCenter}>
+              <div style={styles.bankName}>{ts('Oakline Bank')}</div>
+              <div style={styles.bankTagline}>{ts('Your Financial Partner')}</div>
+            </div>
 
             {/* Language Selector - Right Side */}
             <div style={styles.languageSelectorWrapper} className="language-selector-wrapper">
-              <LanguageSelector compact={true} />
+              <div style={styles.languageSelectorCompact}>
+                <LanguageSelector compact={true} />
+              </div>
             </div>
           </div>
 
@@ -1645,7 +1649,8 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%'
+    width: '100%',
+    gap: '1rem'
   },
   authButtonsRow: {
     display: 'flex',
@@ -1653,31 +1658,44 @@ const styles = {
     alignItems: 'center',
     width: '100%'
   },
-  logoSection: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
+  logoWrapper: {
+    flex: '0 0 auto',
     textDecoration: 'none',
-    flex: '0 0 auto'
+    display: 'flex',
+    alignItems: 'center'
   },
   headerLogo: {
     height: '45px',
     width: 'auto'
   },
-  brandSection: {
+  brandCenter: {
+    flex: '1',
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    alignItems: 'center',
+    textAlign: 'center'
   },
   bankName: {
     fontSize: '1.4rem',
     fontWeight: '800',
     color: 'white',
-    lineHeight: '1'
+    lineHeight: '1.2'
   },
   bankTagline: {
     fontSize: '0.75rem',
     color: '#cbd5e1',
-    fontWeight: '500'
+    fontWeight: '500',
+    marginTop: '0.15rem'
+  },
+  languageSelectorWrapper: {
+    flex: '0 0 auto',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end'
+  },
+  languageSelectorCompact: {
+    transform: 'scale(0.85)',
+    transformOrigin: 'right center'
   },
   headerActions: {
     display: 'flex',
@@ -5587,37 +5605,39 @@ if (typeof document !== 'undefined') {
       }
 
       .top-header-responsive {
-        flex-wrap: wrap !important;
-        justify-content: center !important;
-        row-gap: 0.75rem !important;
+        flex-wrap: nowrap !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+      }
+
+      .top-header-responsive a[href="/"] {
+        flex: 0 0 auto !important;
+      }
+
+      .top-header-responsive > div:nth-child(2) {
+        flex: 1 !important;
+        text-align: center !important;
+      }
+
+      .top-header-responsive > div:nth-child(2) > div:first-child {
+        font-size: 1.1rem !important;
+      }
+
+      .top-header-responsive > div:nth-child(2) > div:last-child {
+        font-size: 0.65rem !important;
+      }
+
+      .top-header-responsive .language-selector-wrapper {
+        flex: 0 0 auto !important;
       }
 
       .top-header-responsive .scrolling-welcome-container {
-        order: 3;
         flex: 1 1 100%;
         width: 100%;
         max-width: 100%;
         text-align: center;
-      }
-
-      .top-header-responsive .language-selector-wrapper,
-      .top-header-responsive .banking-plus-container {
-        flex: 0 1 auto;
-        max-width: none;
-        width: auto;
-        margin: 0 0.5rem;
-      }
-
-      .top-header-responsive .language-selector-wrapper {
-        order: 2;
-      }
-
-      .top-header-responsive .banking-plus-container {
-        order: 3;
-      }
-
-      .top-header-responsive .scrolling-welcome-container {
-        margin: 0.5rem;
+        margin: 0.5rem 0;
       }
 
       .top-header-responsive .banking-dropdown {
