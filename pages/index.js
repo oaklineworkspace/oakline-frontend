@@ -1676,13 +1676,14 @@ const styles = {
   logoAndBrandSection: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1.25rem',
+    gap: '1rem',
     textDecoration: 'none',
-    flex: '0 1 auto',
-    minWidth: 0
+    flex: '0 0 auto',
+    minWidth: 0,
+    marginRight: 'auto'
   },
   headerLogo: {
-    height: '140px',
+    height: '112px',
     width: 'auto',
     transition: 'transform 0.3s ease'
   },
@@ -1690,10 +1691,10 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
-    gap: '0.25rem'
+    gap: '0.2rem'
   },
   bankName: {
-    fontSize: '3rem',
+    fontSize: '2.4rem',
     fontWeight: '800',
     color: 'white',
     lineHeight: '1.1',
@@ -1701,7 +1702,7 @@ const styles = {
     textShadow: '0 2px 4px rgba(0,0,0,0.1)'
   },
   bankTagline: {
-    fontSize: '1.3rem',
+    fontSize: '1.04rem',
     color: '#FFC857',
     fontWeight: '600',
     letterSpacing: '0.02em',
@@ -5768,15 +5769,15 @@ if (typeof document !== 'undefined') {
 
     @media (max-width: 480px) {
       .top-header-responsive a[href="/"] img {
-        height: 120px !important;
+        height: 96px !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:first-child {
-        font-size: 2.5rem !important;
+        font-size: 2rem !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:last-child {
-        font-size: 1.1rem !important;
+        font-size: 0.88rem !important;
       }
 
       .banking-plus-right-section {
