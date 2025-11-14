@@ -1682,7 +1682,7 @@ const styles = {
     minWidth: 0
   },
   headerLogo: {
-    height: '65px',
+    height: '85px',
     width: 'auto',
     transition: 'transform 0.3s ease'
   },
@@ -5696,7 +5696,7 @@ if (typeof document !== 'undefined') {
       }
 
       .top-header-responsive a[href="/"] img {
-        height: 50px !important;
+        height: 65px !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:first-child {
