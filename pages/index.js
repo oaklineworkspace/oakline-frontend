@@ -5613,7 +5613,8 @@ if (typeof document !== 'undefined') {
 
       .top-header-responsive {
         justify-content: flex-start !important;
-        flex-wrap: wrap !important;
+        flex-wrap: nowrap !important;
+        gap: 0.5rem !important;
       }
 
       .top-header-responsive a[href="/"] {
@@ -5633,9 +5634,9 @@ if (typeof document !== 'undefined') {
       }
 
       .scrolling-welcome-inline {
-        flex: 1 1 100% !important;
-        order: 2 !important;
-        margin-top: 0.5rem !important;
+        flex: 1 1 auto !important;
+        min-width: 100px !important;
+        font-size: 0.75rem !important;
       }
 
       .banking-plus-row-container {
