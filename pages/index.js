@@ -1726,7 +1726,7 @@ const styles = {
     position: 'relative',
     minWidth: '250px',
     maxWidth: '100%',
-    marginLeft: '0',
+    margin: '0',
     border: '1px solid rgba(255, 255, 255, 0.15)',
     backdropFilter: 'blur(10px)'
   },
@@ -5705,7 +5705,13 @@ if (typeof document !== 'undefined') {
       }
 
       .scrolling-welcome-inline {
-        display: none !important;
+        display: block !important;
+        width: 100% !important;
+        margin: 0.5rem 0 0 0 !important;
+        padding: 0.5rem 1rem !important;
+        min-width: 0 !important;
+        flex: 1 1 100% !important;
+        order: 10 !important;
       }
 
       .banking-plus-right-section {
