@@ -1721,7 +1721,7 @@ const styles = {
     position: 'relative',
     minWidth: '200px',
     maxWidth: '100%',
-    marginLeft: '1rem'
+    marginLeft: '0.5rem'
   },
   bankingPlusRightSection: {
     display: 'flex',
