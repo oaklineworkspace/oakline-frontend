@@ -196,17 +196,18 @@ const styles = {
     fontWeight: 'bold'
   },
   compactSelect: {
-    padding: '0.5rem 0.7rem',
+    padding: '0.4rem 0.5rem',
     border: '1px solid rgba(255, 255, 255, 0.3)',
     borderRadius: '6px',
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     color: '#ffffff',
-    fontSize: '0.9rem',
+    fontSize: '0.85rem',
     cursor: 'pointer',
     fontWeight: '500',
     outline: 'none',
     transition: 'all 0.2s ease',
-    minWidth: '130px',
+    minWidth: '100px',
+    maxWidth: '110px',
     display: 'block'
   }
 };

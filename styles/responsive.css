@@ -6,17 +6,17 @@
   visibility: visible !important;
   opacity: 1 !important;
   width: auto;
-  min-width: 90px;
+  min-width: 70px;
 }
 
 .language-selector-container select {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
-  min-width: 90px !important;
-  max-width: 100px !important;
-  padding: 0.35rem 0.5rem !important;
-  font-size: 0.75rem !important;
+  min-width: 70px !important;
+  max-width: 85px !important;
+  padding: 0.3rem 0.4rem !important;
+  font-size: 0.7rem !important;
 }
 
 /* Mobile portrait - logo on left, language selector on right */

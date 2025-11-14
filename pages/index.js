@@ -1685,7 +1685,7 @@ const styles = {
     paddingLeft: 0
   },
   headerLogo: {
-    height: '112px',
+    height: '89.6px',
     width: 'auto',
     transition: 'transform 0.3s ease'
   },
@@ -1696,7 +1696,7 @@ const styles = {
     gap: '0.2rem'
   },
   bankName: {
-    fontSize: '2.4rem',
+    fontSize: '1.92rem',
     fontWeight: '800',
     color: 'white',
     lineHeight: '1.1',
@@ -1704,7 +1704,7 @@ const styles = {
     textShadow: '0 2px 4px rgba(0,0,0,0.1)'
   },
   bankTagline: {
-    fontSize: '1.04rem',
+    fontSize: '0.832rem',
     color: '#FFC857',
     fontWeight: '600',
     letterSpacing: '0.02em',
