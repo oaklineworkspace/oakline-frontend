@@ -453,7 +453,7 @@ export default function Home() {
         onClick={(e) => e.stopPropagation()}
       >
         <div style={styles.headerContainer}>
-          {/* First Row: Logo and Brand Text */}
+          {/* First Row: Logo, Brand Text, and Scrolling Welcome Message */}
           <div style={styles.topHeaderRow} className="top-header-responsive">
             <Link href="/" style={styles.logoAndBrandSection}>
               <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.headerLogo} />
@@ -462,16 +462,16 @@ export default function Home() {
                 <div style={styles.bankTagline}>{ts('Your Financial Partner')}</div>
               </div>
             </Link>
-          </div>
-
-          {/* Second Row: Scrolling Welcome Message */}
-          <div style={styles.scrollingWelcomeContainer} className="scrolling-welcome-container">
-            <div style={styles.scrollingWelcomeText}>
-              Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $500,000 • Rated #1 Customer Service
+            
+            {/* Scrolling Welcome Message - Same Row */}
+            <div style={styles.scrollingWelcomeInline} className="scrolling-welcome-inline">
+              <div style={styles.scrollingWelcomeText}>
+                Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $500,000 • Rated #1 Customer Service
+              </div>
             </div>
           </div>
 
-          {/* Third Row: Banking+ Button and Language Selector */}
+          {/* Second Row: Banking+ Button and Language Selector */}
           <div style={styles.bankingPlusRowContainer} className="banking-plus-row-container">
             <div style={styles.bankingPlusAndLanguageWrapper}>
               <div style={styles.bankingPlusContainer} className="banking-plus-container">
@@ -1647,7 +1647,8 @@ const styles = {
     display: 'flex',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    width: '100%'
+    width: '100%',
+    gap: '1.5rem'
   },
   authButtonsRow: {
     display: 'flex',
@@ -1659,7 +1660,8 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '1rem',
-    textDecoration: 'none'
+    textDecoration: 'none',
+    flex: '0 0 auto'
   },
   headerLogo: {
     height: '70px',
@@ -1691,6 +1693,16 @@ const styles = {
   languageSelectorInline: {
     transform: 'scale(0.9)',
     transformOrigin: 'center center'
+  },
+  scrollingWelcomeInline: {
+    flex: '1 1 auto',
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: '20px',
+    padding: '0.5rem 1rem',
+    position: 'relative',
+    minWidth: '200px',
+    maxWidth: '100%'
   },
   headerActions: {
     display: 'flex',
@@ -5601,6 +5613,11 @@ if (typeof document !== 'undefined') {
 
       .top-header-responsive {
         justify-content: flex-start !important;
+        flex-wrap: wrap !important;
+      }
+
+      .top-header-responsive a[href="/"] {
+        flex: 0 0 auto !important;
       }
 
       .top-header-responsive a[href="/"] img {
@@ -5613,6 +5630,12 @@ if (typeof document !== 'undefined') {
 
       .top-header-responsive a[href="/"] > div > div:last-child {
         font-size: 0.7rem !important;
+      }
+
+      .scrolling-welcome-inline {
+        flex: 1 1 100% !important;
+        order: 2 !important;
+        margin-top: 0.5rem !important;
       }
 
       .banking-plus-row-container {
