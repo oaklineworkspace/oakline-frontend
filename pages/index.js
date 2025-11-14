@@ -454,7 +454,7 @@ export default function Home() {
       >
         <div style={styles.headerContainer}>
           <div style={styles.topHeaderRow} className="top-header-responsive">
-            {/* Logo Section */}
+            {/* Logo Section - Left Side */}
             <Link href="/" style={styles.logoSection}>
               <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.headerLogo} />
               <div style={styles.brandSection}>
@@ -463,19 +463,21 @@ export default function Home() {
               </div>
             </Link>
 
-            {/* Scrolling Welcome Message */}
-            <div style={styles.scrollingWelcomeContainer} className="scrolling-welcome-container">
-              <div style={styles.scrollingWelcomeText}>
-                Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $500,000 • Rated #1 Customer Service
-              </div>
-            </div>
-
-            {/* Language Selector - Left Side */}
+            {/* Language Selector - Right Side */}
             <div style={styles.languageSelectorWrapper} className="language-selector-wrapper">
               <LanguageSelector compact={true} />
             </div>
+          </div>
 
-            {/* Banking+ Dropdown Button - Right Side */}
+          {/* Scrolling Welcome Message - Second Row */}
+          <div style={styles.scrollingWelcomeContainer} className="scrolling-welcome-container">
+            <div style={styles.scrollingWelcomeText}>
+              Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $500,000 • Rated #1 Customer Service
+            </div>
+          </div>
+
+          {/* Banking+ Dropdown Button - Third Row */}
+          <div style={styles.bankingPlusRowContainer} className="banking-plus-row-container">
             <div style={styles.bankingPlusContainer} className="banking-plus-container">
             <button
               onClick={(e) => {
@@ -1634,19 +1636,16 @@ const styles = {
   headerContainer: {
     maxWidth: '1400px',
     margin: '0 auto',
-    padding: '1rem 1rem',
+    padding: '1rem 1.5rem',
     display: 'flex',
     flexDirection: 'column',
-    gap: '1rem'
+    gap: '0.75rem'
   },
   topHeaderRow: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%',
-    flexWrap: 'wrap',
-    columnGap: '0.5rem',
-    rowGap: '0.75rem'
+    width: '100%'
   },
   authButtonsRow: {
     display: 'flex',
@@ -1775,10 +1774,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
-    flex: '0 0 auto',
-    minWidth: '200px',
-    maxWidth: '240px'
+    position: 'relative'
   },
   bankingPlusButton: {
     display: 'flex',
@@ -4164,25 +4160,23 @@ const styles = {
 
   // Scrolling Welcome Message Styles
   scrollingWelcomeContainer: {
-    flex: '1 1 100%',
     overflow: 'hidden',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: '20px',
     padding: '0.5rem 1rem',
-    margin: '0 1rem',
     position: 'relative',
-    minWidth: '300px',
-    maxWidth: '100%'
+    width: '100%'
   },
   languageSelectorWrapper: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'flex-end',
+    minWidth: '200px'
+  },
+  bankingPlusRowContainer: {
+    display: 'flex',
     justifyContent: 'center',
-    flex: '0 0 auto',
-    minWidth: '200px',
-    maxWidth: '240px',
-    marginLeft: 'auto',
-    marginRight: '0.5rem'
+    width: '100%'
   },
   scrollingWelcomeText: {
     whiteSpace: 'nowrap',
