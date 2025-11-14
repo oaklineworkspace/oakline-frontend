@@ -327,23 +327,10 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [emailPlaceholder, setEmailPlaceholder] = useState('Enter your email');
-  const [passwordPlaceholder, setPasswordPlaceholder] = useState('Enter your password');
-
 
   useEffect(() => {
     setIsMounted(true);
-    // Dynamically set placeholders based on language if needed
-    // For now, using default values
-    // In a real app, you'd use a translation hook or context
-    if (router.locale === 'es') {
-      setEmailPlaceholder('Introduce tu correo electrónico');
-      setPasswordPlaceholder('Introduce tu contraseña');
-    } else {
-      setEmailPlaceholder('Enter your email');
-      setPasswordPlaceholder('Enter your password');
-    }
-  }, [router.locale]);
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -432,7 +419,7 @@ export default function SignInPage() {
               <input
                 type="email"
                 name="email"
-                placeholder={emailPlaceholder}
+                placeholder="Enter your email"
                 required
                 value={formData.email}
                 onChange={handleChange}
@@ -446,7 +433,7 @@ export default function SignInPage() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   name="password"
-                  placeholder={passwordPlaceholder}
+                  placeholder="Enter your password"
                   required
                   value={formData.password}
                   onChange={handleChange}
