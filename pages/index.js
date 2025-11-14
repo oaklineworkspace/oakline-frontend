@@ -5681,17 +5681,17 @@ if (typeof document !== 'undefined') {
       }
 
       .top-header-responsive {
-        justify-content: center !important;
+        justify-content: space-between !important;
         flex-wrap: wrap !important;
-        gap: 0.75rem !important;
+        gap: 0.5rem !important;
         padding: 0.5rem 0 !important;
         position: relative !important;
       }
 
       .top-header-responsive a[href="/"] {
-        flex: 0 0 100% !important;
-        max-width: 100% !important;
-        justify-content: center !important;
+        flex: 0 0 auto !important;
+        max-width: 50% !important;
+        justify-content: flex-start !important;
         order: 1 !important;
       }
 
@@ -5709,31 +5709,33 @@ if (typeof document !== 'undefined') {
 
       .scrolling-welcome-inline {
         display: block !important;
-        width: 100% !important;
-        margin: 0.5rem 0 0 0 !important;
-        padding: 0.5rem 1rem !important;
+        flex: 1 1 auto !important;
+        margin: 0 !important;
+        padding: 0.4rem 0.8rem !important;
         min-width: 0 !important;
-        flex: 1 1 100% !important;
-        order: 3 !important;
+        max-width: calc(50% - 0.5rem) !important;
+        order: 2 !important;
         overflow: hidden !important;
+        align-self: center !important;
       }
 
       .scrolling-welcome-inline > div {
-        font-size: 0.85rem !important;
+        font-size: 0.75rem !important;
         animation: scrollWelcome 35s linear infinite !important;
       }
 
       .banking-plus-right-section {
         flex: 0 0 100% !important;
         gap: 0.5rem !important;
-        justify-content: space-between !important;
-        order: 2 !important;
+        justify-content: center !important;
+        order: 4 !important;
         display: flex !important;
         align-items: center !important;
+        position: relative !important;
       }
 
       .banking-plus-container {
-        flex: 1 !important;
+        flex: 0 0 auto !important;
         display: flex !important;
         justify-content: center !important;
       }
@@ -5741,7 +5743,9 @@ if (typeof document !== 'undefined') {
       .language-selector-inline {
         transform: scale(0.85) !important;
         flex: 0 0 auto !important;
-        margin-left: auto !important;
+        position: absolute !important;
+        right: 0 !important;
+        top: -60px !important;
       }
 
       .banking-dropdown {
