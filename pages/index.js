@@ -458,8 +458,8 @@ export default function Home() {
             <Link href="/" style={styles.logoAndBrandSection}>
               <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.headerLogo} />
               <div style={styles.brandTextSection}>
-                <div style={styles.bankName}>{ts('Oakline Bank')}</div>
-                <div style={styles.bankTagline}>{ts('Your Financial Partner')}</div>
+                <div style={styles.bankName}>Oakline Bank</div>
+                <div style={styles.bankTagline}>Your Financial Partner</div>
               </div>
             </Link>
 
@@ -1650,16 +1650,18 @@ const styles = {
     justifyContent: 'center'
   },
   bankName: {
-    fontSize: '2rem',
-    fontWeight: '800',
+    fontSize: '3.5rem',
+    fontWeight: '900',
     color: 'white',
-    lineHeight: '1.1'
+    lineHeight: '1',
+    letterSpacing: '-0.02em'
   },
   bankTagline: {
-    fontSize: '0.9rem',
+    fontSize: '1.5rem',
     color: '#cbd5e1',
     fontWeight: '500',
-    marginTop: '0.25rem'
+    marginTop: '0.5rem',
+    letterSpacing: '0.01em'
   },
   bankingPlusAndLanguageWrapper: {
     display: 'flex',
