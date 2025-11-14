@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
+import TranslatedText from '../components/TranslatedText';
 
 // Define styles object if it's not defined elsewhere
 const styles = {
@@ -394,8 +395,8 @@ export default function SignInPage() {
           <Link href="/" style={styles.logoLink}>
             <div style={styles.logoIcon}>🏦</div>
             <div style={styles.logoTextContainer}>
-              <span style={styles.logoBankName}>Oakline Bank</span>
-              <span style={styles.logoSlogan}>Secure Banking Access</span>
+              <span style={styles.logoBankName}><TranslatedText>Oakline Bank</TranslatedText></span>
+              <span style={styles.logoSlogan}><TranslatedText>Secure Banking Access</TranslatedText></span>
             </div>
           </Link>
         </div>
@@ -408,13 +409,13 @@ export default function SignInPage() {
             <div style={styles.iconContainer}>
               <span style={styles.icon}>🏦</span>
             </div>
-            <h1 style={styles.title}>Welcome Back</h1>
-            <p style={styles.subtitle}>Sign in to your Oakline Bank account</p>
+            <h1 style={styles.title}><TranslatedText>Welcome Back</TranslatedText></h1>
+            <p style={styles.subtitle}><TranslatedText>Sign in to your Oakline Bank account</TranslatedText></p>
           </div>
 
           <form onSubmit={handleSubmit} style={styles.form}>
             <div style={styles.inputGroup}>
-              <label style={styles.label}>Email Address</label>
+              <label style={styles.label}><TranslatedText>Email Address</TranslatedText></label>
               <input
                 type="email"
                 name="email"
@@ -427,7 +428,7 @@ export default function SignInPage() {
             </div>
 
             <div style={styles.inputGroup}>
-              <label style={styles.label}>Password</label>
+              <label style={styles.label}><TranslatedText>Password</TranslatedText></label>
               <div style={styles.passwordInputContainer}>
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -447,7 +448,7 @@ export default function SignInPage() {
                 </button>
               </div>
               <Link href="/reset-password" style={styles.forgotPasswordLink}>
-                Forgot your password?
+                <TranslatedText>Forgot your password?</TranslatedText>
               </Link>
             </div>
 
@@ -463,7 +464,7 @@ export default function SignInPage() {
                 htmlFor="rememberDevice"
                 style={styles.rememberDeviceLabel}
               >
-                Remember this device
+                <TranslatedText>Remember this device</TranslatedText>
               </label>
             </div>
 
@@ -496,12 +497,12 @@ export default function SignInPage() {
               {loading ? (
                 <span style={styles.loadingContent}>
                   <div style={styles.spinner}></div>
-                  Signing In...
+                  <TranslatedText>Signing In...</TranslatedText>
                 </span>
               ) : (
                 <>
                   <span style={{ fontSize: '1.2rem' }}>🔐</span>
-                  Sign In to My Account
+                  <TranslatedText>Sign In to My Account</TranslatedText>
                 </>
               )}
             </button>
@@ -520,37 +521,37 @@ export default function SignInPage() {
 
           <div style={styles.securityInfo}>
             <p style={styles.securityText}>
-              🔒 Your security is our priority. We use 256-bit SSL encryption.
+              <TranslatedText>🔒 Your security is our priority. We use 256-bit SSL encryption.</TranslatedText>
             </p>
           </div>
 
           <div style={styles.signUpSection}>
             <p style={styles.signUpText}>
-              Don't have an account?{' '}
+              <TranslatedText>Don't have an account?</TranslatedText>{' '}
               <Link href="/apply" style={styles.signUpLink}>
-                Open Account Today
+                <TranslatedText>Open Account Today</TranslatedText>
               </Link>
             </p>
           </div>
 
           <div style={styles.helpLinksContainer}>
-            <h4 style={styles.helpLinksTitle}>Why Choose Oakline Bank?</h4>
+            <h4 style={styles.helpLinksTitle}><TranslatedText>Why Choose Oakline Bank?</TranslatedText></h4>
             <div style={styles.helpLinksList}>
               <div style={styles.helpLinkItem}>
                 <span style={styles.helpLinkIcon}>🏆</span>
-                <span style={styles.helpLinkText}>Award-winning digital banking</span>
+                <span style={styles.helpLinkText}><TranslatedText>Award-winning digital banking</TranslatedText></span>
               </div>
               <div style={styles.helpLinkItem}>
                 <span style={styles.helpLinkIcon}>🔒</span>
-                <span style={styles.helpLinkText}>Bank-level security protection</span>
+                <span style={styles.helpLinkText}><TranslatedText>Bank-level security protection</TranslatedText></span>
               </div>
               <div style={styles.helpLinkItem}>
                 <span style={styles.helpLinkIcon}>📱</span>
-                <span style={styles.helpLinkText}>Mobile banking excellence</span>
+                <span style={styles.helpLinkText}><TranslatedText>Mobile banking excellence</TranslatedText></span>
               </div>
               <div style={styles.helpLinkItem}>
                 <span style={styles.helpLinkIcon}>💳</span>
-                <span style={styles.helpLinkText}>23 account types available</span>
+                <span style={styles.helpLinkText}><TranslatedText>23 account types available</TranslatedText></span>
               </div>
             </div>
           </div>
@@ -560,17 +561,17 @@ export default function SignInPage() {
       {/* Sticky Footer */}
       <footer style={styles.footer}>
         <p style={styles.footerText}>
-          © 2024 Oakline Bank. All rights reserved.
+          <TranslatedText>© 2024 Oakline Bank. All rights reserved.</TranslatedText>
         </p>
         <div style={styles.footerLinksContainer}>
           <Link href="/privacy" style={styles.footerLink}>
-            Privacy Policy
+            <TranslatedText>Privacy Policy</TranslatedText>
           </Link>
           <Link href="/terms" style={styles.footerLink}>
-            Terms of Service
+            <TranslatedText>Terms of Service</TranslatedText>
           </Link>
           <Link href="/contact" style={styles.footerLink}>
-            Contact Us
+            <TranslatedText>Contact Us</TranslatedText>
           </Link>
         </div>
       </footer>
