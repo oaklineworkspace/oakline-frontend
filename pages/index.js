@@ -1679,7 +1679,7 @@ const styles = {
     flex: '0 0 auto'
   },
   headerLogo: {
-    height: '70px',
+    height: '90px',
     width: 'auto'
   },
   brandTextSection: {
