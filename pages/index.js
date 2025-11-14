@@ -208,53 +208,35 @@ export default function Home() {
     preloadTranslations();
   }, [currentLanguage, t]);
 
-  const premiumFeatures = [
-    // Core Banking Services
-    { name: 'Online Banking', href: user ? '/dashboard' : '/login', icon: '💻', desc: 'Digital banking platform', color: '#0EA5E9', section: 'core' },
-    { name: 'Mobile Banking', href: user ? '/dashboard' : '/apply', icon: '📱', desc: 'Banking on the go', color: '#10B981', section: 'core' },
-    { name: 'Account Types', href: '/account-types', icon: '🏦', desc: '23 account options', color: '#3B82F6', section: 'core' },
-    { name: 'Money Transfer', href: user ? '/transfer' : '/login', icon: '💸', desc: 'Send & receive funds', color: '#059669', section: 'core' },
-    { name: 'Bill Pay', href: user ? '/bill-pay' : '/login', icon: '🧾', desc: 'Automated payments', color: '#F59E0B', section: 'core' },
-    { name: 'Zelle Payments', href: user ? '/zelle' : '/login', icon: '⚡', desc: 'Instant transfers', color: '#6B21A8', section: 'core' },
-    { name: 'Oakline Pay', href: user ? '/oakline-pay' : '/login', icon: '💰', desc: 'Send money with @tags', color: '#1A3E6F', section: 'core' },
-    { name: 'Mobile Deposit', href: user ? '/deposit' : '/login', icon: '📸', desc: 'Deposit checks instantly', color: '#14B8A6', section: 'core' },
-    { name: 'ATM Network', href: '/atm', icon: '🏧', desc: '24/7 cash access', color: '#8B5CF6', section: 'core' },
-    { name: 'Debit & Credit Cards', href: user ? '/cards' : '/login', icon: '💳', desc: 'Manage your cards', color: '#EC4899', section: 'core' },
-    { name: 'Transaction History', href: user ? '/transactions' : '/login', icon: '📜', desc: 'View all transactions', color: '#64748B', section: 'core' },
-    { name: 'Statements', href: user ? '/dashboard' : '/login', icon: '📄', desc: 'Download statements', color: '#0891B2', section: 'core' },
-    { name: 'Branch Locator', href: '/branch-locator', icon: '📍', desc: 'Find nearest branch', color: '#DC2626', section: 'core' },
-
-    // Premium & Advanced Services
-    { name: 'Investment Portfolio', href: user ? '/investments' : '/login', icon: '📈', desc: 'High-yield investments', color: '#10B981', section: 'premium' },
-    { name: 'Crypto Trading', href: user ? '/crypto' : '/login', icon: '₿', desc: 'Digital asset trading', color: '#F59E0B', section: 'premium' },
-    { name: 'Home Loans', href: '/loans', icon: '🏠', desc: 'Mortgage solutions', color: '#3B82F6', section: 'premium' },
-    { name: 'Personal Loans', href: '/loans', icon: '💰', desc: 'Competitive rates', color: '#059669', section: 'premium' },
-    { name: 'Business Banking', href: '/account-types', icon: '🏢', desc: 'Commercial services', color: '#EF4444', section: 'premium' },
-    { name: 'Business Insights', href: '/business-insights', icon: '💼', desc: 'Market analysis & trends', color: '#0369A1', section: 'premium' },
-    { name: 'Wealth Management', href: user ? '/investments' : '/login', icon: '💎', desc: 'Private banking', color: '#8B5CF6', section: 'premium' },
-    { name: 'Financial Advisory', href: '/financial-advisory', icon: '🎯', desc: 'Expert consultation', color: '#06B6D4', section: 'premium' },
-    { name: 'Retirement Planning', href: '/retirement-planning', icon: '🏖️', desc: '401k & IRA guidance', color: '#7C3AED', section: 'premium' },
-    { name: 'Personal Finance Tips', href: '/personal-finance-tips', icon: '💡', desc: 'Budgeting & saving strategies', color: '#059669', section: 'premium' },
-    { name: 'International Banking', href: '/internationalization', icon: '🌍', desc: 'Global services', color: '#84CC16', section: 'premium' },
-    { name: 'Trust Services', href: '/about', icon: '🛡️', desc: 'Estate planning', color: '#F97316', section: 'premium' },
-    { name: 'Credit Reports', href: user ? '/credit-report' : '/login', icon: '📊', desc: 'Monitor your credit', color: '#7C3AED', section: 'premium' },
-    { name: 'Rewards Program', href: user ? '/rewards' : '/login', icon: '🎁', desc: 'Earn & redeem rewards', color: '#F43F5E', section: 'premium' },
-    { name: 'Digital Wallets', href: '/digital-wallets', icon: '📲', desc: 'Crypto & digital payments', color: '#8B5CF6', section: 'premium' },
-    { name: 'Green Banking', href: '/green-banking', icon: '🌱', desc: 'Sustainable banking', color: '#10B981', section: 'premium' },
-    { name: 'Promotions', href: '/promotions', icon: '🎉', desc: 'Current offers & deals', color: '#F59E0B', section: 'premium' },
-    { name: 'Community Impact', href: '/community-impact', icon: '🤝', desc: 'CSR programs', color: '#0891B2', section: 'premium' },
-    { name: 'Market News', href: '/market-news', icon: '📰', desc: 'Financial insights', color: '#0EA5E9', section: 'premium' },
-    { name: 'Financial Education', href: '/financial-education', icon: '📚', desc: 'Learning resources', color: '#10B981', section: 'premium' },
-    { name: 'Financial Tools', href: '/financial-tools', icon: '🔧', desc: 'Calculators & planners', color: '#F59E0B', section: 'premium' },
-    { name: 'Calculators', href: '/calculators', icon: '🧮', desc: 'Financial planning tools', color: '#F59E0B', section: 'premium' },
-    { name: 'Current Rates', href: '/current-rates', icon: '📈', desc: 'Interest & exchange rates', color: '#6366F1', section: 'premium' },
-    { name: 'Security Awareness', href: '/security-awareness', icon: '🔐', desc: 'Fraud prevention tips', color: '#DC2626', section: 'premium' },
-    { name: 'Security Center', href: user ? '/security' : '/login', icon: '🔒', desc: 'Account protection', color: '#EF4444', section: 'premium' },
-    { name: 'Customer Stories', href: '/customer-stories', icon: '⭐', desc: 'Real testimonials', color: '#EC4899', section: 'premium' }
+  // Public features - accessible to everyone
+  const publicFeatures = [
+    { name: 'Account Types', href: '/account-types', icon: '🏦', desc: 'Explore 23 account options', color: '#3B82F6', section: 'explore' },
+    { name: 'Branch Locator', href: '/branch-locator', icon: '📍', desc: 'Find nearest branch', color: '#DC2626', section: 'explore' },
+    { name: 'ATM Network', href: '/atm', icon: '🏧', desc: '24/7 cash access', color: '#8B5CF6', section: 'explore' },
+    { name: 'Current Rates', href: '/current-rates', icon: '📈', desc: 'Interest & exchange rates', color: '#6366F1', section: 'explore' },
+    { name: 'Calculators', href: '/calculators', icon: '🧮', desc: 'Financial planning tools', color: '#F59E0B', section: 'explore' },
+    { name: 'About Us', href: '/about', icon: 'ℹ️', desc: 'Learn about Oakline Bank', color: '#059669', section: 'explore' },
+    
+    { name: 'Home Loans', href: '/loans', icon: '🏠', desc: 'Mortgage solutions', color: '#3B82F6', section: 'services' },
+    { name: 'Personal Loans', href: '/loans', icon: '💰', desc: 'Competitive rates', color: '#059669', section: 'services' },
+    { name: 'Business Banking', href: '/account-types', icon: '🏢', desc: 'Commercial services', color: '#EF4444', section: 'services' },
+    { name: 'Financial Advisory', href: '/financial-advisory', icon: '🎯', desc: 'Expert consultation', color: '#06B6D4', section: 'services' },
+    { name: 'Retirement Planning', href: '/retirement-planning', icon: '🏖️', desc: '401k & IRA guidance', color: '#7C3AED', section: 'services' },
+    { name: 'International Banking', href: '/internationalization', icon: '🌍', desc: 'Global services', color: '#84CC16', section: 'services' },
+    
+    { name: 'Financial Education', href: '/financial-education', icon: '📚', desc: 'Learning resources', color: '#10B981', section: 'resources' },
+    { name: 'Personal Finance Tips', href: '/personal-finance-tips', icon: '💡', desc: 'Budgeting & saving tips', color: '#059669', section: 'resources' },
+    { name: 'Market News', href: '/market-news', icon: '📰', desc: 'Financial insights', color: '#0EA5E9', section: 'resources' },
+    { name: 'Security Awareness', href: '/security-awareness', icon: '🔐', desc: 'Fraud prevention tips', color: '#DC2626', section: 'resources' },
+    { name: 'Customer Stories', href: '/customer-stories', icon: '⭐', desc: 'Real testimonials', color: '#EC4899', section: 'resources' },
+    { name: 'Green Banking', href: '/green-banking', icon: '🌱', desc: 'Sustainable banking', color: '#10B981', section: 'resources' },
+    { name: 'Community Impact', href: '/community-impact', icon: '🤝', desc: 'CSR programs', color: '#0891B2', section: 'resources' },
+    { name: 'Promotions', href: '/promotions', icon: '🎉', desc: 'Current offers & deals', color: '#F59E0B', section: 'resources' }
   ];
 
-  const coreFeatures = premiumFeatures.filter(f => f.section === 'core');
-  const premiumServices = premiumFeatures.filter(f => f.section === 'premium');
+  const exploreFeatures = publicFeatures.filter(f => f.section === 'explore');
+  const servicesFeatures = publicFeatures.filter(f => f.section === 'services');
+  const resourcesFeatures = publicFeatures.filter(f => f.section === 'resources');
 
   const bankingImages = [
     {
@@ -513,10 +495,10 @@ export default function Home() {
                   </div>
 
                   <div style={styles.bankingTwoColumnGrid}>
-                    {/* Core Banking Services Section */}
+                    {/* Explore Section */}
                     <div style={styles.bankingSection}>
-                      <div style={styles.dropdownSectionTitle}>🏦 {ts('MY BANKING')}</div>
-                      {coreFeatures.map((feature) => (
+                      <div style={styles.dropdownSectionTitle}>🔍 {ts('EXPLORE')}</div>
+                      {exploreFeatures.map((feature) => (
                         <Link
                           key={feature.name}
                           href={feature.href}
@@ -529,53 +511,52 @@ export default function Home() {
                       ))}
                     </div>
 
-                    {/* Premium & Advanced Services Section */}
+                    {/* Services & Resources Section */}
                     <div style={styles.bankingSection}>
-                      <div style={styles.dropdownSectionTitle}>💼 {ts('LOANS & CREDIT')}</div>
-                      <Link href="/loan/dashboard" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">💼 {ts('My Loan Dashboard')}</Link>
-                      <Link href="/loan/apply" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">💰 {ts('Apply for New Loan')}</Link>
-                      <Link href="/credit-report" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">📊 {ts('Credit Report')}</Link>
-                      <Link href="/apply-card" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">💳 {ts('Apply for Card')}</Link>
+                      <div style={styles.dropdownSectionTitle}>💼 {ts('BANKING SERVICES')}</div>
+                      {servicesFeatures.map((feature) => (
+                        <Link
+                          key={feature.name}
+                          href={feature.href}
+                          onClick={() => setShowBankingDropdown(false)}
+                          style={styles.dropdownLink}
+                          className="dropdown-link"
+                        >
+                          {feature.icon} {ts(feature.name)}
+                        </Link>
+                      ))}
                       
                       <div style={styles.dropdownDivider}></div>
                       
-                      <div style={styles.dropdownSectionTitle}>📈 {ts('INVESTMENTS')}</div>
-                      <Link href="/investment" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">📊 {ts('Portfolio')}</Link>
-                      <Link href="/crypto" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">₿ {ts('Crypto Trading')}</Link>
-                      <Link href="/market-news" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">📰 {ts('Market News')}</Link>
-                      
-                      <div style={styles.dropdownDivider}></div>
-                      
-                      <div style={styles.dropdownSectionTitle}>🛡️ {ts('SECURITY & SETTINGS')}</div>
-                      <Link href="/security" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">🔒 {ts('Security Settings')}</Link>
-                      <Link href="/profile" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">👤 {ts('Edit Profile')}</Link>
-                      <Link href="/support" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">🎧 {ts('Customer Support')}</Link>
+                      <div style={styles.dropdownSectionTitle}>📚 {ts('RESOURCES')}</div>
+                      {resourcesFeatures.map((feature) => (
+                        <Link
+                          key={feature.name}
+                          href={feature.href}
+                          onClick={() => setShowBankingDropdown(false)}
+                          style={styles.dropdownLink}
+                          className="dropdown-link"
+                        >
+                          {feature.icon} {ts(feature.name)}
+                        </Link>
+                      ))}
                     </div>
                   </div>
 
                   <div style={styles.bankingDropdownFooter}>
-                    {!user && (
-                      <Link
-                        href="/signup"
-                        onClick={() => setShowBankingDropdown(false)}
-                        style={styles.viewAllServicesButtonEnroll}
-                      >
-                        🔐 {ts('Enroll Now')}
-                      </Link>
-                    )}
                     <Link
-                      href="/account-types"
+                      href="/apply"
                       onClick={() => setShowBankingDropdown(false)}
-                      style={styles.viewAllServicesButton}
+                      style={styles.viewAllServicesButtonEnroll}
                     >
-                      {ts('Explore All Banking Services')}
+                      🚀 {ts('Open Account')}
                     </Link>
                     <Link
                       href="/support"
                       onClick={() => setShowBankingDropdown(false)}
                       style={styles.viewAllServicesButtonSecondary}
                     >
-                      {ts('Contact Support')}
+                      💬 {ts('Contact Us')}
                     </Link>
                   </div>
                 </div>
