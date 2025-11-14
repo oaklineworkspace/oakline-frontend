@@ -5682,7 +5682,7 @@ if (typeof document !== 'undefined') {
 
       .top-header-responsive {
         justify-content: space-between !important;
-        flex-wrap: nowrap !important;
+        flex-wrap: wrap !important;
         gap: 0.75rem !important;
         padding: 0.5rem 0 !important;
       }
@@ -5712,6 +5712,12 @@ if (typeof document !== 'undefined') {
         min-width: 0 !important;
         flex: 1 1 100% !important;
         order: 10 !important;
+        overflow: hidden !important;
+      }
+
+      .scrolling-welcome-inline > div {
+        font-size: 0.85rem !important;
+        animation: scrollWelcome 35s linear infinite !important;
       }
 
       .banking-plus-right-section {
