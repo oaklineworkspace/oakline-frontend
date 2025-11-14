@@ -461,7 +461,7 @@ export default function Home() {
         onClick={(e) => e.stopPropagation()}
       >
         <div style={styles.headerContainer}>
-          {/* First Row: Logo, Brand Text, and Scrolling Welcome Message */}
+          {/* First Row: Logo, Brand Text, Scrolling Welcome, and Banking+ */}
           <div style={styles.topHeaderRow} className="top-header-responsive">
             <Link href="/" style={styles.logoAndBrandSection}>
               <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.headerLogo} />
@@ -471,17 +471,15 @@ export default function Home() {
               </div>
             </Link>
 
-            {/* Scrolling Welcome Message - Same Row */}
+            {/* Scrolling Welcome Message */}
             <div style={styles.scrollingWelcomeInline} className="scrolling-welcome-inline">
               <div style={styles.scrollingWelcomeText}>
                 Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $500,000 • Rated #1 Customer Service
               </div>
             </div>
-          </div>
 
-          {/* Second Row: Banking+ Button and Language Selector */}
-          <div style={styles.bankingPlusRowContainer} className="banking-plus-row-container">
-            <div style={styles.bankingPlusAndLanguageWrapper}>
+            {/* Banking+ and Language Selector - Right Side */}
+            <div style={styles.bankingPlusRightSection} className="banking-plus-right-section">
               <div style={styles.bankingPlusContainer} className="banking-plus-container">
                 <button
               onClick={(e) => {
@@ -1660,7 +1658,7 @@ const styles = {
   },
   topHeaderRow: {
     display: 'flex',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
     gap: '1.5rem'
@@ -1679,7 +1677,7 @@ const styles = {
     flex: '0 0 auto'
   },
   headerLogo: {
-    height: '90px',
+    height: '110px',
     width: 'auto'
   },
   brandTextSection: {
@@ -1719,7 +1717,14 @@ const styles = {
     padding: '0.5rem 1rem',
     position: 'relative',
     minWidth: '200px',
-    maxWidth: '100%'
+    maxWidth: '100%',
+    marginRight: '1rem'
+  },
+  bankingPlusRightSection: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    flex: '0 0 auto'
   },
   headerActions: {
     display: 'flex',
@@ -5653,8 +5658,8 @@ if (typeof document !== 'undefined') {
       }
 
       .top-header-responsive {
-        justify-content: flex-start !important;
-        flex-wrap: nowrap !important;
+        justify-content: space-between !important;
+        flex-wrap: wrap !important;
         gap: 0.5rem !important;
       }
 
@@ -5663,37 +5668,39 @@ if (typeof document !== 'undefined') {
       }
 
       .top-header-responsive a[href="/"] img {
-        height: 50px !important;
+        height: 70px !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:first-child {
-        font-size: 1.3rem !important;
+        font-size: 1.5rem !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:last-child {
-        font-size: 0.7rem !important;
+        font-size: 0.85rem !important;
       }
 
       .scrolling-welcome-inline {
-        flex: 1 1 auto !important;
+        flex: 1 1 100% !important;
         min-width: 100px !important;
         font-size: 0.75rem !important;
+        order: 3 !important;
+        margin-right: 0 !important;
       }
 
-      .banking-plus-row-container {
-        padding: 0.5rem 0 !important;
+      .banking-plus-right-section {
+        flex: 0 0 auto !important;
+        order: 2 !important;
+        gap: 0.75rem !important;
       }
 
-      .banking-plus-and-language-wrapper,
       .language-selector-inline {
         gap: 0.75rem !important;
       }
 
-      .top-header-responsive .banking-dropdown {
+      .banking-dropdown {
         width: min(360px, 92vw) !important;
-        left: 50% !important;
-        right: auto !important;
-        transform: translateX(-50%);
+        right: 1rem !important;
+        left: auto !important;
       }
     }
 
