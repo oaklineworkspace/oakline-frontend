@@ -1654,7 +1654,7 @@ const styles = {
   headerContainer: {
     maxWidth: '1400px',
     margin: '0 auto',
-    padding: '0.75rem 2rem',
+    padding: '0.75rem 1rem',
     display: 'flex',
     flexDirection: 'column',
     gap: '0'
@@ -1664,7 +1664,7 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    gap: '2rem',
+    gap: '1.5rem',
     padding: '0.5rem 0'
   },
   authButtonsRow: {
@@ -1676,11 +1676,13 @@ const styles = {
   logoAndBrandSection: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1rem',
+    gap: '0.75rem',
     textDecoration: 'none',
     flex: '0 0 auto',
     minWidth: 0,
-    marginRight: 'auto'
+    marginRight: 'auto',
+    marginLeft: 0,
+    paddingLeft: 0
   },
   headerLogo: {
     height: '112px',
@@ -1716,7 +1718,8 @@ const styles = {
   },
   languageSelectorInline: {
     display: 'flex',
-    alignItems: 'center'
+    alignItems: 'center',
+    marginLeft: 'auto'
   },
   scrollingWelcomeInline: {
     flex: '1 1 auto',
