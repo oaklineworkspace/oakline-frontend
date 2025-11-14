@@ -5709,18 +5709,18 @@ if (typeof document !== 'undefined') {
 
       .scrolling-welcome-inline {
         display: block !important;
-        flex: 1 1 auto !important;
-        margin: 0 !important;
-        padding: 0.4rem 0.8rem !important;
+        flex: 0 0 100% !important;
+        margin: 0.5rem 0 0 0 !important;
+        padding: 0.5rem 1rem !important;
         min-width: 0 !important;
-        max-width: calc(50% - 0.5rem) !important;
-        order: 2 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        order: 3 !important;
         overflow: hidden !important;
-        align-self: center !important;
       }
 
       .scrolling-welcome-inline > div {
-        font-size: 0.75rem !important;
+        font-size: 0.8rem !important;
         animation: scrollWelcome 35s linear infinite !important;
       }
 
@@ -5728,7 +5728,7 @@ if (typeof document !== 'undefined') {
         flex: 0 0 100% !important;
         gap: 0.5rem !important;
         justify-content: center !important;
-        order: 4 !important;
+        order: 2 !important;
         display: flex !important;
         align-items: center !important;
         position: relative !important;
