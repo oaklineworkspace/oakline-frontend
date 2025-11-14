@@ -622,7 +622,8 @@ export default function Home() {
               </>
             )}
           </div>
-        </header>
+        </div>
+      </header>
 
         {/* Professional Banking Hero Section */}
         <section style={styles.heroSection} id="hero" data-animate>
