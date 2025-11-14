@@ -472,14 +472,13 @@ export default function Home() {
                 </div>
                 <div style={styles.bankTagline}>Your Financial Partner</div>
               </div>
-            </Link>
-
-            {/* Scrolling Welcome Message */}
-            <div style={styles.scrollingWelcomeInline} className="scrolling-welcome-inline">
-              <div style={styles.scrollingWelcomeText}>
-                Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $500,000 • Rated #1 Customer Service
+              {/* Scrolling Welcome Message - Right after brand name */}
+              <div style={styles.scrollingWelcomeInline} className="scrolling-welcome-inline">
+                <div style={styles.scrollingWelcomeText}>
+                  Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $500,000 • Rated #1 Customer Service
+                </div>
               </div>
-            </div>
+            </Link>
 
             {/* Banking+ and Language Selector - Right Side */}
             <div style={styles.bankingPlusRightSection} className="banking-plus-right-section">
@@ -1677,7 +1676,8 @@ const styles = {
     alignItems: 'center',
     gap: '1rem',
     textDecoration: 'none',
-    flex: '0 0 auto'
+    flex: '1 1 auto',
+    minWidth: 0
   },
   headerLogo: {
     height: '110px',
@@ -1721,7 +1721,7 @@ const styles = {
     position: 'relative',
     minWidth: '200px',
     maxWidth: '100%',
-    marginRight: '1rem'
+    marginLeft: '1rem'
   },
   bankingPlusRightSection: {
     display: 'flex',
