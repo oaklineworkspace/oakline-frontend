@@ -1884,7 +1884,7 @@ const styles = {
     backgroundColor: 'white',
     borderRadius: '12px',
     boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
-    border: '1px solid #e5e7eb',
+    border: '1px solid #e2e8eb',
     padding: '1rem',
     width: '600px',
     maxWidth: 'calc(100vw - 2rem)',
@@ -2289,10 +2289,10 @@ const styles = {
     borderRadius: '8px',
     fontSize: '0.9rem',
     fontWeight: '700',
-    boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)',
-    transition: 'all 0.3s ease',
-    flex: 1,
-    minWidth: '120px'
+    transition: 'all 0.2s ease',
+    border: 'none',
+    minWidth: '120px',
+    boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)'
   },
   bankingDropdownSecondaryButton: {
     display: 'inline-flex',
@@ -2306,8 +2306,7 @@ const styles = {
     fontSize: '0.9rem',
     fontWeight: '700',
     border: '2px solid #1a365d',
-    transition: 'all 0.3s ease',
-    flex: 1,
+    transition: 'all 0.2s ease',
     minWidth: '120px'
   },
   featuresGrid: {
@@ -4014,8 +4013,8 @@ const styles = {
     borderRadius: '12px',
     fontSize: 'clamp(1rem, 2.2vw, 1.1rem)',
     fontWeight: '700',
-    boxShadow: '0 8px 25px rgba(5, 150, 105, 0.4)',
-    transition: 'all 0.3s ease'
+    transition: 'all 0.3s ease',
+    boxShadow: '0 8px 25px rgba(5, 150, 105, 0.4)'
   },
   debitCardCTASecondary: {
     display: 'inline-flex',
@@ -4827,7 +4826,7 @@ const styles = {
     left: '-2px',
     right: '-2px',
     height: '10px',
-    borderBottomLeftRadius: '18px',
+    borderbottomLeftRadius: '18px',
     borderBottomRightRadius: '18px'
   },
   accountTypesAction: {
