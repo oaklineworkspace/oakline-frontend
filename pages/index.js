@@ -5681,15 +5681,18 @@ if (typeof document !== 'undefined') {
       }
 
       .top-header-responsive {
-        justify-content: space-between !important;
+        justify-content: center !important;
         flex-wrap: wrap !important;
         gap: 0.75rem !important;
         padding: 0.5rem 0 !important;
+        position: relative !important;
       }
 
       .top-header-responsive a[href="/"] {
-        flex: 0 0 auto !important;
-        max-width: 60% !important;
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        justify-content: center !important;
+        order: 1 !important;
       }
 
       .top-header-responsive a[href="/"] img {
@@ -5711,7 +5714,7 @@ if (typeof document !== 'undefined') {
         padding: 0.5rem 1rem !important;
         min-width: 0 !important;
         flex: 1 1 100% !important;
-        order: 10 !important;
+        order: 3 !important;
         overflow: hidden !important;
       }
 
@@ -5721,12 +5724,24 @@ if (typeof document !== 'undefined') {
       }
 
       .banking-plus-right-section {
-        flex: 0 0 auto !important;
+        flex: 0 0 100% !important;
         gap: 0.5rem !important;
+        justify-content: space-between !important;
+        order: 2 !important;
+        display: flex !important;
+        align-items: center !important;
+      }
+
+      .banking-plus-container {
+        flex: 1 !important;
+        display: flex !important;
+        justify-content: center !important;
       }
 
       .language-selector-inline {
         transform: scale(0.85) !important;
+        flex: 0 0 auto !important;
+        margin-left: auto !important;
       }
 
       .banking-dropdown {
