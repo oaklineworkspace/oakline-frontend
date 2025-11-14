@@ -1682,7 +1682,7 @@ const styles = {
     minWidth: 0
   },
   headerLogo: {
-    height: '95px',
+    height: '140px',
     width: 'auto',
     transition: 'transform 0.3s ease'
   },
@@ -1693,7 +1693,7 @@ const styles = {
     gap: '0.25rem'
   },
   bankName: {
-    fontSize: '2.2rem',
+    fontSize: '3rem',
     fontWeight: '800',
     color: 'white',
     lineHeight: '1.1',
@@ -1701,7 +1701,7 @@ const styles = {
     textShadow: '0 2px 4px rgba(0,0,0,0.1)'
   },
   bankTagline: {
-    fontSize: '1rem',
+    fontSize: '1.3rem',
     color: '#FFC857',
     fontWeight: '600',
     letterSpacing: '0.02em',
@@ -1836,20 +1836,22 @@ const styles = {
   bankingPlusButton: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
-    padding: '0.6rem 1.2rem',
+    gap: '0.4rem',
+    padding: '0.5rem 0.8rem',
     backgroundColor: 'rgba(255, 200, 87, 0.15)',
     color: '#ffffff',
     border: '2px solid rgba(255, 200, 87, 0.4)',
-    borderRadius: '12px',
-    fontSize: '0.85rem',
+    borderRadius: '10px',
+    fontSize: '0.8rem',
     fontWeight: '700',
     cursor: 'pointer',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
     position: 'relative',
     overflow: 'hidden',
-    backdropFilter: 'blur(10px)'
+    backdropFilter: 'blur(10px)',
+    minWidth: 'auto',
+    whiteSpace: 'nowrap'
   },
   bankingPlusIconLines: {
     display: 'flex',
@@ -5766,19 +5768,30 @@ if (typeof document !== 'undefined') {
 
     @media (max-width: 480px) {
       .top-header-responsive a[href="/"] img {
-        height: 40px !important;
+        height: 120px !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:first-child {
-        font-size: 1.1rem !important;
+        font-size: 2.5rem !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:last-child {
-        font-size: 0.7rem !important;
+        font-size: 1.1rem !important;
       }
 
       .banking-plus-right-section {
         gap: 0.35rem !important;
+      }
+
+      button[style*="bankingPlusButton"] {
+        padding: 0.4rem 0.6rem !important;
+        font-size: 0.75rem !important;
+        gap: 0.3rem !important;
+        min-width: auto !important;
+      }
+
+      .banking-plus-container {
+        max-width: 110px !important;
       }
     }
 
