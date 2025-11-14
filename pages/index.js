@@ -462,7 +462,7 @@ export default function Home() {
                 <div style={styles.bankTagline}>{ts('Your Financial Partner')}</div>
               </div>
             </Link>
-            
+
             {/* Scrolling Welcome Message - Same Row */}
             <div style={styles.scrollingWelcomeInline} className="scrolling-welcome-inline">
               <div style={styles.scrollingWelcomeText}>
@@ -5174,7 +5174,7 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '0.8rem',
-    padding: '1rem2rem',
+    padding: '1rem 2rem',
     backgroundColor: 'transparent',
     color: '#059669',
     textDecoration: 'none',
@@ -5223,7 +5223,7 @@ const styles = {
   },
   loanBannerFeature: {
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems:    'flex-start',
     gap: '1rem'
   },
   loanBannerFeatureIcon: {
@@ -5558,7 +5558,7 @@ if (typeof document !== 'undefined') {
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
     }
 
-    a[style*="bankingFeatureItem"]:hover [style*="bankingFeatureArrow"],
+    a[style*="bankingFeatureItem"]:hover .bankingFeatureArrow,
     .bankingFeatureItem:hover .bankingFeatureArrow {
       transform: translateX(4px) !important;
       opacity: 1 !important;
@@ -5727,5 +5727,25 @@ if (typeof document !== 'undefined') {
     }
   `;
     document.head.appendChild(styleSheet);
+  }
+
+  // Add hover effects for Banking+ dropdown
+  const bankingDropdownStyles = document.createElement('style');
+  bankingDropdownStyles.id = 'banking-dropdown-styles';
+  bankingDropdownStyles.textContent = `
+    a[style*="bankingFeatureItem"]:hover,
+    div[style*="bankingFeatureItem"]:hover {
+      background-color: #f3f4f6 !important;
+      transform: translateX(3px);
+    }
+
+    a[style*="bankingFeatureItem"]:hover .bankingFeatureArrow,
+    div[style*="bankingFeatureItem"]:hover .bankingFeatureArrow {
+      transform: translateX(3px) !important;
+      opacity: 1 !important;
+    }
+  `;
+  if (!document.querySelector('#banking-dropdown-styles')) {
+    document.head.appendChild(bankingDropdownStyles);
   }
 }
