@@ -208,6 +208,30 @@ export default function Home() {
     preloadTranslations();
   }, [currentLanguage, t]);
 
+  // Logged-in user features - only for authenticated users
+  const loggedInFeatures = [
+    { name: 'My Dashboard', href: '/dashboard', icon: '📊', desc: 'Account overview', color: '#3B82F6', section: 'explore' },
+    { name: 'My Accounts', href: '/account-details', icon: '🏦', desc: 'Manage your accounts', color: '#059669', section: 'explore' },
+    { name: 'Transactions', href: '/transactions', icon: '💸', desc: 'View transaction history', color: '#8B5CF6', section: 'explore' },
+    { name: 'Transfer Money', href: '/transfer', icon: '🔄', desc: 'Internal & external transfers', color: '#06B6D4', section: 'explore' },
+    { name: 'Bill Pay', href: '/bill-pay', icon: '📄', desc: 'Pay your bills online', color: '#EF4444', section: 'explore' },
+    { name: 'My Cards', href: '/cards', icon: '💳', desc: 'Manage debit/credit cards', color: '#F59E0B', section: 'explore' },
+    
+    { name: 'My Loans', href: '/loan/dashboard', icon: '🏠', desc: 'View & manage loans', color: '#3B82F6', section: 'services' },
+    { name: 'Apply for Loan', href: '/loan/apply', icon: '📝', desc: 'New loan application', color: '#059669', section: 'services' },
+    { name: 'Investments', href: '/investment', icon: '📈', desc: 'Portfolio management', color: '#7C3AED', section: 'services' },
+    { name: 'Crypto Trading', href: '/crypto', icon: '₿', desc: 'Digital assets', color: '#F59E0B', section: 'services' },
+    { name: 'Oakline Pay', href: '/oakline-pay', icon: '💰', desc: 'Send money instantly', color: '#10B981', section: 'services' },
+    { name: 'Wire Transfer', href: '/wire-transfer', icon: '🌐', desc: 'International transfers', color: '#06B6D4', section: 'services' },
+    
+    { name: 'Messages', href: '/messages', icon: '💬', desc: 'Secure messaging', color: '#3B82F6', section: 'resources' },
+    { name: 'Notifications', href: '/notifications', icon: '🔔', desc: 'Alerts & updates', color: '#EF4444', section: 'resources' },
+    { name: 'Account Settings', href: '/settings', icon: '⚙️', desc: 'Profile & preferences', color: '#64748B', section: 'resources' },
+    { name: 'Security Center', href: '/security', icon: '🔐', desc: 'Security settings', color: '#DC2626', section: 'resources' },
+    { name: 'Rewards Program', href: '/rewards', icon: '🎁', desc: 'Earn & redeem points', color: '#EC4899', section: 'resources' },
+    { name: 'Financial Tools', href: '/financial-tools', icon: '🧮', desc: 'Calculators & planners', color: '#F59E0B', section: 'resources' }
+  ];
+
   // Public features - accessible to everyone
   const publicFeatures = [
     { name: 'Account Types', href: '/account-types', icon: '🏦', desc: 'Explore 23 account options', color: '#3B82F6', section: 'explore' },
@@ -234,9 +258,11 @@ export default function Home() {
     { name: 'Promotions', href: '/promotions', icon: '🎉', desc: 'Current offers & deals', color: '#F59E0B', section: 'resources' }
   ];
 
-  const exploreFeatures = publicFeatures.filter(f => f.section === 'explore');
-  const servicesFeatures = publicFeatures.filter(f => f.section === 'services');
-  const resourcesFeatures = publicFeatures.filter(f => f.section === 'resources');
+  // Select features based on user authentication status
+  const activeFeatures = user ? loggedInFeatures : publicFeatures;
+  const exploreFeatures = activeFeatures.filter(f => f.section === 'explore');
+  const servicesFeatures = activeFeatures.filter(f => f.section === 'services');
+  const resourcesFeatures = activeFeatures.filter(f => f.section === 'resources');
 
   const bankingImages = [
     {
@@ -490,14 +516,20 @@ export default function Home() {
                 ></div>
                 <div style={styles.bankingDropdown} className="banking-dropdown" onClick={(e) => e.stopPropagation()}>
                   <div style={styles.bankingDropdownHeader}>
-                    <h4 style={styles.bankingDropdownTitle}>{ts('Complete Banking Solutions')}</h4>
-                    <p style={styles.bankingDropdownSubtitle}>{ts('Access all your banking services in one place')}</p>
+                    <h4 style={styles.bankingDropdownTitle}>
+                      {user ? ts('Welcome Back!') : ts('Complete Banking Solutions')}
+                    </h4>
+                    <p style={styles.bankingDropdownSubtitle}>
+                      {user ? ts('Quick access to your banking services') : ts('Access all your banking services in one place')}
+                    </p>
                   </div>
 
                   <div style={styles.bankingTwoColumnGrid}>
                     {/* Explore Section */}
                     <div style={styles.bankingSection}>
-                      <div style={styles.dropdownSectionTitle}>🔍 {ts('EXPLORE')}</div>
+                      <div style={styles.dropdownSectionTitle}>
+                        {user ? '🏠 ' + ts('MY BANKING') : '🔍 ' + ts('EXPLORE')}
+                      </div>
                       {exploreFeatures.map((feature) => (
                         <Link
                           key={feature.name}
@@ -513,7 +545,9 @@ export default function Home() {
 
                     {/* Services & Resources Section */}
                     <div style={styles.bankingSection}>
-                      <div style={styles.dropdownSectionTitle}>💼 {ts('BANKING SERVICES')}</div>
+                      <div style={styles.dropdownSectionTitle}>
+                        {user ? '💼 ' + ts('MY SERVICES') : '💼 ' + ts('BANKING SERVICES')}
+                      </div>
                       {servicesFeatures.map((feature) => (
                         <Link
                           key={feature.name}
@@ -528,7 +562,9 @@ export default function Home() {
                       
                       <div style={styles.dropdownDivider}></div>
                       
-                      <div style={styles.dropdownSectionTitle}>📚 {ts('RESOURCES')}</div>
+                      <div style={styles.dropdownSectionTitle}>
+                        {user ? '⚙️ ' + ts('ACCOUNT TOOLS') : '📚 ' + ts('RESOURCES')}
+                      </div>
                       {resourcesFeatures.map((feature) => (
                         <Link
                           key={feature.name}
@@ -544,20 +580,41 @@ export default function Home() {
                   </div>
 
                   <div style={styles.bankingDropdownFooter}>
-                    <Link
-                      href="/apply"
-                      onClick={() => setShowBankingDropdown(false)}
-                      style={styles.viewAllServicesButtonEnroll}
-                    >
-                      🚀 {ts('Open Account')}
-                    </Link>
-                    <Link
-                      href="/support"
-                      onClick={() => setShowBankingDropdown(false)}
-                      style={styles.viewAllServicesButtonSecondary}
-                    >
-                      💬 {ts('Contact Us')}
-                    </Link>
+                    {user ? (
+                      <>
+                        <Link
+                          href="/dashboard"
+                          onClick={() => setShowBankingDropdown(false)}
+                          style={styles.viewAllServicesButtonEnroll}
+                        >
+                          📊 {ts('Go to Dashboard')}
+                        </Link>
+                        <Link
+                          href="/account-types"
+                          onClick={() => setShowBankingDropdown(false)}
+                          style={styles.viewAllServicesButtonSecondary}
+                        >
+                          ➕ {ts('Add New Account')}
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          href="/apply"
+                          onClick={() => setShowBankingDropdown(false)}
+                          style={styles.viewAllServicesButtonEnroll}
+                        >
+                          🚀 {ts('Open Account')}
+                        </Link>
+                        <Link
+                          href="/support"
+                          onClick={() => setShowBankingDropdown(false)}
+                          style={styles.viewAllServicesButtonSecondary}
+                        >
+                          💬 {ts('Contact Us')}
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </div>
               </>
