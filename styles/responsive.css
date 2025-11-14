@@ -6,20 +6,30 @@
   visibility: visible !important;
   opacity: 1 !important;
   width: auto;
-  min-width: 110px;
+  min-width: 90px;
 }
 
 .language-selector-container select {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
-  min-width: 110px !important;
-  padding: 0.4rem 0.6rem !important;
-  font-size: 0.8rem !important;
+  min-width: 90px !important;
+  max-width: 100px !important;
+  padding: 0.35rem 0.5rem !important;
+  font-size: 0.75rem !important;
 }
 
 /* Mobile portrait - logo on left, language selector on right */
 @media (max-width: 768px) and (orientation: portrait) {
+  .topHeaderRow {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+  }
+
   .language-selector-container {
     display: flex !important;
     justify-content: flex-end !important;
@@ -30,22 +40,25 @@
     z-index: 1000;
     margin: 0 !important;
     width: auto !important;
-    min-width: 110px !important;
+    min-width: 90px !important;
+    order: 2 !important;
   }
 
   .language-selector-container select {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
-    min-width: 110px !important;
-    padding: 0.4rem 0.6rem !important;
-    font-size: 0.8rem !important;
+    min-width: 90px !important;
+    max-width: 100px !important;
+    padding: 0.35rem 0.5rem !important;
+    font-size: 0.75rem !important;
   }
 
   /* Logo positioning on left side */
   .logoSection {
     order: 1 !important;
     margin-right: auto !important;
+    flex-shrink: 0 !important;
   }
 
   /* Language selector on right side */
@@ -53,6 +66,7 @@
   .language-selector-wrapper {
     order: 2 !important;
     margin-left: auto !important;
+    flex-shrink: 0 !important;
   }
 }
 
