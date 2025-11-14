@@ -1643,8 +1643,8 @@ const styles = {
   // Main Header Styles
   mainHeader: {
     backgroundColor: '#1A3E6F',
-    borderBottom: 'none',
-    boxShadow: '0 4px 12px rgba(26, 62, 111, 0.2)',
+    borderBottom: '3px solid rgba(255, 200, 87, 0.3)',
+    boxShadow: '0 2px 20px rgba(26, 62, 111, 0.3)',
     position: 'sticky',
     top: 0,
     zIndex: 1000,
@@ -1653,17 +1653,18 @@ const styles = {
   headerContainer: {
     maxWidth: '1400px',
     margin: '0 auto',
-    padding: '1rem 1.5rem',
+    padding: '0.75rem 2rem',
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.75rem'
+    gap: '0'
   },
   topHeaderRow: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    gap: '1.5rem'
+    gap: '2rem',
+    padding: '0.5rem 0'
   },
   authButtonsRow: {
     display: 'flex',
@@ -1674,33 +1675,36 @@ const styles = {
   logoAndBrandSection: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1rem',
+    gap: '1.25rem',
     textDecoration: 'none',
-    flex: '1 1 auto',
+    flex: '0 1 auto',
     minWidth: 0
   },
   headerLogo: {
-    height: '110px',
-    width: 'auto'
+    height: '65px',
+    width: 'auto',
+    transition: 'transform 0.3s ease'
   },
   brandTextSection: {
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    gap: '0.25rem'
   },
   bankName: {
-    fontSize: '3.5rem',
-    fontWeight: '900',
+    fontSize: '1.75rem',
+    fontWeight: '800',
     color: 'white',
-    lineHeight: '1',
-    letterSpacing: '-0.02em'
+    lineHeight: '1.1',
+    letterSpacing: '-0.01em',
+    textShadow: '0 2px 4px rgba(0,0,0,0.1)'
   },
   bankTagline: {
-    fontSize: '1.5rem',
-    color: '#cbd5e1',
-    fontWeight: '500',
-    marginTop: '0.5rem',
-    letterSpacing: '0.01em'
+    fontSize: '0.85rem',
+    color: '#FFC857',
+    fontWeight: '600',
+    letterSpacing: '0.02em',
+    opacity: 0.95
   },
   bankingPlusAndLanguageWrapper: {
     display: 'flex',
@@ -1709,24 +1713,26 @@ const styles = {
     justifyContent: 'center'
   },
   languageSelectorInline: {
-    transform: 'scale(0.9)',
-    transformOrigin: 'center center'
+    display: 'flex',
+    alignItems: 'center'
   },
   scrollingWelcomeInline: {
     flex: '1 1 auto',
     overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: '20px',
-    padding: '0.5rem 1rem',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: '24px',
+    padding: '0.6rem 1.5rem',
     position: 'relative',
-    minWidth: '200px',
+    minWidth: '250px',
     maxWidth: '100%',
-    marginLeft: '0'
+    marginLeft: '0',
+    border: '1px solid rgba(255, 255, 255, 0.15)',
+    backdropFilter: 'blur(10px)'
   },
   bankingPlusRightSection: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1rem',
+    gap: '1.25rem',
     flex: '0 0 auto'
   },
   headerActions: {
@@ -1829,17 +1835,17 @@ const styles = {
   bankingPlusButton: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
-    padding: '0.6rem 1.2rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    gap: '0.6rem',
+    padding: '0.7rem 1.5rem',
+    backgroundColor: 'rgba(255, 200, 87, 0.15)',
     color: '#ffffff',
-    border: '2px solid rgba(255, 255, 255, 0.3)',
-    borderRadius: '10px',
-    fontSize: '0.85rem',
+    border: '2px solid rgba(255, 200, 87, 0.4)',
+    borderRadius: '12px',
+    fontSize: '0.9rem',
     fontWeight: '700',
     cursor: 'pointer',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
     position: 'relative',
     overflow: 'hidden',
     backdropFilter: 'blur(10px)'
@@ -5599,6 +5605,15 @@ if (typeof document !== 'undefined') {
       color: #1e40af !important;
     }
 
+    /* Banking+ Button Hover Effect */
+    button[style*="bankingPlusButton"]:hover,
+    .bankingPlusButton:hover {
+      background-color: rgba(255, 200, 87, 0.25) !important;
+      border-color: rgba(255, 200, 87, 0.6) !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 12px rgba(255, 200, 87, 0.3) !important;
+    }
+
     /* Banking+ Dropdown Hover Effects - Match Dashboard Style */
     a[style*="bankingFeatureItem"]:hover,
     .bankingFeatureItem:hover {
@@ -5611,6 +5626,11 @@ if (typeof document !== 'undefined') {
       transform: translateX(4px) !important;
       opacity: 1 !important;
       color: #1e40af !important;
+    }
+
+    /* Logo Hover Effect */
+    a[href="/"] img:hover {
+      transform: scale(1.05) !important;
     }
 
     .professionalPrimaryButton:hover {
@@ -5661,48 +5681,63 @@ if (typeof document !== 'undefined') {
 
       .top-header-responsive {
         justify-content: space-between !important;
-        flex-wrap: wrap !important;
-        gap: 0.5rem !important;
+        flex-wrap: nowrap !important;
+        gap: 0.75rem !important;
+        padding: 0.5rem 0 !important;
       }
 
       .top-header-responsive a[href="/"] {
         flex: 0 0 auto !important;
+        max-width: 60% !important;
       }
 
       .top-header-responsive a[href="/"] img {
-        height: 70px !important;
+        height: 50px !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:first-child {
-        font-size: 1.5rem !important;
+        font-size: 1.25rem !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:last-child {
-        font-size: 0.85rem !important;
+        font-size: 0.75rem !important;
       }
 
       .scrolling-welcome-inline {
-        flex: 1 1 100% !important;
-        min-width: 100px !important;
-        font-size: 0.75rem !important;
-        order: 3 !important;
-        margin-right: 0 !important;
+        display: none !important;
       }
 
       .banking-plus-right-section {
         flex: 0 0 auto !important;
-        order: 2 !important;
-        gap: 0.75rem !important;
+        gap: 0.5rem !important;
       }
 
       .language-selector-inline {
-        gap: 0.75rem !important;
+        transform: scale(0.85) !important;
       }
 
       .banking-dropdown {
         width: min(360px, 92vw) !important;
         right: 1rem !important;
         left: auto !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .top-header-responsive a[href="/"] img {
+        height: 40px !important;
+      }
+
+      .top-header-responsive a[href="/"] > div > div:first-child {
+        font-size: 1.1rem !important;
+      }
+
+      .top-header-responsive a[href="/"] > div > div:last-child {
+        font-size: 0.7rem !important;
+      }
+
+      .banking-plus-right-section {
+        gap: 0.35rem !important;
       }
     }
 
