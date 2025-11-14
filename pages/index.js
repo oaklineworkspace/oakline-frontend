@@ -515,64 +515,41 @@ export default function Home() {
                   <div style={styles.bankingTwoColumnGrid}>
                     {/* Core Banking Services Section */}
                     <div style={styles.bankingSection}>
-                      <div style={styles.bankingSectionHeader}>
-                        <span style={styles.bankingSectionIcon}>🏦</span>
-                        <h5 style={styles.bankingSectionTitle}>{ts('Core Banking')}</h5>
-                      </div>
-                      <div style={styles.bankingFeaturesGrid}>
-                        {coreFeatures.map((feature) => (
-                          <Link
-                            key={feature.name}
-                            href={feature.href}
-                            onClick={() => setShowBankingDropdown(false)}
-                            style={styles.bankingFeatureItem}
-                          >
-                            <div style={{
-                              ...styles.bankingFeatureIcon,
-                              backgroundColor: `${feature.color}15`,
-                              border: `1px solid ${feature.color}30`
-                            }}>
-                              {feature.icon}
-                            </div>
-                            <div style={styles.bankingFeatureContent}>
-                              <div style={styles.bankingFeatureName}>{ts(feature.name)}</div>
-                              <div style={styles.bankingFeatureDesc}>{ts(feature.desc)}</div>
-                            </div>
-                            <div style={{ ...styles.bankingFeatureArrow, color: feature.color }}>→</div>
-                          </Link>
-                        ))}
-                      </div>
+                      <div style={styles.dropdownSectionTitle}>🏦 {ts('MY BANKING')}</div>
+                      {coreFeatures.map((feature) => (
+                        <Link
+                          key={feature.name}
+                          href={feature.href}
+                          onClick={() => setShowBankingDropdown(false)}
+                          style={styles.dropdownLink}
+                          className="dropdown-link"
+                        >
+                          {feature.icon} {ts(feature.name)}
+                        </Link>
+                      ))}
                     </div>
 
                     {/* Premium & Advanced Services Section */}
                     <div style={styles.bankingSection}>
-                      <div style={styles.bankingSectionHeader}>
-                        <span style={styles.bankingSectionIcon}>⭐</span>
-                        <h5 style={styles.bankingSectionTitle}>{ts('Premium Services')}</h5>
-                      </div>
-                      <div style={styles.bankingFeaturesGrid}>
-                        {premiumServices.map((feature) => (
-                          <Link
-                            key={feature.name}
-                            href={feature.href}
-                            onClick={() => setShowBankingDropdown(false)}
-                            style={styles.bankingFeatureItem}
-                          >
-                            <div style={{
-                              ...styles.bankingFeatureIcon,
-                              backgroundColor: `${feature.color}15`,
-                              border: `1px solid ${feature.color}30`
-                            }}>
-                              {feature.icon}
-                            </div>
-                            <div style={styles.bankingFeatureContent}>
-                              <div style={styles.bankingFeatureName}>{ts(feature.name)}</div>
-                              <div style={styles.bankingFeatureDesc}>{ts(feature.desc)}</div>
-                            </div>
-                            <div style={{ ...styles.bankingFeatureArrow, color: feature.color }}>→</div>
-                          </Link>
-                        ))}
-                      </div>
+                      <div style={styles.dropdownSectionTitle}>💼 {ts('LOANS & CREDIT')}</div>
+                      <Link href="/loan/dashboard" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">💼 {ts('My Loan Dashboard')}</Link>
+                      <Link href="/loan/apply" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">💰 {ts('Apply for New Loan')}</Link>
+                      <Link href="/credit-report" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">📊 {ts('Credit Report')}</Link>
+                      <Link href="/apply-card" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">💳 {ts('Apply for Card')}</Link>
+                      
+                      <div style={styles.dropdownDivider}></div>
+                      
+                      <div style={styles.dropdownSectionTitle}>📈 {ts('INVESTMENTS')}</div>
+                      <Link href="/investment" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">📊 {ts('Portfolio')}</Link>
+                      <Link href="/crypto" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">₿ {ts('Crypto Trading')}</Link>
+                      <Link href="/market-news" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">📰 {ts('Market News')}</Link>
+                      
+                      <div style={styles.dropdownDivider}></div>
+                      
+                      <div style={styles.dropdownSectionTitle}>🛡️ {ts('SECURITY & SETTINGS')}</div>
+                      <Link href="/security" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">🔒 {ts('Security Settings')}</Link>
+                      <Link href="/profile" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">👤 {ts('Edit Profile')}</Link>
+                      <Link href="/support" onClick={() => setShowBankingDropdown(false)} style={styles.dropdownLink} className="dropdown-link">🎧 {ts('Customer Support')}</Link>
                     </div>
                   </div>
 
@@ -1846,7 +1823,7 @@ const styles = {
     boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
     border: '1px solid #e5e7eb',
     padding: '1rem',
-    width: '350px',
+    width: '600px',
     maxWidth: 'calc(100vw - 2rem)',
     zIndex: 10001,
     maxHeight: 'calc(100vh - 120px)',
@@ -1883,15 +1860,39 @@ const styles = {
     lineHeight: '1.4'
   },
   bankingTwoColumnGrid: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '1.5rem',
     marginBottom: '1rem'
   },
   bankingSection: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.4rem'
+    gap: '0.5rem'
+  },
+  dropdownSectionTitle: {
+    fontSize: '0.8rem',
+    fontWeight: 'bold',
+    color: '#1A3E6F',
+    margin: '0 0 0.5rem 0',
+    padding: '0 0.5rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
+  },
+  dropdownDivider: {
+    height: '1px',
+    backgroundColor: '#e2e8f0',
+    margin: '0.75rem 0',
+    width: '100%'
+  },
+  dropdownLink: {
+    display: 'block',
+    padding: '0.75rem 1rem',
+    color: '#374151',
+    textDecoration: 'none',
+    borderRadius: '6px',
+    fontSize: '0.9rem',
+    transition: 'all 0.2s'
   },
   bankingSectionHeader: {
     display: 'flex',
