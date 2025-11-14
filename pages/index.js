@@ -1682,7 +1682,7 @@ const styles = {
     minWidth: 0
   },
   headerLogo: {
-    height: '85px',
+    height: '95px',
     width: 'auto',
     transition: 'transform 0.3s ease'
   },
@@ -1693,7 +1693,7 @@ const styles = {
     gap: '0.25rem'
   },
   bankName: {
-    fontSize: '1.75rem',
+    fontSize: '2.2rem',
     fontWeight: '800',
     color: 'white',
     lineHeight: '1.1',
@@ -1701,7 +1701,7 @@ const styles = {
     textShadow: '0 2px 4px rgba(0,0,0,0.1)'
   },
   bankTagline: {
-    fontSize: '0.85rem',
+    fontSize: '1rem',
     color: '#FFC857',
     fontWeight: '600',
     letterSpacing: '0.02em',
@@ -1836,13 +1836,13 @@ const styles = {
   bankingPlusButton: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.6rem',
-    padding: '0.7rem 1.5rem',
+    gap: '0.5rem',
+    padding: '0.6rem 1.2rem',
     backgroundColor: 'rgba(255, 200, 87, 0.15)',
     color: '#ffffff',
     border: '2px solid rgba(255, 200, 87, 0.4)',
     borderRadius: '12px',
-    fontSize: '0.9rem',
+    fontSize: '0.85rem',
     fontWeight: '700',
     cursor: 'pointer',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -5696,15 +5696,15 @@ if (typeof document !== 'undefined') {
       }
 
       .top-header-responsive a[href="/"] img {
-        height: 65px !important;
+        height: 80px !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:first-child {
-        font-size: 1.25rem !important;
+        font-size: 1.8rem !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:last-child {
-        font-size: 0.75rem !important;
+        font-size: 0.9rem !important;
       }
 
       .scrolling-welcome-inline {
