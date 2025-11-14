@@ -453,37 +453,29 @@ export default function Home() {
         onClick={(e) => e.stopPropagation()}
       >
         <div style={styles.headerContainer}>
+          {/* First Row: Logo and Brand Text */}
           <div style={styles.topHeaderRow} className="top-header-responsive">
-            {/* Logo - Left Side */}
-            <Link href="/" style={styles.logoWrapper}>
+            <Link href="/" style={styles.logoAndBrandSection}>
               <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.headerLogo} />
-            </Link>
-
-            {/* Brand Text - Center */}
-            <div style={styles.brandCenter}>
-              <div style={styles.bankName}>{ts('Oakline Bank')}</div>
-              <div style={styles.bankTagline}>{ts('Your Financial Partner')}</div>
-            </div>
-
-            {/* Language Selector - Right Side */}
-            <div style={styles.languageSelectorWrapper} className="language-selector-wrapper">
-              <div style={styles.languageSelectorCompact}>
-                <LanguageSelector compact={true} />
+              <div style={styles.brandTextSection}>
+                <div style={styles.bankName}>{ts('Oakline Bank')}</div>
+                <div style={styles.bankTagline}>{ts('Your Financial Partner')}</div>
               </div>
-            </div>
+            </Link>
           </div>
 
-          {/* Scrolling Welcome Message - Second Row */}
+          {/* Second Row: Scrolling Welcome Message */}
           <div style={styles.scrollingWelcomeContainer} className="scrolling-welcome-container">
             <div style={styles.scrollingWelcomeText}>
               Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $500,000 • Rated #1 Customer Service
             </div>
           </div>
 
-          {/* Banking+ Dropdown Button - Third Row */}
+          {/* Third Row: Banking+ Button and Language Selector */}
           <div style={styles.bankingPlusRowContainer} className="banking-plus-row-container">
-            <div style={styles.bankingPlusContainer} className="banking-plus-container">
-            <button
+            <div style={styles.bankingPlusAndLanguageWrapper}>
+              <div style={styles.bankingPlusContainer} className="banking-plus-container">
+                <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowBankingDropdown(!showBankingDropdown);
@@ -496,7 +488,14 @@ export default function Home() {
                 <div style={styles.iconLine}></div>
               </div>
               <span style={styles.bankingPlusText}>{ts('Banking+')}</span>
-            </button>
+                </button>
+              </div>
+
+              {/* Language Selector beside Banking+ */}
+              <div style={styles.languageSelectorInline} className="language-selector-inline">
+                <LanguageSelector compact={true} />
+              </div>
+            </div>
 
             {showBankingDropdown && (
               <>
@@ -605,7 +604,6 @@ export default function Home() {
                 </div>
               </>
             )}
-          </div>
           </div>
         </div>
       </header>
@@ -1647,10 +1645,9 @@ const styles = {
   },
   topHeaderRow: {
     display: 'flex',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    width: '100%',
-    gap: '1rem'
+    width: '100%'
   },
   authButtonsRow: {
     display: 'flex',
@@ -1658,44 +1655,42 @@ const styles = {
     alignItems: 'center',
     width: '100%'
   },
-  logoWrapper: {
-    flex: '0 0 auto',
-    textDecoration: 'none',
+  logoAndBrandSection: {
     display: 'flex',
-    alignItems: 'center'
+    alignItems: 'center',
+    gap: '1rem',
+    textDecoration: 'none'
   },
   headerLogo: {
-    height: '45px',
+    height: '70px',
     width: 'auto'
   },
-  brandCenter: {
-    flex: '1',
+  brandTextSection: {
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    textAlign: 'center'
+    justifyContent: 'center'
   },
   bankName: {
-    fontSize: '1.4rem',
+    fontSize: '2rem',
     fontWeight: '800',
     color: 'white',
-    lineHeight: '1.2'
+    lineHeight: '1.1'
   },
   bankTagline: {
-    fontSize: '0.75rem',
+    fontSize: '0.9rem',
     color: '#cbd5e1',
     fontWeight: '500',
-    marginTop: '0.15rem'
+    marginTop: '0.25rem'
   },
-  languageSelectorWrapper: {
-    flex: '0 0 auto',
+  bankingPlusAndLanguageWrapper: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end'
+    gap: '1rem',
+    justifyContent: 'center'
   },
-  languageSelectorCompact: {
-    transform: 'scale(0.85)',
-    transformOrigin: 'right center'
+  languageSelectorInline: {
+    transform: 'scale(0.9)',
+    transformOrigin: 'center center'
   },
   headerActions: {
     display: 'flex',
@@ -5605,39 +5600,28 @@ if (typeof document !== 'undefined') {
       }
 
       .top-header-responsive {
-        flex-wrap: nowrap !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        gap: 0.5rem !important;
+        justify-content: flex-start !important;
       }
 
-      .top-header-responsive a[href="/"] {
-        flex: 0 0 auto !important;
+      .top-header-responsive a[href="/"] img {
+        height: 50px !important;
       }
 
-      .top-header-responsive > div:nth-child(2) {
-        flex: 1 !important;
-        text-align: center !important;
+      .top-header-responsive a[href="/"] > div > div:first-child {
+        font-size: 1.3rem !important;
       }
 
-      .top-header-responsive > div:nth-child(2) > div:first-child {
-        font-size: 1.1rem !important;
+      .top-header-responsive a[href="/"] > div > div:last-child {
+        font-size: 0.7rem !important;
       }
 
-      .top-header-responsive > div:nth-child(2) > div:last-child {
-        font-size: 0.65rem !important;
+      .banking-plus-row-container {
+        padding: 0.5rem 0 !important;
       }
 
-      .top-header-responsive .language-selector-wrapper {
-        flex: 0 0 auto !important;
-      }
-
-      .top-header-responsive .scrolling-welcome-container {
-        flex: 1 1 100%;
-        width: 100%;
-        max-width: 100%;
-        text-align: center;
-        margin: 0.5rem 0;
+      .banking-plus-and-language-wrapper,
+      .language-selector-inline {
+        gap: 0.75rem !important;
       }
 
       .top-header-responsive .banking-dropdown {
