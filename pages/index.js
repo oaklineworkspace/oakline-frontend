@@ -1779,13 +1779,13 @@ const styles = {
   bankingPlusButton: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.75rem',
-    padding: '0.75rem 2rem',
+    gap: '0.5rem',
+    padding: '0.6rem 1.2rem',
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     color: '#ffffff',
     border: '2px solid rgba(255, 255, 255, 0.3)',
-    borderRadius: '12px',
-    fontSize: '0.95rem',
+    borderRadius: '10px',
+    fontSize: '0.85rem',
     fontWeight: '700',
     cursor: 'pointer',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -1817,11 +1817,11 @@ const styles = {
     top: 'calc(100% + 0.75rem)',
     right: '1rem',
     backgroundColor: 'white',
-    borderRadius: '20px',
-    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    borderRadius: '16px',
+    boxShadow: '0 15px 40px rgba(0, 0, 0, 0.25)',
     border: '1px solid #e2e8f0',
-    padding: '1.5rem',
-    width: '520px',
+    padding: '1.25rem',
+    width: '420px',
     maxWidth: 'calc(100vw - 2rem)',
     zIndex: 10001,
     maxHeight: 'calc(100vh - 120px)',
@@ -1830,65 +1830,68 @@ const styles = {
   },
   bankingDropdownHeader: {
     textAlign: 'center',
-    marginBottom: '1.5rem',
+    marginBottom: '1.25rem',
     paddingBottom: '1rem',
-    borderBottom: '2px solid #e2e8f0',
+    borderBottom: '1px solid #e2e8f0',
     position: 'sticky',
-    top: '-1.5rem',
+    top: '-1.25rem',
     backgroundColor: 'white',
     zIndex: 1,
-    marginTop: '-1.5rem',
-    marginLeft: '-1.5rem',
-    marginRight: '-1.5rem',
-    paddingLeft: '1.5rem',
-    paddingRight: '1.5rem',
-    paddingTop: '1.5rem'
+    marginTop: '-1.25rem',
+    marginLeft: '-1.25rem',
+    marginRight: '-1.25rem',
+    paddingLeft: '1.25rem',
+    paddingRight: '1.25rem',
+    paddingTop: '1.25rem'
   },
   bankingDropdownTitle: {
-    fontSize: '1.25rem',
+    fontSize: '1.1rem',
     fontWeight: '700',
     color: '#1e293b',
-    margin: '0 0 0.5rem 0'
+    margin: '0 0 0.5rem 0',
+    letterSpacing: '-0.01em'
   },
   bankingDropdownSubtitle: {
-    fontSize: '0.875rem',
+    fontSize: '0.85rem',
     color: '#64748b',
-    margin: 0
+    margin: 0,
+    lineHeight: '1.4'
   },
   bankingTwoColumnGrid: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '1.5rem',
-    marginBottom: '1.5rem'
+    gap: '1.25rem',
+    marginBottom: '1.25rem'
   },
   bankingSection: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '0.75rem'
+    gap: '0.5rem'
   },
   bankingSectionHeader: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.75rem',
     paddingBottom: '0.75rem',
-    borderBottom: '2px solid #e2e8f0',
+    borderBottom: '1px solid #e2e8f0',
     position: 'sticky',
     top: '85px',
     backgroundColor: 'white',
     zIndex: 1,
-    marginLeft: '-1.5rem',
-    marginRight: '-1.5rem',
-    paddingLeft: '1.5rem',
-    paddingRight: '1.5rem'
+    marginLeft: '-1.25rem',
+    marginRight: '-1.25rem',
+    paddingLeft: '1.25rem',
+    paddingRight: '1.25rem'
   },
   bankingSectionIcon: {
-    fontSize: '1.5rem'
+    fontSize: '1.3rem'
   },
   bankingSectionTitle: {
-    fontSize: '1rem',
+    fontSize: '0.95rem',
     fontWeight: '700',
     color: '#1e293b',
-    margin: 0
+    margin: 0,
+    letterSpacing: '-0.005em'
   },
   bankingFeaturesGrid: {
     display: 'flex',
@@ -1898,20 +1901,22 @@ const styles = {
   bankingFeatureItem: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: '0.75rem',
-    padding: '0.875rem',
-    borderRadius: '10px',
-    backgroundColor: '#f8fafc',
-    border: '1px solid #e2e8f0',
+    padding: '0.75rem',
+    borderRadius: '8px',
+    backgroundColor: 'white',
+    border: 'none',
     textDecoration: 'none',
     color: '#1e293b',
-    transition: 'all 0.3s ease',
-    cursor: 'pointer'
+    transition: 'all 0.2s ease',
+    cursor: 'pointer',
+    minHeight: '52px'
   },
   bankingFeatureIcon: {
-    fontSize: '1.1rem',
-    width: '36px',
-    height: '36px',
+    fontSize: '1rem',
+    width: '32px',
+    height: '32px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1920,41 +1925,48 @@ const styles = {
   },
   bankingFeatureContent: {
     flex: 1,
-    minWidth: 0
+    minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.2rem'
   },
   bankingFeatureName: {
-    fontSize: '0.875rem',
+    fontSize: '0.85rem',
     fontWeight: '600',
     color: '#1e293b',
-    marginBottom: '0.2rem',
     lineHeight: '1.3'
   },
   bankingFeatureDesc: {
     fontSize: '0.75rem',
     color: '#64748b',
-    lineHeight: '1.3'
+    lineHeight: '1.3',
+    fontWeight: '400'
   },
   bankingFeatureArrow: {
-    fontSize: '0.875rem',
-    fontWeight: 'bold',
-    flexShrink: 0
+    fontSize: '0.9rem',
+    fontWeight: '400',
+    flexShrink: 0,
+    color: '#94a3b8',
+    transition: 'all 0.2s ease',
+    transform: 'translateX(0)',
+    opacity: 0.7
   },
   bankingDropdownFooter: {
     display: 'flex',
     flexDirection: 'column',
     gap: '0.75rem',
     paddingTop: '1rem',
-    borderTop: '2px solid #e2e8f0',
-    marginTop: '1.5rem',
+    borderTop: '1px solid #e2e8f0',
+    marginTop: '1.25rem',
     position: 'sticky',
-    bottom: '-1.5rem',
+    bottom: '-1.25rem',
     backgroundColor: 'white',
-    marginLeft: '-1.5rem',
-    marginRight: '-1.5rem',
-    paddingLeft: '1.5rem',
-    paddingRight: '1.5rem',
-    paddingBottom: '1.5rem',
-    marginBottom: '-1.5rem'
+    marginLeft: '-1.25rem',
+    marginRight: '-1.25rem',
+    paddingLeft: '1.25rem',
+    paddingRight: '1.25rem',
+    paddingBottom: '1.25rem',
+    marginBottom: '-1.25rem'
   },
   viewAllServicesButton: {
     display: 'block',
@@ -5509,6 +5521,20 @@ if (typeof document !== 'undefined') {
     }
 
     .professionalDropdownLink:hover .professionalLinkArrow {
+      transform: translateX(4px) !important;
+      opacity: 1 !important;
+      color: #1e40af !important;
+    }
+
+    /* Banking+ Dropdown Hover Effects - Match Dashboard Style */
+    a[style*="bankingFeatureItem"]:hover,
+    .bankingFeatureItem:hover {
+      background-color: #f8fafc !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    a[style*="bankingFeatureItem"]:hover [style*="bankingFeatureArrow"],
+    .bankingFeatureItem:hover .bankingFeatureArrow {
       transform: translateX(4px) !important;
       opacity: 1 !important;
       color: #1e40af !important;

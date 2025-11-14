@@ -1,18 +1,28 @@
-/* Language Selector Mobile Styles - Always visible and centered */
+/* Language Selector Mobile Styles - Always visible */
 .language-selector-container {
   display: flex !important;
-  justify-content: center !important;
+  justify-content: flex-end !important;
   align-items: center !important;
   visibility: visible !important;
   opacity: 1 !important;
-  width: 100%;
+  width: auto;
+  min-width: 110px;
 }
 
-/* Mobile portrait - ensure language selector is prominent on left side */
+.language-selector-container select {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-width: 110px !important;
+  padding: 0.4rem 0.6rem !important;
+  font-size: 0.8rem !important;
+}
+
+/* Mobile portrait - logo on left, language selector on right */
 @media (max-width: 768px) and (orientation: portrait) {
   .language-selector-container {
     display: flex !important;
-    justify-content: flex-start !important;
+    justify-content: flex-end !important;
     align-items: center !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -20,13 +30,29 @@
     z-index: 1000;
     margin: 0 !important;
     width: auto !important;
-    min-width: 100px !important;
+    min-width: 110px !important;
   }
 
   .language-selector-container select {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    min-width: 110px !important;
+    padding: 0.4rem 0.6rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Logo positioning on left side */
+  .logoSection {
+    order: 1 !important;
+    margin-right: auto !important;
+  }
+
+  /* Language selector on right side */
+  .languageSelectorWrapper,
+  .language-selector-wrapper {
+    order: 2 !important;
+    margin-left: auto !important;
   }
 }
 
