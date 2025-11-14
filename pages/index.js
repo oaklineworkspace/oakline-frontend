@@ -216,14 +216,14 @@ export default function Home() {
     { name: 'Transfer Money', href: '/transfer', icon: '🔄', desc: 'Internal & external transfers', color: '#06B6D4', section: 'explore' },
     { name: 'Bill Pay', href: '/bill-pay', icon: '📄', desc: 'Pay your bills online', color: '#EF4444', section: 'explore' },
     { name: 'My Cards', href: '/cards', icon: '💳', desc: 'Manage debit/credit cards', color: '#F59E0B', section: 'explore' },
-    
+
     { name: 'My Loans', href: '/loan/dashboard', icon: '🏠', desc: 'View & manage loans', color: '#3B82F6', section: 'services' },
     { name: 'Apply for Loan', href: '/loan/apply', icon: '📝', desc: 'New loan application', color: '#059669', section: 'services' },
     { name: 'Investments', href: '/investment', icon: '📈', desc: 'Portfolio management', color: '#7C3AED', section: 'services' },
     { name: 'Crypto Trading', href: '/crypto', icon: '₿', desc: 'Digital assets', color: '#F59E0B', section: 'services' },
     { name: 'Oakline Pay', href: '/oakline-pay', icon: '💰', desc: 'Send money instantly', color: '#10B981', section: 'services' },
     { name: 'Wire Transfer', href: '/wire-transfer', icon: '🌐', desc: 'International transfers', color: '#06B6D4', section: 'services' },
-    
+
     { name: 'Messages', href: '/messages', icon: '💬', desc: 'Secure messaging', color: '#3B82F6', section: 'resources' },
     { name: 'Notifications', href: '/notifications', icon: '🔔', desc: 'Alerts & updates', color: '#EF4444', section: 'resources' },
     { name: 'Account Settings', href: '/settings', icon: '⚙️', desc: 'Profile & preferences', color: '#64748B', section: 'resources' },
@@ -240,14 +240,14 @@ export default function Home() {
     { name: 'Current Rates', href: '/current-rates', icon: '📈', desc: 'Interest & exchange rates', color: '#6366F1', section: 'explore' },
     { name: 'Calculators', href: '/calculators', icon: '🧮', desc: 'Financial planning tools', color: '#F59E0B', section: 'explore' },
     { name: 'About Us', href: '/about', icon: 'ℹ️', desc: 'Learn about Oakline Bank', color: '#059669', section: 'explore' },
-    
+
     { name: 'Home Loans', href: '/loans', icon: '🏠', desc: 'Mortgage solutions', color: '#3B82F6', section: 'services' },
     { name: 'Personal Loans', href: '/loans', icon: '💰', desc: 'Competitive rates', color: '#059669', section: 'services' },
     { name: 'Business Banking', href: '/account-types', icon: '🏢', desc: 'Commercial services', color: '#EF4444', section: 'services' },
     { name: 'Financial Advisory', href: '/financial-advisory', icon: '🎯', desc: 'Expert consultation', color: '#06B6D4', section: 'services' },
     { name: 'Retirement Planning', href: '/retirement-planning', icon: '🏖️', desc: '401k & IRA guidance', color: '#7C3AED', section: 'services' },
     { name: 'International Banking', href: '/internationalization', icon: '🌍', desc: 'Global services', color: '#84CC16', section: 'services' },
-    
+
     { name: 'Financial Education', href: '/financial-education', icon: '📚', desc: 'Learning resources', color: '#10B981', section: 'resources' },
     { name: 'Personal Finance Tips', href: '/personal-finance-tips', icon: '💡', desc: 'Budgeting & saving tips', color: '#059669', section: 'resources' },
     { name: 'Market News', href: '/market-news', icon: '📰', desc: 'Financial insights', color: '#0EA5E9', section: 'resources' },
@@ -466,7 +466,10 @@ export default function Home() {
             <Link href="/" style={styles.logoAndBrandSection}>
               <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.headerLogo} />
               <div style={styles.brandTextSection}>
-                <div style={styles.bankName}>Oakline Bank</div>
+                <div style={styles.bankName}>
+                  <div>Oakline</div>
+                  <div>Bank</div>
+                </div>
                 <div style={styles.bankTagline}>Your Financial Partner</div>
               </div>
             </Link>
@@ -557,9 +560,9 @@ export default function Home() {
                           {feature.icon} {ts(feature.name)}
                         </Link>
                       ))}
-                      
+
                       <div style={styles.dropdownDivider}></div>
-                      
+
                       <div style={styles.dropdownSectionTitle}>
                         {user ? '⚙️ ' + ts('ACCOUNT TOOLS') : '📚 ' + ts('RESOURCES')}
                       </div>
@@ -5381,8 +5384,7 @@ const styles = {
     gap: '0.75rem',
     padding: '1.15rem 2.3rem',
     backgroundColor: 'transparent',
-    color: '#1e40af',
-    textDecoration: 'none',
+    color: '#1e40af',    textDecoration: 'none',
     borderRadius: '12px',
     fontWeight: '600',
     fontSize: '1.27rem',
