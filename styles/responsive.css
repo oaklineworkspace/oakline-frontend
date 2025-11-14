@@ -19,7 +19,7 @@
   font-size: 0.75rem !important;
 }
 
-/* Mobile portrait - logo on left, language selector on right */
+/* Mobile portrait - logo on left, Banking+ and Language selector on right */
 @media (max-width: 768px) and (orientation: portrait) {
   .topHeaderRow {
     display: flex !important;
@@ -28,6 +28,34 @@
     align-items: center !important;
     width: 100% !important;
     gap: 0.5rem !important;
+    flex-wrap: nowrap !important;
+  }
+
+  /* Logo positioning on left side */
+  .logoSection {
+    order: 1 !important;
+    flex-shrink: 1 !important;
+    margin-right: auto !important;
+  }
+
+  /* Banking+ and Language selector container on right side */
+  .banking-plus-right-section {
+    order: 2 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+  }
+
+  .banking-plus-container {
+    display: flex !important;
+    order: 1 !important;
+  }
+
+  .language-selector-inline {
+    display: flex !important;
+    order: 2 !important;
   }
 
   .language-selector-container {
@@ -41,7 +69,6 @@
     margin: 0 !important;
     width: auto !important;
     min-width: 90px !important;
-    order: 2 !important;
   }
 
   .language-selector-container select {
@@ -54,14 +81,12 @@
     font-size: 0.75rem !important;
   }
 
-  /* Logo positioning on left side */
-  .logoSection {
-    order: 1 !important;
-    margin-right: auto !important;
-    flex-shrink: 0 !important;
+  /* Hide scrolling welcome message on portrait */
+  .scrolling-welcome-inline {
+    display: none !important;
   }
 
-  /* Language selector on right side */
+  /* Language selector wrapper on right side */
   .languageSelectorWrapper,
   .language-selector-wrapper {
     order: 2 !important;
