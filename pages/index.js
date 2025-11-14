@@ -1685,7 +1685,7 @@ const styles = {
     paddingLeft: 0
   },
   headerLogo: {
-    height: '89.6px',
+    height: '71.68px',
     width: 'auto',
     transition: 'transform 0.3s ease'
   },
@@ -1696,7 +1696,7 @@ const styles = {
     gap: '0.2rem'
   },
   bankName: {
-    fontSize: '1.92rem',
+    fontSize: '1.536rem',
     fontWeight: '800',
     color: 'white',
     lineHeight: '1.1',
@@ -1704,7 +1704,7 @@ const styles = {
     textShadow: '0 2px 4px rgba(0,0,0,0.1)'
   },
   bankTagline: {
-    fontSize: '0.832rem',
+    fontSize: '0.6656rem',
     color: '#FFC857',
     fontWeight: '600',
     letterSpacing: '0.02em',
@@ -5772,15 +5772,15 @@ if (typeof document !== 'undefined') {
 
     @media (max-width: 480px) {
       .top-header-responsive a[href="/"] img {
-        height: 96px !important;
+        height: 76.8px !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:first-child {
-        font-size: 2rem !important;
+        font-size: 1.6rem !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:last-child {
-        font-size: 0.88rem !important;
+        font-size: 0.704rem !important;
       }
 
       .banking-plus-right-section {
