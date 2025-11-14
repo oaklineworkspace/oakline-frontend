@@ -2311,26 +2311,29 @@ const styles = {
     paddingBottom: '1rem'
   },
   dropdownSectionTitle: {
-    fontSize: '0.9rem',
-    fontWeight: '800',
+    fontSize: '1.05rem',
+    fontWeight: '700',
     color: '#1e40af',
-    marginBottom: '0.75rem',
+    marginBottom: '1rem',
+    paddingBottom: '0.5rem',
+    borderBottom: '2px solid #e2e8f0',
     textTransform: 'uppercase',
     letterSpacing: '0.5px'
   },
   dropdownItem: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1rem',
-    padding: '1rem',
-    color: '#374151',
+    gap: '1.2rem',
+    padding: '1.2rem 1.5rem',
+    color: '#1e293b',
     textDecoration: 'none',
-    fontSize: '0.95rem',
+    fontSize: '1.05rem',
     fontWeight: '600',
-    borderRadius: '10px',
+    borderRadius: '12px',
     transition: 'all 0.3s ease',
-    margin: '0.25rem 0',
-    border: '1px solid #f3f4f6'
+    margin: '0.4rem 0',
+    border: '1.5px solid #e2e8f0',
+    backgroundColor: '#ffffff'
   },
   dropdownItemIcon: {
     fontSize: '1.2rem',
@@ -5668,11 +5671,13 @@ if (typeof document !== 'undefined') {
     @media (max-width: 768px) {
       .dropdownMenu {
         position: fixed !important;
-        top: 80px !important;
+        top: 140px !important;
         left: 1rem !important;
         right: 1rem !important;
         min-width: auto !important;
         max-width: none !important;
+        max-height: 70vh !important;
+        overflow-y: auto !important;
       }
 
       .dropdownGrid {
@@ -5696,22 +5701,25 @@ if (typeof document !== 'undefined') {
       }
 
       .top-header-responsive a[href="/"] img {
-        height: 100px !important;
+        height: 140px !important;
+        width: auto !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:first-child {
-        font-size: 2.5rem !important;
+        font-size: 3.5rem !important;
+        font-weight: 700 !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:last-child {
-        font-size: 1.1rem !important;
+        font-size: 1.4rem !important;
+        font-weight: 500 !important;
       }
 
       .scrolling-welcome-inline {
         display: block !important;
         flex: 0 0 100% !important;
-        margin: 0.75rem 0 0 0 !important;
-        padding: 0.6rem 1.2rem !important;
+        margin: 1rem 0 0 0 !important;
+        padding: 0.8rem 1.5rem !important;
         min-width: 0 !important;
         max-width: 100% !important;
         width: 100% !important;
@@ -5720,7 +5728,8 @@ if (typeof document !== 'undefined') {
       }
 
       .scrolling-welcome-inline > div {
-        font-size: 0.9rem !important;
+        font-size: 1.1rem !important;
+        font-weight: 500 !important;
         animation: scrollWelcome 35s linear infinite !important;
       }
 
