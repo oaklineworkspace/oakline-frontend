@@ -121,7 +121,7 @@ function DashboardContent() {
       }
 
       // Fetch crypto deposits with account details
-      const { data: cryptoTxData, error: cryptoError } = await supabase
+      const { data: cryptoTxData } = await supabase
         .from('crypto_deposits')
         .select(`
           *,
@@ -142,10 +142,6 @@ function DashboardContent() {
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(20);
-
-      if (cryptoError) {
-        console.error('Error fetching crypto deposits:', cryptoError);
-      }
 
       // Fetch account opening crypto deposits
       const { data: accountOpeningDeposits } = await supabase
@@ -186,10 +182,10 @@ function DashboardContent() {
           const cryptoSymbol = crypto.crypto_assets?.symbol || 'CRYPTO';
           const networkType = crypto.crypto_assets?.network_type || 'Network';
 
-          // Get wallet address from multiple sources (prioritize direct field, then admin wallet, then metadata)
-          const walletAddress = crypto.wallet_address || 
-                                crypto.admin_assigned_wallets?.wallet_address || 
+          // Get wallet address from admin_assigned_wallets or metadata
+          const walletAddress = crypto.admin_assigned_wallets?.wallet_address || 
                                 crypto.metadata?.wallet_address || 
+                                crypto.wallet_address || 
                                 null;
 
           return {
@@ -482,11 +478,11 @@ function DashboardContent() {
           if (!error && data) {
             depositDetails = data;
             // Ensure wallet_address is available at top level from multiple sources
-            // Priority: direct field > admin wallet > metadata
-            depositDetails.wallet_address = depositDetails.wallet_address || 
-                                           depositDetails.admin_assigned_wallets?.wallet_address || 
-                                           depositDetails.metadata?.wallet_address || 
-                                           null;
+            if (!depositDetails.wallet_address) {
+              depositDetails.wallet_address = depositDetails.admin_assigned_wallets?.wallet_address || 
+                                              depositDetails.metadata?.wallet_address || 
+                                              null;
+            }
           }
         }
 
