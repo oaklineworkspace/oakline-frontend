@@ -466,6 +466,18 @@ export default function CryptoDeposit() {
         return;
       }
       setCurrentStep(3);
+    } else if (currentStep === 3) {
+      if (!txHash && !proofPath) {
+        setMessage('Please provide either a transaction hash or upload proof of payment to continue');
+        setMessageType('error');
+        return;
+      }
+      if (txHash && txHash.length < 10 && !proofPath) {
+        setMessage('Transaction hash appears to be invalid. Please upload proof of payment instead or provide a valid transaction hash.');
+        setMessageType('error');
+        return;
+      }
+      setCurrentStep(4);
     }
   };
 
@@ -1656,7 +1668,8 @@ export default function CryptoDeposit() {
           {[
             { num: 1, label: 'Deposit Details' },
             { num: 2, label: 'Send Payment' },
-            { num: 3, label: 'Confirm' }
+            { num: 3, label: 'Verification' },
+            { num: 4, label: 'Review & Submit' }
           ].map((step, index) => (
             <div key={step.num} style={styles.stepItem}>
               <div style={{
@@ -2464,6 +2477,26 @@ export default function CryptoDeposit() {
 
         {currentStep === 3 && (
           <div style={styles.contentCard}>
+            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                backgroundColor: '#fef3c7',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1.5rem',
+                fontSize: '40px'
+              }}>
+                📝
+              </div>
+              <h2 style={styles.sectionTitle}>Payment Verification</h2>
+              <p style={{ color: '#64748b', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                To verify your payment, please provide either the transaction hash from your wallet OR upload a screenshot of your payment confirmation.
+              </p>
+            </div>
+
             <div style={{
               backgroundColor: '#1e40af',
               border: '2px solid #3b82f6',
@@ -2480,7 +2513,7 @@ export default function CryptoDeposit() {
                     fontSize: '1rem',
                     fontWeight: '700'
                   }}>
-                    Transaction Hash Not Available?
+                    Flexible Verification Options
                   </h4>
                   <p style={{ 
                     margin: 0, 
@@ -2488,176 +2521,19 @@ export default function CryptoDeposit() {
                     color: '#ffffff',
                     lineHeight: '1.6'
                   }}>
-                    If you made your payment through an online cryptocurrency exchange platform (such as Coinbase, Binance, Kraken, etc.) and are unable to locate the transaction hash, you may upload a screenshot of your transaction confirmation page displaying the payment details. Our Cryptocurrency Verification Department will review and process your deposit accordingly.
+                    You can provide either the transaction hash from your cryptocurrency wallet <strong>OR</strong> upload a screenshot or confirmation document of your payment. For transactions initiated through online exchange platforms (such as Coinbase, Binance, Kraken, etc.), a screenshot displaying your transaction details is perfectly acceptable. Our Cryptocurrency Verification Department will review and process your deposit accordingly.
                   </p>
                 </div>
               </div>
             </div>
 
-            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-              <div style={{
-                width: '80px',
-                height: '80px',
-                backgroundColor: '#ecfdf5',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 1.5rem',
-                fontSize: '40px'
-              }}>
-                ✓
-              </div>
-              <h2 style={styles.sectionTitle}>Confirm Your Payment</h2>
-              <p style={{ color: '#64748b', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                Please provide verification of your payment below. You can enter the transaction hash OR upload proof of payment - whichever is easier for you.
-              </p>
-            </div>
-
-            <div style={styles.summaryCard}>
-              <h3 style={styles.summaryTitle}>Deposit Summary</h3>
-              <div style={styles.summaryRow}>
-                <span style={styles.summaryLabel}>Account Number</span>
-                <span style={{
-                  ...styles.summaryValue,
-                  fontFamily: 'monospace'
-                }}>
-                  {depositForm.account_number}
-                </span>
-              </div>
-              <div style={styles.summaryRow}>
-                <span style={styles.summaryLabel}>Cryptocurrency</span>
-                <span style={styles.summaryValue}>
-                  {getSelectedCrypto()?.label} ({getSelectedCrypto()?.value})
-                </span>
-              </div>
-              <div style={styles.summaryRow}>
-                <span style={styles.summaryLabel}>Network</span>
-                <span style={styles.summaryValue}>
-                  {getSelectedNetwork()?.label}
-                </span>
-              </div>
-              <div style={styles.summaryRow}>
-                <span style={styles.summaryLabel}>Deposit Address</span>
-                <span style={{
-                  ...styles.summaryValue,
-                  fontFamily: 'monospace',
-                  fontSize: '0.8rem',
-                  wordBreak: 'break-all'
-                }}>
-                  {walletAddress}
-                </span>
-              </div>
-              {memo && (
-                <div style={styles.summaryRow}>
-                  <span style={styles.summaryLabel}>Memo/Tag</span>
-                  <span style={{
-                    ...styles.summaryValue,
-                    fontFamily: 'monospace',
-                    color: '#f59e0b',
-                    fontWeight: '700'
-                  }}>
-                    {memo}
-                  </span>
-                </div>
-              )}
-              <div style={styles.summaryRow}>
-                <span style={styles.summaryLabel}>Required Confirmations</span>
-                <span style={styles.summaryValue}>
-                  {getSelectedNetwork()?.confirmations}
-                </span>
-              </div>
-
-              <div style={{
-                borderTop: '2px solid #e5e7eb',
-                marginTop: '1rem',
-                paddingTop: '1rem'
-              }}>
-                <h4 style={{
-                  margin: '0 0 0.75rem 0',
-                  fontSize: '0.9rem',
-                  fontWeight: '700',
-                  color: '#1e293b'
-                }}>
-                  Transaction Breakdown
-                </h4>
-                <div style={styles.summaryRow}>
-                  <span style={styles.summaryLabel}>Deposit Amount</span>
-                  <span style={styles.summaryValue}>
-                    {formatCurrency(depositForm.amount)}
-                  </span>
-                </div>
-                <div style={styles.summaryRow}>
-                  <span style={{...styles.summaryLabel, color: '#dc2626' }}>
-                    Network Fee ({networkFeePercent}%)
-                  </span>
-                  <span style={{...styles.summaryValue, color: '#dc2626' }}>
-                    -{formatCurrency(calculatedFee)}
-                  </span>
-                </div>
-                <div style={{
-                  ...styles.summaryRow,
-                  borderBottom: 'none',
-                  paddingTop: '0.75rem',
-                  marginTop: '0.5rem',
-                  borderTop: '2px solid #e5e7eb'
-                }}>
-                  <span style={{
-                    ...styles.summaryLabel,
-                    fontSize: '1rem',
-                    fontWeight: '700'
-                  }}>
-                    You Will Receive
-                  </span>
-                  <span style={{
-                    ...styles.summaryValue,
-                    fontSize: '1.5rem',
-                    fontWeight: '700',
-                    color: '#059669'
-                  }}>
-                    {formatCurrency(calculatedNetAmount)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
             <div style={{
-              backgroundColor: '#fff7ed',
-              border: '2px solid #f59e0b',
+              backgroundColor: '#fff',
+              border: '2px solid #e5e7eb',
               borderRadius: '12px',
               padding: '1.5rem',
-              marginTop: '2rem',
               marginBottom: '1.5rem'
             }}>
-              <h4 style={{
-                margin: '0 0 1rem 0',
-                fontSize: '1rem',
-                fontWeight: '700',
-                color: '#92400e',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                📝 Payment Verification
-              </h4>
-
-              <div style={{
-                backgroundColor: '#1e40af',
-                border: '1px solid #3b82f6',
-                borderRadius: '8px',
-                padding: '1rem',
-                marginBottom: '1.5rem'
-              }}>
-                <p style={{
-                  fontSize: '0.85rem',
-                  color: '#ffffff',
-                  margin: 0,
-                  lineHeight: '1.5'
-                }}>
-                  💡 <strong>Flexible Verification Options:</strong> You may provide either the transaction hash from your cryptocurrency wallet <strong>OR</strong> upload a screenshot or confirmation document of your payment. For transactions initiated through online exchange platforms (such as Coinbase, Binance, etc.), a screenshot displaying your transaction details is acceptable.
-                </p>
-              </div>
-
               <div style={{ marginBottom: '1.5rem' }}>
                 <label style={{
                   display: 'block',
@@ -2792,6 +2668,259 @@ export default function CryptoDeposit() {
             </div>
 
             <div style={{
+              backgroundColor: '#eff6ff',
+              border: '1px solid #3b82f6',
+              borderRadius: '8px',
+              padding: '1rem',
+              marginTop: '1.5rem',
+              marginBottom: '1.5rem'
+            }}>
+              <p style={{
+                margin: 0,
+                fontSize: '0.85rem',
+                color: '#1e40af',
+                lineHeight: '1.5',
+                textAlign: 'center'
+              }}>
+                💡 <strong>Next Step:</strong> After submitting your verification details, you'll review all transaction information before final confirmation.
+              </p>
+            </div>
+
+            <div style={styles.buttonGroup}>
+              <button
+                onClick={() => setCurrentStep(2)}
+                style={{
+                  ...styles.button,
+                  ...styles.secondaryButton
+                }}
+              >
+                ← Back
+              </button>
+              <button
+                onClick={handleNextStep}
+                style={{
+                  ...styles.button,
+                  ...styles.primaryButton
+                }}
+              >
+                Continue to Review →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 4 && (
+          <div style={styles.contentCard}>
+            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                backgroundColor: '#ecfdf5',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1.5rem',
+                fontSize: '40px'
+              }}>
+                ✓
+              </div>
+              <h2 style={styles.sectionTitle}>Review & Confirm Payment</h2>
+              <p style={{ color: '#64748b', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                Please review all details below and confirm your payment submission.
+              </p>
+            </div>
+
+            <div style={styles.summaryCard}>
+              <h3 style={styles.summaryTitle}>Deposit Summary</h3>
+              <div style={styles.summaryRow}>
+                <span style={styles.summaryLabel}>Account Number</span>
+                <span style={{
+                  ...styles.summaryValue,
+                  fontFamily: 'monospace'
+                }}>
+                  {depositForm.account_number}
+                </span>
+              </div>
+              <div style={styles.summaryRow}>
+                <span style={styles.summaryLabel}>Cryptocurrency</span>
+                <span style={styles.summaryValue}>
+                  {getSelectedCrypto()?.label} ({getSelectedCrypto()?.value})
+                </span>
+              </div>
+              <div style={styles.summaryRow}>
+                <span style={styles.summaryLabel}>Network</span>
+                <span style={styles.summaryValue}>
+                  {getSelectedNetwork()?.label}
+                </span>
+              </div>
+              <div style={styles.summaryRow}>
+                <span style={styles.summaryLabel}>Deposit Address</span>
+                <span style={{
+                  ...styles.summaryValue,
+                  fontFamily: 'monospace',
+                  fontSize: '0.8rem',
+                  wordBreak: 'break-all'
+                }}>
+                  {walletAddress}
+                </span>
+              </div>
+              {memo && (
+                <div style={styles.summaryRow}>
+                  <span style={styles.summaryLabel}>Memo/Tag</span>
+                  <span style={{
+                    ...styles.summaryValue,
+                    fontFamily: 'monospace',
+                    color: '#f59e0b',
+                    fontWeight: '700'
+                  }}>
+                    {memo}
+                  </span>
+                </div>
+              )}
+              <div style={styles.summaryRow}>
+                <span style={styles.summaryLabel}>Required Confirmations</span>
+                <span style={styles.summaryValue}>
+                  {getSelectedNetwork()?.confirmations}
+                </span>
+              </div>
+
+              <div style={{
+                borderTop: '2px solid #e5e7eb',
+                marginTop: '1rem',
+                paddingTop: '1rem'
+              }}>
+                <h4 style={{
+                  margin: '0 0 0.75rem 0',
+                  fontSize: '0.9rem',
+                  fontWeight: '700',
+                  color: '#1e293b'
+                }}>
+                  Transaction Breakdown
+                </h4>
+                <div style={styles.summaryRow}>
+                  <span style={styles.summaryLabel}>Deposit Amount</span>
+                  <span style={styles.summaryValue}>
+                    {formatCurrency(depositForm.amount)}
+                  </span>
+                </div>
+                <div style={styles.summaryRow}>
+                  <span style={{...styles.summaryLabel, color: '#dc2626' }}>
+                    Network Fee ({networkFeePercent}%)
+                  </span>
+                  <span style={{...styles.summaryValue, color: '#dc2626' }}>
+                    -{formatCurrency(calculatedFee)}
+                  </span>
+                </div>
+                <div style={{
+                  ...styles.summaryRow,
+                  borderBottom: 'none',
+                  paddingTop: '0.75rem',
+                  marginTop: '0.5rem',
+                  borderTop: '2px solid #e5e7eb'
+                }}>
+                  <span style={{
+                    ...styles.summaryLabel,
+                    fontSize: '1rem',
+                    fontWeight: '700'
+                  }}>
+                    You Will Receive
+                  </span>
+                  <span style={{
+                    ...styles.summaryValue,
+                    fontSize: '1.5rem',
+                    fontWeight: '700',
+                    color: '#059669'
+                  }}>
+                    {formatCurrency(calculatedNetAmount)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{
+              backgroundColor: '#fef9f3',
+              border: '2px solid #f59e0b',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              marginTop: '2rem',
+              marginBottom: '1.5rem'
+            }}>
+              <h4 style={{
+                margin: '0 0 1rem 0',
+                fontSize: '1rem',
+                fontWeight: '700',
+                color: '#92400e',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                📋 Verification Details
+              </h4>
+
+              {txHash && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{
+                    fontSize: '0.85rem',
+                    color: '#64748b',
+                    marginBottom: '0.25rem',
+                    fontWeight: '600'
+                  }}>
+                    Transaction Hash / TX ID:
+                  </div>
+                  <div style={{
+                    fontSize: '0.9rem',
+                    color: '#1e293b',
+                    fontFamily: 'monospace',
+                    wordBreak: 'break-all',
+                    backgroundColor: '#f3f4f6',
+                    padding: '0.75rem',
+                    borderRadius: '6px'
+                  }}>
+                    {txHash}
+                  </div>
+                </div>
+              )}
+
+              {proofPath && proofFile && (
+                <div>
+                  <div style={{
+                    fontSize: '0.85rem',
+                    color: '#64748b',
+                    marginBottom: '0.25rem',
+                    fontWeight: '600'
+                  }}>
+                    Proof of Payment:
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    backgroundColor: '#ecfdf5',
+                    border: '1px solid #10b981',
+                    borderRadius: '6px',
+                    padding: '0.75rem'
+                  }}>
+                    <span style={{ fontSize: '1.25rem' }}>✓</span>
+                    <span style={{ fontSize: '0.9rem', color: '#065f46', fontWeight: '600' }}>
+                      {proofFile.name}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {!txHash && !proofPath && (
+                <div style={{
+                  fontSize: '0.85rem',
+                  color: '#92400e',
+                  fontStyle: 'italic'
+                }}>
+                  No verification details provided
+                </div>
+              )}
+            </div>
+
+            <div style={{
               backgroundColor: '#1e40af',
               border: '2px solid #3b82f6',
               borderRadius: '12px',
@@ -2824,7 +2953,7 @@ export default function CryptoDeposit() {
 
             <div style={styles.buttonGroup}>
               <button
-                onClick={() => setCurrentStep(2)}
+                onClick={() => setCurrentStep(3)}
                 disabled={submitting}
                 style={{
                   ...styles.button,
@@ -2832,7 +2961,7 @@ export default function CryptoDeposit() {
                   opacity: submitting ? 0.5 : 1
                 }}
               >
-                ← Back
+                ← Back to Verification
               </button>
               <button
                 onClick={handleConfirmPayment}
