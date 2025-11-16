@@ -61,7 +61,14 @@ export default function Security() {
         .single();
 
       if (data) {
-        setSecuritySettings(data);
+        setSecuritySettings({
+          twoFactorEnabled: data.twofactorenabled || false,
+          emailAlerts: data.emailalerts !== undefined ? data.emailalerts : true,
+          smsAlerts: data.smsalerts || false,
+          loginAlerts: data.loginalerts !== undefined ? data.loginalerts : true,
+          transactionAlerts: data.transactionalerts !== undefined ? data.transactionalerts : true,
+          fraudAlerts: data.fraudalerts !== undefined ? data.fraudalerts : true
+        });
       }
     } catch (error) {
       console.error('Error loading security settings:', error);
@@ -132,13 +139,20 @@ export default function Security() {
       const updatedSettings = { ...securitySettings, [setting]: value };
       setSecuritySettings(updatedSettings);
 
+      const dbSettings = {
+        user_id: user.id,
+        twofactorenabled: updatedSettings.twoFactorEnabled,
+        emailalerts: updatedSettings.emailAlerts,
+        smsalerts: updatedSettings.smsAlerts,
+        loginalerts: updatedSettings.loginAlerts,
+        transactionalerts: updatedSettings.transactionAlerts,
+        fraudalerts: updatedSettings.fraudAlerts,
+        updated_at: new Date().toISOString()
+      };
+
       const { error } = await supabase
         .from('user_security_settings')
-        .upsert({
-          user_id: user.id,
-          ...updatedSettings,
-          updated_at: new Date().toISOString()
-        }, {
+        .upsert(dbSettings, {
           onConflict: 'user_id'
         });
 
