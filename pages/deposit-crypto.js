@@ -642,6 +642,7 @@ export default function CryptoDeposit() {
             assigned_wallet_id: walletData?.id,
             amount: parseFloat(depositForm.amount),
             fee: parseFloat(calculatedFee.toFixed(2)),
+            net_amount: parseFloat(calculatedNetAmount.toFixed(2)),
             required_amount: accountMinDeposit,
             status: 'pending',
             confirmations: 0,
@@ -673,9 +674,9 @@ export default function CryptoDeposit() {
             user_id: user.id,
             account_id: depositForm.account_id,
             crypto_asset_id: cryptoAsset.id,
-            assigned_wallet_id: walletData?.id,
             amount: parseFloat(depositForm.amount),
             fee: parseFloat(calculatedFee.toFixed(2)),
+            net_amount: parseFloat(calculatedNetAmount.toFixed(2)),
             status: 'pending',
             purpose: 'general_deposit',
             confirmations: 0,
@@ -690,7 +691,8 @@ export default function CryptoDeposit() {
               network_type: depositForm.network_type,
               fee_percent: networkFeePercent,
               has_proof: !!proofPath,
-              has_tx_hash: !!txHash
+              has_tx_hash: !!txHash,
+              assigned_wallet_id: walletData?.id
             }
           }])
           .select()
