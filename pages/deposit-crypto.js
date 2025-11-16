@@ -722,7 +722,7 @@ export default function CryptoDeposit() {
         const userEmail = userProfile?.email || user.email;
         const userName = userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'Valued Customer';
 
-        await fetch('/api/send-crypto-deposit-notification', {
+        const emailResponse = await fetch('/api/send-crypto-deposit-notification', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -736,11 +736,19 @@ export default function CryptoDeposit() {
             amount: depositForm.amount,
             walletAddress: walletAddress,
             depositId: data.id,
+            accountId: depositForm.account_id, // Added missing accountId
             accountNumber: depositForm.account_number,
             isAccountOpening: fundingMode,
             minDeposit: fundingMode ? accountMinDeposit : null
           })
         });
+
+        if (!emailResponse.ok) {
+          const errorData = await emailResponse.json();
+          console.error('Email notification failed:', errorData);
+        } else {
+          console.log('Email notification sent successfully');
+        }
       } catch (emailError) {
         console.error('Error sending email notification:', emailError);
         // Don't fail the deposit if email fails
