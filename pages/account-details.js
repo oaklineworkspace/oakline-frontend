@@ -106,6 +106,7 @@ export default function AccountDetails() {
       }
 
       // Fetch account opening crypto deposits with wallet info
+      // Only fetch pending/awaiting deposits - completed ones are already in transactions table
       const { data: openingDeposits, error: depositsError } = await supabase
         .from('account_opening_crypto_deposits')
         .select(`
@@ -121,6 +122,7 @@ export default function AccountDetails() {
           )
         `)
         .eq('account_id', accountId)
+        .in('status', ['pending', 'awaiting_confirmations', 'under_review'])
         .order('created_at', { ascending: false });
 
       if (depositsError) {
