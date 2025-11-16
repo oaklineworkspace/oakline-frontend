@@ -12,18 +12,20 @@ export default function TranslatedText({ text, children, as = 'span', style, cla
     
     // Return immediately for English or empty text
     if (!sourceText || sourceText.trim() === '' || currentLanguage === 'en') {
-      setTranslatedText(sourceText);
+      if (isMounted) {
+        setTranslatedText(sourceText);
+      }
       return;
     }
     
     async function translate() {
       try {
         const translated = await t(sourceText);
-        if (isMounted) {
-          setTranslatedText(translated || sourceText);
+        if (isMounted && translated) {
+          setTranslatedText(translated);
         }
       } catch (error) {
-        console.error('Translation error:', error);
+        console.error('Translation error in TranslatedText:', error);
         if (isMounted) {
           setTranslatedText(sourceText);
         }

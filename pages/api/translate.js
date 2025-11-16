@@ -83,7 +83,21 @@ export default async function handler(req, res) {
     try {
       console.log('Attempting MyMemory translation:', { source, target, textLength: text.length });
       
-      const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}`;
+      // MyMemory uses ISO 639-1 language codes, but some need mapping
+      // Convert language codes to MyMemory format
+      const langMap = {
+        'zh': 'zh-CN',
+        'zh-TW': 'zh-TW',
+        'pt': 'pt-PT',
+        'pt-BR': 'pt-BR',
+        'es-MX': 'es',
+        'es-AR': 'es'
+      };
+      
+      const sourceCode = langMap[source] || source;
+      const targetCode = langMap[target] || target;
+      
+      const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceCode}|${targetCode}`;
       const myMemoryResponse = await fetch(myMemoryUrl);
       
       console.log('MyMemory response status:', myMemoryResponse.status);
@@ -93,8 +107,17 @@ export default async function handler(req, res) {
         console.log('MyMemory response:', myMemoryData);
         
         if (myMemoryData.responseData && myMemoryData.responseData.translatedText) {
-          translatedText = myMemoryData.responseData.translatedText;
-          provider = 'mymemory';
+          // Check if translation is valid (not just returning the same text or error)
+          const translated = myMemoryData.responseData.translatedText;
+          const responseStatus = myMemoryData.responseStatus;
+          
+          // MyMemory returns 200 even for unsupported languages, check the response
+          if (translated && translated !== text && responseStatus !== 403) {
+            translatedText = translated;
+            provider = 'mymemory';
+          } else {
+            console.log('MyMemory returned invalid translation or unsupported language');
+          }
         }
       } else {
         const errorText = await myMemoryResponse.text();
