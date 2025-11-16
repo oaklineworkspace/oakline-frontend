@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
+import { logActivity } from '../lib/activityLogger';
 
 const AuthContext = createContext({});
 
@@ -75,6 +76,31 @@ export const AuthProvider = ({ children }) => {
       email,
       password,
     });
+    
+    if (error) {
+      await logActivity({
+        type: 'auth',
+        action: 'login_failed',
+        category: 'authentication',
+        message: 'Failed login attempt',
+        details: {
+          email,
+          reason: error.message
+        }
+      });
+    } else if (data.user) {
+      await logActivity({
+        type: 'auth',
+        action: 'user_login',
+        category: 'authentication',
+        message: 'User logged in successfully',
+        details: {
+          email: data.user.email,
+          login_method: 'email_password'
+        }
+      });
+    }
+    
     return { data, error };
   };
 
@@ -88,6 +114,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = async () => {
+    await logActivity({
+      type: 'auth',
+      action: 'user_logout',
+      category: 'authentication',
+      message: 'User logged out',
+      details: {
+        email: user?.email
+      }
+    });
+    
     const { error } = await supabase.auth.signOut();
     if (!error) {
       setUser(null);
@@ -101,6 +137,19 @@ export const AuthProvider = ({ children }) => {
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
+    
+    if (!error) {
+      await logActivity({
+        type: 'security',
+        action: 'password_reset_requested',
+        category: 'security',
+        message: 'Password reset requested',
+        details: {
+          email
+        }
+      });
+    }
+    
     return { data, error };
   };
 

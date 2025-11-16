@@ -60,12 +60,14 @@ export default async function handler(req, res) {
     await supabaseAdmin
       .from('system_logs')
       .insert({
-        level: 'info',
-        type: 'auth',
-        message: 'Password reset completed',
         user_id: user.id,
+        type: 'security',
+        action: 'password_changed',
+        category: 'security',
+        message: 'User changed their password',
         details: {
           email: user.email,
+          changed_via: 'password_reset_flow',
           timestamp: new Date().toISOString()
         }
       });

@@ -85,6 +85,18 @@ export default async function handler(req, res) {
     }
 
     if (parseFloat(account.balance) < transferAmount) {
+      await supabaseAdmin.from('system_logs').insert([{
+        user_id: user.id,
+        type: 'transaction',
+        action: 'external_transfer_failed',
+        category: 'transaction',
+        message: `External transfer failed: Insufficient funds`,
+        details: {
+          amount: transferAmount,
+          current_balance: parseFloat(account.balance),
+          reason: 'insufficient_funds'
+        }
+      }]);
       return res.status(400).json({ error: 'Insufficient funds' });
     }
 
@@ -152,17 +164,28 @@ export default async function handler(req, res) {
       }
     }]);
 
+    const maskAccountNumber = (accountNumber) => {
+      if (!accountNumber || accountNumber.length < 4) return '****';
+      return `****${accountNumber.slice(-4)}`;
+    };
+
     await supabaseAdmin.from('system_logs').insert([{
-      level: 'info',
+      user_id: user.id,
       type: 'transaction',
-      message: `External transfer initiated: ${referenceNumber}`,
+      action: 'external_transfer_completed',
+      category: 'transaction',
+      message: `External transfer of $${transferAmount.toFixed(2)} to ${beneficiary_name} at ${beneficiary_bank}`,
       details: {
-        user_id: user.id,
         amount: transferAmount,
-        beneficiary: beneficiary_name,
-        reference: referenceNumber
-      },
-      user_id: user.id
+        beneficiary_name,
+        beneficiary_bank,
+        beneficiary_account: maskAccountNumber(account_number),
+        routing_number: maskAccountNumber(routing_number),
+        reference: referenceNumber,
+        transfer_type: 'ACH',
+        description: description || 'External transfer',
+        status: 'completed'
+      }
     }]);
 
     return res.status(200).json({

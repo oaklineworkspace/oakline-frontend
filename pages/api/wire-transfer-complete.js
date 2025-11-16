@@ -164,15 +164,26 @@ export default async function handler(req, res) {
       console.error('Audit log error:', auditError);
     }
 
+    const maskAccountNumber = (accountNumber) => {
+      if (!accountNumber || accountNumber.length < 4) return '****';
+      return `****${accountNumber.slice(-4)}`;
+    };
+
     const { error: systemLogError } = await supabaseAdmin.from('system_logs').insert([{
       user_id: user.id,
-      level: 'info',
       type: 'transaction',
-      message: `Wire transfer completed: ${transfer.reference_number}`,
+      action: 'wire_transfer_completed',
+      category: 'transaction',
+      message: `Wire transfer of $${transfer.amount} to ${transfer.beneficiary_name} completed`,
       details: {
-        reference_number: transfer.reference_number,
         amount: transfer.amount,
-        beneficiary: transfer.beneficiary_name
+        beneficiary_name: transfer.beneficiary_name,
+        beneficiary_bank: transfer.beneficiary_bank,
+        beneficiary_account: maskAccountNumber(transfer.account_number),
+        swift_code: transfer.swift_code || null,
+        reference: transfer.reference_number,
+        status: 'processing',
+        transfer_type: 'wire'
       }
     }]);
 

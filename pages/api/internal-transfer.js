@@ -49,6 +49,18 @@ export default async function handler(req, res) {
     }
 
     if (parseFloat(fromAccount.balance) < transferAmount) {
+      await supabaseAdmin.from('system_logs').insert([{
+        user_id: user.id,
+        type: 'transaction',
+        action: 'internal_transfer_failed',
+        category: 'transaction',
+        message: `Internal transfer failed: Insufficient funds`,
+        details: {
+          amount: transferAmount,
+          current_balance: parseFloat(fromAccount.balance),
+          reason: 'insufficient_funds'
+        }
+      }]);
       return res.status(400).json({ error: 'Insufficient funds' });
     }
 
@@ -222,18 +234,27 @@ export default async function handler(req, res) {
       console.error('Audit log error:', auditError);
     }
 
+    const maskAccountNumber = (accountNumber) => {
+      if (!accountNumber || accountNumber.length < 4) return '****';
+      return `****${accountNumber.slice(-4)}`;
+    };
+
     const { error: systemLogError } = await supabaseAdmin.from('system_logs').insert([{
-      level: 'info',
+      user_id: user.id,
       type: 'transaction',
-      message: `Internal transfer completed: ${referenceNumber}`,
+      action: 'internal_transfer_completed',
+      category: 'transaction',
+      message: `Internal transfer of $${transferAmount.toFixed(2)} to ${recipientName} completed`,
       details: {
-        from_account: fromAccount.account_number,
-        to_account: to_account_number,
         amount: transferAmount,
+        recipient_name: recipientName,
+        recipient_account: maskAccountNumber(to_account_number),
+        from_account: maskAccountNumber(fromAccount.account_number),
         reference: referenceNumber,
-        transfer_group_id: transferGroupId
-      },
-      user_id: user.id
+        transfer_group_id: transferGroupId,
+        status: 'completed',
+        memo: memo || null
+      }
     }]);
 
     if (systemLogError) {

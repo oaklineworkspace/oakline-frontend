@@ -186,6 +186,28 @@ export default async function handler(req, res) {
       console.error('Error sending loan submission email:', emailError);
     }
 
+    // Log loan application activity
+    await supabaseAdmin.from('system_logs').insert([{
+      user_id: user.id,
+      type: 'loan',
+      action: 'loan_application_submitted',
+      category: 'loan',
+      message: `Applied for ${loan_type.replace(/_/g, ' ')} loan of $${principal.toLocaleString()}`,
+      details: {
+        loan_id: loan.id,
+        loan_type,
+        principal,
+        term_months,
+        interest_rate,
+        monthly_payment: monthlyPayment.toFixed(2),
+        total_amount: totalDue.toFixed(2),
+        deposit_required: deposit_required || 0,
+        deposit_method: deposit_method || 'balance',
+        purpose,
+        status: 'pending_deposit'
+      }
+    }]);
+
     return res.status(200).json({
       success: true,
       message: 'Loan application submitted successfully',
