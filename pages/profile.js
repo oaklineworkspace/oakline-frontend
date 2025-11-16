@@ -202,32 +202,36 @@ export default function Profile() {
     const container = cropContainerRef.current;
 
     // Use higher resolution output to maintain quality
-    const outputSize = 600; // Increased from 300 to maintain better quality
+    const outputSize = 600;
     canvas.width = outputSize;
     canvas.height = outputSize;
 
-    // Get the crop circle dimensions (display size)
-    const cropCircleSize = 300; // This matches the circle overlay size
+    // Get the crop circle dimensions
+    const cropCircleRadius = 150; // 300px diameter circle
     const containerRect = container.getBoundingClientRect();
     
-    // Calculate the center of the crop circle
-    const centerX = containerRect.width / 2;
-    const centerY = containerRect.height / 2;
-    const radius = cropCircleSize / 2;
+    // Calculate the center of the container (where the crop circle is)
+    const containerCenterX = containerRect.width / 2;
+    const containerCenterY = containerRect.height / 2;
 
-    // Calculate source dimensions based on image position and scale
-    const imageWidth = image.naturalWidth * imageScale;
-    const imageHeight = image.naturalHeight * imageScale;
+    // The image element's displayed dimensions
+    const displayedImageWidth = image.naturalWidth * imageScale;
+    const displayedImageHeight = image.naturalHeight * imageScale;
     
-    // Calculate the position offset
-    const offsetX = centerX - imagePosition.x;
-    const offsetY = centerY - imagePosition.y;
-
-    // Calculate source crop area from the original image
-    const sourceRadius = (radius / imageScale);
-    const sourceX = (offsetX / imageScale) - sourceRadius;
-    const sourceY = (offsetY / imageScale) - sourceRadius;
-    const sourceSize = sourceRadius * 2;
+    // Calculate where the center of the crop circle is relative to the image's top-left corner
+    // imagePosition is where the image's top-left is positioned in the container
+    const cropCenterOnImageX = containerCenterX - imagePosition.x;
+    const cropCenterOnImageY = containerCenterY - imagePosition.y;
+    
+    // Convert from displayed coordinates back to original image coordinates
+    const cropCenterOriginalX = cropCenterOnImageX / imageScale;
+    const cropCenterOriginalY = cropCenterOnImageY / imageScale;
+    const cropRadiusOriginal = cropCircleRadius / imageScale;
+    
+    // Calculate the source rectangle on the original image
+    const sourceX = cropCenterOriginalX - cropRadiusOriginal;
+    const sourceY = cropCenterOriginalY - cropRadiusOriginal;
+    const sourceSize = cropRadiusOriginal * 2;
 
     // Draw circular crop at higher resolution
     ctx.save();
@@ -236,7 +240,7 @@ export default function Profile() {
     ctx.closePath();
     ctx.clip();
 
-    // Draw the cropped portion at full resolution
+    // Draw the cropped portion from the original image
     ctx.drawImage(
       image,
       sourceX, sourceY, sourceSize, sourceSize,
