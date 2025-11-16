@@ -673,6 +673,7 @@ export default function CryptoDeposit() {
             user_id: user.id,
             account_id: depositForm.account_id,
             crypto_asset_id: cryptoAsset.id,
+            assigned_wallet_id: walletData?.id,
             amount: parseFloat(depositForm.amount),
             fee: parseFloat(calculatedFee.toFixed(2)),
             status: 'pending',

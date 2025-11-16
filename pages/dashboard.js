@@ -133,6 +133,10 @@ function DashboardContent() {
             crypto_type,
             network_type,
             symbol
+          ),
+          admin_assigned_wallets:assigned_wallet_id (
+            wallet_address,
+            memo
           )
         `)
         .eq('user_id', userId)
@@ -178,6 +182,12 @@ function DashboardContent() {
           const cryptoSymbol = crypto.crypto_assets?.symbol || 'CRYPTO';
           const networkType = crypto.crypto_assets?.network_type || 'Network';
 
+          // Get wallet address from admin_assigned_wallets or metadata
+          const walletAddress = crypto.admin_assigned_wallets?.wallet_address || 
+                                crypto.metadata?.wallet_address || 
+                                crypto.wallet_address || 
+                                null;
+
           return {
             id: crypto.id,
             type: 'crypto_deposit',
@@ -191,7 +201,7 @@ function DashboardContent() {
             crypto_type: cryptoType,
             crypto_symbol: cryptoSymbol,
             network_type: networkType,
-            wallet_address: crypto.wallet_address,
+            wallet_address: walletAddress,
             transaction_hash: crypto.transaction_hash,
             fee: crypto.fee || 0,
             gross_amount: crypto.amount || 0,
@@ -440,9 +450,11 @@ function DashboardContent() {
 
           if (!error && data) {
             depositDetails = data;
-            // Ensure wallet_address is available at top level
-            if (!depositDetails.wallet_address && depositDetails.crypto_wallets?.wallet_address) {
-              depositDetails.wallet_address = depositDetails.crypto_wallets.wallet_address;
+            // Ensure wallet_address is available at top level from multiple sources
+            if (!depositDetails.wallet_address) {
+              depositDetails.wallet_address = depositDetails.crypto_wallets?.wallet_address || 
+                                              depositDetails.metadata?.wallet_address || 
+                                              null;
             }
           }
         } else if (transaction.transaction_type === 'crypto_deposit') {
@@ -465,9 +477,11 @@ function DashboardContent() {
 
           if (!error && data) {
             depositDetails = data;
-            // Ensure wallet_address is available at top level
-            if (!depositDetails.wallet_address && depositDetails.admin_assigned_wallets?.wallet_address) {
-              depositDetails.wallet_address = depositDetails.admin_assigned_wallets.wallet_address;
+            // Ensure wallet_address is available at top level from multiple sources
+            if (!depositDetails.wallet_address) {
+              depositDetails.wallet_address = depositDetails.admin_assigned_wallets?.wallet_address || 
+                                              depositDetails.metadata?.wallet_address || 
+                                              null;
             }
           }
         }
