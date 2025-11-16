@@ -1,4 +1,7 @@
-// components/TestimonialsSection.js
+import { useState } from 'react';
+import TranslatedText from './TranslatedText';
+import styles from '../styles/Testimonials.module.css';
+
 export default function TestimonialsSection() {
   const testimonials = [
     {
@@ -38,12 +41,12 @@ export default function TestimonialsSection() {
     <section style={styles.section}>
       <div style={styles.container}>
         <div style={styles.header}>
-          <h2 style={styles.title}>What Our Customers Say</h2>
+          <h2 style={styles.title}><TranslatedText>What Our Customers Say</TranslatedText></h2>
           <p style={styles.subtitle}>
-            Don't just take our word for it. Here's what our valued customers have to say about their Oakline Bank experience.
+            <TranslatedText>Don't just take our word for it. Here's what our valued customers have to say about their Oakline Bank experience.</TranslatedText>
           </p>
         </div>
-        
+
         <div style={styles.testimonialsGrid}>
           {testimonials.map((testimonial, index) => (
             <div key={index} style={styles.testimonialCard}>
@@ -52,30 +55,30 @@ export default function TestimonialsSection() {
                   <span key={i} style={styles.star}>★</span>
                 ))}
               </div>
-              <p style={styles.testimonialText}>"{testimonial.text}"</p>
+              <p style={styles.testimonialText}><TranslatedText>{testimonial.text}</TranslatedText></p>
               <div style={styles.customer}>
-                <img 
-                  src={testimonial.image} 
+                <img
+                  src={testimonial.image}
                   alt={testimonial.name}
                   style={styles.customerImage}
                 />
                 <div style={styles.customerInfo}>
-                  <h4 style={styles.customerName}>{testimonial.name}</h4>
-                  <p style={styles.customerRole}>{testimonial.role}</p>
-                  <p style={styles.customerCompany}>{testimonial.company}</p>
+                  <h4 style={styles.customerName}><TranslatedText>{testimonial.name}</TranslatedText></h4>
+                  <p style={styles.customerRole}><TranslatedText>{testimonial.role}</TranslatedText></p>
+                  <p style={styles.customerCompany}><TranslatedText>{testimonial.company}</TranslatedText></p>
                 </div>
               </div>
             </div>
           ))}
         </div>
-        
+
         <div style={styles.statsSection}>
-          <h3 style={styles.statsTitle}>Trusted by Thousands</h3>
+          <h3 style={styles.statsTitle}><TranslatedText>Trusted by Thousands</TranslatedText></h3>
           <div style={styles.statsGrid}>
             {stats.map((stat, index) => (
               <div key={index} style={styles.statItem}>
                 <span style={styles.statNumber}>{stat.number}</span>
-                <span style={styles.statLabel}>{stat.label}</span>
+                <span style={styles.statLabel}><TranslatedText>{stat.label}</TranslatedText></span>
               </div>
             ))}
           </div>
@@ -212,7 +215,7 @@ const styles = {
 // Mobile responsive
 if (typeof window !== 'undefined') {
   const mediaQuery = window.matchMedia('(max-width: 768px)');
-  
+
   if (mediaQuery.matches) {
     styles.testimonialsGrid.gridTemplateColumns = '1fr';
     styles.testimonialsGrid.gap = '24px';

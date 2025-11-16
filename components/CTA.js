@@ -1,11 +1,13 @@
 // components/CTA.js
 import Link from 'next/link';
+import TranslatedText from './TranslatedText';
+import styles from '../styles/CTA.module.css';
 
-export default function CTA({ title, buttonText, buttonLink, subtitle, variant = 'primary' }) {
+export default function CTA({ title, subtitle, buttonText, buttonLink, variant = 'primary' }) {
   const styles = {
     ctaSection: {
       backgroundColor: variant === 'primary' ? '#1e3a8a' : '#059669',
-      background: variant === 'primary' 
+      background: variant === 'primary'
         ? 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)'
         : 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
       padding: '80px 20px',
@@ -82,25 +84,25 @@ export default function CTA({ title, buttonText, buttonLink, subtitle, variant =
     <section style={styles.ctaSection}>
       <div style={styles.backgroundPattern} />
       <div style={styles.container}>
-        <h2 style={styles.title}>{title}</h2>
-        {subtitle && <p style={styles.subtitle}>{subtitle}</p>}
+        <h2 style={styles.title}><TranslatedText>{title}</TranslatedText></h2>
+        {subtitle && <p style={styles.subtitle}><TranslatedText>{subtitle}</TranslatedText></p>}
         <Link href={buttonLink} style={styles.ctaButton}>
-          {buttonText}
+          <TranslatedText>{buttonText}</TranslatedText>
         </Link>
-        
+
         {variant === 'primary' && (
           <div style={styles.features}>
             <div style={styles.feature}>
               <span style={styles.featureIcon}>⚡</span>
-              <span>Instant Approval</span>
+              <span><TranslatedText>Instant Approval</TranslatedText></span>
             </div>
             <div style={styles.feature}>
               <span style={styles.featureIcon}>🔒</span>
-              <span>Bank-Level Security</span>
+              <span><TranslatedText>Bank-Level Security</TranslatedText></span>
             </div>
             <div style={styles.feature}>
               <span style={styles.featureIcon}>💰</span>
-              <span>No Hidden Fees</span>
+              <span><TranslatedText>No Hidden Fees</TranslatedText></span>
             </div>
           </div>
         )}

@@ -1621,12 +1621,12 @@ export default function Home() {
         }}>
           <Suspense fallback={<div style={styles.loadingComponent}><TranslatedText>Loading...</TranslatedText></div>}>
             <CTA
-              title={user ? <TranslatedText>Ready to Expand Your Banking?</TranslatedText> : <TranslatedText>Ready to Start Your Financial Journey?</TranslatedText>}
+              title={user ? "Ready to Expand Your Banking?" : "Ready to Start Your Financial Journey?"}
               subtitle={user ?
-                <TranslatedText>Access premium banking services and explore all account options.</TranslatedText> :
-                <TranslatedText>Join over 500,000 customers who trust Oakline Bank. Open your account today.</TranslatedText>
+                "Access premium banking services and explore all account options." :
+                "Join over 500,000 customers who trust Oakline Bank. Open your account today."
               }
-              buttonText={user ? <TranslatedText>View Account Types</TranslatedText> : <TranslatedText>Open Account Now</TranslatedText>}
+              buttonText={user ? "View Account Types" : "Open Account Now"}
               buttonLink={user ? "/account-types" : "/apply"}
               variant="primary"
             />
