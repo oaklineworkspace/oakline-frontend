@@ -147,7 +147,7 @@ export default function AccountDetails() {
 
       // Combine and format transactions
       const regularTx = transactionsData || [];
-      
+
       // Format account opening deposits
       const depositTx = (openingDeposits || []).map(deposit => ({
         id: deposit.id,
@@ -276,7 +276,7 @@ export default function AccountDetails() {
 
           if (!error && data) {
             depositDetails = data;
-            
+
             // Try to get wallet address from assigned_wallet_id if available
             if (data.assigned_wallet_id) {
               const { data: walletData } = await supabase
@@ -284,14 +284,14 @@ export default function AccountDetails() {
                 .select('wallet_address, memo')
                 .eq('id', data.assigned_wallet_id)
                 .single();
-              
+
               if (walletData?.wallet_address) {
                 walletAddress = walletData.wallet_address;
                 depositDetails.wallet_address = walletData.wallet_address;
                 depositDetails.memo = walletData.memo;
               }
             }
-            
+
             // Fallback to metadata if wallet address still not found
             if (!walletAddress && data.metadata?.wallet_address) {
               walletAddress = data.metadata.wallet_address;
@@ -314,7 +314,7 @@ export default function AccountDetails() {
 
           if (!error && data) {
             depositDetails = data;
-            
+
             // Try to get wallet address from assigned_wallet_id if available
             if (data.assigned_wallet_id) {
               const { data: walletData } = await supabase
@@ -322,20 +322,20 @@ export default function AccountDetails() {
                 .select('wallet_address, memo')
                 .eq('id', data.assigned_wallet_id)
                 .single();
-              
+
               if (walletData?.wallet_address) {
                 walletAddress = walletData.wallet_address;
                 depositDetails.wallet_address = walletData.wallet_address;
                 depositDetails.memo = walletData.memo;
               }
             }
-            
+
             // Check if wallet_address is stored directly in crypto_deposits table
             if (!walletAddress && data.wallet_address) {
               walletAddress = data.wallet_address;
               depositDetails.wallet_address = data.wallet_address;
             }
-            
+
             // Fallback to metadata if wallet address still not found
             if (!walletAddress && data.metadata?.wallet_address) {
               walletAddress = data.metadata.wallet_address;
