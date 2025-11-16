@@ -200,12 +200,12 @@ export default function Profile() {
     const image = imageRef.current;
     const container = cropContainerRef.current;
 
-    // Set canvas size to output size (300x300 for circular crop)
-    const outputSize = 300;
+    // Use higher resolution output to maintain quality
+    const outputSize = 600; // Increased from 300 to maintain better quality
     canvas.width = outputSize;
     canvas.height = outputSize;
 
-    // Get the crop circle dimensions
+    // Get the crop circle dimensions (display size)
     const cropCircleSize = 300; // This matches the circle overlay size
     const containerRect = container.getBoundingClientRect();
     
@@ -222,19 +222,20 @@ export default function Profile() {
     const offsetX = centerX - imagePosition.x;
     const offsetY = centerY - imagePosition.y;
 
-    // Calculate source crop area
+    // Calculate source crop area from the original image
     const sourceRadius = (radius / imageScale);
     const sourceX = (offsetX / imageScale) - sourceRadius;
     const sourceY = (offsetY / imageScale) - sourceRadius;
     const sourceSize = sourceRadius * 2;
 
-    // Draw circular crop
+    // Draw circular crop at higher resolution
     ctx.save();
     ctx.beginPath();
     ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
 
+    // Draw the cropped portion at full resolution
     ctx.drawImage(
       image,
       sourceX, sourceY, sourceSize, sourceSize,
