@@ -121,7 +121,7 @@ function DashboardContent() {
       }
 
       // Fetch crypto deposits with account details
-      const { data: cryptoTxData } = await supabase
+      const { data: cryptoTxData, error: cryptoError } = await supabase
         .from('crypto_deposits')
         .select(`
           *,
@@ -142,6 +142,10 @@ function DashboardContent() {
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(20);
+
+      if (cryptoError) {
+        console.error('Error fetching crypto deposits:', cryptoError);
+      }
 
       // Fetch account opening crypto deposits
       const { data: accountOpeningDeposits } = await supabase
