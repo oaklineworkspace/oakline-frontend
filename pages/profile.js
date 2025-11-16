@@ -436,9 +436,9 @@ export default function Profile() {
               <span style={styles.zoomLabel}>🔍</span>
               <input
                 type="range"
-                min="0.5"
-                max="3"
-                step="0.1"
+                min="0.8"
+                max="2"
+                step="0.05"
                 value={imageScale}
                 onChange={handleZoomChange}
                 style={styles.zoomSlider}
@@ -664,32 +664,51 @@ export default function Profile() {
         @media (max-width: 768px) {
           .cropperModal {
             padding: 10px !important;
+            align-items: flex-start !important;
           }
           .cropperContent {
             padding: 16px !important;
-            max-height: 95vh !important;
+            margin: 10px auto !important;
           }
           .cropperImageContainer {
-            height: 280px !important;
+            height: 260px !important;
           }
           .cropperTitle {
             font-size: 18px !important;
+            margin-bottom: 4px !important;
+          }
+          .cropperHint {
+            font-size: 11px !important;
+            margin-bottom: 12px !important;
           }
           .cropperActions {
             flex-direction: column !important;
             gap: 8px !important;
+            margin-top: 12px !important;
           }
           .cropperActions button {
             width: 100% !important;
+            padding: 12px 20px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .cropperImageContainer {
+            height: 240px !important;
+          }
+          .cropperContent {
+            padding: 12px !important;
+            margin: 5px auto !important;
           }
         }
         
         @media (max-height: 700px) {
           .cropperImageContainer {
-            height: 250px !important;
+            height: 220px !important;
           }
           .cropperContent {
             padding: 12px !important;
+            margin: 5px auto !important;
           }
         }
       `}</style>
@@ -1073,11 +1092,12 @@ const styles = {
     bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.9)',
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
     zIndex: 1000,
     padding: '20px',
-    overflowY: 'auto'
+    overflowY: 'auto',
+    WebkitOverflowScrolling: 'touch'
   },
   cropperContent: {
     backgroundColor: 'white',
@@ -1085,9 +1105,8 @@ const styles = {
     padding: '20px',
     maxWidth: '480px',
     width: '100%',
-    maxHeight: '90vh',
-    overflow: 'auto',
-    margin: 'auto'
+    margin: '20px auto',
+    position: 'relative'
   },
   cropperTitle: {
     fontSize: '20px',
@@ -1106,7 +1125,7 @@ const styles = {
   cropperImageContainer: {
     position: 'relative',
     width: '100%',
-    height: '350px',
+    height: '320px',
     overflow: 'hidden',
     borderRadius: '12px',
     marginBottom: '16px',
