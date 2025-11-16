@@ -3153,7 +3153,7 @@ export default function Apply() {
             </div>
           </div>
           <div style={styles.copyright}>
-            © 2024 Oakline Bank. All rights reserved.
+            © 2025 Oakline Bank. All rights reserved.
           </div>
         </div>
       </footer>
