@@ -237,6 +237,27 @@ function DashboardContent() {
         transactionsData = [...transactionsData, ...formattedCryptoDeposits];
       }
 
+      // Fetch wallet addresses for account opening deposits if needed
+      let accountOpeningWalletAddresses = {};
+      if (accountOpeningDeposits && accountOpeningDeposits.length > 0) {
+        const walletIds = accountOpeningDeposits
+          .map(d => d.assigned_wallet_id)
+          .filter(id => id);
+
+        if (walletIds.length > 0) {
+          const { data: wallets } = await supabase
+            .from('admin_assigned_wallets')
+            .select('id, wallet_address, memo')
+            .in('id', walletIds);
+
+          if (wallets) {
+            wallets.forEach(w => {
+              accountOpeningWalletAddresses[w.id] = w;
+            });
+          }
+        }
+      }
+
       // Format account opening crypto deposits as transactions
       // Filter out completed/confirmed deposits as they're already in the transactions table
       if (accountOpeningDeposits && accountOpeningDeposits.length > 0) {
@@ -251,6 +272,12 @@ function DashboardContent() {
             const cryptoSymbol = deposit.crypto_assets?.symbol || 'CRYPTO';
             const networkType = deposit.crypto_assets?.network_type || 'Network';
 
+            // Get wallet address from admin_assigned_wallets or metadata
+            const walletAddress = accountOpeningWalletAddresses[deposit.assigned_wallet_id]?.wallet_address || 
+                                  deposit.metadata?.wallet_address || 
+                                  deposit.wallet_address || 
+                                  null;
+
             return {
               id: deposit.id,
               type: 'account_opening_deposit',
@@ -264,13 +291,15 @@ function DashboardContent() {
               crypto_type: cryptoType,
               crypto_symbol: cryptoSymbol,
               network_type: networkType,
+              wallet_address: walletAddress,
               transaction_hash: deposit.tx_hash,
               fee: deposit.fee || 0,
               gross_amount: deposit.amount || 0,
               confirmations: deposit.confirmations || 0,
               required_confirmations: deposit.required_confirmations || 3,
               accounts: deposit.accounts,
-              purpose: 'account_activation'
+              purpose: 'account_activation',
+              assigned_wallet_id: deposit.assigned_wallet_id
             };
           });
 
@@ -954,6 +983,7 @@ function DashboardContent() {
                     case 'oakline_pay_send': return 'O';
                     case 'oakline_pay_receive': return 'O';
                     case 'crypto_deposit': return '₿';
+                    case 'account_opening_deposit': return '₿';
                     default: return '💼';
                   }
                 };
@@ -1614,6 +1644,29 @@ function DashboardContent() {
                      'N/A'}
                   </span>
                 </div>
+                {selectedTransaction.depositDetails.memo && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 0',
+                    borderBottom: '1px solid #f1f5f9'
+                  }}>
+                    <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                      Memo/Tag
+                    </span>
+                    <span style={{ 
+                      fontSize: '0.75rem', 
+                      color: '#1e293b', 
+                      fontWeight: '600', 
+                      fontFamily: 'monospace',
+                      wordBreak: 'break-all',
+                      textAlign: 'right',
+                      maxWidth: '60%'
+                    }}>
+                      {selectedTransaction.depositDetails.memo}
+                    </span>
+                  </div>
+                )}
                 {(selectedTransaction.depositDetails.tx_hash || selectedTransaction.transaction_hash) && (
                   <div style={{
                     display: 'flex',
