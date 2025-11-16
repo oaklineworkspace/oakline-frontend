@@ -8,19 +8,31 @@ export default async function handler(req, res) {
   try {
     const { user_id, type, action, category, message, details } = req.body;
 
-    if (!user_id || !type || !action || !category || !message) {
+    if (!user_id || !type || !message) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Determine log level based on action
+    let level = 'info';
+    if (action?.includes('failed') || action?.includes('suspicious') || action?.includes('blocked')) {
+      level = 'warning';
+    }
+    if (action?.includes('error') || action?.includes('fraud')) {
+      level = 'error';
     }
 
     const { error } = await supabaseAdmin
       .from('system_logs')
       .insert({
         user_id,
+        level,
         type,
-        action,
-        category,
         message,
-        details,
+        details: {
+          ...details,
+          action,
+          category
+        },
         created_at: new Date().toISOString()
       });
 

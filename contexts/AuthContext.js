@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
-import { logActivity } from '../lib/activityLogger';
+import { logAuthActivity, ActivityActions } from '../lib/activityLogger';
 
 const AuthContext = createContext({});
 
@@ -44,21 +44,21 @@ export const AuthProvider = ({ children }) => {
           // Don't auto-redirect if user is in enrollment flow or on specific pages
           const noRedirectPaths = ['/enroll', '/apply', '/sign-in', '/login', '/reset-password'];
           const shouldNotRedirect = noRedirectPaths.some(path => router.pathname.includes(path));
-          
+
           // Check if user has enrollment metadata (magic link enrollment)
           const hasEnrollmentMetadata = session?.user?.user_metadata?.application_id;
-          
+
           // Check URL params for enrollment indicators
           const urlParams = new URLSearchParams(window.location.search);
           const isEnrollmentFlow = urlParams.get('type') === 'magiclink' || urlParams.has('application_id') || hasEnrollmentMetadata;
-          
-          console.log('Auth redirect check:', { 
-            shouldNotRedirect, 
-            hasEnrollmentMetadata, 
+
+          console.log('Auth redirect check:', {
+            shouldNotRedirect,
+            hasEnrollmentMetadata,
             isEnrollmentFlow,
-            pathname: router.pathname 
+            pathname: router.pathname
           });
-          
+
           if (!shouldNotRedirect && !isEnrollmentFlow) {
             window.location.href = 'https://theoaklinebank.com/dashboard';
           }
@@ -76,31 +76,19 @@ export const AuthProvider = ({ children }) => {
       email,
       password,
     });
-    
+
     if (error) {
-      await logActivity({
-        type: 'auth',
-        action: 'login_failed',
-        category: 'authentication',
-        message: 'Failed login attempt',
-        details: {
-          email,
-          reason: error.message
-        }
+      await logAuthActivity(ActivityActions.LOGIN_FAILED, {
+        email,
+        reason: error.message
       });
     } else if (data.user) {
-      await logActivity({
-        type: 'auth',
-        action: 'user_login',
-        category: 'authentication',
-        message: 'User logged in successfully',
-        details: {
-          email: data.user.email,
-          login_method: 'email_password'
-        }
+      await logAuthActivity(ActivityActions.LOGIN_SUCCESS, {
+        email: data.user.email,
+        login_method: 'email_password'
       });
     }
-    
+
     return { data, error };
   };
 
@@ -114,42 +102,41 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = async () => {
-    await logActivity({
-      type: 'auth',
-      action: 'user_logout',
-      category: 'authentication',
-      message: 'User logged out',
-      details: {
+    try {
+      // Log logout activity before signing out
+      await logAuthActivity(ActivityActions.LOGOUT, {
         email: user?.email
+      });
+
+      const { error } = await supabase.auth.signOut();
+      if (!error) {
+        setUser(null);
+        setSession(null);
+        router.push('/sign-in');
       }
-    });
-    
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
-      setUser(null);
-      setSession(null);
-      router.push('/sign-in');
+      return { error };
+    } catch (error) {
+      console.error('Error signing out:', error);
+      // Optionally log the error if needed
+      await logAuthActivity(ActivityActions.LOGOUT_ERROR, {
+        email: user?.email,
+        error: error.message
+      });
+      return { error };
     }
-    return { error };
   };
 
   const resetPassword = async (email) => {
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
-    
+
     if (!error) {
-      await logActivity({
-        type: 'security',
-        action: 'password_reset_requested',
-        category: 'security',
-        message: 'Password reset requested',
-        details: {
-          email
-        }
+      await logAuthActivity(ActivityActions.PASSWORD_RESET_REQUESTED, {
+        email
       });
     }
-    
+
     return { data, error };
   };
 
@@ -169,4 +156,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-
