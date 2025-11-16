@@ -21,6 +21,7 @@ export default function Profile() {
   const [imageScale, setImageScale] = useState(0.25);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [savedCropSettings, setSavedCropSettings] = useState({ position: { x: 0, y: 0 }, scale: 0.25 });
   const router = useRouter();
 
   useEffect(() => {
@@ -131,9 +132,9 @@ export default function Profile() {
       reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
-          // Center the image
-          setImagePosition({ x: 0, y: 0 });
-          setImageScale(0.25);
+          // Use saved crop settings instead of defaults
+          setImagePosition(savedCropSettings.position);
+          setImageScale(savedCropSettings.scale);
           setImageSrc(event.target.result);
           setShowCropper(true);
           setMessage('');
@@ -248,8 +249,8 @@ export default function Profile() {
       setProfilePicture(croppedFile);
       setCroppedImage(URL.createObjectURL(blob));
       setShowCropper(false);
-      setImagePosition({ x: 0, y: 0 });
-      setImageScale(0.25);
+      // Save the current crop settings for next time
+      setSavedCropSettings({ position: imagePosition, scale: imageScale });
     }, 'image/jpeg', 0.95);
   };
 
