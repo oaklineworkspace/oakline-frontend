@@ -722,11 +722,18 @@ export default function CryptoDeposit() {
         const userEmail = userProfile?.email || user.email;
         const userName = userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'Valued Customer';
 
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !sessionData?.session?.access_token) {
+          console.error('Failed to get session for email notification:', sessionError);
+          throw new Error('Unable to authenticate for email notification');
+        }
+
         const emailResponse = await fetch('/api/send-crypto-deposit-notification', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+            'Authorization': `Bearer ${sessionData.session.access_token}`
           },
           body: JSON.stringify({
             email: userEmail,
@@ -736,7 +743,7 @@ export default function CryptoDeposit() {
             amount: depositForm.amount,
             walletAddress: walletAddress,
             depositId: data.id,
-            accountId: depositForm.account_id, // Added missing accountId
+            accountId: depositForm.account_id,
             accountNumber: depositForm.account_number,
             isAccountOpening: fundingMode,
             minDeposit: fundingMode ? accountMinDeposit : null
