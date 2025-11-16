@@ -121,7 +121,7 @@ function DashboardContent() {
       }
 
       // Fetch crypto deposits with account details
-      const { data: cryptoTxData } = await supabase
+      const { data: cryptoTxData, error: cryptoError } = await supabase
         .from('crypto_deposits')
         .select(`
           *,
@@ -133,15 +133,36 @@ function DashboardContent() {
             crypto_type,
             network_type,
             symbol
-          ),
-          admin_assigned_wallets:assigned_wallet_id (
-            wallet_address,
-            memo
           )
         `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(20);
+
+      if (cryptoError) {
+        console.error('Error fetching crypto deposits:', cryptoError);
+      }
+
+      // Fetch wallet addresses separately if needed
+      let walletAddresses = {};
+      if (cryptoTxData && cryptoTxData.length > 0) {
+        const walletIds = cryptoTxData
+          .map(d => d.assigned_wallet_id)
+          .filter(id => id);
+
+        if (walletIds.length > 0) {
+          const { data: wallets } = await supabase
+            .from('admin_assigned_wallets')
+            .select('id, wallet_address, memo')
+            .in('id', walletIds);
+
+          if (wallets) {
+            wallets.forEach(w => {
+              walletAddresses[w.id] = w;
+            });
+          }
+        }
+      }
 
       // Fetch account opening crypto deposits
       const { data: accountOpeningDeposits } = await supabase
@@ -183,7 +204,7 @@ function DashboardContent() {
           const networkType = crypto.crypto_assets?.network_type || 'Network';
 
           // Get wallet address from admin_assigned_wallets or metadata
-          const walletAddress = crypto.admin_assigned_wallets?.wallet_address || 
+          const walletAddress = walletAddresses[crypto.assigned_wallet_id]?.wallet_address || 
                                 crypto.metadata?.wallet_address || 
                                 crypto.wallet_address || 
                                 null;
@@ -208,7 +229,8 @@ function DashboardContent() {
             confirmations: crypto.confirmations || 0,
             required_confirmations: crypto.required_confirmations || 3,
             accounts: crypto.accounts,
-            purpose: crypto.purpose
+            purpose: crypto.purpose,
+            assigned_wallet_id: crypto.assigned_wallet_id // Keep for reference if needed
           };
         });
 
@@ -650,7 +672,7 @@ function DashboardContent() {
                   </div>
                   <div style={styles.dropdownDivider}></div>
                   <div style={styles.dropdownSection}>
-                    <h4 style={styles.dropdownSectionTitle}>💼 Loans & Credit</h4>
+                    <h4 style={styles.dropdownSectionTitle}>Loans & Credit</h4>
                     <Link href="/loan/dashboard" style={styles.dropdownLink}>💳 My Loan Dashboard</Link>
                     <Link href="/loan" style={styles.dropdownLink}>📋 All My Loans</Link>
                     <Link href="/loans" style={styles.dropdownLink}>📊 Loans Overview</Link>
