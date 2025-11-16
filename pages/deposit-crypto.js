@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 
-const QRCode = dynamic(() => import('react-qr-code').then(mod => mod.default), { ssr: false });
+const QRCode = dynamic(() => import('react-qr-code'), { ssr: false });
 
 export default function CryptoDeposit() {
   const [user, setUser] = useState(null);
@@ -674,6 +674,7 @@ export default function CryptoDeposit() {
             account_id: depositForm.account_id,
             crypto_asset_id: cryptoAsset.id,
             assigned_wallet_id: walletData?.id,
+            wallet_address: walletAddress,
             amount: parseFloat(depositForm.amount),
             fee: parseFloat(calculatedFee.toFixed(2)),
             status: 'pending',

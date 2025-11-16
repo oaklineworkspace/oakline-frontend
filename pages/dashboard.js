@@ -182,10 +182,10 @@ function DashboardContent() {
           const cryptoSymbol = crypto.crypto_assets?.symbol || 'CRYPTO';
           const networkType = crypto.crypto_assets?.network_type || 'Network';
 
-          // Get wallet address from admin_assigned_wallets or metadata
-          const walletAddress = crypto.admin_assigned_wallets?.wallet_address || 
+          // Get wallet address from multiple sources (prioritize direct field, then admin wallet, then metadata)
+          const walletAddress = crypto.wallet_address || 
+                                crypto.admin_assigned_wallets?.wallet_address || 
                                 crypto.metadata?.wallet_address || 
-                                crypto.wallet_address || 
                                 null;
 
           return {
@@ -478,11 +478,11 @@ function DashboardContent() {
           if (!error && data) {
             depositDetails = data;
             // Ensure wallet_address is available at top level from multiple sources
-            if (!depositDetails.wallet_address) {
-              depositDetails.wallet_address = depositDetails.admin_assigned_wallets?.wallet_address || 
-                                              depositDetails.metadata?.wallet_address || 
-                                              null;
-            }
+            // Priority: direct field > admin wallet > metadata
+            depositDetails.wallet_address = depositDetails.wallet_address || 
+                                           depositDetails.admin_assigned_wallets?.wallet_address || 
+                                           depositDetails.metadata?.wallet_address || 
+                                           null;
           }
         }
 
