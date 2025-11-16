@@ -1632,12 +1632,10 @@ export default function Home() {
             />
           </Suspense>
         </div>
+  {/* Live Chat Component */}
+      <LiveChat />
 
-        {/* Live Chat Component */}
-        <LiveChat />
-
-        <Footer />
-      </main>
+      <Footer />
     </div>
   );
 }
