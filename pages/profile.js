@@ -16,6 +16,11 @@ export default function Profile() {
   const [croppedImage, setCroppedImage] = useState(null);
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
+  const cropContainerRef = useRef(null);
+  const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
+  const [imageScale, setImageScale] = useState(1);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const router = useRouter();
 
   useEffect(() => {
@@ -124,9 +129,16 @@ export default function Profile() {
       
       const reader = new FileReader();
       reader.onload = (event) => {
-        setImageSrc(event.target.result);
-        setShowCropper(true);
-        setMessage('');
+        const img = new Image();
+        img.onload = () => {
+          // Center the image
+          setImagePosition({ x: 0, y: 0 });
+          setImageScale(1);
+          setImageSrc(event.target.result);
+          setShowCropper(true);
+          setMessage('');
+        };
+        img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     } else {
@@ -134,36 +146,118 @@ export default function Profile() {
     }
   };
 
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - imagePosition.x,
+      y: e.clientY - imagePosition.y
+    });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    setImagePosition({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e) => {
+    const touch = e.touches[0];
+    setIsDragging(true);
+    setDragStart({
+      x: touch.clientX - imagePosition.x,
+      y: touch.clientY - imagePosition.y
+    });
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    setImagePosition({
+      x: touch.clientX - dragStart.x,
+      y: touch.clientY - dragStart.y
+    });
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleZoomChange = (e) => {
+    setImageScale(parseFloat(e.target.value));
+  };
+
   const handleCrop = () => {
-    if (!imageRef.current || !canvasRef.current) return;
+    if (!imageRef.current || !canvasRef.current || !cropContainerRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     const image = imageRef.current;
+    const container = cropContainerRef.current;
 
-    // Set canvas size to square (300x300)
-    const size = 300;
-    canvas.width = size;
-    canvas.height = size;
+    // Set canvas size to output size (300x300 for circular crop)
+    const outputSize = 300;
+    canvas.width = outputSize;
+    canvas.height = outputSize;
 
-    // Calculate dimensions to crop from center
-    const scale = Math.max(size / image.width, size / image.height);
-    const x = (size / scale - image.width) / 2;
-    const y = (size / scale - image.height) / 2;
+    // Get the crop circle dimensions
+    const cropCircleSize = 300; // This matches the circle overlay size
+    const containerRect = container.getBoundingClientRect();
+    
+    // Calculate the center of the crop circle
+    const centerX = containerRect.width / 2;
+    const centerY = containerRect.height / 2;
+    const radius = cropCircleSize / 2;
 
-    ctx.drawImage(image, x, y, image.width, image.height, 0, 0, size, size);
+    // Calculate source dimensions based on image position and scale
+    const imageWidth = image.naturalWidth * imageScale;
+    const imageHeight = image.naturalHeight * imageScale;
+    
+    // Calculate the position offset
+    const offsetX = centerX - imagePosition.x;
+    const offsetY = centerY - imagePosition.y;
+
+    // Calculate source crop area
+    const sourceRadius = (radius / imageScale);
+    const sourceX = (offsetX / imageScale) - sourceRadius;
+    const sourceY = (offsetY / imageScale) - sourceRadius;
+    const sourceSize = sourceRadius * 2;
+
+    // Draw circular crop
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+
+    ctx.drawImage(
+      image,
+      sourceX, sourceY, sourceSize, sourceSize,
+      0, 0, outputSize, outputSize
+    );
+    ctx.restore();
 
     canvas.toBlob((blob) => {
       const croppedFile = new File([blob], 'profile-picture.jpg', { type: 'image/jpeg' });
       setProfilePicture(croppedFile);
       setCroppedImage(URL.createObjectURL(blob));
       setShowCropper(false);
-    }, 'image/jpeg', 0.9);
+      setImagePosition({ x: 0, y: 0 });
+      setImageScale(1);
+    }, 'image/jpeg', 0.95);
   };
 
   const cancelCrop = () => {
     setShowCropper(false);
     setImageSrc(null);
+    setImagePosition({ x: 0, y: 0 });
+    setImageScale(1);
+    setIsDragging(false);
   };
 
   const uploadProfilePicture = async () => {
@@ -299,31 +393,71 @@ export default function Profile() {
 
       {/* Image Cropper Modal */}
       {showCropper && (
-        <div style={styles.cropperModal}>
+        <div style={styles.cropperModal} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
           <div style={styles.cropperContent}>
             <h2 style={styles.cropperTitle}>Crop Your Profile Picture</h2>
-            <p style={styles.cropperHint}>Position your face in the center for best results</p>
-            <div style={styles.cropperImageContainer}>
+            <p style={styles.cropperHint}>Drag to position • Pinch or slide to zoom</p>
+            
+            <div 
+              ref={cropContainerRef}
+              style={styles.cropperImageContainer}
+            >
               <img 
                 ref={imageRef}
                 src={imageSrc} 
                 alt="To crop" 
-                style={styles.cropperImage}
-                onLoad={() => {}}
+                style={{
+                  ...styles.cropperImage,
+                  transform: `translate(${imagePosition.x}px, ${imagePosition.y}px) scale(${imageScale})`,
+                  cursor: isDragging ? 'grabbing' : 'grab'
+                }}
+                onMouseDown={handleMouseDown}
+                onTouchStart={handleTouchStart}
+                draggable={false}
               />
+              {/* Circular overlay */}
+              <div style={styles.circularOverlay}>
+                <svg width="100%" height="100%" style={styles.cropOverlaySvg}>
+                  <defs>
+                    <mask id="circleMask">
+                      <rect width="100%" height="100%" fill="white" />
+                      <circle cx="50%" cy="50%" r="150" fill="black" />
+                    </mask>
+                  </defs>
+                  <rect width="100%" height="100%" fill="rgba(0,0,0,0.6)" mask="url(#circleMask)" />
+                  <circle cx="50%" cy="50%" r="150" fill="none" stroke="white" strokeWidth="3" strokeDasharray="5,5" />
+                </svg>
+              </div>
             </div>
+
+            {/* Zoom slider */}
+            <div style={styles.zoomControlContainer}>
+              <span style={styles.zoomLabel}>🔍</span>
+              <input
+                type="range"
+                min="0.5"
+                max="3"
+                step="0.1"
+                value={imageScale}
+                onChange={handleZoomChange}
+                style={styles.zoomSlider}
+              />
+              <span style={styles.zoomLabel}>🔍+</span>
+            </div>
+
             <canvas ref={canvasRef} style={{ display: 'none' }} />
+            
             <div style={styles.cropperActions}>
               <button onClick={cancelCrop} style={styles.cropperCancelButton}>
                 Cancel
               </button>
               <button onClick={handleCrop} style={styles.cropperCropButton}>
-                Crop & Continue
+                Crop & Upload
               </button>
             </div>
           </div>
         </div>
-      )}
+      )}</div>
 
       {/* Profile Picture Upload Card */}
       <div style={styles.card}>
@@ -904,7 +1038,7 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -913,41 +1047,88 @@ const styles = {
   },
   cropperContent: {
     backgroundColor: 'white',
-    borderRadius: '12px',
-    padding: '24px',
-    maxWidth: '500px',
+    borderRadius: '16px',
+    padding: '28px',
+    maxWidth: '480px',
     width: '100%',
     maxHeight: '90vh',
-    overflow: 'auto'
+    overflow: 'visible'
   },
   cropperTitle: {
-    fontSize: '20px',
-    fontWeight: '600',
+    fontSize: '22px',
+    fontWeight: '700',
     color: '#1e293b',
     margin: '0 0 8px 0',
     textAlign: 'center'
   },
   cropperHint: {
-    fontSize: '14px',
+    fontSize: '13px',
     color: '#64748b',
-    margin: '0 0 20px 0',
-    textAlign: 'center'
+    margin: '0 0 24px 0',
+    textAlign: 'center',
+    fontWeight: '500'
   },
   cropperImageContainer: {
+    position: 'relative',
     width: '100%',
-    maxHeight: '400px',
+    height: '400px',
     overflow: 'hidden',
-    borderRadius: '8px',
+    borderRadius: '12px',
     marginBottom: '20px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f8fafc'
+    backgroundColor: '#1e293b',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
+    touchAction: 'none'
   },
   cropperImage: {
-    maxWidth: '100%',
-    maxHeight: '400px',
-    objectFit: 'contain'
+    position: 'absolute',
+    maxWidth: 'none',
+    maxHeight: 'none',
+    width: 'auto',
+    height: 'auto',
+    transformOrigin: 'center center',
+    transition: 'transform 0.1s ease-out',
+    pointerEvents: 'auto'
+  },
+  circularOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    pointerEvents: 'none',
+    zIndex: 10
+  },
+  cropOverlaySvg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%'
+  },
+  zoomControlContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    marginBottom: '24px',
+    padding: '0 8px'
+  },
+  zoomLabel: {
+    fontSize: '18px',
+    opacity: 0.7
+  },
+  zoomSlider: {
+    flex: 1,
+    height: '6px',
+    borderRadius: '3px',
+    outline: 'none',
+    background: 'linear-gradient(to right, #e2e8f0 0%, #3b82f6 100%)',
+    WebkitAppearance: 'none',
+    appearance: 'none',
+    cursor: 'pointer'
   },
   cropperActions: {
     display: 'flex',
