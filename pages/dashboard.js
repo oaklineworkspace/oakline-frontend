@@ -1029,7 +1029,38 @@ function DashboardContent() {
                   isCredit = amount >= 0;
                 }
 
-                const getTransactionIcon = (type) => {
+                const getCryptoIcon = (cryptoSymbol) => {
+                  const symbol = cryptoSymbol?.toUpperCase();
+                  switch (symbol) {
+                    case 'BTC':
+                    case 'BITCOIN':
+                      return '₿';
+                    case 'ETH':
+                    case 'ETHEREUM':
+                      return 'Ξ';
+                    case 'USDT':
+                    case 'TETHER':
+                      return '₮';
+                    case 'USDC':
+                      return '$';
+                    case 'BNB':
+                    case 'BINANCE':
+                      return 'Ƀ';
+                    case 'LTC':
+                    case 'LITECOIN':
+                      return 'Ł';
+                    case 'XRP':
+                    case 'RIPPLE':
+                      return 'X';
+                    case 'DOGE':
+                    case 'DOGECOIN':
+                      return 'Ð';
+                    default:
+                      return '₿';
+                  }
+                };
+
+                const getTransactionIcon = (type, transaction) => {
                   switch (type?.toLowerCase()) {
                     case 'deposit': return '📥';
                     case 'withdrawal': return '📤';
@@ -1041,8 +1072,9 @@ function DashboardContent() {
                     case 'zelle_receive': return 'Z';
                     case 'oakline_pay_send': return 'O';
                     case 'oakline_pay_receive': return 'O';
-                    case 'crypto_deposit': return '₿';
-                    case 'account_opening_deposit': return '₿';
+                    case 'crypto_deposit': 
+                    case 'account_opening_deposit':
+                      return getCryptoIcon(transaction?.crypto_symbol || transaction?.crypto_type);
                     default: return '💼';
                   }
                 };
@@ -1081,7 +1113,7 @@ function DashboardContent() {
                   >
                     <div style={styles.transactionLeft}>
                       <div style={styles.transactionIcon}>
-                        {getTransactionIcon(tx.type || tx.transaction_type)}
+                        {getTransactionIcon(tx.type || tx.transaction_type, tx)}
                       </div>
                       <div style={styles.transactionInfo}>
                         <div style={styles.transactionDescription}>
