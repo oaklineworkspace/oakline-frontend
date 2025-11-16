@@ -6,12 +6,16 @@ import {
   logCardActivity, 
   logSecurityEvent,
   logUserActivity,
+  logLoginActivity,
   ActivityActions 
 } from '../lib/activityLogger';
 
 export const useActivityLogger = () => {
-  const logLogin = useCallback(async (method = 'password') => {
-    await logAuthActivity(ActivityActions.LOGIN, { method });
+  const logLogin = useCallback(async (method = 'password', success = true, failureReason = null) => {
+    await logLoginActivity(success, failureReason);
+    if (success) {
+      await logAuthActivity(ActivityActions.LOGIN, { method });
+    }
   }, []);
 
   const logLogout = useCallback(async () => {

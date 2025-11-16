@@ -3,6 +3,8 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
 import TranslatedText from '../components/TranslatedText';
+import { supabase } from '../lib/supabaseClient';
+import { useActivityLogger } from '../hooks/useActivityLogger';
 
 // Define styles object if it's not defined elsewhere
 const styles = {
@@ -321,6 +323,7 @@ const styles = {
 export default function SignInPage() {
   const router = useRouter();
   const { signIn } = useAuth();
+  const { logActivity } = useActivityLogger();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -357,9 +360,32 @@ export default function SignInPage() {
     try {
       const { data, error } = await signIn(formData.email, formData.password);
 
-      if (error) throw error;
+      if (error) {
+        await logActivity({
+          activityType: 'LOGIN_FAILURE',
+          details: {
+            email: formData.email,
+            ipAddress: 'getClientIp', // Placeholder, implement actual IP fetching
+            userAgent: navigator.userAgent,
+            errorMessage: error.message,
+            location: 'getClientLocation', // Placeholder, implement actual location fetching
+          },
+        });
+        throw error;
+      }
 
       if (data.user) {
+        await logActivity({
+          activityType: 'LOGIN_SUCCESS',
+          details: {
+            userId: data.user.id,
+            email: formData.email,
+            ipAddress: 'getClientIp', // Placeholder, implement actual IP fetching
+            userAgent: navigator.userAgent,
+            location: 'getClientLocation', // Placeholder, implement actual location fetching
+            rememberDevice: rememberDevice,
+          },
+        });
         setMessage('Sign in successful! Redirecting to dashboard...');
         // Force navigation to dashboard in same tab
         setTimeout(() => {
