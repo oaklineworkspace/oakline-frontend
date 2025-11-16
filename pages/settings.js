@@ -8,29 +8,34 @@ export default function Settings() {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');
-  const [activeTab, setActiveTab] = useState('account');
+  const [saveStatus, setSaveStatus] = useState('');
+  const [activeTab, setActiveTab] = useState('notifications');
+  const [pendingChanges, setPendingChanges] = useState({});
+  const [hasPendingChanges, setHasPendingChanges] = useState(false);
+  const [savedSettings, setSavedSettings] = useState({});
   const router = useRouter();
 
-  // Settings form data
-  const [accountSettings, setAccountSettings] = useState({
+  const [settings, setSettings] = useState({
     email_notifications: true,
-    sms_notifications: true,
+    sms_notifications: false,
     push_notifications: true,
-    marketing_emails: false,
     transaction_alerts: true,
     low_balance_alerts: true,
-    security_alerts: true
-  });
-
-  const [securitySettings, setSecuritySettings] = useState({
+    security_alerts: true,
+    marketing_emails: false,
+    monthly_statements: true,
+    low_balance_threshold: 100,
+    transaction_alert_amount: 500,
+    preferred_language: 'en',
+    currency: 'USD',
+    theme: 'light',
+    email_frequency: 'instant',
+    statement_delivery: 'email',
+    auto_save_enabled: true,
     two_factor_enabled: false,
     biometric_login: false,
-    session_timeout: '30',
-    login_notifications: true
-  });
-
-  const [privacySettings, setPrivacySettings] = useState({
+    session_timeout: 30,
+    login_notifications: true,
     data_sharing: false,
     analytics_tracking: true,
     third_party_sharing: false
@@ -51,7 +56,6 @@ export default function Settings() {
 
       setUser(session.user);
 
-      // Fetch user profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
@@ -60,47 +64,72 @@ export default function Settings() {
 
       setUserProfile(profile);
 
-      // Load existing settings if they exist
       if (profile) {
-        setAccountSettings(prev => ({
-          ...prev,
-          ...profile.notification_settings
-        }));
-        setSecuritySettings(prev => ({
-          ...prev,
-          ...profile.security_settings
-        }));
-        setPrivacySettings(prev => ({
-          ...prev,
-          ...profile.privacy_settings
-        }));
+        const loadedSettings = {
+          email_notifications: true,
+          sms_notifications: false,
+          push_notifications: true,
+          transaction_alerts: true,
+          low_balance_alerts: true,
+          security_alerts: true,
+          marketing_emails: false,
+          monthly_statements: true,
+          low_balance_threshold: 100,
+          transaction_alert_amount: 500,
+          preferred_language: 'en',
+          currency: 'USD',
+          theme: 'light',
+          email_frequency: 'instant',
+          statement_delivery: 'email',
+          auto_save_enabled: true,
+          two_factor_enabled: false,
+          biometric_login: false,
+          session_timeout: 30,
+          login_notifications: true,
+          data_sharing: false,
+          analytics_tracking: true,
+          third_party_sharing: false,
+          ...profile.notification_settings,
+          ...profile.security_settings,
+          ...profile.privacy_settings,
+          ...profile.preferences
+        };
+        setSettings(loadedSettings);
+        setSavedSettings(loadedSettings);
       }
 
     } catch (error) {
       console.error('Error loading data:', error);
-      setMessage('Error loading settings. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSaveSettings = async (settingsType) => {
-    setLoading(true);
-    setMessage('');
-
+  const saveSetting = async (key, value) => {
+    const previousValue = settings[key];
+    setSaveStatus('saving');
+    
     try {
-      let updateData = {};
+      const updatedSettings = { ...settings, [key]: value };
 
-      switch (settingsType) {
-        case 'account':
-          updateData = { notification_settings: accountSettings };
-          break;
-        case 'security':
-          updateData = { security_settings: securitySettings };
-          break;
-        case 'privacy':
-          updateData = { privacy_settings: privacySettings };
-          break;
+      const categories = {
+        notification_settings: ['email_notifications', 'sms_notifications', 'push_notifications', 
+                                'transaction_alerts', 'low_balance_alerts', 'security_alerts', 
+                                'marketing_emails', 'monthly_statements', 'email_frequency', 
+                                'login_notifications'],
+        security_settings: ['two_factor_enabled', 'biometric_login', 'session_timeout'],
+        privacy_settings: ['data_sharing', 'analytics_tracking', 'third_party_sharing'],
+        preferences: ['low_balance_threshold', 'transaction_alert_amount', 'preferred_language', 
+                     'currency', 'theme', 'statement_delivery', 'auto_save_enabled']
+      };
+
+      const updateData = {};
+      for (const [category, keys] of Object.entries(categories)) {
+        const categoryData = {};
+        keys.forEach(k => {
+          categoryData[k] = updatedSettings[k];
+        });
+        updateData[category] = categoryData;
       }
 
       const { error } = await supabase
@@ -110,15 +139,111 @@ export default function Settings() {
 
       if (error) throw error;
 
-      setMessage('✅ Settings saved successfully!');
-      setTimeout(() => setMessage(''), 3000);
+      setSettings(updatedSettings);
+      setSavedSettings(updatedSettings);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus(''), 2000);
+
+    } catch (error) {
+      console.error('Error saving setting:', error);
+      setSettings({ ...settings, [key]: previousValue });
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus(''), 3000);
+    }
+  };
+
+  const saveAllPendingChanges = async () => {
+    setSaveStatus('saving');
+    
+    try {
+      const updatedSettings = { ...settings, ...pendingChanges };
+
+      const categories = {
+        notification_settings: ['email_notifications', 'sms_notifications', 'push_notifications', 
+                                'transaction_alerts', 'low_balance_alerts', 'security_alerts', 
+                                'marketing_emails', 'monthly_statements', 'email_frequency', 
+                                'login_notifications'],
+        security_settings: ['two_factor_enabled', 'biometric_login', 'session_timeout'],
+        privacy_settings: ['data_sharing', 'analytics_tracking', 'third_party_sharing'],
+        preferences: ['low_balance_threshold', 'transaction_alert_amount', 'preferred_language', 
+                     'currency', 'theme', 'statement_delivery', 'auto_save_enabled']
+      };
+
+      const updateData = {};
+      for (const [category, keys] of Object.entries(categories)) {
+        const categoryData = {};
+        keys.forEach(k => {
+          categoryData[k] = updatedSettings[k];
+        });
+        updateData[category] = categoryData;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setSettings(updatedSettings);
+      setSavedSettings(updatedSettings);
+      setPendingChanges({});
+      setHasPendingChanges(false);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus(''), 2000);
 
     } catch (error) {
       console.error('Error saving settings:', error);
-      setMessage('❌ Error saving settings. Please try again.');
-    } finally {
-      setLoading(false);
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus(''), 3000);
     }
+  };
+
+  const handleToggle = (key) => {
+    const newValue = !settings[key];
+    
+    if (settings.auto_save_enabled && key !== 'auto_save_enabled') {
+      saveSetting(key, newValue);
+    } else {
+      setSettings({ ...settings, [key]: newValue });
+      if (key !== 'auto_save_enabled') {
+        setPendingChanges({ ...pendingChanges, [key]: newValue });
+        setHasPendingChanges(true);
+      } else {
+        saveSetting(key, newValue);
+      }
+    }
+  };
+
+  const handleSelectChange = (key, value) => {
+    if (settings.auto_save_enabled) {
+      saveSetting(key, value);
+    } else {
+      setSettings({ ...settings, [key]: value });
+      setPendingChanges({ ...pendingChanges, [key]: value });
+      setHasPendingChanges(true);
+    }
+  };
+
+  const handleNumberChange = (key, value) => {
+    const numValue = Number(value);
+    if (settings.auto_save_enabled) {
+      saveSetting(key, numValue);
+    } else {
+      setSettings({ ...settings, [key]: numValue });
+      setPendingChanges({ ...pendingChanges, [key]: numValue });
+      setHasPendingChanges(true);
+    }
+  };
+
+  const discardPendingChanges = () => {
+    const restoredSettings = { ...settings };
+    Object.keys(pendingChanges).forEach(key => {
+      restoredSettings[key] = savedSettings[key];
+    });
+    setSettings(restoredSettings);
+    setPendingChanges({});
+    setHasPendingChanges(false);
   };
 
   if (loading && !user) {
@@ -176,27 +301,49 @@ export default function Settings() {
                 <p style={styles.subtitle}>Manage your banking preferences and security</p>
               </div>
             </div>
-          </div>
-
-          {message && (
-            <div style={{
-              ...styles.message,
-              backgroundColor: message.includes('✅') ? '#d4edda' : '#f8d7da',
-              color: message.includes('✅') ? '#155724' : '#721c24',
-              borderColor: message.includes('✅') ? '#c3e6cb' : '#f5c6cb'
-            }}>
-              {message}
+            <div style={styles.statusArea}>
+              {saveStatus && (
+                <div style={{
+                  ...styles.saveStatus,
+                  backgroundColor: saveStatus === 'saved' ? '#d4edda' : 
+                                  saveStatus === 'saving' ? '#fff3cd' : '#f8d7da',
+                  color: saveStatus === 'saved' ? '#155724' : 
+                         saveStatus === 'saving' ? '#856404' : '#721c24'
+                }}>
+                  {saveStatus === 'saved' && '✅ Saved'}
+                  {saveStatus === 'saving' && '⏳ Saving...'}
+                  {saveStatus === 'error' && '❌ Error saving'}
+                </div>
+              )}
+              {!settings.auto_save_enabled && hasPendingChanges && (
+                <div style={styles.pendingButtons}>
+                  <button 
+                    style={styles.savePendingButton} 
+                    onClick={saveAllPendingChanges}
+                    disabled={saveStatus === 'saving'}
+                  >
+                    💾 Save {Object.keys(pendingChanges).length} Change{Object.keys(pendingChanges).length > 1 ? 's' : ''}
+                  </button>
+                  <button 
+                    style={styles.discardButton} 
+                    onClick={discardPendingChanges}
+                    disabled={saveStatus === 'saving'}
+                  >
+                    ❌ Discard
+                  </button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           <div style={styles.tabContainer}>
             <div style={styles.tabs}>
               <button
                 style={{
                   ...styles.tab,
-                  ...(activeTab === 'account' ? styles.activeTab : {})
+                  ...(activeTab === 'notifications' ? styles.activeTab : {})
                 }}
-                onClick={() => setActiveTab('account')}
+                onClick={() => setActiveTab('notifications')}
               >
                 🔔 Notifications
               </button>
@@ -212,6 +359,15 @@ export default function Settings() {
               <button
                 style={{
                   ...styles.tab,
+                  ...(activeTab === 'preferences' ? styles.activeTab : {})
+                }}
+                onClick={() => setActiveTab('preferences')}
+              >
+                🎨 Preferences
+              </button>
+              <button
+                style={{
+                  ...styles.tab,
                   ...(activeTab === 'privacy' ? styles.activeTab : {})
                 }}
                 onClick={() => setActiveTab('privacy')}
@@ -221,662 +377,586 @@ export default function Settings() {
               <button
                 style={{
                   ...styles.tab,
-                  ...(activeTab === 'linking' ? styles.activeTab : {})
+                  ...(activeTab === 'advanced' ? styles.activeTab : {})
                 }}
-                onClick={() => setActiveTab('linking')}
+                onClick={() => setActiveTab('advanced')}
               >
-                🔗 Link Accounts
-              </button>
-              <button
-                style={{
-                  ...styles.tab,
-                  ...(activeTab === 'services' ? styles.activeTab : {})
-                }}
-                onClick={() => setActiveTab('services')}
-              >
-                🏦 Services
+                ⚡ Advanced
               </button>
             </div>
           </div>
 
           {/* Notifications Tab */}
-          {activeTab === 'account' && (
+          {activeTab === 'notifications' && (
             <div style={styles.tabContent}>
-              <div style={styles.sectionTitle}>Notification Preferences</div>
+              <div style={styles.sectionTitle}>📬 Notification Preferences</div>
+              <div style={styles.sectionDesc}>Choose how and when you want to be notified</div>
 
               <div style={styles.settingGroup}>
-                <h3 style={styles.groupTitle}>General Notifications</h3>
+                <h3 style={styles.groupTitle}>Communication Channels</h3>
 
                 <div style={styles.settingItem}>
                   <div style={styles.settingInfo}>
-                    <div style={styles.settingName}>Email Notifications</div>
-                    <div style={styles.settingDesc}>Receive important updates via email</div>
+                    <div style={styles.settingName}>📧 Email Notifications</div>
+                    <div style={styles.settingDesc}>Receive important updates and alerts via email</div>
                   </div>
                   <label style={styles.toggle}>
                     <input
                       type="checkbox"
-                      checked={accountSettings.email_notifications}
-                      onChange={(e) => setAccountSettings(prev => ({
-                        ...prev,
-                        email_notifications: e.target.checked
-                      }))}
+                      checked={settings.email_notifications}
+                      onChange={() => handleToggle('email_notifications')}
                       style={styles.toggleInput}
                     />
-                    <span style={styles.toggleSlider}></span>
+                    <span style={settings.email_notifications ? styles.toggleOn : styles.toggleOff}></span>
                   </label>
                 </div>
 
                 <div style={styles.settingItem}>
                   <div style={styles.settingInfo}>
-                    <div style={styles.settingName}>SMS Notifications</div>
-                    <div style={styles.settingDesc}>Receive text messages for critical alerts</div>
+                    <div style={styles.settingName}>📱 SMS Notifications</div>
+                    <div style={styles.settingDesc}>Get text messages for critical alerts and transactions</div>
                   </div>
                   <label style={styles.toggle}>
                     <input
                       type="checkbox"
-                      checked={accountSettings.sms_notifications}
-                      onChange={(e) => setAccountSettings(prev => ({
-                        ...prev,
-                        sms_notifications: e.target.checked
-                      }))}
+                      checked={settings.sms_notifications}
+                      onChange={() => handleToggle('sms_notifications')}
                       style={styles.toggleInput}
                     />
-                    <span style={styles.toggleSlider}></span>
+                    <span style={settings.sms_notifications ? styles.toggleOn : styles.toggleOff}></span>
                   </label>
                 </div>
 
                 <div style={styles.settingItem}>
                   <div style={styles.settingInfo}>
-                    <div style={styles.settingName}>Transaction Alerts</div>
-                    <div style={styles.settingDesc}>Get notified of all account transactions</div>
+                    <div style={styles.settingName}>🔔 Push Notifications</div>
+                    <div style={styles.settingDesc}>Receive real-time notifications on your device</div>
                   </div>
                   <label style={styles.toggle}>
                     <input
                       type="checkbox"
-                      checked={accountSettings.transaction_alerts}
-                      onChange={(e) => setAccountSettings(prev => ({
-                        ...prev,
-                        transaction_alerts: e.target.checked
-                      }))}
+                      checked={settings.push_notifications}
+                      onChange={() => handleToggle('push_notifications')}
                       style={styles.toggleInput}
                     />
-                    <span style={styles.toggleSlider}></span>
+                    <span style={settings.push_notifications ? styles.toggleOn : styles.toggleOff}></span>
                   </label>
                 </div>
 
                 <div style={styles.settingItem}>
                   <div style={styles.settingInfo}>
-                    <div style={styles.settingName}>Low Balance Alerts</div>
-                    <div style={styles.settingDesc}>Alert when account balance is low</div>
+                    <div style={styles.settingName}>Email Frequency</div>
+                    <div style={styles.settingDesc}>How often should we send email notifications?</div>
                   </div>
-                  <label style={styles.toggle}>
-                    <input
-                      type="checkbox"
-                      checked={accountSettings.low_balance_alerts}
-                      onChange={(e) => setAccountSettings(prev => ({
-                        ...prev,
-                        low_balance_alerts: e.target.checked
-                      }))}
-                      style={styles.toggleInput}
-                    />
-                    <span style={styles.toggleSlider}></span>
-                  </label>
+                  <select
+                    style={styles.select}
+                    value={settings.email_frequency}
+                    onChange={(e) => handleSelectChange('email_frequency', e.target.value)}
+                  >
+                    <option value="instant">Instant (as they happen)</option>
+                    <option value="hourly">Hourly digest</option>
+                    <option value="daily">Daily summary</option>
+                    <option value="weekly">Weekly summary</option>
+                  </select>
                 </div>
               </div>
 
-              <button
-                style={styles.saveButton}
-                onClick={() => handleSaveSettings('account')}
-                disabled={loading}
-              >
-                {loading ? '🔄 Saving...' : '💾 Save Notification Settings'}
-              </button>
+              <div style={styles.settingGroup}>
+                <h3 style={styles.groupTitle}>Alert Types</h3>
+
+                <div style={styles.settingItem}>
+                  <div style={styles.settingInfo}>
+                    <div style={styles.settingName}>💸 Transaction Alerts</div>
+                    <div style={styles.settingDesc}>Get notified for every account transaction</div>
+                  </div>
+                  <label style={styles.toggle}>
+                    <input
+                      type="checkbox"
+                      checked={settings.transaction_alerts}
+                      onChange={() => handleToggle('transaction_alerts')}
+                      style={styles.toggleInput}
+                    />
+                    <span style={settings.transaction_alerts ? styles.toggleOn : styles.toggleOff}></span>
+                  </label>
+                </div>
+
+                <div style={styles.settingItem}>
+                  <div style={styles.settingInfo}>
+                    <div style={styles.settingName}>⚠️ Low Balance Alerts</div>
+                    <div style={styles.settingDesc}>Alert when your balance falls below threshold</div>
+                  </div>
+                  <label style={styles.toggle}>
+                    <input
+                      type="checkbox"
+                      checked={settings.low_balance_alerts}
+                      onChange={() => handleToggle('low_balance_alerts')}
+                      style={styles.toggleInput}
+                    />
+                    <span style={settings.low_balance_alerts ? styles.toggleOn : styles.toggleOff}></span>
+                  </label>
+                </div>
+
+                <div style={styles.settingItem}>
+                  <div style={styles.settingInfo}>
+                    <div style={styles.settingName}>Low Balance Threshold</div>
+                    <div style={styles.settingDesc}>Notify me when balance drops below this amount</div>
+                  </div>
+                  <div style={styles.inputGroup}>
+                    <span style={styles.currencySymbol}>$</span>
+                    <input
+                      type="number"
+                      style={styles.numberInput}
+                      value={settings.low_balance_threshold}
+                      onChange={(e) => handleNumberChange('low_balance_threshold', e.target.value)}
+                      min="0"
+                      step="10"
+                    />
+                  </div>
+                </div>
+
+                <div style={styles.settingItem}>
+                  <div style={styles.settingInfo}>
+                    <div style={styles.settingName}>Large Transaction Alert Amount</div>
+                    <div style={styles.settingDesc}>Alert for transactions exceeding this amount</div>
+                  </div>
+                  <div style={styles.inputGroup}>
+                    <span style={styles.currencySymbol}>$</span>
+                    <input
+                      type="number"
+                      style={styles.numberInput}
+                      value={settings.transaction_alert_amount}
+                      onChange={(e) => handleNumberChange('transaction_alert_amount', e.target.value)}
+                      min="0"
+                      step="100"
+                    />
+                  </div>
+                </div>
+
+                <div style={styles.settingItem}>
+                  <div style={styles.settingInfo}>
+                    <div style={styles.settingName}>🔐 Security Alerts</div>
+                    <div style={styles.settingDesc}>Notifications for security events and login attempts</div>
+                  </div>
+                  <label style={styles.toggle}>
+                    <input
+                      type="checkbox"
+                      checked={settings.security_alerts}
+                      onChange={() => handleToggle('security_alerts')}
+                      style={styles.toggleInput}
+                    />
+                    <span style={settings.security_alerts ? styles.toggleOn : styles.toggleOff}></span>
+                  </label>
+                </div>
+
+                <div style={styles.settingItem}>
+                  <div style={styles.settingInfo}>
+                    <div style={styles.settingName}>🔑 Login Notifications</div>
+                    <div style={styles.settingDesc}>Get notified when someone logs into your account</div>
+                  </div>
+                  <label style={styles.toggle}>
+                    <input
+                      type="checkbox"
+                      checked={settings.login_notifications}
+                      onChange={() => handleToggle('login_notifications')}
+                      style={styles.toggleInput}
+                    />
+                    <span style={settings.login_notifications ? styles.toggleOn : styles.toggleOff}></span>
+                  </label>
+                </div>
+
+                <div style={styles.settingItem}>
+                  <div style={styles.settingInfo}>
+                    <div style={styles.settingName}>📊 Monthly Statements</div>
+                    <div style={styles.settingDesc}>Receive monthly account statements</div>
+                  </div>
+                  <label style={styles.toggle}>
+                    <input
+                      type="checkbox"
+                      checked={settings.monthly_statements}
+                      onChange={() => handleToggle('monthly_statements')}
+                      style={styles.toggleInput}
+                    />
+                    <span style={settings.monthly_statements ? styles.toggleOn : styles.toggleOff}></span>
+                  </label>
+                </div>
+
+                <div style={styles.settingItem}>
+                  <div style={styles.settingInfo}>
+                    <div style={styles.settingName}>📣 Marketing Emails</div>
+                    <div style={styles.settingDesc}>Receive promotional offers and product updates</div>
+                  </div>
+                  <label style={styles.toggle}>
+                    <input
+                      type="checkbox"
+                      checked={settings.marketing_emails}
+                      onChange={() => handleToggle('marketing_emails')}
+                      style={styles.toggleInput}
+                    />
+                    <span style={settings.marketing_emails ? styles.toggleOn : styles.toggleOff}></span>
+                  </label>
+                </div>
+              </div>
             </div>
           )}
 
           {/* Security Tab */}
           {activeTab === 'security' && (
             <div style={styles.tabContent}>
-              <div style={styles.sectionTitle}>Security Settings</div>
+              <div style={styles.sectionTitle}>🔒 Security Settings</div>
+              <div style={styles.sectionDesc}>Protect your account with advanced security features</div>
 
               <div style={styles.settingGroup}>
-                <h3 style={styles.groupTitle}>Account Security</h3>
+                <h3 style={styles.groupTitle}>Authentication</h3>
 
                 <div style={styles.settingItem}>
                   <div style={styles.settingInfo}>
-                    <div style={styles.settingName}>Two-Factor Authentication</div>
-                    <div style={styles.settingDesc}>Add an extra layer of security to your account</div>
+                    <div style={styles.settingName}>🔐 Two-Factor Authentication (2FA)</div>
+                    <div style={styles.settingDesc}>Add an extra layer of security with 2FA</div>
                   </div>
                   <label style={styles.toggle}>
                     <input
                       type="checkbox"
-                      checked={securitySettings.two_factor_enabled}
-                      onChange={(e) => setSecuritySettings(prev => ({
-                        ...prev,
-                        two_factor_enabled: e.target.checked
-                      }))}
+                      checked={settings.two_factor_enabled}
+                      onChange={() => handleToggle('two_factor_enabled')}
                       style={styles.toggleInput}
                     />
-                    <span style={styles.toggleSlider}></span>
+                    <span style={settings.two_factor_enabled ? styles.toggleOn : styles.toggleOff}></span>
                   </label>
                 </div>
 
                 <div style={styles.settingItem}>
                   <div style={styles.settingInfo}>
-                    <div style={styles.settingName}>Biometric Login</div>
-                    <div style={styles.settingDesc}>Use fingerprint or face recognition</div>
+                    <div style={styles.settingName}>👆 Biometric Login</div>
+                    <div style={styles.settingDesc}>Use fingerprint or face recognition to log in</div>
                   </div>
                   <label style={styles.toggle}>
                     <input
                       type="checkbox"
-                      checked={securitySettings.biometric_login}
-                      onChange={(e) => setSecuritySettings(prev => ({
-                        ...prev,
-                        biometric_login: e.target.checked
-                      }))}
+                      checked={settings.biometric_login}
+                      onChange={() => handleToggle('biometric_login')}
                       style={styles.toggleInput}
                     />
-                    <span style={styles.toggleSlider}></span>
+                    <span style={settings.biometric_login ? styles.toggleOn : styles.toggleOff}></span>
                   </label>
                 </div>
 
                 <div style={styles.settingItem}>
                   <div style={styles.settingInfo}>
-                    <div style={styles.settingName}>Session Timeout</div>
-                    <div style={styles.settingDesc}>Automatically log out after inactivity</div>
+                    <div style={styles.settingName}>⏱️ Session Timeout</div>
+                    <div style={styles.settingDesc}>Auto-logout after period of inactivity</div>
                   </div>
                   <select
                     style={styles.select}
-                    value={securitySettings.session_timeout}
-                    onChange={(e) => setSecuritySettings(prev => ({
-                      ...prev,
-                      session_timeout: e.target.value
-                    }))}
+                    value={settings.session_timeout}
+                    onChange={(e) => handleNumberChange('session_timeout', e.target.value)}
                   >
                     <option value="15">15 minutes</option>
                     <option value="30">30 minutes</option>
                     <option value="60">1 hour</option>
                     <option value="120">2 hours</option>
+                    <option value="240">4 hours</option>
                   </select>
                 </div>
               </div>
 
-              <button
-                style={styles.saveButton}
-                onClick={() => handleSaveSettings('security')}
-                disabled={loading}
-              >
-                {loading ? '🔄 Saving...' : '🔒 Save Security Settings'}
-              </button>
+              <div style={styles.settingGroup}>
+                <h3 style={styles.groupTitle}>Account Management</h3>
+
+                <div style={styles.actionItem}>
+                  <div style={styles.actionInfo}>
+                    <div style={styles.actionName}>🔑 Change Password</div>
+                    <div style={styles.actionDesc}>Update your account password for better security</div>
+                  </div>
+                  <button 
+                    style={styles.actionButton}
+                    onClick={() => router.push('/security')}
+                  >
+                    Change
+                  </button>
+                </div>
+
+                <div style={styles.actionItem}>
+                  <div style={styles.actionInfo}>
+                    <div style={styles.actionName}>📱 Manage Devices</div>
+                    <div style={styles.actionDesc}>View and manage devices connected to your account</div>
+                  </div>
+                  <button style={styles.actionButton}>
+                    Manage
+                  </button>
+                </div>
+
+                <div style={styles.actionItem}>
+                  <div style={styles.actionInfo}>
+                    <div style={styles.actionName}>📜 Activity Log</div>
+                    <div style={styles.actionDesc}>Review recent account activity and login history</div>
+                  </div>
+                  <button style={styles.actionButton}>
+                    View Log
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Preferences Tab */}
+          {activeTab === 'preferences' && (
+            <div style={styles.tabContent}>
+              <div style={styles.sectionTitle}>🎨 Preferences</div>
+              <div style={styles.sectionDesc}>Customize your banking experience</div>
 
               <div style={styles.settingGroup}>
-                <h3 style={styles.groupTitle}>Account Access</h3>
+                <h3 style={styles.groupTitle}>Display & Language</h3>
+
                 <div style={styles.settingItem}>
                   <div style={styles.settingInfo}>
-                    <div style={styles.settingName}>Change Password</div>
-                    <div style={styles.settingDesc}>Update your account password</div>
+                    <div style={styles.settingName}>🌍 Preferred Language</div>
+                    <div style={styles.settingDesc}>Choose your preferred language</div>
                   </div>
-                  <button style={styles.securityButton}>Change Password</button>
+                  <select
+                    style={styles.select}
+                    value={settings.preferred_language}
+                    onChange={(e) => handleSelectChange('preferred_language', e.target.value)}
+                  >
+                    <option value="en">English</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="de">Deutsch</option>
+                    <option value="zh">中文</option>
+                    <option value="ja">日本語</option>
+                    <option value="ar">العربية</option>
+                  </select>
                 </div>
+
                 <div style={styles.settingItem}>
                   <div style={styles.settingInfo}>
-                    <div style={styles.settingName}>Multi-Factor Authentication (MFA)</div>
-                    <div style={styles.settingDesc}>Manage your MFA devices and settings</div>
+                    <div style={styles.settingName}>💰 Currency</div>
+                    <div style={styles.settingDesc}>Default currency for display</div>
                   </div>
-                  <button style={styles.securityButton}>Manage MFA</button>
+                  <select
+                    style={styles.select}
+                    value={settings.currency}
+                    onChange={(e) => handleSelectChange('currency', e.target.value)}
+                  >
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="EUR">EUR - Euro</option>
+                    <option value="GBP">GBP - British Pound</option>
+                    <option value="JPY">JPY - Japanese Yen</option>
+                    <option value="CAD">CAD - Canadian Dollar</option>
+                    <option value="AUD">AUD - Australian Dollar</option>
+                    <option value="CHF">CHF - Swiss Franc</option>
+                  </select>
+                </div>
+
+                <div style={styles.settingItem}>
+                  <div style={styles.settingInfo}>
+                    <div style={styles.settingName}>🎨 Theme</div>
+                    <div style={styles.settingDesc}>Choose your preferred interface theme</div>
+                  </div>
+                  <select
+                    style={styles.select}
+                    value={settings.theme}
+                    onChange={(e) => handleSelectChange('theme', e.target.value)}
+                  >
+                    <option value="light">Light Mode</option>
+                    <option value="dark">Dark Mode</option>
+                    <option value="auto">Auto (System Default)</option>
+                  </select>
                 </div>
               </div>
 
-              <button
-                style={styles.logoutButton}
-                onClick={() => { /* Handle logout */ }}
-              >
-                🚪 Log Out
-              </button>
+              <div style={styles.settingGroup}>
+                <h3 style={styles.groupTitle}>Statements & Documents</h3>
+
+                <div style={styles.settingItem}>
+                  <div style={styles.settingInfo}>
+                    <div style={styles.settingName}>📄 Statement Delivery</div>
+                    <div style={styles.settingDesc}>How would you like to receive statements?</div>
+                  </div>
+                  <select
+                    style={styles.select}
+                    value={settings.statement_delivery}
+                    onChange={(e) => handleSelectChange('statement_delivery', e.target.value)}
+                  >
+                    <option value="email">Email Only</option>
+                    <option value="mail">Physical Mail</option>
+                    <option value="both">Both Email & Mail</option>
+                    <option value="online">Online Only (No Delivery)</option>
+                  </select>
+                </div>
+
+                <div style={styles.settingItem}>
+                  <div style={styles.settingInfo}>
+                    <div style={styles.settingName}>💾 Auto-Save Forms</div>
+                    <div style={styles.settingDesc}>Automatically save form progress</div>
+                  </div>
+                  <label style={styles.toggle}>
+                    <input
+                      type="checkbox"
+                      checked={settings.auto_save_enabled}
+                      onChange={() => handleToggle('auto_save_enabled')}
+                      style={styles.toggleInput}
+                    />
+                    <span style={settings.auto_save_enabled ? styles.toggleOn : styles.toggleOff}></span>
+                  </label>
+                </div>
+              </div>
             </div>
           )}
 
           {/* Privacy Tab */}
           {activeTab === 'privacy' && (
             <div style={styles.tabContent}>
-              <div style={styles.sectionTitle}>Privacy Settings</div>
+              <div style={styles.sectionTitle}>🛡️ Privacy Settings</div>
+              <div style={styles.sectionDesc}>Control how your data is used and shared</div>
 
               <div style={styles.settingGroup}>
                 <h3 style={styles.groupTitle}>Data & Privacy</h3>
 
                 <div style={styles.settingItem}>
                   <div style={styles.settingInfo}>
-                    <div style={styles.settingName}>Data Sharing</div>
-                    <div style={styles.settingDesc}>Allow sharing anonymized data for service improvements</div>
+                    <div style={styles.settingName}>📊 Data Sharing</div>
+                    <div style={styles.settingDesc}>Share anonymized data to improve our services</div>
                   </div>
                   <label style={styles.toggle}>
                     <input
                       type="checkbox"
-                      checked={privacySettings.data_sharing}
-                      onChange={(e) => setPrivacySettings(prev => ({
-                        ...prev,
-                        data_sharing: e.target.checked
-                      }))}
+                      checked={settings.data_sharing}
+                      onChange={() => handleToggle('data_sharing')}
                       style={styles.toggleInput}
                     />
-                    <span style={styles.toggleSlider}></span>
+                    <span style={settings.data_sharing ? styles.toggleOn : styles.toggleOff}></span>
                   </label>
                 </div>
 
                 <div style={styles.settingItem}>
                   <div style={styles.settingInfo}>
-                    <div style={styles.settingName}>Analytics Tracking</div>
-                    <div style={styles.settingDesc}>Help us improve our services with usage analytics</div>
+                    <div style={styles.settingName}>📈 Analytics Tracking</div>
+                    <div style={styles.settingDesc}>Help us improve by tracking app usage</div>
                   </div>
                   <label style={styles.toggle}>
                     <input
                       type="checkbox"
-                      checked={privacySettings.analytics_tracking}
-                      onChange={(e) => setPrivacySettings(prev => ({
-                        ...prev,
-                        analytics_tracking: e.target.checked
-                      }))}
+                      checked={settings.analytics_tracking}
+                      onChange={() => handleToggle('analytics_tracking')}
                       style={styles.toggleInput}
                     />
-                    <span style={styles.toggleSlider}></span>
+                    <span style={settings.analytics_tracking ? styles.toggleOn : styles.toggleOff}></span>
+                  </label>
+                </div>
+
+                <div style={styles.settingItem}>
+                  <div style={styles.settingInfo}>
+                    <div style={styles.settingName}>🤝 Third-Party Sharing</div>
+                    <div style={styles.settingDesc}>Allow sharing data with trusted partners</div>
+                  </div>
+                  <label style={styles.toggle}>
+                    <input
+                      type="checkbox"
+                      checked={settings.third_party_sharing}
+                      onChange={() => handleToggle('third_party_sharing')}
+                      style={styles.toggleInput}
+                    />
+                    <span style={settings.third_party_sharing ? styles.toggleOn : styles.toggleOff}></span>
                   </label>
                 </div>
               </div>
 
-              <button
-                style={styles.saveButton}
-                onClick={() => handleSaveSettings('privacy')}
-                disabled={loading}
-              >
-                {loading ? '🔄 Saving...' : '🛡️ Save Privacy Settings'}
-              </button>
+              <div style={styles.infoBox}>
+                <div style={styles.infoIcon}>ℹ️</div>
+                <div>
+                  <div style={styles.infoTitle}>Your Privacy Matters</div>
+                  <div style={styles.infoText}>
+                    We take your privacy seriously. Your financial data is never sold to third parties. 
+                    Analytics help us improve our services, and all data is anonymized.
+                  </div>
+                  <Link href="/privacy-policy" style={styles.infoLink}>
+                    Read our Privacy Policy →
+                  </Link>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Account Linking Tab */}
-          {activeTab === 'linking' && (
+          {/* Advanced Tab */}
+          {activeTab === 'advanced' && (
             <div style={styles.tabContent}>
-              <div style={styles.sectionTitle}>Link External Accounts</div>
+              <div style={styles.sectionTitle}>⚡ Advanced Settings</div>
+              <div style={styles.sectionDesc}>Advanced options for power users</div>
 
-              <div style={styles.linkingIntro}>
-                <div style={styles.introCard}>
-                  <div style={styles.introIcon}>🔗</div>
-                  <div>
-                    <h3 style={styles.introTitle}>Connect Your Financial Accounts</h3>
-                    <p style={styles.introDesc}>
-                      Securely link your external bank accounts, credit cards, and investment accounts
-                      to manage all your finances in one place. We use bank-level security to protect your information.
-                    </p>
+              <div style={styles.settingGroup}>
+                <h3 style={styles.groupTitle}>Account Actions</h3>
+
+                <div style={styles.actionItem}>
+                  <div style={styles.actionInfo}>
+                    <div style={styles.actionName}>📥 Export Account Data</div>
+                    <div style={styles.actionDesc}>Download all your account data and transaction history</div>
                   </div>
+                  <button style={styles.actionButton}>
+                    Export
+                  </button>
+                </div>
+
+                <div style={styles.actionItem}>
+                  <div style={styles.actionInfo}>
+                    <div style={styles.actionName}>🔗 Connect External Accounts</div>
+                    <div style={styles.actionDesc}>Link accounts from other banks using Plaid</div>
+                  </div>
+                  <button 
+                    style={styles.actionButton}
+                    onClick={() => router.push('/link-account')}
+                  >
+                    Connect
+                  </button>
+                </div>
+
+                <div style={styles.actionItem}>
+                  <div style={styles.actionInfo}>
+                    <div style={styles.actionName}>🔄 Reset All Settings</div>
+                    <div style={styles.actionDesc}>Restore all settings to default values</div>
+                  </div>
+                  <button style={{...styles.actionButton, backgroundColor: '#f59e0b'}}>
+                    Reset
+                  </button>
                 </div>
               </div>
 
-              <div style={styles.serviceCategory}>
-                <h3 style={styles.categoryTitle}>🏦 Bank Accounts</h3>
-                <div style={styles.servicesList}>
-                  <div style={styles.linkingItem}>
-                    <div style={styles.serviceIcon}>🏛️</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Connect Checking Account</div>
-                      <div style={styles.serviceDesc}>Link external checking accounts for transfers and monitoring</div>
+              <div style={styles.dangerZone}>
+                <h3 style={styles.dangerTitle}>⚠️ Danger Zone</h3>
+                
+                <div style={styles.dangerItem}>
+                  <div style={styles.dangerInfo}>
+                    <div style={styles.dangerName}>Deactivate Account</div>
+                    <div style={styles.dangerDesc}>
+                      Temporarily disable your account. You can reactivate it anytime.
                     </div>
-                    <button style={styles.linkButton}>+ Link Account</button>
                   </div>
-
-                  <div style={styles.linkingItem}>
-                    <div style={styles.serviceIcon}>💰</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Connect Savings Account</div>
-                      <div style={styles.serviceDesc}>Add savings accounts from other banks to track your total savings</div>
-                    </div>
-                    <button style={styles.linkButton}>+ Link Account</button>
-                  </div>
-
-                  <div style={styles.linkingItem}>
-                    <div style={styles.serviceIcon}>🌐</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>International Accounts</div>
-                      <div style={styles.serviceDesc}>Connect accounts from international banks and manage currency exchange</div>
-                    </div>
-                    <button style={styles.linkButton}>+ Link Account</button>
-                  </div>
+                  <button style={styles.dangerButton}>
+                    Deactivate
+                  </button>
                 </div>
-              </div>
 
-              <div style={styles.serviceCategory}>
-                <h3 style={styles.categoryTitle}>💳 Credit Cards & Loans</h3>
-                <div style={styles.servicesList}>
-                  <div style={styles.linkingItem}>
-                    <div style={styles.serviceIcon}>💳</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Credit Cards</div>
-                      <div style={styles.serviceDesc}>Track balances and payments across all your credit cards</div>
+                <div style={styles.dangerItem}>
+                  <div style={styles.dangerInfo}>
+                    <div style={styles.dangerName}>Close Account</div>
+                    <div style={styles.dangerDesc}>
+                      Permanently close your account. This action cannot be undone.
                     </div>
-                    <button style={styles.linkButton}>+ Link Card</button>
                   </div>
-
-                  <div style={styles.linkingItem}>
-                    <div style={styles.serviceIcon}>🏠</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Mortgage & Home Loans</div>
-                      <div style={styles.serviceDesc}>Monitor mortgage balances and payment schedules</div>
-                    </div>
-                    <button style={styles.linkButton}>+ Link Loan</button>
-                  </div>
-
-                  <div style={styles.linkingItem}>
-                    <div style={styles.serviceIcon}>🚗</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Auto Loans</div>
-                      <div style={styles.serviceDesc}>Track car loan payments and remaining balances</div>
-                    </div>
-                    <button style={styles.linkButton}>+ Link Loan</button>
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.serviceCategory}>
-                <h3 style={styles.categoryTitle}>📈 Investment Accounts</h3>
-                <div style={styles.servicesList}>
-                  <div style={styles.linkingItem}>
-                    <div style={styles.serviceIcon}>📊</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Brokerage Accounts</div>
-                      <div style={styles.serviceDesc}>Connect investment accounts to track portfolio performance</div>
-                    </div>
-                    <button style={styles.linkButton}>+ Link Account</button>
-                  </div>
-
-                  <div style={styles.linkingItem}>
-                    <div style={styles.serviceIcon}>🏖️</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Retirement Accounts (401k, IRA)</div>
-                      <div style={styles.serviceDesc}>Monitor retirement savings and contribution limits</div>
-                    </div>
-                    <button style={styles.linkButton}>+ Link Account</button>
-                  </div>
-
-                  <div style={styles.linkingItem}>
-                    <div style={styles.serviceIcon}>₿</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Cryptocurrency Wallets</div>
-                      <div style={styles.serviceDesc}>Track crypto holdings across multiple exchanges and wallets</div>
-                    </div>
-                    <button style={styles.linkButton}>+ Link Wallet</button>
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.linkingSecurityInfo}>
-                <div style={styles.securityCard}>
-                  <div style={styles.securityIcon}>🔒</div>
-                  <div>
-                    <h4 style={styles.securityTitle}>Your Security is Our Priority</h4>
-                    <ul style={styles.securityList}>
-                      <li>We use 256-bit SSL encryption to protect your data</li>
-                      <li>We never store your login credentials</li>
-                      <li>All connections are read-only for your protection</li>
-                      <li>You can disconnect accounts at any time</li>
-                    </ul>
-                  </div>
+                  <button style={styles.dangerButton}>
+                    Close Account
+                  </button>
                 </div>
               </div>
             </div>
           )}
-
-          {/* Services Tab */}
-          {activeTab === 'services' && (
-            <div style={styles.tabContent}>
-              <div style={styles.sectionTitle}>Banking Services & Account Management</div>
-
-              <div style={styles.serviceCategory}>
-                <h3 style={styles.categoryTitle}>🏦 Account Management</h3>
-                <div style={styles.servicesList}>
-                  <Link href="/account-details" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>📊</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Account Overview</div>
-                      <div style={styles.serviceDesc}>View all account balances and details</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-
-                  <Link href="/account-types" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>🔗</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Link New Account</div>
-                      <div style={styles.serviceDesc}>Connect external bank accounts and credit cards</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-
-                  <Link href="/transfer" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>💸</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Transfer Limits</div>
-                      <div style={styles.serviceDesc}>Manage daily and monthly transfer limits</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-
-                  <div style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>📋</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Account Statements</div>
-                      <div style={styles.serviceDesc}>Download monthly and annual statements</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.serviceCategory}>
-                <h3 style={styles.categoryTitle}>💳 Card & Payment Services</h3>
-                <div style={styles.servicesList}>
-                  <Link href="/cards" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>💳</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Card Management</div>
-                      <div style={styles.serviceDesc}>Manage debit and credit cards, set limits</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-
-                  <Link href="/zelle-settings" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>⚡</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Zelle Settings</div>
-                      <div style={styles.serviceDesc}>Manage Zelle contacts and transaction limits</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-
-                  <Link href="/bill-pay" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>🧾</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Bill Pay Setup</div>
-                      <div style={styles.serviceDesc}>Manage automatic bill payments and payees</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-
-                  <div style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>📱</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Mobile Wallet</div>
-                      <div style={styles.serviceDesc}>Apple Pay, Google Pay, Samsung Pay settings</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.serviceCategory}>
-                <h3 style={styles.categoryTitle}>🔐 Security & Identity</h3>
-                <div style={styles.servicesList}>
-                  <Link href="/security" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>🔐</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Advanced Security</div>
-                      <div style={styles.serviceDesc}>Multi-factor authentication and device management</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-
-                  <Link href="/profile" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>👤</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Personal Information</div>
-                      <div style={styles.serviceDesc}>Update address, phone, email, and tax information</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-
-                  <div style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>🆔</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Identity Verification</div>
-                      <div style={styles.serviceDesc}>Update ID documents and beneficiary information</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </div>
-
-                  <div style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>🔒</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Login & Password</div>
-                      <div style={styles.serviceDesc}>Change password and security questions</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.serviceCategory}>
-                <h3 style={styles.categoryTitle}>📈 Investment & Loans</h3>
-                <div style={styles.servicesList}>
-                  <Link href="/investments" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>📈</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Investment Accounts</div>
-                      <div style={styles.serviceDesc}>Manage portfolio, risk tolerance, and automatic investing</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-
-                  <Link href="/loans" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>🏠</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Loan Management</div>
-                      <div style={styles.serviceDesc}>View loan details, make payments, and apply for new loans</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-
-                  <div style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>💰</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Savings Goals</div>
-                      <div style={styles.serviceDesc}>Set up and track savings goals and automatic transfers</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </div>
-
-                  <Link href="/crypto" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>₿</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Cryptocurrency</div>
-                      <div style={styles.serviceDesc}>Manage digital asset trading and storage preferences</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-                </div>
-              </div>
-
-              <div style={styles.serviceCategory}>
-                <h3 style={styles.categoryTitle}>📞 Communication & Support</h3>
-                <div style={styles.servicesList}>
-                  <Link href="/notifications" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>🔔</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Notification Center</div>
-                      <div style={styles.serviceDesc}>View and manage all alerts and messages</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-
-                  <Link href="/messages" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>💬</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Secure Messages</div>
-                      <div style={styles.serviceDesc}>Communicate securely with your banking team</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-
-                  <div style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>📧</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Email Preferences</div>
-                      <div style={styles.serviceDesc}>Manage marketing emails and communication preferences</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </div>
-
-                  <Link href="/support" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>🎧</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Customer Support</div>
-                      <div style={styles.serviceDesc}>Contact support, schedule appointments, view case history</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-                </div>
-              </div>
-
-              <div style={styles.serviceCategory}>
-                <h3 style={styles.categoryTitle}>📄 Documents & Legal</h3>
-                <div style={styles.servicesList}>
-                  <Link href="/forms-documents" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>📋</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Forms & Documents</div>
-                      <div style={styles.serviceDesc}>Access tax forms, account agreements, and disclosures</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-
-                  <Link href="/privacy" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>🛡️</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Privacy Controls</div>
-                      <div style={styles.serviceDesc}>Manage data sharing and privacy preferences</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-
-                  <Link href="/compliance" style={styles.serviceItem}>
-                    <div style={styles.serviceIcon}>⚖️</div>
-                    <div style={styles.serviceInfo}>
-                      <div style={styles.serviceName}>Compliance & Reporting</div>
-                      <div style={styles.serviceDesc}>Tax reporting, regulatory compliance, and legal notices</div>
-                    </div>
-                    <div style={styles.serviceArrow}>→</div>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div style={styles.helpSection}>
-            <h3 style={styles.helpTitle}>Need Help?</h3>
-            <div style={styles.helpLinks}>
-              <Link href="/support" style={styles.helpLink}>💬 Contact Support</Link>
-              <Link href="/faq" style={styles.helpLink}>❓ View FAQ</Link>
-              <a href="tel:+1-800-OAKLINE" style={styles.helpLink}>📞 Call: 1-800-OAKLINE</a>
-            </div>
-          </div>
         </div>
+
+        <style jsx>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     </>
   );
@@ -886,287 +966,371 @@ const styles = {
   container: {
     minHeight: '100vh',
     backgroundColor: '#f8fafc',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    paddingBottom: '100px'
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
   },
   header: {
-    backgroundColor: '#1e40af',
+    background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
     color: 'white',
-    padding: '1rem',
+    padding: '20px',
+    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+    alignItems: 'center'
   },
   logoContainer: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
+    gap: '12px',
     textDecoration: 'none',
     color: 'white'
   },
   logoPlaceholder: {
-    fontSize: '1.5rem'
+    fontSize: '28px'
   },
   logoText: {
-    fontSize: '1.25rem',
+    fontSize: '22px',
     fontWeight: 'bold'
   },
   headerInfo: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.75rem'
+    gap: '15px'
   },
   backButton: {
-    padding: '0.4rem 0.8rem',
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    background: 'rgba(255,255,255,0.2)',
+    border: 'none',
     color: 'white',
+    padding: '10px 20px',
+    borderRadius: '8px',
+    fontSize: '14px',
+    cursor: 'pointer',
     textDecoration: 'none',
-    borderRadius: '6px',
-    fontSize: '0.8rem'
+    display: 'inline-block'
   },
   content: {
-    padding: '1rem',
-    maxWidth: '800px',
-    margin: '0 auto'
+    maxWidth: '900px',
+    margin: '0 auto',
+    padding: '30px 20px'
   },
   titleSection: {
-    marginBottom: '1.5rem'
+    marginBottom: '30px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start'
   },
   settingsHeader: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1rem',
-    backgroundColor: 'white',
-    padding: '1.5rem',
-    borderRadius: '16px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+    gap: '20px'
   },
   settingsIcon: {
-    fontSize: '2.5rem'
+    fontSize: '48px'
   },
   title: {
-    fontSize: '1.5rem',
+    fontSize: '32px',
     fontWeight: 'bold',
     color: '#1e293b',
-    margin: 0
+    margin: '0 0 5px 0'
   },
   subtitle: {
-    fontSize: '0.9rem',
+    fontSize: '16px',
     color: '#64748b',
     margin: 0
   },
+  saveStatus: {
+    padding: '10px 20px',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '600',
+    marginTop: '10px'
+  },
   tabContainer: {
     backgroundColor: 'white',
-    borderRadius: '16px',
-    padding: '0.5rem',
-    marginBottom: '1rem',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+    borderRadius: '12px',
+    padding: '10px',
+    marginBottom: '20px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+    border: '1px solid #e2e8f0'
   },
   tabs: {
     display: 'flex',
-    gap: '0.5rem',
+    gap: '8px',
     flexWrap: 'wrap'
   },
   tab: {
     flex: 1,
-    padding: '0.75rem',
-    backgroundColor: 'transparent',
+    minWidth: '120px',
+    padding: '12px 16px',
     border: 'none',
-    borderRadius: '12px',
-    fontSize: '0.8rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
+    backgroundColor: 'transparent',
     color: '#64748b',
-    minWidth: '120px'
+    fontSize: '14px',
+    fontWeight: '500',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    whiteSpace: 'nowrap'
   },
   activeTab: {
-    backgroundColor: '#1e40af',
-    color: 'white'
+    backgroundColor: '#3b82f6',
+    color: 'white',
+    fontWeight: '600'
   },
   tabContent: {
     backgroundColor: 'white',
-    borderRadius: '16px',
-    padding: '1.5rem',
-    marginBottom: '1rem',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+    borderRadius: '12px',
+    padding: '30px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+    border: '1px solid #e2e8f0'
   },
   sectionTitle: {
-    fontSize: '1.1rem',
-    fontWeight: '600',
+    fontSize: '24px',
+    fontWeight: 'bold',
     color: '#1e293b',
-    marginBottom: '1.5rem'
+    marginBottom: '8px'
+  },
+  sectionDesc: {
+    fontSize: '14px',
+    color: '#64748b',
+    marginBottom: '30px'
   },
   settingGroup: {
-    marginBottom: '2rem'
+    marginBottom: '30px',
+    paddingBottom: '30px',
+    borderBottom: '1px solid #e2e8f0'
   },
   groupTitle: {
-    fontSize: '1rem',
+    fontSize: '18px',
     fontWeight: '600',
-    color: '#374151',
-    marginBottom: '1rem',
-    paddingBottom: '0.5rem',
-    borderBottom: '1px solid #e5e7eb'
+    color: '#1e293b',
+    marginBottom: '20px'
   },
   settingItem: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '1rem',
-    backgroundColor: '#f8fafc',
-    borderRadius: '8px',
-    marginBottom: '0.75rem',
-    border: '1px solid #e2e8f0'
+    padding: '20px 0',
+    borderBottom: '1px solid #f1f5f9'
   },
   settingInfo: {
-    flex: 1
+    flex: 1,
+    paddingRight: '20px'
   },
   settingName: {
-    fontSize: '0.95rem',
+    fontSize: '16px',
     fontWeight: '600',
     color: '#1e293b',
-    marginBottom: '0.25rem'
+    marginBottom: '5px'
   },
   settingDesc: {
-    fontSize: '0.8rem',
+    fontSize: '14px',
     color: '#64748b',
-    lineHeight: '1.4'
+    lineHeight: '1.5'
   },
   toggle: {
     position: 'relative',
     display: 'inline-block',
-    width: '50px',
-    height: '24px'
+    width: '56px',
+    height: '28px',
+    cursor: 'pointer'
   },
   toggleInput: {
     opacity: 0,
     width: 0,
     height: 0
   },
-  toggleSlider: {
+  toggleOff: {
     position: 'absolute',
     cursor: 'pointer',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#ccc',
-    transition: '0.4s',
-    borderRadius: '24px',
-    '&:before': {
+    backgroundColor: '#cbd5e0',
+    transition: '0.3s',
+    borderRadius: '28px',
+    '::before': {
       position: 'absolute',
       content: '""',
-      height: '16px',
-      width: '16px',
+      height: '20px',
+      width: '20px',
       left: '4px',
       bottom: '4px',
       backgroundColor: 'white',
-      transition: '0.4s',
+      transition: '0.3s',
+      borderRadius: '50%'
+    }
+  },
+  toggleOn: {
+    position: 'absolute',
+    cursor: 'pointer',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#10b981',
+    transition: '0.3s',
+    borderRadius: '28px',
+    '::before': {
+      position: 'absolute',
+      content: '""',
+      height: '20px',
+      width: '20px',
+      left: '32px',
+      bottom: '4px',
+      backgroundColor: 'white',
+      transition: '0.3s',
       borderRadius: '50%'
     }
   },
   select: {
-    padding: '0.5rem',
-    borderRadius: '6px',
-    border: '1px solid #d1d5db',
+    minWidth: '200px',
+    padding: '10px 15px',
+    border: '2px solid #e2e8f0',
+    borderRadius: '8px',
+    fontSize: '14px',
+    color: '#1e293b',
     backgroundColor: 'white',
-    fontSize: '0.9rem'
+    cursor: 'pointer',
+    outline: 'none',
+    transition: 'border-color 0.2s'
   },
-  saveButton: {
-    width: '100%',
-    padding: '1rem',
-    backgroundColor: '#1e40af',
+  inputGroup: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    backgroundColor: '#f8fafc',
+    border: '2px solid #e2e8f0',
+    borderRadius: '8px',
+    padding: '0 15px'
+  },
+  currencySymbol: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#64748b'
+  },
+  numberInput: {
+    width: '120px',
+    padding: '10px 5px',
+    border: 'none',
+    fontSize: '14px',
+    color: '#1e293b',
+    backgroundColor: 'transparent',
+    outline: 'none'
+  },
+  actionItem: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '20px',
+    backgroundColor: '#f8fafc',
+    borderRadius: '12px',
+    marginBottom: '15px',
+    border: '1px solid #e2e8f0'
+  },
+  actionInfo: {
+    flex: 1,
+    paddingRight: '20px'
+  },
+  actionName: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: '5px'
+  },
+  actionDesc: {
+    fontSize: '14px',
+    color: '#64748b'
+  },
+  actionButton: {
+    padding: '10px 24px',
+    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
     color: 'white',
     border: 'none',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    boxShadow: '0 2px 6px rgba(59, 130, 246, 0.3)'
+  },
+  infoBox: {
+    display: 'flex',
+    gap: '15px',
+    padding: '20px',
+    backgroundColor: '#eff6ff',
     borderRadius: '12px',
-    fontSize: '1rem',
+    border: '1px solid #bfdbfe',
+    marginTop: '30px'
+  },
+  infoIcon: {
+    fontSize: '24px'
+  },
+  infoTitle: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#1e40af',
+    marginBottom: '8px'
+  },
+  infoText: {
+    fontSize: '14px',
+    color: '#1e40af',
+    lineHeight: '1.6',
+    marginBottom: '10px'
+  },
+  infoLink: {
+    fontSize: '14px',
+    color: '#2563eb',
+    fontWeight: '600',
+    textDecoration: 'none'
+  },
+  dangerZone: {
+    marginTop: '40px',
+    padding: '25px',
+    backgroundColor: '#fef2f2',
+    borderRadius: '12px',
+    border: '2px solid #fecaca'
+  },
+  dangerTitle: {
+    fontSize: '18px',
+    fontWeight: '600',
+    color: '#dc2626',
+    marginBottom: '20px'
+  },
+  dangerItem: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '20px',
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    marginBottom: '15px',
+    border: '1px solid #fecaca'
+  },
+  dangerInfo: {
+    flex: 1,
+    paddingRight: '20px'
+  },
+  dangerName: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#dc2626',
+    marginBottom: '5px'
+  },
+  dangerDesc: {
+    fontSize: '14px',
+    color: '#991b1b'
+  },
+  dangerButton: {
+    padding: '10px 24px',
+    backgroundColor: '#dc2626',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.2s'
-  },
-  serviceCategory: {
-    marginBottom: '2rem'
-  },
-  categoryTitle: {
-    fontSize: '1.1rem',
-    fontWeight: '700',
-    color: '#1e40af',
-    marginBottom: '1rem',
-    paddingBottom: '0.5rem',
-    borderBottom: '2px solid #e2e8f0',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem'
-  },
-  servicesList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.75rem'
-  },
-  serviceItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-    padding: '1rem',
-    backgroundColor: '#f8fafc',
-    borderRadius: '12px',
-    border: '1px solid #e2e8f0',
-    textDecoration: 'none',
-    transition: 'all 0.2s'
-  },
-  serviceIcon: {
-    fontSize: '1.5rem'
-  },
-  serviceInfo: {
-    flex: 1
-  },
-  serviceName: {
-    fontSize: '1rem',
-    fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: '0.25rem'
-  },
-  serviceDesc: {
-    fontSize: '0.8rem',
-    color: '#64748b'
-  },
-  serviceArrow: {
-    fontSize: '1.2rem',
-    color: '#94a3b8'
-  },
-  helpSection: {
-    backgroundColor: 'white',
-    padding: '1.5rem',
-    borderRadius: '12px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-    marginTop: '2rem'
-  },
-  helpTitle: {
-    color: '#1e40af',
-    marginBottom: '1rem',
-    fontSize: '1rem'
-  },
-  helpLinks: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.5rem'
-  },
-  helpLink: {
-    color: '#64748b',
-    textDecoration: 'none',
-    fontSize: '0.9rem',
-    fontWeight: '500',
-    padding: '0.5rem',
-    borderRadius: '6px',
-    transition: 'all 0.2s'
-  },
-  message: {
-    padding: '1rem',
-    borderRadius: '8px',
-    border: '2px solid',
-    marginBottom: '1rem',
-    fontSize: '0.9rem'
   },
   loadingContainer: {
     display: 'flex',
@@ -1177,158 +1341,75 @@ const styles = {
     backgroundColor: '#f8fafc'
   },
   spinner: {
-    width: '32px',
-    height: '32px',
-    border: '3px solid #e2e8f0',
-    borderTop: '3px solid #1e40af',
+    width: '50px',
+    height: '50px',
+    border: '5px solid #e2e8f0',
+    borderTop: '5px solid #3b82f6',
     borderRadius: '50%',
-    animation: 'spin 1s linear infinite'
+    animation: 'spin 1s linear infinite',
+    marginBottom: '20px'
   },
   loadingText: {
-    marginTop: '1rem',
-    color: '#64748b',
-    fontSize: '1rem'
+    fontSize: '16px',
+    color: '#64748b'
   },
   loginPrompt: {
     textAlign: 'center',
-    padding: '2rem 1rem',
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    margin: '2rem auto',
-    maxWidth: '400px'
+    padding: '60px 20px'
   },
   loginTitle: {
-    fontSize: '1.5rem',
-    fontWeight: '600',
+    fontSize: '28px',
+    fontWeight: 'bold',
     color: '#1e293b',
-    margin: '0 0 1rem 0'
+    marginBottom: '10px'
   },
   loginMessage: {
+    fontSize: '16px',
     color: '#64748b',
-    margin: '0 0 1.5rem 0',
-    fontSize: '1rem'
+    marginBottom: '30px'
   },
   loginButton: {
     display: 'inline-block',
-    padding: '0.75rem 1.5rem',
-    backgroundColor: '#1e40af',
+    padding: '12px 32px',
+    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
     color: 'white',
     textDecoration: 'none',
-    borderRadius: '8px',
-    fontWeight: '500'
+    borderRadius: '10px',
+    fontSize: '16px',
+    fontWeight: '600'
   },
-  linkingIntro: {
-    marginBottom: '2rem'
-  },
-  introCard: {
+  statusArea: {
     display: 'flex',
-    alignItems: 'flex-start',
-    gap: '1rem',
-    backgroundColor: '#f0f9ff',
-    padding: '1.5rem',
-    borderRadius: '12px',
-    border: '2px solid #0ea5e9'
+    flexDirection: 'column',
+    gap: '10px',
+    alignItems: 'flex-end'
   },
-  introIcon: {
-    fontSize: '2rem',
-    flexShrink: 0
-  },
-  introTitle: {
-    fontSize: '1.2rem',
-    fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: '0.5rem'
-  },
-  introDesc: {
-    fontSize: '0.95rem',
-    color: '#64748b',
-    lineHeight: '1.5',
-    margin: 0
-  },
-  linkingItem: {
+  pendingButtons: {
     display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-    padding: '1rem',
-    backgroundColor: '#f8fafc',
-    borderRadius: '12px',
-    border: '1px solid #e2e8f0',
-    transition: 'all 0.2s'
+    gap: '10px'
   },
-  linkButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: '#059669',
+  savePendingButton: {
+    padding: '10px 20px',
+    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
     color: 'white',
     border: 'none',
     borderRadius: '8px',
-    fontSize: '0.85rem',
+    fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.2s',
-    flexShrink: 0
+    boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)'
   },
-  linkingSecurityInfo: {
-    marginTop: '2rem'
-  },
-  securityCard: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '1rem',
-    backgroundColor: '#fefce8',
-    padding: '1.5rem',
-    borderRadius: '12px',
-    border: '2px solid #fbbf24'
-  },
-  securityIcon: {
-    fontSize: '1.5rem',
-    flexShrink: 0
-  },
-  securityTitle: {
-    fontSize: '1rem',
-    fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: '0.75rem'
-  },
-  securityList: {
-    fontSize: '0.9rem',
-    color: '#64748b',
-    lineHeight: '1.6',
-    margin: 0,
-    paddingLeft: '1.2rem'
-  },
-  securityButton: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    padding: '1rem',
-    background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
-    backgroundColor: '#1e40af',
-    color: '#ffffff',
-    border: 'none',
-    borderRadius: '12px',
-    fontSize: '0.95rem',
-    fontWeight: '700',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    boxShadow: '0 6px 20px rgba(26, 62, 111, 0.4)',
-    minHeight: '48px'
-  },
-  logoutButton: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    padding: '1rem',
-    background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+  discardButton: {
+    padding: '10px 20px',
+    backgroundColor: '#ef4444',
     color: 'white',
     border: 'none',
-    borderRadius: '12px',
-    fontSize: '0.95rem',
-    fontWeight: '700',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '600',
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    boxShadow: '0 6px 20px rgba(220, 38, 38, 0.4)'
+    transition: 'all 0.2s',
+    boxShadow: '0 2px 6px rgba(239, 68, 68, 0.3)'
   }
 };
