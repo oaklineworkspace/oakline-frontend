@@ -4945,7 +4945,7 @@ const styles = {
   },
   facilityFeatureTitle: {
     fontSize: '1.1rem',
-    fontWeight: '700,
+    fontWeight: '700',
     color: '#1e293b',
     marginBottom: '0.5rem'
   },
