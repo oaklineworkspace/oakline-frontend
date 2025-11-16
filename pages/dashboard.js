@@ -451,6 +451,7 @@ function DashboardContent() {
     if (transaction.type === 'account_opening_deposit' || transaction.transaction_type === 'crypto_deposit') {
       try {
         let depositDetails = null;
+        let walletAddress = transaction.wallet_address; // Start with what we have
 
         if (transaction.type === 'account_opening_deposit') {
           const { data, error } = await supabase
@@ -461,10 +462,6 @@ function DashboardContent() {
                 crypto_type,
                 symbol,
                 network_type
-              ),
-              crypto_wallets:assigned_wallet_id (
-                wallet_address,
-                memo
               )
             `)
             .eq('id', transaction.id)
@@ -472,11 +469,26 @@ function DashboardContent() {
 
           if (!error && data) {
             depositDetails = data;
-            // Ensure wallet_address is available at top level from multiple sources
-            if (!depositDetails.wallet_address) {
-              depositDetails.wallet_address = depositDetails.crypto_wallets?.wallet_address || 
-                                              depositDetails.metadata?.wallet_address || 
-                                              null;
+            
+            // Try to get wallet address from assigned_wallet_id if available
+            if (data.assigned_wallet_id) {
+              const { data: walletData } = await supabase
+                .from('admin_assigned_wallets')
+                .select('wallet_address, memo')
+                .eq('id', data.assigned_wallet_id)
+                .single();
+              
+              if (walletData?.wallet_address) {
+                walletAddress = walletData.wallet_address;
+                depositDetails.wallet_address = walletData.wallet_address;
+                depositDetails.memo = walletData.memo;
+              }
+            }
+            
+            // Fallback to metadata if wallet address still not found
+            if (!walletAddress && data.metadata?.wallet_address) {
+              walletAddress = data.metadata.wallet_address;
+              depositDetails.wallet_address = data.metadata.wallet_address;
             }
           }
         } else if (transaction.transaction_type === 'crypto_deposit') {
@@ -488,10 +500,6 @@ function DashboardContent() {
                 crypto_type,
                 symbol,
                 network_type
-              ),
-              admin_assigned_wallets:assigned_wallet_id (
-                wallet_address,
-                memo
               )
             `)
             .eq('id', transaction.id)
@@ -499,11 +507,32 @@ function DashboardContent() {
 
           if (!error && data) {
             depositDetails = data;
-            // Ensure wallet_address is available at top level from multiple sources
-            if (!depositDetails.wallet_address) {
-              depositDetails.wallet_address = depositDetails.admin_assigned_wallets?.wallet_address || 
-                                              depositDetails.metadata?.wallet_address || 
-                                              null;
+            
+            // Try to get wallet address from assigned_wallet_id if available
+            if (data.assigned_wallet_id) {
+              const { data: walletData } = await supabase
+                .from('admin_assigned_wallets')
+                .select('wallet_address, memo')
+                .eq('id', data.assigned_wallet_id)
+                .single();
+              
+              if (walletData?.wallet_address) {
+                walletAddress = walletData.wallet_address;
+                depositDetails.wallet_address = walletData.wallet_address;
+                depositDetails.memo = walletData.memo;
+              }
+            }
+            
+            // Check if wallet_address is stored directly in crypto_deposits table
+            if (!walletAddress && data.wallet_address) {
+              walletAddress = data.wallet_address;
+              depositDetails.wallet_address = data.wallet_address;
+            }
+            
+            // Fallback to metadata if wallet address still not found
+            if (!walletAddress && data.metadata?.wallet_address) {
+              walletAddress = data.metadata.wallet_address;
+              depositDetails.wallet_address = data.metadata.wallet_address;
             }
           }
         }
@@ -511,8 +540,7 @@ function DashboardContent() {
         setSelectedTransaction({
           ...transaction,
           depositDetails,
-          // Also set wallet_address at transaction level for easier access
-          wallet_address: depositDetails?.wallet_address || transaction.wallet_address
+          wallet_address: walletAddress || transaction.wallet_address
         });
       } catch (error) {
         console.error('Error fetching transaction details:', error);
