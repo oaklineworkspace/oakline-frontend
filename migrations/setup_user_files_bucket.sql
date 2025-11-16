@@ -17,7 +17,6 @@ TO authenticated
 WITH CHECK (
   bucket_id = 'user-files' 
   AND (storage.foldername(name))[1] = 'profile-pictures'
-  AND auth.uid()::text = (regexp_match(name, 'profile-pictures/([^-]+)-'))[1]
 );
 
 -- Allow public read access to profile pictures (since they're displayed on profiles)
@@ -33,7 +32,6 @@ TO authenticated
 USING (
   bucket_id = 'user-files' 
   AND (storage.foldername(name))[1] = 'profile-pictures'
-  AND auth.uid()::text = (regexp_match(name, 'profile-pictures/([^-]+)-'))[1]
 );
 
 -- Allow users to delete their own profile pictures
@@ -43,5 +41,4 @@ TO authenticated
 USING (
   bucket_id = 'user-files' 
   AND (storage.foldername(name))[1] = 'profile-pictures'
-  AND auth.uid()::text = (regexp_match(name, 'profile-pictures/([^-]+)-'))[1]
 );

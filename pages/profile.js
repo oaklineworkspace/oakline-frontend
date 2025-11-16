@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
 
@@ -11,6 +11,11 @@ export default function Profile() {
   const [message, setMessage] = useState('');
   const [profilePicture, setProfilePicture] = useState(null);
   const [uploadingPicture, setUploadingPicture] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [imageSrc, setImageSrc] = useState(null);
+  const [croppedImage, setCroppedImage] = useState(null);
+  const canvasRef = useRef(null);
+  const imageRef = useRef(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -116,10 +121,49 @@ export default function Profile() {
         setMessage('Image size should be less than 5MB');
         return;
       }
-      setProfilePicture(file);
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImageSrc(event.target.result);
+        setShowCropper(true);
+        setMessage('');
+      };
+      reader.readAsDataURL(file);
     } else {
       setMessage('Please select a valid image file');
     }
+  };
+
+  const handleCrop = () => {
+    if (!imageRef.current || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const image = imageRef.current;
+
+    // Set canvas size to square (300x300)
+    const size = 300;
+    canvas.width = size;
+    canvas.height = size;
+
+    // Calculate dimensions to crop from center
+    const scale = Math.max(size / image.width, size / image.height);
+    const x = (size / scale - image.width) / 2;
+    const y = (size / scale - image.height) / 2;
+
+    ctx.drawImage(image, x, y, image.width, image.height, 0, 0, size, size);
+
+    canvas.toBlob((blob) => {
+      const croppedFile = new File([blob], 'profile-picture.jpg', { type: 'image/jpeg' });
+      setProfilePicture(croppedFile);
+      setCroppedImage(URL.createObjectURL(blob));
+      setShowCropper(false);
+    }, 'image/jpeg', 0.9);
+  };
+
+  const cancelCrop = () => {
+    setShowCropper(false);
+    setImageSrc(null);
   };
 
   const uploadProfilePicture = async () => {
@@ -253,14 +297,42 @@ export default function Profile() {
         </div>
       )}
 
+      {/* Image Cropper Modal */}
+      {showCropper && (
+        <div style={styles.cropperModal}>
+          <div style={styles.cropperContent}>
+            <h2 style={styles.cropperTitle}>Crop Your Profile Picture</h2>
+            <p style={styles.cropperHint}>Position your face in the center for best results</p>
+            <div style={styles.cropperImageContainer}>
+              <img 
+                ref={imageRef}
+                src={imageSrc} 
+                alt="To crop" 
+                style={styles.cropperImage}
+                onLoad={() => {}}
+              />
+            </div>
+            <canvas ref={canvasRef} style={{ display: 'none' }} />
+            <div style={styles.cropperActions}>
+              <button onClick={cancelCrop} style={styles.cropperCancelButton}>
+                Cancel
+              </button>
+              <button onClick={handleCrop} style={styles.cropperCropButton}>
+                Crop & Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Profile Picture Upload Card */}
       <div style={styles.card}>
         <h2 style={styles.cardTitle}>Profile Picture</h2>
         <div style={styles.profilePictureSection}>
           <div style={styles.profilePictureDisplay}>
-            {(profilePicture || userProfile?.profile_picture) ? (
+            {(croppedImage || userProfile?.profile_picture) ? (
               <img 
-                src={profilePicture ? URL.createObjectURL(profilePicture) : userProfile.profile_picture} 
+                src={croppedImage || userProfile.profile_picture} 
                 alt="Profile" 
                 style={styles.profileImage}
               />
@@ -825,5 +897,83 @@ const styles = {
     cursor: 'pointer',
     textAlign: 'left',
     transition: 'all 0.2s'
+  },
+  cropperModal: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+    padding: '20px'
+  },
+  cropperContent: {
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    padding: '24px',
+    maxWidth: '500px',
+    width: '100%',
+    maxHeight: '90vh',
+    overflow: 'auto'
+  },
+  cropperTitle: {
+    fontSize: '20px',
+    fontWeight: '600',
+    color: '#1e293b',
+    margin: '0 0 8px 0',
+    textAlign: 'center'
+  },
+  cropperHint: {
+    fontSize: '14px',
+    color: '#64748b',
+    margin: '0 0 20px 0',
+    textAlign: 'center'
+  },
+  cropperImageContainer: {
+    width: '100%',
+    maxHeight: '400px',
+    overflow: 'hidden',
+    borderRadius: '8px',
+    marginBottom: '20px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f8fafc'
+  },
+  cropperImage: {
+    maxWidth: '100%',
+    maxHeight: '400px',
+    objectFit: 'contain'
+  },
+  cropperActions: {
+    display: 'flex',
+    gap: '12px',
+    justifyContent: 'flex-end'
+  },
+  cropperCancelButton: {
+    padding: '10px 20px',
+    backgroundColor: '#f1f5f9',
+    color: '#475569',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'background 0.2s'
+  },
+  cropperCropButton: {
+    padding: '10px 20px',
+    backgroundColor: '#3b82f6',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'background 0.2s'
   }
 };
