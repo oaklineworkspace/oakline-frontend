@@ -393,13 +393,14 @@ export default function Profile() {
 
       {/* Image Cropper Modal */}
       {showCropper && (
-        <div style={styles.cropperModal} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-          <div style={styles.cropperContent}>
-            <h2 style={styles.cropperTitle}>Crop Your Profile Picture</h2>
-            <p style={styles.cropperHint}>Drag to position • Pinch or slide to zoom</p>
+        <div className="cropperModal" style={styles.cropperModal} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+          <div className="cropperContent" style={styles.cropperContent}>
+            <h2 className="cropperTitle" style={styles.cropperTitle}>Crop Your Profile Picture</h2>
+            <p className="cropperHint" style={styles.cropperHint}>Drag to position • Pinch or slide to zoom</p>
             
             <div 
               ref={cropContainerRef}
+              className="cropperImageContainer"
               style={styles.cropperImageContainer}
             >
               <img 
@@ -447,7 +448,7 @@ export default function Profile() {
 
             <canvas ref={canvasRef} style={{ display: 'none' }} />
             
-            <div style={styles.cropperActions}>
+            <div className="cropperActions" style={styles.cropperActions}>
               <button onClick={cancelCrop} style={styles.cropperCancelButton}>
                 Cancel
               </button>
@@ -658,6 +659,38 @@ export default function Profile() {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+          .cropperModal {
+            padding: 10px !important;
+          }
+          .cropperContent {
+            padding: 16px !important;
+            max-height: 95vh !important;
+          }
+          .cropperImageContainer {
+            height: 280px !important;
+          }
+          .cropperTitle {
+            font-size: 18px !important;
+          }
+          .cropperActions {
+            flex-direction: column !important;
+            gap: 8px !important;
+          }
+          .cropperActions button {
+            width: 100% !important;
+          }
+        }
+        
+        @media (max-height: 700px) {
+          .cropperImageContainer {
+            height: 250px !important;
+          }
+          .cropperContent {
+            padding: 12px !important;
+          }
         }
       `}</style>
     </div>
@@ -1043,45 +1076,48 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
-    padding: '20px'
+    padding: '20px',
+    overflowY: 'auto'
   },
   cropperContent: {
     backgroundColor: 'white',
     borderRadius: '16px',
-    padding: '28px',
+    padding: '20px',
     maxWidth: '480px',
     width: '100%',
     maxHeight: '90vh',
-    overflow: 'visible'
+    overflow: 'auto',
+    margin: 'auto'
   },
   cropperTitle: {
-    fontSize: '22px',
+    fontSize: '20px',
     fontWeight: '700',
     color: '#1e293b',
-    margin: '0 0 8px 0',
+    margin: '0 0 6px 0',
     textAlign: 'center'
   },
   cropperHint: {
-    fontSize: '13px',
+    fontSize: '12px',
     color: '#64748b',
-    margin: '0 0 24px 0',
+    margin: '0 0 16px 0',
     textAlign: 'center',
     fontWeight: '500'
   },
   cropperImageContainer: {
     position: 'relative',
     width: '100%',
-    height: '400px',
+    height: '350px',
     overflow: 'hidden',
     borderRadius: '12px',
-    marginBottom: '20px',
+    marginBottom: '16px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#1e293b',
     userSelect: 'none',
     WebkitUserSelect: 'none',
-    touchAction: 'none'
+    touchAction: 'none',
+    flexShrink: 0
   },
   cropperImage: {
     position: 'absolute',
@@ -1113,8 +1149,9 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    marginBottom: '24px',
-    padding: '0 8px'
+    marginBottom: '16px',
+    padding: '0 4px',
+    flexShrink: 0
   },
   zoomLabel: {
     fontSize: '18px',
@@ -1133,7 +1170,9 @@ const styles = {
   cropperActions: {
     display: 'flex',
     gap: '12px',
-    justifyContent: 'flex-end'
+    justifyContent: 'flex-end',
+    flexShrink: 0,
+    paddingTop: '8px'
   },
   cropperCancelButton: {
     padding: '10px 20px',
