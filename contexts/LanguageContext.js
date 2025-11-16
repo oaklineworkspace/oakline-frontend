@@ -101,6 +101,12 @@ export function LanguageProvider({ children }) {
       return text;
     }
     
+    // Validate target language exists
+    if (!currentLanguage || currentLanguage === 'undefined') {
+      console.warn('Invalid target language, using original text');
+      return text;
+    }
+    
     try {
       const translated = await translateText(text, currentLanguage, DEFAULT_LANGUAGE);
       return translated || text;

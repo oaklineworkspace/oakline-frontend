@@ -4,8 +4,22 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 export default function TranslatedText({ text, children, as = 'span', style, className }) {
   const sourceText = String(text || children || '');
-  const { currentLanguage, t } = useLanguage();
+  
+  // Guard against hook usage outside component body
+  let currentLanguage = 'en';
+  let t = (text) => text;
+  
+  try {
+    const languageContext = useLanguage();
+    currentLanguage = languageContext.currentLanguage;
+    t = languageContext.t;
+  } catch (error) {
+    // If context is not available, fall back to English
+    console.warn('LanguageContext not available, using English:', error.message);
+  }
+  
   const [translatedText, setTranslatedText] = useState(sourceText);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -14,20 +28,27 @@ export default function TranslatedText({ text, children, as = 'span', style, cla
     if (!sourceText || sourceText.trim() === '' || currentLanguage === 'en') {
       if (isMounted) {
         setTranslatedText(sourceText);
+        setIsTranslating(false);
       }
       return;
     }
     
     async function translate() {
+      if (!isMounted) return;
+      
+      setIsTranslating(true);
+      
       try {
         const translated = await t(sourceText);
-        if (isMounted && translated) {
-          setTranslatedText(translated);
+        if (isMounted) {
+          setTranslatedText(translated || sourceText);
+          setIsTranslating(false);
         }
       } catch (error) {
         console.error('Translation error in TranslatedText:', error);
         if (isMounted) {
           setTranslatedText(sourceText);
+          setIsTranslating(false);
         }
       }
     }
@@ -37,7 +58,7 @@ export default function TranslatedText({ text, children, as = 'span', style, cla
     return () => {
       isMounted = false;
     };
-  }, [currentLanguage, sourceText, t]);
+  }, [currentLanguage, sourceText]);
 
   const Component = as;
   
