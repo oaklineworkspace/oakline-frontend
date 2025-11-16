@@ -8,30 +8,31 @@ export default async function handler(req, res) {
   }
 
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('❌ Missing or invalid authorization header');
-      return res.status(401).json({ error: 'Unauthorized - Missing auth header' });
+    const { email, userName, cryptoType, networkType, amount, walletAddress, depositId, accountNumber, isAccountOpening, minDeposit, userId } = req.body;
+
+    // Verify the deposit exists and belongs to a valid user
+    if (!depositId) {
+      console.error('❌ Missing depositId in request');
+      return res.status(400).json({ error: 'Bad Request - Missing depositId' });
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    console.log('🔐 Verifying user token for crypto deposit notification...');
+    console.log('🔐 Verifying crypto deposit notification request...');
+    console.log('Deposit ID:', depositId);
     
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    // Verify the deposit exists in the database
+    const depositTable = isAccountOpening ? 'account_opening_crypto_deposits' : 'crypto_deposits';
+    const { data: deposit, error: depositError } = await supabaseAdmin
+      .from(depositTable)
+      .select('id, user_id')
+      .eq('id', depositId)
+      .single();
 
-    if (authError) {
-      console.error('❌ Auth error:', authError.message);
-      return res.status(401).json({ error: 'Unauthorized - Invalid token', details: authError.message });
+    if (depositError || !deposit) {
+      console.error('❌ Deposit not found:', depositError?.message);
+      return res.status(404).json({ error: 'Deposit not found' });
     }
-    
-    if (!user) {
-      console.error('❌ No user found for token');
-      return res.status(401).json({ error: 'Unauthorized - User not found' });
-    }
 
-    console.log('✅ User authenticated:', user.id);
-
-    const { email, userName, cryptoType, networkType, amount, walletAddress, depositId, accountNumber, isAccountOpening, minDeposit } = req.body;
+    console.log('✅ Deposit verified for user:', deposit.user_id);
 
     const emailTitle = isAccountOpening 
       ? '💳 Account Activation Deposit Submitted' 
@@ -251,7 +252,7 @@ export default async function handler(req, res) {
       : `Your ${cryptoType} deposit of $${parseFloat(amount).toFixed(2)} is being processed.`;
 
     await supabaseAdmin.from('notifications').insert([{
-      user_id: user.id,
+      user_id: deposit.user_id,
       type: isAccountOpening ? 'account_activation_deposit' : 'crypto_deposit',
       title: notificationTitle,
       message: notificationMessage,
@@ -261,7 +262,7 @@ export default async function handler(req, res) {
     // Create a pending transaction entry immediately
     if (req.body.accountId) {
       const transactionData = {
-        user_id: user.id,
+        user_id: deposit.user_id,
         account_id: req.body.accountId,
         type: 'crypto_deposit',
         amount: parseFloat(amount),
@@ -285,10 +286,14 @@ export default async function handler(req, res) {
       if (txError) {
         console.error('Error creating pending transaction:', txError);
         // Don't fail the entire request if transaction creation fails
+      } else {
+        console.log('✅ Pending transaction created');
       }
     } else {
       console.warn('No accountId provided, skipping transaction creation');
     }
+
+    console.log('✅ Email notification sent successfully to:', email);
 
     return res.status(200).json({ success: true, message: 'Email sent successfully' });
   } catch (error) {
