@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import TranslatedText from './TranslatedText';
-import styles from '../styles/Testimonials.module.css';
 
 export default function TestimonialsSection() {
   const testimonials = [
