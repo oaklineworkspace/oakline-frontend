@@ -18,7 +18,7 @@ export default function Profile() {
   const imageRef = useRef(null);
   const cropContainerRef = useRef(null);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
-  const [imageScale, setImageScale] = useState(0.8);
+  const [imageScale, setImageScale] = useState(0.5);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const router = useRouter();
@@ -133,7 +133,7 @@ export default function Profile() {
         img.onload = () => {
           // Center the image
           setImagePosition({ x: 0, y: 0 });
-          setImageScale(0.8);
+          setImageScale(0.5);
           setImageSrc(event.target.result);
           setShowCropper(true);
           setMessage('');
@@ -248,7 +248,7 @@ export default function Profile() {
       setCroppedImage(URL.createObjectURL(blob));
       setShowCropper(false);
       setImagePosition({ x: 0, y: 0 });
-      setImageScale(0.8);
+      setImageScale(0.5);
     }, 'image/jpeg', 0.95);
   };
 
@@ -256,7 +256,7 @@ export default function Profile() {
     setShowCropper(false);
     setImageSrc(null);
     setImagePosition({ x: 0, y: 0 });
-    setImageScale(0.8);
+    setImageScale(0.5);
     setIsDragging(false);
   };
 
@@ -436,8 +436,8 @@ export default function Profile() {
               <span style={styles.zoomLabel}>🔍</span>
               <input
                 type="range"
-                min="0.5"
-                max="1.5"
+                min="0.3"
+                max="1.0"
                 step="0.05"
                 value={imageScale}
                 onChange={handleZoomChange}
