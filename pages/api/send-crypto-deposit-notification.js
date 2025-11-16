@@ -10,15 +10,26 @@ export default async function handler(req, res) {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      console.error('❌ Missing or invalid authorization header');
+      return res.status(401).json({ error: 'Unauthorized - Missing auth header' });
     }
 
     const token = authHeader.replace('Bearer ', '');
+    console.log('🔐 Verifying user token for crypto deposit notification...');
+    
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
-    if (authError || !user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    if (authError) {
+      console.error('❌ Auth error:', authError.message);
+      return res.status(401).json({ error: 'Unauthorized - Invalid token', details: authError.message });
     }
+    
+    if (!user) {
+      console.error('❌ No user found for token');
+      return res.status(401).json({ error: 'Unauthorized - User not found' });
+    }
+
+    console.log('✅ User authenticated:', user.id);
 
     const { email, userName, cryptoType, networkType, amount, walletAddress, depositId, accountNumber, isAccountOpening, minDeposit } = req.body;
 

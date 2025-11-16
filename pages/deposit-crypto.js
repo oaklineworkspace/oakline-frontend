@@ -722,18 +722,23 @@ export default function CryptoDeposit() {
         const userEmail = userProfile?.email || user.email;
         const userName = userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'Valued Customer';
 
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        // Get fresh session token
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (sessionError || !sessionData?.session?.access_token) {
-          console.error('Failed to get session for email notification:', sessionError);
-          throw new Error('Unable to authenticate for email notification');
+        if (!session?.access_token) {
+          console.error('No valid session found for email notification');
+          // Don't throw error, just log and continue
+          console.log('Skipping email notification due to missing session');
+          return;
         }
+
+        console.log('Sending crypto deposit notification email...');
 
         const emailResponse = await fetch('/api/send-crypto-deposit-notification', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${sessionData.session.access_token}`
+            'Authorization': `Bearer ${session.access_token}`
           },
           body: JSON.stringify({
             email: userEmail,
@@ -754,7 +759,7 @@ export default function CryptoDeposit() {
           const errorData = await emailResponse.json();
           console.error('Email notification failed:', errorData);
         } else {
-          console.log('Email notification sent successfully');
+          console.log('✅ Email notification sent successfully');
         }
       } catch (emailError) {
         console.error('Error sending email notification:', emailError);
