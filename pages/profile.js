@@ -457,7 +457,7 @@ export default function Profile() {
             </div>
           </div>
         </div>
-      )}</div>
+      )}
 
       {/* Profile Picture Upload Card */}
       <div style={styles.card}>
