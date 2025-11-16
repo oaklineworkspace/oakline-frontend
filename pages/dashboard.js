@@ -306,6 +306,65 @@ function DashboardContent() {
         transactionsData = [...transactionsData, ...formattedAccountOpeningDeposits];
       }
 
+      // Also update regular transactions that are account opening deposits to include crypto info
+      transactionsData = transactionsData.map(tx => {
+        if (tx.description === 'Account opening deposit credited' || 
+            tx.description?.toLowerCase().includes('account opening')) {
+          // Try to find the matching crypto deposit
+          const matchingDeposit = [...(accountOpeningDeposits || []), ...(cryptoTxData || [])]
+            .find(dep => {
+              // Match by similar amounts and dates
+              const txAmount = parseFloat(tx.amount) || 0;
+              const depAmount = parseFloat(dep.net_amount || dep.amount) || 0;
+              const amountMatch = Math.abs(txAmount - depAmount) < 0.01;
+              
+              const txDate = new Date(tx.created_at).getTime();
+              const depDate = new Date(dep.created_at).getTime();
+              const dateMatch = Math.abs(txDate - depDate) < 60000; // Within 1 minute
+              
+              return amountMatch && dateMatch;
+            });
+
+          if (matchingDeposit) {
+            const cryptoType = matchingDeposit.crypto_assets?.crypto_type || 'Cryptocurrency';
+            const cryptoSymbol = matchingDeposit.crypto_assets?.symbol || 'CRYPTO';
+            const networkType = matchingDeposit.crypto_assets?.network_type || 'Network';
+            
+            // Get wallet address
+            const walletId = matchingDeposit.assigned_wallet_id;
+            let walletAddress = matchingDeposit.wallet_address;
+            
+            if (!walletAddress && walletId) {
+              walletAddress = walletAddresses[walletId]?.wallet_address || 
+                            accountOpeningWalletAddresses[walletId]?.wallet_address;
+            }
+            
+            if (!walletAddress && matchingDeposit.metadata?.wallet_address) {
+              walletAddress = matchingDeposit.metadata.wallet_address;
+            }
+
+            return {
+              ...tx,
+              description: `${cryptoSymbol} Account Opening Deposit via ${networkType}`,
+              type: 'account_opening_deposit',
+              transaction_type: 'crypto_deposit',
+              crypto_type: cryptoType,
+              crypto_symbol: cryptoSymbol,
+              network_type: networkType,
+              wallet_address: walletAddress,
+              transaction_hash: matchingDeposit.tx_hash || matchingDeposit.transaction_hash,
+              fee: matchingDeposit.fee || 0,
+              gross_amount: matchingDeposit.amount || tx.amount,
+              confirmations: matchingDeposit.confirmations || 0,
+              required_confirmations: matchingDeposit.required_confirmations || 3,
+              purpose: 'account_activation',
+              assigned_wallet_id: matchingDeposit.assigned_wallet_id
+            };
+          }
+        }
+        return tx;
+      });
+
       // Sort all transactions and limit to 10
       transactionsData = transactionsData
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
