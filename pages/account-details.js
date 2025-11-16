@@ -253,8 +253,109 @@ export default function AccountDetails() {
     return accounts.reduce((sum, acc) => sum + (parseFloat(acc.balance) || 0), 0);
   };
 
-  const handleTransactionClick = (transaction) => {
-    setSelectedTransaction(transaction);
+  const handleTransactionClick = async (transaction) => {
+    // Fetch additional details for crypto deposits
+    if (transaction.type === 'account_opening_deposit' || transaction.transaction_type === 'crypto_deposit') {
+      try {
+        let depositDetails = null;
+        let walletAddress = transaction.wallet_address; // Start with what we have
+
+        if (transaction.type === 'account_opening_deposit') {
+          const { data, error } = await supabase
+            .from('account_opening_crypto_deposits')
+            .select(`
+              *,
+              crypto_assets:crypto_asset_id (
+                crypto_type,
+                symbol,
+                network_type
+              )
+            `)
+            .eq('id', transaction.id)
+            .single();
+
+          if (!error && data) {
+            depositDetails = data;
+            
+            // Try to get wallet address from assigned_wallet_id if available
+            if (data.assigned_wallet_id) {
+              const { data: walletData } = await supabase
+                .from('admin_assigned_wallets')
+                .select('wallet_address, memo')
+                .eq('id', data.assigned_wallet_id)
+                .single();
+              
+              if (walletData?.wallet_address) {
+                walletAddress = walletData.wallet_address;
+                depositDetails.wallet_address = walletData.wallet_address;
+                depositDetails.memo = walletData.memo;
+              }
+            }
+            
+            // Fallback to metadata if wallet address still not found
+            if (!walletAddress && data.metadata?.wallet_address) {
+              walletAddress = data.metadata.wallet_address;
+              depositDetails.wallet_address = data.metadata.wallet_address;
+            }
+          }
+        } else if (transaction.transaction_type === 'crypto_deposit') {
+          const { data, error } = await supabase
+            .from('crypto_deposits')
+            .select(`
+              *,
+              crypto_assets:crypto_asset_id (
+                crypto_type,
+                symbol,
+                network_type
+              )
+            `)
+            .eq('id', transaction.id)
+            .single();
+
+          if (!error && data) {
+            depositDetails = data;
+            
+            // Try to get wallet address from assigned_wallet_id if available
+            if (data.assigned_wallet_id) {
+              const { data: walletData } = await supabase
+                .from('admin_assigned_wallets')
+                .select('wallet_address, memo')
+                .eq('id', data.assigned_wallet_id)
+                .single();
+              
+              if (walletData?.wallet_address) {
+                walletAddress = walletData.wallet_address;
+                depositDetails.wallet_address = walletData.wallet_address;
+                depositDetails.memo = walletData.memo;
+              }
+            }
+            
+            // Check if wallet_address is stored directly in crypto_deposits table
+            if (!walletAddress && data.wallet_address) {
+              walletAddress = data.wallet_address;
+              depositDetails.wallet_address = data.wallet_address;
+            }
+            
+            // Fallback to metadata if wallet address still not found
+            if (!walletAddress && data.metadata?.wallet_address) {
+              walletAddress = data.metadata.wallet_address;
+              depositDetails.wallet_address = data.metadata.wallet_address;
+            }
+          }
+        }
+
+        setSelectedTransaction({
+          ...transaction,
+          depositDetails,
+          wallet_address: walletAddress || transaction.wallet_address
+        });
+      } catch (error) {
+        console.error('Error fetching transaction details:', error);
+        setSelectedTransaction(transaction);
+      }
+    } else {
+      setSelectedTransaction(transaction);
+    }
     setShowReceiptModal(true);
   };
 
@@ -1035,7 +1136,7 @@ export default function AccountDetails() {
               </span>
             </div>
 
-            {(selectedTransaction.type === 'account_opening_deposit' || selectedTransaction.transaction_type === 'crypto_deposit') && (
+            {(selectedTransaction.type === 'account_opening_deposit' || selectedTransaction.transaction_type === 'crypto_deposit') && selectedTransaction.depositDetails && (
               <>
                 <div style={{ 
                   marginTop: '1.5rem', 
@@ -1054,29 +1155,31 @@ export default function AccountDetails() {
                 <div style={styles.receiptRow}>
                   <span style={styles.receiptLabel}>Cryptocurrency</span>
                   <span style={styles.receiptValue}>
-                    {selectedTransaction.crypto_symbol || 'BTC'} - {selectedTransaction.crypto_type || 'Bitcoin'}
+                    {selectedTransaction.depositDetails.crypto_assets?.symbol || selectedTransaction.crypto_symbol || 'BTC'} - {selectedTransaction.depositDetails.crypto_assets?.crypto_type || selectedTransaction.crypto_type || 'Bitcoin'}
                   </span>
                 </div>
                 <div style={styles.receiptRow}>
                   <span style={styles.receiptLabel}>Network</span>
                   <span style={styles.receiptValue}>
-                    {selectedTransaction.network_type || 'N/A'}
+                    {selectedTransaction.depositDetails.crypto_assets?.network_type || selectedTransaction.network_type || 'N/A'}
                   </span>
                 </div>
-                {selectedTransaction.wallet_address && (
-                  <div style={styles.receiptRow}>
-                    <span style={styles.receiptLabel}>Wallet Address</span>
-                    <span style={{ 
-                      ...styles.receiptValue,
-                      fontFamily: 'monospace',
-                      fontSize: '0.75rem',
-                      wordBreak: 'break-all'
-                    }}>
-                      {selectedTransaction.wallet_address}
-                    </span>
-                  </div>
-                )}
-                {selectedTransaction.transaction_hash && (
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Wallet Address</span>
+                  <span style={{ 
+                    ...styles.receiptValue,
+                    fontFamily: 'monospace',
+                    fontSize: '0.75rem',
+                    wordBreak: 'break-all'
+                  }}>
+                    {selectedTransaction.wallet_address || 
+                     selectedTransaction.depositDetails?.wallet_address ||
+                     selectedTransaction.depositDetails?.crypto_wallets?.wallet_address || 
+                     selectedTransaction.depositDetails?.admin_assigned_wallets?.wallet_address || 
+                     'N/A'}
+                  </span>
+                </div>
+                {(selectedTransaction.depositDetails.tx_hash || selectedTransaction.transaction_hash) && (
                   <div style={styles.receiptRow}>
                     <span style={styles.receiptLabel}>Transaction Hash</span>
                     <span style={{ 
@@ -1085,30 +1188,28 @@ export default function AccountDetails() {
                       fontSize: '0.75rem',
                       wordBreak: 'break-all'
                     }}>
-                      {selectedTransaction.transaction_hash}
+                      {selectedTransaction.depositDetails.tx_hash || selectedTransaction.transaction_hash}
                     </span>
                   </div>
                 )}
-                {selectedTransaction.confirmations !== undefined && selectedTransaction.confirmations !== null && (
-                  <div style={styles.receiptRow}>
-                    <span style={styles.receiptLabel}>Confirmations</span>
-                    <span style={styles.receiptValue}>
-                      {selectedTransaction.confirmations} / {selectedTransaction.required_confirmations || 3}
-                    </span>
-                  </div>
-                )}
-                {selectedTransaction.fee && parseFloat(selectedTransaction.fee) > 0 && (
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Confirmations</span>
+                  <span style={styles.receiptValue}>
+                    {selectedTransaction.depositDetails.confirmations || selectedTransaction.confirmations || 0} / {selectedTransaction.depositDetails.required_confirmations || selectedTransaction.required_confirmations || 3}
+                  </span>
+                </div>
+                {selectedTransaction.depositDetails.fee && parseFloat(selectedTransaction.depositDetails.fee) > 0 && (
                   <>
                     <div style={styles.receiptRow}>
                       <span style={styles.receiptLabel}>Network Fee</span>
                       <span style={{ ...styles.receiptValue, color: '#dc2626' }}>
-                        -{formatCurrency(parseFloat(selectedTransaction.fee))}
+                        -{formatCurrency(parseFloat(selectedTransaction.depositDetails.fee))}
                       </span>
                     </div>
                     <div style={styles.receiptRow}>
                       <span style={styles.receiptLabel}>Gross Amount</span>
                       <span style={styles.receiptValue}>
-                        {formatCurrency(parseFloat(selectedTransaction.gross_amount) || 0)}
+                        {formatCurrency(parseFloat(selectedTransaction.depositDetails.amount) || parseFloat(selectedTransaction.gross_amount) || 0)}
                       </span>
                     </div>
                   </>
