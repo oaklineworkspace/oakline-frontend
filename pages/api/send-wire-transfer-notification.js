@@ -1,4 +1,3 @@
-
 import { sendEmail, EMAIL_TYPES, getEmailAddress } from '../../lib/email';
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 
@@ -219,7 +218,7 @@ export default async function handler(req, res) {
             <!-- Security Notice -->
             <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 16px; margin: 24px 0;">
               <p style="color: #991b1b; font-size: 14px; font-weight: 500; margin: 0;">
-                🔒 <strong>Important Security Information:</strong> Wire transfers cannot be cancelled or reversed once processed. If you did not authorize this transfer, please contact our Wire Transfer Department immediately at ${bankDetails.support_email} or call ${bankDetails.support_phone}.
+                🔒 <strong>Important Security Information:</strong> Wire transfers cannot be cancelled or reversed once processed. If you did not authorize this transfer, please contact our Wire Transfer Department immediately at ${bankDetails.email_contact || bankDetails.email_support || 'contact-us@theoaklinebank.com'} or call ${bankDetails.phone || '+1 (636) 635-6122'}.
               </p>
             </div>
 
@@ -242,8 +241,8 @@ export default async function handler(req, res) {
             <p style="color: #718096; font-size: 14px; margin: 0 0 16px 0;">
               Questions about your wire transfer? Contact our Wire Transfer Department:
             </p>
-            <p style="color: #4a5568; font-size: 14px; font-weight: 600; margin: 0 0 8px 0;">
-              📧 ${bankDetails.support_email} | 📞 ${bankDetails.support_phone}
+            <p style="color: #4a5568; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">
+              📧 ${bankDetails.email_contact || bankDetails.email_support || 'contact-us@theoaklinebank.com'} | 📞 ${bankDetails.phone || '+1 (636) 635-6122'}
             </p>
 
             <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 20px;">

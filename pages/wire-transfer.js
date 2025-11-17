@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -32,6 +31,7 @@ export default function WireTransfer() {
   const [sentCode, setSentCode] = useState('');
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
+  const [selectedTransfer, setSelectedTransfer] = useState(null); // For transfer details modal
   const [currentStep, setCurrentStep] = useState(1);
 
   const [wireForm, setWireForm] = useState({
@@ -351,7 +351,9 @@ export default function WireTransfer() {
               number: account.account_number
             },
             swiftCode: wireForm.swift_code || null,
-            routingNumber: wireForm.routing_number || null
+            routingNumber: wireForm.routing_number || null,
+            contactEmail: user.email, // Ensure contact email is sent
+            contactPhone: user.user_metadata?.phone // Include phone if available
           })
         });
       } catch (emailError) {
@@ -695,7 +697,12 @@ export default function WireTransfer() {
       padding: '1rem',
       borderRadius: '12px',
       marginBottom: '1rem',
-      border: '1px solid #e2e8f0'
+      border: '1px solid #e2e8f0',
+      cursor: 'pointer',
+      transition: 'box-shadow 0.3s ease',
+    },
+    transferItemHover: {
+      boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
     },
     transferHeader: {
       display: 'flex',
@@ -942,7 +949,7 @@ export default function WireTransfer() {
             </div>
           </div>
         )}
-        
+
         <header style={styles.header}>
           <a href="/dashboard" style={styles.logo}>🏦 Oakline Bank</a>
           <a href="/dashboard" style={styles.backButton}>← Back to Dashboard</a>
@@ -962,7 +969,7 @@ export default function WireTransfer() {
               <p style={styles.infoText}>
                 Wire transfers are a secure method of sending money electronically between banks. Unlike other payment methods, wire transfers are typically <strong>irreversible once processed</strong>. Please ensure all recipient details are accurate before submitting your transfer.
               </p>
-              
+
               <div style={styles.infoGrid}>
                 <div style={styles.infoBox}>
                   <div style={styles.infoBoxTitle}>🇺🇸 Domestic Transfers</div>
@@ -973,7 +980,7 @@ export default function WireTransfer() {
                     <strong>Requirements:</strong> Routing number and account number
                   </div>
                 </div>
-                
+
                 <div style={styles.infoBox}>
                   <div style={styles.infoBoxTitle}>🌍 International Transfers</div>
                   <div style={styles.infoBoxText}>
@@ -983,7 +990,7 @@ export default function WireTransfer() {
                     <strong>Requirements:</strong> SWIFT/BIC code and account details
                   </div>
                 </div>
-                
+
                 <div style={styles.infoBox}>
                   <div style={styles.infoBoxTitle}>🔒 Security Features</div>
                   <div style={styles.infoBoxText}>
@@ -993,7 +1000,7 @@ export default function WireTransfer() {
                     <strong>•</strong> Encrypted transmission of all data
                   </div>
                 </div>
-                
+
                 <div style={styles.infoBox}>
                   <div style={styles.infoBoxTitle}>⏰ Cut-off Times</div>
                   <div style={styles.infoBoxText}>
@@ -1381,7 +1388,7 @@ export default function WireTransfer() {
                         <div style={{ fontSize: '0.875rem', color: '#1e40af', marginBottom: '0.75rem', lineHeight: '1.6' }}>
                           Select this option if you need your transfer processed faster than standard processing times.
                         </div>
-                        <label 
+                        <label
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -1424,8 +1431,8 @@ export default function WireTransfer() {
                               ⚡ Expedited Processing (+$10.00)
                             </div>
                             <div style={{ fontSize: '0.875rem', color: '#059669', fontWeight: '600' }}>
-                              {wireForm.transfer_type === 'domestic' 
-                                ? '✓ Completed within 2 hours' 
+                              {wireForm.transfer_type === 'domestic'
+                                ? '✓ Completed within 2 hours'
                                 : '✓ Completed within 24-48 hours'}
                             </div>
                           </div>
@@ -1468,18 +1475,18 @@ export default function WireTransfer() {
                     <>
                       <div style={styles.reviewSection}>
                         <div style={styles.reviewTitle}>Transfer Summary</div>
-                        
+
                         <div style={styles.reviewRow}>
                           <span style={styles.reviewLabel}>Transfer Type</span>
                           <span style={styles.reviewValue}>
                             {wireForm.transfer_type === 'domestic' ? '🇺🇸 Domestic' : '🌍 International'}
                           </span>
                         </div>
-                        
+
                         <div style={styles.reviewRow}>
                           <span style={styles.reviewLabel}>From Account</span>
                           <span style={styles.reviewValue}>
-                            {accounts.find(a => a.id === wireForm.from_account_id)?.account_type?.toUpperCase()} - 
+                            {accounts.find(a => a.id === wireForm.from_account_id)?.account_type?.toUpperCase()} -
                             {accounts.find(a => a.id === wireForm.from_account_id)?.account_number}
                           </span>
                         </div>
@@ -1518,7 +1525,7 @@ export default function WireTransfer() {
                         <div style={styles.reviewRow}>
                           <span style={styles.reviewLabel}>Bank Address</span>
                           <span style={styles.reviewValue}>
-                            {wireForm.recipient_bank_address}, {wireForm.recipient_bank_city}, 
+                            {wireForm.recipient_bank_address}, {wireForm.recipient_bank_city},
                             {wireForm.recipient_bank_state} {wireForm.recipient_bank_zip}
                           </span>
                         </div>
@@ -1557,7 +1564,7 @@ export default function WireTransfer() {
                         <div style={styles.reviewRow}>
                           <span style={styles.reviewLabel}>Processing Time</span>
                           <span style={styles.reviewValue}>
-                            {wireForm.urgent_transfer 
+                            {wireForm.urgent_transfer
                               ? (wireForm.transfer_type === 'domestic' ? 'Within 2 hours' : '24-48 hours')
                               : (wireForm.transfer_type === 'domestic' ? 'Same business day' : '1-3 business days')
                             }
@@ -1573,7 +1580,7 @@ export default function WireTransfer() {
                         marginBottom: '1.5rem'
                       }}>
                         <p style={{ fontSize: '0.875rem', color: '#92400e', margin: 0 }}>
-                          <strong>⚠️ Please Review Carefully:</strong> Wire transfers are typically irreversible. 
+                          <strong>⚠️ Please Review Carefully:</strong> Wire transfers are typically irreversible.
                           Verify all recipient information is correct before proceeding to the next step.
                         </p>
                       </div>
@@ -1710,7 +1717,7 @@ export default function WireTransfer() {
 
                       <div style={styles.reviewSection}>
                         <div style={styles.reviewTitle}>Final Confirmation</div>
-                        
+
                         <div style={styles.reviewRow}>
                           <span style={styles.reviewLabel}>Transfer Type</span>
                           <span style={styles.reviewValue}>
@@ -1822,47 +1829,53 @@ export default function WireTransfer() {
               {currentStep === 1 && (
                 <div style={styles.card}>
                   <h2 style={styles.cardTitle}>📋 Recent Transfer History</h2>
-                <div style={styles.transfersList}>
-                  {transfers.length === 0 ? (
-                    <div style={styles.emptyState}>
-                      <p style={{ fontSize: '2rem' }}>📋</p>
-                      <p>No transfer history yet</p>
-                    </div>
-                  ) : (
-                    transfers.map(transfer => (
-                      <div key={transfer.id} style={styles.transferItem}>
-                        <div style={styles.transferHeader}>
-                          <div>
-                            <div style={styles.transferRecipient}>
-                              {transfer.transfer_type === 'domestic' ? '🇺🇸' : '🌍'} {transfer.recipient_name}
+                  <div style={styles.transfersList}>
+                    {transfers.length === 0 ? (
+                      <div style={styles.emptyState}>
+                        <p style={{ fontSize: '2rem' }}>📋</p>
+                        <p>No transfer history yet</p>
+                      </div>
+                    ) : (
+                      transfers.map(transfer => (
+                        <div
+                          key={transfer.id}
+                          style={styles.transferItem}
+                          onClick={() => setSelectedTransfer(transfer)}
+                          onMouseEnter={(e) => e.currentTarget.style.boxShadow = styles.transferItemHover.boxShadow}
+                          onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
+                        >
+                          <div style={styles.transferHeader}>
+                            <div>
+                              <div style={styles.transferRecipient}>
+                                {transfer.transfer_type === 'domestic' ? '🇺🇸' : '🌍'} {transfer.recipient_name}
+                              </div>
+                              <div style={styles.transferDetails}>
+                                {transfer.recipient_bank}
+                              </div>
+                              <div style={styles.transferDetails}>
+                                Ref: {transfer.reference}
+                              </div>
+                              <div style={styles.transferDetails}>
+                                {new Date(transfer.created_at).toLocaleDateString()}
+                              </div>
                             </div>
-                            <div style={styles.transferDetails}>
-                              {transfer.recipient_bank}
-                            </div>
-                            <div style={styles.transferDetails}>
-                              Ref: {transfer.reference}
-                            </div>
-                            <div style={styles.transferDetails}>
-                              {new Date(transfer.created_at).toLocaleDateString()}
-                            </div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={styles.transferAmount}>
-                              {formatCurrency(transfer.total_amount)}
-                            </div>
-                            <div style={{
-                              ...styles.transferStatus,
-                              backgroundColor: getStatusColor(transfer.status)
-                            }}>
-                              {transfer.status?.toUpperCase()}
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={styles.transferAmount}>
+                                {formatCurrency(transfer.total_amount)}
+                              </div>
+                              <div style={{
+                                ...styles.transferStatus,
+                                backgroundColor: getStatusColor(transfer.status)
+                              }}>
+                                {transfer.status?.toUpperCase()}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))
-                  )}
+                      ))
+                    )}
+                  </div>
                 </div>
-              </div>
               )}
             </div>
           )}
@@ -1963,6 +1976,151 @@ export default function WireTransfer() {
                   color: 'white'
                 }}
                 onClick={() => setShowReceipt(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transfer Details Modal */}
+      {selectedTransfer && (
+        <div style={styles.receiptModal} onClick={() => setSelectedTransfer(null)}>
+          <div style={styles.receipt} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.receiptHeader}>
+              <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>
+                {selectedTransfer.transfer_type === 'domestic' ? '🇺🇸' : '🌍'}
+              </div>
+              <div style={styles.receiptTitle}>Wire Transfer Details</div>
+              <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>Oakline Bank</div>
+            </div>
+
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Reference Number</span>
+              <span style={styles.receiptValue}>{selectedTransfer.reference}</span>
+            </div>
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Date & Time</span>
+              <span style={styles.receiptValue}>{new Date(selectedTransfer.created_at).toLocaleString()}</span>
+            </div>
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Transfer Type</span>
+              <span style={styles.receiptValue}>
+                {selectedTransfer.transfer_type === 'domestic' ? '🇺🇸 Domestic Wire' : '🌍 International Wire'}
+              </span>
+            </div>
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Recipient Name</span>
+              <span style={styles.receiptValue}>{selectedTransfer.recipient_name}</span>
+            </div>
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Recipient Bank</span>
+              <span style={styles.receiptValue}>{selectedTransfer.recipient_bank}</span>
+            </div>
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Recipient Account</span>
+              <span style={styles.receiptValue}>••••{selectedTransfer.recipient_account?.slice(-4)}</span>
+            </div>
+            {selectedTransfer.recipient_bank_address && (
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Bank Address</span>
+                <span style={styles.receiptValue}>{selectedTransfer.recipient_bank_address}</span>
+              </div>
+            )}
+            {selectedTransfer.swift_code && (
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>SWIFT Code</span>
+                <span style={styles.receiptValue}>{selectedTransfer.swift_code}</span>
+              </div>
+            )}
+            {selectedTransfer.routing_number && (
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Routing Number</span>
+                <span style={styles.receiptValue}>{selectedTransfer.routing_number}</span>
+              </div>
+            )}
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Transfer Amount</span>
+              <span style={styles.receiptValue}>{formatCurrency(selectedTransfer.amount)}</span>
+            </div>
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Processing Fee</span>
+              <span style={styles.receiptValue}>{formatCurrency(selectedTransfer.fee)}</span>
+            </div>
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Total Amount</span>
+              <span style={styles.receiptValue}>{formatCurrency(selectedTransfer.total_amount)}</span>
+            </div>
+            {selectedTransfer.urgent_transfer && (
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Processing Speed</span>
+                <span style={{...styles.receiptValue, color: '#059669', fontWeight: '600'}}>
+                  ⚡ Expedited
+                </span>
+              </div>
+            )}
+            {selectedTransfer.description && (
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Purpose</span>
+                <span style={styles.receiptValue}>{selectedTransfer.description}</span>
+              </div>
+            )}
+            <div style={styles.receiptRow}>
+              <span style={styles.receiptLabel}>Status</span>
+              <span style={{
+                ...styles.receiptValue,
+                color: 'white',
+                backgroundColor: getStatusColor(selectedTransfer.status),
+                padding: '0.5rem 1rem',
+                borderRadius: '12px',
+                fontWeight: '600',
+                textTransform: 'capitalize'
+              }}>
+                {selectedTransfer.status}
+              </span>
+            </div>
+
+            {selectedTransfer.processed_at && (
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Processed At</span>
+                <span style={styles.receiptValue}>{new Date(selectedTransfer.processed_at).toLocaleString()}</span>
+              </div>
+            )}
+
+            {selectedTransfer.rejection_reason && (
+              <div style={{
+                backgroundColor: '#fef2f2',
+                border: '2px solid #dc2626',
+                borderRadius: '12px',
+                padding: '1rem',
+                marginTop: '1rem',
+                marginBottom: '1rem'
+              }}>
+                <p style={{ fontSize: '0.875rem', color: '#991b1b', margin: 0, fontWeight: '600' }}>
+                  <strong>❌ Rejection Reason:</strong> {selectedTransfer.rejection_reason}
+                </p>
+              </div>
+            )}
+
+            <div style={styles.receiptButtons}>
+              <button
+                style={{
+                  ...styles.receiptButton,
+                  backgroundColor: '#059669',
+                  color: 'white'
+                }}
+                onClick={() => window.print()}
+              >
+                🖨️ Print
+              </button>
+              <button
+                style={{
+                  ...styles.receiptButton,
+                  backgroundColor: '#1a365d',
+                  color: 'white'
+                }}
+                onClick={() => setSelectedTransfer(null)}
               >
                 Close
               </button>
