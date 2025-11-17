@@ -16,7 +16,7 @@ export default function WireTransferPage() {
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [sentCode, setSentCode] = useState('');
-  const [bankDetails, setBankDetails] = useState(null);
+  const [sendingCode, setSendingCode] = useState(false);
   const router = useRouter();
 
   const [wireForm, setWireForm] = useState({
@@ -36,6 +36,16 @@ export default function WireTransferPage() {
     memo: ''
   });
 
+  const US_STATES = [
+    'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware',
+    'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas',
+    'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi',
+    'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York',
+    'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina',
+    'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia',
+    'Wisconsin', 'Wyoming'
+  ];
+
   useEffect(() => {
     checkUserAndLoadData();
   }, []);
@@ -48,13 +58,6 @@ export default function WireTransferPage() {
         return;
       }
       setUser(session.user);
-
-      // Fetch bank details
-      const { data: bankData } = await supabase
-        .from('bank_details')
-        .select('*')
-        .single();
-      setBankDetails(bankData);
 
       const { data: userAccounts } = await supabase
         .from('accounts')
@@ -136,7 +139,7 @@ export default function WireTransferPage() {
   };
 
   const sendVerificationCode = async () => {
-    setProcessing(true);
+    setSendingCode(true);
     try {
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       setSentCode(code);
@@ -159,12 +162,12 @@ export default function WireTransferPage() {
       }
 
       setShowVerificationModal(true);
-      setMessage('✅ Verification code sent to your email');
+      setMessage('✅ Verification code sent to ' + user.email);
     } catch (error) {
       console.error('Error sending verification code:', error);
       setMessage(`❌ ${error.message || 'Failed to send verification code. Please try again.'}`);
     } finally {
-      setProcessing(false);
+      setSendingCode(false);
     }
   };
 
@@ -231,20 +234,6 @@ export default function WireTransferPage() {
         title: 'Wire Transfer Processing',
         message: `Wire transfer of ${formatCurrency(amount)} to ${wireForm.beneficiary_name} is being processed`
       }]);
-
-      await fetch('/api/send-transfer-notification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          email: user.email,
-          transferType: 'wire',
-          amount: amount,
-          recipientName: wireForm.beneficiary_name,
-          recipientBank: wireForm.beneficiary_bank,
-          reference: wireTransfer.reference_number
-        })
-      });
 
       setMessage('✅ Wire transfer submitted successfully and is being processed!');
       setShowVerificationModal(false);
@@ -349,7 +338,7 @@ export default function WireTransferPage() {
               <div style={styles.formGroup}>
                 <label style={styles.label}>Transfer Type *</label>
                 <select
-                  style={styles.select}
+                  style={styles.modernSelect}
                   value={wireForm.transfer_type}
                   onChange={(e) => handleInputChange('transfer_type', e.target.value)}
                 >
@@ -361,7 +350,7 @@ export default function WireTransferPage() {
               <div style={styles.formGroup}>
                 <label style={styles.label}>From Account *</label>
                 <select
-                  style={styles.select}
+                  style={styles.modernSelect}
                   value={wireForm.from_account}
                   onChange={(e) => handleInputChange('from_account', e.target.value)}
                 >
@@ -381,7 +370,7 @@ export default function WireTransferPage() {
                 <label style={styles.label}>Beneficiary Full Name *</label>
                 <input
                   type="text"
-                  style={styles.input}
+                  style={styles.modernInput}
                   value={wireForm.beneficiary_name}
                   onChange={(e) => handleInputChange('beneficiary_name', e.target.value)}
                   placeholder="John Smith"
@@ -392,7 +381,7 @@ export default function WireTransferPage() {
                 <label style={styles.label}>Street Address *</label>
                 <input
                   type="text"
-                  style={styles.input}
+                  style={styles.modernInput}
                   value={wireForm.beneficiary_address}
                   onChange={(e) => handleInputChange('beneficiary_address', e.target.value)}
                   placeholder="123 Main Street, Apt 4B"
@@ -404,7 +393,7 @@ export default function WireTransferPage() {
                   <label style={styles.label}>City *</label>
                   <input
                     type="text"
-                    style={styles.input}
+                    style={styles.modernInput}
                     value={wireForm.beneficiary_city}
                     onChange={(e) => handleInputChange('beneficiary_city', e.target.value)}
                     placeholder="New York"
@@ -415,23 +404,26 @@ export default function WireTransferPage() {
                   <>
                     <div style={styles.formGroup}>
                       <label style={styles.label}>State *</label>
-                      <input
-                        type="text"
-                        style={styles.input}
+                      <select
+                        style={styles.modernSelect}
                         value={wireForm.beneficiary_state}
-                        onChange={(e) => handleInputChange('beneficiary_state', e.target.value.toUpperCase())}
-                        placeholder="NY"
-                        maxLength="2"
-                      />
+                        onChange={(e) => handleInputChange('beneficiary_state', e.target.value)}
+                      >
+                        <option value="">Select State</option>
+                        {US_STATES.map(state => (
+                          <option key={state} value={state}>{state}</option>
+                        ))}
+                      </select>
                     </div>
                     <div style={styles.formGroup}>
                       <label style={styles.label}>ZIP Code *</label>
                       <input
                         type="text"
-                        style={styles.input}
+                        style={styles.modernInput}
                         value={wireForm.beneficiary_zip}
                         onChange={(e) => handleInputChange('beneficiary_zip', e.target.value)}
                         placeholder="10001"
+                        maxLength="10"
                       />
                     </div>
                   </>
@@ -440,7 +432,7 @@ export default function WireTransferPage() {
                     <label style={styles.label}>Country *</label>
                     <input
                       type="text"
-                      style={styles.input}
+                      style={styles.modernInput}
                       value={wireForm.beneficiary_country}
                       onChange={(e) => handleInputChange('beneficiary_country', e.target.value)}
                       placeholder="United Kingdom"
@@ -457,7 +449,7 @@ export default function WireTransferPage() {
                 <label style={styles.label}>Beneficiary Bank Name *</label>
                 <input
                   type="text"
-                  style={styles.input}
+                  style={styles.modernInput}
                   value={wireForm.beneficiary_bank}
                   onChange={(e) => handleInputChange('beneficiary_bank', e.target.value)}
                   placeholder="Bank of America"
@@ -471,7 +463,7 @@ export default function WireTransferPage() {
                   </label>
                   <input
                     type="text"
-                    style={styles.input}
+                    style={styles.modernInput}
                     value={wireForm.routing_number}
                     onChange={(e) => handleInputChange('routing_number', e.target.value)}
                     placeholder={wireForm.transfer_type === 'domestic' ? '021000021' : '12-34-56'}
@@ -482,7 +474,7 @@ export default function WireTransferPage() {
                   <label style={styles.label}>Account Number *</label>
                   <input
                     type="text"
-                    style={styles.input}
+                    style={styles.modernInput}
                     value={wireForm.account_number}
                     onChange={(e) => handleInputChange('account_number', e.target.value)}
                     placeholder="1234567890"
@@ -495,7 +487,7 @@ export default function WireTransferPage() {
                   <label style={styles.label}>SWIFT/BIC Code *</label>
                   <input
                     type="text"
-                    style={styles.input}
+                    style={styles.modernInput}
                     value={wireForm.swift_code}
                     onChange={(e) => handleInputChange('swift_code', e.target.value.toUpperCase())}
                     placeholder="BOFAUS3NXXX"
@@ -516,7 +508,7 @@ export default function WireTransferPage() {
                   <label style={styles.label}>Amount (USD) *</label>
                   <input
                     type="number"
-                    style={styles.input}
+                    style={styles.modernInput}
                     value={wireForm.amount}
                     onChange={(e) => handleInputChange('amount', e.target.value)}
                     placeholder="0.00"
@@ -529,7 +521,7 @@ export default function WireTransferPage() {
                   <label style={styles.label}>Memo / Reference (Optional)</label>
                   <input
                     type="text"
-                    style={styles.input}
+                    style={styles.modernInput}
                     value={wireForm.memo}
                     onChange={(e) => handleInputChange('memo', e.target.value)}
                     placeholder="Invoice #1234"
@@ -625,28 +617,40 @@ export default function WireTransferPage() {
                 </div>
               </div>
 
+              <div style={styles.emailVerificationNotice}>
+                <div style={styles.emailIconContainer}>
+                  <span style={styles.emailIcon}>📧</span>
+                </div>
+                <div>
+                  <p style={styles.emailNoticeTitle}>Email Verification Required</p>
+                  <p style={styles.emailNoticeText}>
+                    To protect your account, we'll send a 6-digit verification code to: <strong>{user?.email}</strong>
+                  </p>
+                </div>
+              </div>
+
               <div style={styles.buttonRow}>
                 <button 
                   style={styles.secondaryButton} 
                   onClick={() => setStep(1)}
-                  disabled={processing}
+                  disabled={processing || sendingCode}
                 >
                   ← Edit Details
                 </button>
                 <button
                   style={styles.primaryButton}
                   onClick={sendVerificationCode}
-                  disabled={processing}
-                  onMouseEnter={(e) => !processing && (e.target.style.backgroundColor = '#1e3a8a')}
-                  onMouseLeave={(e) => !processing && (e.target.style.backgroundColor = '#1e40af')}
+                  disabled={processing || sendingCode}
+                  onMouseEnter={(e) => !(processing || sendingCode) && (e.target.style.backgroundColor = '#1e3a8a')}
+                  onMouseLeave={(e) => !(processing || sendingCode) && (e.target.style.backgroundColor = '#1e40af')}
                 >
-                  {processing ? (
+                  {sendingCode ? (
                     <>
                       <span style={styles.buttonSpinner}></span>
                       Sending Code...
                     </>
                   ) : (
-                    'Proceed to Verification'
+                    'Send Verification Code →'
                   )}
                 </button>
               </div>
@@ -699,23 +703,13 @@ export default function WireTransferPage() {
                 <div style={styles.modalIconContainer}>
                   <span style={styles.modalIcon}>📧</span>
                 </div>
-                <h2 style={styles.modalTitle}>Email Verification Required</h2>
+                <h2 style={styles.modalTitle}>Enter Verification Code</h2>
                 <p style={styles.modalSubtitle}>
-                  To protect your account, we need to verify this wire transfer
+                  We've sent a 6-digit code to <strong>{user.email}</strong>
                 </p>
               </div>
 
               <div style={styles.modalBody}>
-                <div style={styles.emailNotice}>
-                  <p style={styles.emailNoticeText}>
-                    A 6-digit verification code has been sent to:
-                  </p>
-                  <p style={styles.emailAddress}>{user.email}</p>
-                  <p style={styles.emailHint}>
-                    Please check your inbox and enter the code below
-                  </p>
-                </div>
-
                 <div style={styles.codeInputContainer}>
                   <label style={styles.codeLabel}>Verification Code</label>
                   <input
@@ -723,7 +717,7 @@ export default function WireTransferPage() {
                     style={styles.verificationInput}
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="Enter 6-digit code"
+                    placeholder="000000"
                     maxLength="6"
                     disabled={processing}
                     autoFocus
@@ -738,9 +732,9 @@ export default function WireTransferPage() {
                   <button
                     style={styles.resendButton}
                     onClick={sendVerificationCode}
-                    disabled={processing}
+                    disabled={processing || sendingCode}
                   >
-                    Resend Code
+                    {sendingCode ? 'Resending...' : 'Resend Code'}
                   </button>
                 </div>
               </div>
@@ -751,7 +745,7 @@ export default function WireTransferPage() {
                   onClick={() => setShowVerificationModal(false)}
                   disabled={processing}
                 >
-                  Cancel Transfer
+                  Cancel
                 </button>
                 <button
                   style={{
@@ -760,27 +754,15 @@ export default function WireTransferPage() {
                   }}
                   onClick={completeWireTransfer}
                   disabled={processing || verificationCode.length !== 6}
-                  onMouseEnter={(e) => {
-                    if (!processing && verificationCode.length === 6) {
-                      e.target.style.transform = 'translateY(-2px)';
-                      e.target.style.boxShadow = '0 8px 20px rgba(30, 64, 175, 0.4)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!processing && verificationCode.length === 6) {
-                      e.target.style.transform = 'translateY(0)';
-                      e.target.style.boxShadow = '0 4px 12px rgba(30, 64, 175, 0.4)';
-                    }
-                  }}
                 >
                   {processing ? (
                     <>
                       <span style={styles.buttonSpinner}></span>
-                      Processing Transfer...
+                      Processing...
                     </>
                   ) : (
                     <>
-                      <span>✓</span> Verify & Complete Transfer
+                      <span>✓</span> Verify & Complete
                     </>
                   )}
                 </button>
@@ -893,8 +875,8 @@ const styles = {
     width: '40px',
     height: '40px',
     borderRadius: '50%',
-    backgroundColor: '#d4af37',
-    color: '#0a1a2f',
+    backgroundColor: '#1e40af',
+    color: 'white',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -943,29 +925,35 @@ const styles = {
   },
   label: {
     display: 'block',
-    fontSize: '0.9rem',
+    fontSize: '0.875rem',
     fontWeight: '600',
     color: '#374151',
     marginBottom: '0.5rem'
   },
-  select: {
+  modernSelect: {
     width: '100%',
-    padding: '0.875rem',
+    padding: '0.875rem 1rem',
     border: '2px solid #e2e8f0',
     borderRadius: '12px',
     fontSize: '1rem',
     backgroundColor: 'white',
-    transition: 'border-color 0.2s',
-    outline: 'none'
+    transition: 'all 0.2s',
+    outline: 'none',
+    cursor: 'pointer',
+    appearance: 'none',
+    backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23374151\' d=\'M6 9L1 4h10z\'/%3E%3C/svg%3E")',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 1rem center',
+    paddingRight: '2.5rem'
   },
-  input: {
+  modernInput: {
     width: '100%',
-    padding: '0.875rem',
+    padding: '0.875rem 1rem',
     border: '2px solid #e2e8f0',
     borderRadius: '12px',
     fontSize: '1rem',
     boxSizing: 'border-box',
-    transition: 'border-color 0.2s',
+    transition: 'all 0.2s',
     outline: 'none'
   },
   helpText: {
@@ -980,7 +968,7 @@ const styles = {
     margin: '2rem 0'
   },
   infoBox: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: '#fffbeb',
     border: '2px solid #fbbf24',
     borderRadius: '12px',
     padding: '1rem',
@@ -990,6 +978,41 @@ const styles = {
     margin: 0,
     fontSize: '0.9rem',
     color: '#92400e',
+    lineHeight: '1.5'
+  },
+  emailVerificationNotice: {
+    backgroundColor: '#eff6ff',
+    border: '2px solid #3b82f6',
+    borderRadius: '12px',
+    padding: '1.25rem',
+    marginBottom: '1.5rem',
+    display: 'flex',
+    gap: '1rem',
+    alignItems: 'flex-start'
+  },
+  emailIconContainer: {
+    width: '48px',
+    height: '48px',
+    backgroundColor: '#dbeafe',
+    borderRadius: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0
+  },
+  emailIcon: {
+    fontSize: '1.5rem'
+  },
+  emailNoticeTitle: {
+    margin: '0 0 0.5rem 0',
+    fontSize: '1rem',
+    fontWeight: '600',
+    color: '#1e40af'
+  },
+  emailNoticeText: {
+    margin: 0,
+    fontSize: '0.875rem',
+    color: '#1e40af',
     lineHeight: '1.5'
   },
   primaryButton: {
@@ -1136,8 +1159,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000,
-    animation: 'fadeIn 0.3s ease-out'
+    zIndex: 1000
   },
   modal: {
     backgroundColor: 'white',
@@ -1145,8 +1167,7 @@ const styles = {
     maxWidth: '540px',
     width: '90%',
     boxShadow: '0 24px 60px rgba(0,0,0,0.2)',
-    overflow: 'hidden',
-    animation: 'slideUp 0.4s ease-out'
+    overflow: 'hidden'
   },
   modalHeader: {
     padding: '2rem 2rem 1.5rem',
@@ -1179,30 +1200,6 @@ const styles = {
   },
   modalBody: {
     padding: '2rem'
-  },
-  emailNotice: {
-    backgroundColor: '#f8fafc',
-    borderRadius: '12px',
-    padding: '1.5rem',
-    marginBottom: '2rem',
-    border: '1px solid #e2e8f0'
-  },
-  emailNoticeText: {
-    fontSize: '0.875rem',
-    color: '#64748b',
-    marginBottom: '0.5rem'
-  },
-  emailAddress: {
-    fontSize: '1rem',
-    fontWeight: '600',
-    color: '#1e40af',
-    marginBottom: '0.75rem',
-    wordBreak: 'break-all'
-  },
-  emailHint: {
-    fontSize: '0.8rem',
-    color: '#94a3b8',
-    fontStyle: 'italic'
   },
   codeInputContainer: {
     marginBottom: '1.5rem'

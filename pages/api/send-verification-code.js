@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email } = req.body;
+    const { email, type } = req.body;
 
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
@@ -20,16 +20,19 @@ export default async function handler(req, res) {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    const { data: existingApp } = await supabaseAdmin
-      .from('applications')
-      .select('email')
-      .eq('email', normalizedEmail)
-      .single();
+    // Only check for existing applications if this is NOT a wire transfer verification
+    if (type !== 'wire_transfer') {
+      const { data: existingApp } = await supabaseAdmin
+        .from('applications')
+        .select('email')
+        .eq('email', normalizedEmail)
+        .single();
 
-    if (existingApp) {
-      return res.status(400).json({
-        error: 'An account with this email already exists. Please sign in or use a different email.'
-      });
+      if (existingApp) {
+        return res.status(400).json({
+          error: 'An account with this email already exists. Please sign in or use a different email.'
+        });
+      }
     }
 
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
