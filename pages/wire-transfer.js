@@ -205,6 +205,7 @@ export default function WireTransferPage() {
     if (!validateForm()) {
       setMessage('Please fill in all required fields');
       setMessageType('error');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -214,16 +215,20 @@ export default function WireTransferPage() {
     if (totalAmount > parseFloat(selectedAccount.balance)) {
       setMessage('Insufficient funds in selected account (including fees)');
       setMessageType('error');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
     setMessage('');
     setStep(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const sendVerificationCode = async () => {
     setSendingCode(true);
     setCodeSent(false);
+    setMessage('');
+    
     try {
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       setSentCode(code);
@@ -392,6 +397,8 @@ export default function WireTransferPage() {
       setSentCode('');
       setCodeSent(false);
 
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
       setTimeout(() => {
         checkUserAndLoadData();
       }, 1000);
@@ -550,22 +557,24 @@ export default function WireTransferPage() {
     },
     input: {
       width: '100%',
-      padding: '0.75rem',
+      padding: '0.875rem',
       border: '2px solid #e2e8f0',
       borderRadius: '12px',
       fontSize: '0.875rem',
-      transition: 'border-color 0.3s',
-      boxSizing: 'border-box'
+      transition: 'all 0.3s',
+      boxSizing: 'border-box',
+      fontFamily: 'inherit'
     },
     select: {
       width: '100%',
-      padding: '0.75rem',
+      padding: '0.875rem',
       border: '2px solid #e2e8f0',
       borderRadius: '12px',
       fontSize: '0.875rem',
       backgroundColor: 'white',
-      transition: 'border-color 0.3s',
-      boxSizing: 'border-box'
+      transition: 'all 0.3s',
+      boxSizing: 'border-box',
+      fontFamily: 'inherit'
     },
     formRow: {
       display: 'grid',
@@ -574,34 +583,35 @@ export default function WireTransferPage() {
       marginBottom: '1.25rem'
     },
     balanceInfo: {
-      backgroundColor: '#f8fafc',
-      padding: '1rem',
+      backgroundColor: '#f0fdf4',
+      padding: '1.25rem',
       borderRadius: '12px',
       marginTop: '1rem',
-      border: '1px solid #e2e8f0'
+      border: '2px solid #86efac'
     },
     balanceLabel: {
       fontSize: '0.75rem',
-      color: '#64748b',
-      marginBottom: '0.5rem'
+      color: '#065f46',
+      marginBottom: '0.5rem',
+      fontWeight: '600'
     },
     balanceValue: {
-      fontSize: '1.25rem',
+      fontSize: '1.5rem',
       fontWeight: '700',
-      color: '#1e293b'
+      color: '#059669'
     },
     feeBreakdown: {
       backgroundColor: '#f8fafc',
-      padding: '1rem',
+      padding: '1.25rem',
       borderRadius: '12px',
       marginTop: '1rem',
-      border: '1px solid #e2e8f0'
+      border: '2px solid #e2e8f0'
     },
     feeRow: {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: '0.5rem',
+      marginBottom: '0.75rem',
       fontSize: '0.875rem'
     },
     feeLabel: {
@@ -757,45 +767,124 @@ export default function WireTransferPage() {
     modal: {
       backgroundColor: 'white',
       borderRadius: '20px',
-      padding: '2rem',
       maxWidth: '500px',
       width: '100%',
+      maxHeight: '90vh',
+      display: 'flex',
+      flexDirection: 'column',
       boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-      border: '2px solid #059669'
+      border: '2px solid #059669',
+      overflow: 'hidden'
+    },
+    modalHeader: {
+      padding: '1.5rem 2rem',
+      borderBottom: '2px solid #e2e8f0',
+      backgroundColor: '#f8fafc',
+      flexShrink: 0
     },
     modalTitle: {
       fontSize: '1.5rem',
       fontWeight: '700',
       color: '#1a365d',
-      marginBottom: '1rem',
-      textAlign: 'center'
+      marginBottom: '0.5rem',
+      textAlign: 'center',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.5rem'
     },
     modalSubtitle: {
       fontSize: '0.95rem',
       color: '#64748b',
-      marginBottom: '1.5rem',
+      textAlign: 'center',
+      lineHeight: '1.5'
+    },
+    modalBody: {
+      padding: '2rem',
+      overflowY: 'auto',
+      flex: 1
+    },
+    modalFooter: {
+      padding: '1.5rem 2rem',
+      borderTop: '2px solid #e2e8f0',
+      backgroundColor: '#f8fafc',
+      flexShrink: 0
+    },
+    verificationInputWrapper: {
+      marginBottom: '1.5rem'
+    },
+    verificationLabel: {
+      display: 'block',
+      fontSize: '0.875rem',
+      fontWeight: '700',
+      color: '#1e293b',
+      marginBottom: '0.75rem',
       textAlign: 'center'
     },
     verificationInput: {
       width: '100%',
       padding: '1rem',
-      fontSize: '1.5rem',
+      fontSize: '1.75rem',
       fontWeight: '700',
-      letterSpacing: '0.5rem',
+      letterSpacing: '0.75rem',
       textAlign: 'center',
-      border: '2px solid #e5e7eb',
+      border: '3px solid #e5e7eb',
       borderRadius: '12px',
       fontFamily: 'monospace',
       boxSizing: 'border-box',
+      transition: 'all 0.3s ease'
+    },
+    verificationInputFocused: {
+      borderColor: '#10b981',
+      outline: 'none',
+      boxShadow: '0 0 0 3px rgba(16, 185, 129, 0.1)'
+    },
+    timerSection: {
+      textAlign: 'center',
+      padding: '1rem',
+      backgroundColor: '#fef3c7',
+      borderRadius: '10px',
+      marginBottom: '1rem',
+      border: '1px solid #fbbf24'
+    },
+    timerText: {
+      fontSize: '0.875rem',
+      color: '#92400e',
+      fontWeight: '600',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.5rem'
+    },
+    resendSection: {
+      textAlign: 'center',
+      padding: '1rem',
+      backgroundColor: '#f9fafb',
+      borderRadius: '10px',
       marginBottom: '1rem'
     },
+    resendText: {
+      fontSize: '0.875rem',
+      color: '#64748b',
+      marginBottom: '0.75rem'
+    },
+    resendButton: {
+      background: 'none',
+      border: 'none',
+      color: '#3b82f6',
+      fontSize: '0.9rem',
+      fontWeight: '700',
+      cursor: 'pointer',
+      textDecoration: 'underline',
+      padding: '0.5rem 1rem',
+      transition: 'color 0.3s ease'
+    },
     modalButtons: {
-      display: 'flex',
-      gap: '1rem',
-      marginTop: '1.5rem'
+      display: 'grid',
+      gridTemplateColumns: '1fr 2fr',
+      gap: '1rem'
     },
     cancelButton: {
-      flex: 1,
       padding: '0.875rem',
       fontSize: '1rem',
       fontWeight: '600',
@@ -807,7 +896,6 @@ export default function WireTransferPage() {
       transition: 'all 0.3s ease'
     },
     confirmButton: {
-      flex: 2,
       padding: '0.875rem',
       fontSize: '1rem',
       fontWeight: '700',
@@ -842,6 +930,18 @@ export default function WireTransferPage() {
       textAlign: 'center',
       padding: '3rem 1rem',
       color: '#64748b'
+    },
+    infoBox: {
+      backgroundColor: '#e0f2fe',
+      padding: '1rem',
+      borderRadius: '8px',
+      marginBottom: '1rem',
+      border: '1px solid #7dd3fc'
+    },
+    infoText: {
+      fontSize: '0.8rem',
+      color: '#0c4a6e',
+      lineHeight: '1.5'
     }
   };
 
@@ -1027,26 +1127,24 @@ export default function WireTransferPage() {
                 </div>
 
                 {wireForm.transfer_type === 'domestic' ? (
-                  <>
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>
-                        State <span style={styles.required}>*</span>
-                      </label>
-                      <input
-                        type="text"
-                        list="state-suggestions"
-                        style={styles.input}
-                        value={wireForm.beneficiary_state}
-                        onChange={(e) => handleInputChange('beneficiary_state', e.target.value)}
-                        placeholder="California"
-                      />
-                      <datalist id="state-suggestions">
-                        {US_STATES.map(state => (
-                          <option key={state} value={state} />
-                        ))}
-                      </datalist>
-                    </div>
-                  </>
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>
+                      State <span style={styles.required}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      list="state-suggestions"
+                      style={styles.input}
+                      value={wireForm.beneficiary_state}
+                      onChange={(e) => handleInputChange('beneficiary_state', e.target.value)}
+                      placeholder="California"
+                    />
+                    <datalist id="state-suggestions">
+                      {US_STATES.map(state => (
+                        <option key={state} value={state} />
+                      ))}
+                    </datalist>
+                  </div>
                 ) : (
                   <div style={styles.formGroup}>
                     <label style={styles.label}>
@@ -1081,6 +1179,12 @@ export default function WireTransferPage() {
 
               <h3 style={{ ...styles.cardTitle, marginTop: '2rem' }}>Bank Details</h3>
 
+              <div style={styles.infoBox}>
+                <p style={styles.infoText}>
+                  ℹ️ Bank address is {wireForm.transfer_type === 'international' ? 'required' : 'recommended'} for {wireForm.transfer_type} wire transfers to ensure proper routing.
+                </p>
+              </div>
+
               <div style={styles.formGroup}>
                 <label style={styles.label}>
                   Bank Name <span style={styles.required}>*</span>
@@ -1091,6 +1195,53 @@ export default function WireTransferPage() {
                   value={wireForm.beneficiary_bank}
                   onChange={(e) => handleInputChange('beneficiary_bank', e.target.value)}
                   placeholder="Bank of America"
+                />
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>
+                  Bank Street Address
+                </label>
+                <input
+                  type="text"
+                  style={styles.input}
+                  value={wireForm.beneficiary_bank_address}
+                  onChange={(e) => handleInputChange('beneficiary_bank_address', e.target.value)}
+                  placeholder="100 Bank Street"
+                />
+              </div>
+
+              <div style={styles.formRow}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Bank City</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={wireForm.beneficiary_bank_city}
+                    onChange={(e) => handleInputChange('beneficiary_bank_city', e.target.value)}
+                    placeholder="New York"
+                  />
+                </div>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Bank State/Province</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={wireForm.beneficiary_bank_state}
+                    onChange={(e) => handleInputChange('beneficiary_bank_state', e.target.value)}
+                    placeholder="NY"
+                  />
+                </div>
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Bank ZIP/Postal Code</label>
+                <input
+                  type="text"
+                  style={styles.input}
+                  value={wireForm.beneficiary_bank_zip}
+                  onChange={(e) => handleInputChange('beneficiary_bank_zip', e.target.value)}
+                  placeholder="10001"
                 />
               </div>
 
@@ -1214,7 +1365,7 @@ export default function WireTransferPage() {
                     {formatCurrency(accounts.find(a => a.id === wireForm.from_account)?.balance || 0)}
                   </div>
                   {wireForm.total_deduction && (
-                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#64748b' }}>
+                    <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#065f46', fontWeight: '600' }}>
                       Balance after transfer: {formatCurrency(
                         parseFloat(accounts.find(a => a.id === wireForm.from_account)?.balance || 0) - parseFloat(wireForm.total_deduction || 0)
                       )}
@@ -1314,6 +1465,17 @@ export default function WireTransferPage() {
                   <span style={styles.reviewLabel}>Bank Name:</span>
                   <span style={styles.reviewValue}>{wireForm.beneficiary_bank}</span>
                 </div>
+                {wireForm.beneficiary_bank_address && (
+                  <div style={styles.reviewRow}>
+                    <span style={styles.reviewLabel}>Bank Address:</span>
+                    <span style={styles.reviewValue}>
+                      {wireForm.beneficiary_bank_address}
+                      {wireForm.beneficiary_bank_city && `, ${wireForm.beneficiary_bank_city}`}
+                      {wireForm.beneficiary_bank_state && `, ${wireForm.beneficiary_bank_state}`}
+                      {wireForm.beneficiary_bank_zip && ` ${wireForm.beneficiary_bank_zip}`}
+                    </span>
+                  </div>
+                )}
                 <div style={styles.reviewRow}>
                   <span style={styles.reviewLabel}>Routing Number:</span>
                   <span style={styles.reviewValue}>{wireForm.routing_number}</span>
@@ -1409,69 +1571,88 @@ export default function WireTransferPage() {
       </div>
 
       {showVerificationModal && (
-        <div style={styles.modalOverlay} onClick={() => !processing && setShowVerificationModal(false)}>
+        <div style={styles.modalOverlay} onClick={(e) => {
+          if (!processing) {
+            setShowVerificationModal(false);
+          }
+        }}>
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h2 style={styles.modalTitle}>🔐 Verify Your Transfer</h2>
-            <p style={styles.modalSubtitle}>
-              We've sent a 6-digit code to <strong>{user?.email}</strong>
-            </p>
-
-            <div>
-              <label style={styles.label}>Verification Code</label>
-              <input
-                type="text"
-                style={styles.verificationInput}
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="000000"
-                maxLength="6"
-                disabled={processing}
-                autoFocus
-              />
-              <p style={{ fontSize: '0.85rem', color: '#9ca3af', textAlign: 'center' }}>
-                ⏱ Code expires in 15 minutes
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>
+                🔐 Verify Your Transfer
+              </h2>
+              <p style={styles.modalSubtitle}>
+                We've sent a 6-digit code to <strong>{user?.email}</strong>
               </p>
             </div>
 
-            <div style={{ textAlign: 'center', marginTop: '1rem', padding: '1rem', backgroundColor: '#f9fafb', borderRadius: '12px' }}>
-              <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '0.5rem' }}>Didn't receive the code?</p>
-              <button
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#3b82f6',
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  padding: '0.25rem 0.5rem'
-                }}
-                onClick={sendVerificationCode}
-                disabled={processing || sendingCode}
-              >
-                {sendingCode ? 'Resending...' : 'Resend Code'}
-              </button>
+            <div style={styles.modalBody}>
+              <div style={styles.verificationInputWrapper}>
+                <label style={styles.verificationLabel}>Verification Code</label>
+                <input
+                  type="text"
+                  style={{
+                    ...styles.verificationInput,
+                    ...(verificationCode.length === 6 ? styles.verificationInputFocused : {})
+                  }}
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  maxLength="6"
+                  disabled={processing}
+                  autoFocus
+                />
+              </div>
+
+              <div style={styles.timerSection}>
+                <p style={styles.timerText}>
+                  ⏱ Code expires in 15 minutes
+                </p>
+              </div>
+
+              <div style={styles.resendSection}>
+                <p style={styles.resendText}>Didn't receive the code?</p>
+                <button
+                  style={styles.resendButton}
+                  onClick={sendVerificationCode}
+                  disabled={processing || sendingCode}
+                >
+                  {sendingCode ? 'Resending...' : 'Resend Code'}
+                </button>
+              </div>
             </div>
 
-            <div style={styles.modalButtons}>
-              <button
-                style={styles.cancelButton}
-                onClick={() => setShowVerificationModal(false)}
-                disabled={processing}
-              >
-                Cancel
-              </button>
-              <button
-                style={{
-                  ...styles.confirmButton,
-                  opacity: (processing || verificationCode.length !== 6) ? 0.5 : 1,
-                  cursor: (processing || verificationCode.length !== 6) ? 'not-allowed' : 'pointer'
-                }}
-                onClick={completeWireTransfer}
-                disabled={processing || verificationCode.length !== 6}
-              >
-                {processing ? '🔄 Processing...' : '✓ Verify & Submit'}
-              </button>
+            <div style={styles.modalFooter}>
+              <div style={styles.modalButtons}>
+                <button
+                  style={styles.cancelButton}
+                  onClick={() => setShowVerificationModal(false)}
+                  disabled={processing}
+                >
+                  Cancel
+                </button>
+                <button
+                  style={{
+                    ...styles.confirmButton,
+                    opacity: (processing || verificationCode.length !== 6) ? 0.5 : 1,
+                    cursor: (processing || verificationCode.length !== 6) ? 'not-allowed' : 'pointer'
+                  }}
+                  onClick={completeWireTransfer}
+                  disabled={processing || verificationCode.length !== 6}
+                >
+                  {processing ? (
+                    <>
+                      <span>🔄</span>
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>✓</span>
+                      <span>Verify & Submit</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
