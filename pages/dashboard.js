@@ -204,9 +204,9 @@ function DashboardContent() {
           const networkType = crypto.crypto_assets?.network_type || 'Network';
 
           // Get wallet address from admin_assigned_wallets or metadata
-          const walletAddress = walletAddresses[crypto.assigned_wallet_id]?.wallet_address || 
-                                crypto.metadata?.wallet_address || 
-                                crypto.wallet_address || 
+          const walletAddress = walletAddresses[crypto.assigned_wallet_id]?.wallet_address ||
+                                crypto.metadata?.wallet_address ||
+                                crypto.wallet_address ||
                                 null;
 
           return {
@@ -273,9 +273,9 @@ function DashboardContent() {
             const networkType = deposit.crypto_assets?.network_type || 'Network';
 
             // Get wallet address from admin_assigned_wallets or metadata
-            const walletAddress = accountOpeningWalletAddresses[deposit.assigned_wallet_id]?.wallet_address || 
-                                  deposit.metadata?.wallet_address || 
-                                  deposit.wallet_address || 
+            const walletAddress = accountOpeningWalletAddresses[deposit.assigned_wallet_id]?.wallet_address ||
+                                  deposit.metadata?.wallet_address ||
+                                  deposit.wallet_address ||
                                   null;
 
             return {
@@ -308,7 +308,7 @@ function DashboardContent() {
 
       // Also update regular transactions that are account opening deposits to include crypto info
       transactionsData = transactionsData.map(tx => {
-        if (tx.description === 'Account opening deposit credited' || 
+        if (tx.description === 'Account opening deposit credited' ||
             tx.description?.toLowerCase().includes('account opening')) {
           // Try to find the matching crypto deposit
           const matchingDeposit = [...(accountOpeningDeposits || []), ...(cryptoTxData || [])]
@@ -335,7 +335,7 @@ function DashboardContent() {
             let walletAddress = matchingDeposit.wallet_address;
 
             if (!walletAddress && walletId) {
-              walletAddress = walletAddresses[walletId]?.wallet_address || 
+              walletAddress = walletAddresses[walletId]?.wallet_address ||
                             accountOpeningWalletAddresses[walletId]?.wallet_address;
             }
 
@@ -874,17 +874,17 @@ function DashboardContent() {
               <h2 style={styles.sectionTitle}>Account Summary</h2>
               <div>
                 {userProfile?.profile_picture && (
-                  <img 
-                    src={userProfile.profile_picture} 
-                    alt="Profile" 
+                  <img
+                    src={userProfile.profile_picture}
+                    alt="Profile"
                     style={styles.profilePictureInSummary}
                   />
                 )}
                 {!userProfile?.profile_picture && (
                   <div style={styles.profilePlaceholderInSummary}>
                     <span style={styles.profilePlaceholderText}>
-                      {userProfile ? 
-                        `${userProfile.first_name?.[0] || ''}${userProfile.last_name?.[0] || ''}`.toUpperCase() || '?' 
+                      {userProfile ?
+                        `${userProfile.first_name?.[0] || ''}${userProfile.last_name?.[0] || ''}`.toUpperCase() || '?'
                         : '?'}
                     </span>
                   </div>
@@ -911,7 +911,7 @@ function DashboardContent() {
               </div>
               <div style={styles.balanceAmountContainer}>
                 <div style={styles.balanceAmount}>
-                  {showBalance 
+                  {showBalance
                     ? new Intl.NumberFormat('en-US', {
                         style: 'currency',
                         currency: 'USD',
@@ -978,7 +978,7 @@ function DashboardContent() {
               <div key={account.id} style={styles.accountItem}>
                 <div style={styles.accountInfo}>
                   <div style={styles.accountTypeIcon}>
-                    {account.account_type === 'checking' ? '🏦' : 
+                    {account.account_type === 'checking' ? '🏦' :
                      account.account_type === 'savings' ? '💰' : '📊'}
                   </div>
                   <div style={styles.accountDetails}>
@@ -1025,7 +1025,7 @@ function DashboardContent() {
                     isCredit = true;
                   }
                   // If it's a cancelled transfer without "refund" in description, treat as debit (original attempt)
-                  else if (description.includes('wire transfer cancelled') || 
+                  else if (description.includes('wire transfer cancelled') ||
                            description.includes('transfer cancelled')) {
                     isCredit = false;
                   }
@@ -1039,10 +1039,10 @@ function DashboardContent() {
                   }
                 }
                 // Money coming IN (Credit - Green/Positive)
-                else if (txType === 'deposit' || 
-                    txType === 'credit' || 
-                    txType === 'interest' || 
-                    txType === 'refund' || 
+                else if (txType === 'deposit' ||
+                    txType === 'credit' ||
+                    txType === 'interest' ||
+                    txType === 'refund' ||
                     txType === 'zelle_receive' ||
                     txType === 'oakline_pay_receive' ||
                     txType === 'salary' ||
@@ -1053,11 +1053,11 @@ function DashboardContent() {
                 }
 
                 // Money going OUT (Debit - Red/Negative)
-                else if (txType === 'debit' || 
-                         txType === 'withdrawal' || 
-                         txType === 'purchase' || 
-                         txType === 'bill_payment' || 
-                         txType === 'fee' || 
+                else if (txType === 'debit' ||
+                         txType === 'withdrawal' ||
+                         txType === 'purchase' ||
+                         txType === 'bill_payment' ||
+                         txType === 'fee' ||
                          txType === 'zelle_send' ||
                          txType === 'oakline_pay_send' ||
                          txType === 'payment_sent' ||
@@ -1116,7 +1116,7 @@ function DashboardContent() {
                     case 'zelle_receive': return 'Z';
                     case 'oakline_pay_send': return 'O';
                     case 'oakline_pay_receive': return 'O';
-                    case 'crypto_deposit': 
+                    case 'crypto_deposit':
                     case 'account_opening_deposit':
                       return getCryptoIcon(transaction?.crypto_symbol || transaction?.crypto_type);
                     default: return '💼';
@@ -1143,8 +1143,8 @@ function DashboardContent() {
                 const statusColors = getStatusColor(status);
 
                 return (
-                  <div 
-                    key={tx.id} 
+                  <div
+                    key={tx.id}
                     style={styles.transactionItem}
                     onClick={() => handleTransactionClick(tx)}
                     onMouseEnter={(e) => {
@@ -1178,9 +1178,9 @@ function DashboardContent() {
                           </div>
                         )}
                         {tx.transaction_type === 'crypto_deposit' && tx.transaction_hash && (
-                          <div style={{ 
-                            fontSize: '0.65rem', 
-                            color: '#1e40af', 
+                          <div style={{
+                            fontSize: '0.65rem',
+                            color: '#1e40af',
                             marginTop: '0.2rem',
                             fontFamily: 'monospace',
                             overflow: 'hidden',
@@ -1293,7 +1293,7 @@ function DashboardContent() {
             <div style={styles.cardsGrid}>
               {cards.map(card => (
                 <div key={card.id} style={styles.cardContainer}>
-                  <div 
+                  <div
                     style={{
                       ...styles.cardFlipWrapper,
                       transform: flippedCards[card.id] ? 'rotateY(180deg)' : 'rotateY(0deg)'
@@ -1325,7 +1325,7 @@ function DashboardContent() {
                       </div>
 
                       <div style={styles.cardNumberDisplay}>
-                        {showCardDetails[card.id] 
+                        {showCardDetails[card.id]
                           ? (card.card_number ? card.card_number.replace(/(\d{4})(?=\d)/g, '$1 ') : '**** **** **** ****')
                           : '**** **** **** ****'
                         }
@@ -1449,8 +1449,8 @@ function DashboardContent() {
                 };
 
                 return (
-                  <div 
-                    key={deposit.id} 
+                  <div
+                    key={deposit.id}
                     style={styles.transactionItem}
                     onClick={() => handleTransactionClick(transactionObj)}
                     onMouseEnter={(e) => {
@@ -1498,7 +1498,7 @@ function DashboardContent() {
                       </div>
                       <div style={{
                         ...styles.statusBadge,
-                        backgroundColor: 
+                        backgroundColor:
                           deposit.status === 'pending' || deposit.status === 'awaiting_confirmations' ? '#fef3c7' :
                           deposit.status === 'completed' || deposit.status === 'approved' ? '#d1fae5' :
                           deposit.status === 'under_review' ? '#dbeafe' :
@@ -1522,7 +1522,7 @@ function DashboardContent() {
 
       {/* Transaction Receipt Modal */}
       {showReceiptModal && selectedTransaction && (
-        <div 
+        <div
           style={{
             position: 'fixed',
             top: 0,
@@ -1535,10 +1535,10 @@ function DashboardContent() {
             justifyContent: 'center',
             zIndex: 1000,
             padding: '2rem'
-          }} 
+          }}
           onClick={closeReceiptModal}
         >
-          <div 
+          <div
             style={{
               backgroundColor: 'white',
               borderRadius: '16px',
@@ -1548,10 +1548,10 @@ function DashboardContent() {
               maxHeight: '90vh',
               overflowY: 'auto',
               position: 'relative'
-            }} 
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button 
+            <button
               style={{
                 position: 'absolute',
                 top: '1rem',
@@ -1562,7 +1562,7 @@ function DashboardContent() {
                 cursor: 'pointer',
                 color: '#64748b',
                 padding: '0.25rem 0.5rem'
-              }} 
+              }}
               onClick={closeReceiptModal}
             >
               ×
@@ -1604,11 +1604,11 @@ function DashboardContent() {
               <div style={{
                 fontSize: '2rem',
                 fontWeight: '700',
-                color: (selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('deposit') || 
-                       (selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('credit') ? 
+                color: (selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('deposit') ||
+                       (selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('credit') ?
                        '#059669' : '#dc2626'
               }}>
-                {((selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('deposit') || 
+                {((selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('deposit') ||
                   (selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('credit')) ? '+' : '-'}
                 {formatCurrency(Math.abs(parseFloat(selectedTransaction.amount) || 0))}
               </div>
@@ -1717,16 +1717,16 @@ function DashboardContent() {
 
             {(selectedTransaction.type === 'account_opening_deposit' || selectedTransaction.transaction_type === 'crypto_deposit') && selectedTransaction.depositDetails && (
               <>
-                <div style={{ 
-                  marginTop: '1.5rem', 
-                  paddingTop: '1.5rem', 
-                  borderTop: '2px solid #e2e8f0' 
+                <div style={{
+                  marginTop: '1.5rem',
+                  paddingTop: '1.5rem',
+                  borderTop: '2px solid #e2e8f0'
                 }}>
-                  <h3 style={{ 
-                    fontSize: '1.1rem', 
-                    fontWeight: '700', 
-                    color: '#1e293b', 
-                    marginBottom: '1rem' 
+                  <h3 style={{
+                    fontSize: '1.1rem',
+                    fontWeight: '700',
+                    color: '#1e293b',
+                    marginBottom: '1rem'
                   }}>
                     Cryptocurrency Details
                   </h3>
@@ -1766,19 +1766,19 @@ function DashboardContent() {
                   <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
                     Wallet Address
                   </span>
-                  <span style={{ 
-                    fontSize: '0.75rem', 
-                    color: '#1e293b', 
-                    fontWeight: '600', 
+                  <span style={{
+                    fontSize: '0.75rem',
+                    color: '#1e293b',
+                    fontWeight: '600',
                     fontFamily: 'monospace',
                     wordBreak: 'break-all',
                     textAlign: 'right',
                     maxWidth: '60%'
                   }}>
-                    {selectedTransaction.wallet_address || 
+                    {selectedTransaction.wallet_address ||
                      selectedTransaction.depositDetails?.wallet_address ||
-                     selectedTransaction.depositDetails?.crypto_wallets?.wallet_address || 
-                     selectedTransaction.depositDetails?.admin_assigned_wallets?.wallet_address || 
+                     selectedTransaction.depositDetails?.crypto_wallets?.wallet_address ||
+                     selectedTransaction.depositDetails?.admin_assigned_wallets?.wallet_address ||
                      'N/A'}
                   </span>
                 </div>
@@ -1792,10 +1792,10 @@ function DashboardContent() {
                     <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
                       Memo/Tag
                     </span>
-                    <span style={{ 
-                      fontSize: '0.75rem', 
-                      color: '#1e293b', 
-                      fontWeight: '600', 
+                    <span style={{
+                      fontSize: '0.75rem',
+                      color: '#1e293b',
+                      fontWeight: '600',
                       fontFamily: 'monospace',
                       wordBreak: 'break-all',
                       textAlign: 'right',
@@ -1815,10 +1815,10 @@ function DashboardContent() {
                     <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
                       Transaction Hash
                     </span>
-                    <span style={{ 
-                      fontSize: '0.75rem', 
-                      color: '#1e293b', 
-                      fontWeight: '600', 
+                    <span style={{
+                      fontSize: '0.75rem',
+                      color: '#1e293b',
+                      fontWeight: '600',
                       fontFamily: 'monospace',
                       wordBreak: 'break-all',
                       textAlign: 'right',
@@ -1874,17 +1874,17 @@ function DashboardContent() {
               </>
             )}
 
-            <div style={{ 
-              marginTop: '2rem', 
-              padding: '1rem', 
-              backgroundColor: '#f8fafc', 
+            <div style={{
+              marginTop: '2rem',
+              padding: '1rem',
+              backgroundColor: '#f8fafc',
               borderRadius: '8px',
               textAlign: 'center'
             }}>
-              <p style={{ 
-                fontSize: '0.8rem', 
-                color: '#64748b', 
-                margin: 0 
+              <p style={{
+                fontSize: '0.8rem',
+                color: '#64748b',
+                margin: 0
               }}>
                 Thank you for banking with Oakline Bank
               </p>
@@ -2288,7 +2288,7 @@ const styles = {
   },
   summaryHeaderLeft: {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: '1.5rem',
     flex: 1,
