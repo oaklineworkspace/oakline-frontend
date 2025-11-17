@@ -1219,11 +1219,20 @@ export default function WireTransferPage() {
         select:focus,
         textarea:focus {
           border-color: #3b82f6 !important;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 2px 8px rgba(59, 130, 246, 0.2) !important;
+          background-color: #ffffff !important;
+          transform: translateY(-1px);
+        }
+        
+        input:hover,
+        select:hover {
+          border-color: #93c5fd !important;
+          background-color: #ffffff !important;
         }
         
         input::placeholder {
           color: #94a3b8;
+          font-weight: 400;
         }
         
         input[type="text"],
@@ -1235,6 +1244,10 @@ export default function WireTransferPage() {
           -moz-appearance: none;
           appearance: none;
         }
+        
+        button:active {
+          transform: scale(0.98);
+        }
       `}</style>
     </>
   );
@@ -1243,7 +1256,7 @@ export default function WireTransferPage() {
 const styles = {
   container: {
     minHeight: '100vh',
-    backgroundColor: '#f8fafc',
+    background: 'linear-gradient(to bottom, #f1f5f9 0%, #e2e8f0 50%, #f8fafc 100%)',
     fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Oxygen, Ubuntu, "Helvetica Neue", Arial, sans-serif',
     paddingBottom: '80px'
   },
@@ -1346,17 +1359,19 @@ const styles = {
     opacity: 1
   },
   progressStepCircle: {
-    width: '48px',
-    height: '48px',
+    width: '56px',
+    height: '56px',
     borderRadius: '50%',
-    backgroundColor: '#e5e7eb',
-    color: '#9ca3af',
+    background: 'linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)',
+    color: '#6b7280',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '1.125rem',
+    fontSize: '1.25rem',
     fontWeight: 'bold',
-    transition: 'all 0.4s ease'
+    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+    border: '3px solid #f3f4f6',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
   },
   progressStepLabel: {
     fontSize: '0.875rem',
@@ -1379,26 +1394,32 @@ const styles = {
   },
   formCard: {
     backgroundColor: 'white',
-    borderRadius: '20px',
-    padding: '2.5rem',
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+    borderRadius: '24px',
+    padding: '3rem',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04)',
     border: '1px solid #e2e8f0',
-    marginBottom: '2rem'
+    marginBottom: '2rem',
+    background: 'linear-gradient(to bottom, #ffffff 0%, #f8fafc 100%)'
   },
   cardHeader: {
     display: 'flex',
     alignItems: 'flex-start',
-    gap: '1.25rem',
+    gap: '1.5rem',
     marginBottom: '2.5rem',
-    paddingBottom: '1.75rem',
-    borderBottom: '2px solid #f1f5f9'
+    paddingBottom: '2rem',
+    borderBottom: '3px solid #e2e8f0',
+    background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+    padding: '1.5rem',
+    margin: '-3rem -3rem 2.5rem -3rem',
+    borderRadius: '24px 24px 0 0'
   },
   cardIcon: {
-    fontSize: '2.25rem',
-    backgroundColor: '#dbeafe',
-    padding: '1rem',
-    borderRadius: '14px',
-    lineHeight: 1
+    fontSize: '2.5rem',
+    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+    padding: '1.25rem',
+    borderRadius: '18px',
+    lineHeight: 1,
+    boxShadow: '0 8px 20px rgba(59, 130, 246, 0.3)'
   },
   cardTitle: {
     fontSize: '1.75rem',
@@ -1417,21 +1438,24 @@ const styles = {
     marginBottom: '2.25rem'
   },
   sectionTitle: {
-    fontSize: '1.25rem',
-    fontWeight: '700',
-    color: '#1e293b',
+    fontSize: '1.375rem',
+    fontWeight: '800',
+    color: '#0f172a',
     marginBottom: '1.5rem',
     display: 'flex',
     alignItems: 'center',
-    gap: '0.625rem',
-    letterSpacing: '-0.01em'
+    gap: '0.75rem',
+    letterSpacing: '-0.02em',
+    paddingBottom: '0.75rem',
+    borderBottom: '3px solid #e2e8f0'
   },
   sectionDescription: {
-    fontSize: '0.9rem',
-    color: '#64748b',
-    marginBottom: '1.25rem',
+    fontSize: '0.95rem',
+    color: '#475569',
+    marginBottom: '1.5rem',
     marginTop: '-0.75rem',
-    lineHeight: '1.6'
+    lineHeight: '1.7',
+    fontWeight: '500'
   },
   formGroup: {
     marginBottom: '1.75rem',
@@ -1444,38 +1468,58 @@ const styles = {
   },
   label: {
     display: 'block',
-    marginBottom: '0.625rem',
+    marginBottom: '0.75rem',
     fontSize: '0.95rem',
-    fontWeight: '600',
-    color: '#334155',
-    letterSpacing: '-0.01em'
+    fontWeight: '700',
+    color: '#1e293b',
+    letterSpacing: '-0.01em',
+    textTransform: 'capitalize'
   },
   required: {
-    color: '#ef4444'
+    color: '#ef4444',
+    fontSize: '1.1em',
+    fontWeight: 'bold'
   },
   modernInput: {
     width: '100%',
-    padding: '1rem 1.25rem',
+    padding: '1.125rem 1.5rem',
     fontSize: '1rem',
     border: '2px solid #e2e8f0',
-    borderRadius: '12px',
-    backgroundColor: '#ffffff',
-    transition: 'all 0.2s ease',
+    borderRadius: '14px',
+    backgroundColor: '#f8fafc',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     fontFamily: 'inherit',
     boxSizing: 'border-box',
-    outline: 'none'
+    outline: 'none',
+    color: '#1e293b',
+    fontWeight: '500',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    appearance: 'none'
   },
   modernSelect: {
     width: '100%',
-    padding: '0.875rem 1rem',
-    fontSize: '0.95rem',
-    border: '1.5px solid #e5e7eb',
-    borderRadius: '10px',
-    backgroundColor: '#ffffff',
-    transition: 'all 0.3s ease',
+    padding: '1.125rem 1.5rem',
+    fontSize: '1rem',
+    border: '2px solid #e2e8f0',
+    borderRadius: '14px',
+    backgroundColor: '#f8fafc',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     cursor: 'pointer',
     fontFamily: 'inherit',
-    boxSizing: 'border-box'
+    boxSizing: 'border-box',
+    color: '#1e293b',
+    fontWeight: '500',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+    backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23475569\' d=\'M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z\'/%3E%3C/svg%3E")',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 1.25rem center',
+    backgroundSize: '14px',
+    paddingRight: '3rem',
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    appearance: 'none'
   },
   helpText: {
     display: 'block',
@@ -1490,11 +1534,12 @@ const styles = {
     margin: '2rem 0'
   },
   feeBreakdown: {
-    backgroundColor: '#f9fafb',
-    padding: '1.5rem',
-    borderRadius: '12px',
+    background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+    padding: '2rem',
+    borderRadius: '16px',
     marginTop: '1.5rem',
-    border: '1px solid #e5e7eb'
+    border: '2px solid #e2e8f0',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)'
   },
   feeRow: {
     display: 'flex',
@@ -1561,20 +1606,24 @@ const styles = {
   },
   primaryButton: {
     width: '100%',
-    padding: '1rem 2rem',
-    fontSize: '1rem',
+    padding: '1.25rem 2rem',
+    fontSize: '1.05rem',
     fontWeight: '700',
     color: 'white',
-    background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1e40af 100%)',
     border: 'none',
-    borderRadius: '12px',
+    borderRadius: '14px',
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '0.5rem',
-    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+    gap: '0.75rem',
+    boxShadow: '0 8px 20px rgba(59, 130, 246, 0.35), 0 2px 8px rgba(59, 130, 246, 0.2)',
+    letterSpacing: '0.02em',
+    textTransform: 'uppercase',
+    position: 'relative',
+    overflow: 'hidden'
   },
   reviewGrid: {
     display: 'grid',
@@ -1582,18 +1631,20 @@ const styles = {
     marginBottom: '2rem'
   },
   reviewSection: {
-    backgroundColor: '#f9fafb',
-    padding: '1.5rem',
-    borderRadius: '12px',
-    border: '1px solid #e5e7eb'
+    background: 'linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%)',
+    padding: '2rem',
+    borderRadius: '16px',
+    border: '2px solid #dbeafe',
+    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.08)'
   },
   reviewSectionTitle: {
-    fontSize: '1rem',
-    fontWeight: '700',
+    fontSize: '1.125rem',
+    fontWeight: '800',
     color: '#0f172a',
-    marginBottom: '1rem',
-    paddingBottom: '0.75rem',
-    borderBottom: '2px solid #e5e7eb'
+    marginBottom: '1.25rem',
+    paddingBottom: '1rem',
+    borderBottom: '3px solid #3b82f6',
+    letterSpacing: '-0.01em'
   },
   reviewRow: {
     display: 'flex',
