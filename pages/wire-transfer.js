@@ -16,6 +16,7 @@ export default function WireTransferPage() {
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [sentCode, setSentCode] = useState('');
+  const [bankDetails, setBankDetails] = useState(null);
   const router = useRouter();
 
   const [wireForm, setWireForm] = useState({
@@ -48,6 +49,13 @@ export default function WireTransferPage() {
       }
       setUser(session.user);
 
+      // Fetch bank details
+      const { data: bankData } = await supabase
+        .from('bank_details')
+        .select('*')
+        .single();
+      setBankDetails(bankData);
+
       const { data: userAccounts } = await supabase
         .from('accounts')
         .select('*')
@@ -75,7 +83,6 @@ export default function WireTransferPage() {
   const handleInputChange = (field, value) => {
     setWireForm(prev => ({ ...prev, [field]: value }));
     
-    // Auto-clear SWIFT code when switching to domestic
     if (field === 'transfer_type' && value === 'domestic') {
       setWireForm(prev => ({ ...prev, swift_code: '' }));
     }
@@ -88,7 +95,6 @@ export default function WireTransferPage() {
       'account_number', 'amount'
     ];
 
-    // Add country/state/zip requirements based on transfer type
     if (wireForm.transfer_type === 'domestic') {
       requiredFields.push('beneficiary_state', 'beneficiary_zip');
     } else {
@@ -172,7 +178,6 @@ export default function WireTransferPage() {
         return;
       }
 
-      // Create wire transfer record
       const { data: wireTransfer, error: wireError } = await supabase
         .from('wire_transfers')
         .insert([{
@@ -194,7 +199,6 @@ export default function WireTransferPage() {
 
       if (wireError) throw wireError;
 
-      // Deduct from sender account
       const balanceBefore = parseFloat(selectedAccount.balance);
       const newBalance = balanceBefore - amount;
       await supabase
@@ -202,7 +206,6 @@ export default function WireTransferPage() {
         .update({ balance: newBalance, updated_at: new Date().toISOString() })
         .eq('id', wireForm.from_account);
 
-      // Create transaction record
       await supabase.from('transactions').insert([{
         user_id: user.id,
         account_id: wireForm.from_account,
@@ -215,7 +218,6 @@ export default function WireTransferPage() {
         balance_after: newBalance
       }]);
 
-      // Create notification
       await supabase.from('notifications').insert([{
         user_id: user.id,
         type: 'wire_transfer',
@@ -223,7 +225,6 @@ export default function WireTransferPage() {
         message: `Wire transfer of ${formatCurrency(amount)} to ${wireForm.beneficiary_name} is being processed`
       }]);
 
-      // Send email notification
       await fetch('/api/send-transfer-notification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -241,7 +242,6 @@ export default function WireTransferPage() {
       setMessage('✅ Wire transfer submitted successfully and is being processed!');
       setShowVerificationModal(false);
       
-      // Reset form
       setStep(1);
       setWireForm({
         from_account: wireForm.from_account,
@@ -323,7 +323,6 @@ export default function WireTransferPage() {
             </div>
           )}
 
-          {/* Progress Steps */}
           <div style={styles.steps}>
             <div style={{ ...styles.stepItem, ...(step >= 1 ? styles.stepActive : {}) }}>
               <div style={styles.stepNumber}>1</div>
@@ -336,12 +335,10 @@ export default function WireTransferPage() {
             </div>
           </div>
 
-          {/* Step 1: Wire Details */}
           {step === 1 && (
             <div style={styles.formCard}>
               <h3 style={styles.sectionTitle}>Wire Transfer Information</h3>
 
-              {/* Transfer Type */}
               <div style={styles.formGroup}>
                 <label style={styles.label}>Transfer Type *</label>
                 <select
@@ -354,7 +351,6 @@ export default function WireTransferPage() {
                 </select>
               </div>
 
-              {/* From Account */}
               <div style={styles.formGroup}>
                 <label style={styles.label}>From Account *</label>
                 <select
@@ -372,7 +368,6 @@ export default function WireTransferPage() {
 
               <div style={styles.divider}></div>
 
-              {/* Beneficiary Information */}
               <h4 style={styles.subsectionTitle}>Beneficiary Information</h4>
 
               <div style={styles.formGroup}>
@@ -449,7 +444,6 @@ export default function WireTransferPage() {
 
               <div style={styles.divider}></div>
 
-              {/* Bank Information */}
               <h4 style={styles.subsectionTitle}>Bank Information</h4>
 
               <div style={styles.formGroup}>
@@ -508,7 +502,6 @@ export default function WireTransferPage() {
 
               <div style={styles.divider}></div>
 
-              {/* Transfer Details */}
               <h4 style={styles.subsectionTitle}>Transfer Details</h4>
 
               <div style={styles.formRow}>
@@ -556,7 +549,6 @@ export default function WireTransferPage() {
             </div>
           )}
 
-          {/* Step 2: Review */}
           {step === 2 && (
             <div style={styles.formCard}>
               <h3 style={styles.sectionTitle}>Review Wire Transfer</h3>
@@ -654,7 +646,6 @@ export default function WireTransferPage() {
             </div>
           )}
 
-          {/* Wire Transfer History */}
           <div style={styles.historyCard}>
             <h3 style={styles.sectionTitle}>Transfer History</h3>
             {wireTransfers.length === 0 ? (
@@ -694,7 +685,6 @@ export default function WireTransferPage() {
           </div>
         </div>
 
-        {/* Verification Modal */}
         {showVerificationModal && (
           <div style={styles.modalOverlay} onClick={() => !processing && setShowVerificationModal(false)}>
             <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -740,6 +730,13 @@ export default function WireTransferPage() {
           </div>
         )}
       </div>
+
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </>
   );
 }
