@@ -193,12 +193,10 @@ export default function WireTransfer() {
         setCurrentStep(2);
       }
     } else if (currentStep === 2) {
-      setSendingCode(true);
       setCurrentStep(3);
       if (!sentCode) {
+        setSendingCode(true);
         await sendVerificationCode();
-      } else {
-        setSendingCode(false);
       }
     }
   };
@@ -520,33 +518,48 @@ export default function WireTransfer() {
       justifyContent: 'center',
       alignItems: 'center',
       gap: isMobile ? '0.5rem' : '1rem',
-      marginBottom: '2rem'
+      marginBottom: '2.5rem',
+      backgroundColor: 'rgba(255,255,255,0.1)',
+      padding: isMobile ? '1.5rem 1rem' : '2rem',
+      borderRadius: '16px',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(255,255,255,0.2)',
+      maxWidth: '900px',
+      margin: '0 auto 2.5rem auto'
     },
     step: {
       display: 'flex',
+      flexDirection: isMobile ? 'column' : 'row',
       alignItems: 'center',
-      gap: '0.5rem'
+      gap: isMobile ? '0.375rem' : '0.625rem',
+      flex: 1
     },
     stepCircle: {
-      width: isMobile ? '32px' : '40px',
-      height: isMobile ? '32px' : '40px',
+      width: isMobile ? '44px' : '56px',
+      height: isMobile ? '44px' : '56px',
       borderRadius: '50%',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      fontSize: isMobile ? '0.875rem' : '1rem',
+      fontSize: isMobile ? '1.125rem' : '1.375rem',
       fontWeight: '700',
-      transition: 'all 0.3s'
+      transition: 'all 0.3s ease',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      border: '3px solid transparent'
     },
     stepLabel: {
-      fontSize: isMobile ? '0.75rem' : '0.875rem',
+      fontSize: isMobile ? '0.75rem' : '0.9375rem',
       fontWeight: '600',
-      color: 'white'
+      color: 'white',
+      textAlign: isMobile ? 'center' : 'left',
+      lineHeight: '1.3'
     },
     stepDivider: {
-      width: isMobile ? '20px' : '40px',
-      height: '2px',
-      backgroundColor: 'rgba(255,255,255,0.3)'
+      width: isMobile ? '2px' : '60px',
+      height: isMobile ? '24px' : '3px',
+      backgroundColor: 'rgba(255,255,255,0.3)',
+      borderRadius: '2px',
+      transition: 'all 0.3s ease'
     },
     contentGrid: {
       display: 'grid',
@@ -872,6 +885,64 @@ export default function WireTransfer() {
       `}</style>
 
       <div style={styles.container}>
+        {sendingCode && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(26, 54, 93, 0.95)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+            backdropFilter: 'blur(8px)'
+          }}>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              border: '6px solid rgba(255,255,255,0.2)',
+              borderTop: '6px solid #059669',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              marginBottom: '2rem'
+            }}></div>
+            <h2 style={{
+              color: 'white',
+              fontSize: isMobile ? '1.5rem' : '2rem',
+              fontWeight: '700',
+              marginBottom: '1rem',
+              textAlign: 'center'
+            }}>
+              📧 Sending Verification Code
+            </h2>
+            <p style={{
+              color: 'rgba(255,255,255,0.9)',
+              fontSize: isMobile ? '1rem' : '1.125rem',
+              textAlign: 'center',
+              maxWidth: '500px',
+              lineHeight: '1.6',
+              padding: '0 1rem'
+            }}>
+              Please wait while we send a 6-digit security code to <strong>{user?.email}</strong>
+            </p>
+            <div style={{
+              marginTop: '2rem',
+              padding: '1rem 2rem',
+              backgroundColor: 'rgba(5, 150, 105, 0.2)',
+              borderRadius: '12px',
+              border: '2px solid rgba(5, 150, 105, 0.5)',
+              color: 'rgba(255,255,255,0.9)',
+              fontSize: '0.875rem',
+              textAlign: 'center'
+            }}>
+              🔒 This process is secured with bank-level encryption
+            </div>
+          </div>
+        )}
+        
         <header style={styles.header}>
           <a href="/dashboard" style={styles.logo}>🏦 Oakline Bank</a>
           <a href="/dashboard" style={styles.backButton}>← Back to Dashboard</a>
@@ -952,34 +1023,64 @@ export default function WireTransfer() {
             <div style={styles.step}>
               <div style={{
                 ...styles.stepCircle,
-                backgroundColor: currentStep >= 1 ? '#059669' : 'rgba(255,255,255,0.3)',
-                color: currentStep >= 1 ? 'white' : '#64748b'
+                backgroundColor: currentStep >= 1 ? '#059669' : 'rgba(255,255,255,0.2)',
+                color: currentStep >= 1 ? 'white' : 'rgba(255,255,255,0.6)',
+                borderColor: currentStep === 1 ? '#FFC857' : 'transparent',
+                transform: currentStep === 1 ? 'scale(1.05)' : 'scale(1)'
               }}>
-                1
+                {currentStep > 1 ? '✓' : '1'}
               </div>
-              <span style={styles.stepLabel}>Transfer Details</span>
+              <span style={{
+                ...styles.stepLabel,
+                opacity: currentStep >= 1 ? 1 : 0.6,
+                fontWeight: currentStep === 1 ? '700' : '600'
+              }}>
+                Transfer Details
+              </span>
             </div>
-            <div style={styles.stepDivider}></div>
+            <div style={{
+              ...styles.stepDivider,
+              backgroundColor: currentStep >= 2 ? '#059669' : 'rgba(255,255,255,0.3)'
+            }}></div>
             <div style={styles.step}>
               <div style={{
                 ...styles.stepCircle,
-                backgroundColor: currentStep >= 2 ? '#059669' : 'rgba(255,255,255,0.3)',
-                color: currentStep >= 2 ? 'white' : '#64748b'
+                backgroundColor: currentStep >= 2 ? '#059669' : 'rgba(255,255,255,0.2)',
+                color: currentStep >= 2 ? 'white' : 'rgba(255,255,255,0.6)',
+                borderColor: currentStep === 2 ? '#FFC857' : 'transparent',
+                transform: currentStep === 2 ? 'scale(1.05)' : 'scale(1)'
               }}>
-                2
+                {currentStep > 2 ? '✓' : '2'}
               </div>
-              <span style={styles.stepLabel}>Review & Confirm</span>
+              <span style={{
+                ...styles.stepLabel,
+                opacity: currentStep >= 2 ? 1 : 0.6,
+                fontWeight: currentStep === 2 ? '700' : '600'
+              }}>
+                Review & Confirm
+              </span>
             </div>
-            <div style={styles.stepDivider}></div>
+            <div style={{
+              ...styles.stepDivider,
+              backgroundColor: currentStep >= 3 ? '#059669' : 'rgba(255,255,255,0.3)'
+            }}></div>
             <div style={styles.step}>
               <div style={{
                 ...styles.stepCircle,
-                backgroundColor: currentStep >= 3 ? '#059669' : 'rgba(255,255,255,0.3)',
-                color: currentStep >= 3 ? 'white' : '#64748b'
+                backgroundColor: currentStep >= 3 ? '#059669' : 'rgba(255,255,255,0.2)',
+                color: currentStep >= 3 ? 'white' : 'rgba(255,255,255,0.6)',
+                borderColor: currentStep === 3 ? '#FFC857' : 'transparent',
+                transform: currentStep === 3 ? 'scale(1.05)' : 'scale(1)'
               }}>
-                3
+                {currentStep > 3 ? '✓' : '3'}
               </div>
-              <span style={styles.stepLabel}>Verify & Submit</span>
+              <span style={{
+                ...styles.stepLabel,
+                opacity: currentStep >= 3 ? 1 : 0.6,
+                fontWeight: currentStep === 3 ? '700' : '600'
+              }}>
+                Verify & Submit
+              </span>
             </div>
           </div>
 
@@ -1003,12 +1104,19 @@ export default function WireTransfer() {
               </div>
             </div>
           ) : (
-            <div style={styles.contentGrid}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: currentStep === 1 ? (isMobile ? '1fr' : '1fr 1fr') : '1fr',
+              gap: '2rem',
+              marginBottom: '2rem',
+              maxWidth: currentStep === 1 ? '1400px' : '800px',
+              margin: currentStep === 1 ? '0 auto 2rem auto' : '0 auto'
+            }}>
               <div style={styles.card}>
                 <h2 style={styles.cardTitle}>
-                  {currentStep === 1 && 'Step 1: Transfer Details'}
-                  {currentStep === 2 && 'Step 2: Review & Confirm'}
-                  {currentStep === 3 && 'Step 3: Verify & Submit'}
+                  {currentStep === 1 && '📝 Step 1: Transfer Details'}
+                  {currentStep === 2 && '👁️ Step 2: Review & Confirm'}
+                  {currentStep === 3 && '🔐 Step 3: Verify & Submit'}
                 </h2>
 
                 <form onSubmit={handleSubmit}>
@@ -1711,8 +1819,9 @@ export default function WireTransfer() {
                 </form>
               </div>
 
-              <div style={styles.card}>
-                <h2 style={styles.cardTitle}>Transfer History</h2>
+              {currentStep === 1 && (
+                <div style={styles.card}>
+                  <h2 style={styles.cardTitle}>📋 Recent Transfer History</h2>
                 <div style={styles.transfersList}>
                   {transfers.length === 0 ? (
                     <div style={styles.emptyState}>
@@ -1754,6 +1863,7 @@ export default function WireTransfer() {
                   )}
                 </div>
               </div>
+              )}
             </div>
           )}
         </main>
