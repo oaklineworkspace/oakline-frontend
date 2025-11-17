@@ -635,6 +635,55 @@ export default function WireTransferPage() {
       height: '18px',
       cursor: 'pointer'
     },
+    urgentTransferBox: {
+      backgroundColor: '#fef3c7',
+      border: '2px solid #fbbf24',
+      borderRadius: '12px',
+      padding: '1rem',
+      marginTop: '0.75rem',
+      marginBottom: '0.5rem',
+      transition: 'all 0.3s ease'
+    },
+    urgentCheckboxLabel: {
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '0.75rem',
+      cursor: 'pointer',
+      width: '100%'
+    },
+    urgentCheckbox: {
+      width: '20px',
+      height: '20px',
+      cursor: 'pointer',
+      marginTop: '2px',
+      accentColor: '#f59e0b',
+      flexShrink: 0
+    },
+    urgentLabelContent: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0.25rem',
+      flex: 1
+    },
+    urgentLabelText: {
+      fontSize: '0.95rem',
+      fontWeight: '700',
+      color: '#92400e',
+      display: 'block'
+    },
+    urgentLabelFee: {
+      fontSize: '0.875rem',
+      fontWeight: '600',
+      color: '#b45309',
+      display: 'block'
+    },
+    urgentLabelDesc: {
+      fontSize: '0.8rem',
+      color: '#78350f',
+      fontStyle: 'italic',
+      display: 'block',
+      marginTop: '0.25rem'
+    },
     submitButton: {
       width: '100%',
       padding: '1rem',
@@ -1336,21 +1385,27 @@ export default function WireTransferPage() {
                   <span style={styles.feeValue}>{formatCurrency(wireForm.amount || 0)}</span>
                 </div>
                 <div style={styles.feeRow}>
-                  <span style={styles.feeLabel}>Transfer Fee:</span>
+                  <span style={styles.feeLabel}>Transfer Fee ({wireForm.transfer_type === 'domestic' ? 'Domestic' : 'International'}):</span>
                   <span style={styles.feeValue}>{formatCurrency(wireForm.transfer_fee || 0)}</span>
                 </div>
-                <div style={styles.feeRow}>
-                  <label style={styles.checkboxLabel}>
+                
+                <div style={styles.urgentTransferBox}>
+                  <label style={styles.urgentCheckboxLabel}>
                     <input
                       type="checkbox"
                       checked={wireForm.urgent_transfer}
                       onChange={(e) => handleInputChange('urgent_transfer', e.target.checked)}
-                      style={styles.checkbox}
+                      style={styles.urgentCheckbox}
                     />
-                    <span>Urgent Transfer (+$10.00)</span>
+                    <div style={styles.urgentLabelContent}>
+                      <span style={styles.urgentLabelText}>🚀 Urgent Transfer (Priority Processing)</span>
+                      <span style={styles.urgentLabelFee}>Additional Fee: +$10.00</span>
+                      <span style={styles.urgentLabelDesc}>Your transfer will be processed within 24 hours</span>
+                    </div>
                   </label>
                 </div>
-                <div style={{ ...styles.feeRow, borderTop: '2px solid #e5e7eb', paddingTop: '0.75rem', marginTop: '0.5rem' }}>
+
+                <div style={{ ...styles.feeRow, borderTop: '2px solid #e5e7eb', paddingTop: '0.75rem', marginTop: '0.75rem' }}>
                   <span style={{ ...styles.feeLabel, fontWeight: 'bold' }}>Total Deduction:</span>
                   <span style={{ ...styles.feeValue, fontWeight: 'bold', fontSize: '1.2rem', color: '#dc2626' }}>
                     {formatCurrency(wireForm.total_deduction || 0)}
