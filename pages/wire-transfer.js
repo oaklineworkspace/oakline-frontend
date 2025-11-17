@@ -266,9 +266,15 @@ export default function WireTransferPage() {
   };
 
   const handleVerifyCode = () => {
+    if (processing) {
+      console.log('Already processing, ignoring click');
+      return;
+    }
+
     console.log('Verify button clicked');
     console.log('Code sent:', sentCode);
     console.log('Code entered:', verificationCode);
+    console.log('Codes match:', verificationCode === sentCode);
     
     if (!codeSent) {
       setMessage('Please request a verification code first.');
@@ -283,13 +289,15 @@ export default function WireTransferPage() {
     }
 
     if (verificationCode !== sentCode) {
-      setMessage('Invalid verification code. Please check and try again.');
+      setMessage(`Invalid verification code. Please check and try again. (Expected: ${sentCode.substring(0, 2)}****, Got: ${verificationCode.substring(0, 2)}****)`);
       setMessageType('error');
       return;
     }
 
-    setMessage('Code verified successfully!');
+    setMessage('✅ Code verified successfully! Processing transfer...');
     setMessageType('success');
+    setProcessing(true);
+    
     setTimeout(() => {
       completeWireTransfer();
     }, 500);
@@ -1634,13 +1642,34 @@ export default function WireTransferPage() {
                 backgroundColor: '#e0f2fe',
                 padding: '1.25rem',
                 borderRadius: '12px',
-                marginBottom: '2rem',
+                marginBottom: '1rem',
                 border: '2px solid #7dd3fc'
               }}>
                 <p style={{ fontSize: '0.95rem', color: '#0c4a6e', margin: 0, textAlign: 'center' }}>
                   📧 We've sent a 6-digit verification code to <strong>{user?.email}</strong>
                 </p>
               </div>
+
+              {sentCode && (
+                <div style={{
+                  backgroundColor: '#fef3c7',
+                  padding: '1rem',
+                  borderRadius: '12px',
+                  marginBottom: '2rem',
+                  border: '2px solid #fbbf24',
+                  textAlign: 'center'
+                }}>
+                  <p style={{ fontSize: '0.75rem', color: '#78350f', margin: '0 0 0.5rem 0', fontWeight: '600' }}>
+                    🔧 Development Mode - Your Code:
+                  </p>
+                  <p style={{ fontSize: '1.5rem', color: '#92400e', margin: 0, fontWeight: 'bold', letterSpacing: '0.3rem', fontFamily: 'monospace' }}>
+                    {sentCode}
+                  </p>
+                  <p style={{ fontSize: '0.7rem', color: '#78350f', margin: '0.5rem 0 0 0', fontStyle: 'italic' }}>
+                    (Also sent to your email)
+                  </p>
+                </div>
+              )}
 
               <div style={{ marginBottom: '2rem' }}>
                 <label style={{
