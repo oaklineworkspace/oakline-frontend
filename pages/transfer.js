@@ -448,6 +448,17 @@ export default function Transfer() {
         throw new Error('Failed to record credit transaction');
       }
 
+      // Fetch sender's name from profiles/applications table
+      const { data: senderProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', user.id)
+        .single();
+
+      const senderName = senderProfile
+        ? `${senderProfile.first_name} ${senderProfile.last_name}`
+        : user?.email?.split('@')[0] || 'Account Holder';
+
       // Generate receipt data
       const receipt = {
         referenceNumber,
@@ -459,7 +470,7 @@ export default function Transfer() {
           minute: '2-digit',
           second: '2-digit'
         }),
-        senderName: user?.email?.split('@')[0] || 'Account Holder',
+        senderName: senderName,
         fromAccount: {
           type: selectedFromAccount.account_type,
           number: selectedFromAccount.account_number,
@@ -505,14 +516,14 @@ export default function Transfer() {
     const receipt = {
       referenceNumber: transfer.reference || 'N/A',
       date: formatDate(transfer.created_at),
-      senderName: user?.email?.split('@')[0] || 'Account Holder',
+      senderName: user?.email?.split('@')[0] || 'Account Holder', // Fallback sender name
       fromAccount: {
         type: fromAccountData?.account_type || 'N/A',
         number: fromAccountData?.account_number || 'N/A',
         balance: transfer.balance_after || 0
       },
       toAccount: {
-        type: 'Account',
+        type: 'Account', // This might need to be determined based on context if it's an external transfer
         number: 'N/A'
       },
       amount: transfer.amount,
@@ -817,6 +828,39 @@ export default function Transfer() {
       marginTop: '1rem',
       color: '#64748b',
       fontSize: '1rem'
+    },
+    processingOverlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999,
+      backdropFilter: 'blur(4px)'
+    },
+    processingSpinner: {
+      width: '60px',
+      height: '60px',
+      border: '6px solid rgba(255, 255, 255, 0.2)',
+      borderTop: '6px solid #ffffff',
+      borderRadius: '50%',
+      animation: 'spin 0.8s linear infinite',
+      marginBottom: '1.5rem'
+    },
+    processingText: {
+      color: '#ffffff',
+      fontSize: '1.2rem',
+      fontWeight: '600',
+      marginBottom: '0.5rem'
+    },
+    processingSubtext: {
+      color: 'rgba(255, 255, 255, 0.8)',
+      fontSize: '0.9rem'
     },
     emptyState: {
       textAlign: 'center',
@@ -1176,6 +1220,14 @@ export default function Transfer() {
             </div>
           )}
 
+          {loading && (
+            <div style={styles.processingOverlay}>
+              <div style={styles.processingSpinner}></div>
+              <p style={styles.processingText}>Processing Transfer...</p>
+              <p style={styles.processingSubtext}>Please wait while we finalize your transaction.</p>
+            </div>
+          )}
+
           <div style={styles.welcomeSection}>
             <h1 style={styles.welcomeTitle}>Transfer Between Your Accounts</h1>
             <p style={styles.welcomeSubtitle}>Move money instantly between your Oakline accounts</p>
@@ -1308,7 +1360,7 @@ export default function Transfer() {
                 }}
                 disabled={loading}
               >
-                {loading ? '🔄 Processing...' : `💸 Transfer ${formatCurrency(parseFloat(amount) || 0)}`}
+                {loading ? 'Processing...' : `💸 Transfer ${formatCurrency(parseFloat(amount) || 0)}`}
               </button>
             </form>
           </div>
