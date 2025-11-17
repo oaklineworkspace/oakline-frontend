@@ -2111,16 +2111,16 @@ const styles = {
     fontWeight: 'bold'
   },
   profilePictureInSummary: {
-    width: '60px',
-    height: '60px',
+    width: '80px',
+    height: '80px',
     borderRadius: '50%',
     objectFit: 'cover',
     border: '3px solid #059669',
     boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
   },
   profilePlaceholderInSummary: {
-    width: '60px',
-    height: '60px',
+    width: '80px',
+    height: '80px',
     borderRadius: '50%',
     backgroundColor: '#059669',
     display: 'flex',
