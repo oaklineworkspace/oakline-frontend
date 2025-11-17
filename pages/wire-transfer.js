@@ -29,7 +29,7 @@ export default function WireTransfer() {
     amount: '',
     description: '',
     urgent_transfer: false,
-    fee: 25.00,
+    fee: 15.00,
     urgent_fee: 10.00,
     total_amount: 0
   });
@@ -77,7 +77,7 @@ export default function WireTransfer() {
 
   const calculateTotal = () => {
     const amount = parseFloat(wireForm.amount) || 0;
-    const baseFee = wireForm.transfer_type === 'international' ? 45 : 25;
+    const baseFee = wireForm.transfer_type === 'international' ? 25 : 15;
     const urgentFee = wireForm.urgent_transfer ? 10 : 0;
     const totalFee = baseFee + urgentFee;
     const total = amount + totalFee;
