@@ -907,9 +907,8 @@ function DashboardContent() {
             </div>
           </div>
           <span style={styles.lastUpdated}>Last updated: {new Date().toLocaleDateString()}</span>
-        </section>
 
-        <div style={styles.summaryCards}>
+          <div style={styles.summaryCards}>
           <div style={styles.primaryBalanceCard}>
             <div style={styles.balanceCardHeader}>
               <div style={styles.balanceHeaderInfo}>
@@ -975,6 +974,7 @@ function DashboardContent() {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </section>
 
