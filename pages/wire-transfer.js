@@ -5,7 +5,22 @@ import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
 import Head from 'next/head';
 
+const useMediaQuery = (query) => {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) setMatches(media.matches);
+    const listener = () => setMatches(media.matches);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, [matches, query]);
+  return matches;
+};
+
 export default function WireTransferPage() {
+  const router = useRouter();
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  
   const [user, setUser] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [wireTransfers, setWireTransfers] = useState([]);
@@ -13,12 +28,12 @@ export default function WireTransferPage() {
   const [processing, setProcessing] = useState(false);
   const [step, setStep] = useState(1);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [sentCode, setSentCode] = useState('');
   const [sendingCode, setSendingCode] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
-  const router = useRouter();
 
   const [wireForm, setWireForm] = useState({
     from_account: '',
@@ -134,6 +149,8 @@ export default function WireTransferPage() {
 
     } catch (error) {
       console.error('Error loading data:', error);
+      setMessage('Error loading data. Please refresh.');
+      setMessageType('error');
     } finally {
       setLoading(false);
     }
@@ -187,6 +204,7 @@ export default function WireTransferPage() {
   const handleNext = () => {
     if (!validateForm()) {
       setMessage('Please fill in all required fields');
+      setMessageType('error');
       return;
     }
 
@@ -195,6 +213,7 @@ export default function WireTransferPage() {
 
     if (totalAmount > parseFloat(selectedAccount.balance)) {
       setMessage('Insufficient funds in selected account (including fees)');
+      setMessageType('error');
       return;
     }
 
@@ -229,9 +248,11 @@ export default function WireTransferPage() {
       setCodeSent(true);
       setShowVerificationModal(true);
       setMessage('Verification code sent to ' + user.email);
+      setMessageType('success');
     } catch (error) {
       console.error('Error sending verification code:', error);
       setMessage(`${error.message || 'Failed to send verification code. Please try again.'}`);
+      setMessageType('error');
       setSentCode('');
       setCodeSent(false);
     } finally {
@@ -242,16 +263,19 @@ export default function WireTransferPage() {
   const completeWireTransfer = async () => {
     if (!codeSent) {
       setMessage('Please request a verification code first.');
+      setMessageType('error');
       return;
     }
 
     if (!verificationCode || verificationCode.length !== 6) {
       setMessage('Please enter a valid 6-digit verification code.');
+      setMessageType('error');
       return;
     }
 
     if (verificationCode !== sentCode) {
       setMessage('Invalid verification code. Please check and try again.');
+      setMessageType('error');
       return;
     }
 
@@ -263,6 +287,7 @@ export default function WireTransferPage() {
 
       if (totalAmount > parseFloat(selectedAccount.balance)) {
         setMessage('Insufficient funds');
+        setMessageType('error');
         setProcessing(false);
         return;
       }
@@ -328,6 +353,7 @@ export default function WireTransferPage() {
       }]);
 
       setMessage('Wire transfer submitted successfully and is pending admin review!');
+      setMessageType('success');
       setShowVerificationModal(false);
       
       setStep(1);
@@ -373,6 +399,7 @@ export default function WireTransferPage() {
     } catch (error) {
       console.error('Wire transfer error:', error);
       setMessage(`${error.message}`);
+      setMessageType('error');
     } finally {
       setProcessing(false);
     }
@@ -385,11 +412,450 @@ export default function WireTransferPage() {
     }).format(amount || 0);
   };
 
-  if (loading && !user) {
+  const getStatusColor = (status) => {
+    const colors = {
+      pending: '#f59e0b',
+      processing: '#3b82f6',
+      completed: '#10b981',
+      failed: '#ef4444',
+      cancelled: '#6b7280'
+    };
+    return colors[status] || '#6b7280';
+  };
+
+  const styles = {
+    container: {
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #1a365d 0%, #059669 100%)',
+      paddingTop: isMobile ? '1rem' : '2rem',
+      paddingBottom: '4rem'
+    },
+    header: {
+      maxWidth: '1400px',
+      margin: '0 auto',
+      padding: isMobile ? '1rem' : '1.5rem 2rem',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: '1rem'
+    },
+    logo: {
+      fontSize: isMobile ? '1.25rem' : '1.5rem',
+      fontWeight: 'bold',
+      color: 'white',
+      textDecoration: 'none'
+    },
+    backButton: {
+      padding: isMobile ? '0.5rem 1rem' : '0.6rem 1.2rem',
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      color: 'white',
+      textDecoration: 'none',
+      borderRadius: '8px',
+      fontSize: isMobile ? '0.85rem' : '0.95rem',
+      border: '1px solid rgba(255,255,255,0.3)',
+      transition: 'all 0.3s ease',
+      cursor: 'pointer'
+    },
+    main: {
+      maxWidth: '1400px',
+      margin: '0 auto',
+      padding: isMobile ? '1rem 0.75rem' : '2rem'
+    },
+    pageTitle: {
+      fontSize: isMobile ? '1.5rem' : '2rem',
+      fontWeight: '700',
+      color: '#ffffff',
+      marginBottom: '2rem',
+      textAlign: 'center'
+    },
+    message: {
+      padding: '1rem',
+      borderRadius: '12px',
+      marginBottom: '1rem',
+      border: '2px solid'
+    },
+    progressSteps: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: '2rem',
+      padding: '0 1rem'
+    },
+    progressStep: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '0.5rem',
+      opacity: 0.5,
+      transition: 'all 0.4s ease'
+    },
+    progressStepActive: {
+      opacity: 1
+    },
+    progressStepCircle: {
+      width: isMobile ? '40px' : '50px',
+      height: isMobile ? '40px' : '50px',
+      borderRadius: '50%',
+      backgroundColor: 'rgba(255,255,255,0.3)',
+      color: 'white',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: isMobile ? '1rem' : '1.2rem',
+      fontWeight: 'bold',
+      border: '2px solid rgba(255,255,255,0.5)'
+    },
+    progressStepLabel: {
+      fontSize: isMobile ? '0.75rem' : '0.875rem',
+      fontWeight: '600',
+      color: 'white'
+    },
+    progressLine: {
+      flex: 1,
+      height: '2px',
+      backgroundColor: 'rgba(255,255,255,0.3)',
+      margin: '0 0.5rem',
+      maxWidth: '80px'
+    },
+    card: {
+      backgroundColor: 'rgba(255, 255, 255, 0.98)',
+      borderRadius: '16px',
+      padding: isMobile ? '1.5rem' : '2rem',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+      border: '1px solid #059669',
+      marginBottom: '2rem'
+    },
+    cardTitle: {
+      fontSize: isMobile ? '1.1rem' : '1.25rem',
+      fontWeight: '700',
+      color: '#1a365d',
+      marginBottom: '1.5rem',
+      paddingBottom: '1rem',
+      borderBottom: '2px solid #059669'
+    },
+    formGroup: {
+      marginBottom: '1.25rem'
+    },
+    label: {
+      display: 'block',
+      fontSize: '0.875rem',
+      fontWeight: '600',
+      color: '#374151',
+      marginBottom: '0.5rem'
+    },
+    required: {
+      color: '#ef4444',
+      marginLeft: '0.25rem'
+    },
+    input: {
+      width: '100%',
+      padding: '0.75rem',
+      border: '2px solid #e2e8f0',
+      borderRadius: '12px',
+      fontSize: '0.875rem',
+      transition: 'border-color 0.3s',
+      boxSizing: 'border-box'
+    },
+    select: {
+      width: '100%',
+      padding: '0.75rem',
+      border: '2px solid #e2e8f0',
+      borderRadius: '12px',
+      fontSize: '0.875rem',
+      backgroundColor: 'white',
+      transition: 'border-color 0.3s',
+      boxSizing: 'border-box'
+    },
+    formRow: {
+      display: 'grid',
+      gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+      gap: '1rem',
+      marginBottom: '1.25rem'
+    },
+    balanceInfo: {
+      backgroundColor: '#f8fafc',
+      padding: '1rem',
+      borderRadius: '12px',
+      marginTop: '1rem',
+      border: '1px solid #e2e8f0'
+    },
+    balanceLabel: {
+      fontSize: '0.75rem',
+      color: '#64748b',
+      marginBottom: '0.5rem'
+    },
+    balanceValue: {
+      fontSize: '1.25rem',
+      fontWeight: '700',
+      color: '#1e293b'
+    },
+    feeBreakdown: {
+      backgroundColor: '#f8fafc',
+      padding: '1rem',
+      borderRadius: '12px',
+      marginTop: '1rem',
+      border: '1px solid #e2e8f0'
+    },
+    feeRow: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '0.5rem',
+      fontSize: '0.875rem'
+    },
+    feeLabel: {
+      color: '#64748b',
+      fontWeight: '500'
+    },
+    feeValue: {
+      color: '#1e293b',
+      fontWeight: '600'
+    },
+    checkboxLabel: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+      cursor: 'pointer',
+      color: '#1e293b',
+      fontWeight: '500'
+    },
+    checkbox: {
+      width: '18px',
+      height: '18px',
+      cursor: 'pointer'
+    },
+    submitButton: {
+      width: '100%',
+      padding: '1rem',
+      backgroundColor: '#1e40af',
+      color: 'white',
+      border: 'none',
+      borderRadius: '12px',
+      fontSize: isMobile ? '0.875rem' : '0.95rem',
+      fontWeight: '700',
+      cursor: 'pointer',
+      transition: 'all 0.3s',
+      boxShadow: '0 6px 20px rgba(30, 64, 175, 0.4)',
+      marginTop: '1rem'
+    },
+    buttonRow: {
+      display: 'flex',
+      gap: '1rem',
+      marginTop: '1.5rem'
+    },
+    secondaryButton: {
+      flex: 1,
+      padding: '1rem',
+      fontSize: '1rem',
+      fontWeight: '600',
+      color: '#64748b',
+      backgroundColor: 'white',
+      border: '2px solid #e5e7eb',
+      borderRadius: '12px',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease'
+    },
+    reviewSection: {
+      backgroundColor: '#f8fafc',
+      padding: '1.5rem',
+      borderRadius: '12px',
+      marginBottom: '1rem',
+      border: '1px solid #e2e8f0'
+    },
+    reviewSectionTitle: {
+      fontSize: '1rem',
+      fontWeight: '700',
+      color: '#1a365d',
+      marginBottom: '1rem',
+      paddingBottom: '0.75rem',
+      borderBottom: '2px solid #059669'
+    },
+    reviewRow: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: '0.75rem',
+      gap: '1rem',
+      fontSize: '0.875rem'
+    },
+    reviewLabel: {
+      color: '#64748b',
+      fontWeight: '500',
+      minWidth: '120px'
+    },
+    reviewValue: {
+      color: '#1e293b',
+      fontWeight: '600',
+      textAlign: 'right',
+      wordBreak: 'break-word'
+    },
+    historyItem: {
+      backgroundColor: '#f8fafc',
+      padding: '1rem',
+      borderRadius: '12px',
+      marginBottom: '1rem',
+      border: '1px solid #e2e8f0'
+    },
+    historyHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'start',
+      marginBottom: '0.5rem',
+      flexWrap: 'wrap',
+      gap: '0.5rem'
+    },
+    historyName: {
+      fontSize: '1rem',
+      fontWeight: '600',
+      color: '#1e293b'
+    },
+    historyBank: {
+      fontSize: '0.875rem',
+      color: '#64748b',
+      marginTop: '0.25rem'
+    },
+    historyRef: {
+      fontSize: '0.75rem',
+      color: '#9ca3af',
+      fontFamily: 'monospace',
+      marginTop: '0.25rem'
+    },
+    historyAmount: {
+      fontSize: '1.1rem',
+      fontWeight: '700',
+      color: '#059669'
+    },
+    historyStatus: {
+      display: 'inline-block',
+      padding: '0.25rem 0.75rem',
+      borderRadius: '20px',
+      fontSize: '0.75rem',
+      fontWeight: '600',
+      marginTop: '0.5rem',
+      color: 'white'
+    },
+    historyDate: {
+      fontSize: '0.8rem',
+      color: '#9ca3af',
+      marginTop: '0.5rem'
+    },
+    modalOverlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(10, 31, 68, 0.95)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: '1rem',
+      backdropFilter: 'blur(8px)'
+    },
+    modal: {
+      backgroundColor: 'white',
+      borderRadius: '20px',
+      padding: '2rem',
+      maxWidth: '500px',
+      width: '100%',
+      boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+      border: '2px solid #059669'
+    },
+    modalTitle: {
+      fontSize: '1.5rem',
+      fontWeight: '700',
+      color: '#1a365d',
+      marginBottom: '1rem',
+      textAlign: 'center'
+    },
+    modalSubtitle: {
+      fontSize: '0.95rem',
+      color: '#64748b',
+      marginBottom: '1.5rem',
+      textAlign: 'center'
+    },
+    verificationInput: {
+      width: '100%',
+      padding: '1rem',
+      fontSize: '1.5rem',
+      fontWeight: '700',
+      letterSpacing: '0.5rem',
+      textAlign: 'center',
+      border: '2px solid #e5e7eb',
+      borderRadius: '12px',
+      fontFamily: 'monospace',
+      boxSizing: 'border-box',
+      marginBottom: '1rem'
+    },
+    modalButtons: {
+      display: 'flex',
+      gap: '1rem',
+      marginTop: '1.5rem'
+    },
+    cancelButton: {
+      flex: 1,
+      padding: '0.875rem',
+      fontSize: '1rem',
+      fontWeight: '600',
+      color: '#64748b',
+      backgroundColor: 'white',
+      border: '2px solid #e5e7eb',
+      borderRadius: '10px',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease'
+    },
+    confirmButton: {
+      flex: 2,
+      padding: '0.875rem',
+      fontSize: '1rem',
+      fontWeight: '700',
+      color: 'white',
+      backgroundColor: '#10b981',
+      border: 'none',
+      borderRadius: '10px',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.5rem'
+    },
+    loadingContainer: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '100vh',
+      backgroundColor: '#f8fafc'
+    },
+    spinner: {
+      width: '40px',
+      height: '40px',
+      border: '4px solid #e2e8f0',
+      borderTop: '4px solid #1e40af',
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite'
+    },
+    emptyState: {
+      textAlign: 'center',
+      padding: '3rem 1rem',
+      color: '#64748b'
+    }
+  };
+
+  if (loading) {
     return (
       <div style={styles.loadingContainer}>
+        <style jsx>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
         <div style={styles.spinner}></div>
-        <p style={styles.loadingText}>Loading...</p>
+        <p style={{ marginTop: '1rem', color: '#64748b' }}>Loading...</p>
       </div>
     );
   }
@@ -401,33 +867,30 @@ export default function WireTransferPage() {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
 
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <Link href="/" style={styles.logoContainer}>
-            <div style={styles.logoPlaceholder}>🏦</div>
-            <span style={styles.logoText}>Oakline Bank</span>
-          </Link>
-          <Link href="/dashboard" style={styles.backButton}>← Dashboard</Link>
-        </div>
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
 
-        <div style={styles.content}>
-          <div style={styles.titleSection}>
-            <div style={styles.titleIcon}>💸</div>
-            <h1 style={styles.title}>Wire Transfer</h1>
-            <p style={styles.subtitle}>Securely transfer funds to any bank account worldwide</p>
-          </div>
+      <div style={styles.container}>
+        <header style={styles.header}>
+          <a href="/dashboard" style={styles.logo}>🏦 Oakline Bank</a>
+          <a href="/dashboard" style={styles.backButton}>← Back to Dashboard</a>
+        </header>
+
+        <main style={styles.main}>
+          <h1 style={styles.pageTitle}>💸 Wire Transfer</h1>
 
           {message && (
             <div style={{
               ...styles.message,
-              backgroundColor: message.includes('successfully') || message.includes('sent') ? '#d1fae5' : '#fee2e2',
-              color: message.includes('successfully') || message.includes('sent') ? '#065f46' : '#991b1b',
-              borderColor: message.includes('successfully') || message.includes('sent') ? '#10b981' : '#ef4444'
+              backgroundColor: messageType === 'error' ? '#fee2e2' : '#d1fae5',
+              color: messageType === 'error' ? '#dc2626' : '#059669',
+              borderColor: messageType === 'error' ? '#fca5a5' : '#6ee7b7'
             }}>
-              <div style={styles.messageIcon}>
-                {message.includes('successfully') || message.includes('sent') ? '✓' : '⚠'}
-              </div>
-              <div>{message}</div>
+              {message}
             </div>
           )}
 
@@ -438,7 +901,7 @@ export default function WireTransferPage() {
               </div>
               <div style={styles.progressStepLabel}>Transfer Details</div>
             </div>
-            <div style={{ ...styles.progressLine, ...(step >= 2 ? styles.progressLineActive : {}) }}></div>
+            <div style={styles.progressLine}></div>
             <div style={{ ...styles.progressStep, ...(step >= 2 ? styles.progressStepActive : {}) }}>
               <div style={styles.progressStepCircle}>
                 {step > 2 ? '✓' : '2'}
@@ -448,675 +911,490 @@ export default function WireTransferPage() {
           </div>
 
           {step === 1 && (
-            <div style={styles.formContainer}>
-              <div style={styles.formCard}>
-                <div style={styles.cardHeader}>
-                  <div style={styles.cardIcon}>📝</div>
-                  <div>
-                    <h3 style={styles.cardTitle}>Transfer Information</h3>
-                    <p style={styles.cardSubtitle}>Please provide all required transfer details</p>
-                  </div>
+            <div style={styles.card}>
+              <h2 style={styles.cardTitle}>Transfer Information</h2>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>
+                  Transfer Type <span style={styles.required}>*</span>
+                </label>
+                <select
+                  style={styles.select}
+                  value={wireForm.transfer_type}
+                  onChange={(e) => handleInputChange('transfer_type', e.target.value)}
+                >
+                  <option value="domestic">Domestic (Within USA)</option>
+                  <option value="international">International</option>
+                </select>
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>
+                  From Account <span style={styles.required}>*</span>
+                </label>
+                <select
+                  style={styles.select}
+                  value={wireForm.from_account}
+                  onChange={(e) => handleInputChange('from_account', e.target.value)}
+                >
+                  {accounts.map(acc => (
+                    <option key={acc.id} value={acc.id}>
+                      {acc.account_type?.toUpperCase()} - ****{acc.account_number?.slice(-4)} - {formatCurrency(acc.balance)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>
+                  Purpose of Transfer <span style={styles.required}>*</span>
+                </label>
+                <select
+                  style={styles.select}
+                  value={wireForm.purpose}
+                  onChange={(e) => handleInputChange('purpose', e.target.value)}
+                >
+                  <option value="">Select purpose</option>
+                  {TRANSFER_PURPOSES.map(purpose => (
+                    <option key={purpose} value={purpose}>{purpose}</option>
+                  ))}
+                </select>
+              </div>
+
+              <h3 style={{ ...styles.cardTitle, marginTop: '2rem' }}>Recipient Information</h3>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>
+                  Beneficiary Full Name <span style={styles.required}>*</span>
+                </label>
+                <input
+                  type="text"
+                  style={styles.input}
+                  value={wireForm.beneficiary_name}
+                  onChange={(e) => handleInputChange('beneficiary_name', e.target.value)}
+                  placeholder="John Smith"
+                />
+              </div>
+
+              <div style={styles.formRow}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Email Address</label>
+                  <input
+                    type="email"
+                    style={styles.input}
+                    value={wireForm.beneficiary_email}
+                    onChange={(e) => handleInputChange('beneficiary_email', e.target.value)}
+                    placeholder="john.smith@example.com"
+                  />
+                </div>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Phone Number</label>
+                  <input
+                    type="tel"
+                    style={styles.input}
+                    value={wireForm.beneficiary_phone}
+                    onChange={(e) => handleInputChange('beneficiary_phone', e.target.value)}
+                    placeholder="+1 (555) 123-4567"
+                  />
+                </div>
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>
+                  Street Address <span style={styles.required}>*</span>
+                </label>
+                <input
+                  type="text"
+                  style={styles.input}
+                  value={wireForm.beneficiary_address}
+                  onChange={(e) => handleInputChange('beneficiary_address', e.target.value)}
+                  placeholder="123 Main Street, Apt 4B"
+                />
+              </div>
+
+              <div style={styles.formRow}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>
+                    City <span style={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={wireForm.beneficiary_city}
+                    onChange={(e) => handleInputChange('beneficiary_city', e.target.value)}
+                    placeholder="New York"
+                  />
                 </div>
 
-                <div style={styles.formSection}>
-                  <h4 style={styles.sectionTitle}>Source Account</h4>
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>
-                      Transfer Type <span style={styles.required}>*</span>
-                    </label>
-                    <select
-                      style={styles.modernSelect}
-                      value={wireForm.transfer_type}
-                      onChange={(e) => handleInputChange('transfer_type', e.target.value)}
-                    >
-                      <option value="domestic">Domestic (Within USA)</option>
-                      <option value="international">International</option>
-                    </select>
-                  </div>
-
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>
-                      From Account <span style={styles.required}>*</span>
-                    </label>
-                    <select
-                      style={styles.modernSelect}
-                      value={wireForm.from_account}
-                      onChange={(e) => handleInputChange('from_account', e.target.value)}
-                    >
-                      {accounts.map(acc => (
-                        <option key={acc.id} value={acc.id}>
-                          {acc.account_type?.toUpperCase()} - ****{acc.account_number?.slice(-4)} - {formatCurrency(acc.balance)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>
-                      Purpose of Transfer <span style={styles.required}>*</span>
-                    </label>
-                    <select
-                      style={styles.modernSelect}
-                      value={wireForm.purpose}
-                      onChange={(e) => handleInputChange('purpose', e.target.value)}
-                    >
-                      <option value="">Select purpose</option>
-                      {TRANSFER_PURPOSES.map(purpose => (
-                        <option key={purpose} value={purpose}>{purpose}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div style={styles.divider}></div>
-
-                <div style={styles.formSection}>
-                  <h4 style={styles.sectionTitle}>📋 Recipient Personal Information</h4>
-                  <p style={styles.sectionDescription}>Enter the recipient's personal details and home address</p>
-                  
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>
-                      Beneficiary Full Name <span style={styles.required}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      style={styles.modernInput}
-                      value={wireForm.beneficiary_name}
-                      onChange={(e) => handleInputChange('beneficiary_name', e.target.value)}
-                      placeholder="John Smith"
-                    />
-                  </div>
-
-                  <div style={styles.formRow}>
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>Email Address</label>
-                      <input
-                        type="email"
-                        style={styles.modernInput}
-                        value={wireForm.beneficiary_email}
-                        onChange={(e) => handleInputChange('beneficiary_email', e.target.value)}
-                        placeholder="john.smith@example.com"
-                      />
-                    </div>
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>Phone Number</label>
-                      <input
-                        type="tel"
-                        style={styles.modernInput}
-                        value={wireForm.beneficiary_phone}
-                        onChange={(e) => handleInputChange('beneficiary_phone', e.target.value)}
-                        placeholder="+1 (555) 123-4567"
-                      />
-                    </div>
-                  </div>
-
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>
-                      Street Address <span style={styles.required}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      style={styles.modernInput}
-                      value={wireForm.beneficiary_address}
-                      onChange={(e) => handleInputChange('beneficiary_address', e.target.value)}
-                      placeholder="123 Main Street, Apt 4B"
-                    />
-                  </div>
-
-                  <div style={styles.formRow}>
+                {wireForm.transfer_type === 'domestic' ? (
+                  <>
                     <div style={styles.formGroup}>
                       <label style={styles.label}>
-                        City <span style={styles.required}>*</span>
+                        State <span style={styles.required}>*</span>
                       </label>
                       <input
                         type="text"
-                        style={styles.modernInput}
-                        value={wireForm.beneficiary_city}
-                        onChange={(e) => handleInputChange('beneficiary_city', e.target.value)}
-                        placeholder="New York"
+                        list="state-suggestions"
+                        style={styles.input}
+                        value={wireForm.beneficiary_state}
+                        onChange={(e) => handleInputChange('beneficiary_state', e.target.value)}
+                        placeholder="California"
                       />
+                      <datalist id="state-suggestions">
+                        {US_STATES.map(state => (
+                          <option key={state} value={state} />
+                        ))}
+                      </datalist>
                     </div>
-
-                    {wireForm.transfer_type === 'domestic' ? (
-                      <>
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>
-                            State <span style={styles.required}>*</span>
-                          </label>
-                          <input
-                            type="text"
-                            list="state-suggestions"
-                            style={styles.modernInput}
-                            value={wireForm.beneficiary_state}
-                            onChange={(e) => handleInputChange('beneficiary_state', e.target.value)}
-                            placeholder="California"
-                          />
-                          <datalist id="state-suggestions">
-                            {US_STATES.map(state => (
-                              <option key={state} value={state} />
-                            ))}
-                          </datalist>
-                        </div>
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>
-                            ZIP Code <span style={styles.required}>*</span>
-                          </label>
-                          <input
-                            type="text"
-                            style={styles.modernInput}
-                            value={wireForm.beneficiary_zip}
-                            onChange={(e) => handleInputChange('beneficiary_zip', e.target.value)}
-                            placeholder="10001"
-                            maxLength="10"
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <div style={styles.formGroup}>
-                        <label style={styles.label}>
-                          Country <span style={styles.required}>*</span>
-                        </label>
-                        <input
-                          type="text"
-                          style={styles.modernInput}
-                          value={wireForm.beneficiary_country}
-                          onChange={(e) => handleInputChange('beneficiary_country', e.target.value)}
-                          placeholder="United Kingdom"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div style={styles.divider}></div>
-
-                <div style={styles.formSection}>
-                  <h4 style={styles.sectionTitle}>🏦 Recipient's Bank Information</h4>
-                  <p style={styles.sectionDescription}>Enter the bank details where the funds will be deposited</p>
-
+                  </>
+                ) : (
                   <div style={styles.formGroup}>
                     <label style={styles.label}>
-                      Bank Name <span style={styles.required}>*</span>
+                      Country <span style={styles.required}>*</span>
                     </label>
                     <input
                       type="text"
-                      style={styles.modernInput}
-                      value={wireForm.beneficiary_bank}
-                      onChange={(e) => handleInputChange('beneficiary_bank', e.target.value)}
-                      placeholder="Bank of America"
+                      style={styles.input}
+                      value={wireForm.beneficiary_country}
+                      onChange={(e) => handleInputChange('beneficiary_country', e.target.value)}
+                      placeholder="United Kingdom"
                     />
                   </div>
+                )}
+              </div>
 
+              {wireForm.transfer_type === 'domestic' && (
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>
+                    ZIP Code <span style={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={wireForm.beneficiary_zip}
+                    onChange={(e) => handleInputChange('beneficiary_zip', e.target.value)}
+                    placeholder="10001"
+                    maxLength="10"
+                  />
+                </div>
+              )}
+
+              <h3 style={{ ...styles.cardTitle, marginTop: '2rem' }}>Bank Details</h3>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>
+                  Bank Name <span style={styles.required}>*</span>
+                </label>
+                <input
+                  type="text"
+                  style={styles.input}
+                  value={wireForm.beneficiary_bank}
+                  onChange={(e) => handleInputChange('beneficiary_bank', e.target.value)}
+                  placeholder="Bank of America"
+                />
+              </div>
+
+              <div style={styles.formRow}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>
+                    Routing Number <span style={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={wireForm.routing_number}
+                    onChange={(e) => handleInputChange('routing_number', e.target.value)}
+                    placeholder="021000021"
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>
+                    Account Number <span style={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={wireForm.account_number}
+                    onChange={(e) => handleInputChange('account_number', e.target.value)}
+                    placeholder="1234567890"
+                  />
+                </div>
+              </div>
+
+              {wireForm.transfer_type === 'international' && (
+                <div style={styles.formRow}>
                   <div style={styles.formGroup}>
-                    <label style={styles.label}>Bank Address</label>
+                    <label style={styles.label}>
+                      SWIFT/BIC Code <span style={styles.required}>*</span>
+                    </label>
                     <input
                       type="text"
-                      style={styles.modernInput}
-                      value={wireForm.beneficiary_bank_address}
-                      onChange={(e) => handleInputChange('beneficiary_bank_address', e.target.value)}
-                      placeholder="100 Bank Street"
+                      style={styles.input}
+                      value={wireForm.swift_code}
+                      onChange={(e) => handleInputChange('swift_code', e.target.value.toUpperCase())}
+                      placeholder="BOFAUS3NXXX"
+                      maxLength="11"
                     />
                   </div>
-
-                  <div style={styles.formRow}>
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>Bank City</label>
-                      <input
-                        type="text"
-                        style={styles.modernInput}
-                        value={wireForm.beneficiary_bank_city}
-                        onChange={(e) => handleInputChange('beneficiary_bank_city', e.target.value)}
-                        placeholder="New York"
-                      />
-                    </div>
-                    {wireForm.transfer_type === 'domestic' && (
-                      <>
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>Bank State</label>
-                          <input
-                            type="text"
-                            list="bank-state-suggestions"
-                            style={styles.modernInput}
-                            value={wireForm.beneficiary_bank_state}
-                            onChange={(e) => handleInputChange('beneficiary_bank_state', e.target.value)}
-                            placeholder="New York"
-                          />
-                          <datalist id="bank-state-suggestions">
-                            {US_STATES.map(state => (
-                              <option key={state} value={state} />
-                            ))}
-                          </datalist>
-                        </div>
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>Bank ZIP</label>
-                          <input
-                            type="text"
-                            style={styles.modernInput}
-                            value={wireForm.beneficiary_bank_zip}
-                            onChange={(e) => handleInputChange('beneficiary_bank_zip', e.target.value)}
-                            placeholder="10001"
-                            maxLength="10"
-                          />
-                        </div>
-                      </>
-                    )}
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>IBAN (if applicable)</label>
+                    <input
+                      type="text"
+                      style={styles.input}
+                      value={wireForm.iban}
+                      onChange={(e) => handleInputChange('iban', e.target.value.toUpperCase())}
+                      placeholder="GB29NWBK60161331926819"
+                    />
                   </div>
+                </div>
+              )}
 
-                  <div style={styles.formRow}>
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>
-                        {wireForm.transfer_type === 'domestic' ? 'Routing Number (ABA)' : 'Routing/Sort Code'} <span style={styles.required}>*</span>
-                      </label>
-                      <input
-                        type="text"
-                        style={styles.modernInput}
-                        value={wireForm.routing_number}
-                        onChange={(e) => handleInputChange('routing_number', e.target.value)}
-                        placeholder={wireForm.transfer_type === 'domestic' ? '021000021' : '12-34-56'}
-                      />
-                    </div>
+              <h3 style={{ ...styles.cardTitle, marginTop: '2rem' }}>Transfer Amount</h3>
 
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>
-                        Account Number <span style={styles.required}>*</span>
-                      </label>
-                      <input
-                        type="text"
-                        style={styles.modernInput}
-                        value={wireForm.account_number}
-                        onChange={(e) => handleInputChange('account_number', e.target.value)}
-                        placeholder="1234567890"
-                      />
-                    </div>
+              <div style={styles.formRow}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>
+                    Amount (USD) <span style={styles.required}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    style={styles.input}
+                    value={wireForm.amount}
+                    onChange={(e) => handleInputChange('amount', e.target.value)}
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0.01"
+                  />
+                </div>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Reference Note</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={wireForm.reference_note}
+                    onChange={(e) => handleInputChange('reference_note', e.target.value)}
+                    placeholder="Invoice #1234"
+                  />
+                </div>
+              </div>
+
+              <div style={styles.feeBreakdown}>
+                <div style={styles.feeRow}>
+                  <span style={styles.feeLabel}>Transfer Amount:</span>
+                  <span style={styles.feeValue}>{formatCurrency(wireForm.amount || 0)}</span>
+                </div>
+                <div style={styles.feeRow}>
+                  <span style={styles.feeLabel}>Transfer Fee:</span>
+                  <span style={styles.feeValue}>{formatCurrency(wireForm.transfer_fee || 0)}</span>
+                </div>
+                <div style={styles.feeRow}>
+                  <label style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={wireForm.urgent_transfer}
+                      onChange={(e) => handleInputChange('urgent_transfer', e.target.checked)}
+                      style={styles.checkbox}
+                    />
+                    <span>Urgent Transfer (+$10.00)</span>
+                  </label>
+                </div>
+                <div style={{ ...styles.feeRow, borderTop: '2px solid #e5e7eb', paddingTop: '0.75rem', marginTop: '0.5rem' }}>
+                  <span style={{ ...styles.feeLabel, fontWeight: 'bold' }}>Total Deduction:</span>
+                  <span style={{ ...styles.feeValue, fontWeight: 'bold', fontSize: '1.2rem', color: '#dc2626' }}>
+                    {formatCurrency(wireForm.total_deduction || 0)}
+                  </span>
+                </div>
+              </div>
+
+              {wireForm.from_account && (
+                <div style={styles.balanceInfo}>
+                  <div style={styles.balanceLabel}>Available Balance</div>
+                  <div style={styles.balanceValue}>
+                    {formatCurrency(accounts.find(a => a.id === wireForm.from_account)?.balance || 0)}
                   </div>
-
-                  {wireForm.transfer_type === 'international' && (
-                    <div style={styles.formRow}>
-                      <div style={styles.formGroup}>
-                        <label style={styles.label}>
-                          SWIFT/BIC Code <span style={styles.required}>*</span>
-                        </label>
-                        <input
-                          type="text"
-                          style={styles.modernInput}
-                          value={wireForm.swift_code}
-                          onChange={(e) => handleInputChange('swift_code', e.target.value.toUpperCase())}
-                          placeholder="BOFAUS3NXXX"
-                          maxLength="11"
-                        />
-                        <small style={styles.helpText}>
-                          8 or 11 characters
-                        </small>
-                      </div>
-                      <div style={styles.formGroup}>
-                        <label style={styles.label}>IBAN (if applicable)</label>
-                        <input
-                          type="text"
-                          style={styles.modernInput}
-                          value={wireForm.iban}
-                          onChange={(e) => handleInputChange('iban', e.target.value.toUpperCase())}
-                          placeholder="GB29NWBK60161331926819"
-                        />
-                        <small style={styles.helpText}>
-                          International Bank Account Number
-                        </small>
-                      </div>
+                  {wireForm.total_deduction && (
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#64748b' }}>
+                      Balance after transfer: {formatCurrency(
+                        parseFloat(accounts.find(a => a.id === wireForm.from_account)?.balance || 0) - parseFloat(wireForm.total_deduction || 0)
+                      )}
                     </div>
                   )}
                 </div>
+              )}
 
-                {wireForm.transfer_type === 'international' && (
-                  <>
-                    <div style={styles.divider}></div>
-                    <div style={styles.formSection}>
-                      <h4 style={styles.sectionTitle}>Intermediary Bank (Optional)</h4>
-                      <p style={styles.sectionDescription}>
-                        Some international transfers may require an intermediary bank
-                      </p>
+              <button
+                style={{
+                  ...styles.submitButton,
+                  opacity: processing ? 0.7 : 1,
+                  cursor: processing ? 'not-allowed' : 'pointer'
+                }}
+                onClick={handleNext}
+                disabled={processing}
+              >
+                {processing ? '🔄 Processing...' : 'Continue to Review →'}
+              </button>
+            </div>
+          )}
 
-                      <div style={styles.formGroup}>
-                        <label style={styles.label}>Intermediary Bank Name</label>
-                        <input
-                          type="text"
-                          style={styles.modernInput}
-                          value={wireForm.intermediary_bank_name}
-                          onChange={(e) => handleInputChange('intermediary_bank_name', e.target.value)}
-                          placeholder="Citibank N.A."
-                        />
-                      </div>
+          {step === 2 && (
+            <div style={styles.card}>
+              <h2 style={styles.cardTitle}>Review Transfer Details</h2>
 
-                      <div style={styles.formRow}>
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>Intermediary SWIFT Code</label>
-                          <input
-                            type="text"
-                            style={styles.modernInput}
-                            value={wireForm.intermediary_bank_swift}
-                            onChange={(e) => handleInputChange('intermediary_bank_swift', e.target.value.toUpperCase())}
-                            placeholder="CITIUS33XXX"
-                            maxLength="11"
-                          />
-                        </div>
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>Intermediary Account</label>
-                          <input
-                            type="text"
-                            style={styles.modernInput}
-                            value={wireForm.intermediary_bank_account}
-                            onChange={(e) => handleInputChange('intermediary_bank_account', e.target.value)}
-                            placeholder="Account number"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </>
+              <div style={styles.reviewSection}>
+                <h3 style={styles.reviewSectionTitle}>Transfer Information</h3>
+                <div style={styles.reviewRow}>
+                  <span style={styles.reviewLabel}>Type:</span>
+                  <span style={styles.reviewValue}>{wireForm.transfer_type === 'domestic' ? 'Domestic (USA)' : 'International'}</span>
+                </div>
+                <div style={styles.reviewRow}>
+                  <span style={styles.reviewLabel}>From Account:</span>
+                  <span style={styles.reviewValue}>
+                    {accounts.find(acc => acc.id === wireForm.from_account)?.account_type?.toUpperCase()} -
+                    ****{accounts.find(acc => acc.id === wireForm.from_account)?.account_number?.slice(-4)}
+                  </span>
+                </div>
+                <div style={styles.reviewRow}>
+                  <span style={styles.reviewLabel}>Purpose:</span>
+                  <span style={styles.reviewValue}>{wireForm.purpose}</span>
+                </div>
+                <div style={styles.reviewRow}>
+                  <span style={styles.reviewLabel}>Amount:</span>
+                  <span style={{ ...styles.reviewValue, fontWeight: 'bold', fontSize: '1.1rem', color: '#059669' }}>
+                    {formatCurrency(wireForm.amount)}
+                  </span>
+                </div>
+                <div style={styles.reviewRow}>
+                  <span style={styles.reviewLabel}>Transfer Fee:</span>
+                  <span style={styles.reviewValue}>{formatCurrency(wireForm.transfer_fee)}</span>
+                </div>
+                {wireForm.urgent_transfer && (
+                  <div style={styles.reviewRow}>
+                    <span style={styles.reviewLabel}>Processing:</span>
+                    <span style={{ ...styles.reviewValue, color: '#dc2626' }}>Urgent (+$10.00)</span>
+                  </div>
                 )}
-
-                <div style={styles.divider}></div>
-
-                <div style={styles.formSection}>
-                  <h4 style={styles.sectionTitle}>Transfer Amount & Details</h4>
-
-                  <div style={styles.formRow}>
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>
-                        Transfer Amount (USD) <span style={styles.required}>*</span>
-                      </label>
-                      <input
-                        type="number"
-                        style={styles.modernInput}
-                        value={wireForm.amount}
-                        onChange={(e) => handleInputChange('amount', e.target.value)}
-                        placeholder="0.00"
-                        step="0.01"
-                        min="0.01"
-                      />
-                    </div>
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>Reference Note</label>
-                      <input
-                        type="text"
-                        style={styles.modernInput}
-                        value={wireForm.reference_note}
-                        onChange={(e) => handleInputChange('reference_note', e.target.value)}
-                        placeholder="Invoice #1234"
-                      />
-                    </div>
-                  </div>
-
-                  <div style={styles.feeBreakdown}>
-                    <div style={styles.feeRow}>
-                      <span style={styles.feeLabel}>Transfer Amount:</span>
-                      <span style={styles.feeValue}>{formatCurrency(wireForm.amount || 0)}</span>
-                    </div>
-                    <div style={styles.feeRow}>
-                      <span style={styles.feeLabel}>Transfer Fee:</span>
-                      <span style={styles.feeValue}>{formatCurrency(wireForm.transfer_fee || 0)}</span>
-                    </div>
-                    <div style={styles.feeRow}>
-                      <label style={styles.checkboxLabel}>
-                        <input
-                          type="checkbox"
-                          checked={wireForm.urgent_transfer}
-                          onChange={(e) => handleInputChange('urgent_transfer', e.target.checked)}
-                          style={styles.checkbox}
-                        />
-                        <span>Urgent Transfer (+$10.00)</span>
-                      </label>
-                    </div>
-                    <div style={{ ...styles.feeRow, ...styles.totalRow }}>
-                      <span style={styles.totalLabel}>Total Deduction:</span>
-                      <span style={styles.totalValue}>{formatCurrency(wireForm.total_deduction || 0)}</span>
-                    </div>
-                  </div>
+                <div style={{ ...styles.reviewRow, borderTop: '2px solid #e5e7eb', paddingTop: '0.75rem', marginTop: '0.5rem' }}>
+                  <span style={{ ...styles.reviewLabel, fontWeight: 'bold' }}>Total Deduction:</span>
+                  <span style={{ ...styles.reviewValue, fontWeight: 'bold', fontSize: '1.2rem', color: '#dc2626' }}>
+                    {formatCurrency(wireForm.total_deduction)}
+                  </span>
                 </div>
+              </div>
 
-                <div style={styles.warningBox}>
-                  <div style={styles.warningIcon}>⚠️</div>
-                  <div style={styles.warningContent}>
-                    <strong>Important Notice:</strong> Wire transfers are typically irreversible. Please verify all details carefully before proceeding.
-                    {wireForm.transfer_type === 'international' && ' International transfers may take 1-5 business days to complete.'}
-                  </div>
+              <div style={styles.reviewSection}>
+                <h3 style={styles.reviewSectionTitle}>Beneficiary Details</h3>
+                <div style={styles.reviewRow}>
+                  <span style={styles.reviewLabel}>Name:</span>
+                  <span style={styles.reviewValue}>{wireForm.beneficiary_name}</span>
                 </div>
+                {wireForm.beneficiary_email && (
+                  <div style={styles.reviewRow}>
+                    <span style={styles.reviewLabel}>Email:</span>
+                    <span style={styles.reviewValue}>{wireForm.beneficiary_email}</span>
+                  </div>
+                )}
+                {wireForm.beneficiary_phone && (
+                  <div style={styles.reviewRow}>
+                    <span style={styles.reviewLabel}>Phone:</span>
+                    <span style={styles.reviewValue}>{wireForm.beneficiary_phone}</span>
+                  </div>
+                )}
+                <div style={styles.reviewRow}>
+                  <span style={styles.reviewLabel}>Address:</span>
+                  <span style={styles.reviewValue}>
+                    {wireForm.beneficiary_address}, {wireForm.beneficiary_city}, {wireForm.beneficiary_state || wireForm.beneficiary_country} {wireForm.beneficiary_zip || ''}
+                  </span>
+                </div>
+              </div>
 
+              <div style={styles.reviewSection}>
+                <h3 style={styles.reviewSectionTitle}>Bank Details</h3>
+                <div style={styles.reviewRow}>
+                  <span style={styles.reviewLabel}>Bank Name:</span>
+                  <span style={styles.reviewValue}>{wireForm.beneficiary_bank}</span>
+                </div>
+                <div style={styles.reviewRow}>
+                  <span style={styles.reviewLabel}>Routing Number:</span>
+                  <span style={styles.reviewValue}>{wireForm.routing_number}</span>
+                </div>
+                <div style={styles.reviewRow}>
+                  <span style={styles.reviewLabel}>Account Number:</span>
+                  <span style={styles.reviewValue}>****{wireForm.account_number.slice(-4)}</span>
+                </div>
+                {wireForm.swift_code && (
+                  <div style={styles.reviewRow}>
+                    <span style={styles.reviewLabel}>SWIFT Code:</span>
+                    <span style={styles.reviewValue}>{wireForm.swift_code}</span>
+                  </div>
+                )}
+                {wireForm.iban && (
+                  <div style={styles.reviewRow}>
+                    <span style={styles.reviewLabel}>IBAN:</span>
+                    <span style={styles.reviewValue}>{wireForm.iban}</span>
+                  </div>
+                )}
+                {wireForm.reference_note && (
+                  <div style={styles.reviewRow}>
+                    <span style={styles.reviewLabel}>Reference:</span>
+                    <span style={styles.reviewValue}>{wireForm.reference_note}</span>
+                  </div>
+                )}
+              </div>
+
+              <div style={styles.buttonRow}>
                 <button
-                  style={styles.primaryButton}
-                  onClick={handleNext}
-                  disabled={processing}
-                  onMouseEnter={(e) => !processing && (e.target.style.opacity = '0.9')}
-                  onMouseLeave={(e) => !processing && (e.target.style.opacity = '1')}
+                  style={styles.secondaryButton}
+                  onClick={() => setStep(1)}
+                  disabled={processing || sendingCode}
                 >
-                  {processing ? 'Processing...' : 'Continue to Review →'}
+                  ← Edit Details
+                </button>
+                <button
+                  style={{
+                    ...styles.submitButton,
+                    flex: 2,
+                    opacity: (processing || sendingCode) ? 0.7 : 1,
+                    cursor: (processing || sendingCode) ? 'not-allowed' : 'pointer'
+                  }}
+                  onClick={sendVerificationCode}
+                  disabled={processing || sendingCode}
+                >
+                  {sendingCode ? '🔄 Sending Code...' : 'Send Verification Code →'}
                 </button>
               </div>
             </div>
           )}
 
-          {step === 2 && (
-            <div style={styles.formContainer}>
-              <div style={styles.formCard}>
-                <div style={styles.cardHeader}>
-                  <div style={styles.cardIcon}>📋</div>
-                  <div>
-                    <h3 style={styles.cardTitle}>Review Transfer Details</h3>
-                    <p style={styles.cardSubtitle}>Please verify all information before proceeding</p>
-                  </div>
-                </div>
-
-                <div style={styles.reviewGrid}>
-                  <div style={styles.reviewSection}>
-                    <h4 style={styles.reviewSectionTitle}>Transfer Information</h4>
-                    <div style={styles.reviewRow}>
-                      <span style={styles.reviewLabel}>Type:</span>
-                      <span style={styles.reviewValue}>{wireForm.transfer_type === 'domestic' ? 'Domestic (USA)' : 'International'}</span>
-                    </div>
-                    <div style={styles.reviewRow}>
-                      <span style={styles.reviewLabel}>From Account:</span>
-                      <span style={styles.reviewValue}>
-                        {accounts.find(acc => acc.id === wireForm.from_account)?.account_type?.toUpperCase()} -
-                        ****{accounts.find(acc => acc.id === wireForm.from_account)?.account_number?.slice(-4)}
-                      </span>
-                    </div>
-                    <div style={styles.reviewRow}>
-                      <span style={styles.reviewLabel}>Purpose:</span>
-                      <span style={styles.reviewValue}>{wireForm.purpose}</span>
-                    </div>
-                    <div style={styles.reviewRow}>
-                      <span style={styles.reviewLabel}>Amount:</span>
-                      <span style={{...styles.reviewValue, fontWeight: 'bold', fontSize: '1.1rem', color: '#059669'}}>
-                        {formatCurrency(wireForm.amount)}
-                      </span>
-                    </div>
-                    <div style={styles.reviewRow}>
-                      <span style={styles.reviewLabel}>Transfer Fee:</span>
-                      <span style={styles.reviewValue}>{formatCurrency(wireForm.transfer_fee)}</span>
-                    </div>
-                    {wireForm.urgent_transfer && (
-                      <div style={styles.reviewRow}>
-                        <span style={styles.reviewLabel}>Processing:</span>
-                        <span style={{...styles.reviewValue, color: '#dc2626'}}>Urgent (+$10.00)</span>
-                      </div>
-                    )}
-                    <div style={{ ...styles.reviewRow, borderTop: '2px solid #e5e7eb', paddingTop: '12px', marginTop: '8px' }}>
-                      <span style={{...styles.reviewLabel, fontWeight: 'bold'}}>Total Deduction:</span>
-                      <span style={{...styles.reviewValue, fontWeight: 'bold', fontSize: '1.2rem', color: '#dc2626'}}>
-                        {formatCurrency(wireForm.total_deduction)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div style={styles.reviewSection}>
-                    <h4 style={styles.reviewSectionTitle}>Beneficiary Details</h4>
-                    <div style={styles.reviewRow}>
-                      <span style={styles.reviewLabel}>Name:</span>
-                      <span style={styles.reviewValue}>{wireForm.beneficiary_name}</span>
-                    </div>
-                    {wireForm.beneficiary_email && (
-                      <div style={styles.reviewRow}>
-                        <span style={styles.reviewLabel}>Email:</span>
-                        <span style={styles.reviewValue}>{wireForm.beneficiary_email}</span>
-                      </div>
-                    )}
-                    {wireForm.beneficiary_phone && (
-                      <div style={styles.reviewRow}>
-                        <span style={styles.reviewLabel}>Phone:</span>
-                        <span style={styles.reviewValue}>{wireForm.beneficiary_phone}</span>
-                      </div>
-                    )}
-                    <div style={styles.reviewRow}>
-                      <span style={styles.reviewLabel}>Address:</span>
-                      <span style={styles.reviewValue}>
-                        {wireForm.beneficiary_address}, {wireForm.beneficiary_city}, {wireForm.beneficiary_state || wireForm.beneficiary_country} {wireForm.beneficiary_zip || ''}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div style={styles.reviewSection}>
-                    <h4 style={styles.reviewSectionTitle}>Bank Details</h4>
-                    <div style={styles.reviewRow}>
-                      <span style={styles.reviewLabel}>Bank Name:</span>
-                      <span style={styles.reviewValue}>{wireForm.beneficiary_bank}</span>
-                    </div>
-                    {wireForm.beneficiary_bank_address && (
-                      <div style={styles.reviewRow}>
-                        <span style={styles.reviewLabel}>Bank Address:</span>
-                        <span style={styles.reviewValue}>{wireForm.beneficiary_bank_address}</span>
-                      </div>
-                    )}
-                    <div style={styles.reviewRow}>
-                      <span style={styles.reviewLabel}>Routing Number:</span>
-                      <span style={styles.reviewValue}>{wireForm.routing_number}</span>
-                    </div>
-                    <div style={styles.reviewRow}>
-                      <span style={styles.reviewLabel}>Account Number:</span>
-                      <span style={styles.reviewValue}>****{wireForm.account_number.slice(-4)}</span>
-                    </div>
-                    {wireForm.swift_code && (
-                      <div style={styles.reviewRow}>
-                        <span style={styles.reviewLabel}>SWIFT Code:</span>
-                        <span style={styles.reviewValue}>{wireForm.swift_code}</span>
-                      </div>
-                    )}
-                    {wireForm.iban && (
-                      <div style={styles.reviewRow}>
-                        <span style={styles.reviewLabel}>IBAN:</span>
-                        <span style={styles.reviewValue}>{wireForm.iban}</span>
-                      </div>
-                    )}
-                    {wireForm.reference_note && (
-                      <div style={styles.reviewRow}>
-                        <span style={styles.reviewLabel}>Reference:</span>
-                        <span style={styles.reviewValue}>{wireForm.reference_note}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {wireForm.intermediary_bank_name && (
-                    <div style={styles.reviewSection}>
-                      <h4 style={styles.reviewSectionTitle}>Intermediary Bank</h4>
-                      <div style={styles.reviewRow}>
-                        <span style={styles.reviewLabel}>Bank Name:</span>
-                        <span style={styles.reviewValue}>{wireForm.intermediary_bank_name}</span>
-                      </div>
-                      {wireForm.intermediary_bank_swift && (
-                        <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>SWIFT Code:</span>
-                          <span style={styles.reviewValue}>{wireForm.intermediary_bank_swift}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div style={styles.verificationNotice}>
-                  <div style={styles.verificationIconContainer}>
-                    <span style={styles.verificationIcon}>🔐</span>
-                  </div>
-                  <div>
-                    <p style={styles.verificationNoticeTitle}>Email Verification Required</p>
-                    <p style={styles.verificationNoticeText}>
-                      For your security, we'll send a 6-digit verification code to: <strong>{user?.email}</strong>
-                    </p>
-                    <p style={styles.verificationNoticeText}>
-                      After verification, your transfer will be submitted for admin review with a <strong>pending</strong> status.
-                    </p>
-                  </div>
-                </div>
-
-                <div style={styles.buttonRow}>
-                  <button 
-                    style={styles.secondaryButton} 
-                    onClick={() => setStep(1)}
-                    disabled={processing || sendingCode}
-                  >
-                    ← Edit Details
-                  </button>
-                  <button
-                    style={styles.primaryButton}
-                    onClick={sendVerificationCode}
-                    disabled={processing || sendingCode}
-                    onMouseEnter={(e) => !(processing || sendingCode) && (e.target.style.opacity = '0.9')}
-                    onMouseLeave={(e) => !(processing || sendingCode) && (e.target.style.opacity = '1')}
-                  >
-                    {sendingCode ? (
-                      <>
-                        <span style={styles.buttonSpinner}></span>
-                        Sending Code...
-                      </>
-                    ) : (
-                      'Send Verification Code →'
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div style={styles.historyCard}>
-            <div style={styles.historyHeader}>
-              <div style={styles.historyIcon}>📜</div>
-              <h3 style={styles.historyTitle}>Transfer History</h3>
-            </div>
+          <div style={styles.card}>
+            <h2 style={styles.cardTitle}>Transfer History</h2>
             {wireTransfers.length === 0 ? (
               <div style={styles.emptyState}>
-                <div style={styles.emptyIcon}>💸</div>
-                <p style={styles.emptyText}>No wire transfers yet</p>
-                <p style={styles.emptySubtext}>Your transfer history will appear here</p>
+                <p style={{ fontSize: '2rem' }}>💸</p>
+                <p>No wire transfers yet</p>
               </div>
             ) : (
-              <div style={styles.historyList}>
+              <div>
                 {wireTransfers.slice(0, 5).map(wire => (
                   <div key={wire.id} style={styles.historyItem}>
-                    <div style={styles.historyMain}>
-                      <div style={styles.historyLeft}>
-                        <div style={styles.historyStatusIcon}>
-                          {wire.status === 'completed' ? '✓' : 
-                           wire.status === 'pending' ? '⏱' : 
-                           wire.status === 'processing' ? '⚙' : '⚠'}
-                        </div>
-                        <div style={styles.historyInfo}>
-                          <div style={styles.historyName}>{wire.beneficiary_name}</div>
-                          <div style={styles.historyBank}>{wire.beneficiary_bank}</div>
-                          <div style={styles.historyRef}>Ref: {wire.reference_number}</div>
-                        </div>
+                    <div style={styles.historyHeader}>
+                      <div>
+                        <div style={styles.historyName}>{wire.beneficiary_name}</div>
+                        <div style={styles.historyBank}>{wire.beneficiary_bank}</div>
+                        <div style={styles.historyRef}>Ref: {wire.reference_number}</div>
                       </div>
-                      <div style={styles.historyRight}>
+                      <div style={{ textAlign: 'right' }}>
                         <div style={styles.historyAmount}>{formatCurrency(wire.amount)}</div>
                         <div style={{
                           ...styles.historyStatus,
-                          backgroundColor: wire.status === 'completed' ? '#d1fae5' :
-                                         wire.status === 'pending' ? '#fef3c7' :
-                                         wire.status === 'processing' ? '#dbeafe' : '#fee2e2',
-                          color: wire.status === 'completed' ? '#065f46' :
-                                wire.status === 'pending' ? '#92400e' :
-                                wire.status === 'processing' ? '#1e40af' : '#991b1b'
+                          backgroundColor: getStatusColor(wire.status)
                         }}>
-                          {wire.status.charAt(0).toUpperCase() + wire.status.slice(1)}
+                          {wire.status?.toUpperCase()}
                         </div>
                         <div style={styles.historyDate}>
-                          {new Date(wire.created_at).toLocaleDateString('en-US', { 
-                            year: 'numeric', 
-                            month: 'short', 
+                          {new Date(wire.created_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
                             day: 'numeric'
                           })}
                         </div>
@@ -1127,902 +1405,77 @@ export default function WireTransferPage() {
               </div>
             )}
           </div>
-        </div>
-
-        {showVerificationModal && (
-          <div style={styles.modalOverlay} onClick={() => !processing && setShowVerificationModal(false)}>
-            <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-              <div style={styles.modalHeader}>
-                <div style={styles.modalIconContainer}>
-                  <span style={styles.modalIcon}>🔐</span>
-                </div>
-                <h2 style={styles.modalTitle}>Verify Your Transfer</h2>
-                <p style={styles.modalSubtitle}>
-                  We've sent a 6-digit code to <strong>{user.email}</strong>
-                </p>
-              </div>
-
-              <div style={styles.modalBody}>
-                <div style={styles.codeInputContainer}>
-                  <label style={styles.codeLabel}>Verification Code</label>
-                  <input
-                    type="text"
-                    style={styles.verificationInput}
-                    value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="000000"
-                    maxLength="6"
-                    disabled={processing}
-                    autoFocus
-                  />
-                  <p style={styles.codeHint}>
-                    ⏱ Code expires in 15 minutes
-                  </p>
-                </div>
-
-                <div style={styles.resendContainer}>
-                  <p style={styles.resendText}>Didn't receive the code?</p>
-                  <button
-                    style={styles.resendButton}
-                    onClick={sendVerificationCode}
-                    disabled={processing || sendingCode}
-                  >
-                    {sendingCode ? 'Resending...' : 'Resend Code'}
-                  </button>
-                </div>
-              </div>
-
-              <div style={styles.modalFooter}>
-                <button 
-                  style={styles.cancelButton} 
-                  onClick={() => setShowVerificationModal(false)}
-                  disabled={processing}
-                >
-                  Cancel
-                </button>
-                <button
-                  style={{
-                    ...styles.confirmButton,
-                    ...(processing || verificationCode.length !== 6 ? styles.confirmButtonDisabled : {})
-                  }}
-                  onClick={completeWireTransfer}
-                  disabled={processing || verificationCode.length !== 6}
-                >
-                  {processing ? (
-                    <>
-                      <span style={styles.buttonSpinner}></span>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <span>✓</span> Verify & Submit
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        </main>
       </div>
 
-      <style jsx global>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        input:focus,
-        select:focus,
-        textarea:focus {
-          border-color: #3b82f6 !important;
-          box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.12), 0 4px 16px rgba(59, 130, 246, 0.15) !important;
-          background-color: #ffffff !important;
-          transform: translateY(-2px);
-          outline: none;
-        }
-        
-        input:hover:not(:focus),
-        select:hover:not(:focus) {
-          border-color: #94a3b8 !important;
-          background-color: #f8fafc !important;
-          transform: translateY(-1px);
-          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06) !important;
-        }
-        
-        input::placeholder {
-          color: #94a3b8;
-          font-weight: 400;
-        }
-        
-        input[type="text"],
-        input[type="email"],
-        input[type="tel"],
-        input[type="number"],
-        select {
-          -webkit-appearance: none;
-          -moz-appearance: none;
-          appearance: none;
-        }
-        
-        button:active {
-          transform: scale(0.98);
-        }
-      `}</style>
+      {showVerificationModal && (
+        <div style={styles.modalOverlay} onClick={() => !processing && setShowVerificationModal(false)}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h2 style={styles.modalTitle}>🔐 Verify Your Transfer</h2>
+            <p style={styles.modalSubtitle}>
+              We've sent a 6-digit code to <strong>{user?.email}</strong>
+            </p>
+
+            <div>
+              <label style={styles.label}>Verification Code</label>
+              <input
+                type="text"
+                style={styles.verificationInput}
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+                maxLength="6"
+                disabled={processing}
+                autoFocus
+              />
+              <p style={{ fontSize: '0.85rem', color: '#9ca3af', textAlign: 'center' }}>
+                ⏱ Code expires in 15 minutes
+              </p>
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: '1rem', padding: '1rem', backgroundColor: '#f9fafb', borderRadius: '12px' }}>
+              <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '0.5rem' }}>Didn't receive the code?</p>
+              <button
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#3b82f6',
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  padding: '0.25rem 0.5rem'
+                }}
+                onClick={sendVerificationCode}
+                disabled={processing || sendingCode}
+              >
+                {sendingCode ? 'Resending...' : 'Resend Code'}
+              </button>
+            </div>
+
+            <div style={styles.modalButtons}>
+              <button
+                style={styles.cancelButton}
+                onClick={() => setShowVerificationModal(false)}
+                disabled={processing}
+              >
+                Cancel
+              </button>
+              <button
+                style={{
+                  ...styles.confirmButton,
+                  opacity: (processing || verificationCode.length !== 6) ? 0.5 : 1,
+                  cursor: (processing || verificationCode.length !== 6) ? 'not-allowed' : 'pointer'
+                }}
+                onClick={completeWireTransfer}
+                disabled={processing || verificationCode.length !== 6}
+              >
+                {processing ? '🔄 Processing...' : '✓ Verify & Submit'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
-
-const styles = {
-  container: {
-    minHeight: '100vh',
-    background: 'linear-gradient(to bottom, #f1f5f9 0%, #e2e8f0 50%, #f8fafc 100%)',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Oxygen, Ubuntu, "Helvetica Neue", Arial, sans-serif',
-    paddingBottom: '80px'
-  },
-  header: {
-    background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
-    color: 'white',
-    padding: '1.75rem 2.5rem',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    boxShadow: '0 4px 24px rgba(30, 58, 138, 0.2)'
-  },
-  logoContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.875rem',
-    textDecoration: 'none',
-    color: 'white'
-  },
-  logoPlaceholder: {
-    fontSize: '2rem'
-  },
-  logoText: {
-    fontSize: '1.625rem',
-    fontWeight: '700',
-    letterSpacing: '-0.01em'
-  },
-  backButton: {
-    padding: '0.75rem 1.5rem',
-    background: 'rgba(255, 255, 255, 0.15)',
-    backdropFilter: 'blur(10px)',
-    color: 'white',
-    textDecoration: 'none',
-    borderRadius: '10px',
-    fontSize: '1rem',
-    border: '1px solid rgba(255, 255, 255, 0.25)',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    fontWeight: '600'
-  },
-  content: {
-    maxWidth: '960px',
-    margin: '0 auto',
-    padding: '2.5rem 1.5rem'
-  },
-  titleSection: {
-    textAlign: 'center',
-    marginBottom: '3rem',
-    animation: 'fadeIn 0.6s ease'
-  },
-  titleIcon: {
-    fontSize: '4rem',
-    marginBottom: '1.25rem'
-  },
-  title: {
-    fontSize: '2.75rem',
-    fontWeight: '800',
-    color: '#0f172a',
-    marginBottom: '0.75rem',
-    letterSpacing: '-0.03em'
-  },
-  subtitle: {
-    fontSize: '1.2rem',
-    color: '#64748b',
-    fontWeight: '500',
-    lineHeight: '1.6'
-  },
-  message: {
-    padding: '1.125rem 1.5rem',
-    borderRadius: '12px',
-    marginBottom: '1.75rem',
-    border: '1px solid',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    fontSize: '0.95rem',
-    animation: 'fadeIn 0.4s ease',
-    fontWeight: '500'
-  },
-  messageIcon: {
-    fontSize: '1.25rem',
-    fontWeight: 'bold'
-  },
-  progressSteps: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: '2.5rem',
-    padding: '0 2rem'
-  },
-  progressStep: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '0.5rem',
-    opacity: 0.4,
-    transition: 'all 0.4s ease'
-  },
-  progressStepActive: {
-    opacity: 1
-  },
-  progressStepCircle: {
-    width: '56px',
-    height: '56px',
-    borderRadius: '50%',
-    background: 'linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)',
-    color: '#6b7280',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '1.25rem',
-    fontWeight: 'bold',
-    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-    border: '3px solid #f3f4f6',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-  },
-  progressStepLabel: {
-    fontSize: '0.875rem',
-    fontWeight: '600',
-    color: '#64748b'
-  },
-  progressLine: {
-    flex: 1,
-    height: '3px',
-    backgroundColor: '#e5e7eb',
-    margin: '0 1rem',
-    maxWidth: '120px',
-    transition: 'all 0.4s ease'
-  },
-  progressLineActive: {
-    backgroundColor: '#10b981'
-  },
-  formContainer: {
-    marginBottom: '2rem'
-  },
-  formCard: {
-    backgroundColor: 'white',
-    borderRadius: '24px',
-    padding: '3rem',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04)',
-    border: '1px solid #e2e8f0',
-    marginBottom: '2rem',
-    background: 'linear-gradient(to bottom, #ffffff 0%, #f8fafc 100%)'
-  },
-  cardHeader: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '1.5rem',
-    marginBottom: '2.5rem',
-    paddingBottom: '2rem',
-    borderBottom: '3px solid #e2e8f0',
-    background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-    padding: '1.5rem',
-    margin: '-3rem -3rem 2.5rem -3rem',
-    borderRadius: '24px 24px 0 0'
-  },
-  cardIcon: {
-    fontSize: '2.5rem',
-    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-    padding: '1.25rem',
-    borderRadius: '18px',
-    lineHeight: 1,
-    boxShadow: '0 8px 20px rgba(59, 130, 246, 0.3)'
-  },
-  cardTitle: {
-    fontSize: '1.75rem',
-    fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: '0.375rem',
-    letterSpacing: '-0.02em'
-  },
-  cardSubtitle: {
-    fontSize: '1rem',
-    color: '#64748b',
-    margin: 0,
-    lineHeight: '1.5'
-  },
-  formSection: {
-    marginBottom: '2.25rem'
-  },
-  sectionTitle: {
-    fontSize: '1.375rem',
-    fontWeight: '800',
-    color: '#0f172a',
-    marginBottom: '1.5rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    letterSpacing: '-0.02em',
-    paddingBottom: '0.75rem',
-    borderBottom: '3px solid #e2e8f0'
-  },
-  sectionDescription: {
-    fontSize: '0.95rem',
-    color: '#475569',
-    marginBottom: '1.5rem',
-    marginTop: '-0.75rem',
-    lineHeight: '1.7',
-    fontWeight: '500'
-  },
-  formGroup: {
-    marginBottom: '1.875rem',
-    flex: 1,
-    position: 'relative'
-  },
-  formRow: {
-    display: 'flex',
-    gap: '1.5rem',
-    marginBottom: '0'
-  },
-  label: {
-    display: 'block',
-    marginBottom: '0.875rem',
-    fontSize: '0.975rem',
-    fontWeight: '700',
-    color: '#0f172a',
-    letterSpacing: '-0.01em',
-    textTransform: 'capitalize',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem'
-  },
-  required: {
-    color: '#ef4444',
-    fontSize: '1.1em',
-    fontWeight: 'bold'
-  },
-  modernInput: {
-    width: '100%',
-    padding: '1.25rem 1.75rem',
-    fontSize: '1.05rem',
-    border: '2.5px solid #cbd5e1',
-    borderRadius: '16px',
-    backgroundColor: '#ffffff',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    fontFamily: 'inherit',
-    boxSizing: 'border-box',
-    outline: 'none',
-    color: '#0f172a',
-    fontWeight: '500',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 2px rgba(0, 0, 0, 0.02)',
-    WebkitAppearance: 'none',
-    MozAppearance: 'none',
-    appearance: 'none',
-    position: 'relative'
-  },
-  modernSelect: {
-    width: '100%',
-    padding: '1.25rem 1.75rem',
-    fontSize: '1.05rem',
-    border: '2.5px solid #cbd5e1',
-    borderRadius: '16px',
-    backgroundColor: '#ffffff',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    boxSizing: 'border-box',
-    color: '#0f172a',
-    fontWeight: '500',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 2px rgba(0, 0, 0, 0.02)',
-    backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'14\' height=\'14\' viewBox=\'0 0 14 14\'%3E%3Cpath fill=\'%233b82f6\' d=\'M11.293 4.293L7 8.586 2.707 4.293A1 1 0 001.293 5.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z\'/%3E%3C/svg%3E")',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 1.5rem center',
-    backgroundSize: '16px',
-    paddingRight: '3.5rem',
-    WebkitAppearance: 'none',
-    MozAppearance: 'none',
-    appearance: 'none'
-  },
-  helpText: {
-    display: 'block',
-    marginTop: '0.5rem',
-    fontSize: '0.8rem',
-    color: '#9ca3af',
-    fontStyle: 'italic'
-  },
-  divider: {
-    height: '1px',
-    backgroundColor: '#e5e7eb',
-    margin: '2rem 0'
-  },
-  feeBreakdown: {
-    background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-    padding: '2rem',
-    borderRadius: '16px',
-    marginTop: '1.5rem',
-    border: '2px solid #e2e8f0',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)'
-  },
-  feeRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '0.75rem',
-    fontSize: '0.95rem'
-  },
-  feeLabel: {
-    color: '#64748b',
-    fontWeight: '500'
-  },
-  feeValue: {
-    color: '#1e293b',
-    fontWeight: '600'
-  },
-  checkboxLabel: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    cursor: 'pointer',
-    color: '#1e293b',
-    fontWeight: '500'
-  },
-  checkbox: {
-    width: '18px',
-    height: '18px',
-    cursor: 'pointer'
-  },
-  totalRow: {
-    borderTop: '2px solid #e5e7eb',
-    paddingTop: '0.75rem',
-    marginTop: '0.5rem',
-    marginBottom: 0
-  },
-  totalLabel: {
-    fontSize: '1.05rem',
-    fontWeight: '700',
-    color: '#0f172a'
-  },
-  totalValue: {
-    fontSize: '1.25rem',
-    fontWeight: '800',
-    color: '#dc2626'
-  },
-  warningBox: {
-    backgroundColor: '#fef3c7',
-    border: '1px solid #fbbf24',
-    borderRadius: '12px',
-    padding: '1.25rem',
-    marginBottom: '1.5rem',
-    display: 'flex',
-    gap: '1rem',
-    alignItems: 'flex-start'
-  },
-  warningIcon: {
-    fontSize: '1.5rem',
-    flexShrink: 0
-  },
-  warningContent: {
-    fontSize: '0.9rem',
-    color: '#92400e',
-    lineHeight: '1.6'
-  },
-  primaryButton: {
-    width: '100%',
-    padding: '1.25rem 2rem',
-    fontSize: '1.05rem',
-    fontWeight: '700',
-    color: 'white',
-    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1e40af 100%)',
-    border: 'none',
-    borderRadius: '14px',
-    cursor: 'pointer',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.75rem',
-    boxShadow: '0 8px 20px rgba(59, 130, 246, 0.35), 0 2px 8px rgba(59, 130, 246, 0.2)',
-    letterSpacing: '0.02em',
-    textTransform: 'uppercase',
-    position: 'relative',
-    overflow: 'hidden'
-  },
-  reviewGrid: {
-    display: 'grid',
-    gap: '1.5rem',
-    marginBottom: '2rem'
-  },
-  reviewSection: {
-    background: 'linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%)',
-    padding: '2rem',
-    borderRadius: '16px',
-    border: '2px solid #dbeafe',
-    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.08)'
-  },
-  reviewSectionTitle: {
-    fontSize: '1.125rem',
-    fontWeight: '800',
-    color: '#0f172a',
-    marginBottom: '1.25rem',
-    paddingBottom: '1rem',
-    borderBottom: '3px solid #3b82f6',
-    letterSpacing: '-0.01em'
-  },
-  reviewRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '0.875rem',
-    gap: '1rem'
-  },
-  reviewLabel: {
-    fontSize: '0.9rem',
-    color: '#64748b',
-    fontWeight: '500',
-    minWidth: '140px'
-  },
-  reviewValue: {
-    fontSize: '0.9rem',
-    color: '#1e293b',
-    fontWeight: '600',
-    textAlign: 'right',
-    wordBreak: 'break-word'
-  },
-  verificationNotice: {
-    backgroundColor: '#eff6ff',
-    border: '1px solid #3b82f6',
-    borderRadius: '12px',
-    padding: '1.5rem',
-    marginBottom: '1.5rem',
-    display: 'flex',
-    gap: '1rem',
-    alignItems: 'flex-start'
-  },
-  verificationIconContainer: {
-    backgroundColor: 'white',
-    borderRadius: '50%',
-    width: '48px',
-    height: '48px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0
-  },
-  verificationIcon: {
-    fontSize: '1.5rem'
-  },
-  verificationNoticeTitle: {
-    fontSize: '1rem',
-    fontWeight: '700',
-    color: '#1e40af',
-    marginBottom: '0.5rem',
-    margin: 0
-  },
-  verificationNoticeText: {
-    fontSize: '0.9rem',
-    color: '#1e40af',
-    lineHeight: '1.6',
-    margin: '0.5rem 0'
-  },
-  buttonRow: {
-    display: 'flex',
-    gap: '1rem',
-    marginTop: '1.5rem'
-  },
-  secondaryButton: {
-    flex: 1,
-    padding: '1rem',
-    fontSize: '1rem',
-    fontWeight: '600',
-    color: '#64748b',
-    backgroundColor: 'white',
-    border: '2px solid #e5e7eb',
-    borderRadius: '12px',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease'
-  },
-  historyCard: {
-    backgroundColor: 'white',
-    borderRadius: '16px',
-    padding: '2rem',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-    border: '1px solid #e5e7eb',
-    marginTop: '2rem'
-  },
-  historyHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-    marginBottom: '1.5rem',
-    paddingBottom: '1rem',
-    borderBottom: '2px solid #f3f4f6'
-  },
-  historyIcon: {
-    fontSize: '1.75rem',
-    backgroundColor: '#eff6ff',
-    padding: '0.625rem',
-    borderRadius: '10px'
-  },
-  historyTitle: {
-    fontSize: '1.25rem',
-    fontWeight: '700',
-    color: '#0f172a',
-    margin: 0
-  },
-  emptyState: {
-    textAlign: 'center',
-    padding: '3rem 1rem'
-  },
-  emptyIcon: {
-    fontSize: '3rem',
-    marginBottom: '1rem',
-    opacity: 0.5
-  },
-  emptyText: {
-    fontSize: '1.125rem',
-    color: '#64748b',
-    fontWeight: '600',
-    marginBottom: '0.5rem'
-  },
-  emptySubtext: {
-    fontSize: '0.9rem',
-    color: '#9ca3af'
-  },
-  historyList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem'
-  },
-  historyItem: {
-    padding: '1.25rem',
-    borderRadius: '12px',
-    backgroundColor: '#f9fafb',
-    border: '1px solid #e5e7eb',
-    transition: 'all 0.3s ease'
-  },
-  historyMain: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: '1rem'
-  },
-  historyLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-    flex: 1
-  },
-  historyStatusIcon: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    backgroundColor: 'white',
-    border: '2px solid #e5e7eb',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '1.125rem',
-    flexShrink: 0
-  },
-  historyInfo: {
-    flex: 1
-  },
-  historyName: {
-    fontSize: '1rem',
-    fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: '0.25rem'
-  },
-  historyBank: {
-    fontSize: '0.875rem',
-    color: '#64748b',
-    marginBottom: '0.25rem'
-  },
-  historyRef: {
-    fontSize: '0.75rem',
-    color: '#9ca3af',
-    fontFamily: 'monospace'
-  },
-  historyRight: {
-    textAlign: 'right'
-  },
-  historyAmount: {
-    fontSize: '1.125rem',
-    fontWeight: '800',
-    color: '#0f172a',
-    marginBottom: '0.5rem'
-  },
-  historyStatus: {
-    display: 'inline-block',
-    padding: '0.375rem 0.875rem',
-    borderRadius: '20px',
-    fontSize: '0.75rem',
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    marginBottom: '0.5rem'
-  },
-  historyDate: {
-    fontSize: '0.8rem',
-    color: '#9ca3af'
-  },
-  modalOverlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-    padding: '1rem',
-    backdropFilter: 'blur(4px)'
-  },
-  modal: {
-    backgroundColor: 'white',
-    borderRadius: '20px',
-    maxWidth: '500px',
-    width: '100%',
-    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-    animation: 'fadeIn 0.3s ease'
-  },
-  modalHeader: {
-    padding: '2rem 2rem 1.5rem',
-    textAlign: 'center',
-    borderBottom: '1px solid #e5e7eb'
-  },
-  modalIconContainer: {
-    width: '72px',
-    height: '72px',
-    borderRadius: '50%',
-    background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
-    margin: '0 auto 1.5rem',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  modalIcon: {
-    fontSize: '2rem'
-  },
-  modalTitle: {
-    fontSize: '1.75rem',
-    fontWeight: '800',
-    color: '#0f172a',
-    marginBottom: '0.5rem'
-  },
-  modalSubtitle: {
-    fontSize: '0.95rem',
-    color: '#64748b',
-    margin: 0
-  },
-  modalBody: {
-    padding: '2rem'
-  },
-  codeInputContainer: {
-    marginBottom: '1.5rem'
-  },
-  codeLabel: {
-    display: 'block',
-    fontSize: '0.9rem',
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: '0.75rem'
-  },
-  verificationInput: {
-    width: '100%',
-    padding: '1rem',
-    fontSize: '1.5rem',
-    fontWeight: '700',
-    letterSpacing: '0.5rem',
-    textAlign: 'center',
-    border: '2px solid #e5e7eb',
-    borderRadius: '12px',
-    fontFamily: 'monospace',
-    boxSizing: 'border-box'
-  },
-  codeHint: {
-    fontSize: '0.85rem',
-    color: '#9ca3af',
-    marginTop: '0.75rem',
-    textAlign: 'center'
-  },
-  resendContainer: {
-    textAlign: 'center',
-    padding: '1rem',
-    backgroundColor: '#f9fafb',
-    borderRadius: '12px'
-  },
-  resendText: {
-    fontSize: '0.875rem',
-    color: '#64748b',
-    marginBottom: '0.5rem'
-  },
-  resendButton: {
-    background: 'none',
-    border: 'none',
-    color: '#3b82f6',
-    fontSize: '0.9rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    textDecoration: 'underline',
-    padding: '0.25rem 0.5rem'
-  },
-  modalFooter: {
-    padding: '1.5rem 2rem 2rem',
-    display: 'flex',
-    gap: '1rem',
-    borderTop: '1px solid #e5e7eb'
-  },
-  cancelButton: {
-    flex: 1,
-    padding: '0.875rem',
-    fontSize: '1rem',
-    fontWeight: '600',
-    color: '#64748b',
-    backgroundColor: 'white',
-    border: '2px solid #e5e7eb',
-    borderRadius: '10px',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease'
-  },
-  confirmButton: {
-    flex: 2,
-    padding: '0.875rem',
-    fontSize: '1rem',
-    fontWeight: '700',
-    color: 'white',
-    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-    border: 'none',
-    borderRadius: '10px',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
-  },
-  confirmButtonDisabled: {
-    opacity: 0.5,
-    cursor: 'not-allowed'
-  },
-  buttonSpinner: {
-    width: '16px',
-    height: '16px',
-    border: '2px solid rgba(255, 255, 255, 0.3)',
-    borderTopColor: 'white',
-    borderRadius: '50%',
-    animation: 'spin 0.8s linear infinite',
-    display: 'inline-block'
-  },
-  loadingContainer: {
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f9fafb'
-  },
-  spinner: {
-    width: '50px',
-    height: '50px',
-    border: '4px solid #e5e7eb',
-    borderTopColor: '#3b82f6',
-    borderRadius: '50%',
-    animation: 'spin 0.8s linear infinite'
-  },
-  loadingText: {
-    marginTop: '1rem',
-    fontSize: '1.125rem',
-    color: '#64748b',
-    fontWeight: '600'
-  }
-};
