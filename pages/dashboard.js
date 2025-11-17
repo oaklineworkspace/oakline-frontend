@@ -2287,9 +2287,10 @@ const styles = {
   summaryHeaderLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1rem',
+    gap: '1.5rem',
     flex: 1,
-    minWidth: '250px'
+    minWidth: '250px',
+    paddingTop: '0.5rem'
   },
   sectionTitle: {
     fontSize: '1.7rem',
