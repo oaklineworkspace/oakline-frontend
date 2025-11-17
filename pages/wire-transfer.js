@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -167,7 +166,7 @@ export default function WireTransfer() {
       setSentCode(code);
 
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       await fetch('/api/send-verification-code', {
         method: 'POST',
         headers: {
@@ -687,7 +686,7 @@ export default function WireTransfer() {
             <div style={styles.headerContent}>
               <div style={styles.headerTop}>
                 <div style={styles.logoSection}>
-                  <img src="/images/logo-primary.png" alt="Oakline Bank" style={styles.bankLogo} />
+                  <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.bankLogo} />
                   <div style={styles.bankInfo}>
                     <div style={styles.bankName}>Oakline Bank</div>
                     <div style={styles.bankTagline}>Trusted Banking Since 1995</div>
@@ -743,7 +742,7 @@ export default function WireTransfer() {
           <div style={styles.headerContent}>
             <div style={styles.headerTop}>
               <div style={styles.logoSection}>
-                <img src="/images/logo-primary.png" alt="Oakline Bank" style={styles.bankLogo} />
+                <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.bankLogo} />
                 <div style={styles.bankInfo}>
                   <div style={styles.bankName}>Oakline Bank</div>
                   <div style={styles.bankTagline}>Trusted Banking Since 1995</div>
@@ -780,7 +779,7 @@ export default function WireTransfer() {
                 ...styles.progressLineActive,
                 width: step === 1 ? '0%' : step === 2 ? '50%' : '100%'
               }}></div>
-              
+
               <div style={styles.step}>
                 <div style={{
                   ...styles.stepCircle,
@@ -791,7 +790,7 @@ export default function WireTransfer() {
                 </div>
                 <span style={styles.stepLabel}>Transfer Details</span>
               </div>
-              
+
               <div style={styles.step}>
                 <div style={{
                   ...styles.stepCircle,
@@ -802,7 +801,7 @@ export default function WireTransfer() {
                 </div>
                 <span style={styles.stepLabel}>Review & Confirm</span>
               </div>
-              
+
               <div style={styles.step}>
                 <div style={{
                   ...styles.stepCircle,
