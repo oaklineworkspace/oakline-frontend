@@ -186,16 +186,19 @@ export default function WireTransfer() {
     return true;
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     setMessage('');
     if (currentStep === 1) {
       if (validateStep1()) {
         setCurrentStep(2);
       }
     } else if (currentStep === 2) {
+      setSendingCode(true);
       setCurrentStep(3);
       if (!sentCode) {
-        sendVerificationCode();
+        await sendVerificationCode();
+      } else {
+        setSendingCode(false);
       }
     }
   };
@@ -507,9 +510,9 @@ export default function WireTransfer() {
       letterSpacing: '-0.01em'
     },
     infoBoxText: {
-      fontSize: '0.8125rem',
-      color: '#6b7280',
-      lineHeight: '1.6',
+      fontSize: '0.875rem',
+      color: '#374151',
+      lineHeight: '1.8',
       fontWeight: '400'
     },
     stepIndicator: {
@@ -880,60 +883,70 @@ export default function WireTransfer() {
             Secure, fast, and reliable domestic and international wire transfers with competitive rates and professional banking service
           </p>
 
-          <div style={styles.infoCard}>
-            <div style={styles.infoTitle}>
-              <span>ℹ️</span> Important Wire Transfer Information
-            </div>
-            <p style={styles.infoText}>
-              Wire transfers are a secure method of sending money electronically between banks. Unlike other payment methods, wire transfers are typically irreversible once processed. Please ensure all recipient details are accurate before submitting your transfer.
-            </p>
-            
-            <div style={styles.infoGrid}>
-              <div style={styles.infoBox}>
-                <div style={styles.infoBoxTitle}>🇺🇸 Domestic Transfers</div>
-                <div style={styles.infoBoxText}>
-                  • Processing Time: Same business day if submitted before 3:00 PM ET<br/>
-                  • Standard Fee: $15.00<br/>
-                  • Expedited Option: +$10.00 (within 2 hours)<br/>
-                  • Requires: Routing number and account number
-                </div>
+          {currentStep === 1 && (
+            <div style={styles.infoCard}>
+              <div style={styles.infoTitle}>
+                Important Wire Transfer Information
               </div>
+              <p style={styles.infoText}>
+                Wire transfers are a secure method of sending money electronically between banks. Unlike other payment methods, wire transfers are typically <strong>irreversible once processed</strong>. Please ensure all recipient details are accurate before submitting your transfer.
+              </p>
               
-              <div style={styles.infoBox}>
-                <div style={styles.infoBoxTitle}>🌍 International Transfers</div>
-                <div style={styles.infoBoxText}>
-                  • Processing Time: 1-3 business days<br/>
-                  • Standard Fee: $25.00<br/>
-                  • Expedited Option: +$10.00 (24-48 hours)<br/>
-                  • Requires: SWIFT/BIC code and account details
+              <div style={styles.infoGrid}>
+                <div style={styles.infoBox}>
+                  <div style={styles.infoBoxTitle}>🇺🇸 Domestic Transfers</div>
+                  <div style={styles.infoBoxText}>
+                    <strong>Processing Time:</strong> Same business day if submitted before 3:00 PM ET<br/>
+                    <strong>Standard Fee:</strong> $15.00<br/>
+                    <strong>Expedited Option:</strong> +$10.00 (within 2 hours)<br/>
+                    <strong>Requirements:</strong> Routing number and account number
+                  </div>
+                </div>
+                
+                <div style={styles.infoBox}>
+                  <div style={styles.infoBoxTitle}>🌍 International Transfers</div>
+                  <div style={styles.infoBoxText}>
+                    <strong>Processing Time:</strong> 1-3 business days<br/>
+                    <strong>Standard Fee:</strong> $25.00<br/>
+                    <strong>Expedited Option:</strong> +$10.00 (24-48 hours)<br/>
+                    <strong>Requirements:</strong> SWIFT/BIC code and account details
+                  </div>
+                </div>
+                
+                <div style={styles.infoBox}>
+                  <div style={styles.infoBoxTitle}>🔒 Security Features</div>
+                  <div style={styles.infoBoxText}>
+                    <strong>•</strong> Multi-factor authentication required<br/>
+                    <strong>•</strong> Email verification code confirmation<br/>
+                    <strong>•</strong> Real-time fraud monitoring<br/>
+                    <strong>•</strong> Encrypted transmission of all data
+                  </div>
+                </div>
+                
+                <div style={styles.infoBox}>
+                  <div style={styles.infoBoxTitle}>⏰ Cut-off Times</div>
+                  <div style={styles.infoBoxText}>
+                    <strong>Domestic:</strong> 3:00 PM ET for same-day processing<br/>
+                    <strong>International:</strong> 2:00 PM ET for next-day processing<br/>
+                    <strong>Expedited:</strong> Available until 5:00 PM ET<br/>
+                    <strong>Note:</strong> No weekend or holiday processing
+                  </div>
                 </div>
               </div>
-              
-              <div style={styles.infoBox}>
-                <div style={styles.infoBoxTitle}>🔒 Security Features</div>
-                <div style={styles.infoBoxText}>
-                  • Multi-factor authentication required<br/>
-                  • Email verification code confirmation<br/>
-                  • Real-time fraud monitoring<br/>
-                  • Encrypted transmission of all data
-                </div>
-              </div>
-              
-              <div style={styles.infoBox}>
-                <div style={styles.infoBoxTitle}>⏰ Cut-off Times</div>
-                <div style={styles.infoBoxText}>
-                  • Domestic: 3:00 PM ET for same-day processing<br/>
-                  • International: 2:00 PM ET for next-day processing<br/>
-                  • Expedited transfers available until 5:00 PM ET<br/>
-                  • No weekend or holiday processing
-                </div>
-              </div>
-            </div>
 
-            <p style={{ ...styles.infoText, marginTop: '1rem', fontWeight: '600', color: '#dc2626' }}>
-              ⚠️ Important: Wire transfers cannot be cancelled or reversed once processed. Please verify all recipient information carefully before confirming your transfer.
-            </p>
-          </div>
+              <div style={{
+                backgroundColor: '#fef2f2',
+                border: '2px solid #dc2626',
+                borderRadius: '12px',
+                padding: '1rem',
+                marginTop: '1.25rem'
+              }}>
+                <p style={{ fontSize: '0.9375rem', color: '#991b1b', margin: 0, fontWeight: '600', lineHeight: '1.6' }}>
+                  <strong>⚠️ Important Notice:</strong> Wire transfers cannot be cancelled or reversed once processed. Please verify all recipient information carefully before confirming your transfer.
+                </p>
+              </div>
+            </div>
+          )}
 
           <div style={styles.stepIndicator}>
             <div style={styles.step}>
@@ -1428,21 +1441,49 @@ export default function WireTransfer() {
 
                   {currentStep === 3 && (
                     <>
-                      <div style={{
-                        backgroundColor: '#dbeafe',
-                        border: '2px solid #3b82f6',
-                        borderRadius: '10px',
-                        padding: '1.5rem',
-                        marginBottom: '1.5rem',
-                        textAlign: 'center'
-                      }}>
-                        <p style={{ fontSize: '1rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: '600' }}>
-                          🔐 Security Verification Required
-                        </p>
-                        <p style={{ fontSize: '0.875rem', color: '#1e40af', margin: 0 }}>
-                          For your security, we've sent a 6-digit verification code to your email: <strong>{user?.email}</strong>
-                        </p>
-                      </div>
+                      {sendingCode ? (
+                        <div style={{
+                          backgroundColor: '#f0f9ff',
+                          border: '2px solid #3b82f6',
+                          borderRadius: '12px',
+                          padding: '2rem',
+                          marginBottom: '1.5rem',
+                          textAlign: 'center'
+                        }}>
+                          <div style={{
+                            width: '48px',
+                            height: '48px',
+                            border: '4px solid #dbeafe',
+                            borderTop: '4px solid #3b82f6',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite',
+                            margin: '0 auto 1rem auto'
+                          }}></div>
+                          <p style={{ fontSize: '1.125rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: '700' }}>
+                            Sending Verification Code...
+                          </p>
+                          <p style={{ fontSize: '0.9375rem', color: '#1e40af', margin: 0 }}>
+                            Please wait while we send a secure code to <strong>{user?.email}</strong>
+                          </p>
+                        </div>
+                      ) : (
+                        <div style={{
+                          backgroundColor: '#f0fdf4',
+                          border: '2px solid #059669',
+                          borderRadius: '12px',
+                          padding: '1.5rem',
+                          marginBottom: '1.5rem',
+                          textAlign: 'center'
+                        }}>
+                          <p style={{ fontSize: '1rem', color: '#047857', margin: '0 0 0.5rem 0', fontWeight: '700' }}>
+                            🔐 Security Verification Required
+                          </p>
+                          <p style={{ fontSize: '0.9375rem', color: '#047857', margin: 0, lineHeight: '1.6' }}>
+                            A 6-digit verification code has been sent to your email address:<br/>
+                            <strong style={{ fontSize: '1rem' }}>{user?.email}</strong>
+                          </p>
+                        </div>
+                      )}
 
                       <div style={styles.formGroup}>
                         <label style={styles.label}>Enter Verification Code *</label>
@@ -1450,10 +1491,11 @@ export default function WireTransfer() {
                           type="text"
                           style={{
                             ...styles.input,
-                            fontSize: '1.5rem',
+                            fontSize: '1.75rem',
                             textAlign: 'center',
-                            letterSpacing: '0.5rem',
-                            fontWeight: '700'
+                            letterSpacing: '0.75rem',
+                            fontWeight: '700',
+                            padding: '1rem'
                           }}
                           value={verificationCode}
                           onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -1468,11 +1510,11 @@ export default function WireTransfer() {
                           disabled={sendingCode}
                           style={{
                             marginTop: '0.75rem',
-                            padding: '0.75rem 1.25rem',
+                            padding: '0.875rem 1.25rem',
                             backgroundColor: sendingCode ? '#e5e7eb' : '#059669',
                             color: sendingCode ? '#9ca3af' : 'white',
                             border: 'none',
-                            borderRadius: '10px',
+                            borderRadius: '12px',
                             fontSize: '0.9375rem',
                             fontWeight: '600',
                             cursor: sendingCode ? 'not-allowed' : 'pointer',
@@ -1502,22 +1544,82 @@ export default function WireTransfer() {
 
                       <div style={styles.reviewSection}>
                         <div style={styles.reviewTitle}>Final Confirmation</div>
+                        
                         <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Recipient</span>
+                          <span style={styles.reviewLabel}>Transfer Type</span>
                           <span style={styles.reviewValue}>
-                            {wireForm.recipient_first_name} {wireForm.recipient_last_name}
+                            {wireForm.transfer_type === 'domestic' ? '🇺🇸 Domestic Wire' : '🌍 International Wire'}
                           </span>
                         </div>
+
                         <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Bank</span>
+                          <span style={styles.reviewLabel}>From Account</span>
+                          <span style={styles.reviewValue}>
+                            {accounts.find(a => a.id === wireForm.from_account_id)?.account_type?.toUpperCase()} •••{accounts.find(a => a.id === wireForm.from_account_id)?.account_number?.slice(-4)}
+                          </span>
+                        </div>
+
+                        <div style={styles.reviewRow}>
+                          <span style={styles.reviewLabel}>Recipient Name</span>
+                          <span style={styles.reviewValue}>
+                            {wireForm.recipient_first_name} {wireForm.recipient_middle_name && `${wireForm.recipient_middle_name} `}{wireForm.recipient_last_name}
+                          </span>
+                        </div>
+
+                        <div style={styles.reviewRow}>
+                          <span style={styles.reviewLabel}>Recipient Bank</span>
                           <span style={styles.reviewValue}>{wireForm.recipient_bank}</span>
                         </div>
-                        <div style={{...styles.reviewRow, borderTop: '2px solid #059669', paddingTop: '1rem', marginTop: '0.5rem'}}>
-                          <span style={{...styles.reviewLabel, fontWeight: '700'}}>Total Debit</span>
-                          <span style={{...styles.reviewValue, fontWeight: '700', fontSize: '1.1rem', color: '#dc2626'}}>
+
+                        <div style={styles.reviewRow}>
+                          <span style={styles.reviewLabel}>Account Number</span>
+                          <span style={styles.reviewValue}>•••••{wireForm.recipient_account.slice(-4)}</span>
+                        </div>
+
+                        {wireForm.transfer_type === 'international' ? (
+                          <div style={styles.reviewRow}>
+                            <span style={styles.reviewLabel}>SWIFT Code</span>
+                            <span style={styles.reviewValue}>{wireForm.swift_code}</span>
+                          </div>
+                        ) : (
+                          <div style={styles.reviewRow}>
+                            <span style={styles.reviewLabel}>Routing Number</span>
+                            <span style={styles.reviewValue}>{wireForm.routing_number}</span>
+                          </div>
+                        )}
+
+                        <div style={styles.reviewRow}>
+                          <span style={styles.reviewLabel}>Transfer Amount</span>
+                          <span style={styles.reviewValue}>{formatCurrency(wireForm.amount)}</span>
+                        </div>
+
+                        <div style={styles.reviewRow}>
+                          <span style={styles.reviewLabel}>Processing Fee</span>
+                          <span style={styles.reviewValue}>{formatCurrency(wireForm.fee)}</span>
+                        </div>
+
+                        {wireForm.urgent_transfer && (
+                          <div style={styles.reviewRow}>
+                            <span style={styles.reviewLabel}>Expedited Fee</span>
+                            <span style={styles.reviewValue}>{formatCurrency(wireForm.urgent_fee)}</span>
+                          </div>
+                        )}
+
+                        <div style={{...styles.reviewRow, borderTop: '2px solid #059669', paddingTop: '1rem', marginTop: '0.5rem', backgroundColor: '#fef3c7'}}>
+                          <span style={{...styles.reviewLabel, fontWeight: '700', fontSize: '1rem', color: '#1a365d'}}>Total Debit</span>
+                          <span style={{...styles.reviewValue, fontWeight: '700', fontSize: '1.25rem', color: '#dc2626'}}>
                             {formatCurrency(wireForm.total_amount)}
                           </span>
                         </div>
+
+                        {wireForm.urgent_transfer && (
+                          <div style={styles.reviewRow}>
+                            <span style={styles.reviewLabel}>Processing Speed</span>
+                            <span style={{...styles.reviewValue, color: '#059669', fontWeight: '600'}}>
+                              ⚡ {wireForm.transfer_type === 'domestic' ? 'Within 2 hours' : '24-48 hours'}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       <div style={styles.buttonGroup}>
