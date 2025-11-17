@@ -848,6 +848,10 @@ function DashboardContent() {
 
           <div style={styles.headerRight}>
             <div style={styles.userSection}>
+              <div style={styles.userInfo}>
+                <span style={styles.welcomeText}>Welcome back</span>
+                <span style={styles.userName}>{getUserDisplayName()}</span>
+              </div>
               {userProfile?.profile_picture && (
                 <img 
                   src={userProfile.profile_picture} 
@@ -864,10 +868,6 @@ function DashboardContent() {
                   </span>
                 </div>
               )}
-              <div style={styles.userInfo}>
-                <span style={styles.welcomeText}>Welcome back</span>
-                <span style={styles.userName}>{getUserDisplayName()}</span>
-              </div>
             </div>
           </div>
         </div>
