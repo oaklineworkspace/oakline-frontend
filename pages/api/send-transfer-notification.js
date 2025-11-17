@@ -1,4 +1,3 @@
-
 import { sendEmail, EMAIL_TYPES, getEmailAddress } from '../../lib/email';
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 
@@ -12,6 +11,17 @@ export default async function handler(req, res) {
 
     if (!email || !amount || !fromAccount || !toAccount) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Fetch bank details from Supabase
+    const { data: bankDetails, error: fetchError } = await supabaseAdmin
+      .from('bank_details')
+      .select('*')
+      .single();
+
+    if (fetchError || !bankDetails) {
+      console.error('Error fetching bank details:', fetchError);
+      return res.status(500).json({ error: 'Failed to fetch bank details' });
     }
 
     const formatCurrency = (amt) => {
@@ -132,7 +142,7 @@ export default async function handler(req, res) {
             <!-- Security Notice -->
             <div style="background-color: #eff6ff; border-left: 4px solid #1e40af; padding: 16px; margin: 24px 0;">
               <p style="color: #1e40af; font-size: 14px; font-weight: 500; margin: 0;">
-                🔒 <strong>Security Note:</strong> If you did not authorize this transfer, please contact our support team immediately at contact-us@theoaklinebank.com or call (636) 635-6122.
+                🔒 <strong>Security Note:</strong> If you did not authorize this transfer, please contact our support team immediately at ${bankDetails.support_email} or call ${bankDetails.support_phone}.
               </p>
             </div>
           </div>
@@ -143,14 +153,14 @@ export default async function handler(req, res) {
               Need help? Contact our support team 24/7:
             </p>
             <p style="color: #4a5568; font-size: 14px; font-weight: 600; margin: 0 0 8px 0;">
-              📧 contact-us@theoaklinebank.com | 📞 (636) 635-6122
+              📧 ${bankDetails.support_email} | 📞 ${bankDetails.support_phone}
             </p>
 
             <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 20px;">
               <p style="color: #718096; font-size: 12px; margin: 0;">
                 © ${new Date().getFullYear()} Oakline Bank. All rights reserved.<br>
-                Member FDIC | Equal Housing Lender | Routing: 075915826<br>
-                12201 N May Avenue, Oklahoma City, OK 73120
+                Member FDIC | Equal Housing Lender | Routing: ${bankDetails.routing_number}<br>
+                ${bankDetails.address}
               </p>
             </div>
           </div>

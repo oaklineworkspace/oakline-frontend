@@ -216,11 +216,25 @@ export default function Transfer() {
   const [recentTransfers, setRecentTransfers] = useState([]);
   const [loadingTransfers, setLoadingTransfers] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [bankDetails, setBankDetails] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
     checkUserAndFetchData();
+    fetchBankDetails();
   }, []);
+
+  const fetchBankDetails = async () => {
+    try {
+      const response = await fetch('/api/bank-details');
+      const data = await response.json();
+      if (data.bankDetails) {
+        setBankDetails(data.bankDetails);
+      }
+    } catch (error) {
+      console.error('Error fetching bank details:', error);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -474,12 +488,14 @@ export default function Transfer() {
         fromAccount: {
           type: selectedFromAccount.account_type,
           number: selectedFromAccount.account_number,
-          balance: newFromBalance
+          balance: newFromBalance,
+          newBalance: newFromBalance
         },
         toAccount: {
           type: selectedToAccount.account_type,
           number: selectedToAccount.account_number,
-          balance: newToBalance
+          balance: newToBalance,
+          newBalance: newToBalance
         },
         amount: transferAmount,
         memo: memo || 'Internal Transfer'
@@ -489,6 +505,37 @@ export default function Transfer() {
       setShowReceipt(true);
       setAmount('');
       setMemo('');
+
+      // Send email notification
+      try {
+        await fetch('/api/send-transfer-notification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: user.email,
+            userName: senderName,
+            userId: user.id,
+            amount: transferAmount,
+            fromAccount: {
+              type: selectedFromAccount.account_type,
+              number: selectedFromAccount.account_number,
+              newBalance: newFromBalance
+            },
+            toAccount: {
+              type: selectedToAccount.account_type,
+              number: selectedToAccount.account_number,
+              newBalance: newToBalance
+            },
+            reference: referenceNumber,
+            memo: memo || 'Internal Transfer'
+          }),
+        });
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+        // Don't fail the transfer if email fails
+      }
 
       // Refresh accounts and transfers
       await checkUserAndFetchData();
@@ -1202,12 +1249,13 @@ export default function Transfer() {
                 <div style={{ borderTop: '2px solid #e2e8f0', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
                   <div style={{ backgroundColor: '#eff6ff', padding: '1rem', borderRadius: '8px', border: '1px solid #bfdbfe', marginBottom: '1rem' }}>
                     <p style={{ fontSize: '0.85rem', color: '#1e40af', margin: 0, textAlign: 'center', fontWeight: '500' }}>
-                      This is an official receipt from Oakline Bank. For support, contact us at support@theoaklinebank.com
+                      This is an official receipt from {bankDetails?.name || 'Oakline Bank'}. For support, contact us at {bankDetails?.email_contact || 'contact-us@theoaklinebank.com'}
                     </p>
                   </div>
                   <div style={{ textAlign: 'center' }}>
                     <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0 }}>
-                      © {new Date().getFullYear()} Oakline Bank. All rights reserved. | Member FDIC
+                      © {new Date().getFullYear()} {bankDetails?.name || 'Oakline Bank'}. All rights reserved. | Member FDIC<br/>
+                      Routing: {bankDetails?.routing_number || '075915826'} | {bankDetails?.address || '12201 N May Avenue, Oklahoma City, OK 73120'}
                     </p>
                   </div>
                 </div>
