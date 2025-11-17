@@ -207,13 +207,14 @@ export default function WireTransfer() {
 
   const sendVerificationCode = async () => {
     setSendingCode(true);
+    setMessage('');
     try {
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       setSentCode(code);
 
       const { data: { session } } = await supabase.auth.getSession();
 
-      await fetch('/api/send-verification-code', {
+      const response = await fetch('/api/send-verification-code', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -226,11 +227,15 @@ export default function WireTransfer() {
         })
       });
 
+      if (!response.ok) {
+        throw new Error('Failed to send verification code');
+      }
+
       setMessage('Verification code sent to your email');
       setMessageType('success');
     } catch (error) {
       console.error('Error sending code:', error);
-      setMessage('Failed to send verification code');
+      setMessage('Failed to send verification code. Please try again.');
       setMessageType('error');
     } finally {
       setSendingCode(false);
@@ -320,6 +325,39 @@ export default function WireTransfer() {
       setReceiptData(receipt);
       setShowReceipt(true);
 
+      // Send email notification
+      try {
+        await fetch('/api/send-wire-transfer-notification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: user.email,
+            userName: user.user_metadata?.full_name || user.email,
+            userId: user.id,
+            transferType: wireForm.transfer_type,
+            recipientName: recipientFullName,
+            recipientBank: wireForm.recipient_bank,
+            amount: wireForm.amount,
+            fee: wireForm.fee + (wireForm.urgent_transfer ? wireForm.urgent_fee : 0),
+            totalAmount: wireForm.total_amount,
+            reference: reference,
+            urgent: wireForm.urgent_transfer,
+            description: wireForm.description,
+            fromAccount: {
+              type: account.account_type,
+              number: account.account_number
+            },
+            swiftCode: wireForm.swift_code || null,
+            routingNumber: wireForm.routing_number || null
+          })
+        });
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+        // Don't fail the transaction if email fails
+      }
+
       setWireForm({
         from_account_id: accounts[0]?.id || '',
         transfer_type: 'domestic',
@@ -407,42 +445,47 @@ export default function WireTransfer() {
       padding: isMobile ? '1rem 0.75rem' : '2rem'
     },
     pageTitle: {
-      fontSize: isMobile ? '1.5rem' : '2rem',
+      fontSize: isMobile ? '1.75rem' : '2.25rem',
       fontWeight: '700',
       color: '#ffffff',
       marginBottom: '1rem',
-      textAlign: 'center'
+      textAlign: 'center',
+      letterSpacing: '-0.02em'
     },
     pageSubtitle: {
-      fontSize: isMobile ? '0.9rem' : '1rem',
-      color: 'rgba(255,255,255,0.9)',
+      fontSize: isMobile ? '0.9375rem' : '1.0625rem',
+      color: 'rgba(255,255,255,0.95)',
       textAlign: 'center',
       marginBottom: '2rem',
       maxWidth: '800px',
-      margin: '0 auto 2rem auto'
+      margin: '0 auto 2rem auto',
+      lineHeight: '1.6',
+      fontWeight: '400'
     },
     infoCard: {
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      backgroundColor: '#ffffff',
       borderRadius: '16px',
-      padding: isMobile ? '1.25rem' : '1.5rem',
+      padding: isMobile ? '1.5rem' : '2rem',
       marginBottom: '2rem',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-      border: '1px solid rgba(5, 150, 105, 0.3)'
+      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+      border: '1px solid #e5e7eb'
     },
     infoTitle: {
-      fontSize: isMobile ? '1rem' : '1.1rem',
-      fontWeight: '700',
-      color: '#1a365d',
-      marginBottom: '1rem',
+      fontSize: isMobile ? '1.125rem' : '1.25rem',
+      fontWeight: '600',
+      color: '#111827',
+      marginBottom: '1.25rem',
       display: 'flex',
       alignItems: 'center',
-      gap: '0.5rem'
+      gap: '0.625rem',
+      letterSpacing: '-0.01em'
     },
     infoText: {
-      fontSize: '0.875rem',
-      color: '#374151',
-      lineHeight: '1.6',
-      marginBottom: '0.75rem'
+      fontSize: '0.9375rem',
+      color: '#4b5563',
+      lineHeight: '1.7',
+      marginBottom: '0.875rem',
+      fontWeight: '400'
     },
     infoGrid: {
       display: 'grid',
@@ -451,21 +494,23 @@ export default function WireTransfer() {
       marginTop: '1rem'
     },
     infoBox: {
-      backgroundColor: '#f8fafc',
-      padding: '1rem',
-      borderRadius: '10px',
-      border: '1px solid #e2e8f0'
+      backgroundColor: '#f9fafb',
+      padding: '1.125rem',
+      borderRadius: '12px',
+      border: '1px solid #e5e7eb'
     },
     infoBoxTitle: {
-      fontSize: '0.8rem',
+      fontSize: '0.875rem',
       fontWeight: '600',
       color: '#059669',
-      marginBottom: '0.5rem'
+      marginBottom: '0.625rem',
+      letterSpacing: '-0.01em'
     },
     infoBoxText: {
-      fontSize: '0.8rem',
-      color: '#64748b',
-      lineHeight: '1.5'
+      fontSize: '0.8125rem',
+      color: '#6b7280',
+      lineHeight: '1.6',
+      fontWeight: '400'
     },
     stepIndicator: {
       display: 'flex',
@@ -534,8 +579,9 @@ export default function WireTransfer() {
       display: 'block',
       fontSize: '0.875rem',
       fontWeight: '600',
-      color: '#374151',
-      marginBottom: '0.5rem'
+      color: '#1f2937',
+      marginBottom: '0.5rem',
+      letterSpacing: '-0.01em'
     },
     input: {
       width: '100%',
@@ -829,9 +875,9 @@ export default function WireTransfer() {
         </header>
 
         <main style={styles.main}>
-          <h1 style={styles.pageTitle}>🌐 Wire Transfer Services</h1>
+          <h1 style={styles.pageTitle}>Wire Transfer Services</h1>
           <p style={styles.pageSubtitle}>
-            Secure, fast, and reliable domestic and international wire transfers with competitive rates and professional service
+            Secure, fast, and reliable domestic and international wire transfers with competitive rates and professional banking service
           </p>
 
           <div style={styles.infoCard}>
@@ -984,6 +1030,21 @@ export default function WireTransfer() {
                         </select>
                       </div>
 
+                      <div style={{
+                        backgroundColor: '#eff6ff',
+                        border: '2px solid #3b82f6',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        marginBottom: '1.25rem'
+                      }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#1e40af', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          👤 Recipient Name Information
+                        </div>
+                        <div style={{ fontSize: '0.875rem', color: '#1e40af', lineHeight: '1.6' }}>
+                          Please enter the recipient's full legal name exactly as it appears on their bank account. This ensures the transfer is processed correctly.
+                        </div>
+                      </div>
+
                       <div style={styles.formGrid}>
                         <div style={styles.formGroup}>
                           <label style={styles.label}>First Name *</label>
@@ -1020,6 +1081,26 @@ export default function WireTransfer() {
                           />
                         </div>
                       </div>
+
+                      {(wireForm.recipient_first_name || wireForm.recipient_last_name) && (
+                        <div style={{
+                          backgroundColor: '#f0fdf4',
+                          border: '1px solid #86efac',
+                          borderRadius: '10px',
+                          padding: '0.875rem',
+                          marginBottom: '1.25rem'
+                        }}>
+                          <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#059669', marginBottom: '0.375rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Recipient Full Name Preview
+                          </div>
+                          <div style={{ fontSize: '1.125rem', fontWeight: '700', color: '#047857', letterSpacing: '-0.01em' }}>
+                            {wireForm.recipient_first_name} {wireForm.recipient_middle_name && `${wireForm.recipient_middle_name} `}{wireForm.recipient_last_name}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '0.375rem' }}>
+                            ✓ Please verify this name matches the recipient's bank account
+                          </div>
+                        </div>
+                      )}
 
                       <div style={styles.formGroup}>
                         <label style={styles.label}>Recipient Bank Name *</label>
@@ -1147,9 +1228,14 @@ export default function WireTransfer() {
                         />
                       </div>
 
-                      <div 
-                        style={styles.checkboxContainer}
-                        onClick={() => handleInputChange('urgent_transfer', !wireForm.urgent_transfer)}
+                      <label 
+                        style={{
+                          ...styles.checkboxContainer,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          border: wireForm.urgent_transfer ? '2px solid #059669' : '2px solid #e2e8f0',
+                          backgroundColor: wireForm.urgent_transfer ? '#f0fdf4' : '#ffffff'
+                        }}
                       >
                         <input
                           type="checkbox"
@@ -1157,10 +1243,15 @@ export default function WireTransfer() {
                           checked={wireForm.urgent_transfer}
                           onChange={(e) => handleInputChange('urgent_transfer', e.target.checked)}
                         />
-                        <label style={{ fontSize: '0.875rem', fontWeight: '500', color: '#1e293b', cursor: 'pointer' }}>
-                          ⚡ Expedited Processing (+$10.00) - {wireForm.transfer_type === 'domestic' ? 'Within 2 hours' : '24-48 hours'}
-                        </label>
-                      </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#111827', marginBottom: '0.25rem' }}>
+                            ⚡ Expedited Processing (+$10.00)
+                          </div>
+                          <div style={{ fontSize: '0.8125rem', color: '#6b7280' }}>
+                            {wireForm.transfer_type === 'domestic' ? 'Completed within 2 hours' : 'Completed within 24-48 hours'}
+                          </div>
+                        </div>
+                      </label>
 
                       {wireForm.from_account_id && (
                         <div style={styles.balanceInfo}>
@@ -1369,24 +1460,43 @@ export default function WireTransfer() {
                           placeholder="000000"
                           maxLength="6"
                           required
+                          disabled={sendingCode}
                         />
                         <button
                           type="button"
                           onClick={sendVerificationCode}
                           disabled={sendingCode}
                           style={{
-                            marginTop: '0.5rem',
-                            padding: '0.5rem 1rem',
-                            backgroundColor: sendingCode ? '#cbd5e1' : '#059669',
-                            color: 'white',
+                            marginTop: '0.75rem',
+                            padding: '0.75rem 1.25rem',
+                            backgroundColor: sendingCode ? '#e5e7eb' : '#059669',
+                            color: sendingCode ? '#9ca3af' : 'white',
                             border: 'none',
-                            borderRadius: '8px',
-                            fontSize: '0.875rem',
+                            borderRadius: '10px',
+                            fontSize: '0.9375rem',
+                            fontWeight: '600',
                             cursor: sendingCode ? 'not-allowed' : 'pointer',
-                            width: '100%'
+                            width: '100%',
+                            transition: 'all 0.3s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem'
                           }}
                         >
-                          {sendingCode ? 'Sending...' : sentCode ? 'Resend Code' : 'Send Code'}
+                          {sendingCode ? (
+                            <>
+                              <div style={{
+                                width: '16px',
+                                height: '16px',
+                                border: '2px solid #9ca3af',
+                                borderTop: '2px solid transparent',
+                                borderRadius: '50%',
+                                animation: 'spin 0.8s linear infinite'
+                              }}></div>
+                              Sending Code...
+                            </>
+                          ) : sentCode ? '🔄 Resend Verification Code' : '📧 Send Verification Code'}
                         </button>
                       </div>
 
