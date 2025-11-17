@@ -83,8 +83,10 @@ export default function WireTransferPage() {
   const handleInputChange = (field, value) => {
     setWireForm(prev => ({ ...prev, [field]: value }));
     
-    if (field === 'transfer_type' && value === 'domestic') {
-      setWireForm(prev => ({ ...prev, swift_code: '' }));
+    if (field === 'transfer_type') {
+      if (value === 'domestic') {
+        setWireForm(prev => ({ ...prev, swift_code: '', beneficiary_country: 'United States' }));
+      }
     }
   };
 
@@ -309,7 +311,7 @@ export default function WireTransferPage() {
         <div style={styles.content}>
           <div style={styles.titleSection}>
             <h1 style={styles.title}>🌐 Wire Transfer</h1>
-            <p style={styles.subtitle}>Send money securely to any bank account</p>
+            <p style={styles.subtitle}>Send money securely to any bank account worldwide</p>
           </div>
 
           {message && (
@@ -382,7 +384,7 @@ export default function WireTransferPage() {
               </div>
 
               <div style={styles.formGroup}>
-                <label style={styles.label}>Beneficiary Address *</label>
+                <label style={styles.label}>Street Address *</label>
                 <input
                   type="text"
                   style={styles.input}
@@ -412,7 +414,7 @@ export default function WireTransferPage() {
                         type="text"
                         style={styles.input}
                         value={wireForm.beneficiary_state}
-                        onChange={(e) => handleInputChange('beneficiary_state', e.target.value)}
+                        onChange={(e) => handleInputChange('beneficiary_state', e.target.value.toUpperCase())}
                         placeholder="NY"
                         maxLength="2"
                       />
@@ -460,14 +462,14 @@ export default function WireTransferPage() {
               <div style={styles.formRow}>
                 <div style={styles.formGroup}>
                   <label style={styles.label}>
-                    {wireForm.transfer_type === 'domestic' ? 'Routing Number *' : 'Routing/Sort Code *'}
+                    {wireForm.transfer_type === 'domestic' ? 'Routing Number (ABA) *' : 'Routing/Sort Code *'}
                   </label>
                   <input
                     type="text"
                     style={styles.input}
                     value={wireForm.routing_number}
                     onChange={(e) => handleInputChange('routing_number', e.target.value)}
-                    placeholder={wireForm.transfer_type === 'domestic' ? '123456789' : '12-34-56'}
+                    placeholder={wireForm.transfer_type === 'domestic' ? '021000021' : '12-34-56'}
                   />
                 </div>
 
@@ -491,7 +493,7 @@ export default function WireTransferPage() {
                     style={styles.input}
                     value={wireForm.swift_code}
                     onChange={(e) => handleInputChange('swift_code', e.target.value.toUpperCase())}
-                    placeholder="BOFAUS3N"
+                    placeholder="BOFAUS3NXXX"
                     maxLength="11"
                   />
                   <small style={styles.helpText}>
