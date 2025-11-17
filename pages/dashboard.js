@@ -848,22 +848,6 @@ function DashboardContent() {
 
           <div style={styles.headerRight}>
             <div style={styles.userSection}>
-              {userProfile?.profile_picture && (
-                <img 
-                  src={userProfile.profile_picture} 
-                  alt="Profile" 
-                  style={styles.profilePicture}
-                />
-              )}
-              {!userProfile?.profile_picture && (
-                <div style={styles.profilePlaceholder}>
-                  <span style={styles.profilePlaceholderText}>
-                    {userProfile ? 
-                      `${userProfile.first_name?.[0] || ''}${userProfile.last_name?.[0] || ''}`.toUpperCase() || '?' 
-                      : '?'}
-                  </span>
-                </div>
-              )}
               <div style={styles.userInfo}>
                 <span style={styles.welcomeText}>Welcome back</span>
                 <span style={styles.userName}>{getUserDisplayName()}</span>
@@ -887,6 +871,22 @@ function DashboardContent() {
         <section style={styles.summarySection}>
           <div style={styles.summaryHeader}>
             <h2 style={styles.sectionTitle}>Account Summary</h2>
+            {userProfile?.profile_picture && (
+              <img 
+                src={userProfile.profile_picture} 
+                alt="Profile" 
+                style={styles.profilePictureInSummary}
+              />
+            )}
+            {!userProfile?.profile_picture && (
+              <div style={styles.profilePlaceholderInSummary}>
+                <span style={styles.profilePlaceholderText}>
+                  {userProfile ? 
+                    `${userProfile.first_name?.[0] || ''}${userProfile.last_name?.[0] || ''}`.toUpperCase() || '?' 
+                    : '?'}
+                </span>
+              </div>
+            )}
             <span style={styles.lastUpdated}>Last updated: {new Date().toLocaleDateString()}</span>
           </div>
 
@@ -2107,6 +2107,25 @@ const styles = {
     color: 'white',
     fontSize: '1.2rem',
     fontWeight: 'bold'
+  },
+  profilePictureInSummary: {
+    width: '60px',
+    height: '60px',
+    borderRadius: '50%',
+    objectFit: 'cover',
+    border: '3px solid #059669',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+  },
+  profilePlaceholderInSummary: {
+    width: '60px',
+    height: '60px',
+    borderRadius: '50%',
+    backgroundColor: '#059669',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: '3px solid #047857',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
   },
   userInfo: {
     display: 'flex',
