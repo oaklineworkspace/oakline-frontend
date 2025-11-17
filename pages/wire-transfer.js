@@ -511,7 +511,8 @@ export default function WireTransferPage() {
                 <div style={styles.divider}></div>
 
                 <div style={styles.formSection}>
-                  <h4 style={styles.sectionTitle}>Beneficiary Information</h4>
+                  <h4 style={styles.sectionTitle}>📋 Recipient Personal Information</h4>
+                  <p style={styles.sectionDescription}>Enter the recipient's personal details and home address</p>
                   
                   <div style={styles.formGroup}>
                     <label style={styles.label}>
@@ -582,16 +583,19 @@ export default function WireTransferPage() {
                           <label style={styles.label}>
                             State <span style={styles.required}>*</span>
                           </label>
-                          <select
-                            style={styles.modernSelect}
+                          <input
+                            type="text"
+                            list="state-suggestions"
+                            style={styles.modernInput}
                             value={wireForm.beneficiary_state}
                             onChange={(e) => handleInputChange('beneficiary_state', e.target.value)}
-                          >
-                            <option value="">Select State</option>
+                            placeholder="California"
+                          />
+                          <datalist id="state-suggestions">
                             {US_STATES.map(state => (
-                              <option key={state} value={state}>{state}</option>
+                              <option key={state} value={state} />
                             ))}
-                          </select>
+                          </datalist>
                         </div>
                         <div style={styles.formGroup}>
                           <label style={styles.label}>
@@ -627,7 +631,8 @@ export default function WireTransferPage() {
                 <div style={styles.divider}></div>
 
                 <div style={styles.formSection}>
-                  <h4 style={styles.sectionTitle}>Beneficiary Bank Details</h4>
+                  <h4 style={styles.sectionTitle}>🏦 Recipient's Bank Information</h4>
+                  <p style={styles.sectionDescription}>Enter the bank details where the funds will be deposited</p>
 
                   <div style={styles.formGroup}>
                     <label style={styles.label}>
@@ -668,16 +673,19 @@ export default function WireTransferPage() {
                       <>
                         <div style={styles.formGroup}>
                           <label style={styles.label}>Bank State</label>
-                          <select
-                            style={styles.modernSelect}
+                          <input
+                            type="text"
+                            list="bank-state-suggestions"
+                            style={styles.modernInput}
                             value={wireForm.beneficiary_bank_state}
                             onChange={(e) => handleInputChange('beneficiary_bank_state', e.target.value)}
-                          >
-                            <option value="">Select State</option>
+                            placeholder="New York"
+                          />
+                          <datalist id="bank-state-suggestions">
                             {US_STATES.map(state => (
-                              <option key={state} value={state}>{state}</option>
+                              <option key={state} value={state} />
                             ))}
-                          </select>
+                          </datalist>
                         </div>
                         <div style={styles.formGroup}>
                           <label style={styles.label}>Bank ZIP</label>
@@ -1197,7 +1205,7 @@ export default function WireTransferPage() {
         )}
       </div>
 
-      <style jsx>{`
+      <style jsx global>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
@@ -1205,6 +1213,27 @@ export default function WireTransferPage() {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-10px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        
+        input:focus,
+        select:focus,
+        textarea:focus {
+          border-color: #3b82f6 !important;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+        }
+        
+        input::placeholder {
+          color: #94a3b8;
+        }
+        
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="number"],
+        select {
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          appearance: none;
         }
       `}</style>
     </>
@@ -1214,71 +1243,73 @@ export default function WireTransferPage() {
 const styles = {
   container: {
     minHeight: '100vh',
-    backgroundColor: '#f9fafb',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    backgroundColor: '#f8fafc',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Oxygen, Ubuntu, "Helvetica Neue", Arial, sans-serif',
     paddingBottom: '80px'
   },
   header: {
-    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+    background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
     color: 'white',
-    padding: '1.5rem 2rem',
+    padding: '1.75rem 2.5rem',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+    boxShadow: '0 4px 24px rgba(30, 58, 138, 0.2)'
   },
   logoContainer: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.75rem',
+    gap: '0.875rem',
     textDecoration: 'none',
     color: 'white'
   },
   logoPlaceholder: {
-    fontSize: '1.75rem'
+    fontSize: '2rem'
   },
   logoText: {
-    fontSize: '1.5rem',
-    fontWeight: '700'
+    fontSize: '1.625rem',
+    fontWeight: '700',
+    letterSpacing: '-0.01em'
   },
   backButton: {
-    padding: '0.625rem 1.25rem',
-    background: 'rgba(255, 255, 255, 0.1)',
+    padding: '0.75rem 1.5rem',
+    background: 'rgba(255, 255, 255, 0.15)',
     backdropFilter: 'blur(10px)',
     color: 'white',
     textDecoration: 'none',
-    borderRadius: '8px',
-    fontSize: '0.95rem',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
+    borderRadius: '10px',
+    fontSize: '1rem',
+    border: '1px solid rgba(255, 255, 255, 0.25)',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    fontWeight: '500'
+    fontWeight: '600'
   },
   content: {
-    maxWidth: '1000px',
+    maxWidth: '960px',
     margin: '0 auto',
-    padding: '2rem 1.5rem'
+    padding: '2.5rem 1.5rem'
   },
   titleSection: {
     textAlign: 'center',
-    marginBottom: '2.5rem',
+    marginBottom: '3rem',
     animation: 'fadeIn 0.6s ease'
   },
   titleIcon: {
-    fontSize: '3.5rem',
-    marginBottom: '1rem'
+    fontSize: '4rem',
+    marginBottom: '1.25rem'
   },
   title: {
-    fontSize: '2.5rem',
+    fontSize: '2.75rem',
     fontWeight: '800',
     color: '#0f172a',
-    marginBottom: '0.5rem',
-    letterSpacing: '-0.02em'
+    marginBottom: '0.75rem',
+    letterSpacing: '-0.03em'
   },
   subtitle: {
-    fontSize: '1.125rem',
+    fontSize: '1.2rem',
     color: '#64748b',
-    fontWeight: '400'
+    fontWeight: '500',
+    lineHeight: '1.6'
   },
   message: {
     padding: '1.125rem 1.5rem',
@@ -1348,83 +1379,91 @@ const styles = {
   },
   formCard: {
     backgroundColor: 'white',
-    borderRadius: '16px',
-    padding: '2rem',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-    border: '1px solid #e5e7eb'
+    borderRadius: '20px',
+    padding: '2.5rem',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+    border: '1px solid #e2e8f0',
+    marginBottom: '2rem'
   },
   cardHeader: {
     display: 'flex',
     alignItems: 'flex-start',
-    gap: '1rem',
-    marginBottom: '2rem',
-    paddingBottom: '1.5rem',
-    borderBottom: '2px solid #f3f4f6'
+    gap: '1.25rem',
+    marginBottom: '2.5rem',
+    paddingBottom: '1.75rem',
+    borderBottom: '2px solid #f1f5f9'
   },
   cardIcon: {
-    fontSize: '2rem',
-    backgroundColor: '#eff6ff',
-    padding: '0.75rem',
-    borderRadius: '12px'
+    fontSize: '2.25rem',
+    backgroundColor: '#dbeafe',
+    padding: '1rem',
+    borderRadius: '14px',
+    lineHeight: 1
   },
   cardTitle: {
-    fontSize: '1.5rem',
+    fontSize: '1.75rem',
     fontWeight: '700',
     color: '#0f172a',
-    marginBottom: '0.25rem'
+    marginBottom: '0.375rem',
+    letterSpacing: '-0.02em'
   },
   cardSubtitle: {
-    fontSize: '0.95rem',
+    fontSize: '1rem',
     color: '#64748b',
-    margin: 0
+    margin: 0,
+    lineHeight: '1.5'
   },
   formSection: {
-    marginBottom: '2rem'
+    marginBottom: '2.25rem'
   },
   sectionTitle: {
-    fontSize: '1.125rem',
+    fontSize: '1.25rem',
     fontWeight: '700',
     color: '#1e293b',
-    marginBottom: '1.25rem',
+    marginBottom: '1.5rem',
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem'
+    gap: '0.625rem',
+    letterSpacing: '-0.01em'
   },
   sectionDescription: {
-    fontSize: '0.875rem',
+    fontSize: '0.9rem',
     color: '#64748b',
-    marginBottom: '1rem',
-    marginTop: '-0.5rem'
+    marginBottom: '1.25rem',
+    marginTop: '-0.75rem',
+    lineHeight: '1.6'
   },
   formGroup: {
-    marginBottom: '1.5rem',
+    marginBottom: '1.75rem',
     flex: 1
   },
   formRow: {
     display: 'flex',
-    gap: '1.25rem',
+    gap: '1.5rem',
     marginBottom: '0'
   },
   label: {
     display: 'block',
-    marginBottom: '0.5rem',
-    fontSize: '0.9rem',
+    marginBottom: '0.625rem',
+    fontSize: '0.95rem',
     fontWeight: '600',
-    color: '#374151'
+    color: '#334155',
+    letterSpacing: '-0.01em'
   },
   required: {
     color: '#ef4444'
   },
   modernInput: {
     width: '100%',
-    padding: '0.875rem 1rem',
-    fontSize: '0.95rem',
-    border: '1.5px solid #e5e7eb',
-    borderRadius: '10px',
+    padding: '1rem 1.25rem',
+    fontSize: '1rem',
+    border: '2px solid #e2e8f0',
+    borderRadius: '12px',
     backgroundColor: '#ffffff',
-    transition: 'all 0.3s ease',
+    transition: 'all 0.2s ease',
     fontFamily: 'inherit',
-    boxSizing: 'border-box'
+    boxSizing: 'border-box',
+    outline: 'none'
   },
   modernSelect: {
     width: '100%',
