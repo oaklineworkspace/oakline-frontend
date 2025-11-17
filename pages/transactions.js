@@ -323,6 +323,9 @@ export default function TransactionsHistory() {
         txType === 'payment' || 
         txType === 'loan_payment' ||
         txType === 'zelle_send' ||
+        description.includes('online shopping') ||
+        description.includes('purchase') ||
+        description.includes('shopping') ||
         description.includes('transfer to') ||
         description.includes('sent to')) {
       return false;

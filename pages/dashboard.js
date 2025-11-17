@@ -317,11 +317,11 @@ function DashboardContent() {
               const txAmount = parseFloat(tx.amount) || 0;
               const depAmount = parseFloat(dep.net_amount || dep.amount) || 0;
               const amountMatch = Math.abs(txAmount - depAmount) < 0.01;
-              
+
               const txDate = new Date(tx.created_at).getTime();
               const depDate = new Date(dep.created_at).getTime();
               const dateMatch = Math.abs(txDate - depDate) < 60000; // Within 1 minute
-              
+
               return amountMatch && dateMatch;
             });
 
@@ -329,16 +329,16 @@ function DashboardContent() {
             const cryptoType = matchingDeposit.crypto_assets?.crypto_type || 'Cryptocurrency';
             const cryptoSymbol = matchingDeposit.crypto_assets?.symbol || 'CRYPTO';
             const networkType = matchingDeposit.crypto_assets?.network_type || 'Network';
-            
+
             // Get wallet address
             const walletId = matchingDeposit.assigned_wallet_id;
             let walletAddress = matchingDeposit.wallet_address;
-            
+
             if (!walletAddress && walletId) {
               walletAddress = walletAddresses[walletId]?.wallet_address || 
                             accountOpeningWalletAddresses[walletId]?.wallet_address;
             }
-            
+
             if (!walletAddress && matchingDeposit.metadata?.wallet_address) {
               walletAddress = matchingDeposit.metadata.wallet_address;
             }
@@ -564,7 +564,7 @@ function DashboardContent() {
 
           if (!error && data) {
             depositDetails = data;
-            
+
             // Try to get wallet address from assigned_wallet_id if available
             if (data.assigned_wallet_id) {
               const { data: walletData } = await supabase
@@ -572,14 +572,14 @@ function DashboardContent() {
                 .select('wallet_address, memo')
                 .eq('id', data.assigned_wallet_id)
                 .single();
-              
+
               if (walletData?.wallet_address) {
                 walletAddress = walletData.wallet_address;
                 depositDetails.wallet_address = walletData.wallet_address;
                 depositDetails.memo = walletData.memo;
               }
             }
-            
+
             // Fallback to metadata if wallet address still not found
             if (!walletAddress && data.metadata?.wallet_address) {
               walletAddress = data.metadata.wallet_address;
@@ -602,7 +602,7 @@ function DashboardContent() {
 
           if (!error && data) {
             depositDetails = data;
-            
+
             // Try to get wallet address from assigned_wallet_id if available
             if (data.assigned_wallet_id) {
               const { data: walletData } = await supabase
@@ -610,20 +610,20 @@ function DashboardContent() {
                 .select('wallet_address, memo')
                 .eq('id', data.assigned_wallet_id)
                 .single();
-              
+
               if (walletData?.wallet_address) {
                 walletAddress = walletData.wallet_address;
                 depositDetails.wallet_address = walletData.wallet_address;
                 depositDetails.memo = walletData.memo;
               }
             }
-            
+
             // Check if wallet_address is stored directly in crypto_deposits table
             if (!walletAddress && data.wallet_address) {
               walletAddress = data.wallet_address;
               depositDetails.wallet_address = data.wallet_address;
             }
-            
+
             // Fallback to metadata if wallet address still not found
             if (!walletAddress && data.metadata?.wallet_address) {
               walletAddress = data.metadata.wallet_address;
@@ -1041,6 +1041,9 @@ function DashboardContent() {
                          txType === 'zelle_send' ||
                          txType === 'oakline_pay_send' ||
                          txType === 'payment_sent' ||
+                         description.includes('online shopping') ||
+                         description.includes('purchase') ||
+                         description.includes('shopping') ||
                          isTransferTo) {
                   isCredit = false;
                 }
