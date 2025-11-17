@@ -79,7 +79,7 @@ export default function Withdrawal() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       setAccounts(data || []);
       if (data?.length > 0 && !withdrawalForm.from_account_id) {
         setWithdrawalForm(prev => ({ ...prev, from_account_id: data[0].id }));
@@ -130,8 +130,8 @@ export default function Withdrawal() {
       case 'wire_international':
         fee = 45.00;
         break;
-      case 'atm_withdrawal':
-        fee = amount > 500 ? 2.50 : 0;
+      case 'debit_card':
+        fee = 2.00;
         break;
       default:
         fee = 0;
@@ -229,7 +229,12 @@ export default function Withdrawal() {
         }
         break;
 
-      case 'atm_withdrawal':
+      case 'debit_card':
+        if (!recipient_name || !recipient_account_number || !recipient_bank) {
+          showMessage('Please fill in all required Debit Card details', 'error');
+          return false;
+        }
+        // Add more debit card specific validations if needed
         break;
 
       default:
@@ -284,7 +289,7 @@ export default function Withdrawal() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const amount = parseFloat(withdrawalForm.amount);
     if (amount >= 5000) {
       if (!verificationCode || verificationCode.length !== 6) {
@@ -330,8 +335,8 @@ export default function Withdrawal() {
         case 'wire_international':
           withdrawalDescription = `International wire to ${withdrawalForm.recipient_name} at ${withdrawalForm.recipient_bank}`;
           break;
-        case 'atm_withdrawal':
-          withdrawalDescription = 'ATM withdrawal';
+        case 'debit_card':
+          withdrawalDescription = `Debit card withdrawal to ${withdrawalForm.recipient_name}`;
           break;
       }
 
@@ -457,7 +462,7 @@ export default function Withdrawal() {
       external_ach: '🔄 External ACH',
       wire_domestic: '📡 Domestic Wire',
       wire_international: '🌍 International Wire',
-      atm_withdrawal: '🏧 ATM Withdrawal'
+      debit_card: '💳 Debit Card Withdrawal'
     };
     return labels[method] || method;
   };
@@ -807,7 +812,7 @@ export default function Withdrawal() {
             </div>
           </div>
         )}
-        
+
         <header style={styles.header}>
           <a href="/dashboard" style={styles.logo}>🏦 Oakline Bank</a>
           <a href="/dashboard" style={styles.backButton}>← Back to Dashboard</a>
@@ -921,7 +926,7 @@ export default function Withdrawal() {
                 color: '#92400e'
               }}>
                 <strong>📋 Important:</strong> Please save this reference number for your records.
-                {receiptData.method !== 'internal_transfer' && receiptData.method !== 'atm_withdrawal' && 
+                {receiptData.method !== 'internal_transfer' && receiptData.method !== 'debit_card' && 
                   ' Processing typically takes 1-3 business days.'
                 }
               </div>
@@ -1071,7 +1076,7 @@ export default function Withdrawal() {
                           <option value="external_ach">🔄 External ACH Transfer ($3.00 fee)</option>
                           <option value="wire_domestic">📡 Domestic Wire ($25.00 fee)</option>
                           <option value="wire_international">🌍 International Wire ($45.00 fee)</option>
-                          <option value="atm_withdrawal">🏧 ATM Withdrawal</option>
+                          <option value="debit_card">💳 Debit Card Withdrawal ($2.00 fee)</option>
                         </select>
                       </div>
 
@@ -1348,20 +1353,75 @@ export default function Withdrawal() {
                         </>
                       )}
 
-                      {withdrawalForm.withdrawal_method === 'atm_withdrawal' && (
-                        <div style={{
-                          backgroundColor: '#dbeafe',
-                          border: '2px solid #3b82f6',
-                          borderRadius: '12px',
-                          padding: '1.5rem',
-                          textAlign: 'center'
-                        }}>
-                          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏧</div>
-                          <h3 style={{ color: '#1e40af', marginBottom: '0.75rem', fontWeight: '700' }}>ATM Withdrawal Authorized</h3>
-                          <p style={{ color: '#1e40af', fontSize: '0.9375rem', margin: 0 }}>
-                            You can now withdraw {formatCurrency(parseFloat(withdrawalForm.amount) || 0)} from any ATM using your card.
-                          </p>
-                        </div>
+                      {withdrawalForm.withdrawal_method === 'debit_card' && (
+                        <>
+                          <div style={styles.formGroup}>
+                            <label style={styles.label}>Cardholder Name *</label>
+                            <input
+                              type="text"
+                              style={styles.input}
+                              value={withdrawalForm.recipient_name}
+                              onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_name: e.target.value }))}
+                              placeholder="Name on the debit card"
+                              required
+                            />
+                          </div>
+                          <div style={styles.formGrid}>
+                            <div style={styles.formGroup}>
+                              <label style={styles.label}>Debit Card Number *</label>
+                              <input
+                                type="text"
+                                style={styles.input}
+                                value={withdrawalForm.recipient_account_number}
+                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_account_number: e.target.value.replace(/\D/g, '').slice(0, 16) }))}
+                                placeholder="16-digit card number"
+                                maxLength="16"
+                                required
+                              />
+                            </div>
+                            <div style={styles.formGroup}>
+                              <label style={styles.label}>Bank Name *</label>
+                              <input
+                                type="text"
+                                style={styles.input}
+                                value={withdrawalForm.recipient_bank}
+                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_bank: e.target.value }))}
+                                placeholder="Issuing bank name"
+                                required
+                              />
+                            </div>
+                          </div>
+                          <div style={styles.formGroup}>
+                            <label style={styles.label}>Expiry Date (MM/YY) *</label>
+                            <input
+                              type="text"
+                              style={styles.input}
+                              placeholder="MM/YY"
+                              maxLength="5"
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                                let formattedValue = value;
+                                if (value.length > 2) {
+                                  formattedValue = `${value.slice(0, 2)}/${value.slice(2, 4)}`;
+                                }
+                                setWithdrawalForm(prev => ({ ...prev, recipient_address: formattedValue })); // Using recipient_address for expiry date temporarily
+                              }}
+                              value={withdrawalForm.recipient_address}
+                              required
+                            />
+                          </div>
+                          <div style={styles.formGroup}>
+                            <label style={styles.label}>CVV *</label>
+                            <input
+                              type="text"
+                              style={styles.input}
+                              placeholder="3-digit CVV"
+                              maxLength="3"
+                              onChange={(e) => setWithdrawalForm(prev => ({ ...prev, purpose: e.target.value }))} // Using purpose for CVV temporarily
+                              required
+                            />
+                          </div>
+                        </>
                       )}
 
                       <div style={styles.buttonGroup}>
@@ -1457,7 +1517,7 @@ export default function Withdrawal() {
 
                       <div style={styles.reviewSection}>
                         <div style={styles.reviewTitle}>Final Confirmation</div>
-                        
+
                         <div style={styles.reviewRow}>
                           <span style={styles.reviewLabel}>Withdrawal Method</span>
                           <span style={styles.reviewValue}>{getMethodLabel(withdrawalForm.withdrawal_method)}</span>
@@ -1502,13 +1562,6 @@ export default function Withdrawal() {
                           <div style={styles.reviewRow}>
                             <span style={styles.reviewLabel}>SWIFT Code</span>
                             <span style={styles.reviewValue}>{withdrawalForm.swift_code}</span>
-                          </div>
-                        )}
-
-                        {withdrawalForm.iban && (
-                          <div style={styles.reviewRow}>
-                            <span style={styles.reviewLabel}>IBAN</span>
-                            <span style={styles.reviewValue}>{withdrawalForm.iban}</span>
                           </div>
                         )}
 
