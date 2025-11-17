@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -31,6 +32,7 @@ export default function WireTransfer() {
   const [sentCode, setSentCode] = useState('');
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
+  const [currentStep, setCurrentStep] = useState(1);
 
   const [wireForm, setWireForm] = useState({
     from_account_id: '',
@@ -130,6 +132,79 @@ export default function WireTransfer() {
     }).format(amount || 0);
   };
 
+  const validateStep1 = () => {
+    if (!wireForm.from_account_id) {
+      setMessage('Please select a source account');
+      setMessageType('error');
+      return false;
+    }
+
+    if (!wireForm.recipient_first_name || !wireForm.recipient_last_name) {
+      setMessage('Please enter recipient first and last name');
+      setMessageType('error');
+      return false;
+    }
+
+    if (!wireForm.recipient_account || !wireForm.recipient_bank) {
+      setMessage('Please fill in all recipient bank details');
+      setMessageType('error');
+      return false;
+    }
+
+    if (!wireForm.recipient_bank_address || !wireForm.recipient_bank_city) {
+      setMessage('Please enter complete bank address');
+      setMessageType('error');
+      return false;
+    }
+
+    if (wireForm.transfer_type === 'international' && !wireForm.swift_code) {
+      setMessage('SWIFT code is required for international transfers');
+      setMessageType('error');
+      return false;
+    }
+
+    if (wireForm.transfer_type === 'domestic' && !wireForm.routing_number) {
+      setMessage('Routing number is required for domestic transfers');
+      setMessageType('error');
+      return false;
+    }
+
+    const amount = parseFloat(wireForm.amount);
+    if (!amount || amount <= 0) {
+      setMessage('Please enter a valid amount');
+      setMessageType('error');
+      return false;
+    }
+
+    const account = accounts.find(a => a.id === wireForm.from_account_id);
+    if (parseFloat(account.balance) < wireForm.total_amount) {
+      setMessage('Insufficient funds (including fees)');
+      setMessageType('error');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleNextStep = () => {
+    setMessage('');
+    if (currentStep === 1) {
+      if (validateStep1()) {
+        setCurrentStep(2);
+      }
+    } else if (currentStep === 2) {
+      setCurrentStep(3);
+      if (!sentCode) {
+        sendVerificationCode();
+      }
+    }
+  };
+
+  const handlePreviousStep = () => {
+    setMessage('');
+    setCurrentStep(prev => Math.max(1, prev - 1));
+  };
+
   const sendVerificationCode = async () => {
     setSendingCode(true);
     try {
@@ -168,44 +243,11 @@ export default function WireTransfer() {
     setMessage('');
 
     try {
-      if (!wireForm.from_account_id) {
-        throw new Error('Please select a source account');
-      }
-
-      if (!wireForm.recipient_first_name || !wireForm.recipient_last_name) {
-        throw new Error('Please enter recipient first and last name');
-      }
-
-      if (!wireForm.recipient_account || !wireForm.recipient_bank) {
-        throw new Error('Please fill in all recipient bank details');
-      }
-
-      if (!wireForm.recipient_bank_address || !wireForm.recipient_bank_city) {
-        throw new Error('Please enter complete bank address');
-      }
-
-      if (wireForm.transfer_type === 'international' && !wireForm.swift_code) {
-        throw new Error('SWIFT code is required for international transfers');
-      }
-
-      if (wireForm.transfer_type === 'domestic' && !wireForm.routing_number) {
-        throw new Error('Routing number is required for domestic transfers');
-      }
-
-      const amount = parseFloat(wireForm.amount);
-      if (!amount || amount <= 0) {
-        throw new Error('Please enter a valid amount');
-      }
-
-      const account = accounts.find(a => a.id === wireForm.from_account_id);
-      if (parseFloat(account.balance) < wireForm.total_amount) {
-        throw new Error('Insufficient funds (including fees)');
-      }
-
       if (verificationCode !== sentCode) {
         throw new Error('Invalid verification code');
       }
 
+      const account = accounts.find(a => a.id === wireForm.from_account_id);
       const recipientFullName = `${wireForm.recipient_first_name} ${wireForm.recipient_middle_name ? wireForm.recipient_middle_name + ' ' : ''}${wireForm.recipient_last_name}`;
       const reference = `WIRE-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
@@ -302,6 +344,7 @@ export default function WireTransfer() {
       });
       setVerificationCode('');
       setSentCode('');
+      setCurrentStep(1);
 
       await checkUserAndFetchData();
 
@@ -367,8 +410,95 @@ export default function WireTransfer() {
       fontSize: isMobile ? '1.5rem' : '2rem',
       fontWeight: '700',
       color: '#ffffff',
-      marginBottom: '2rem',
+      marginBottom: '1rem',
       textAlign: 'center'
+    },
+    pageSubtitle: {
+      fontSize: isMobile ? '0.9rem' : '1rem',
+      color: 'rgba(255,255,255,0.9)',
+      textAlign: 'center',
+      marginBottom: '2rem',
+      maxWidth: '800px',
+      margin: '0 auto 2rem auto'
+    },
+    infoCard: {
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderRadius: '16px',
+      padding: isMobile ? '1.25rem' : '1.5rem',
+      marginBottom: '2rem',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+      border: '1px solid rgba(5, 150, 105, 0.3)'
+    },
+    infoTitle: {
+      fontSize: isMobile ? '1rem' : '1.1rem',
+      fontWeight: '700',
+      color: '#1a365d',
+      marginBottom: '1rem',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem'
+    },
+    infoText: {
+      fontSize: '0.875rem',
+      color: '#374151',
+      lineHeight: '1.6',
+      marginBottom: '0.75rem'
+    },
+    infoGrid: {
+      display: 'grid',
+      gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+      gap: '1rem',
+      marginTop: '1rem'
+    },
+    infoBox: {
+      backgroundColor: '#f8fafc',
+      padding: '1rem',
+      borderRadius: '10px',
+      border: '1px solid #e2e8f0'
+    },
+    infoBoxTitle: {
+      fontSize: '0.8rem',
+      fontWeight: '600',
+      color: '#059669',
+      marginBottom: '0.5rem'
+    },
+    infoBoxText: {
+      fontSize: '0.8rem',
+      color: '#64748b',
+      lineHeight: '1.5'
+    },
+    stepIndicator: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: isMobile ? '0.5rem' : '1rem',
+      marginBottom: '2rem'
+    },
+    step: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.5rem'
+    },
+    stepCircle: {
+      width: isMobile ? '32px' : '40px',
+      height: isMobile ? '32px' : '40px',
+      borderRadius: '50%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: isMobile ? '0.875rem' : '1rem',
+      fontWeight: '700',
+      transition: 'all 0.3s'
+    },
+    stepLabel: {
+      fontSize: isMobile ? '0.75rem' : '0.875rem',
+      fontWeight: '600',
+      color: 'white'
+    },
+    stepDivider: {
+      width: isMobile ? '20px' : '40px',
+      height: '2px',
+      backgroundColor: 'rgba(255,255,255,0.3)'
     },
     contentGrid: {
       display: 'grid',
@@ -459,6 +589,21 @@ export default function WireTransfer() {
       fontWeight: '700',
       color: '#1e293b'
     },
+    buttonGroup: {
+      display: 'flex',
+      gap: '1rem',
+      marginTop: '1.5rem'
+    },
+    button: {
+      flex: 1,
+      padding: '1rem',
+      border: 'none',
+      borderRadius: '12px',
+      fontSize: isMobile ? '0.875rem' : '0.95rem',
+      fontWeight: '700',
+      cursor: 'pointer',
+      transition: 'all 0.3s'
+    },
     submitButton: {
       width: '100%',
       padding: '1rem',
@@ -521,6 +666,36 @@ export default function WireTransfer() {
       fontWeight: '600',
       marginTop: '0.5rem',
       color: 'white'
+    },
+    reviewSection: {
+      backgroundColor: '#f8fafc',
+      padding: '1.5rem',
+      borderRadius: '12px',
+      border: '2px solid #e2e8f0',
+      marginBottom: '1.5rem'
+    },
+    reviewTitle: {
+      fontSize: '1rem',
+      fontWeight: '700',
+      color: '#1a365d',
+      marginBottom: '1rem'
+    },
+    reviewRow: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      padding: '0.75rem 0',
+      borderBottom: '1px solid #e2e8f0'
+    },
+    reviewLabel: {
+      fontSize: '0.875rem',
+      color: '#64748b',
+      fontWeight: '500'
+    },
+    reviewValue: {
+      fontSize: '0.875rem',
+      color: '#1e293b',
+      fontWeight: '600',
+      textAlign: 'right'
     },
     receiptModal: {
       position: 'fixed',
@@ -637,7 +812,7 @@ export default function WireTransfer() {
     <>
       <Head>
         <title>Wire Transfer - Oakline Bank</title>
-        <meta name="description" content="Send wire transfers securely" />
+        <meta name="description" content="Send domestic and international wire transfers securely" />
       </Head>
 
       <style jsx>{`
@@ -654,7 +829,100 @@ export default function WireTransfer() {
         </header>
 
         <main style={styles.main}>
-          <h1 style={styles.pageTitle}>🌐 Wire Transfer</h1>
+          <h1 style={styles.pageTitle}>🌐 Wire Transfer Services</h1>
+          <p style={styles.pageSubtitle}>
+            Secure, fast, and reliable domestic and international wire transfers with competitive rates and professional service
+          </p>
+
+          <div style={styles.infoCard}>
+            <div style={styles.infoTitle}>
+              <span>ℹ️</span> Important Wire Transfer Information
+            </div>
+            <p style={styles.infoText}>
+              Wire transfers are a secure method of sending money electronically between banks. Unlike other payment methods, wire transfers are typically irreversible once processed. Please ensure all recipient details are accurate before submitting your transfer.
+            </p>
+            
+            <div style={styles.infoGrid}>
+              <div style={styles.infoBox}>
+                <div style={styles.infoBoxTitle}>🇺🇸 Domestic Transfers</div>
+                <div style={styles.infoBoxText}>
+                  • Processing Time: Same business day if submitted before 3:00 PM ET<br/>
+                  • Standard Fee: $15.00<br/>
+                  • Expedited Option: +$10.00 (within 2 hours)<br/>
+                  • Requires: Routing number and account number
+                </div>
+              </div>
+              
+              <div style={styles.infoBox}>
+                <div style={styles.infoBoxTitle}>🌍 International Transfers</div>
+                <div style={styles.infoBoxText}>
+                  • Processing Time: 1-3 business days<br/>
+                  • Standard Fee: $25.00<br/>
+                  • Expedited Option: +$10.00 (24-48 hours)<br/>
+                  • Requires: SWIFT/BIC code and account details
+                </div>
+              </div>
+              
+              <div style={styles.infoBox}>
+                <div style={styles.infoBoxTitle}>🔒 Security Features</div>
+                <div style={styles.infoBoxText}>
+                  • Multi-factor authentication required<br/>
+                  • Email verification code confirmation<br/>
+                  • Real-time fraud monitoring<br/>
+                  • Encrypted transmission of all data
+                </div>
+              </div>
+              
+              <div style={styles.infoBox}>
+                <div style={styles.infoBoxTitle}>⏰ Cut-off Times</div>
+                <div style={styles.infoBoxText}>
+                  • Domestic: 3:00 PM ET for same-day processing<br/>
+                  • International: 2:00 PM ET for next-day processing<br/>
+                  • Expedited transfers available until 5:00 PM ET<br/>
+                  • No weekend or holiday processing
+                </div>
+              </div>
+            </div>
+
+            <p style={{ ...styles.infoText, marginTop: '1rem', fontWeight: '600', color: '#dc2626' }}>
+              ⚠️ Important: Wire transfers cannot be cancelled or reversed once processed. Please verify all recipient information carefully before confirming your transfer.
+            </p>
+          </div>
+
+          <div style={styles.stepIndicator}>
+            <div style={styles.step}>
+              <div style={{
+                ...styles.stepCircle,
+                backgroundColor: currentStep >= 1 ? '#059669' : 'rgba(255,255,255,0.3)',
+                color: currentStep >= 1 ? 'white' : '#64748b'
+              }}>
+                1
+              </div>
+              <span style={styles.stepLabel}>Transfer Details</span>
+            </div>
+            <div style={styles.stepDivider}></div>
+            <div style={styles.step}>
+              <div style={{
+                ...styles.stepCircle,
+                backgroundColor: currentStep >= 2 ? '#059669' : 'rgba(255,255,255,0.3)',
+                color: currentStep >= 2 ? 'white' : '#64748b'
+              }}>
+                2
+              </div>
+              <span style={styles.stepLabel}>Review & Confirm</span>
+            </div>
+            <div style={styles.stepDivider}></div>
+            <div style={styles.step}>
+              <div style={{
+                ...styles.stepCircle,
+                backgroundColor: currentStep >= 3 ? '#059669' : 'rgba(255,255,255,0.3)',
+                color: currentStep >= 3 ? 'white' : '#64748b'
+              }}>
+                3
+              </div>
+              <span style={styles.stepLabel}>Verify & Submit</span>
+            </div>
+          </div>
 
           {message && (
             <div style={{
@@ -678,274 +946,498 @@ export default function WireTransfer() {
           ) : (
             <div style={styles.contentGrid}>
               <div style={styles.card}>
-                <h2 style={styles.cardTitle}>Send Wire Transfer</h2>
+                <h2 style={styles.cardTitle}>
+                  {currentStep === 1 && 'Step 1: Transfer Details'}
+                  {currentStep === 2 && 'Step 2: Review & Confirm'}
+                  {currentStep === 3 && 'Step 3: Verify & Submit'}
+                </h2>
+
                 <form onSubmit={handleSubmit}>
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>Transfer Type *</label>
-                    <select
-                      style={styles.select}
-                      value={wireForm.transfer_type}
-                      onChange={(e) => handleInputChange('transfer_type', e.target.value)}
-                      required
-                    >
-                      <option value="domestic">🇺🇸 Domestic (US)</option>
-                      <option value="international">🌍 International</option>
-                    </select>
-                  </div>
-
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>From Account *</label>
-                    <select
-                      style={styles.select}
-                      value={wireForm.from_account_id}
-                      onChange={(e) => handleInputChange('from_account_id', e.target.value)}
-                      required
-                    >
-                      {accounts.map(account => (
-                        <option key={account.id} value={account.id}>
-                          {account.account_type?.toUpperCase()} - {account.account_number} ({formatCurrency(account.balance)})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div style={styles.formGrid}>
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>First Name *</label>
-                      <input
-                        type="text"
-                        style={styles.input}
-                        value={wireForm.recipient_first_name}
-                        onChange={(e) => handleInputChange('recipient_first_name', e.target.value)}
-                        placeholder="John"
-                        required
-                      />
-                    </div>
-
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>Middle Name</label>
-                      <input
-                        type="text"
-                        style={styles.input}
-                        value={wireForm.recipient_middle_name}
-                        onChange={(e) => handleInputChange('recipient_middle_name', e.target.value)}
-                        placeholder="Optional"
-                      />
-                    </div>
-
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>Last Name *</label>
-                      <input
-                        type="text"
-                        style={styles.input}
-                        value={wireForm.recipient_last_name}
-                        onChange={(e) => handleInputChange('recipient_last_name', e.target.value)}
-                        placeholder="Doe"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>Bank Name *</label>
-                    <input
-                      type="text"
-                      style={styles.input}
-                      value={wireForm.recipient_bank}
-                      onChange={(e) => handleInputChange('recipient_bank', e.target.value)}
-                      placeholder="e.g., Chase Bank"
-                      required
-                    />
-                  </div>
-
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>Account Number *</label>
-                    <input
-                      type="text"
-                      style={styles.input}
-                      value={wireForm.recipient_account}
-                      onChange={(e) => handleInputChange('recipient_account', e.target.value)}
-                      placeholder="Account number"
-                      required
-                    />
-                  </div>
-
-                  {wireForm.transfer_type === 'international' ? (
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>SWIFT/BIC Code *</label>
-                      <input
-                        type="text"
-                        style={styles.input}
-                        value={wireForm.swift_code}
-                        onChange={(e) => handleInputChange('swift_code', e.target.value.toUpperCase())}
-                        placeholder="e.g., CHASUS33XXX"
-                        maxLength="11"
-                        required
-                      />
-                    </div>
-                  ) : (
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>Routing Number *</label>
-                      <input
-                        type="text"
-                        style={styles.input}
-                        value={wireForm.routing_number}
-                        onChange={(e) => handleInputChange('routing_number', e.target.value)}
-                        placeholder="9-digit routing number"
-                        maxLength="9"
-                        required
-                      />
-                    </div>
-                  )}
-
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>Street Address *</label>
-                    <input
-                      type="text"
-                      style={styles.input}
-                      value={wireForm.recipient_bank_address}
-                      onChange={(e) => handleInputChange('recipient_bank_address', e.target.value)}
-                      placeholder="Bank street address"
-                      required
-                    />
-                  </div>
-
-                  <div style={styles.formGrid}>
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>City *</label>
-                      <input
-                        type="text"
-                        style={styles.input}
-                        value={wireForm.recipient_bank_city}
-                        onChange={(e) => handleInputChange('recipient_bank_city', e.target.value)}
-                        placeholder="City"
-                        required
-                      />
-                    </div>
-
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>State</label>
-                      <input
-                        type="text"
-                        style={styles.input}
-                        value={wireForm.recipient_bank_state}
-                        onChange={(e) => handleInputChange('recipient_bank_state', e.target.value)}
-                        placeholder="State"
-                      />
-                    </div>
-
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>ZIP Code</label>
-                      <input
-                        type="text"
-                        style={styles.input}
-                        value={wireForm.recipient_bank_zip}
-                        onChange={(e) => handleInputChange('recipient_bank_zip', e.target.value)}
-                        placeholder="ZIP"
-                      />
-                    </div>
-                  </div>
-
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>Amount ($) *</label>
-                    <input
-                      type="number"
-                      style={styles.input}
-                      value={wireForm.amount}
-                      onChange={(e) => handleInputChange('amount', e.target.value)}
-                      placeholder="0.00"
-                      step="0.01"
-                      min="0.01"
-                      required
-                    />
-                  </div>
-
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>Description (Optional)</label>
-                    <input
-                      type="text"
-                      style={styles.input}
-                      value={wireForm.description}
-                      onChange={(e) => handleInputChange('description', e.target.value)}
-                      placeholder="Payment purpose"
-                      maxLength="100"
-                    />
-                  </div>
-
-                  <div 
-                    style={styles.checkboxContainer}
-                    onClick={() => handleInputChange('urgent_transfer', !wireForm.urgent_transfer)}
-                  >
-                    <input
-                      type="checkbox"
-                      style={styles.checkbox}
-                      checked={wireForm.urgent_transfer}
-                      onChange={(e) => handleInputChange('urgent_transfer', e.target.checked)}
-                    />
-                    <label style={{ fontSize: '0.875rem', fontWeight: '500', color: '#1e293b', cursor: 'pointer' }}>
-                      ⚡ Expedited Processing (+$10.00)
-                    </label>
-                  </div>
-
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>Verification Code *</label>
-                    <input
-                      type="text"
-                      style={styles.input}
-                      value={verificationCode}
-                      onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      placeholder="6-digit code"
-                      maxLength="6"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={sendVerificationCode}
-                      disabled={sendingCode}
-                      style={{
-                        marginTop: '0.5rem',
-                        padding: '0.5rem 1rem',
-                        backgroundColor: sendingCode ? '#cbd5e1' : '#059669',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '0.875rem',
-                        cursor: sendingCode ? 'not-allowed' : 'pointer',
-                        width: '100%'
-                      }}
-                    >
-                      {sendingCode ? 'Sending...' : 'Send Code'}
-                    </button>
-                  </div>
-
-                  {wireForm.from_account_id && (
-                    <div style={styles.balanceInfo}>
-                      <div style={styles.balanceLabel}>Available Balance</div>
-                      <div style={styles.balanceValue}>
-                        {formatCurrency(accounts.find(a => a.id === wireForm.from_account_id)?.balance || 0)}
+                  {currentStep === 1 && (
+                    <>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Transfer Type *</label>
+                        <select
+                          style={styles.select}
+                          value={wireForm.transfer_type}
+                          onChange={(e) => handleInputChange('transfer_type', e.target.value)}
+                          required
+                        >
+                          <option value="domestic">🇺🇸 Domestic (US) - Same Day Processing</option>
+                          <option value="international">🌍 International - 1-3 Business Days</option>
+                        </select>
                       </div>
-                      {wireForm.amount && (
-                        <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#64748b' }}>
-                          Total with fees: {formatCurrency(wireForm.total_amount)}<br/>
-                          Balance after: {formatCurrency(
-                            parseFloat(accounts.find(a => a.id === wireForm.from_account_id)?.balance || 0) - wireForm.total_amount
+
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>From Account *</label>
+                        <select
+                          style={styles.select}
+                          value={wireForm.from_account_id}
+                          onChange={(e) => handleInputChange('from_account_id', e.target.value)}
+                          required
+                        >
+                          {accounts.map(account => (
+                            <option key={account.id} value={account.id}>
+                              {account.account_type?.toUpperCase()} - {account.account_number} ({formatCurrency(account.balance)})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div style={styles.formGrid}>
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>First Name *</label>
+                          <input
+                            type="text"
+                            style={styles.input}
+                            value={wireForm.recipient_first_name}
+                            onChange={(e) => handleInputChange('recipient_first_name', e.target.value)}
+                            placeholder="John"
+                            required
+                          />
+                        </div>
+
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>Middle Name</label>
+                          <input
+                            type="text"
+                            style={styles.input}
+                            value={wireForm.recipient_middle_name}
+                            onChange={(e) => handleInputChange('recipient_middle_name', e.target.value)}
+                            placeholder="Optional"
+                          />
+                        </div>
+
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>Last Name *</label>
+                          <input
+                            type="text"
+                            style={styles.input}
+                            value={wireForm.recipient_last_name}
+                            onChange={(e) => handleInputChange('recipient_last_name', e.target.value)}
+                            placeholder="Doe"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Recipient Bank Name *</label>
+                        <input
+                          type="text"
+                          style={styles.input}
+                          value={wireForm.recipient_bank}
+                          onChange={(e) => handleInputChange('recipient_bank', e.target.value)}
+                          placeholder="e.g., Chase Bank"
+                          required
+                        />
+                      </div>
+
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Recipient Account Number *</label>
+                        <input
+                          type="text"
+                          style={styles.input}
+                          value={wireForm.recipient_account}
+                          onChange={(e) => handleInputChange('recipient_account', e.target.value)}
+                          placeholder="Account number"
+                          required
+                        />
+                      </div>
+
+                      {wireForm.transfer_type === 'international' ? (
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>SWIFT/BIC Code *</label>
+                          <input
+                            type="text"
+                            style={styles.input}
+                            value={wireForm.swift_code}
+                            onChange={(e) => handleInputChange('swift_code', e.target.value.toUpperCase())}
+                            placeholder="e.g., CHASUS33XXX"
+                            maxLength="11"
+                            required
+                          />
+                        </div>
+                      ) : (
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>Routing Number (ABA) *</label>
+                          <input
+                            type="text"
+                            style={styles.input}
+                            value={wireForm.routing_number}
+                            onChange={(e) => handleInputChange('routing_number', e.target.value)}
+                            placeholder="9-digit routing number"
+                            maxLength="9"
+                            required
+                          />
+                        </div>
+                      )}
+
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Bank Street Address *</label>
+                        <input
+                          type="text"
+                          style={styles.input}
+                          value={wireForm.recipient_bank_address}
+                          onChange={(e) => handleInputChange('recipient_bank_address', e.target.value)}
+                          placeholder="123 Main Street"
+                          required
+                        />
+                      </div>
+
+                      <div style={styles.formGrid}>
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>City *</label>
+                          <input
+                            type="text"
+                            style={styles.input}
+                            value={wireForm.recipient_bank_city}
+                            onChange={(e) => handleInputChange('recipient_bank_city', e.target.value)}
+                            placeholder="City"
+                            required
+                          />
+                        </div>
+
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>State/Province</label>
+                          <input
+                            type="text"
+                            style={styles.input}
+                            value={wireForm.recipient_bank_state}
+                            onChange={(e) => handleInputChange('recipient_bank_state', e.target.value)}
+                            placeholder="State"
+                          />
+                        </div>
+
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>ZIP/Postal Code</label>
+                          <input
+                            type="text"
+                            style={styles.input}
+                            value={wireForm.recipient_bank_zip}
+                            onChange={(e) => handleInputChange('recipient_bank_zip', e.target.value)}
+                            placeholder="ZIP"
+                          />
+                        </div>
+                      </div>
+
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Transfer Amount ($) *</label>
+                        <input
+                          type="number"
+                          style={styles.input}
+                          value={wireForm.amount}
+                          onChange={(e) => handleInputChange('amount', e.target.value)}
+                          placeholder="0.00"
+                          step="0.01"
+                          min="0.01"
+                          required
+                        />
+                      </div>
+
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Purpose/Description (Optional)</label>
+                        <input
+                          type="text"
+                          style={styles.input}
+                          value={wireForm.description}
+                          onChange={(e) => handleInputChange('description', e.target.value)}
+                          placeholder="e.g., Payment for services, Invoice #12345"
+                          maxLength="100"
+                        />
+                      </div>
+
+                      <div 
+                        style={styles.checkboxContainer}
+                        onClick={() => handleInputChange('urgent_transfer', !wireForm.urgent_transfer)}
+                      >
+                        <input
+                          type="checkbox"
+                          style={styles.checkbox}
+                          checked={wireForm.urgent_transfer}
+                          onChange={(e) => handleInputChange('urgent_transfer', e.target.checked)}
+                        />
+                        <label style={{ fontSize: '0.875rem', fontWeight: '500', color: '#1e293b', cursor: 'pointer' }}>
+                          ⚡ Expedited Processing (+$10.00) - {wireForm.transfer_type === 'domestic' ? 'Within 2 hours' : '24-48 hours'}
+                        </label>
+                      </div>
+
+                      {wireForm.from_account_id && (
+                        <div style={styles.balanceInfo}>
+                          <div style={styles.balanceLabel}>Available Balance</div>
+                          <div style={styles.balanceValue}>
+                            {formatCurrency(accounts.find(a => a.id === wireForm.from_account_id)?.balance || 0)}
+                          </div>
+                          {wireForm.amount && (
+                            <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#64748b' }}>
+                              Transfer Amount: {formatCurrency(wireForm.amount)}<br/>
+                              Fees: {formatCurrency(wireForm.fee + (wireForm.urgent_transfer ? wireForm.urgent_fee : 0))}<br/>
+                              Total Debit: {formatCurrency(wireForm.total_amount)}<br/>
+                              Remaining Balance: {formatCurrency(
+                                parseFloat(accounts.find(a => a.id === wireForm.from_account_id)?.balance || 0) - wireForm.total_amount
+                              )}
+                            </div>
                           )}
                         </div>
                       )}
-                    </div>
+
+                      <button
+                        type="button"
+                        onClick={handleNextStep}
+                        style={{
+                          ...styles.submitButton,
+                          backgroundColor: '#059669'
+                        }}
+                      >
+                        Continue to Review →
+                      </button>
+                    </>
                   )}
 
-                  <button
-                    type="submit"
-                    style={{
-                      ...styles.submitButton,
-                      opacity: loading ? 0.7 : 1,
-                      cursor: loading ? 'not-allowed' : 'pointer'
-                    }}
-                    disabled={loading}
-                  >
-                    {loading ? '🔄 Processing...' : `💸 Send ${formatCurrency(wireForm.total_amount)}`}
-                  </button>
+                  {currentStep === 2 && (
+                    <>
+                      <div style={styles.reviewSection}>
+                        <div style={styles.reviewTitle}>Transfer Summary</div>
+                        
+                        <div style={styles.reviewRow}>
+                          <span style={styles.reviewLabel}>Transfer Type</span>
+                          <span style={styles.reviewValue}>
+                            {wireForm.transfer_type === 'domestic' ? '🇺🇸 Domestic' : '🌍 International'}
+                          </span>
+                        </div>
+                        
+                        <div style={styles.reviewRow}>
+                          <span style={styles.reviewLabel}>From Account</span>
+                          <span style={styles.reviewValue}>
+                            {accounts.find(a => a.id === wireForm.from_account_id)?.account_type?.toUpperCase()} - 
+                            {accounts.find(a => a.id === wireForm.from_account_id)?.account_number}
+                          </span>
+                        </div>
+
+                        <div style={styles.reviewRow}>
+                          <span style={styles.reviewLabel}>Recipient Name</span>
+                          <span style={styles.reviewValue}>
+                            {wireForm.recipient_first_name} {wireForm.recipient_middle_name} {wireForm.recipient_last_name}
+                          </span>
+                        </div>
+
+                        <div style={styles.reviewRow}>
+                          <span style={styles.reviewLabel}>Recipient Bank</span>
+                          <span style={styles.reviewValue}>{wireForm.recipient_bank}</span>
+                        </div>
+
+                        <div style={styles.reviewRow}>
+                          <span style={styles.reviewLabel}>Account Number</span>
+                          <span style={styles.reviewValue}>{wireForm.recipient_account}</span>
+                        </div>
+
+                        {wireForm.transfer_type === 'international' && (
+                          <div style={styles.reviewRow}>
+                            <span style={styles.reviewLabel}>SWIFT Code</span>
+                            <span style={styles.reviewValue}>{wireForm.swift_code}</span>
+                          </div>
+                        )}
+
+                        {wireForm.transfer_type === 'domestic' && (
+                          <div style={styles.reviewRow}>
+                            <span style={styles.reviewLabel}>Routing Number</span>
+                            <span style={styles.reviewValue}>{wireForm.routing_number}</span>
+                          </div>
+                        )}
+
+                        <div style={styles.reviewRow}>
+                          <span style={styles.reviewLabel}>Bank Address</span>
+                          <span style={styles.reviewValue}>
+                            {wireForm.recipient_bank_address}, {wireForm.recipient_bank_city}, 
+                            {wireForm.recipient_bank_state} {wireForm.recipient_bank_zip}
+                          </span>
+                        </div>
+
+                        <div style={styles.reviewRow}>
+                          <span style={styles.reviewLabel}>Transfer Amount</span>
+                          <span style={styles.reviewValue}>{formatCurrency(wireForm.amount)}</span>
+                        </div>
+
+                        <div style={styles.reviewRow}>
+                          <span style={styles.reviewLabel}>Processing Fee</span>
+                          <span style={styles.reviewValue}>{formatCurrency(wireForm.fee)}</span>
+                        </div>
+
+                        {wireForm.urgent_transfer && (
+                          <div style={styles.reviewRow}>
+                            <span style={styles.reviewLabel}>Expedited Fee</span>
+                            <span style={styles.reviewValue}>{formatCurrency(wireForm.urgent_fee)}</span>
+                          </div>
+                        )}
+
+                        <div style={{...styles.reviewRow, borderTop: '2px solid #059669', paddingTop: '1rem', marginTop: '0.5rem'}}>
+                          <span style={{...styles.reviewLabel, fontWeight: '700', color: '#1a365d'}}>Total Amount</span>
+                          <span style={{...styles.reviewValue, fontWeight: '700', color: '#059669', fontSize: '1.1rem'}}>
+                            {formatCurrency(wireForm.total_amount)}
+                          </span>
+                        </div>
+
+                        {wireForm.description && (
+                          <div style={styles.reviewRow}>
+                            <span style={styles.reviewLabel}>Description</span>
+                            <span style={styles.reviewValue}>{wireForm.description}</span>
+                          </div>
+                        )}
+
+                        <div style={styles.reviewRow}>
+                          <span style={styles.reviewLabel}>Processing Time</span>
+                          <span style={styles.reviewValue}>
+                            {wireForm.urgent_transfer 
+                              ? (wireForm.transfer_type === 'domestic' ? 'Within 2 hours' : '24-48 hours')
+                              : (wireForm.transfer_type === 'domestic' ? 'Same business day' : '1-3 business days')
+                            }
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={{
+                        backgroundColor: '#fef3c7',
+                        border: '2px solid #f59e0b',
+                        borderRadius: '10px',
+                        padding: '1rem',
+                        marginBottom: '1.5rem'
+                      }}>
+                        <p style={{ fontSize: '0.875rem', color: '#92400e', margin: 0 }}>
+                          <strong>⚠️ Please Review Carefully:</strong> Wire transfers are typically irreversible. 
+                          Verify all recipient information is correct before proceeding to the next step.
+                        </p>
+                      </div>
+
+                      <div style={styles.buttonGroup}>
+                        <button
+                          type="button"
+                          onClick={handlePreviousStep}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: '#64748b',
+                            color: 'white'
+                          }}
+                        >
+                          ← Back
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleNextStep}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: '#059669',
+                            color: 'white'
+                          }}
+                        >
+                          Proceed to Verification →
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {currentStep === 3 && (
+                    <>
+                      <div style={{
+                        backgroundColor: '#dbeafe',
+                        border: '2px solid #3b82f6',
+                        borderRadius: '10px',
+                        padding: '1.5rem',
+                        marginBottom: '1.5rem',
+                        textAlign: 'center'
+                      }}>
+                        <p style={{ fontSize: '1rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: '600' }}>
+                          🔐 Security Verification Required
+                        </p>
+                        <p style={{ fontSize: '0.875rem', color: '#1e40af', margin: 0 }}>
+                          For your security, we've sent a 6-digit verification code to your email: <strong>{user?.email}</strong>
+                        </p>
+                      </div>
+
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Enter Verification Code *</label>
+                        <input
+                          type="text"
+                          style={{
+                            ...styles.input,
+                            fontSize: '1.5rem',
+                            textAlign: 'center',
+                            letterSpacing: '0.5rem',
+                            fontWeight: '700'
+                          }}
+                          value={verificationCode}
+                          onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          placeholder="000000"
+                          maxLength="6"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={sendVerificationCode}
+                          disabled={sendingCode}
+                          style={{
+                            marginTop: '0.5rem',
+                            padding: '0.5rem 1rem',
+                            backgroundColor: sendingCode ? '#cbd5e1' : '#059669',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '0.875rem',
+                            cursor: sendingCode ? 'not-allowed' : 'pointer',
+                            width: '100%'
+                          }}
+                        >
+                          {sendingCode ? 'Sending...' : sentCode ? 'Resend Code' : 'Send Code'}
+                        </button>
+                      </div>
+
+                      <div style={styles.reviewSection}>
+                        <div style={styles.reviewTitle}>Final Confirmation</div>
+                        <div style={styles.reviewRow}>
+                          <span style={styles.reviewLabel}>Recipient</span>
+                          <span style={styles.reviewValue}>
+                            {wireForm.recipient_first_name} {wireForm.recipient_last_name}
+                          </span>
+                        </div>
+                        <div style={styles.reviewRow}>
+                          <span style={styles.reviewLabel}>Bank</span>
+                          <span style={styles.reviewValue}>{wireForm.recipient_bank}</span>
+                        </div>
+                        <div style={{...styles.reviewRow, borderTop: '2px solid #059669', paddingTop: '1rem', marginTop: '0.5rem'}}>
+                          <span style={{...styles.reviewLabel, fontWeight: '700'}}>Total Debit</span>
+                          <span style={{...styles.reviewValue, fontWeight: '700', fontSize: '1.1rem', color: '#dc2626'}}>
+                            {formatCurrency(wireForm.total_amount)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={styles.buttonGroup}>
+                        <button
+                          type="button"
+                          onClick={handlePreviousStep}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: '#64748b',
+                            color: 'white'
+                          }}
+                        >
+                          ← Back
+                        </button>
+                        <button
+                          type="submit"
+                          style={{
+                            ...styles.button,
+                            backgroundColor: loading ? '#cbd5e1' : '#1e40af',
+                            color: 'white',
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            opacity: loading ? 0.7 : 1
+                          }}
+                          disabled={loading || !verificationCode || verificationCode.length !== 6}
+                        >
+                          {loading ? '🔄 Processing...' : `✓ Submit Transfer`}
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </form>
               </div>
 
@@ -1007,7 +1499,7 @@ export default function WireTransfer() {
             </div>
 
             <div style={styles.receiptRow}>
-              <span style={styles.receiptLabel}>Reference</span>
+              <span style={styles.receiptLabel}>Reference Number</span>
               <span style={styles.receiptValue}>{receiptData.reference}</span>
             </div>
             <div style={styles.receiptRow}>
@@ -1019,25 +1511,25 @@ export default function WireTransfer() {
               <span style={styles.receiptValue}>{receiptData.recipientName}</span>
             </div>
             <div style={styles.receiptRow}>
-              <span style={styles.receiptLabel}>Bank</span>
+              <span style={styles.receiptLabel}>Recipient Bank</span>
               <span style={styles.receiptValue}>{receiptData.recipientBank}</span>
             </div>
             <div style={styles.receiptRow}>
-              <span style={styles.receiptLabel}>Type</span>
+              <span style={styles.receiptLabel}>Transfer Type</span>
               <span style={styles.receiptValue}>
                 {receiptData.transferType === 'domestic' ? '🇺🇸 Domestic' : '🌍 International'}
               </span>
             </div>
             <div style={styles.receiptRow}>
-              <span style={styles.receiptLabel}>Amount</span>
+              <span style={styles.receiptLabel}>Transfer Amount</span>
               <span style={styles.receiptValue}>{formatCurrency(receiptData.amount)}</span>
             </div>
             <div style={styles.receiptRow}>
-              <span style={styles.receiptLabel}>Fee</span>
+              <span style={styles.receiptLabel}>Processing Fee</span>
               <span style={styles.receiptValue}>{formatCurrency(receiptData.fee)}</span>
             </div>
             <div style={styles.receiptRow}>
-              <span style={styles.receiptLabel}>Total</span>
+              <span style={styles.receiptLabel}>Total Debit</span>
               <span style={styles.receiptValue}>{formatCurrency(receiptData.totalAmount)}</span>
             </div>
             <div style={styles.receiptRow}>
@@ -1054,6 +1546,24 @@ export default function WireTransfer() {
                 <span style={styles.receiptValue}>⚡ Expedited</span>
               </div>
             )}
+            {receiptData.description && (
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Description</span>
+                <span style={styles.receiptValue}>{receiptData.description}</span>
+              </div>
+            )}
+
+            <div style={{
+              backgroundColor: '#dbeafe',
+              padding: '1rem',
+              borderRadius: '8px',
+              marginTop: '1.5rem',
+              marginBottom: '1.5rem'
+            }}>
+              <p style={{ fontSize: '0.8rem', color: '#1e40af', margin: 0, textAlign: 'center' }}>
+                Your wire transfer has been submitted for processing. You will receive email confirmation once completed.
+              </p>
+            </div>
 
             <div style={styles.receiptButtons}>
               <button
