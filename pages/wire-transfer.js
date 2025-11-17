@@ -1737,26 +1737,15 @@ export default function WireTransferPage() {
                     opacity: (processing || verificationCode.length !== 6) ? 0.5 : 1,
                     cursor: (processing || verificationCode.length !== 6) ? 'not-allowed' : 'pointer'
                   }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
+                  onClick={() => {
                     if (!processing && verificationCode.length === 6) {
                       completeWireTransfer();
                     }
                   }}
                   disabled={processing || verificationCode.length !== 6}
+                  type="button"
                 >
-                  {processing ? (
-                    <>
-                      <span>🔄</span>
-                      <span>Processing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>✓</span>
-                      <span>Verify & Submit</span>
-                    </>
-                  )}
+                  {processing ? '🔄 Processing...' : '✓ Verify & Submit'}
                 </button>
               </div>
             </div>
