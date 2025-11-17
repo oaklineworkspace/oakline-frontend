@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, type } = req.body;
+    const { email, type, code } = req.body;
 
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
@@ -35,7 +35,8 @@ export default async function handler(req, res) {
       }
     }
 
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    // Use code from request if provided, otherwise generate one
+    const verificationCode = code || Math.floor(100000 + Math.random() * 900000).toString();
     const verificationToken = `verify_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
@@ -182,6 +183,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       message: 'Verification code sent successfully',
+      code: verificationCode,
       expiresIn: 900
     });
 

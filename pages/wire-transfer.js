@@ -249,6 +249,12 @@ export default function WireTransferPage() {
         throw new Error(data.error || 'Failed to send verification code');
       }
 
+      // Use the code returned from API as confirmation
+      if (data.code) {
+        setSentCode(data.code);
+        console.log('Code confirmed by API:', data.code);
+      }
+
       setCodeSent(true);
       setStep(3);
       setMessage('Verification code sent to ' + user.email);
