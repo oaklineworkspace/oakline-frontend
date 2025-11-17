@@ -1,11 +1,10 @@
--- SQL to create wire_transfers table in Supabase
--- Run this in your Supabase SQL Editor
 
-CREATE TABLE IF NOT EXISTS public.wire_transfers (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  from_account_id uuid NOT NULL,
-  transfer_type text NOT NULL CHECK (transfer_type = ANY (ARRAY['domestic'::text, 'international'::text])),
+-- Create wire_transfers table for external bank transfers
+CREATE TABLE IF NOT EXISTS wire_transfers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id),
+  from_account_id uuid NOT NULL REFERENCES accounts(id),
+  transfer_type text NOT NULL CHECK (transfer_type IN ('domestic', 'international')),
   recipient_name text NOT NULL,
   recipient_account text NOT NULL,
   recipient_bank text NOT NULL,
@@ -18,37 +17,40 @@ CREATE TABLE IF NOT EXISTS public.wire_transfers (
   urgent_transfer boolean DEFAULT false,
   reference text,
   description text,
-  status text DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'processing'::text, 'completed'::text, 'failed'::text, 'cancelled'::text])),
+  status text DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'cancelled')),
   verification_code text,
-  verified_at timestamp with time zone,
-  processed_at timestamp with time zone,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT wire_transfers_pkey PRIMARY KEY (id),
-  CONSTRAINT wire_transfers_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE,
-  CONSTRAINT wire_transfers_from_account_id_fkey FOREIGN KEY (from_account_id) REFERENCES public.accounts(id) ON DELETE CASCADE
+  verified_at timestamptz,
+  processed_at timestamptz,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
 );
 
--- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_wire_transfers_user_id ON public.wire_transfers(user_id);
-CREATE INDEX IF NOT EXISTS idx_wire_transfers_status ON public.wire_transfers(status);
-CREATE INDEX IF NOT EXISTS idx_wire_transfers_created_at ON public.wire_transfers(created_at DESC);
+-- Create indexes for better query performance
+CREATE INDEX IF NOT EXISTS idx_wire_transfers_user_id ON wire_transfers(user_id);
+CREATE INDEX IF NOT EXISTS idx_wire_transfers_from_account_id ON wire_transfers(from_account_id);
+CREATE INDEX IF NOT EXISTS idx_wire_transfers_status ON wire_transfers(status);
+CREATE INDEX IF NOT EXISTS idx_wire_transfers_created_at ON wire_transfers(created_at DESC);
 
--- Enable Row Level Security (RLS)
-ALTER TABLE public.wire_transfers ENABLE ROW LEVEL SECURITY;
+-- Enable Row Level Security
+ALTER TABLE wire_transfers ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policies
-CREATE POLICY "Users can view their own wire transfers"
-  ON public.wire_transfers
+-- Policy: Users can view their own wire transfers
+CREATE POLICY "Users can view own wire transfers"
+  ON wire_transfers
   FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can create their own wire transfers"
-  ON public.wire_transfers
+-- Policy: Users can create their own wire transfers
+CREATE POLICY "Users can create own wire transfers"
+  ON wire_transfers
   FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own pending wire transfers"
-  ON public.wire_transfers
+-- Policy: Users can update their pending wire transfers
+CREATE POLICY "Users can update pending wire transfers"
+  ON wire_transfers
   FOR UPDATE
   USING (auth.uid() = user_id AND status = 'pending');
+
+-- Add comment to table
+COMMENT ON TABLE wire_transfers IS 'Stores wire transfer requests to external banks for admin review and processing';

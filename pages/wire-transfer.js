@@ -5,122 +5,47 @@ import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
 import Head from 'next/head';
 
-const useMediaQuery = (query) => {
-  const [matches, setMatches] = useState(false);
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    if (media.matches !== matches) setMatches(media.matches);
-    const listener = () => setMatches(media.matches);
-    media.addEventListener('change', listener);
-    return () => media.removeEventListener('change', listener);
-  }, [matches, query]);
-  return matches;
-};
-
-export default function WireTransferPage() {
+export default function WireTransfer() {
   const router = useRouter();
-  const isMobile = useMediaQuery('(max-width: 768px)');
-  
   const [user, setUser] = useState(null);
   const [accounts, setAccounts] = useState([]);
-  const [wireTransfers, setWireTransfers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [step, setStep] = useState(1);
   const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState('');
+  const [step, setStep] = useState(1);
+  const [isMobile, setIsMobile] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [sentCode, setSentCode] = useState('');
-  const [sendingCode, setSendingCode] = useState(false);
-  const [codeSent, setCodeSent] = useState(false);
 
   const [wireForm, setWireForm] = useState({
-    from_account: '',
+    from_account_id: '',
     transfer_type: 'domestic',
-    beneficiary_name: '',
-    beneficiary_email: '',
-    beneficiary_phone: '',
-    beneficiary_bank: '',
-    beneficiary_bank_address: '',
-    beneficiary_bank_city: '',
-    beneficiary_bank_state: '',
-    beneficiary_bank_zip: '',
-    beneficiary_address: '',
-    beneficiary_city: '',
-    beneficiary_state: '',
-    beneficiary_zip: '',
-    beneficiary_country: 'United States',
-    routing_number: '',
-    account_number: '',
+    recipient_name: '',
+    recipient_account: '',
+    recipient_bank: '',
+    recipient_bank_address: '',
     swift_code: '',
-    iban: '',
-    intermediary_bank_name: '',
-    intermediary_bank_swift: '',
-    intermediary_bank_account: '',
+    routing_number: '',
     amount: '',
-    transfer_fee: '',
-    exchange_rate: '',
-    total_deduction: '',
-    purpose: '',
-    reference_note: '',
-    urgent_transfer: false
+    description: '',
+    urgent_transfer: false,
+    fee: 25.00,
+    urgent_fee: 10.00,
+    total_amount: 0
   });
 
-  const US_STATES = [
-    'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware',
-    'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas',
-    'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi',
-    'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York',
-    'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina',
-    'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia',
-    'Wisconsin', 'Wyoming'
-  ];
-
-  const TRANSFER_PURPOSES = [
-    'Family Support',
-    'Business Payment',
-    'Real Estate Purchase',
-    'Investment',
-    'Education',
-    'Medical Expenses',
-    'Loan Repayment',
-    'Personal Savings',
-    'Charity/Donation',
-    'Other'
-  ];
-
   useEffect(() => {
-    checkUserAndLoadData();
+    checkUser();
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  useEffect(() => {
-    calculateFees();
-  }, [wireForm.amount, wireForm.transfer_type, wireForm.urgent_transfer]);
-
-  const calculateFees = () => {
-    if (!wireForm.amount || isNaN(parseFloat(wireForm.amount))) {
-      setWireForm(prev => ({
-        ...prev,
-        transfer_fee: '',
-        total_deduction: ''
-      }));
-      return;
-    }
-
-    const amount = parseFloat(wireForm.amount);
-    let baseFee = wireForm.transfer_type === 'domestic' ? 15 : 25;
-    const urgentFee = wireForm.urgent_transfer ? 10 : 0;
-    const totalFee = baseFee + urgentFee;
-    const totalDeduction = amount + totalFee;
-
-    setWireForm(prev => ({
-      ...prev,
-      transfer_fee: totalFee.toFixed(2),
-      total_deduction: totalDeduction.toFixed(2)
-    }));
+  const checkMobile = () => {
+    setIsMobile(window.matchMedia('(max-width: 768px)').matches);
   };
 
-  const checkUserAndLoadData = async () => {
+  const checkUser = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
@@ -129,314 +54,48 @@ export default function WireTransferPage() {
       }
       setUser(session.user);
 
-      const { data: userAccounts } = await supabase
+      const { data: userAccounts, error } = await supabase
         .from('accounts')
         .select('*')
         .eq('user_id', session.user.id)
-        .eq('status', 'active');
-      setAccounts(userAccounts || []);
-      if (userAccounts?.length > 0) {
-        setWireForm(prev => ({ ...prev, from_account: userAccounts[0].id }));
+        .eq('status', 'active')
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (userAccounts && userAccounts.length > 0) {
+        setAccounts(userAccounts);
+        setWireForm(prev => ({ ...prev, from_account_id: userAccounts[0].id }));
       }
-
-      const { data: wires } = await supabase
-        .from('wire_transfers')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false });
-      setWireTransfers(wires || []);
-
     } catch (error) {
-      console.error('Error loading data:', error);
-      setMessage('Error loading data. Please refresh.');
-      setMessageType('error');
+      console.error('Error:', error);
+      setMessage('Error loading accounts. Please refresh.');
     } finally {
       setLoading(false);
     }
   };
 
+  const calculateTotal = () => {
+    const amount = parseFloat(wireForm.amount) || 0;
+    const baseFee = wireForm.transfer_type === 'international' ? 45 : 25;
+    const urgentFee = wireForm.urgent_transfer ? 10 : 0;
+    const totalFee = baseFee + urgentFee;
+    const total = amount + totalFee;
+
+    setWireForm(prev => ({
+      ...prev,
+      fee: baseFee,
+      urgent_fee: urgentFee,
+      total_amount: total
+    }));
+  };
+
+  useEffect(() => {
+    calculateTotal();
+  }, [wireForm.amount, wireForm.transfer_type, wireForm.urgent_transfer]);
+
   const handleInputChange = (field, value) => {
     setWireForm(prev => ({ ...prev, [field]: value }));
-    
-    if (field === 'transfer_type') {
-      if (value === 'domestic') {
-        setWireForm(prev => ({ 
-          ...prev, 
-          swift_code: '', 
-          iban: '',
-          intermediary_bank_name: '',
-          intermediary_bank_swift: '',
-          intermediary_bank_account: '',
-          beneficiary_country: 'United States' 
-        }));
-      }
-    }
-  };
-
-  const validateForm = () => {
-    const requiredFields = [
-      'from_account', 'beneficiary_name', 'beneficiary_bank',
-      'beneficiary_address', 'beneficiary_city', 'routing_number',
-      'account_number', 'amount', 'purpose'
-    ];
-
-    if (wireForm.transfer_type === 'domestic') {
-      requiredFields.push('beneficiary_state', 'beneficiary_zip');
-    } else {
-      requiredFields.push('beneficiary_country', 'swift_code');
-    }
-
-    for (const field of requiredFields) {
-      if (!wireForm[field]) {
-        return false;
-      }
-    }
-
-    const amount = parseFloat(wireForm.amount);
-    if (isNaN(amount) || amount <= 0) {
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleNext = () => {
-    if (!validateForm()) {
-      setMessage('Please fill in all required fields');
-      setMessageType('error');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    const selectedAccount = accounts.find(acc => acc.id === wireForm.from_account);
-    const totalAmount = parseFloat(wireForm.total_deduction);
-
-    if (totalAmount > parseFloat(selectedAccount.balance)) {
-      setMessage('Insufficient funds in selected account (including fees)');
-      setMessageType('error');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    setMessage('');
-    setStep(2);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const sendVerificationCode = async () => {
-    setSendingCode(true);
-    setCodeSent(false);
-    setMessage('');
-    
-    try {
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      setSentCode(code);
-
-      const response = await fetch('/api/send-verification-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: user.email,
-          code: code,
-          type: 'wire_transfer',
-          userId: user.id
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send verification code');
-      }
-
-      // Use the code returned from API as confirmation
-      if (data.code) {
-        setSentCode(data.code);
-        console.log('Code confirmed by API:', data.code);
-      }
-
-      setCodeSent(true);
-      setStep(3);
-      setMessage('Verification code sent to ' + user.email);
-      setMessageType('success');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (error) {
-      console.error('Error sending verification code:', error);
-      setMessage(`${error.message || 'Failed to send verification code. Please try again.'}`);
-      setMessageType('error');
-      setSentCode('');
-      setCodeSent(false);
-    } finally {
-      setSendingCode(false);
-    }
-  };
-
-  const handleVerifyCode = () => {
-    if (processing) {
-      console.log('Already processing, ignoring click');
-      return;
-    }
-
-    console.log('Verify button clicked');
-    console.log('Code sent:', sentCode);
-    console.log('Code entered:', verificationCode);
-    console.log('Codes match:', verificationCode === sentCode);
-    
-    if (!codeSent) {
-      setMessage('Please request a verification code first.');
-      setMessageType('error');
-      return;
-    }
-
-    if (!verificationCode || verificationCode.length !== 6) {
-      setMessage('Please enter a valid 6-digit verification code.');
-      setMessageType('error');
-      return;
-    }
-
-    if (verificationCode !== sentCode) {
-      setMessage(`Invalid verification code. Please check and try again. (Expected: ${sentCode.substring(0, 2)}****, Got: ${verificationCode.substring(0, 2)}****)`);
-      setMessageType('error');
-      return;
-    }
-
-    setMessage('✅ Code verified successfully! Processing transfer...');
-    setMessageType('success');
-    setProcessing(true);
-    
-    setTimeout(() => {
-      completeWireTransfer();
-    }, 500);
-  };
-
-  const completeWireTransfer = async () => {
-    setProcessing(true);
-    setMessage('Processing your wire transfer...');
-    setMessageType('info');
-    
-    try {
-      const selectedAccount = accounts.find(acc => acc.id === wireForm.from_account);
-      const amount = parseFloat(wireForm.amount);
-      const totalAmount = parseFloat(wireForm.total_deduction);
-
-      if (totalAmount > parseFloat(selectedAccount.balance)) {
-        setMessage('Insufficient funds');
-        setMessageType('error');
-        setProcessing(false);
-        return;
-      }
-
-      const { data: wireTransfer, error: wireError } = await supabase
-        .from('wire_transfers')
-        .insert([{
-          user_id: user.id,
-          from_account_id: wireForm.from_account,
-          beneficiary_name: wireForm.beneficiary_name,
-          beneficiary_email: wireForm.beneficiary_email || null,
-          beneficiary_phone: wireForm.beneficiary_phone || null,
-          beneficiary_bank: wireForm.beneficiary_bank,
-          beneficiary_bank_address: wireForm.beneficiary_bank_address || null,
-          beneficiary_bank_city: wireForm.beneficiary_bank_city || null,
-          beneficiary_bank_state: wireForm.beneficiary_bank_state || null,
-          beneficiary_bank_zip: wireForm.beneficiary_bank_zip || null,
-          beneficiary_address: `${wireForm.beneficiary_address}, ${wireForm.beneficiary_city}, ${wireForm.beneficiary_state || wireForm.beneficiary_country} ${wireForm.beneficiary_zip || ''}`.trim(),
-          routing_number: wireForm.routing_number,
-          account_number: wireForm.account_number,
-          swift_code: wireForm.swift_code || null,
-          iban: wireForm.iban || null,
-          intermediary_bank_name: wireForm.intermediary_bank_name || null,
-          intermediary_bank_swift: wireForm.intermediary_bank_swift || null,
-          intermediary_bank_account: wireForm.intermediary_bank_account || null,
-          amount: amount,
-          transfer_fee: parseFloat(wireForm.transfer_fee),
-          purpose: wireForm.purpose,
-          reference_note: wireForm.reference_note || null,
-          urgent_transfer: wireForm.urgent_transfer,
-          status: 'pending',
-          reference_number: `WIRE${Date.now()}${Math.floor(Math.random() * 10000)}`
-        }])
-        .select()
-        .single();
-
-      if (wireError) throw wireError;
-
-      const balanceBefore = parseFloat(selectedAccount.balance);
-      const newBalance = balanceBefore - totalAmount;
-      await supabase
-        .from('accounts')
-        .update({ balance: newBalance, updated_at: new Date().toISOString() })
-        .eq('id', wireForm.from_account);
-
-      await supabase.from('transactions').insert([{
-        user_id: user.id,
-        account_id: wireForm.from_account,
-        type: 'debit',
-        amount: totalAmount,
-        description: `Wire transfer to ${wireForm.beneficiary_name} - ${wireForm.beneficiary_bank} (including $${wireForm.transfer_fee} fee)`,
-        status: 'completed',
-        reference: wireTransfer.reference_number,
-        balance_before: balanceBefore,
-        balance_after: newBalance
-      }]);
-
-      await supabase.from('notifications').insert([{
-        user_id: user.id,
-        type: 'wire_transfer',
-        title: 'Wire Transfer Submitted',
-        message: `Wire transfer of ${formatCurrency(amount)} to ${wireForm.beneficiary_name} is pending admin review`
-      }]);
-
-      setMessage('Wire transfer submitted successfully and is pending admin review!');
-      setMessageType('success');
-      
-      setTimeout(() => {
-        setStep(1);
-        setWireForm({
-          from_account: wireForm.from_account,
-          transfer_type: 'domestic',
-          beneficiary_name: '',
-          beneficiary_email: '',
-          beneficiary_phone: '',
-          beneficiary_bank: '',
-          beneficiary_bank_address: '',
-          beneficiary_bank_city: '',
-          beneficiary_bank_state: '',
-          beneficiary_bank_zip: '',
-          beneficiary_address: '',
-          beneficiary_city: '',
-          beneficiary_state: '',
-          beneficiary_zip: '',
-          beneficiary_country: 'United States',
-          routing_number: '',
-          account_number: '',
-          swift_code: '',
-          iban: '',
-          intermediary_bank_name: '',
-          intermediary_bank_swift: '',
-          intermediary_bank_account: '',
-          amount: '',
-          transfer_fee: '',
-          exchange_rate: '',
-          total_deduction: '',
-          purpose: '',
-          reference_note: '',
-          urgent_transfer: false
-        });
-        setVerificationCode('');
-        setSentCode('');
-        setCodeSent(false);
-        checkUserAndLoadData();
-      }, 2000);
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    } catch (error) {
-      console.error('Wire transfer error:', error);
-      setMessage(`${error.message}`);
-      setMessageType('error');
-    } finally {
-      setProcessing(false);
-    }
   };
 
   const formatCurrency = (amount) => {
@@ -446,28 +105,169 @@ export default function WireTransferPage() {
     }).format(amount || 0);
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      pending: '#f59e0b',
-      processing: '#3b82f6',
-      completed: '#10b981',
-      failed: '#ef4444',
-      cancelled: '#6b7280'
-    };
-    return colors[status] || '#6b7280';
+  const handleNext = async () => {
+    setMessage('');
+
+    // Validation
+    if (!wireForm.from_account_id) {
+      setMessage('Please select a source account');
+      return;
+    }
+
+    if (!wireForm.recipient_name || !wireForm.recipient_account || !wireForm.recipient_bank) {
+      setMessage('Please fill in all recipient details');
+      return;
+    }
+
+    if (wireForm.transfer_type === 'international' && !wireForm.swift_code) {
+      setMessage('SWIFT code is required for international transfers');
+      return;
+    }
+
+    if (wireForm.transfer_type === 'domestic' && !wireForm.routing_number) {
+      setMessage('Routing number is required for domestic transfers');
+      return;
+    }
+
+    const amount = parseFloat(wireForm.amount);
+    if (!amount || amount <= 0) {
+      setMessage('Please enter a valid amount');
+      return;
+    }
+
+    const account = accounts.find(a => a.id === wireForm.from_account_id);
+    if (parseFloat(account.balance) < wireForm.total_amount) {
+      setMessage('Insufficient funds (including fees)');
+      return;
+    }
+
+    setStep(2);
+  };
+
+  const sendVerificationCode = async () => {
+    try {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      setSentCode(code);
+      console.log('Code sent:', code);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      await fetch('/api/send-verification-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          email: user.email,
+          code: code,
+          type: 'wire_transfer'
+        })
+      });
+
+      setMessage('Verification code sent to your email');
+    } catch (error) {
+      console.error('Error sending code:', error);
+      setMessage('Failed to send verification code');
+    }
+  };
+
+  const handleVerifyAndSubmit = async () => {
+    console.log('Verify button clicked');
+    console.log('Code sent:', sentCode);
+    console.log('Code entered:', verificationCode);
+
+    if (verificationCode !== sentCode) {
+      setMessage('Invalid verification code');
+      return;
+    }
+
+    setProcessing(true);
+    setMessage('');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const transferData = {
+        user_id: user.id,
+        from_account_id: wireForm.from_account_id,
+        transfer_type: wireForm.transfer_type,
+        recipient_name: wireForm.recipient_name,
+        recipient_account: wireForm.recipient_account,
+        recipient_bank: wireForm.recipient_bank,
+        recipient_bank_address: wireForm.recipient_bank_address || null,
+        swift_code: wireForm.swift_code || null,
+        routing_number: wireForm.routing_number || null,
+        amount: parseFloat(wireForm.amount),
+        fee: wireForm.fee + (wireForm.urgent_transfer ? wireForm.urgent_fee : 0),
+        total_amount: wireForm.total_amount,
+        urgent_transfer: wireForm.urgent_transfer,
+        description: wireForm.description || null,
+        status: 'pending',
+        reference: `WIRE-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+        verification_code: verificationCode,
+        verified_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('wire_transfers')
+        .insert([transferData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Deduct total amount from account
+      const account = accounts.find(a => a.id === wireForm.from_account_id);
+      const newBalance = parseFloat(account.balance) - wireForm.total_amount;
+
+      const { error: balanceError } = await supabase
+        .from('accounts')
+        .update({ balance: newBalance })
+        .eq('id', wireForm.from_account_id);
+
+      if (balanceError) throw balanceError;
+
+      // Create transaction record
+      await supabase.from('transactions').insert([{
+        user_id: user.id,
+        account_id: wireForm.from_account_id,
+        type: 'wire_transfer',
+        amount: wireForm.total_amount,
+        description: `Wire transfer to ${wireForm.recipient_name} at ${wireForm.recipient_bank} - ${wireForm.transfer_type}`,
+        status: 'pending',
+        reference: transferData.reference
+      }]);
+
+      setMessage('Wire transfer submitted successfully! It will be reviewed by our team.');
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 3000);
+
+    } catch (error) {
+      console.error('Wire transfer error:', error);
+      setMessage(error.message || 'Transfer failed. Please try again.');
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const styles = {
     container: {
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #1a365d 0%, #059669 100%)',
-      paddingTop: isMobile ? '1rem' : '2rem',
-      paddingBottom: '4rem'
+      backgroundColor: '#0a1f44',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     },
     header: {
+      backgroundColor: '#1a365d',
+      color: 'white',
+      padding: isMobile ? '1rem' : '1.5rem 2rem',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      borderBottom: '3px solid #059669'
+    },
+    headerContent: {
       maxWidth: '1400px',
       margin: '0 auto',
-      padding: isMobile ? '1rem' : '1.5rem 2rem',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -475,242 +275,110 @@ export default function WireTransferPage() {
       gap: '1rem'
     },
     logo: {
-      fontSize: isMobile ? '1.25rem' : '1.5rem',
-      fontWeight: 'bold',
+      height: isMobile ? '35px' : '45px',
+      width: 'auto'
+    },
+    logoText: {
+      fontSize: isMobile ? '1.2rem' : '1.6rem',
+      fontWeight: '700',
       color: 'white',
       textDecoration: 'none'
     },
     backButton: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '0.5rem',
       padding: isMobile ? '0.5rem 1rem' : '0.6rem 1.2rem',
       backgroundColor: 'rgba(255,255,255,0.2)',
       color: 'white',
       textDecoration: 'none',
       borderRadius: '8px',
       fontSize: isMobile ? '0.85rem' : '0.95rem',
-      border: '1px solid rgba(255,255,255,0.3)',
-      transition: 'all 0.3s ease',
-      cursor: 'pointer'
+      border: '1px solid rgba(255,255,255,0.3)'
     },
     main: {
-      maxWidth: '1400px',
+      maxWidth: '900px',
       margin: '0 auto',
-      padding: isMobile ? '1rem 0.75rem' : '2rem'
-    },
-    pageTitle: {
-      fontSize: isMobile ? '1.5rem' : '2rem',
-      fontWeight: '700',
-      color: '#ffffff',
-      marginBottom: '2rem',
-      textAlign: 'center'
-    },
-    message: {
-      padding: '1rem',
-      borderRadius: '12px',
-      marginBottom: '1rem',
-      border: '2px solid'
-    },
-    progressSteps: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: '2rem',
-      padding: '0 1rem'
-    },
-    progressStep: {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: '0.5rem',
-      opacity: 0.5,
-      transition: 'all 0.4s ease'
-    },
-    progressStepActive: {
-      opacity: 1
-    },
-    progressStepCircle: {
-      width: isMobile ? '40px' : '50px',
-      height: isMobile ? '40px' : '50px',
-      borderRadius: '50%',
-      backgroundColor: 'rgba(255,255,255,0.3)',
-      color: 'white',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: isMobile ? '1rem' : '1.2rem',
-      fontWeight: 'bold',
-      border: '2px solid rgba(255,255,255,0.5)'
-    },
-    progressStepLabel: {
-      fontSize: isMobile ? '0.75rem' : '0.875rem',
-      fontWeight: '600',
-      color: 'white'
-    },
-    progressLine: {
-      flex: 1,
-      height: '2px',
-      backgroundColor: 'rgba(255,255,255,0.3)',
-      margin: '0 0.5rem',
-      maxWidth: '80px'
+      padding: isMobile ? '1rem' : '2rem'
     },
     card: {
-      backgroundColor: 'rgba(255, 255, 255, 0.98)',
+      backgroundColor: 'white',
       borderRadius: '16px',
       padding: isMobile ? '1.5rem' : '2rem',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-      border: '1px solid #059669',
-      marginBottom: '2rem'
+      marginBottom: '1.5rem',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
     },
     cardTitle: {
-      fontSize: isMobile ? '1.1rem' : '1.25rem',
+      fontSize: isMobile ? '1.25rem' : '1.5rem',
       fontWeight: '700',
       color: '#1a365d',
       marginBottom: '1.5rem',
-      paddingBottom: '1rem',
-      borderBottom: '2px solid #059669'
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem'
+    },
+    progressSteps: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      marginBottom: '2rem',
+      position: 'relative'
+    },
+    step: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      flex: 1,
+      position: 'relative'
+    },
+    stepCircle: {
+      width: '50px',
+      height: '50px',
+      borderRadius: '50%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '1.25rem',
+      fontWeight: '700',
+      marginBottom: '0.5rem',
+      zIndex: 2
+    },
+    stepLabel: {
+      fontSize: '0.85rem',
+      fontWeight: '600',
+      textAlign: 'center'
     },
     formGroup: {
-      marginBottom: '1.25rem'
+      marginBottom: '1.5rem'
     },
     label: {
       display: 'block',
-      fontSize: '0.875rem',
+      fontSize: '0.9rem',
       fontWeight: '600',
       color: '#374151',
       marginBottom: '0.5rem'
     },
-    required: {
-      color: '#ef4444',
-      marginLeft: '0.25rem'
-    },
     input: {
       width: '100%',
-      padding: '0.875rem',
+      padding: '0.75rem',
       border: '2px solid #e2e8f0',
-      borderRadius: '12px',
-      fontSize: '0.875rem',
-      transition: 'all 0.3s',
-      boxSizing: 'border-box',
-      fontFamily: 'inherit'
+      borderRadius: '8px',
+      fontSize: '1rem',
+      boxSizing: 'border-box'
     },
     select: {
       width: '100%',
-      padding: '0.875rem',
+      padding: '0.75rem',
       border: '2px solid #e2e8f0',
-      borderRadius: '12px',
-      fontSize: '0.875rem',
+      borderRadius: '8px',
+      fontSize: '1rem',
       backgroundColor: 'white',
-      transition: 'all 0.3s',
-      boxSizing: 'border-box',
-      fontFamily: 'inherit'
+      boxSizing: 'border-box'
     },
-    formRow: {
-      display: 'grid',
-      gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-      gap: '1rem',
-      marginBottom: '1.25rem'
-    },
-    balanceInfo: {
-      backgroundColor: '#f0fdf4',
-      padding: '1.25rem',
-      borderRadius: '12px',
-      marginTop: '1rem',
-      border: '2px solid #86efac'
-    },
-    balanceLabel: {
-      fontSize: '0.75rem',
-      color: '#065f46',
-      marginBottom: '0.5rem',
-      fontWeight: '600'
-    },
-    balanceValue: {
-      fontSize: '1.5rem',
-      fontWeight: '700',
-      color: '#059669'
-    },
-    feeBreakdown: {
-      backgroundColor: '#f8fafc',
-      padding: '1.25rem',
-      borderRadius: '12px',
-      marginTop: '1rem',
-      border: '2px solid #e2e8f0'
-    },
-    feeRow: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '0.75rem',
-      fontSize: '0.875rem'
-    },
-    feeLabel: {
-      color: '#64748b',
-      fontWeight: '500'
-    },
-    feeValue: {
-      color: '#1e293b',
-      fontWeight: '600'
-    },
-    checkboxLabel: {
+    checkbox: {
       display: 'flex',
       alignItems: 'center',
       gap: '0.5rem',
-      cursor: 'pointer',
-      color: '#1e293b',
-      fontWeight: '500'
-    },
-    checkbox: {
-      width: '18px',
-      height: '18px',
-      cursor: 'pointer'
-    },
-    urgentTransferBox: {
-      backgroundColor: '#fef3c7',
-      border: '2px solid #fbbf24',
-      borderRadius: '8px',
-      padding: '0.875rem',
-      marginTop: '0.5rem',
-      marginBottom: '0.5rem',
-      transition: 'all 0.3s ease'
-    },
-    urgentCheckboxLabel: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.75rem',
-      cursor: 'pointer',
-      width: '100%'
-    },
-    urgentCheckbox: {
-      width: '22px',
-      height: '22px',
-      cursor: 'pointer',
-      accentColor: '#1e40af',
-      flexShrink: 0,
-      appearance: 'auto',
-      WebkitAppearance: 'checkbox'
-    },
-    urgentLabelContent: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0.15rem',
-      flex: 1
-    },
-    urgentLabelText: {
-      fontSize: '0.875rem',
-      fontWeight: '700',
-      color: '#92400e',
-      display: 'block'
-    },
-    urgentLabelFee: {
-      fontSize: '0.8rem',
-      fontWeight: '600',
-      color: '#b45309',
-      display: 'block'
-    },
-    urgentLabelDesc: {
-      fontSize: '0.75rem',
-      color: '#78350f',
-      fontStyle: 'italic',
-      display: 'block',
-      marginTop: '0.1rem'
+      marginTop: '1rem'
     },
     submitButton: {
       width: '100%',
@@ -719,322 +387,78 @@ export default function WireTransferPage() {
       color: 'white',
       border: 'none',
       borderRadius: '12px',
-      fontSize: isMobile ? '0.875rem' : '0.95rem',
-      fontWeight: '700',
-      cursor: 'pointer',
-      transition: 'all 0.3s',
-      boxShadow: '0 6px 20px rgba(30, 64, 175, 0.4)',
-      marginTop: '1rem'
-    },
-    buttonRow: {
-      display: 'flex',
-      gap: '1rem',
-      marginTop: '1.5rem'
-    },
-    secondaryButton: {
-      flex: 1,
-      padding: '1rem',
-      fontSize: '1rem',
-      fontWeight: '600',
-      color: '#64748b',
-      backgroundColor: 'white',
-      border: '2px solid #e5e7eb',
-      borderRadius: '12px',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease'
-    },
-    reviewSection: {
-      backgroundColor: '#f8fafc',
-      padding: '1.5rem',
-      borderRadius: '12px',
-      marginBottom: '1rem',
-      border: '1px solid #e2e8f0'
-    },
-    reviewSectionTitle: {
       fontSize: '1rem',
       fontWeight: '700',
-      color: '#1a365d',
-      marginBottom: '1rem',
-      paddingBottom: '0.75rem',
-      borderBottom: '2px solid #059669'
+      cursor: 'pointer',
+      transition: 'all 0.3s'
     },
     reviewRow: {
       display: 'flex',
       justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      marginBottom: '0.75rem',
-      gap: '1rem',
-      fontSize: '0.875rem'
+      padding: '0.75rem 0',
+      borderBottom: '1px solid #e5e7eb'
     },
     reviewLabel: {
-      color: '#64748b',
-      fontWeight: '500',
-      minWidth: '120px'
+      color: '#6b7280',
+      fontSize: '0.95rem'
     },
     reviewValue: {
-      color: '#1e293b',
       fontWeight: '600',
-      textAlign: 'right',
-      wordBreak: 'break-word'
+      color: '#1f2937',
+      fontSize: '0.95rem'
     },
-    historyItem: {
-      backgroundColor: '#f8fafc',
-      padding: '1rem',
-      borderRadius: '12px',
-      marginBottom: '1rem',
-      border: '1px solid #e2e8f0'
-    },
-    historyHeader: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'start',
-      marginBottom: '0.5rem',
-      flexWrap: 'wrap',
-      gap: '0.5rem'
-    },
-    historyName: {
-      fontSize: '1rem',
-      fontWeight: '600',
-      color: '#1e293b'
-    },
-    historyBank: {
-      fontSize: '0.875rem',
-      color: '#64748b',
-      marginTop: '0.25rem'
-    },
-    historyRef: {
-      fontSize: '0.75rem',
-      color: '#9ca3af',
-      fontFamily: 'monospace',
-      marginTop: '0.25rem'
-    },
-    historyAmount: {
-      fontSize: '1.1rem',
-      fontWeight: '700',
-      color: '#059669'
-    },
-    historyStatus: {
-      display: 'inline-block',
-      padding: '0.25rem 0.75rem',
-      borderRadius: '20px',
-      fontSize: '0.75rem',
-      fontWeight: '600',
-      marginTop: '0.5rem',
-      color: 'white'
-    },
-    historyDate: {
-      fontSize: '0.8rem',
-      color: '#9ca3af',
-      marginTop: '0.5rem'
-    },
-    modalOverlay: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(10, 31, 68, 0.95)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '1rem',
-      backdropFilter: 'blur(8px)',
-      overflowY: 'auto'
-    },
-    modal: {
-      backgroundColor: 'white',
-      borderRadius: '20px',
-      maxWidth: '500px',
-      width: '100%',
-      maxHeight: '90vh',
-      display: 'flex',
-      flexDirection: 'column',
-      boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-      border: '2px solid #059669',
-      overflow: 'auto',
-      margin: 'auto'
-    },
-    modalHeader: {
-      padding: '1.5rem 2rem',
-      borderBottom: '2px solid #e2e8f0',
-      backgroundColor: '#f8fafc',
-      flexShrink: 0
-    },
-    modalTitle: {
-      fontSize: '1.5rem',
-      fontWeight: '700',
-      color: '#1a365d',
-      marginBottom: '0.5rem',
-      textAlign: 'center',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '0.5rem'
-    },
-    modalSubtitle: {
-      fontSize: '0.95rem',
-      color: '#64748b',
-      textAlign: 'center',
-      lineHeight: '1.5'
-    },
-    modalBody: {
-      padding: '2rem',
-      overflowY: 'auto',
-      flex: 1
-    },
-    modalFooter: {
-      padding: '1.5rem 2rem',
-      borderTop: '2px solid #e2e8f0',
-      backgroundColor: '#f8fafc',
-      flexShrink: 0
-    },
-    verificationInputWrapper: {
-      marginBottom: '1.5rem'
-    },
-    verificationLabel: {
-      display: 'block',
-      fontSize: '0.875rem',
-      fontWeight: '700',
-      color: '#1e293b',
-      marginBottom: '0.75rem',
-      textAlign: 'center'
-    },
-    verificationInput: {
-      width: '100%',
-      padding: '1rem',
-      fontSize: '1.75rem',
-      fontWeight: '700',
-      letterSpacing: '0.75rem',
-      textAlign: 'center',
-      border: '3px solid #e5e7eb',
-      borderRadius: '12px',
-      fontFamily: 'monospace',
-      boxSizing: 'border-box',
-      transition: 'all 0.3s ease'
-    },
-    verificationInputFocused: {
-      borderColor: '#10b981',
-      outline: 'none',
-      boxShadow: '0 0 0 3px rgba(16, 185, 129, 0.1)'
-    },
-    timerSection: {
-      textAlign: 'center',
-      padding: '1rem',
-      backgroundColor: '#fef3c7',
-      borderRadius: '10px',
-      marginBottom: '1rem',
-      border: '1px solid #fbbf24'
-    },
-    timerText: {
-      fontSize: '0.875rem',
-      color: '#92400e',
-      fontWeight: '600',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '0.5rem'
-    },
-    resendSection: {
-      textAlign: 'center',
-      padding: '1rem',
-      backgroundColor: '#f9fafb',
-      borderRadius: '10px',
-      marginBottom: '1rem'
-    },
-    resendText: {
-      fontSize: '0.875rem',
-      color: '#64748b',
-      marginBottom: '0.75rem'
-    },
-    resendButton: {
-      background: 'none',
-      border: 'none',
-      color: '#3b82f6',
-      fontSize: '0.9rem',
-      fontWeight: '700',
-      cursor: 'pointer',
-      textDecoration: 'underline',
-      padding: '0.5rem 1rem',
-      transition: 'color 0.3s ease'
-    },
-    modalButtons: {
-      display: 'grid',
-      gridTemplateColumns: '1fr 2fr',
-      gap: '1rem'
-    },
-    cancelButton: {
-      padding: '0.875rem',
-      fontSize: '1rem',
-      fontWeight: '600',
-      color: '#64748b',
-      backgroundColor: 'white',
-      border: '2px solid #e5e7eb',
-      borderRadius: '10px',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease'
-    },
-    confirmButton: {
-      padding: '0.875rem',
-      fontSize: '1rem',
-      fontWeight: '700',
-      color: 'white',
-      backgroundColor: '#10b981',
-      border: 'none',
-      borderRadius: '10px',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '0.5rem'
-    },
-    loadingContainer: {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '100vh',
-      backgroundColor: '#f8fafc'
-    },
-    spinner: {
-      width: '40px',
-      height: '40px',
-      border: '4px solid #e2e8f0',
-      borderTop: '4px solid #1e40af',
-      borderRadius: '50%',
-      animation: 'spin 1s linear infinite'
-    },
-    emptyState: {
-      textAlign: 'center',
-      padding: '3rem 1rem',
-      color: '#64748b'
-    },
-    infoBox: {
-      backgroundColor: '#e0f2fe',
+    message: {
       padding: '1rem',
       borderRadius: '8px',
       marginBottom: '1rem',
-      border: '1px solid #7dd3fc'
+      fontSize: '0.95rem'
     },
-    infoText: {
-      fontSize: '0.8rem',
-      color: '#0c4a6e',
-      lineHeight: '1.5'
+    errorMessage: {
+      backgroundColor: '#fee2e2',
+      color: '#dc2626',
+      border: '1px solid #fca5a5'
+    },
+    successMessage: {
+      backgroundColor: '#d1fae5',
+      color: '#065f46',
+      border: '1px solid #6ee7b7'
+    },
+    infoBox: {
+      backgroundColor: '#eff6ff',
+      border: '1px solid #bfdbfe',
+      borderRadius: '8px',
+      padding: '1rem',
+      marginBottom: '1.5rem'
     }
   };
 
   if (loading) {
     return (
-      <div style={styles.loadingContainer}>
-        <style jsx>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-        <div style={styles.spinner}></div>
-        <p style={{ marginTop: '1rem', color: '#64748b' }}>Loading...</p>
+      <div style={styles.container}>
+        <div style={{ ...styles.main, textAlign: 'center', paddingTop: '3rem' }}>
+          <p style={{ color: 'white', fontSize: '1.2rem' }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (accounts.length === 0) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.header}>
+          <div style={styles.headerContent}>
+            <Link href="/" style={styles.logoText}>Oakline Bank</Link>
+            <Link href="/dashboard" style={styles.backButton}>← Dashboard</Link>
+          </div>
+        </div>
+        <div style={styles.main}>
+          <div style={styles.card}>
+            <h2 style={{ textAlign: 'center', color: '#1a365d' }}>No Active Accounts</h2>
+            <p style={{ textAlign: 'center', color: '#64748b' }}>
+              You need an active account to initiate wire transfers.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -1043,377 +467,177 @@ export default function WireTransferPage() {
     <>
       <Head>
         <title>Wire Transfer - Oakline Bank</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
 
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        input[type="checkbox"] {
-          appearance: auto;
-          -webkit-appearance: checkbox;
-          width: 22px;
-          height: 22px;
-          cursor: pointer;
-          accent-color: #1e40af;
-          border: 2px solid #1e40af;
-          border-radius: 4px;
-        }
-        
-        input[type="checkbox"]:checked {
-          background-color: #1e40af;
-          border-color: #1e40af;
-        }
-        
-        input[type="checkbox"]:hover {
-          border-color: #1e3a8a;
-        }
-      `}</style>
-
       <div style={styles.container}>
-        <header style={styles.header}>
-          <a href="/dashboard" style={styles.logo}>🏦 Oakline Bank</a>
-          <a href="/dashboard" style={styles.backButton}>← Back to Dashboard</a>
-        </header>
+        <div style={styles.header}>
+          <div style={styles.headerContent}>
+            <Link href="/" style={styles.logoText}>
+              💸 Wire Transfer
+            </Link>
+            <Link href="/dashboard" style={styles.backButton}>
+              ← Back to Dashboard
+            </Link>
+          </div>
+        </div>
 
         <main style={styles.main}>
-          <h1 style={styles.pageTitle}>💸 Wire Transfer</h1>
-
-          {message && (
-            <div style={{
-              ...styles.message,
-              backgroundColor: messageType === 'error' ? '#fee2e2' : messageType === 'info' ? '#dbeafe' : '#d1fae5',
-              color: messageType === 'error' ? '#dc2626' : messageType === 'info' ? '#1e40af' : '#059669',
-              borderColor: messageType === 'error' ? '#fca5a5' : messageType === 'info' ? '#93c5fd' : '#6ee7b7'
-            }}>
-              {message}
-            </div>
-          )}
-
-          <div style={styles.progressSteps}>
-            <div style={{ ...styles.progressStep, ...(step >= 1 ? styles.progressStepActive : {}) }}>
-              <div style={styles.progressStepCircle}>
-                {step > 1 ? '✓' : '1'}
-              </div>
-              <div style={styles.progressStepLabel}>Transfer Details</div>
-            </div>
-            <div style={styles.progressLine}></div>
-            <div style={{ ...styles.progressStep, ...(step >= 2 ? styles.progressStepActive : {}) }}>
-              <div style={styles.progressStepCircle}>
-                {step > 2 ? '✓' : '2'}
-              </div>
-              <div style={styles.progressStepLabel}>Review</div>
-            </div>
-            <div style={styles.progressLine}></div>
-            <div style={{ ...styles.progressStep, ...(step >= 3 ? styles.progressStepActive : {}) }}>
-              <div style={styles.progressStepCircle}>
-                {step > 3 ? '✓' : '3'}
-              </div>
-              <div style={styles.progressStepLabel}>Verify & Submit</div>
-            </div>
-          </div>
-
-          {step === 1 && (
-            <div style={styles.card}>
-              <h2 style={styles.cardTitle}>Transfer Information</h2>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>
-                  Transfer Type <span style={styles.required}>*</span>
-                </label>
-                <select
-                  style={styles.select}
-                  value={wireForm.transfer_type}
-                  onChange={(e) => handleInputChange('transfer_type', e.target.value)}
-                >
-                  <option value="domestic">Domestic (Within USA)</option>
-                  <option value="international">International</option>
-                </select>
-              </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>
-                  From Account <span style={styles.required}>*</span>
-                </label>
-                <select
-                  style={styles.select}
-                  value={wireForm.from_account}
-                  onChange={(e) => handleInputChange('from_account', e.target.value)}
-                >
-                  {accounts.map(acc => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.account_type?.toUpperCase()} - ****{acc.account_number?.slice(-4)} - {formatCurrency(acc.balance)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>
-                  Purpose of Transfer <span style={styles.required}>*</span>
-                </label>
-                <select
-                  style={styles.select}
-                  value={wireForm.purpose}
-                  onChange={(e) => handleInputChange('purpose', e.target.value)}
-                >
-                  <option value="">Select purpose</option>
-                  {TRANSFER_PURPOSES.map(purpose => (
-                    <option key={purpose} value={purpose}>{purpose}</option>
-                  ))}
-                </select>
-              </div>
-
-              <h3 style={{ ...styles.cardTitle, marginTop: '2rem' }}>Recipient Information</h3>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>
-                  Beneficiary Full Name <span style={styles.required}>*</span>
-                </label>
-                <input
-                  type="text"
-                  style={styles.input}
-                  value={wireForm.beneficiary_name}
-                  onChange={(e) => handleInputChange('beneficiary_name', e.target.value)}
-                  placeholder="John Smith"
-                />
-              </div>
-
-              <div style={styles.formRow}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Email Address</label>
-                  <input
-                    type="email"
-                    style={styles.input}
-                    value={wireForm.beneficiary_email}
-                    onChange={(e) => handleInputChange('beneficiary_email', e.target.value)}
-                    placeholder="john.smith@example.com"
-                  />
+          <div style={styles.card}>
+            <div style={styles.progressSteps}>
+              <div style={styles.step}>
+                <div style={{
+                  ...styles.stepCircle,
+                  backgroundColor: step >= 1 ? '#1e40af' : '#e5e7eb',
+                  color: step >= 1 ? 'white' : '#9ca3af'
+                }}>
+                  {step > 1 ? '✓' : '1'}
                 </div>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Phone Number</label>
-                  <input
-                    type="tel"
-                    style={styles.input}
-                    value={wireForm.beneficiary_phone}
-                    onChange={(e) => handleInputChange('beneficiary_phone', e.target.value)}
-                    placeholder="+1 (555) 123-4567"
-                  />
+                <span style={styles.stepLabel}>Transfer Details</span>
+              </div>
+              <div style={styles.step}>
+                <div style={{
+                  ...styles.stepCircle,
+                  backgroundColor: step >= 2 ? '#1e40af' : '#e5e7eb',
+                  color: step >= 2 ? 'white' : '#9ca3af'
+                }}>
+                  2
                 </div>
+                <span style={styles.stepLabel}>Review</span>
               </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>
-                  Street Address <span style={styles.required}>*</span>
-                </label>
-                <input
-                  type="text"
-                  style={styles.input}
-                  value={wireForm.beneficiary_address}
-                  onChange={(e) => handleInputChange('beneficiary_address', e.target.value)}
-                  placeholder="123 Main Street, Apt 4B"
-                />
+              <div style={styles.step}>
+                <div style={{
+                  ...styles.stepCircle,
+                  backgroundColor: step >= 3 ? '#1e40af' : '#e5e7eb',
+                  color: step >= 3 ? 'white' : '#9ca3af'
+                }}>
+                  3
+                </div>
+                <span style={styles.stepLabel}>Verify & Submit</span>
               </div>
+            </div>
 
-              <div style={styles.formRow}>
+            {message && (
+              <div style={{
+                ...styles.message,
+                ...(message.includes('success') || message.includes('sent') 
+                  ? styles.successMessage 
+                  : styles.errorMessage)
+              }}>
+                {message}
+              </div>
+            )}
+
+            {step === 1 && (
+              <>
+                <h2 style={styles.cardTitle}>🌐 Wire Transfer Details</h2>
+
+                <div style={styles.infoBox}>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#1e40af' }}>
+                    <strong>Important:</strong> Wire transfers are reviewed by our banking team for security. 
+                    Processing typically takes 1-3 business days for domestic transfers and 3-5 business days for international transfers.
+                  </p>
+                </div>
+
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>
-                    City <span style={styles.required}>*</span>
-                  </label>
+                  <label style={styles.label}>Transfer Type *</label>
+                  <select
+                    style={styles.select}
+                    value={wireForm.transfer_type}
+                    onChange={(e) => handleInputChange('transfer_type', e.target.value)}
+                  >
+                    <option value="domestic">Domestic (US)</option>
+                    <option value="international">International</option>
+                  </select>
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>From Account *</label>
+                  <select
+                    style={styles.select}
+                    value={wireForm.from_account_id}
+                    onChange={(e) => handleInputChange('from_account_id', e.target.value)}
+                  >
+                    {accounts.map(account => (
+                      <option key={account.id} value={account.id}>
+                        {account.account_type?.toUpperCase()} - ****{account.account_number?.slice(-4)} - {formatCurrency(account.balance)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Recipient Name *</label>
                   <input
                     type="text"
                     style={styles.input}
-                    value={wireForm.beneficiary_city}
-                    onChange={(e) => handleInputChange('beneficiary_city', e.target.value)}
-                    placeholder="New York"
+                    value={wireForm.recipient_name}
+                    onChange={(e) => handleInputChange('recipient_name', e.target.value)}
+                    placeholder="Full name of recipient"
                   />
                 </div>
 
-                {wireForm.transfer_type === 'domestic' ? (
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Recipient Account Number *</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={wireForm.recipient_account}
+                    onChange={(e) => handleInputChange('recipient_account', e.target.value)}
+                    placeholder="Account number"
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Recipient Bank Name *</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={wireForm.recipient_bank}
+                    onChange={(e) => handleInputChange('recipient_bank', e.target.value)}
+                    placeholder="Bank name"
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Recipient Bank Address</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={wireForm.recipient_bank_address}
+                    onChange={(e) => handleInputChange('recipient_bank_address', e.target.value)}
+                    placeholder="Bank address (optional)"
+                  />
+                </div>
+
+                {wireForm.transfer_type === 'international' && (
                   <div style={styles.formGroup}>
-                    <label style={styles.label}>
-                      State <span style={styles.required}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      list="state-suggestions"
-                      style={styles.input}
-                      value={wireForm.beneficiary_state}
-                      onChange={(e) => handleInputChange('beneficiary_state', e.target.value)}
-                      placeholder="California"
-                    />
-                    <datalist id="state-suggestions">
-                      {US_STATES.map(state => (
-                        <option key={state} value={state} />
-                      ))}
-                    </datalist>
-                  </div>
-                ) : (
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>
-                      Country <span style={styles.required}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      style={styles.input}
-                      value={wireForm.beneficiary_country}
-                      onChange={(e) => handleInputChange('beneficiary_country', e.target.value)}
-                      placeholder="United Kingdom"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {wireForm.transfer_type === 'domestic' && (
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>
-                    ZIP Code <span style={styles.required}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    style={styles.input}
-                    value={wireForm.beneficiary_zip}
-                    onChange={(e) => handleInputChange('beneficiary_zip', e.target.value)}
-                    placeholder="10001"
-                    maxLength="10"
-                  />
-                </div>
-              )}
-
-              <h3 style={{ ...styles.cardTitle, marginTop: '2rem' }}>Bank Details</h3>
-
-              <div style={styles.infoBox}>
-                <p style={styles.infoText}>
-                  ℹ️ Bank address is {wireForm.transfer_type === 'international' ? 'required' : 'recommended'} for {wireForm.transfer_type} wire transfers to ensure proper routing.
-                </p>
-              </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>
-                  Bank Name <span style={styles.required}>*</span>
-                </label>
-                <input
-                  type="text"
-                  style={styles.input}
-                  value={wireForm.beneficiary_bank}
-                  onChange={(e) => handleInputChange('beneficiary_bank', e.target.value)}
-                  placeholder="Bank of America"
-                />
-              </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>
-                  Bank Street Address
-                </label>
-                <input
-                  type="text"
-                  style={styles.input}
-                  value={wireForm.beneficiary_bank_address}
-                  onChange={(e) => handleInputChange('beneficiary_bank_address', e.target.value)}
-                  placeholder="100 Bank Street"
-                />
-              </div>
-
-              <div style={styles.formRow}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Bank City</label>
-                  <input
-                    type="text"
-                    style={styles.input}
-                    value={wireForm.beneficiary_bank_city}
-                    onChange={(e) => handleInputChange('beneficiary_bank_city', e.target.value)}
-                    placeholder="New York"
-                  />
-                </div>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Bank State/Province</label>
-                  <input
-                    type="text"
-                    style={styles.input}
-                    value={wireForm.beneficiary_bank_state}
-                    onChange={(e) => handleInputChange('beneficiary_bank_state', e.target.value)}
-                    placeholder="NY"
-                  />
-                </div>
-              </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Bank ZIP/Postal Code</label>
-                <input
-                  type="text"
-                  style={styles.input}
-                  value={wireForm.beneficiary_bank_zip}
-                  onChange={(e) => handleInputChange('beneficiary_bank_zip', e.target.value)}
-                  placeholder="10001"
-                />
-              </div>
-
-              <div style={styles.formRow}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>
-                    Routing Number <span style={styles.required}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    style={styles.input}
-                    value={wireForm.routing_number}
-                    onChange={(e) => handleInputChange('routing_number', e.target.value)}
-                    placeholder="021000021"
-                  />
-                </div>
-
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>
-                    Account Number <span style={styles.required}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    style={styles.input}
-                    value={wireForm.account_number}
-                    onChange={(e) => handleInputChange('account_number', e.target.value)}
-                    placeholder="1234567890"
-                  />
-                </div>
-              </div>
-
-              {wireForm.transfer_type === 'international' && (
-                <div style={styles.formRow}>
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>
-                      SWIFT/BIC Code <span style={styles.required}>*</span>
-                    </label>
+                    <label style={styles.label}>SWIFT/BIC Code *</label>
                     <input
                       type="text"
                       style={styles.input}
                       value={wireForm.swift_code}
-                      onChange={(e) => handleInputChange('swift_code', e.target.value.toUpperCase())}
-                      placeholder="BOFAUS3NXXX"
-                      maxLength="11"
+                      onChange={(e) => handleInputChange('swift_code', e.target.value)}
+                      placeholder="e.g., ABCDUS33XXX"
                     />
                   </div>
+                )}
+
+                {wireForm.transfer_type === 'domestic' && (
                   <div style={styles.formGroup}>
-                    <label style={styles.label}>IBAN (if applicable)</label>
+                    <label style={styles.label}>Routing Number *</label>
                     <input
                       type="text"
                       style={styles.input}
-                      value={wireForm.iban}
-                      onChange={(e) => handleInputChange('iban', e.target.value.toUpperCase())}
-                      placeholder="GB29NWBK60161331926819"
+                      value={wireForm.routing_number}
+                      onChange={(e) => handleInputChange('routing_number', e.target.value)}
+                      placeholder="9-digit routing number"
+                      maxLength="9"
                     />
                   </div>
-                </div>
-              )}
+                )}
 
-              <h3 style={{ ...styles.cardTitle, marginTop: '2rem' }}>Transfer Amount</h3>
-
-              <div style={styles.formRow}>
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>
-                    Amount (USD) <span style={styles.required}>*</span>
-                  </label>
+                  <label style={styles.label}>Amount (USD) *</label>
                   <input
                     type="number"
                     style={styles.input}
@@ -1424,396 +648,205 @@ export default function WireTransferPage() {
                     min="0.01"
                   />
                 </div>
+
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Reference Note</label>
+                  <label style={styles.label}>Description/Reference</label>
                   <input
                     type="text"
                     style={styles.input}
-                    value={wireForm.reference_note}
-                    onChange={(e) => handleInputChange('reference_note', e.target.value)}
-                    placeholder="Invoice #1234"
+                    value={wireForm.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
+                    placeholder="Payment purpose (optional)"
                   />
                 </div>
-              </div>
 
-              <div style={styles.feeBreakdown}>
-                <div style={styles.feeRow}>
-                  <span style={styles.feeLabel}>Transfer Amount:</span>
-                  <span style={styles.feeValue}>{formatCurrency(wireForm.amount || 0)}</span>
-                </div>
-                <div style={styles.feeRow}>
-                  <span style={styles.feeLabel}>Transfer Fee ({wireForm.transfer_type === 'domestic' ? 'Domestic' : 'International'}):</span>
-                  <span style={styles.feeValue}>{formatCurrency(wireForm.transfer_fee || 0)}</span>
-                </div>
-                
-                <div style={styles.urgentTransferBox}>
-                  <label style={styles.urgentCheckboxLabel}>
-                    <input
-                      type="checkbox"
-                      checked={wireForm.urgent_transfer}
-                      onChange={(e) => handleInputChange('urgent_transfer', e.target.checked)}
-                      style={styles.urgentCheckbox}
-                    />
-                    <div style={styles.urgentLabelContent}>
-                      <span style={styles.urgentLabelText}>🚀 Urgent Transfer (Priority Processing)</span>
-                      <span style={styles.urgentLabelFee}>Additional Fee: +$10.00</span>
-                      <span style={styles.urgentLabelDesc}>Processed within 24 hours</span>
-                    </div>
-                  </label>
+                <div style={styles.checkbox}>
+                  <input
+                    type="checkbox"
+                    checked={wireForm.urgent_transfer}
+                    onChange={(e) => handleInputChange('urgent_transfer', e.target.checked)}
+                  />
+                  <label>Urgent transfer (+$10.00 fee)</label>
                 </div>
 
-                <div style={{ ...styles.feeRow, borderTop: '2px solid #e5e7eb', paddingTop: '0.75rem', marginTop: '0.75rem' }}>
-                  <span style={{ ...styles.feeLabel, fontWeight: 'bold' }}>Total Deduction:</span>
-                  <span style={{ ...styles.feeValue, fontWeight: 'bold', fontSize: '1.2rem', color: '#dc2626' }}>
-                    {formatCurrency(wireForm.total_deduction || 0)}
-                  </span>
-                </div>
-              </div>
+                <button
+                  style={{
+                    ...styles.submitButton,
+                    opacity: processing ? 0.7 : 1,
+                    cursor: processing ? 'not-allowed' : 'pointer'
+                  }}
+                  onClick={handleNext}
+                  disabled={processing}
+                >
+                  {processing ? 'Processing...' : 'Continue to Review →'}
+                </button>
+              </>
+            )}
 
-              {wireForm.from_account && (
-                <div style={styles.balanceInfo}>
-                  <div style={styles.balanceLabel}>Available Balance</div>
-                  <div style={styles.balanceValue}>
-                    {formatCurrency(accounts.find(a => a.id === wireForm.from_account)?.balance || 0)}
-                  </div>
-                  {wireForm.total_deduction && (
-                    <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#065f46', fontWeight: '600' }}>
-                      Balance after transfer: {formatCurrency(
-                        parseFloat(accounts.find(a => a.id === wireForm.from_account)?.balance || 0) - parseFloat(wireForm.total_deduction || 0)
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+            {step === 2 && (
+              <>
+                <h2 style={styles.cardTitle}>📋 Review Transfer Details</h2>
 
-              <button
-                style={{
-                  ...styles.submitButton,
-                  opacity: processing ? 0.7 : 1,
-                  cursor: processing ? 'not-allowed' : 'pointer'
-                }}
-                onClick={handleNext}
-                disabled={processing}
-              >
-                {processing ? '🔄 Processing...' : 'Continue to Review →'}
-              </button>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div style={styles.card}>
-              <h2 style={styles.cardTitle}>Review Transfer Details</h2>
-
-              <div style={styles.reviewSection}>
-                <h3 style={styles.reviewSectionTitle}>Transfer Information</h3>
-                <div style={styles.reviewRow}>
-                  <span style={styles.reviewLabel}>Type:</span>
-                  <span style={styles.reviewValue}>{wireForm.transfer_type === 'domestic' ? 'Domestic (USA)' : 'International'}</span>
-                </div>
-                <div style={styles.reviewRow}>
-                  <span style={styles.reviewLabel}>From Account:</span>
-                  <span style={styles.reviewValue}>
-                    {accounts.find(acc => acc.id === wireForm.from_account)?.account_type?.toUpperCase()} -
-                    ****{accounts.find(acc => acc.id === wireForm.from_account)?.account_number?.slice(-4)}
-                  </span>
-                </div>
-                <div style={styles.reviewRow}>
-                  <span style={styles.reviewLabel}>Purpose:</span>
-                  <span style={styles.reviewValue}>{wireForm.purpose}</span>
-                </div>
-                <div style={styles.reviewRow}>
-                  <span style={styles.reviewLabel}>Amount:</span>
-                  <span style={{ ...styles.reviewValue, fontWeight: 'bold', fontSize: '1.1rem', color: '#059669' }}>
-                    {formatCurrency(wireForm.amount)}
-                  </span>
-                </div>
-                <div style={styles.reviewRow}>
-                  <span style={styles.reviewLabel}>Transfer Fee:</span>
-                  <span style={styles.reviewValue}>{formatCurrency(wireForm.transfer_fee)}</span>
-                </div>
-                {wireForm.urgent_transfer && (
+                <div style={{ marginBottom: '2rem' }}>
                   <div style={styles.reviewRow}>
-                    <span style={styles.reviewLabel}>Processing:</span>
-                    <span style={{ ...styles.reviewValue, color: '#dc2626' }}>Urgent (+$10.00)</span>
+                    <span style={styles.reviewLabel}>Transfer Type:</span>
+                    <span style={styles.reviewValue}>{wireForm.transfer_type === 'domestic' ? 'Domestic (US)' : 'International'}</span>
                   </div>
-                )}
-                <div style={{ ...styles.reviewRow, borderTop: '2px solid #e5e7eb', paddingTop: '0.75rem', marginTop: '0.5rem' }}>
-                  <span style={{ ...styles.reviewLabel, fontWeight: 'bold' }}>Total Deduction:</span>
-                  <span style={{ ...styles.reviewValue, fontWeight: 'bold', fontSize: '1.2rem', color: '#dc2626' }}>
-                    {formatCurrency(wireForm.total_deduction)}
-                  </span>
-                </div>
-              </div>
-
-              <div style={styles.reviewSection}>
-                <h3 style={styles.reviewSectionTitle}>Beneficiary Details</h3>
-                <div style={styles.reviewRow}>
-                  <span style={styles.reviewLabel}>Name:</span>
-                  <span style={styles.reviewValue}>{wireForm.beneficiary_name}</span>
-                </div>
-                {wireForm.beneficiary_email && (
                   <div style={styles.reviewRow}>
-                    <span style={styles.reviewLabel}>Email:</span>
-                    <span style={styles.reviewValue}>{wireForm.beneficiary_email}</span>
-                  </div>
-                )}
-                {wireForm.beneficiary_phone && (
-                  <div style={styles.reviewRow}>
-                    <span style={styles.reviewLabel}>Phone:</span>
-                    <span style={styles.reviewValue}>{wireForm.beneficiary_phone}</span>
-                  </div>
-                )}
-                <div style={styles.reviewRow}>
-                  <span style={styles.reviewLabel}>Address:</span>
-                  <span style={styles.reviewValue}>
-                    {wireForm.beneficiary_address}, {wireForm.beneficiary_city}, {wireForm.beneficiary_state || wireForm.beneficiary_country} {wireForm.beneficiary_zip || ''}
-                  </span>
-                </div>
-              </div>
-
-              <div style={styles.reviewSection}>
-                <h3 style={styles.reviewSectionTitle}>Bank Details</h3>
-                <div style={styles.reviewRow}>
-                  <span style={styles.reviewLabel}>Bank Name:</span>
-                  <span style={styles.reviewValue}>{wireForm.beneficiary_bank}</span>
-                </div>
-                {wireForm.beneficiary_bank_address && (
-                  <div style={styles.reviewRow}>
-                    <span style={styles.reviewLabel}>Bank Address:</span>
+                    <span style={styles.reviewLabel}>From Account:</span>
                     <span style={styles.reviewValue}>
-                      {wireForm.beneficiary_bank_address}
-                      {wireForm.beneficiary_bank_city && `, ${wireForm.beneficiary_bank_city}`}
-                      {wireForm.beneficiary_bank_state && `, ${wireForm.beneficiary_bank_state}`}
-                      {wireForm.beneficiary_bank_zip && ` ${wireForm.beneficiary_bank_zip}`}
+                      {accounts.find(a => a.id === wireForm.from_account_id)?.account_type?.toUpperCase()} - 
+                      ****{accounts.find(a => a.id === wireForm.from_account_id)?.account_number?.slice(-4)}
                     </span>
                   </div>
-                )}
-                <div style={styles.reviewRow}>
-                  <span style={styles.reviewLabel}>Routing Number:</span>
-                  <span style={styles.reviewValue}>{wireForm.routing_number}</span>
-                </div>
-                <div style={styles.reviewRow}>
-                  <span style={styles.reviewLabel}>Account Number:</span>
-                  <span style={styles.reviewValue}>****{wireForm.account_number.slice(-4)}</span>
-                </div>
-                {wireForm.swift_code && (
                   <div style={styles.reviewRow}>
-                    <span style={styles.reviewLabel}>SWIFT Code:</span>
-                    <span style={styles.reviewValue}>{wireForm.swift_code}</span>
+                    <span style={styles.reviewLabel}>Recipient Name:</span>
+                    <span style={styles.reviewValue}>{wireForm.recipient_name}</span>
                   </div>
-                )}
-                {wireForm.iban && (
                   <div style={styles.reviewRow}>
-                    <span style={styles.reviewLabel}>IBAN:</span>
-                    <span style={styles.reviewValue}>{wireForm.iban}</span>
+                    <span style={styles.reviewLabel}>Recipient Account:</span>
+                    <span style={styles.reviewValue}>{wireForm.recipient_account}</span>
                   </div>
-                )}
-                {wireForm.reference_note && (
                   <div style={styles.reviewRow}>
-                    <span style={styles.reviewLabel}>Reference:</span>
-                    <span style={styles.reviewValue}>{wireForm.reference_note}</span>
+                    <span style={styles.reviewLabel}>Recipient Bank:</span>
+                    <span style={styles.reviewValue}>{wireForm.recipient_bank}</span>
                   </div>
-                )}
-              </div>
-
-              <div style={styles.buttonRow}>
-                <button
-                  style={styles.secondaryButton}
-                  onClick={() => setStep(1)}
-                  disabled={processing || sendingCode}
-                >
-                  ← Edit Details
-                </button>
-                <button
-                  style={{
-                    ...styles.submitButton,
-                    flex: 2,
-                    opacity: (processing || sendingCode) ? 0.7 : 1,
-                    cursor: (processing || sendingCode) ? 'not-allowed' : 'pointer'
-                  }}
-                  onClick={sendVerificationCode}
-                  disabled={processing || sendingCode}
-                >
-                  {sendingCode ? '🔄 Sending Code...' : 'Send Verification Code →'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div style={styles.card}>
-              <h2 style={styles.cardTitle}>🔐 Verify Your Transfer</h2>
-              
-              <div style={{
-                backgroundColor: '#e0f2fe',
-                padding: '1.25rem',
-                borderRadius: '12px',
-                marginBottom: '1rem',
-                border: '2px solid #7dd3fc'
-              }}>
-                <p style={{ fontSize: '0.95rem', color: '#0c4a6e', margin: 0, textAlign: 'center' }}>
-                  📧 We've sent a 6-digit verification code to <strong>{user?.email}</strong>
-                </p>
-              </div>
-
-
-              <div style={{ marginBottom: '2rem' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '1rem',
-                  fontWeight: '700',
-                  color: '#1a365d',
-                  marginBottom: '1rem',
-                  textAlign: 'center'
-                }}>
-                  Enter Verification Code
-                </label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  style={{
-                    width: '100%',
-                    padding: '1.5rem',
-                    border: verificationCode.length === 6 ? '3px solid #10b981' : '3px solid #e2e8f0',
-                    borderRadius: '16px',
-                    fontSize: '2rem',
-                    fontWeight: 'bold',
-                    textAlign: 'center',
-                    letterSpacing: '0.5rem',
-                    transition: 'all 0.3s',
-                    backgroundColor: verificationCode.length === 6 ? '#f0fdf4' : 'white',
-                    boxSizing: 'border-box',
-                    fontFamily: 'monospace'
-                  }}
-                  value={verificationCode}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                    setVerificationCode(value);
-                    console.log('Code entered:', value);
-                  }}
-                  placeholder="000000"
-                  maxLength="6"
-                  disabled={processing}
-                  autoFocus
-                />
-              </div>
-
-              <div style={{
-                backgroundColor: '#fef3c7',
-                padding: '1rem',
-                borderRadius: '12px',
-                marginBottom: '2rem',
-                border: '2px solid #fbbf24',
-                textAlign: 'center'
-              }}>
-                <p style={{ fontSize: '0.875rem', color: '#92400e', margin: 0, fontWeight: '600' }}>
-                  ⏱ Code expires in 15 minutes
-                </p>
-              </div>
-
-              <div style={{
-                textAlign: 'center',
-                marginBottom: '2rem',
-                padding: '1rem',
-                backgroundColor: '#f8fafc',
-                borderRadius: '12px'
-              }}>
-                <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 0.75rem 0' }}>
-                  Didn't receive the code?
-                </p>
-                <button
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    color: '#1e40af',
-                    backgroundColor: 'white',
-                    border: '2px solid #1e40af',
-                    borderRadius: '10px',
-                    cursor: sendingCode ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.3s',
-                    opacity: sendingCode ? 0.6 : 1
-                  }}
-                  onClick={() => {
-                    console.log('Resend button clicked');
-                    setVerificationCode('');
-                    sendVerificationCode();
-                  }}
-                  disabled={sendingCode}
-                >
-                  {sendingCode ? '🔄 Resending...' : '↻ Resend Code'}
-                </button>
-              </div>
-
-              <div style={styles.buttonRow}>
-                <button
-                  style={styles.secondaryButton}
-                  onClick={() => {
-                    setStep(2);
-                    setVerificationCode('');
-                  }}
-                  disabled={processing}
-                >
-                  ← Back to Review
-                </button>
-                <button
-                  style={{
-                    ...styles.submitButton,
-                    flex: 2,
-                    opacity: (processing || verificationCode.length !== 6) ? 0.5 : 1,
-                    cursor: (processing || verificationCode.length !== 6) ? 'not-allowed' : 'pointer',
-                    backgroundColor: verificationCode.length === 6 ? '#10b981' : '#1e40af'
-                  }}
-                  onClick={() => {
-                    console.log('Submit button clicked!');
-                    handleVerifyCode();
-                  }}
-                  disabled={processing || verificationCode.length !== 6}
-                  type="button"
-                >
-                  {processing ? '🔄 Processing...' : verificationCode.length === 6 ? '✓ Verify & Submit Transfer' : 'Enter 6-Digit Code'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div style={styles.card}>
-            <h2 style={styles.cardTitle}>Transfer History</h2>
-            {wireTransfers.length === 0 ? (
-              <div style={styles.emptyState}>
-                <p style={{ fontSize: '2rem' }}>💸</p>
-                <p>No wire transfers yet</p>
-              </div>
-            ) : (
-              <div>
-                {wireTransfers.slice(0, 5).map(wire => (
-                  <div key={wire.id} style={styles.historyItem}>
-                    <div style={styles.historyHeader}>
-                      <div>
-                        <div style={styles.historyName}>{wire.beneficiary_name}</div>
-                        <div style={styles.historyBank}>{wire.beneficiary_bank}</div>
-                        <div style={styles.historyRef}>Ref: {wire.reference_number}</div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={styles.historyAmount}>{formatCurrency(wire.amount)}</div>
-                        <div style={{
-                          ...styles.historyStatus,
-                          backgroundColor: getStatusColor(wire.status)
-                        }}>
-                          {wire.status?.toUpperCase()}
-                        </div>
-                        <div style={styles.historyDate}>
-                          {new Date(wire.created_at).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                        </div>
-                      </div>
+                  {wireForm.swift_code && (
+                    <div style={styles.reviewRow}>
+                      <span style={styles.reviewLabel}>SWIFT Code:</span>
+                      <span style={styles.reviewValue}>{wireForm.swift_code}</span>
                     </div>
+                  )}
+                  {wireForm.routing_number && (
+                    <div style={styles.reviewRow}>
+                      <span style={styles.reviewLabel}>Routing Number:</span>
+                      <span style={styles.reviewValue}>{wireForm.routing_number}</span>
+                    </div>
+                  )}
+                  <div style={styles.reviewRow}>
+                    <span style={styles.reviewLabel}>Amount:</span>
+                    <span style={styles.reviewValue}>{formatCurrency(wireForm.amount)}</span>
                   </div>
-                ))}
-              </div>
+                  <div style={styles.reviewRow}>
+                    <span style={styles.reviewLabel}>Wire Transfer Fee:</span>
+                    <span style={styles.reviewValue}>{formatCurrency(wireForm.fee)}</span>
+                  </div>
+                  {wireForm.urgent_transfer && (
+                    <div style={styles.reviewRow}>
+                      <span style={styles.reviewLabel}>Urgent Processing Fee:</span>
+                      <span style={styles.reviewValue}>{formatCurrency(wireForm.urgent_fee)}</span>
+                    </div>
+                  )}
+                  <div style={{
+                    ...styles.reviewRow,
+                    borderTop: '2px solid #1e40af',
+                    marginTop: '0.5rem',
+                    paddingTop: '1rem'
+                  }}>
+                    <span style={{ ...styles.reviewLabel, fontWeight: 'bold', fontSize: '1.1rem' }}>Total Deduction:</span>
+                    <span style={{ ...styles.reviewValue, fontWeight: 'bold', fontSize: '1.2rem', color: '#dc2626' }}>
+                      {formatCurrency(wireForm.total_amount)}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button
+                    style={{
+                      ...styles.submitButton,
+                      backgroundColor: '#6b7280',
+                      flex: 1
+                    }}
+                    onClick={() => setStep(1)}
+                  >
+                    ← Back
+                  </button>
+                  <button
+                    style={{
+                      ...styles.submitButton,
+                      flex: 1
+                    }}
+                    onClick={() => {
+                      setStep(3);
+                      sendVerificationCode();
+                    }}
+                  >
+                    Proceed to Verification →
+                  </button>
+                </div>
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <h2 style={styles.cardTitle}>🔒 Verify Your Transfer</h2>
+
+                <div style={styles.infoBox}>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#1e40af' }}>
+                    📧 We've sent a 6-digit verification code to <strong>{user.email}</strong>
+                  </p>
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Enter Verification Code *</label>
+                  <input
+                    type="text"
+                    style={styles.input}
+                    value={verificationCode}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                      setVerificationCode(value);
+                      console.log('Code entered:', value);
+                    }}
+                    placeholder="6-digit code"
+                    maxLength="6"
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button
+                    style={{
+                      ...styles.submitButton,
+                      backgroundColor: '#6b7280',
+                      flex: 1
+                    }}
+                    onClick={() => setStep(2)}
+                  >
+                    ← Back
+                  </button>
+                  <button
+                    style={{
+                      ...styles.submitButton,
+                      flex: 1,
+                      opacity: processing || verificationCode.length !== 6 ? 0.7 : 1,
+                      cursor: processing || verificationCode.length !== 6 ? 'not-allowed' : 'pointer'
+                    }}
+                    onClick={() => {
+                      console.log('Submit button clicked!');
+                      handleVerifyAndSubmit();
+                    }}
+                    disabled={processing || verificationCode.length !== 6}
+                  >
+                    {processing ? '🔄 Processing...' : '✓ Submit Transfer'}
+                  </button>
+                </div>
+
+                <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                  <button
+                    onClick={sendVerificationCode}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#1e40af',
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    Resend Code
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </main>
