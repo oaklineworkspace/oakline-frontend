@@ -989,6 +989,7 @@ function DashboardContent() {
                 const txType = (tx.type || tx.transaction_type || '').toLowerCase();
                 const description = (tx.description || '').toLowerCase();
                 const amount = parseFloat(tx.amount) || 0;
+                const status = (tx.status || 'completed').toLowerCase();
 
                 // Determine if it's a credit (money in) or debit (money out) based on transaction type
                 let isCredit = false;
@@ -997,8 +998,26 @@ function DashboardContent() {
                 const isTransferTo = description.includes('transfer to') || description.includes('sent to');
                 const isTransferFrom = description.includes('transfer from') || description.includes('received from');
 
+                // For cancelled/reversed transactions, check if it's a refund (shows as credit) or a reversal (shows as debit)
+                if (status === 'cancelled' || status === 'reversed') {
+                  // If description contains "refund" or "cancelled" with "fraudulent", it's money returned (credit)
+                  if (description.includes('refund') || description.includes('fraudulent')) {
+                    isCredit = true;
+                  }
+                  // If it was originally a debit that got cancelled, the refund is a credit
+                  else if (description.includes('wire transfer cancelled') || 
+                           description.includes('transfer cancelled') ||
+                           txType === 'debit' || 
+                           txType === 'withdrawal') {
+                    isCredit = true;
+                  }
+                  // Otherwise, treat as debit
+                  else {
+                    isCredit = false;
+                  }
+                }
                 // Money coming IN (Credit - Green/Positive)
-                if (txType === 'deposit' || 
+                else if (txType === 'deposit' || 
                     txType === 'credit' || 
                     txType === 'interest' || 
                     txType === 'refund' || 

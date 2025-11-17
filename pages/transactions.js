@@ -280,6 +280,24 @@ export default function TransactionsHistory() {
   const isTransactionCredit = (tx) => {
     const txType = (tx.type || tx.transaction_type || '').toLowerCase();
     const description = (tx.description || '').toLowerCase();
+    const status = (tx.status || 'completed').toLowerCase();
+
+    // For cancelled/reversed transactions, check if it's a refund or reversal
+    if (status === 'cancelled' || status === 'reversed') {
+      // If description contains "refund" or "cancelled" with "fraudulent", it's money returned (credit)
+      if (description.includes('refund') || description.includes('fraudulent')) {
+        return true;
+      }
+      // If it was originally a debit that got cancelled, the refund is a credit
+      if (description.includes('wire transfer cancelled') || 
+          description.includes('transfer cancelled') ||
+          txType === 'debit' || 
+          txType === 'withdrawal') {
+        return true;
+      }
+      // Otherwise, treat as debit
+      return false;
+    }
 
     if (txType === 'deposit' || 
         txType === 'credit' || 
