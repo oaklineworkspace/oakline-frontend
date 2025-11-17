@@ -29,7 +29,6 @@ export default function WireTransferPage() {
   const [step, setStep] = useState(1);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
-  const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [sentCode, setSentCode] = useState('');
   const [sendingCode, setSendingCode] = useState(false);
@@ -251,9 +250,10 @@ export default function WireTransferPage() {
       }
 
       setCodeSent(true);
-      setShowVerificationModal(true);
+      setStep(3);
       setMessage('Verification code sent to ' + user.email);
       setMessageType('success');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       console.error('Error sending verification code:', error);
       setMessage(`${error.message || 'Failed to send verification code. Please try again.'}`);
@@ -265,7 +265,11 @@ export default function WireTransferPage() {
     }
   };
 
-  const completeWireTransfer = async () => {
+  const handleVerifyCode = () => {
+    console.log('Verify button clicked');
+    console.log('Code sent:', sentCode);
+    console.log('Code entered:', verificationCode);
+    
     if (!codeSent) {
       setMessage('Please request a verification code first.');
       setMessageType('error');
@@ -284,7 +288,18 @@ export default function WireTransferPage() {
       return;
     }
 
+    setMessage('Code verified successfully!');
+    setMessageType('success');
+    setTimeout(() => {
+      completeWireTransfer();
+    }, 500);
+  };
+
+  const completeWireTransfer = async () => {
     setProcessing(true);
+    setMessage('Processing your wire transfer...');
+    setMessageType('info');
+    
     try {
       const selectedAccount = accounts.find(acc => acc.id === wireForm.from_account);
       const amount = parseFloat(wireForm.amount);
@@ -359,49 +374,47 @@ export default function WireTransferPage() {
 
       setMessage('Wire transfer submitted successfully and is pending admin review!');
       setMessageType('success');
-      setShowVerificationModal(false);
       
-      setStep(1);
-      setWireForm({
-        from_account: wireForm.from_account,
-        transfer_type: 'domestic',
-        beneficiary_name: '',
-        beneficiary_email: '',
-        beneficiary_phone: '',
-        beneficiary_bank: '',
-        beneficiary_bank_address: '',
-        beneficiary_bank_city: '',
-        beneficiary_bank_state: '',
-        beneficiary_bank_zip: '',
-        beneficiary_address: '',
-        beneficiary_city: '',
-        beneficiary_state: '',
-        beneficiary_zip: '',
-        beneficiary_country: 'United States',
-        routing_number: '',
-        account_number: '',
-        swift_code: '',
-        iban: '',
-        intermediary_bank_name: '',
-        intermediary_bank_swift: '',
-        intermediary_bank_account: '',
-        amount: '',
-        transfer_fee: '',
-        exchange_rate: '',
-        total_deduction: '',
-        purpose: '',
-        reference_note: '',
-        urgent_transfer: false
-      });
-      setVerificationCode('');
-      setSentCode('');
-      setCodeSent(false);
+      setTimeout(() => {
+        setStep(1);
+        setWireForm({
+          from_account: wireForm.from_account,
+          transfer_type: 'domestic',
+          beneficiary_name: '',
+          beneficiary_email: '',
+          beneficiary_phone: '',
+          beneficiary_bank: '',
+          beneficiary_bank_address: '',
+          beneficiary_bank_city: '',
+          beneficiary_bank_state: '',
+          beneficiary_bank_zip: '',
+          beneficiary_address: '',
+          beneficiary_city: '',
+          beneficiary_state: '',
+          beneficiary_zip: '',
+          beneficiary_country: 'United States',
+          routing_number: '',
+          account_number: '',
+          swift_code: '',
+          iban: '',
+          intermediary_bank_name: '',
+          intermediary_bank_swift: '',
+          intermediary_bank_account: '',
+          amount: '',
+          transfer_fee: '',
+          exchange_rate: '',
+          total_deduction: '',
+          purpose: '',
+          reference_note: '',
+          urgent_transfer: false
+        });
+        setVerificationCode('');
+        setSentCode('');
+        setCodeSent(false);
+        checkUserAndLoadData();
+      }, 2000);
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      setTimeout(() => {
-        checkUserAndLoadData();
-      }, 1000);
 
     } catch (error) {
       console.error('Wire transfer error:', error);
@@ -1058,9 +1071,9 @@ export default function WireTransferPage() {
           {message && (
             <div style={{
               ...styles.message,
-              backgroundColor: messageType === 'error' ? '#fee2e2' : '#d1fae5',
-              color: messageType === 'error' ? '#dc2626' : '#059669',
-              borderColor: messageType === 'error' ? '#fca5a5' : '#6ee7b7'
+              backgroundColor: messageType === 'error' ? '#fee2e2' : messageType === 'info' ? '#dbeafe' : '#d1fae5',
+              color: messageType === 'error' ? '#dc2626' : messageType === 'info' ? '#1e40af' : '#059669',
+              borderColor: messageType === 'error' ? '#fca5a5' : messageType === 'info' ? '#93c5fd' : '#6ee7b7'
             }}>
               {message}
             </div>
@@ -1078,7 +1091,14 @@ export default function WireTransferPage() {
               <div style={styles.progressStepCircle}>
                 {step > 2 ? '✓' : '2'}
               </div>
-              <div style={styles.progressStepLabel}>Review & Verify</div>
+              <div style={styles.progressStepLabel}>Review</div>
+            </div>
+            <div style={styles.progressLine}></div>
+            <div style={{ ...styles.progressStep, ...(step >= 3 ? styles.progressStepActive : {}) }}>
+              <div style={styles.progressStepCircle}>
+                {step > 3 ? '✓' : '3'}
+              </div>
+              <div style={styles.progressStepLabel}>Verify & Submit</div>
             </div>
           </div>
 
@@ -1606,6 +1626,142 @@ export default function WireTransferPage() {
             </div>
           )}
 
+          {step === 3 && (
+            <div style={styles.card}>
+              <h2 style={styles.cardTitle}>🔐 Verify Your Transfer</h2>
+              
+              <div style={{
+                backgroundColor: '#e0f2fe',
+                padding: '1.25rem',
+                borderRadius: '12px',
+                marginBottom: '2rem',
+                border: '2px solid #7dd3fc'
+              }}>
+                <p style={{ fontSize: '0.95rem', color: '#0c4a6e', margin: 0, textAlign: 'center' }}>
+                  📧 We've sent a 6-digit verification code to <strong>{user?.email}</strong>
+                </p>
+              </div>
+
+              <div style={{ marginBottom: '2rem' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '1rem',
+                  fontWeight: '700',
+                  color: '#1a365d',
+                  marginBottom: '1rem',
+                  textAlign: 'center'
+                }}>
+                  Enter Verification Code
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  style={{
+                    width: '100%',
+                    padding: '1.5rem',
+                    border: verificationCode.length === 6 ? '3px solid #10b981' : '3px solid #e2e8f0',
+                    borderRadius: '16px',
+                    fontSize: '2rem',
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    letterSpacing: '0.5rem',
+                    transition: 'all 0.3s',
+                    backgroundColor: verificationCode.length === 6 ? '#f0fdf4' : 'white',
+                    boxSizing: 'border-box',
+                    fontFamily: 'monospace'
+                  }}
+                  value={verificationCode}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setVerificationCode(value);
+                    console.log('Code entered:', value);
+                  }}
+                  placeholder="000000"
+                  maxLength="6"
+                  disabled={processing}
+                  autoFocus
+                />
+              </div>
+
+              <div style={{
+                backgroundColor: '#fef3c7',
+                padding: '1rem',
+                borderRadius: '12px',
+                marginBottom: '2rem',
+                border: '2px solid #fbbf24',
+                textAlign: 'center'
+              }}>
+                <p style={{ fontSize: '0.875rem', color: '#92400e', margin: 0, fontWeight: '600' }}>
+                  ⏱ Code expires in 15 minutes
+                </p>
+              </div>
+
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '2rem',
+                padding: '1rem',
+                backgroundColor: '#f8fafc',
+                borderRadius: '12px'
+              }}>
+                <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 0.75rem 0' }}>
+                  Didn't receive the code?
+                </p>
+                <button
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    color: '#1e40af',
+                    backgroundColor: 'white',
+                    border: '2px solid #1e40af',
+                    borderRadius: '10px',
+                    cursor: sendingCode ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s',
+                    opacity: sendingCode ? 0.6 : 1
+                  }}
+                  onClick={() => {
+                    console.log('Resend button clicked');
+                    setVerificationCode('');
+                    sendVerificationCode();
+                  }}
+                  disabled={sendingCode}
+                >
+                  {sendingCode ? '🔄 Resending...' : '↻ Resend Code'}
+                </button>
+              </div>
+
+              <div style={styles.buttonRow}>
+                <button
+                  style={styles.secondaryButton}
+                  onClick={() => {
+                    setStep(2);
+                    setVerificationCode('');
+                  }}
+                  disabled={processing}
+                >
+                  ← Back to Review
+                </button>
+                <button
+                  style={{
+                    ...styles.submitButton,
+                    flex: 2,
+                    opacity: (processing || verificationCode.length !== 6) ? 0.5 : 1,
+                    cursor: (processing || verificationCode.length !== 6) ? 'not-allowed' : 'pointer',
+                    backgroundColor: verificationCode.length === 6 ? '#10b981' : '#1e40af'
+                  }}
+                  onClick={() => {
+                    console.log('Submit button clicked!');
+                    handleVerifyCode();
+                  }}
+                  disabled={processing || verificationCode.length !== 6}
+                  type="button"
+                >
+                  {processing ? '🔄 Processing...' : verificationCode.length === 6 ? '✓ Verify & Submit Transfer' : 'Enter 6-Digit Code'}
+                </button>
+              </div>
+            </div>
+          )}
+
           <div style={styles.card}>
             <h2 style={styles.cardTitle}>Transfer History</h2>
             {wireTransfers.length === 0 ? (
@@ -1647,111 +1803,6 @@ export default function WireTransferPage() {
           </div>
         </main>
       </div>
-
-      {sendingCode && (
-        <div style={styles.modalOverlay}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '20px',
-            padding: '3rem 2rem',
-            textAlign: 'center',
-            maxWidth: '400px',
-            width: '100%'
-          }}>
-            <div style={styles.spinner}></div>
-            <h3 style={{ color: '#1a365d', marginTop: '1.5rem', marginBottom: '0.5rem' }}>
-              Sending Verification Code
-            </h3>
-            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
-              Please wait while we send a code to {user?.email}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {showVerificationModal && !sendingCode && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.modalHeader}>
-              <h2 style={styles.modalTitle}>
-                🔐 Verify Your Transfer
-              </h2>
-              <p style={styles.modalSubtitle}>
-                We've sent a 6-digit code to <strong>{user?.email}</strong>
-              </p>
-            </div>
-
-            <div style={styles.modalBody}>
-              <div style={styles.verificationInputWrapper}>
-                <label style={styles.verificationLabel}>Verification Code</label>
-                <input
-                  type="text"
-                  style={{
-                    ...styles.verificationInput,
-                    ...(verificationCode.length === 6 ? styles.verificationInputFocused : {})
-                  }}
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="000000"
-                  maxLength="6"
-                  disabled={processing}
-                  autoFocus
-                />
-              </div>
-
-              <div style={styles.timerSection}>
-                <p style={styles.timerText}>
-                  ⏱ Code expires in 15 minutes
-                </p>
-              </div>
-
-              <div style={styles.resendSection}>
-                <p style={styles.resendText}>Didn't receive the code?</p>
-                <button
-                  style={styles.resendButton}
-                  onClick={sendVerificationCode}
-                  disabled={processing || sendingCode}
-                >
-                  {sendingCode ? 'Resending...' : 'Resend Code'}
-                </button>
-              </div>
-            </div>
-
-            <div style={styles.modalFooter}>
-              <div style={styles.modalButtons}>
-                <button
-                  style={styles.cancelButton}
-                  onClick={() => {
-                    if (!processing) {
-                      setShowVerificationModal(false);
-                      setVerificationCode('');
-                    }
-                  }}
-                  disabled={processing}
-                >
-                  Cancel
-                </button>
-                <button
-                  style={{
-                    ...styles.confirmButton,
-                    opacity: (processing || verificationCode.length !== 6) ? 0.5 : 1,
-                    cursor: (processing || verificationCode.length !== 6) ? 'not-allowed' : 'pointer'
-                  }}
-                  onClick={() => {
-                    if (!processing && verificationCode.length === 6) {
-                      completeWireTransfer();
-                    }
-                  }}
-                  disabled={processing || verificationCode.length !== 6}
-                  type="button"
-                >
-                  {processing ? '🔄 Processing...' : '✓ Verify & Submit'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
