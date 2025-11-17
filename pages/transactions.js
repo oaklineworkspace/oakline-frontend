@@ -315,15 +315,17 @@ export default function TransactionsHistory() {
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'completed':
-        return { bg: '#d1fae5', color: '#059669' };
+        return { bg: '#d1fae5', color: '#047857', fontWeight: '600' };
       case 'pending':
-        return { bg: '#fef3c7', color: '#f59e0b' };
+        return { bg: '#fef3c7', color: '#b45309', fontWeight: '600' };
       case 'failed':
-        return { bg: '#fee2e2', color: '#dc2626' };
+        return { bg: '#fee2e2', color: '#b91c1c', fontWeight: '700' };
       case 'cancelled':
-        return { bg: '#f3f4f6', color: '#6b7280' };
+        return { bg: '#e5e7eb', color: '#374151', fontWeight: '600' };
+      case 'reversed':
+        return { bg: '#ddd6fe', color: '#6d28d9', fontWeight: '600' };
       default:
-        return { bg: '#e0e7ff', color: '#4f46e5' };
+        return { bg: '#e0e7ff', color: '#4338ca', fontWeight: '600' };
     }
   };
 
@@ -506,15 +508,17 @@ export default function TransactionsHistory() {
                   <div style={styles.transactionRight}>
                     <div style={{
                       ...styles.transactionAmount,
-                      color: status?.toLowerCase() === 'pending' ? '#f59e0b' : 
-                             (isCredit ? '#059669' : '#dc2626')
+                      color: status?.toLowerCase() === 'pending' ? '#d97706' : 
+                             (isCredit ? '#047857' : '#b91c1c'),
+                      fontWeight: '700'
                     }}>
                       {isCredit ? '+' : '-'}{formatCurrency(Math.abs(amount))}
                     </div>
                     <div style={{
                       ...styles.statusBadge,
                       backgroundColor: statusColors.bg,
-                      color: statusColors.color
+                      color: statusColors.color,
+                      fontWeight: statusColors.fontWeight
                     }}>
                       {status}
                     </div>
@@ -855,7 +859,7 @@ const styles = {
   transactionDescription: {
     fontSize: '0.9rem',
     fontWeight: '600',
-    color: '#1e293b',
+    color: '#0f172a',
     marginBottom: '0.2rem',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
