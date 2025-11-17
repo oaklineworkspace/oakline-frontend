@@ -1,12 +1,5 @@
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
-import { sendEmail } from '../../lib/email';
-
-// Define EMAIL_TYPES if it's not globally available or imported elsewhere.
-// Assuming it's an object like { VERIFY: 'verify' }
-const EMAIL_TYPES = {
-  VERIFY: 'verify',
-  // Add other types if they exist, e.g., PASSWORD_RESET: 'password-reset'
-};
+import { sendEmail, EMAIL_TYPES } from '../../lib/email';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -96,6 +89,15 @@ export default async function handler(req, res) {
 
       console.log('Attempting to send verification email to:', normalizedEmail);
 
+      // Get type from request body
+      const { type, userId } = req.body;
+      
+      // Define email subject and content based on type
+      const isWireTransfer = type === 'wire_transfer';
+      const emailSubject = isWireTransfer 
+        ? '🔐 Wire Transfer Verification Code - Oakline Bank'
+        : '🔐 Your Oakline Bank Verification Code';
+
       // Define the email HTML structure
       const emailHtml = `
           <!DOCTYPE html>
@@ -112,8 +114,19 @@ export default async function handler(req, res) {
               </div>
 
               <div style="background: white; padding: 40px 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                <h2 style="color: #1A3E6F; margin-top: 0;">Email Verification</h2>
-                <p style="color: #333; line-height: 1.6;">Thank you for choosing Oakline Bank! Please use the verification code below to complete your application:</p>
+                <h2 style="color: #1A3E6F; margin-top: 0;">${isWireTransfer ? 'Wire Transfer Verification' : 'Email Verification'}</h2>
+                <p style="color: #333; line-height: 1.6;">${isWireTransfer 
+                  ? 'To protect your account and ensure the security of your wire transfer, please verify this transaction with the code below:'
+                  : 'Thank you for choosing Oakline Bank! Please use the verification code below to complete your application:'
+                }</p>
+
+                ${isWireTransfer ? `
+                <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0;">
+                  <p style="color: #92400e; font-size: 14px; margin: 0;">
+                    <strong>🔒 Security Notice:</strong> This verification is required to authorize your wire transfer request.
+                  </p>
+                </div>
+                ` : ''}
 
                 <div style="background: #f5f6f8; border-left: 4px solid #FFC857; padding: 20px; margin: 25px 0; text-align: center;">
                   <div style="font-size: 32px; font-weight: bold; color: #1A3E6F; letter-spacing: 5px; font-family: 'Courier New', monospace;">
@@ -122,7 +135,10 @@ export default async function handler(req, res) {
                 </div>
 
                 <p style="color: #666; font-size: 14px; margin-top: 20px;">This code will expire in 15 minutes.</p>
-                <p style="color: #666; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
+                <p style="color: #666; font-size: 14px;">${isWireTransfer 
+                  ? 'If you did not initiate this wire transfer, please contact our security team immediately.'
+                  : 'If you didn\'t request this code, please ignore this email.'
+                }</p>
 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
                   <p style="color: #999; font-size: 12px; margin: 5px 0;">
@@ -139,9 +155,10 @@ export default async function handler(req, res) {
       // Use the verify email type for verification codes
       await sendEmail({
         to: normalizedEmail,
-        subject: '🔐 Your Oakline Bank Verification Code',
+        subject: emailSubject,
         html: emailHtml,
-        emailType: EMAIL_TYPES.VERIFY // Using the defined constant
+        emailType: isWireTransfer ? EMAIL_TYPES.SECURITY : EMAIL_TYPES.VERIFY,
+        userId: userId
       });
 
       console.log('✅ Verification email sent successfully to:', normalizedEmail);

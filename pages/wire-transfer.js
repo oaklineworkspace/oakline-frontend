@@ -147,17 +147,22 @@ export default function WireTransferPage() {
         body: JSON.stringify({
           email: user.email,
           code: code,
-          type: 'wire_transfer'
+          type: 'wire_transfer',
+          userId: user.id
         })
       });
 
-      if (!response.ok) throw new Error('Failed to send verification code');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send verification code');
+      }
 
       setShowVerificationModal(true);
       setMessage('✅ Verification code sent to your email');
     } catch (error) {
       console.error('Error sending verification code:', error);
-      setMessage('❌ Failed to send verification code. Please try again.');
+      setMessage(`❌ ${error.message || 'Failed to send verification code. Please try again.'}`);
     } finally {
       setProcessing(false);
     }
@@ -690,41 +695,93 @@ export default function WireTransferPage() {
         {showVerificationModal && (
           <div style={styles.modalOverlay} onClick={() => !processing && setShowVerificationModal(false)}>
             <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-              <h2 style={styles.modalTitle}>Email Verification</h2>
-              <p style={styles.modalText}>
-                We've sent a 6-digit verification code to <strong>{user.email}</strong>
-              </p>
-              <input
-                type="text"
-                style={styles.verificationInput}
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="000000"
-                maxLength="6"
-                disabled={processing}
-              />
-              <div style={styles.modalButtons}>
+              <div style={styles.modalHeader}>
+                <div style={styles.modalIconContainer}>
+                  <span style={styles.modalIcon}>📧</span>
+                </div>
+                <h2 style={styles.modalTitle}>Email Verification Required</h2>
+                <p style={styles.modalSubtitle}>
+                  To protect your account, we need to verify this wire transfer
+                </p>
+              </div>
+
+              <div style={styles.modalBody}>
+                <div style={styles.emailNotice}>
+                  <p style={styles.emailNoticeText}>
+                    A 6-digit verification code has been sent to:
+                  </p>
+                  <p style={styles.emailAddress}>{user.email}</p>
+                  <p style={styles.emailHint}>
+                    Please check your inbox and enter the code below
+                  </p>
+                </div>
+
+                <div style={styles.codeInputContainer}>
+                  <label style={styles.codeLabel}>Verification Code</label>
+                  <input
+                    type="text"
+                    style={styles.verificationInput}
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="Enter 6-digit code"
+                    maxLength="6"
+                    disabled={processing}
+                    autoFocus
+                  />
+                  <p style={styles.codeHint}>
+                    Code expires in 15 minutes
+                  </p>
+                </div>
+
+                <div style={styles.resendContainer}>
+                  <p style={styles.resendText}>Didn't receive the code?</p>
+                  <button
+                    style={styles.resendButton}
+                    onClick={sendVerificationCode}
+                    disabled={processing}
+                  >
+                    Resend Code
+                  </button>
+                </div>
+              </div>
+
+              <div style={styles.modalFooter}>
                 <button 
                   style={styles.cancelButton} 
                   onClick={() => setShowVerificationModal(false)}
                   disabled={processing}
                 >
-                  Cancel
+                  Cancel Transfer
                 </button>
                 <button
-                  style={styles.confirmButton}
+                  style={{
+                    ...styles.confirmButton,
+                    ...(processing || verificationCode.length !== 6 ? styles.confirmButtonDisabled : {})
+                  }}
                   onClick={completeWireTransfer}
                   disabled={processing || verificationCode.length !== 6}
-                  onMouseEnter={(e) => !processing && verificationCode.length === 6 && (e.target.style.backgroundColor = '#1e3a8a')}
-                  onMouseLeave={(e) => !processing && verificationCode.length === 6 && (e.target.style.backgroundColor = '#1e40af')}
+                  onMouseEnter={(e) => {
+                    if (!processing && verificationCode.length === 6) {
+                      e.target.style.transform = 'translateY(-2px)';
+                      e.target.style.boxShadow = '0 8px 20px rgba(30, 64, 175, 0.4)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!processing && verificationCode.length === 6) {
+                      e.target.style.transform = 'translateY(0)';
+                      e.target.style.boxShadow = '0 4px 12px rgba(30, 64, 175, 0.4)';
+                    }
+                  }}
                 >
                   {processing ? (
                     <>
                       <span style={styles.buttonSpinner}></span>
-                      Processing...
+                      Processing Transfer...
                     </>
                   ) : (
-                    'Complete Transfer'
+                    <>
+                      <span>✓</span> Verify & Complete Transfer
+                    </>
                   )}
                 </button>
               </div>
@@ -1074,68 +1131,158 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(10, 26, 47, 0.7)',
+    backdropFilter: 'blur(8px)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000
+    zIndex: 1000,
+    animation: 'fadeIn 0.3s ease-out'
   },
   modal: {
     backgroundColor: 'white',
-    borderRadius: '16px',
-    padding: '2rem',
-    maxWidth: '500px',
+    borderRadius: '20px',
+    maxWidth: '540px',
     width: '90%',
-    boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+    boxShadow: '0 24px 60px rgba(0,0,0,0.2)',
+    overflow: 'hidden',
+    animation: 'slideUp 0.4s ease-out'
+  },
+  modalHeader: {
+    padding: '2rem 2rem 1.5rem',
+    textAlign: 'center',
+    borderBottom: '1px solid #e2e8f0'
+  },
+  modalIconContainer: {
+    width: '64px',
+    height: '64px',
+    margin: '0 auto 1rem',
+    backgroundColor: '#eff6ff',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  modalIcon: {
+    fontSize: '2rem'
   },
   modalTitle: {
     fontSize: '1.5rem',
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#0a1a2f',
-    marginBottom: '1rem'
+    marginBottom: '0.5rem'
   },
-  modalText: {
+  modalSubtitle: {
     fontSize: '0.9rem',
     color: '#64748b',
-    marginBottom: '1.5rem',
     lineHeight: '1.5'
+  },
+  modalBody: {
+    padding: '2rem'
+  },
+  emailNotice: {
+    backgroundColor: '#f8fafc',
+    borderRadius: '12px',
+    padding: '1.5rem',
+    marginBottom: '2rem',
+    border: '1px solid #e2e8f0'
+  },
+  emailNoticeText: {
+    fontSize: '0.875rem',
+    color: '#64748b',
+    marginBottom: '0.5rem'
+  },
+  emailAddress: {
+    fontSize: '1rem',
+    fontWeight: '600',
+    color: '#1e40af',
+    marginBottom: '0.75rem',
+    wordBreak: 'break-all'
+  },
+  emailHint: {
+    fontSize: '0.8rem',
+    color: '#94a3b8',
+    fontStyle: 'italic'
+  },
+  codeInputContainer: {
+    marginBottom: '1.5rem'
+  },
+  codeLabel: {
+    display: 'block',
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: '0.75rem'
   },
   verificationInput: {
     width: '100%',
     padding: '1rem',
     border: '2px solid #e2e8f0',
     borderRadius: '12px',
-    fontSize: '1.5rem',
+    fontSize: '1.75rem',
     textAlign: 'center',
-    letterSpacing: '0.5rem',
-    fontWeight: 'bold',
-    marginBottom: '1.5rem',
-    boxSizing: 'border-box'
+    letterSpacing: '0.75rem',
+    fontWeight: '700',
+    color: '#0a1a2f',
+    boxSizing: 'border-box',
+    transition: 'all 0.3s',
+    outline: 'none'
   },
-  modalButtons: {
+  codeHint: {
+    fontSize: '0.75rem',
+    color: '#94a3b8',
+    marginTop: '0.5rem',
+    textAlign: 'center'
+  },
+  resendContainer: {
+    textAlign: 'center',
+    padding: '1rem',
+    backgroundColor: '#fffbeb',
+    borderRadius: '8px',
+    border: '1px solid #fef3c7'
+  },
+  resendText: {
+    fontSize: '0.875rem',
+    color: '#92400e',
+    marginBottom: '0.5rem'
+  },
+  resendButton: {
+    background: 'none',
+    border: 'none',
+    color: '#1e40af',
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    textDecoration: 'underline',
+    padding: '0.25rem 0.5rem'
+  },
+  modalFooter: {
     display: 'flex',
-    gap: '1rem'
+    gap: '1rem',
+    padding: '1.5rem 2rem 2rem',
+    backgroundColor: '#f8fafc',
+    borderTop: '1px solid #e2e8f0'
   },
   cancelButton: {
     flex: 1,
-    padding: '0.875rem',
-    backgroundColor: '#f1f5f9',
-    color: '#0a1a2f',
-    border: 'none',
+    padding: '1rem',
+    backgroundColor: 'white',
+    color: '#64748b',
+    border: '2px solid #e2e8f0',
     borderRadius: '12px',
-    fontSize: '0.9rem',
+    fontSize: '0.95rem',
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.3s'
   },
   confirmButton: {
     flex: 1,
-    padding: '0.875rem',
+    padding: '1rem',
     backgroundColor: '#1e40af',
     color: '#ffffff',
     border: 'none',
     borderRadius: '12px',
-    fontSize: '0.9rem',
+    fontSize: '0.95rem',
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.3s',
@@ -1144,6 +1291,11 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     gap: '0.5rem'
+  },
+  confirmButtonDisabled: {
+    backgroundColor: '#cbd5e1',
+    cursor: 'not-allowed',
+    boxShadow: 'none'
   },
   buttonSpinner: {
     width: '16px',
