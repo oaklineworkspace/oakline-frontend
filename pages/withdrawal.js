@@ -119,13 +119,14 @@ export default function Withdrawal() {
 
     switch (withdrawalForm.withdrawal_method) {
       case 'crypto_wallet':
-        fee = 5.00;
+        fee = amount * 0.01; // 1% network fee (minimum $5)
+        fee = Math.max(fee, 5.00);
         break;
       case 'linked_bank':
-        fee = 3.00;
+        fee = 0.00; // Free ACH transfer
         break;
       case 'debit_card':
-        fee = 2.00;
+        fee = amount >= 1000 ? 10.00 : 3.50; // Express: $10, Standard: $3.50
         break;
       default:
         fee = 0;
@@ -427,9 +428,9 @@ export default function Withdrawal() {
 
   const getMethodLabel = (method) => {
     const labels = {
-      crypto_wallet: '💎 Crypto Wallet',
-      linked_bank: '⭐ Linked Bank Account',
-      debit_card: '⭐ Debit Card'
+      crypto_wallet: '💎 Cryptocurrency Wallet',
+      linked_bank: '🏦 Linked Bank Account',
+      debit_card: '💳 Debit Card'
     };
     return labels[method] || method;
   };
@@ -788,7 +789,7 @@ export default function Withdrawal() {
         <main style={styles.main}>
           <h1 style={styles.pageTitle}>💸 Withdrawal Services</h1>
           <p style={styles.pageSubtitle}>
-            Securely withdraw funds to your preferred destination
+            Transfer funds securely to your cryptocurrency wallet, bank account, or debit card
           </p>
 
           {showReceipt && receiptData ? (
@@ -1039,10 +1040,56 @@ export default function Withdrawal() {
                           onChange={(e) => setWithdrawalForm(prev => ({ ...prev, withdrawal_method: e.target.value }))}
                           required
                         >
-                          <option value="crypto_wallet">💎 Withdraw to Crypto Wallet (USDT, BTC, ETH) - Very popular, fast, and global</option>
-                          <option value="linked_bank">⭐ Withdraw to Linked Bank Accounts - Professional & essential for any fintech</option>
-                          <option value="debit_card">⭐ Withdraw to Debit Cards - Popular and convenient</option>
+                          <option value="">Select withdrawal method</option>
+                          <option value="crypto_wallet">💎 Cryptocurrency Wallet - Withdraw to USDT, BTC, ETH & more (Fast & Global)</option>
+                          <option value="linked_bank">🏦 Linked Bank Account - ACH transfer to your verified bank account (1-3 business days)</option>
+                          <option value="debit_card">💳 Debit Card - Instant withdrawal to your linked debit card (Standard or Express)</option>
                         </select>
+                        {withdrawalForm.withdrawal_method && (
+                          <div style={{
+                            marginTop: '0.75rem',
+                            padding: '0.75rem 1rem',
+                            backgroundColor: '#f0f9ff',
+                            borderRadius: '8px',
+                            border: '1px solid #bfdbfe',
+                            fontSize: '0.85rem',
+                            lineHeight: '1.5'
+                          }}>
+                            {withdrawalForm.withdrawal_method === 'crypto_wallet' && (
+                              <>
+                                <strong>💎 Cryptocurrency Withdrawal:</strong>
+                                <ul style={{ margin: '0.5rem 0 0 1.25rem', paddingLeft: 0 }}>
+                                  <li>Supports USDT, BTC, ETH, and other major cryptocurrencies</li>
+                                  <li>Network fee: 1% (minimum $5.00)</li>
+                                  <li>Processing time: 10-30 minutes after network confirmation</li>
+                                  <li>You can link a new wallet or use an existing one</li>
+                                </ul>
+                              </>
+                            )}
+                            {withdrawalForm.withdrawal_method === 'linked_bank' && (
+                              <>
+                                <strong>🏦 Bank Account Withdrawal:</strong>
+                                <ul style={{ margin: '0.5rem 0 0 1.25rem', paddingLeft: 0 }}>
+                                  <li>Free ACH transfer to your verified bank account</li>
+                                  <li>Processing time: 1-3 business days</li>
+                                  <li>You can link a new bank account or use an existing one</li>
+                                  <li>Bank account must be in your name</li>
+                                </ul>
+                              </>
+                            )}
+                            {withdrawalForm.withdrawal_method === 'debit_card' && (
+                              <>
+                                <strong>💳 Debit Card Withdrawal:</strong>
+                                <ul style={{ margin: '0.5rem 0 0 1.25rem', paddingLeft: 0 }}>
+                                  <li>Standard: $3.50 fee, 2-5 business days</li>
+                                  <li>Express (for amounts ≥ $1,000): $10.00 fee, same day</li>
+                                  <li>You can link a new card or use an existing one</li>
+                                  <li>Card must be a debit card (Visa, Mastercard, or Discover)</li>
+                                </ul>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <div style={styles.formGroup}>

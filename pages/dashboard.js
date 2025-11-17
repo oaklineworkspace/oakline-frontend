@@ -2281,13 +2281,15 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '1.5rem',
-    gap: '2rem'
+    gap: '2rem',
+    flexWrap: 'wrap'
   },
   summaryHeaderLeft: {
     display: 'flex',
     alignItems: 'center',
     gap: '1rem',
-    flex: 1
+    flex: 1,
+    minWidth: '200px'
   },
   sectionTitle: {
     fontSize: '1.7rem',
@@ -2299,7 +2301,9 @@ const styles = {
     fontSize: '0.9rem',
     color: '#64748b',
     whiteSpace: 'nowrap',
-    marginLeft: 'auto'
+    marginLeft: 'auto',
+    textAlign: 'right',
+    minWidth: '150px'
   },
   summaryCards: {
     display: 'grid',
