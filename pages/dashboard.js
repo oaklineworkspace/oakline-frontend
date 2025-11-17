@@ -848,25 +848,17 @@ function DashboardContent() {
 
           <div style={styles.headerRight}>
             <div style={styles.userSection}>
-              {userProfile?.profile_picture && (
-                <img 
-                  src={userProfile.profile_picture} 
-                  alt="Profile" 
-                  style={styles.profilePicture}
-                />
-              )}
-              {!userProfile?.profile_picture && (
-                <div style={styles.profilePlaceholder}>
-                  <span style={styles.profilePlaceholderText}>
-                    {userProfile ? 
-                      `${userProfile.first_name?.[0] || ''}${userProfile.last_name?.[0] || ''}`.toUpperCase() || '?' 
-                      : '?'}
-                  </span>
-                </div>
-              )}
               <div style={styles.userInfo}>
                 <span style={styles.welcomeText}>Welcome back</span>
                 <span style={styles.userName}>{getUserDisplayName()}</span>
+                {userProfile && (
+                  <span style={{
+                    ...styles.accountStatus,
+                    color: userProfile.application_status === 'approved' || userProfile.application_status === 'completed' ? '#10b981' : '#f59e0b'
+                  }}>
+                    {userProfile.application_status === 'approved' || userProfile.application_status === 'completed' ? '✓ Verified' : `Status: ${userProfile.application_status || 'Pending'}`}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -2073,38 +2065,14 @@ const styles = {
   userSection: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.75rem',
+    gap: '0.5rem',
     flexShrink: 0
-  },
-  profilePicture: {
-    width: '45px',
-    height: '45px',
-    borderRadius: '50%',
-    objectFit: 'cover',
-    border: '2px solid rgba(255, 255, 255, 0.3)',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-  },
-  profilePlaceholder: {
-    width: '45px',
-    height: '45px',
-    borderRadius: '50%',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    border: '2px solid rgba(255, 255, 255, 0.3)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-  },
-  profilePlaceholderText: {
-    fontSize: '16px',
-    fontWeight: 'bold',
-    color: 'white'
   },
   userInfo: {
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'flex-start',
-    textAlign: 'left'
+    alignItems: 'center',
+    textAlign: 'center'
   },
   welcomeText: {
     fontSize: '0.8rem',
@@ -2114,6 +2082,11 @@ const styles = {
     fontSize: '1rem',
     fontWeight: '600',
     color: 'white'
+  },
+  accountStatus: {
+    fontSize: '0.75rem',
+    fontWeight: '600',
+    marginTop: '0.25rem'
   },
 
   logoutButton: {
