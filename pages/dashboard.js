@@ -1115,7 +1115,6 @@ function DashboardContent() {
                   }
                 };
 
-                const status = tx.status || 'completed';
                 const statusColors = getStatusColor(status);
 
                 return (
