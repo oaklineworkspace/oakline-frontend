@@ -2,18 +2,27 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 
 export default function AccountTypes() {
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [accountTypes, setAccountTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
+    checkUser();
     fetchAccountTypes();
   }, []);
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+  };
 
   const fetchAccountTypes = async () => {
     try {
@@ -248,8 +257,11 @@ export default function AccountTypes() {
                       </div>
                     )}
 
-                    <Link href="/apply" style={styles.applyButton}>
-                      Apply Now
+                    <Link 
+                      href={user ? "/request-account" : "/apply"} 
+                      style={styles.applyButton}
+                    >
+                      {user ? 'Request Account' : 'Apply Now'}
                     </Link>
                   </div>
                 );

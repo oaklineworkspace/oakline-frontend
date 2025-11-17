@@ -1219,15 +1219,18 @@ export default function WireTransferPage() {
         select:focus,
         textarea:focus {
           border-color: #3b82f6 !important;
-          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 2px 8px rgba(59, 130, 246, 0.2) !important;
+          box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.12), 0 4px 16px rgba(59, 130, 246, 0.15) !important;
           background-color: #ffffff !important;
-          transform: translateY(-1px);
+          transform: translateY(-2px);
+          outline: none;
         }
         
-        input:hover,
-        select:hover {
-          border-color: #93c5fd !important;
-          background-color: #ffffff !important;
+        input:hover:not(:focus),
+        select:hover:not(:focus) {
+          border-color: #94a3b8 !important;
+          background-color: #f8fafc !important;
+          transform: translateY(-1px);
+          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06) !important;
         }
         
         input::placeholder {
@@ -1458,8 +1461,9 @@ const styles = {
     fontWeight: '500'
   },
   formGroup: {
-    marginBottom: '1.75rem',
-    flex: 1
+    marginBottom: '1.875rem',
+    flex: 1,
+    position: 'relative'
   },
   formRow: {
     display: 'flex',
@@ -1468,12 +1472,15 @@ const styles = {
   },
   label: {
     display: 'block',
-    marginBottom: '0.75rem',
-    fontSize: '0.95rem',
+    marginBottom: '0.875rem',
+    fontSize: '0.975rem',
     fontWeight: '700',
-    color: '#1e293b',
+    color: '#0f172a',
     letterSpacing: '-0.01em',
-    textTransform: 'capitalize'
+    textTransform: 'capitalize',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem'
   },
   required: {
     color: '#ef4444',
@@ -1482,41 +1489,42 @@ const styles = {
   },
   modernInput: {
     width: '100%',
-    padding: '1.125rem 1.5rem',
-    fontSize: '1rem',
-    border: '2px solid #e2e8f0',
-    borderRadius: '14px',
-    backgroundColor: '#f8fafc',
+    padding: '1.25rem 1.75rem',
+    fontSize: '1.05rem',
+    border: '2.5px solid #cbd5e1',
+    borderRadius: '16px',
+    backgroundColor: '#ffffff',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     fontFamily: 'inherit',
     boxSizing: 'border-box',
     outline: 'none',
-    color: '#1e293b',
+    color: '#0f172a',
     fontWeight: '500',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 2px rgba(0, 0, 0, 0.02)',
     WebkitAppearance: 'none',
     MozAppearance: 'none',
-    appearance: 'none'
+    appearance: 'none',
+    position: 'relative'
   },
   modernSelect: {
     width: '100%',
-    padding: '1.125rem 1.5rem',
-    fontSize: '1rem',
-    border: '2px solid #e2e8f0',
-    borderRadius: '14px',
-    backgroundColor: '#f8fafc',
+    padding: '1.25rem 1.75rem',
+    fontSize: '1.05rem',
+    border: '2.5px solid #cbd5e1',
+    borderRadius: '16px',
+    backgroundColor: '#ffffff',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     cursor: 'pointer',
     fontFamily: 'inherit',
     boxSizing: 'border-box',
-    color: '#1e293b',
+    color: '#0f172a',
     fontWeight: '500',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-    backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23475569\' d=\'M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z\'/%3E%3C/svg%3E")',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 2px rgba(0, 0, 0, 0.02)',
+    backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'14\' height=\'14\' viewBox=\'0 0 14 14\'%3E%3Cpath fill=\'%233b82f6\' d=\'M11.293 4.293L7 8.586 2.707 4.293A1 1 0 001.293 5.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z\'/%3E%3C/svg%3E")',
     backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 1.25rem center',
-    backgroundSize: '14px',
-    paddingRight: '3rem',
+    backgroundPosition: 'right 1.5rem center',
+    backgroundSize: '16px',
+    paddingRight: '3.5rem',
     WebkitAppearance: 'none',
     MozAppearance: 'none',
     appearance: 'none'
