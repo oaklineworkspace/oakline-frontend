@@ -872,22 +872,24 @@ function DashboardContent() {
           <div style={styles.summaryHeader}>
             <div style={styles.summaryHeaderLeft}>
               <h2 style={styles.sectionTitle}>Account Summary</h2>
-              {userProfile?.profile_picture && (
-                <img 
-                  src={userProfile.profile_picture} 
-                  alt="Profile" 
-                  style={styles.profilePictureInSummary}
-                />
-              )}
-              {!userProfile?.profile_picture && (
-                <div style={styles.profilePlaceholderInSummary}>
-                  <span style={styles.profilePlaceholderText}>
-                    {userProfile ? 
-                      `${userProfile.first_name?.[0] || ''}${userProfile.last_name?.[0] || ''}`.toUpperCase() || '?' 
-                      : '?'}
-                  </span>
-                </div>
-              )}
+              <div>
+                {userProfile?.profile_picture && (
+                  <img 
+                    src={userProfile.profile_picture} 
+                    alt="Profile" 
+                    style={styles.profilePictureInSummary}
+                  />
+                )}
+                {!userProfile?.profile_picture && (
+                  <div style={styles.profilePlaceholderInSummary}>
+                    <span style={styles.profilePlaceholderText}>
+                      {userProfile ? 
+                        `${userProfile.first_name?.[0] || ''}${userProfile.last_name?.[0] || ''}`.toUpperCase() || '?' 
+                        : '?'}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
             <span style={styles.lastUpdated}>Last updated: {new Date().toLocaleDateString()}</span>
           </div>
@@ -2287,10 +2289,10 @@ const styles = {
   summaryHeaderLeft: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: '1.5rem',
     flex: 1,
-    minWidth: '250px',
-    paddingTop: '0.5rem'
+    minWidth: '250px'
   },
   sectionTitle: {
     fontSize: '1.7rem',
