@@ -1719,38 +1719,38 @@ export default function WireTransferPage() {
                   {sendingCode ? 'Resending...' : 'Resend Code'}
                 </button>
               </div>
-            </div>
 
-            <div style={styles.modalFooter}>
-              <div style={styles.modalButtons}>
-                <button
-                  style={styles.cancelButton}
-                  onClick={() => setShowVerificationModal(false)}
-                  disabled={processing}
-                >
-                  Cancel
-                </button>
-                <button
-                  style={{
-                    ...styles.confirmButton,
-                    opacity: (processing || verificationCode.length !== 6) ? 0.5 : 1,
-                    cursor: (processing || verificationCode.length !== 6) ? 'not-allowed' : 'pointer'
-                  }}
-                  onClick={completeWireTransfer}
-                  disabled={processing || verificationCode.length !== 6}
-                >
-                  {processing ? (
-                    <>
-                      <span>🔄</span>
-                      <span>Processing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>✓</span>
-                      <span>Verify & Submit</span>
-                    </>
-                  )}
-                </button>
+              <div style={{ marginTop: '1.5rem' }}>
+                <div style={styles.modalButtons}>
+                  <button
+                    style={styles.cancelButton}
+                    onClick={() => setShowVerificationModal(false)}
+                    disabled={processing}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    style={{
+                      ...styles.confirmButton,
+                      opacity: (processing || verificationCode.length !== 6) ? 0.5 : 1,
+                      cursor: (processing || verificationCode.length !== 6) ? 'not-allowed' : 'pointer'
+                    }}
+                    onClick={completeWireTransfer}
+                    disabled={processing || verificationCode.length !== 6}
+                  >
+                    {processing ? (
+                      <>
+                        <span>🔄</span>
+                        <span>Processing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>✓</span>
+                        <span>Verify & Submit</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
