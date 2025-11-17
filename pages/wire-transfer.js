@@ -655,10 +655,10 @@ export default function WireTransferPage() {
       width: '22px',
       height: '22px',
       cursor: 'pointer',
-      accentColor: '#f59e0b',
+      accentColor: '#1e40af',
       flexShrink: 0,
-      border: '2px solid #f59e0b',
-      borderRadius: '4px'
+      appearance: 'auto',
+      WebkitAppearance: 'checkbox'
     },
     urgentLabelContent: {
       display: 'flex',
@@ -1023,6 +1023,26 @@ export default function WireTransferPage() {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        
+        input[type="checkbox"] {
+          appearance: auto;
+          -webkit-appearance: checkbox;
+          width: 22px;
+          height: 22px;
+          cursor: pointer;
+          accent-color: #1e40af;
+          border: 2px solid #1e40af;
+          border-radius: 4px;
+        }
+        
+        input[type="checkbox"]:checked {
+          background-color: #1e40af;
+          border-color: #1e40af;
+        }
+        
+        input[type="checkbox"]:hover {
+          border-color: #1e3a8a;
         }
       `}</style>
 
