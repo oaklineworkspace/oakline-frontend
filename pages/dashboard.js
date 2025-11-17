@@ -2279,9 +2279,9 @@ const styles = {
   summaryHeader: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: '1.5rem',
-    gap: '2rem',
+    gap: '1rem',
     flexWrap: 'wrap'
   },
   summaryHeaderLeft: {
@@ -2289,7 +2289,7 @@ const styles = {
     alignItems: 'center',
     gap: '1rem',
     flex: 1,
-    minWidth: '200px'
+    minWidth: '250px'
   },
   sectionTitle: {
     fontSize: '1.7rem',
@@ -2301,9 +2301,9 @@ const styles = {
     fontSize: '0.9rem',
     color: '#64748b',
     whiteSpace: 'nowrap',
-    marginLeft: 'auto',
     textAlign: 'right',
-    minWidth: '150px'
+    alignSelf: 'flex-start',
+    paddingTop: '0.5rem'
   },
   summaryCards: {
     display: 'grid',
