@@ -2280,12 +2280,14 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '1.5rem'
+    marginBottom: '1.5rem',
+    gap: '2rem'
   },
   summaryHeaderLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1rem'
+    gap: '1rem',
+    flex: 1
   },
   sectionTitle: {
     fontSize: '1.7rem',
@@ -2295,7 +2297,9 @@ const styles = {
   },
   lastUpdated: {
     fontSize: '0.9rem',
-    color: '#64748b'
+    color: '#64748b',
+    whiteSpace: 'nowrap',
+    marginLeft: 'auto'
   },
   summaryCards: {
     display: 'grid',
