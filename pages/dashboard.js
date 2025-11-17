@@ -848,6 +848,22 @@ function DashboardContent() {
 
           <div style={styles.headerRight}>
             <div style={styles.userSection}>
+              {userProfile?.profile_picture && (
+                <img 
+                  src={userProfile.profile_picture} 
+                  alt="Profile" 
+                  style={styles.profilePicture}
+                />
+              )}
+              {!userProfile?.profile_picture && (
+                <div style={styles.profilePlaceholder}>
+                  <span style={styles.profilePlaceholderText}>
+                    {userProfile ? 
+                      `${userProfile.first_name?.[0] || ''}${userProfile.last_name?.[0] || ''}`.toUpperCase() || '?' 
+                      : '?'}
+                  </span>
+                </div>
+              )}
               <div style={styles.userInfo}>
                 <span style={styles.welcomeText}>Welcome back</span>
                 <span style={styles.userName}>{getUserDisplayName()}</span>
@@ -2065,14 +2081,38 @@ const styles = {
   userSection: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
+    gap: '0.75rem',
     flexShrink: 0
+  },
+  profilePicture: {
+    width: '50px',
+    height: '50px',
+    borderRadius: '50%',
+    objectFit: 'cover',
+    border: '2px solid #059669',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+  },
+  profilePlaceholder: {
+    width: '50px',
+    height: '50px',
+    borderRadius: '50%',
+    backgroundColor: '#059669',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: '2px solid #047857',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+  },
+  profilePlaceholderText: {
+    color: 'white',
+    fontSize: '1.2rem',
+    fontWeight: 'bold'
   },
   userInfo: {
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    textAlign: 'center'
+    alignItems: 'flex-start',
+    textAlign: 'left'
   },
   welcomeText: {
     fontSize: '0.8rem',
