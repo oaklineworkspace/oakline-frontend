@@ -321,9 +321,9 @@ export default function TransactionsHistory() {
       case 'failed':
         return { bg: '#fee2e2', color: '#b91c1c', fontWeight: '700' };
       case 'cancelled':
-        return { bg: '#e5e7eb', color: '#374151', fontWeight: '600' };
+        return { bg: '#e5e7eb', color: '#6b7280', fontWeight: '600' };
       case 'reversed':
-        return { bg: '#ddd6fe', color: '#6d28d9', fontWeight: '600' };
+        return { bg: '#e5e7eb', color: '#6b7280', fontWeight: '600' };
       default:
         return { bg: '#e0e7ff', color: '#4338ca', fontWeight: '600' };
     }
@@ -508,7 +508,9 @@ export default function TransactionsHistory() {
                   <div style={styles.transactionRight}>
                     <div style={{
                       ...styles.transactionAmount,
-                      color: status?.toLowerCase() === 'pending' ? '#d97706' : 
+                      color: status?.toLowerCase() === 'pending' ? '#d97706' :
+                             status?.toLowerCase() === 'cancelled' ? '#6b7280' :
+                             status?.toLowerCase() === 'reversed' ? '#6b7280' :
                              (isCredit ? '#047857' : '#b91c1c'),
                       fontWeight: '700'
                     }}>

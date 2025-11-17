@@ -1089,6 +1089,8 @@ function DashboardContent() {
                       return { bg: '#fee2e2', color: '#dc2626' };
                     case 'cancelled':
                       return { bg: '#f3f4f6', color: '#6b7280' };
+                    case 'reversed':
+                      return { bg: '#f3f4f6', color: '#6b7280' };
                     default:
                       return { bg: '#e0e7ff', color: '#4f46e5' };
                   }
@@ -1151,7 +1153,9 @@ function DashboardContent() {
                     <div style={styles.transactionRight}>
                       <div style={{
                         ...styles.transactionAmount,
-                        color: status?.toLowerCase() === 'pending' ? '#f59e0b' : 
+                        color: status?.toLowerCase() === 'pending' ? '#f59e0b' :
+                               status?.toLowerCase() === 'cancelled' ? '#6b7280' :
+                               status?.toLowerCase() === 'reversed' ? '#6b7280' :
                                (isCredit ? '#059669' : '#dc2626')
                       }}>
                         {isCredit ? '+' : '-'}
