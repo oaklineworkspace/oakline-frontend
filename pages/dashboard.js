@@ -870,23 +870,25 @@ function DashboardContent() {
         {/* Account Summary Section */}
         <section style={styles.summarySection}>
           <div style={styles.summaryHeader}>
-            <h2 style={styles.sectionTitle}>Account Summary</h2>
-            {userProfile?.profile_picture && (
-              <img 
-                src={userProfile.profile_picture} 
-                alt="Profile" 
-                style={styles.profilePictureInSummary}
-              />
-            )}
-            {!userProfile?.profile_picture && (
-              <div style={styles.profilePlaceholderInSummary}>
-                <span style={styles.profilePlaceholderText}>
-                  {userProfile ? 
-                    `${userProfile.first_name?.[0] || ''}${userProfile.last_name?.[0] || ''}`.toUpperCase() || '?' 
-                    : '?'}
-                </span>
-              </div>
-            )}
+            <div style={styles.summaryHeaderLeft}>
+              <h2 style={styles.sectionTitle}>Account Summary</h2>
+              {userProfile?.profile_picture && (
+                <img 
+                  src={userProfile.profile_picture} 
+                  alt="Profile" 
+                  style={styles.profilePictureInSummary}
+                />
+              )}
+              {!userProfile?.profile_picture && (
+                <div style={styles.profilePlaceholderInSummary}>
+                  <span style={styles.profilePlaceholderText}>
+                    {userProfile ? 
+                      `${userProfile.first_name?.[0] || ''}${userProfile.last_name?.[0] || ''}`.toUpperCase() || '?' 
+                      : '?'}
+                  </span>
+                </div>
+              )}
+            </div>
             <span style={styles.lastUpdated}>Last updated: {new Date().toLocaleDateString()}</span>
           </div>
 
@@ -2279,6 +2281,11 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '1.5rem'
+  },
+  summaryHeaderLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem'
   },
   sectionTitle: {
     fontSize: '1.7rem',

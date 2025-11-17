@@ -19,7 +19,7 @@ export default function Withdrawal() {
 
   const [withdrawalForm, setWithdrawalForm] = useState({
     from_account_id: '',
-    withdrawal_method: 'internal_transfer',
+    withdrawal_method: 'crypto_wallet',
     amount: '',
     recipient_name: '',
     recipient_account_number: '',
@@ -118,17 +118,11 @@ export default function Withdrawal() {
     let fee = 0;
 
     switch (withdrawalForm.withdrawal_method) {
-      case 'internal_transfer':
-        fee = 0;
+      case 'crypto_wallet':
+        fee = 5.00;
         break;
-      case 'external_ach':
+      case 'linked_bank':
         fee = 3.00;
-        break;
-      case 'wire_domestic':
-        fee = 25.00;
-        break;
-      case 'wire_international':
-        fee = 45.00;
         break;
       case 'debit_card':
         fee = 2.00;
@@ -185,56 +179,37 @@ export default function Withdrawal() {
             swift_code, iban, recipient_bank, recipient_address } = withdrawalForm;
 
     switch (withdrawal_method) {
-      case 'internal_transfer':
+      case 'crypto_wallet':
         if (!recipient_account_number) {
-          showMessage('Please enter the recipient account number', 'error');
+          showMessage('Please enter the crypto wallet address', 'error');
           return false;
         }
-        if (recipient_account_number.length < 10) {
-          showMessage('Please enter a valid account number', 'error');
+        if (recipient_account_number.length < 26) {
+          showMessage('Please enter a valid wallet address', 'error');
           return false;
         }
         break;
 
-      case 'external_ach':
+      case 'linked_bank':
         if (!recipient_name || !recipient_account_number || !routing_number || !recipient_bank) {
-          showMessage('Please fill in all required ACH transfer details', 'error');
+          showMessage('Please fill in all required bank account details', 'error');
           return false;
         }
         if (routing_number.length !== 9) {
           showMessage('Routing number must be 9 digits', 'error');
-          return false;
-        }
-        break;
-
-      case 'wire_domestic':
-        if (!recipient_name || !recipient_account_number || !routing_number || !recipient_bank || !recipient_address) {
-          showMessage('Please fill in all required wire transfer details', 'error');
-          return false;
-        }
-        if (routing_number.length !== 9) {
-          showMessage('Routing number must be 9 digits', 'error');
-          return false;
-        }
-        break;
-
-      case 'wire_international':
-        if (!recipient_name || !swift_code || !iban || !recipient_bank || !recipient_address) {
-          showMessage('Please fill in all required international wire details', 'error');
-          return false;
-        }
-        if (swift_code.length < 8 || swift_code.length > 11) {
-          showMessage('SWIFT code must be 8-11 characters', 'error');
           return false;
         }
         break;
 
       case 'debit_card':
-        if (!recipient_name || !recipient_account_number || !recipient_bank) {
-          showMessage('Please fill in all required Debit Card details', 'error');
+        if (!recipient_name || !recipient_account_number) {
+          showMessage('Please fill in all required card details', 'error');
           return false;
         }
-        // Add more debit card specific validations if needed
+        if (recipient_account_number.length < 13 || recipient_account_number.length > 19) {
+          showMessage('Please enter a valid card number', 'error');
+          return false;
+        }
         break;
 
       default:
@@ -323,17 +298,11 @@ export default function Withdrawal() {
 
       let withdrawalDescription = '';
       switch (withdrawalForm.withdrawal_method) {
-        case 'internal_transfer':
-          withdrawalDescription = `Internal transfer to ${withdrawalForm.recipient_account_number}`;
+        case 'crypto_wallet':
+          withdrawalDescription = `Crypto wallet withdrawal to ${withdrawalForm.recipient_account_number.substring(0, 8)}...${withdrawalForm.recipient_account_number.substring(withdrawalForm.recipient_account_number.length - 6)}`;
           break;
-        case 'external_ach':
-          withdrawalDescription = `ACH transfer to ${withdrawalForm.recipient_name} at ${withdrawalForm.recipient_bank}`;
-          break;
-        case 'wire_domestic':
-          withdrawalDescription = `Domestic wire to ${withdrawalForm.recipient_name} at ${withdrawalForm.recipient_bank}`;
-          break;
-        case 'wire_international':
-          withdrawalDescription = `International wire to ${withdrawalForm.recipient_name} at ${withdrawalForm.recipient_bank}`;
+        case 'linked_bank':
+          withdrawalDescription = `Bank transfer to ${withdrawalForm.recipient_name} at ${withdrawalForm.recipient_bank}`;
           break;
         case 'debit_card':
           withdrawalDescription = `Debit card withdrawal to ${withdrawalForm.recipient_name}`;
@@ -424,7 +393,7 @@ export default function Withdrawal() {
     setGeneratedCode('');
     setWithdrawalForm({
       from_account_id: accounts[0]?.id || '',
-      withdrawal_method: 'internal_transfer',
+      withdrawal_method: 'crypto_wallet',
       amount: '',
       recipient_name: '',
       recipient_account_number: '',
@@ -458,11 +427,9 @@ export default function Withdrawal() {
 
   const getMethodLabel = (method) => {
     const labels = {
-      internal_transfer: '🏦 Internal Transfer',
-      external_ach: '🔄 External ACH',
-      wire_domestic: '📡 Domestic Wire',
-      wire_international: '🌍 International Wire',
-      debit_card: '💳 Debit Card Withdrawal'
+      crypto_wallet: '💎 Crypto Wallet',
+      linked_bank: '⭐ Linked Bank Account',
+      debit_card: '⭐ Debit Card'
     };
     return labels[method] || method;
   };
@@ -1072,11 +1039,9 @@ export default function Withdrawal() {
                           onChange={(e) => setWithdrawalForm(prev => ({ ...prev, withdrawal_method: e.target.value }))}
                           required
                         >
-                          <option value="internal_transfer">🏦 Internal Transfer (Free)</option>
-                          <option value="external_ach">🔄 External ACH Transfer ($3.00 fee)</option>
-                          <option value="wire_domestic">📡 Domestic Wire ($25.00 fee)</option>
-                          <option value="wire_international">🌍 International Wire ($45.00 fee)</option>
-                          <option value="debit_card">💳 Debit Card Withdrawal ($2.00 fee)</option>
+                          <option value="crypto_wallet">💎 Withdraw to Crypto Wallet (USDT, BTC, ETH) - Very popular, fast, and global</option>
+                          <option value="linked_bank">⭐ Withdraw to Linked Bank Accounts - Professional & essential for any fintech</option>
+                          <option value="debit_card">⭐ Withdraw to Debit Cards - Popular and convenient</option>
                         </select>
                       </div>
 
@@ -1136,219 +1101,103 @@ export default function Withdrawal() {
 
                   {currentStep === 2 && (
                     <>
-                      {withdrawalForm.withdrawal_method === 'internal_transfer' && (
+                      {withdrawalForm.withdrawal_method === 'crypto_wallet' && (
                         <>
                           <div style={styles.formGroup}>
-                            <label style={styles.label}>Recipient Account Number *</label>
+                            <label style={styles.label}>Crypto Wallet Address *</label>
                             <input
                               type="text"
                               style={styles.input}
                               value={withdrawalForm.recipient_account_number}
                               onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_account_number: e.target.value }))}
-                              placeholder="Enter Oakline Bank account number"
+                              placeholder="Enter USDT, BTC, or ETH wallet address"
                               required
                             />
+                            <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>
+                              Please double-check the wallet address. Transactions to crypto wallets are irreversible.
+                            </p>
                           </div>
                           <div style={styles.formGroup}>
-                            <label style={styles.label}>Recipient Name (Optional)</label>
-                            <input
-                              type="text"
-                              style={styles.input}
-                              value={withdrawalForm.recipient_name}
-                              onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_name: e.target.value }))}
-                              placeholder="For reference only"
-                            />
-                          </div>
-                        </>
-                      )}
-
-                      {withdrawalForm.withdrawal_method === 'external_ach' && (
-                        <>
-                          <div style={styles.formGrid}>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>Recipient Full Name *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.recipient_name}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_name: e.target.value }))}
-                                placeholder="Full name on account"
-                                required
-                              />
-                            </div>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>Bank Name *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.recipient_bank}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_bank: e.target.value }))}
-                                placeholder="Bank name"
-                                required
-                              />
-                            </div>
-                          </div>
-                          <div style={styles.formGrid}>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>Routing Number *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.routing_number}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, routing_number: e.target.value.replace(/\D/g, '').slice(0, 9) }))}
-                                placeholder="123456789"
-                                maxLength="9"
-                                required
-                              />
-                            </div>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>Account Number *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.recipient_account_number}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_account_number: e.target.value }))}
-                                placeholder="Account number"
-                                required
-                              />
-                            </div>
-                          </div>
-                        </>
-                      )}
-
-                      {withdrawalForm.withdrawal_method === 'wire_domestic' && (
-                        <>
-                          <div style={styles.formGrid}>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>Recipient Full Name *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.recipient_name}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_name: e.target.value }))}
-                                placeholder="Full name on account"
-                                required
-                              />
-                            </div>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>Bank Name *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.recipient_bank}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_bank: e.target.value }))}
-                                placeholder="Bank name"
-                                required
-                              />
-                            </div>
-                          </div>
-                          <div style={styles.formGrid}>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>Routing Number *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.routing_number}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, routing_number: e.target.value.replace(/\D/g, '').slice(0, 9) }))}
-                                placeholder="123456789"
-                                maxLength="9"
-                                required
-                              />
-                            </div>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>Account Number *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.recipient_account_number}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_account_number: e.target.value }))}
-                                placeholder="Account number"
-                                required
-                              />
-                            </div>
-                          </div>
-                          <div style={styles.formGroup}>
-                            <label style={styles.label}>Recipient Address *</label>
-                            <textarea
-                              style={{ ...styles.input, minHeight: '80px', resize: 'vertical' }}
-                              value={withdrawalForm.recipient_address}
-                              onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_address: e.target.value }))}
-                              placeholder="Complete address"
-                              required
-                            />
-                          </div>
-                        </>
-                      )}
-
-                      {withdrawalForm.withdrawal_method === 'wire_international' && (
-                        <>
-                          <div style={styles.formGrid}>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>Recipient Full Name *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.recipient_name}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_name: e.target.value }))}
-                                placeholder="Full name on account"
-                                required
-                              />
-                            </div>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>Bank Name *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.recipient_bank}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_bank: e.target.value }))}
-                                placeholder="Bank name"
-                                required
-                              />
-                            </div>
-                          </div>
-                          <div style={styles.formGrid}>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>SWIFT Code *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.swift_code}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, swift_code: e.target.value.toUpperCase().slice(0, 11) }))}
-                                placeholder="ABCDUS33XXX"
-                                required
-                              />
-                            </div>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>IBAN *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.iban}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, iban: e.target.value.toUpperCase() }))}
-                                placeholder="International Bank Account Number"
-                                required
-                              />
-                            </div>
-                          </div>
-                          <div style={styles.formGroup}>
-                            <label style={styles.label}>Bank Address *</label>
-                            <textarea
-                              style={{ ...styles.input, minHeight: '80px', resize: 'vertical' }}
-                              value={withdrawalForm.recipient_address}
-                              onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_address: e.target.value }))}
-                              placeholder="Complete bank address"
-                              required
-                            />
-                          </div>
-                          <div style={styles.formGroup}>
-                            <label style={styles.label}>Purpose of Transfer</label>
-                            <input
-                              type="text"
-                              style={styles.input}
+                            <label style={styles.label}>Cryptocurrency Type *</label>
+                            <select
+                              style={styles.select}
                               value={withdrawalForm.purpose}
                               onChange={(e) => setWithdrawalForm(prev => ({ ...prev, purpose: e.target.value }))}
-                              placeholder="e.g., Personal transfer, Investment"
-                            />
+                              required
+                            >
+                              <option value="">Select cryptocurrency</option>
+                              <option value="USDT">USDT (Tether)</option>
+                              <option value="BTC">BTC (Bitcoin)</option>
+                              <option value="ETH">ETH (Ethereum)</option>
+                            </select>
+                          </div>
+                          <div style={styles.formGroup}>
+                            <label style={styles.label}>Network *</label>
+                            <select
+                              style={styles.select}
+                              value={withdrawalForm.recipient_name}
+                              onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_name: e.target.value }))}
+                              required
+                            >
+                              <option value="">Select network</option>
+                              <option value="ERC-20">ERC-20 (Ethereum)</option>
+                              <option value="TRC-20">TRC-20 (Tron)</option>
+                              <option value="BEP-20">BEP-20 (BSC)</option>
+                            </select>
+                          </div>
+                        </>
+                      )}
+
+                      {withdrawalForm.withdrawal_method === 'linked_bank' && (
+                        <>
+                          <div style={styles.formGrid}>
+                            <div style={styles.formGroup}>
+                              <label style={styles.label}>Account Holder Name *</label>
+                              <input
+                                type="text"
+                                style={styles.input}
+                                value={withdrawalForm.recipient_name}
+                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_name: e.target.value }))}
+                                placeholder="Full name on account"
+                                required
+                              />
+                            </div>
+                            <div style={styles.formGroup}>
+                              <label style={styles.label}>Bank Name *</label>
+                              <input
+                                type="text"
+                                style={styles.input}
+                                value={withdrawalForm.recipient_bank}
+                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_bank: e.target.value }))}
+                                placeholder="Bank name"
+                                required
+                              />
+                            </div>
+                          </div>
+                          <div style={styles.formGrid}>
+                            <div style={styles.formGroup}>
+                              <label style={styles.label}>Routing Number *</label>
+                              <input
+                                type="text"
+                                style={styles.input}
+                                value={withdrawalForm.routing_number}
+                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, routing_number: e.target.value.replace(/\D/g, '').slice(0, 9) }))}
+                                placeholder="123456789"
+                                maxLength="9"
+                                required
+                              />
+                            </div>
+                            <div style={styles.formGroup}>
+                              <label style={styles.label}>Account Number *</label>
+                              <input
+                                type="text"
+                                style={styles.input}
+                                value={withdrawalForm.recipient_account_number}
+                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_account_number: e.target.value }))}
+                                placeholder="Account number"
+                                required
+                              />
+                            </div>
                           </div>
                         </>
                       )}
@@ -1366,58 +1215,15 @@ export default function Withdrawal() {
                               required
                             />
                           </div>
-                          <div style={styles.formGrid}>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>Debit Card Number *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.recipient_account_number}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_account_number: e.target.value.replace(/\D/g, '').slice(0, 16) }))}
-                                placeholder="16-digit card number"
-                                maxLength="16"
-                                required
-                              />
-                            </div>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>Bank Name *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.recipient_bank}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_bank: e.target.value }))}
-                                placeholder="Issuing bank name"
-                                required
-                              />
-                            </div>
-                          </div>
                           <div style={styles.formGroup}>
-                            <label style={styles.label}>Expiry Date (MM/YY) *</label>
+                            <label style={styles.label}>Debit Card Number *</label>
                             <input
                               type="text"
                               style={styles.input}
-                              placeholder="MM/YY"
-                              maxLength="5"
-                              onChange={(e) => {
-                                const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-                                let formattedValue = value;
-                                if (value.length > 2) {
-                                  formattedValue = `${value.slice(0, 2)}/${value.slice(2, 4)}`;
-                                }
-                                setWithdrawalForm(prev => ({ ...prev, recipient_address: formattedValue })); // Using recipient_address for expiry date temporarily
-                              }}
-                              value={withdrawalForm.recipient_address}
-                              required
-                            />
-                          </div>
-                          <div style={styles.formGroup}>
-                            <label style={styles.label}>CVV *</label>
-                            <input
-                              type="text"
-                              style={styles.input}
-                              placeholder="3-digit CVV"
-                              maxLength="3"
-                              onChange={(e) => setWithdrawalForm(prev => ({ ...prev, purpose: e.target.value }))} // Using purpose for CVV temporarily
+                              value={withdrawalForm.recipient_account_number}
+                              onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_account_number: e.target.value.replace(/\D/g, '').slice(0, 19) }))}
+                              placeholder="Enter 13-19 digit card number"
+                              maxLength="19"
                               required
                             />
                           </div>
