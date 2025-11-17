@@ -638,51 +638,52 @@ export default function WireTransferPage() {
     urgentTransferBox: {
       backgroundColor: '#fef3c7',
       border: '2px solid #fbbf24',
-      borderRadius: '12px',
-      padding: '1rem',
-      marginTop: '0.75rem',
+      borderRadius: '8px',
+      padding: '0.875rem',
+      marginTop: '0.5rem',
       marginBottom: '0.5rem',
       transition: 'all 0.3s ease'
     },
     urgentCheckboxLabel: {
       display: 'flex',
-      alignItems: 'flex-start',
+      alignItems: 'center',
       gap: '0.75rem',
       cursor: 'pointer',
       width: '100%'
     },
     urgentCheckbox: {
-      width: '20px',
-      height: '20px',
+      width: '22px',
+      height: '22px',
       cursor: 'pointer',
-      marginTop: '2px',
       accentColor: '#f59e0b',
-      flexShrink: 0
+      flexShrink: 0,
+      border: '2px solid #f59e0b',
+      borderRadius: '4px'
     },
     urgentLabelContent: {
       display: 'flex',
       flexDirection: 'column',
-      gap: '0.25rem',
+      gap: '0.15rem',
       flex: 1
     },
     urgentLabelText: {
-      fontSize: '0.95rem',
+      fontSize: '0.875rem',
       fontWeight: '700',
       color: '#92400e',
       display: 'block'
     },
     urgentLabelFee: {
-      fontSize: '0.875rem',
+      fontSize: '0.8rem',
       fontWeight: '600',
       color: '#b45309',
       display: 'block'
     },
     urgentLabelDesc: {
-      fontSize: '0.8rem',
+      fontSize: '0.75rem',
       color: '#78350f',
       fontStyle: 'italic',
       display: 'block',
-      marginTop: '0.25rem'
+      marginTop: '0.1rem'
     },
     submitButton: {
       width: '100%',
@@ -811,7 +812,8 @@ export default function WireTransferPage() {
       justifyContent: 'center',
       zIndex: 1000,
       padding: '1rem',
-      backdropFilter: 'blur(8px)'
+      backdropFilter: 'blur(8px)',
+      overflowY: 'auto'
     },
     modal: {
       backgroundColor: 'white',
@@ -823,7 +825,8 @@ export default function WireTransferPage() {
       flexDirection: 'column',
       boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
       border: '2px solid #059669',
-      overflow: 'hidden'
+      overflow: 'auto',
+      margin: 'auto'
     },
     modalHeader: {
       padding: '1.5rem 2rem',
@@ -1400,7 +1403,7 @@ export default function WireTransferPage() {
                     <div style={styles.urgentLabelContent}>
                       <span style={styles.urgentLabelText}>🚀 Urgent Transfer (Priority Processing)</span>
                       <span style={styles.urgentLabelFee}>Additional Fee: +$10.00</span>
-                      <span style={styles.urgentLabelDesc}>Your transfer will be processed within 24 hours</span>
+                      <span style={styles.urgentLabelDesc}>Processed within 24 hours</span>
                     </div>
                   </label>
                 </div>
@@ -1625,7 +1628,28 @@ export default function WireTransferPage() {
         </main>
       </div>
 
-      {showVerificationModal && (
+      {sendingCode && (
+        <div style={styles.modalOverlay}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '3rem 2rem',
+            textAlign: 'center',
+            maxWidth: '400px',
+            width: '100%'
+          }}>
+            <div style={styles.spinner}></div>
+            <h3 style={{ color: '#1a365d', marginTop: '1.5rem', marginBottom: '0.5rem' }}>
+              Sending Verification Code
+            </h3>
+            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
+              Please wait while we send a code to {user?.email}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {showVerificationModal && !sendingCode && (
         <div style={styles.modalOverlay} onClick={(e) => {
           if (!processing) {
             setShowVerificationModal(false);
