@@ -1230,41 +1230,99 @@ export default function WireTransfer() {
                       </div>
 
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>Purpose/Description (Optional)</label>
-                        <input
-                          type="text"
-                          style={styles.input}
+                        <label style={styles.label}>Transfer Purpose *</label>
+                        <select
+                          style={styles.select}
                           value={wireForm.description}
                           onChange={(e) => handleInputChange('description', e.target.value)}
-                          placeholder="e.g., Payment for services, Invoice #12345"
-                          maxLength="100"
-                        />
+                          required
+                        >
+                          <option value="">Select transfer purpose</option>
+                          <option value="Family Support">Family Support</option>
+                          <option value="Business Payment">Business Payment</option>
+                          <option value="Invoice Payment">Invoice Payment</option>
+                          <option value="Property Purchase">Property Purchase</option>
+                          <option value="Rent Payment">Rent Payment</option>
+                          <option value="Loan Payment">Loan Payment</option>
+                          <option value="Educational Expenses">Educational Expenses</option>
+                          <option value="Medical Expenses">Medical Expenses</option>
+                          <option value="Investment">Investment</option>
+                          <option value="Gift">Gift</option>
+                          <option value="Salary Payment">Salary Payment</option>
+                          <option value="Contract Payment">Contract Payment</option>
+                          <option value="Subscription Payment">Subscription Payment</option>
+                          <option value="Insurance Premium">Insurance Premium</option>
+                          <option value="Tax Payment">Tax Payment</option>
+                          <option value="Legal Services">Legal Services</option>
+                          <option value="Consulting Fees">Consulting Fees</option>
+                          <option value="Travel Expenses">Travel Expenses</option>
+                          <option value="Other">Other</option>
+                        </select>
                       </div>
 
-                      <label 
-                        style={{
-                          ...styles.checkboxContainer,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          border: wireForm.urgent_transfer ? '2px solid #059669' : '2px solid #e2e8f0',
-                          backgroundColor: wireForm.urgent_transfer ? '#f0fdf4' : '#ffffff'
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          style={styles.checkbox}
-                          checked={wireForm.urgent_transfer}
-                          onChange={(e) => handleInputChange('urgent_transfer', e.target.checked)}
-                        />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#111827', marginBottom: '0.25rem' }}>
-                            ⚡ Expedited Processing (+$10.00)
-                          </div>
-                          <div style={{ fontSize: '0.8125rem', color: '#6b7280' }}>
-                            {wireForm.transfer_type === 'domestic' ? 'Completed within 2 hours' : 'Completed within 24-48 hours'}
-                          </div>
+                      <div style={{
+                        backgroundColor: '#f0f9ff',
+                        border: '2px solid #3b82f6',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        marginBottom: '1.25rem'
+                      }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#1e40af', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          ⚡ Optional: Expedited Processing Service
                         </div>
-                      </label>
+                        <div style={{ fontSize: '0.875rem', color: '#1e40af', marginBottom: '0.75rem', lineHeight: '1.6' }}>
+                          Select this option if you need your transfer processed faster than standard processing times.
+                        </div>
+                        <label 
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            padding: '1rem',
+                            backgroundColor: wireForm.urgent_transfer ? '#f0fdf4' : '#ffffff',
+                            borderRadius: '10px',
+                            border: wireForm.urgent_transfer ? '2px solid #059669' : '2px solid #cbd5e1',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            boxShadow: wireForm.urgent_transfer ? '0 4px 12px rgba(5, 150, 105, 0.2)' : 'none'
+                          }}
+                        >
+                          <div style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '6px',
+                            border: wireForm.urgent_transfer ? '2px solid #059669' : '2px solid #cbd5e1',
+                            backgroundColor: wireForm.urgent_transfer ? '#059669' : '#ffffff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            transition: 'all 0.2s ease'
+                          }}>
+                            {wireForm.urgent_transfer && (
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            )}
+                          </div>
+                          <input
+                            type="checkbox"
+                            style={{ display: 'none' }}
+                            checked={wireForm.urgent_transfer}
+                            onChange={(e) => handleInputChange('urgent_transfer', e.target.checked)}
+                          />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '1rem', fontWeight: '700', color: '#111827', marginBottom: '0.25rem', letterSpacing: '-0.01em' }}>
+                              ⚡ Expedited Processing (+$10.00)
+                            </div>
+                            <div style={{ fontSize: '0.875rem', color: '#059669', fontWeight: '600' }}>
+                              {wireForm.transfer_type === 'domestic' 
+                                ? '✓ Completed within 2 hours' 
+                                : '✓ Completed within 24-48 hours'}
+                            </div>
+                          </div>
+                        </label>
+                      </div>
 
                       {wireForm.from_account_id && (
                         <div style={styles.balanceInfo}>
