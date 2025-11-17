@@ -284,15 +284,17 @@ export default function TransactionsHistory() {
 
     // For cancelled/reversed transactions, check if it's a refund or reversal
     if (status === 'cancelled' || status === 'reversed') {
-      // If description contains "refund" or "cancelled" with "fraudulent", it's money returned (credit)
-      if (description.includes('refund') || description.includes('fraudulent')) {
+      // If description explicitly says "refund", it's money returned (credit)
+      if (description.includes('refund')) {
         return true;
       }
-      // If it was originally a debit that got cancelled, the refund is a credit
+      // If it's a cancelled transfer without "refund" in description, treat as debit (original attempt)
       if (description.includes('wire transfer cancelled') || 
-          description.includes('transfer cancelled') ||
-          txType === 'debit' || 
-          txType === 'withdrawal') {
+          description.includes('transfer cancelled')) {
+        return false;
+      }
+      // If it was originally a debit/withdrawal that got cancelled, the refund is a credit
+      if (txType === 'debit' || txType === 'withdrawal') {
         return true;
       }
       // Otherwise, treat as debit

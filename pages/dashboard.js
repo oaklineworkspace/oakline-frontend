@@ -1000,15 +1000,17 @@ function DashboardContent() {
 
                 // For cancelled/reversed transactions, check if it's a refund (shows as credit) or a reversal (shows as debit)
                 if (status === 'cancelled' || status === 'reversed') {
-                  // If description contains "refund" or "cancelled" with "fraudulent", it's money returned (credit)
-                  if (description.includes('refund') || description.includes('fraudulent')) {
+                  // If description explicitly says "refund", it's money returned (credit)
+                  if (description.includes('refund')) {
                     isCredit = true;
                   }
-                  // If it was originally a debit that got cancelled, the refund is a credit
+                  // If it's a cancelled transfer without "refund" in description, treat as debit (original attempt)
                   else if (description.includes('wire transfer cancelled') || 
-                           description.includes('transfer cancelled') ||
-                           txType === 'debit' || 
-                           txType === 'withdrawal') {
+                           description.includes('transfer cancelled')) {
+                    isCredit = false;
+                  }
+                  // If it was originally a debit/withdrawal that got cancelled, the refund is a credit
+                  else if (txType === 'debit' || txType === 'withdrawal') {
                     isCredit = true;
                   }
                   // Otherwise, treat as debit
