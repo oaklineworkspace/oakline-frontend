@@ -50,13 +50,15 @@ function LinkDebitCardContent() {
     try {
       const { data, error} = await supabase
         .from('linked_debit_cards')
-        .select('*')
+        .select('id, user_id, cardholder_name, card_number_last4, card_brand, expiry_month, expiry_year, billing_address, billing_city, billing_state, billing_zip, billing_country, bank_name, is_primary, status, created_at, updated_at, card_front_photo, card_back_photo')
         .eq('user_id', user.id)
         .neq('status', 'deleted')
         .order('is_primary', { ascending: false })
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      console.log('Fetched cards:', data); // Debug log to see the data
       setLinkedCards(data || []);
     } catch (error) {
       console.error('Error fetching linked cards:', error);
@@ -1561,7 +1563,7 @@ function LinkDebitCardContent() {
                       <div style={{ flex: 1 }}>
                         <div style={styles.cardSmallLabel}>Cardholder Name</div>
                         <div style={styles.cardholderNameDisplay}>
-                          {card.cardholder_name ? card.cardholder_name.toUpperCase() : 'CARD HOLDER'}
+                          {(card.cardholder_name || 'CARDHOLDER').toUpperCase()}
                         </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
