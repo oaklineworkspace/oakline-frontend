@@ -665,12 +665,13 @@ function LinkDebitCardContent() {
       perspective: '1000px'
     },
     cardFlipWrapper: {
-      width: '420px',
-      height: '250px',
-      maxWidth: '100%',
+      perspective: '1000px',
+      width: '100%',
+      maxWidth: '380px',
+      height: '240px',
       position: 'relative',
       transformStyle: 'preserve-3d',
-      transition: 'transform 0.6s ease',
+      transition: 'transform 0.6s',
       cursor: 'pointer',
       margin: '0 auto'
     },
@@ -769,13 +770,15 @@ function LinkDebitCardContent() {
       boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)'
     },
     cardNumberDisplay: {
-      fontSize: '1.5rem',
-      fontWeight: 'bold',
+      fontSize: '1.4rem',
+      fontWeight: '600',
       letterSpacing: '3px',
-      fontFamily: '"Courier New", monospace',
-      textAlign: 'left',
-      marginBottom: '1rem',
-      textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+      fontFamily: '"Courier New", Courier, monospace',
+      textAlign: 'center',
+      margin: '1rem 0',
+      whiteSpace: 'nowrap',
+      color: 'white',
+      textShadow: '0 1px 2px rgba(0,0,0,0.1)'
     },
     cardVisualFooter: {
       display: 'flex',
@@ -784,24 +787,16 @@ function LinkDebitCardContent() {
     },
     cardSmallLabel: {
       fontSize: '0.65rem',
-      opacity: 0.9,
-      fontWeight: '600',
-      marginBottom: '0.25rem',
-      textTransform: 'uppercase',
-      letterSpacing: '1px',
-      color: '#FFFFFF'
+      opacity: 0.85,
+      marginBottom: '4px',
+      letterSpacing: '0.5px',
+      fontWeight: '500'
     },
     cardholderNameDisplay: {
-      fontSize: '1rem',
+      fontSize: '0.95rem',
       fontWeight: '700',
-      textTransform: 'uppercase',
-      letterSpacing: '1px',
-      textShadow: '0 2px 4px rgba(0,0,0,0.6)',
-      lineHeight: '1.2',
-      color: '#FFFFFF',
-      wordBreak: 'break-word',
-      overflow: 'visible',
-      maxWidth: '220px'
+      letterSpacing: '0.5px',
+      textTransform: 'uppercase'
     },
     cardExpiryDisplay: {
       fontSize: '0.95rem',
