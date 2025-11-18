@@ -665,8 +665,8 @@ function LinkDebitCardContent() {
       perspective: '1000px'
     },
     cardFlipWrapper: {
-      width: '380px',
-      height: '240px',
+      width: '420px',
+      height: '250px',
       maxWidth: '100%',
       position: 'relative',
       transformStyle: 'preserve-3d',
@@ -769,13 +769,13 @@ function LinkDebitCardContent() {
       boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)'
     },
     cardNumberDisplay: {
-      fontSize: 'clamp(1.25rem, 3vw, 1.6rem)',
+      fontSize: '1.5rem',
       fontWeight: 'bold',
-      letterSpacing: '0.15rem',
+      letterSpacing: '3px',
       fontFamily: '"Courier New", monospace',
       textAlign: 'left',
-      marginBottom: '1.25rem',
-      textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+      marginBottom: '1rem',
+      textShadow: '0 2px 4px rgba(0,0,0,0.3)'
     },
     cardVisualFooter: {
       display: 'flex',
@@ -783,28 +783,25 @@ function LinkDebitCardContent() {
       alignItems: 'flex-end'
     },
     cardSmallLabel: {
-      fontSize: '0.7rem',
-      opacity: 1,
-      fontWeight: '700',
-      marginBottom: '0.35rem',
+      fontSize: '0.65rem',
+      opacity: 0.9,
+      fontWeight: '600',
+      marginBottom: '0.25rem',
       textTransform: 'uppercase',
-      letterSpacing: '0.8px',
-      textShadow: '0 2px 4px rgba(0,0,0,0.6)',
+      letterSpacing: '1px',
       color: '#FFFFFF'
     },
     cardholderNameDisplay: {
-      fontSize: '0.95rem',
+      fontSize: '1rem',
       fontWeight: '700',
       textTransform: 'uppercase',
-      letterSpacing: '0.5px',
-      textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 3px rgba(0,0,0,0.9)',
-      lineHeight: '1.3',
+      letterSpacing: '1px',
+      textShadow: '0 2px 4px rgba(0,0,0,0.6)',
+      lineHeight: '1.2',
       color: '#FFFFFF',
       wordBreak: 'break-word',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-      maxWidth: '180px'
+      overflow: 'visible',
+      maxWidth: '220px'
     },
     cardExpiryDisplay: {
       fontSize: '0.95rem',
