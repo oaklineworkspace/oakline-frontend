@@ -696,9 +696,9 @@ function LinkDebitCardContent() {
     },
     magneticStripe: {
       width: '100%',
-      height: '45px',
+      height: 'clamp(35px, 8vw, 45px)',
       backgroundColor: '#000',
-      marginTop: '20px'
+      marginTop: 'clamp(0.75rem, 3vw, 1.25rem)'
     },
     cvvSection: {
       backgroundColor: 'white',
@@ -1588,18 +1588,22 @@ function LinkDebitCardContent() {
                     }}
                   >
                     <div style={styles.magneticStripe}></div>
-                    <div style={styles.cvvSection}>
+                    <div style={{
+                      ...styles.cvvSection,
+                      margin: 'clamp(0.75rem, 3vw, 1.25rem) 0'
+                    }}>
                       <span style={styles.cvvLabel}>CVV</span>
                       <span style={styles.cvvBox}>•••</span>
                     </div>
                     <div style={{
-                      fontSize: 'clamp(0.55rem, 1.5vw, 0.65rem)',
+                      fontSize: 'clamp(0.5rem, 1.2vw, 0.6rem)',
                       opacity: 0.85,
-                      lineHeight: '1.4',
-                      marginTop: '0.75rem',
-                      marginBottom: '0.5rem'
+                      lineHeight: '1.3',
+                      marginTop: 'clamp(0.5rem, 2vw, 0.75rem)',
+                      marginBottom: '0.3rem',
+                      padding: '0 0.5rem'
                     }}>
-                      <p style={{ margin: '0 0 0.3rem 0' }}>
+                      <p style={{ margin: '0 0 0.25rem 0' }}>
                         For verification purposes only.
                       </p>
                       <p style={{ margin: '0' }}>
