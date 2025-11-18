@@ -802,9 +802,8 @@ function LinkDebitCardContent() {
       wordBreak: 'break-word',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
-      display: '-webkit-box',
-      WebkitLineClamp: 2,
-      WebkitBoxOrient: 'vertical'
+      whiteSpace: 'nowrap',
+      maxWidth: '180px'
     },
     cardExpiryDisplay: {
       fontSize: '0.95rem',
