@@ -668,7 +668,7 @@ function LinkDebitCardContent() {
       perspective: '1000px',
       width: '100%',
       maxWidth: '420px',
-      height: '250px',
+      height: '260px',
       position: 'relative',
       transformStyle: 'preserve-3d',
       transition: 'transform 0.6s',
