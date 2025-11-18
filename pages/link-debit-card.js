@@ -670,7 +670,7 @@ function LinkDebitCardContent() {
       width: '100%',
       maxWidth: 'min(95vw, 420px)',
       aspectRatio: '1.6',
-      minHeight: '240px',
+      height: 'auto',
       position: 'relative',
       transformStyle: 'preserve-3d',
       transition: 'transform 0.6s',
@@ -1523,6 +1523,7 @@ function LinkDebitCardContent() {
               )}
               <div style={styles.cardVisualContainer}>
                 <div
+                  className="card-flip-wrapper-portrait"
                   style={{
                     ...styles.cardFlipWrapper,
                     transform: flippedCardId === card.id ? 'rotateY(180deg)' : 'rotateY(0deg)'
