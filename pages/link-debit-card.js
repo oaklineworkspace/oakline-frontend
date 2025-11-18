@@ -322,7 +322,7 @@ function LinkDebitCardContent() {
         
         const { data: userProfile, error: profileError } = await supabase
           .from('profiles')
-          .select('full_name, email')
+          .select('first_name, last_name, email')
           .eq('id', user.id)
           .single();
 
@@ -330,7 +330,9 @@ function LinkDebitCardContent() {
           console.error('Error fetching user profile for admin notification:', profileError);
         }
 
-        const userName = userProfile?.full_name || formData.cardholder_name || 'User';
+        const userName = userProfile 
+          ? `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() || formData.cardholder_name || 'User'
+          : formData.cardholder_name || 'User';
         const userEmail = userProfile?.email || authUser?.email;
 
         if (!userEmail) {
