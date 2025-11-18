@@ -662,13 +662,15 @@ function LinkDebitCardContent() {
       marginBottom: '2rem',
       display: 'flex',
       justifyContent: 'center',
-      perspective: '1000px'
+      perspective: '1000px',
+      padding: '0 0.5rem'
     },
     cardFlipWrapper: {
       perspective: '1000px',
       width: '100%',
-      maxWidth: '420px',
-      height: '260px',
+      maxWidth: 'min(95vw, 420px)',
+      aspectRatio: '1.6',
+      minHeight: '240px',
       position: 'relative',
       transformStyle: 'preserve-3d',
       transition: 'transform 0.6s',
@@ -682,14 +684,14 @@ function LinkDebitCardContent() {
       backfaceVisibility: 'hidden',
       WebkitBackfaceVisibility: 'hidden',
       background: 'linear-gradient(135deg, #1434A4 0%, #2E5EAA 100%)',
-      borderRadius: '16px',
-      padding: '1.5rem',
+      borderRadius: 'clamp(12px, 2vw, 16px)',
+      padding: 'clamp(1rem, 3.5vw, 1.5rem)',
       color: 'white',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
       boxShadow: '0 8px 32px rgba(30, 64, 175, 0.3)',
-      overflow: 'hidden',
+      overflow: 'visible',
       transition: 'opacity 0.3s ease, transform 0.6s'
     },
     magneticStripe: {
@@ -734,13 +736,14 @@ function LinkDebitCardContent() {
       marginBottom: '0.5rem'
     },
     cardBankName: {
-      fontSize: '0.95rem',
+      fontSize: 'clamp(0.75rem, 2.5vw, 0.95rem)',
       fontWeight: 'bold',
-      letterSpacing: '1.5px',
-      opacity: 0.95
+      letterSpacing: 'clamp(0.5px, 1vw, 1.5px)',
+      opacity: 0.95,
+      lineHeight: '1.2'
     },
     cardTypeLabel: {
-      fontSize: '0.8rem',
+      fontSize: 'clamp(0.65rem, 2vw, 0.8rem)',
       fontWeight: 'bold',
       opacity: 0.9,
       letterSpacing: '0.5px'
@@ -749,13 +752,13 @@ function LinkDebitCardContent() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: '1.5rem'
+      marginBottom: 'clamp(0.75rem, 2.5vw, 1.5rem)'
     },
     cardChip: {
-      width: '50px',
-      height: '40px',
+      width: 'clamp(40px, 10vw, 50px)',
+      height: 'clamp(32px, 8vw, 40px)',
       background: 'linear-gradient(135deg, #d4af37 0%, #f4e5b8 50%, #d4af37 100%)',
-      borderRadius: '8px',
+      borderRadius: 'clamp(6px, 1.5vw, 8px)',
       boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)',
       position: 'relative'
     },
@@ -770,15 +773,16 @@ function LinkDebitCardContent() {
       boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)'
     },
     cardNumberDisplay: {
-      fontSize: '1.4rem',
+      fontSize: 'clamp(1rem, 3.5vw, 1.4rem)',
       fontWeight: '600',
-      letterSpacing: '3px',
+      letterSpacing: 'clamp(1px, 0.5vw, 3px)',
       fontFamily: '"Courier New", Courier, monospace',
       textAlign: 'center',
-      margin: '1rem 0',
+      margin: 'clamp(0.5rem, 2vw, 1rem) 0',
       whiteSpace: 'nowrap',
       color: 'white',
-      textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+      textShadow: '0 1px 2px rgba(0,0,0,0.1)',
+      overflow: 'visible'
     },
     cardVisualFooter: {
       display: 'flex',
@@ -786,20 +790,21 @@ function LinkDebitCardContent() {
       alignItems: 'flex-end'
     },
     cardSmallLabel: {
-      fontSize: '0.65rem',
+      fontSize: 'clamp(0.55rem, 1.8vw, 0.65rem)',
       opacity: 0.85,
-      marginBottom: '4px',
+      marginBottom: 'clamp(2px, 1vw, 4px)',
       letterSpacing: '0.5px',
       fontWeight: '500'
     },
     cardholderNameDisplay: {
-      fontSize: '0.95rem',
+      fontSize: 'clamp(0.75rem, 2.5vw, 0.95rem)',
       fontWeight: '700',
-      letterSpacing: '0.5px',
-      textTransform: 'uppercase'
+      letterSpacing: 'clamp(0.3px, 0.5vw, 0.5px)',
+      textTransform: 'uppercase',
+      lineHeight: '1.2'
     },
     cardExpiryDisplay: {
-      fontSize: '0.95rem',
+      fontSize: 'clamp(0.75rem, 2.5vw, 0.95rem)',
       fontWeight: 'bold',
       fontFamily: '"Courier New", monospace'
     },
