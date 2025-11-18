@@ -1595,14 +1595,7 @@ function LinkDebitCardContent() {
                       <span style={styles.cvvLabel}>CVV</span>
                       <span style={styles.cvvBox}>•••</span>
                     </div>
-                    <div style={{
-                      fontSize: 'clamp(0.5rem, 1.2vw, 0.6rem)',
-                      opacity: 0.85,
-                      lineHeight: '1.3',
-                      marginTop: 'clamp(0.5rem, 2vw, 0.75rem)',
-                      marginBottom: '0.3rem',
-                      padding: '0 0.5rem'
-                    }}>
+                    <div style={styles.cardBackInfo}>
                       <p style={{ margin: '0 0 0.25rem 0' }}>
                         For verification purposes only.
                       </p>
