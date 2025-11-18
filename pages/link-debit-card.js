@@ -774,50 +774,6 @@ function LinkDebitCardContent() {
 
           {showForm && (
             <form onSubmit={handleSubmit} style={{ marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #e2e8f0' }}>
-              <div style={styles.cardVisualContainer}>
-                <div style={{ ...styles.cardVisual, ...getCardBackgroundClass(detectCardBrand(formData.card_number)) }}>
-                  <div style={styles.cardVisualHeader}>
-                    <span style={styles.cardBankName}>BANK NAME</span>
-                    {formData.cardholder_name && (
-                      <span style={styles.cardTypeLabel}>DEBIT CARD</span>
-                    )}
-                  </div>
-
-                  <div style={styles.cardChipSection}>
-                    <div style={styles.cardChip}></div>
-                    {formData.card_number && (
-                       <div style={styles.primaryBadgeCard}>PRIMARY</div>
-                    )}
-                  </div>
-
-                  {formData.card_number ? (
-                    <div style={styles.cardNumberDisplay}>
-                      {formatCardDisplay(formData.card_number.replace(/\s/g, ''))}
-                    </div>
-                  ) : (
-                    <div style={styles.cardNumberDisplay}>•••• •••• •••• ••••</div>
-                  )}
-
-                  <div style={styles.cardVisualFooter}>
-                    <div>
-                      <div style={styles.cardSmallLabel}>Cardholder Name</div>
-                      <div style={styles.cardholderNameDisplay}>
-                        {formData.cardholder_name || 'CARDHOLDER NAME'}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={styles.cardSmallLabel}>Expires</div>
-                      <div style={styles.cardExpiryDisplay}>
-                        {formData.expiry_month || 'MM'} / {formData.expiry_year || 'YYYY'}
-                      </div>
-                    </div>
-                  </div>
-                  {formData.card_brand && (
-                    <div style={styles.cardBrandLogo}>{formData.card_brand.toUpperCase()}</div>
-                  )}
-                </div>
-              </div>
-
               <div style={styles.formGroup}>
                 <label style={styles.label}>Cardholder Name *</label>
                 <input
