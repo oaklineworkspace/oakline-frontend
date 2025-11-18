@@ -12,6 +12,8 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [loadingStage, setLoadingStage] = useState(0);
+  const [showLoadingBanner, setShowLoadingBanner] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -25,23 +27,44 @@ export default function SignInPage() {
     e.preventDefault();
     setLoading(true);
     setMessage('');
+    setShowLoadingBanner(true);
+
+    const loadingStages = [
+      'Verifying credentials',
+      'Authenticating account',
+      'Securing connection',
+      'Loading your dashboard'
+    ];
 
     try {
+      // Stage 1: Verifying credentials
+      setLoadingStage(0);
+      await new Promise(resolve => setTimeout(resolve, 600));
+
       const { data, error } = await signIn(formData.email, formData.password);
 
       if (error) throw error;
 
       if (data.user) {
-        setMessage('Sign in successful! Redirecting to dashboard...');
-        // Force navigation to dashboard in same tab
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1000);
+        // Stage 2: Authenticating account
+        setLoadingStage(1);
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Stage 3: Securing connection
+        setLoadingStage(2);
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Stage 4: Loading dashboard
+        setLoadingStage(3);
+        await new Promise(resolve => setTimeout(resolve, 600));
+
+        // Navigate to dashboard
+        window.location.href = '/dashboard';
       }
 
     } catch (error) {
+      setShowLoadingBanner(false);
       setMessage(`Sign in failed: ${error.message}`);
-    } finally {
       setLoading(false);
     }
   };
@@ -375,7 +398,114 @@ export default function SignInPage() {
             </button>
           </form>
 
-          {message && (
+          {showLoadingBanner && (
+            <div style={{
+              marginTop: '1.5rem',
+              padding: '1.5rem',
+              borderRadius: '12px',
+              backgroundColor: '#f8fafc',
+              border: '2px solid #e2e8f0',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                marginBottom: '1rem'
+              }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  border: '3px solid #e2e8f0',
+                  borderTop: '3px solid #059669',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }}></div>
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontSize: '1rem',
+                    fontWeight: '700',
+                    color: '#1e293b',
+                    marginBottom: '0.25rem'
+                  }}>
+                    {loadingStage === 0 && 'Verifying credentials'}
+                    {loadingStage === 1 && 'Authenticating account'}
+                    {loadingStage === 2 && 'Securing connection'}
+                    {loadingStage === 3 && 'Loading your dashboard'}
+                  </div>
+                  <div style={{
+                    fontSize: '0.85rem',
+                    color: '#64748b'
+                  }}>
+                    Please wait while we securely sign you in...
+                  </div>
+                </div>
+              </div>
+              
+              {/* Progress Bar */}
+              <div style={{
+                width: '100%',
+                height: '6px',
+                backgroundColor: '#e2e8f0',
+                borderRadius: '3px',
+                overflow: 'hidden',
+                marginBottom: '0.75rem'
+              }}>
+                <div style={{
+                  height: '100%',
+                  width: `${((loadingStage + 1) / 4) * 100}%`,
+                  background: 'linear-gradient(90deg, #059669 0%, #10b981 100%)',
+                  borderRadius: '3px',
+                  transition: 'width 0.5s ease-in-out'
+                }}></div>
+              </div>
+
+              {/* Stage Indicators */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: '0.5rem'
+              }}>
+                {['Verify', 'Auth', 'Secure', 'Load'].map((stage, index) => (
+                  <div key={index} style={{
+                    flex: 1,
+                    textAlign: 'center',
+                    fontSize: '0.7rem',
+                    fontWeight: '600',
+                    color: index <= loadingStage ? '#059669' : '#94a3b8',
+                    transition: 'color 0.3s ease'
+                  }}>
+                    <div style={{
+                      width: '20px',
+                      height: '20px',
+                      margin: '0 auto 0.25rem',
+                      borderRadius: '50%',
+                      backgroundColor: index <= loadingStage ? '#059669' : '#e2e8f0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.3s ease'
+                    }}>
+                      {index < loadingStage && (
+                        <span style={{ color: 'white', fontSize: '0.75rem' }}>✓</span>
+                      )}
+                      {index === loadingStage && (
+                        <div style={{
+                          width: '8px',
+                          height: '8px',
+                          backgroundColor: 'white',
+                          borderRadius: '50%'
+                        }}></div>
+                      )}
+                    </div>
+                    {stage}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {message && !showLoadingBanner && (
             <div style={{
               marginTop: '1.5rem',
               padding: '1rem 1.25rem',
