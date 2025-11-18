@@ -958,34 +958,13 @@ function LinkDebitCardContent() {
 
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Country *</label>
-                  {formData.billing_country === 'other' ? (
-                    <input
-                      type="text"
-                      name="manual_billing_country"
-                      value={formData.manual_billing_country || ''}
-                      onChange={handleChange}
-                      style={styles.input}
-                      placeholder="Enter your country"
-                      required
-                    />
-                  ) : (
-                    <input
-                      type="text"
-                      list="countries-list"
-                      name="billing_country"
-                      value={formData.billing_country}
-                      onChange={handleChange}
-                      style={{
-                        ...styles.input,
-                        paddingRight: '0.75rem', // Reset padding to avoid conflict with default input styling
-                        backgroundImage: 'none', // Remove default background image if any
-                        appearance: 'none' // Ensure no default appearance
-                      }}
-                      placeholder="Select or enter your country"
-                      required
-                    />
-                  )}
-                  <datalist id="countries-list">
+                  <select
+                    name="billing_country"
+                    value={formData.billing_country}
+                    onChange={handleChange}
+                    style={styles.select}
+                    required
+                  >
                     <option value="United States">United States</option>
                     <option value="Canada">Canada</option>
                     <option value="United Kingdom">United Kingdom</option>
@@ -1039,59 +1018,47 @@ function LinkDebitCardContent() {
                     <option value="Portugal">Portugal</option>
                     <option value="Russia">Russia</option>
                     <option value="Ukraine">Ukraine</option>
-                    <option value="other">Other (Enter Manually)</option>
-                  </datalist>
-
-                  {formData.billing_country !== 'other' && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFormData(prev => ({ 
-                          ...prev, 
-                          billing_country: 'other',
-                          manual_billing_country: ''
-                        }));
-                      }}
-                      style={{
-                        marginTop: '0.5rem',
-                        padding: '0.5rem',
-                        backgroundColor: 'transparent',
-                        color: '#059669',
-                        border: '1px solid #059669',
-                        borderRadius: '8px',
-                        fontSize: '0.75rem',
-                        cursor: 'pointer',
-                        fontWeight: '600'
-                      }}
-                    >
-                      My country is not listed
-                    </button>
-                  )}
-                  {formData.billing_country === 'other' && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFormData(prev => ({ 
-                          ...prev, 
-                          billing_country: 'United States',
-                          manual_billing_country: ''
-                        }));
-                      }}
-                      style={{
-                        marginTop: '0.5rem',
-                        padding: '0.5rem',
-                        backgroundColor: 'transparent',
-                        color: '#059669',
-                        border: '1px solid #059669',
-                        borderRadius: '8px',
-                        fontSize: '0.75rem',
-                        cursor: 'pointer',
-                        fontWeight: '600'
-                      }}
-                    >
-                      Select from list
-                    </button>
-                  )}
+                    <option value="Jamaica">Jamaica</option>
+                    <option value="Trinidad and Tobago">Trinidad and Tobago</option>
+                    <option value="Barbados">Barbados</option>
+                    <option value="Costa Rica">Costa Rica</option>
+                    <option value="Panama">Panama</option>
+                    <option value="Venezuela">Venezuela</option>
+                    <option value="Ecuador">Ecuador</option>
+                    <option value="Uruguay">Uruguay</option>
+                    <option value="Paraguay">Paraguay</option>
+                    <option value="Bolivia">Bolivia</option>
+                    <option value="Morocco">Morocco</option>
+                    <option value="Algeria">Algeria</option>
+                    <option value="Tunisia">Tunisia</option>
+                    <option value="Ghana">Ghana</option>
+                    <option value="Ethiopia">Ethiopia</option>
+                    <option value="Tanzania">Tanzania</option>
+                    <option value="Uganda">Uganda</option>
+                    <option value="Zambia">Zambia</option>
+                    <option value="Zimbabwe">Zimbabwe</option>
+                    <option value="Botswana">Botswana</option>
+                    <option value="Namibia">Namibia</option>
+                    <option value="Sri Lanka">Sri Lanka</option>
+                    <option value="Nepal">Nepal</option>
+                    <option value="Myanmar">Myanmar</option>
+                    <option value="Cambodia">Cambodia</option>
+                    <option value="Laos">Laos</option>
+                    <option value="Mongolia">Mongolia</option>
+                    <option value="Kazakhstan">Kazakhstan</option>
+                    <option value="Uzbekistan">Uzbekistan</option>
+                    <option value="Afghanistan">Afghanistan</option>
+                    <option value="Iraq">Iraq</option>
+                    <option value="Iran">Iran</option>
+                    <option value="Lebanon">Lebanon</option>
+                    <option value="Jordan">Jordan</option>
+                    <option value="Kuwait">Kuwait</option>
+                    <option value="Qatar">Qatar</option>
+                    <option value="Bahrain">Bahrain</option>
+                    <option value="Oman">Oman</option>
+                    <option value="Yemen">Yemen</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
               </div>
 
@@ -1176,27 +1143,52 @@ function LinkDebitCardContent() {
 
           {!showForm && linkedCards.map(card => (
             <div key={card.id} style={styles.cardItem}>
-              <div style={styles.cardHeader}>
-                <div style={styles.cardName}>
-                  {getCardIcon(card.card_brand)} {card.card_brand.toUpperCase()} •••• {card.card_number_last4}
+              {/* Visual Card Display */}
+              <div style={styles.cardVisualContainer}>
+                <div style={{ ...styles.cardVisual, ...getCardBackgroundClass(card.card_brand) }}>
+                  <div style={styles.cardVisualHeader}>
+                    <span style={styles.cardBankName}>BANK NAME</span>
+                    <span style={styles.cardTypeLabel}>DEBIT CARD</span>
+                  </div>
+
+                  <div style={styles.cardChipSection}>
+                    <div style={styles.cardChip}></div>
+                    {card.is_primary && (
+                      <div style={styles.primaryBadgeCard}>PRIMARY</div>
+                    )}
+                  </div>
+
+                  <div style={styles.cardNumberDisplay}>
+                    •••• •••• •••• {card.card_number_last4}
+                  </div>
+
+                  <div style={styles.cardVisualFooter}>
+                    <div>
+                      <div style={styles.cardSmallLabel}>Cardholder Name</div>
+                      <div style={styles.cardholderNameDisplay}>
+                        {card.cardholder_name}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={styles.cardSmallLabel}>Expires</div>
+                      <div style={styles.cardExpiryDisplay}>
+                        {card.expiry_month} / {card.expiry_year}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={styles.cardBrandLogo}>{card.card_brand.toUpperCase()}</div>
                 </div>
-                {card.is_primary && (
-                  <div style={styles.primaryBadge}>PRIMARY</div>
-                )}
               </div>
 
+              {/* Card Details */}
               <div style={styles.cardDetails}>
-                <div style={styles.detailItem}>
-                  <div style={styles.detailLabel}>Cardholder</div>
-                  <div style={styles.detailValue}>{card.cardholder_name}</div>
-                </div>
-                <div style={styles.detailItem}>
-                  <div style={styles.detailLabel}>Expiry</div>
-                  <div style={styles.detailValue}>{card.expiry_month}/{card.expiry_year}</div>
-                </div>
                 <div style={styles.detailItem}>
                   <div style={styles.detailLabel}>Billing Address</div>
                   <div style={styles.detailValue}>{card.billing_city}, {card.billing_state} {card.billing_zip}</div>
+                </div>
+                <div style={styles.detailItem}>
+                  <div style={styles.detailLabel}>Country</div>
+                  <div style={styles.detailValue}>{card.billing_country}</div>
                 </div>
                 <div style={styles.detailItem}>
                   <div style={styles.detailLabel}>Status</div>
