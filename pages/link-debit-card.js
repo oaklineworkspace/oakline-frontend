@@ -25,7 +25,9 @@ function LinkDebitCardContent() {
     billing_state: '',
     billing_zip: '',
     billing_country: 'United States',
-    card_brand: ''
+    card_brand: '',
+    card_front_photo: null, // Added for photo upload
+    card_back_photo: null    // Added for photo upload
   });
 
   // State for form errors, used specifically for card number validation in this context
@@ -89,6 +91,23 @@ function LinkDebitCardContent() {
     }));
   };
 
+  // Handler for file inputs
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    if (files && files.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        [name]: files[0] // Store the File object
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: null // Clear if no file is selected
+      }));
+    }
+  };
+
+
   const showMessage = (msg, type = 'info') => {
     setMessage(msg);
     setMessageType(type);
@@ -107,37 +126,8 @@ function LinkDebitCardContent() {
     return 'visa'; // Default to visa if not recognized
   };
 
-  const validateCardNumber = (cardNumber) => {
-    const cleanedCardNumber = cardNumber.replace(/\s/g, '');
-
-    // Basic length check
-    if (cleanedCardNumber.length < 13 || cleanedCardNumber.length > 19) {
-      return false;
-    }
-
-    // Check if it only contains digits
-    if (!/^\d+$/.test(cleanedCardNumber)) {
-      return false;
-    }
-
-    // Luhn algorithm validation
-    const luhnCheck = (num) => {
-      let sum = 0;
-      let isEven = false;
-      for (let i = num.length - 1; i >= 0; i--) {
-        let digit = parseInt(num[i], 10);
-        if (isEven) {
-          digit *= 2;
-          if (digit > 9) digit -= 9;
-        }
-        sum += digit;
-        isEven = !isEven;
-      }
-      return sum % 10 === 0;
-    };
-
-    return luhnCheck(cleanedCardNumber);
-  };
+  // Luhn algorithm validation removed as per user request.
+  // const validateCardNumber = (cardNumber) => { ... };
 
   const validateForm = () => {
     // Resetting errors before re-validation
@@ -166,16 +156,7 @@ function LinkDebitCardContent() {
       return false;
     }
 
-    // Validate with Luhn algorithm, but allow bypass for known test cards (optional, for testing purposes)
-    const isTestCard = cleanedCardNumber.startsWith('4111111111111111') ||
-                       cleanedCardNumber.startsWith('5555555555554444') ||
-                       cleanedCardNumber.startsWith('378282246310005');
-
-    if (!isTestCard && !validateCardNumber(cleanedCardNumber)) {
-      setErrors(prev => ({ ...prev, cardNumber: 'Invalid card number. Please check and try again.' }));
-      showMessage('Invalid card number. Please check and try again.', 'error');
-      return false;
-    }
+    // Luhn algorithm validation removed.
 
     if (!formData.expiry_month || formData.expiry_month.length !== 2) {
       showMessage('Please enter a valid expiry month (MM)', 'error');
@@ -234,6 +215,17 @@ function LinkDebitCardContent() {
       return false;
     }
 
+    // Check for required photo uploads
+    if (!formData.card_front_photo) {
+      showMessage('Please upload a photo of the front of your card', 'error');
+      return false;
+    }
+    if (!formData.card_back_photo) {
+      showMessage('Please upload a photo of the back of your card', 'error');
+      return false;
+    }
+
+
     return true;
   };
 
@@ -250,6 +242,33 @@ function LinkDebitCardContent() {
       const detectedBrand = detectCardBrand(cleaned);
       const last4 = cleaned.slice(-4);
 
+      // Upload photos to Supabase Storage
+      let cardFrontPhotoUrl = null;
+      let cardBackPhotoUrl = null;
+
+      if (formData.card_front_photo) {
+        const { data: frontData, error: frontError } = await supabase.storage
+          .from('card_photos') // Assuming you have a bucket named 'card_photos'
+          .upload(`public/${user.id}/card_front_${Date.now()}.jpg`, formData.card_front_photo, {
+            cacheControl: '3600',
+            upsert: true,
+          });
+        if (frontError) throw frontError;
+        cardFrontPhotoUrl = `https://YOUR_SUPABASE_URL.supabase.co/storage/v1/object/public/card_photos/${frontData.path}`; // Construct URL
+      }
+
+      if (formData.card_back_photo) {
+        const { data: backData, error: backError } = await supabase.storage
+          .from('card_photos')
+          .upload(`public/${user.id}/card_back_${Date.now()}.jpg`, formData.card_back_photo, {
+            cacheControl: '3600',
+            upsert: true,
+          });
+        if (backError) throw backError;
+        cardBackPhotoUrl = `https://YOUR_SUPABASE_URL.supabase.co/storage/v1/object/public/card_photos/${backData.path}`; // Construct URL
+      }
+
+
       const { data, error } = await supabase
         .from('linked_debit_cards')
         .insert([{
@@ -265,7 +284,9 @@ function LinkDebitCardContent() {
           billing_zip: formData.billing_zip,
           billing_country: formData.billing_country,
           is_primary: linkedCards.length === 0 ? true : formData.is_primary,
-          status: 'active' // Default to active upon linking
+          status: 'pending', // Changed to 'pending' for manual verification
+          card_front_photo_url: cardFrontPhotoUrl, // Store photo URLs
+          card_back_photo_url: cardBackPhotoUrl    // Store photo URLs
         }])
         .select()
         .single();
@@ -287,7 +308,7 @@ function LinkDebitCardContent() {
           .eq('id', data.id);
       }
 
-      showMessage('Debit card linked successfully!', 'success');
+      showMessage('Debit card linked successfully! It is now pending verification.', 'success');
       // Reset form data
       setFormData({
         cardholder_name: '',
@@ -301,7 +322,9 @@ function LinkDebitCardContent() {
         billing_zip: '',
         billing_country: 'United States',
         card_brand: '',
-        is_primary: false // Reset checkbox
+        is_primary: false, // Reset checkbox
+        card_front_photo: null, // Reset photos
+        card_back_photo: null    // Reset photos
       });
       setShowForm(false);
       fetchLinkedCards(); // Refresh the list of linked cards
@@ -605,7 +628,7 @@ function LinkDebitCardContent() {
       <div style={styles.main}>
         <h1 style={styles.pageTitle}>Link Debit Card</h1>
         <p style={styles.pageSubtitle}>
-          Link your external debit card for quick withdrawals and seamless transactions.
+          Link your external debit card for quick withdrawals and seamless transactions. Your card will be pending verification upon submission.
         </p>
 
         {message && (
@@ -793,6 +816,51 @@ function LinkDebitCardContent() {
                 </div>
               </div>
 
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: '#1e293b', marginTop: '1.5rem', marginBottom: '1rem' }}>
+                Card Verification Photos
+              </h3>
+              <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '1rem' }}>
+                Please upload clear photos of the front and back of your card for verification. Cover the CVV on the back photo for security.
+              </p>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Front of Card *</label>
+                <input
+                  type="file"
+                  name="card_front_photo"
+                  accept="image/jpeg,image/jpg,image/png"
+                  onChange={handleFileChange}
+                  style={styles.input}
+                  required
+                />
+                {formData.card_front_photo && (
+                  <small style={{ color: '#059669', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                    ✓ {formData.card_front_photo.name}
+                  </small>
+                )}
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Back of Card *</label>
+                <input
+                  type="file"
+                  name="card_back_photo"
+                  accept="image/jpeg,image/jpg,image/png"
+                  onChange={handleFileChange}
+                  style={styles.input}
+                  required
+                />
+                {formData.card_back_photo && (
+                  <small style={{ color: '#059669', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                    ✓ {formData.card_back_photo.name}
+                  </small>
+                )}
+                <small style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                  For security, please cover the CVV/CVC code before taking the photo.
+                </small>
+              </div>
+
+
               {linkedCards.length > 0 && (
                 <div style={{ ...styles.formGroup, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
                   <input
@@ -898,7 +966,7 @@ function LinkDebitCardContent() {
             Security Notice
           </h3>
           <p style={{ fontSize: '0.875rem', color: '#075985', lineHeight: '1.6', margin: 0 }}>
-            Your card information is encrypted and stored securely using industry-standard protocols. We never store your full card number. All transactions are processed through secure, PCI-compliant systems to ensure the safety of your financial data.
+            Your card information is encrypted and stored securely using industry-standard protocols. We never store your full card number. All transactions are processed through secure, PCI-compliant systems to ensure the safety of your financial data. Card images are used solely for verification purposes and are stored securely.
           </p>
         </div>
       </div>

@@ -19,6 +19,15 @@ WITH CHECK (
   AND (storage.foldername(name))[1] = 'profile-pictures'
 );
 
+-- Allow authenticated users to upload their own card photos
+CREATE POLICY "Users can upload their own card photos"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'user-files' 
+  AND (storage.foldername(name))[1] = 'card_photos'
+);
+
 -- Allow public read access to profile pictures (since they're displayed on profiles)
 CREATE POLICY "Public can view profile pictures"
 ON storage.objects FOR SELECT
