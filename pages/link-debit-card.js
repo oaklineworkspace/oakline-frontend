@@ -665,13 +665,14 @@ function LinkDebitCardContent() {
       perspective: '1000px'
     },
     cardFlipWrapper: {
-      width: '100%',
-      maxWidth: '450px',
-      aspectRatio: '1.586',
+      width: '380px',
+      height: '240px',
+      maxWidth: '100%',
       position: 'relative',
       transformStyle: 'preserve-3d',
       transition: 'transform 0.6s ease',
-      cursor: 'pointer'
+      cursor: 'pointer',
+      margin: '0 auto'
     },
     cardVisual: {
       position: 'absolute',
@@ -680,15 +681,15 @@ function LinkDebitCardContent() {
       backfaceVisibility: 'hidden',
       WebkitBackfaceVisibility: 'hidden',
       background: 'linear-gradient(135deg, #1434A4 0%, #2E5EAA 100%)',
-      borderRadius: '18px',
-      padding: '1.75rem 2rem',
+      borderRadius: '16px',
+      padding: '1.5rem',
       color: 'white',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
-      boxShadow: '0 15px 40px rgba(0,0,0,0.25), 0 5px 15px rgba(0,0,0,0.15)',
+      boxShadow: '0 8px 32px rgba(30, 64, 175, 0.3)',
       overflow: 'hidden',
-      transition: 'opacity 0.3s ease'
+      transition: 'opacity 0.3s ease, transform 0.6s'
     },
     magneticStripe: {
       width: '100%',
