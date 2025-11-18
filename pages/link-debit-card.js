@@ -1558,13 +1558,13 @@ function LinkDebitCardContent() {
                     </div>
 
                     <div style={styles.cardVisualFooter}>
-                      <div>
+                      <div style={{ flex: 1 }}>
                         <div style={styles.cardSmallLabel}>Cardholder Name</div>
                         <div style={styles.cardholderNameDisplay}>
-                          {card.cardholder_name.toUpperCase()}
+                          {card.cardholder_name ? card.cardholder_name.toUpperCase() : 'CARD HOLDER'}
                         </div>
                       </div>
-                      <div>
+                      <div style={{ textAlign: 'right' }}>
                         <div style={styles.cardSmallLabel}>Expires</div>
                         <div style={styles.cardExpiryDisplay}>
                           {card.expiry_month}/{card.expiry_year}
