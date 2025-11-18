@@ -31,7 +31,8 @@ function LinkDebitCardContent() {
     card_brand: '',
     card_front_photo: null,
     card_back_photo: null,
-    is_primary: false
+    is_primary: false,
+    custom_bank_name: '' // Added for custom bank name input
   });
 
   const [errors, setErrors] = useState({});
@@ -83,10 +84,15 @@ function LinkDebitCardContent() {
       processedValue = value.replace(/\D/g, '').slice(0, 4);
     }
 
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : processedValue
-    }));
+    // Handle custom_bank_name specifically
+    if (name === 'custom_bank_name') {
+        setFormData(prev => ({ ...prev, custom_bank_name: processedValue }));
+    } else {
+        setFormData(prev => ({
+          ...prev,
+          [name]: type === 'checkbox' ? checked : processedValue
+        }));
+    }
   };
 
   const handleFileChange = (e) => {
@@ -212,6 +218,13 @@ function LinkDebitCardContent() {
       return false;
     }
 
+    // Validate bank name if 'Other' is selected
+    if (formData.bank_name === 'Other' && !formData.custom_bank_name.trim()) {
+        showMessage('Please specify the bank name', 'error');
+        return false;
+    }
+
+
     return true;
   };
 
@@ -281,7 +294,7 @@ function LinkDebitCardContent() {
           billing_state: formData.billing_state,
           billing_zip: formData.billing_zip,
           billing_country: formData.billing_country === 'Other' ? formData.manual_billing_country : formData.billing_country,
-          bank_name: formData.bank_name === 'Other' ? formData.manual_bank_name : formData.bank_name,
+          bank_name: formData.bank_name === 'Other' ? formData.custom_bank_name : formData.bank_name, // Use custom_bank_name if 'Other'
           is_primary: linkedCards.length === 0 ? true : formData.is_primary,
           status: 'pending',
           card_front_photo: cardFrontPhotoUrl,
@@ -323,7 +336,8 @@ function LinkDebitCardContent() {
         card_brand: '',
         is_primary: false,
         card_front_photo: null,
-        card_back_photo: null
+        card_back_photo: null,
+        custom_bank_name: '' // Reset custom bank name
       });
       setShowForm(false);
       fetchLinkedCards();
@@ -946,8 +960,8 @@ function LinkDebitCardContent() {
                   <label style={styles.label}>Specify Bank Name *</label>
                   <input
                     type="text"
-                    name="manual_bank_name"
-                    value={formData.manual_bank_name}
+                    name="custom_bank_name"
+                    value={formData.custom_bank_name}
                     onChange={handleChange}
                     style={styles.input}
                     placeholder="Enter your bank name"
@@ -1151,8 +1165,8 @@ function LinkDebitCardContent() {
                     checked={formData.is_primary}
                     onChange={handleChange}
                     id="is_primary"
-                    style={{ 
-                      cursor: 'pointer', 
+                    style={{
+                      cursor: 'pointer',
                       accentColor: '#059669',
                       width: '20px',
                       height: '20px'
@@ -1200,9 +1214,7 @@ function LinkDebitCardContent() {
                      onMouseOut={(e) => e.currentTarget.style.transform = 'rotateY(0deg) rotateX(0deg)'}>
                   <div style={styles.cardVisualHeader}>
                     <span style={styles.cardBankName}>
-                      {formData.bank_name === 'Other' 
-                        ? (formData.manual_bank_name || 'BANK NAME')
-                        : (formData.bank_name || 'BANK NAME')}
+                      {card.bank_name || 'BANK NAME'}
                     </span>
                     <span style={styles.cardTypeLabel}>DEBIT CARD</span>
                   </div>
