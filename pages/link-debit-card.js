@@ -50,7 +50,7 @@ function LinkDebitCardContent() {
         .from('linked_debit_cards')
         .select('*')
         .eq('user_id', user.id)
-        .in('status', ['pending', 'active'])
+        .neq('status', 'deleted')
         .order('is_primary', { ascending: false })
         .order('created_at', { ascending: false });
 
@@ -1365,10 +1365,17 @@ function LinkDebitCardContent() {
                   <div style={styles.detailLabel}>Status</div>
                   <div style={{
                     ...styles.detailValue,
-                    color: card.status === 'active' ? '#059669' : card.status === 'pending' ? '#f59e0b' : '#dc2626',
+                    color: card.status === 'active' ? '#059669' : 
+                           card.status === 'pending' ? '#f59e0b' : 
+                           card.status === 'suspended' ? '#dc2626' : 
+                           card.status === 'expired' ? '#6b7280' : '#dc2626',
                     fontWeight: '700'
                   }}>
-                    {card.status.toUpperCase()}
+                    {card.status === 'suspended' ? '⚠️ SUSPENDED' : 
+                     card.status === 'expired' ? '⏰ EXPIRED' : 
+                     card.status === 'pending' ? '⏳ PENDING' : 
+                     card.status === 'active' ? '✓ ACTIVE' : 
+                     card.status.toUpperCase()}
                   </div>
                 </div>
               </div>
