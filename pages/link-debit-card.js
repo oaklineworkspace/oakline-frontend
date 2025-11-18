@@ -124,10 +124,24 @@ function LinkDebitCardContent() {
 
   const detectCardBrand = (cardNumber) => {
     const cleaned = cardNumber.replace(/\s/g, '');
+    
+    // Visa: starts with 4
     if (/^4/.test(cleaned)) return 'visa';
-    if (/^5[1-5]/.test(cleaned)) return 'mastercard';
+    
+    // Mastercard: 51-55, 2221-2720
+    if (/^5[1-5]/.test(cleaned) || /^2(?:22[1-9]|2[3-9]\d|[3-6]\d{2}|7[01]\d|720)/.test(cleaned)) {
+      return 'mastercard';
+    }
+    
+    // American Express: starts with 34 or 37
     if (/^3[47]/.test(cleaned)) return 'amex';
-    if (/^6(?:011|5)/.test(cleaned)) return 'discover';
+    
+    // Discover: starts with 6011, 622126-622925, 644-649, 65
+    if (/^6(?:011|22(?:12[6-9]|1[3-9]\d|[2-8]\d{2}|9[01]\d|92[0-5])|4[4-9]\d|5)/.test(cleaned)) {
+      return 'discover';
+    }
+    
+    // Default to visa if no match
     return 'visa';
   };
 
@@ -430,6 +444,10 @@ function LinkDebitCardContent() {
     setDeleteConfirmModal({ show: false, cardId: null });
     
     setDeletingCardId(cardId);
+    
+    // Add a 2-second delay for better UX (shows removing state)
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
     try {
       const { error } = await supabase
         .from('linked_debit_cards')
@@ -457,7 +475,40 @@ function LinkDebitCardContent() {
     return cleaned.replace(/(.{4})/g, '$1 ').trim();
   };
 
-  const getCardBackgroundClass = (brand) => {
+  const getCardBackgroundByBank = (bankName, brand) => {
+    // First check for bank-specific colors
+    const bankColors = {
+      'Chase Bank': { backgroundImage: 'linear-gradient(135deg, #117ACA 0%, #0A4D8C 100%)' },
+      'Bank of America': { backgroundImage: 'linear-gradient(135deg, #E31837 0%, #B01229 100%)' },
+      'Wells Fargo': { backgroundImage: 'linear-gradient(135deg, #D71E28 0%, #A01620 100%)' },
+      'Citibank': { backgroundImage: 'linear-gradient(135deg, #056DAE 0%, #034A75 100%)' },
+      'U.S. Bank': { backgroundImage: 'linear-gradient(135deg, #0C2074 0%, #061548 100%)' },
+      'PNC Bank': { backgroundImage: 'linear-gradient(135deg, #F58220 0%, #C96818 100%)' },
+      'Capital One': { backgroundImage: 'linear-gradient(135deg, #004879 0%, #00314F 100%)' },
+      'TD Bank': { backgroundImage: 'linear-gradient(135deg, #00A651 0%, #007A3D 100%)' },
+      'Truist Bank': { backgroundImage: 'linear-gradient(135deg, #4B2170 0%, #321650 100%)' },
+      'Goldman Sachs': { backgroundImage: 'linear-gradient(135deg, #0F1B2E 0%, #000000 100%)' },
+      'American Express': { backgroundImage: 'linear-gradient(135deg, #006FCF 0%, #00A2E5 50%, #00B5E2 100%)' },
+      'Discover Bank': { backgroundImage: 'linear-gradient(135deg, #FF6000 0%, #FF8500 50%, #FFA500 100%)' },
+      'HSBC UK': { backgroundImage: 'linear-gradient(135deg, #DB0011 0%, #9E000D 100%)' },
+      'Barclays': { backgroundImage: 'linear-gradient(135deg, #00AEEF 0%, #0088BB 100%)' },
+      'Lloyds Bank': { backgroundImage: 'linear-gradient(135deg, #006B54 0%, #004A3A 100%)' },
+      'NatWest': { backgroundImage: 'linear-gradient(135deg, #5A287D 0%, #3D1A54 100%)' },
+      'Santander UK': { backgroundImage: 'linear-gradient(135deg, #EC0000 0%, #B00000 100%)' },
+      'Royal Bank of Canada': { backgroundImage: 'linear-gradient(135deg, #005DAA 0%, #003D6F 100%)' },
+      'TD Canada Trust': { backgroundImage: 'linear-gradient(135deg, #00A651 0%, #007A3D 100%)' },
+      'Scotiabank': { backgroundImage: 'linear-gradient(135deg, #EE0000 0%, #B00000 100%)' },
+      'BMO': { backgroundImage: 'linear-gradient(135deg, #0079C1 0%, #005A8F 100%)' },
+      'Deutsche Bank': { backgroundImage: 'linear-gradient(135deg, #0018A8 0%, #00126E 100%)' },
+      'BNP Paribas': { backgroundImage: 'linear-gradient(135deg, #00915A 0%, #006841 100%)' },
+      'Santander': { backgroundImage: 'linear-gradient(135deg, #EC0000 0%, #B00000 100%)' },
+    };
+
+    if (bankName && bankColors[bankName]) {
+      return bankColors[bankName];
+    }
+
+    // Fallback to card brand colors
     switch (brand) {
       case 'visa': return { backgroundImage: 'linear-gradient(135deg, #1434A4 0%, #2E5EAA 50%, #0F52BA 100%)' };
       case 'mastercard': return { backgroundImage: 'linear-gradient(135deg, #EB001B 0%, #FF5F00 50%, #F79E1B 100%)' };
@@ -915,6 +966,21 @@ function LinkDebitCardContent() {
       transition: 'all 0.3s'
     }
   };
+
+  // Add CSS animation for spinner
+  if (typeof document !== 'undefined') {
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    if (!document.querySelector('style[data-spinner-animation]')) {
+      styleSheet.setAttribute('data-spinner-animation', 'true');
+      document.head.appendChild(styleSheet);
+    }
+  }
 
   return (
     <div style={styles.container}>
@@ -1442,7 +1508,7 @@ function LinkDebitCardContent() {
                   <div
                     style={{
                       ...styles.cardVisual,
-                      ...getCardBackgroundClass(card.card_brand),
+                      ...getCardBackgroundByBank(card.bank_name, card.card_brand),
                       opacity: flippedCardId === card.id ? 0 : 1,
                       zIndex: flippedCardId === card.id ? 1 : 2
                     }}
@@ -1577,13 +1643,28 @@ function LinkDebitCardContent() {
                   style={{
                     ...styles.buttonDanger,
                     opacity: deletingCardId === card.id ? 0.6 : 1,
-                    cursor: deletingCardId === card.id ? 'not-allowed' : 'pointer'
+                    cursor: deletingCardId === card.id ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
                   }}
                   disabled={deletingCardId === card.id}
                   onMouseOver={(e) => deletingCardId !== card.id && (e.target.style.transform = 'translateY(-2px)')}
                   onMouseOut={(e) => deletingCardId !== card.id && (e.target.style.transform = 'translateY(0)')}
                 >
-                  {deletingCardId === card.id ? 'Removing...' : 'Remove Card'}
+                  {deletingCardId === card.id && (
+                    <span style={{
+                      display: 'inline-block',
+                      width: '16px',
+                      height: '16px',
+                      border: '2px solid white',
+                      borderTopColor: 'transparent',
+                      borderRadius: '50%',
+                      animation: 'spin 0.6s linear infinite'
+                    }}></span>
+                  )}
+                  {deletingCardId === card.id ? 'Removing Card...' : 'Remove Card'}
                 </button>
               </div>
             </div>
