@@ -722,18 +722,6 @@ function LinkDebitCardContent() {
       fontSize: '1.1rem',
       fontWeight: 'bold'
     },
-    cardBackInfo: {
-      fontSize: 'clamp(0.6rem, 1.8vw, 0.7rem)',
-      opacity: 0.9,
-      lineHeight: '1.3',
-      marginTop: '0.5rem'
-    },
-    cardBackText: {
-      margin: '0.25rem 0',
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis'
-    },
     cardVisualHeader: {
       display: 'flex',
       justifyContent: 'space-between',
@@ -1604,12 +1592,18 @@ function LinkDebitCardContent() {
                       <span style={styles.cvvLabel}>CVV</span>
                       <span style={styles.cvvBox}>•••</span>
                     </div>
-                    <div style={styles.cardBackInfo}>
-                      <p style={styles.cardBackText}>
-                        Please refer to your card issuer for details. This card is for verification purposes only.
+                    <div style={{
+                      fontSize: 'clamp(0.55rem, 1.5vw, 0.65rem)',
+                      opacity: 0.85,
+                      lineHeight: '1.4',
+                      marginTop: '0.75rem',
+                      marginBottom: '0.5rem'
+                    }}>
+                      <p style={{ margin: '0 0 0.3rem 0' }}>
+                        For verification purposes only.
                       </p>
-                      <p style={styles.cardBackText}>
-                        Unauthorized use may lead to legal consequences.
+                      <p style={{ margin: '0' }}>
+                        Unauthorized use prohibited.
                       </p>
                     </div>
                     <div style={{ ...styles.cardBrandLogoContainer, bottom: '1.5rem', right: '2rem' }}>
