@@ -14,6 +14,7 @@ function LinkDebitCardContent() {
   const [messageType, setMessageType] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [flippedCardId, setFlippedCardId] = useState(null);
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState({ show: false, cardId: null });
 
   const [formData, setFormData] = useState({
     cardholder_name: '',
@@ -368,9 +369,14 @@ function LinkDebitCardContent() {
     }
   };
 
-  const handleDelete = async (cardId) => {
-    if (!confirm('Are you sure you want to remove this debit card? This action cannot be undone.')) return;
+  const handleDeleteClick = (cardId) => {
+    setDeleteConfirmModal({ show: true, cardId });
+  };
 
+  const handleDeleteConfirm = async () => {
+    const cardId = deleteConfirmModal.cardId;
+    setDeleteConfirmModal({ show: false, cardId: null });
+    
     setLoading(true);
     try {
       const { error } = await supabase
@@ -388,6 +394,10 @@ function LinkDebitCardContent() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirmModal({ show: false, cardId: null });
   };
 
   const formatCardDisplay = (cardNumber) => {
@@ -774,6 +784,83 @@ function LinkDebitCardContent() {
       fontSize: '0.8rem',
       marginTop: '0.375rem',
       fontWeight: '500'
+    },
+    modalOverlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999,
+      backdropFilter: 'blur(4px)'
+    },
+    modalContent: {
+      backgroundColor: 'white',
+      borderRadius: '20px',
+      padding: '2.5rem',
+      maxWidth: '480px',
+      width: '90%',
+      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+      animation: 'slideUp 0.3s ease-out'
+    },
+    modalIcon: {
+      width: '70px',
+      height: '70px',
+      margin: '0 auto 1.5rem',
+      backgroundColor: '#fee2e2',
+      borderRadius: '50%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '2rem'
+    },
+    modalTitle: {
+      fontSize: '1.5rem',
+      fontWeight: '700',
+      color: '#1e293b',
+      marginBottom: '0.75rem',
+      textAlign: 'center'
+    },
+    modalMessage: {
+      fontSize: '1rem',
+      color: '#64748b',
+      lineHeight: '1.6',
+      textAlign: 'center',
+      marginBottom: '2rem'
+    },
+    modalButtons: {
+      display: 'flex',
+      gap: '1rem',
+      flexDirection: 'column'
+    },
+    modalButtonConfirm: {
+      width: '100%',
+      padding: '1rem',
+      background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+      color: 'white',
+      border: 'none',
+      borderRadius: '12px',
+      fontSize: '1rem',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.3s',
+      boxShadow: '0 4px 15px rgba(220, 38, 38, 0.3)'
+    },
+    modalButtonCancel: {
+      width: '100%',
+      padding: '1rem',
+      backgroundColor: '#f1f5f9',
+      color: '#475569',
+      border: 'none',
+      borderRadius: '12px',
+      fontSize: '1rem',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.3s'
     }
   };
 
@@ -1393,7 +1480,7 @@ function LinkDebitCardContent() {
                   </button>
                 )}
                 <button
-                  onClick={() => handleDelete(card.id)}
+                  onClick={() => handleDeleteClick(card.id)}
                   style={styles.buttonDanger}
                   disabled={loading}
                   onMouseOver={(e) => !loading && (e.target.style.transform = 'translateY(-2px)')}
@@ -1406,6 +1493,47 @@ function LinkDebitCardContent() {
           ))}
         </div>
       </div>
+
+      {/* Custom Confirmation Modal */}
+      {deleteConfirmModal.show && (
+        <div style={styles.modalOverlay} onClick={handleDeleteCancel}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalIcon}>⚠️</div>
+            <h3 style={styles.modalTitle}>Remove Debit Card?</h3>
+            <p style={styles.modalMessage}>
+              Are you sure you want to remove this debit card? This action cannot be undone and you will need to re-link the card if you want to use it again.
+            </p>
+            <div style={styles.modalButtons}>
+              <button
+                onClick={handleDeleteConfirm}
+                style={styles.modalButtonConfirm}
+                onMouseOver={(e) => {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 6px 20px rgba(220, 38, 38, 0.4)';
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 4px 15px rgba(220, 38, 38, 0.3)';
+                }}
+              >
+                Yes, Remove Card
+              </button>
+              <button
+                onClick={handleDeleteCancel}
+                style={styles.modalButtonCancel}
+                onMouseOver={(e) => {
+                  e.target.style.backgroundColor = '#e2e8f0';
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.backgroundColor = '#f1f5f9';
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
