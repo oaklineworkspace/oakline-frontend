@@ -51,7 +51,7 @@ function LinkDebitCardContent() {
         .from('linked_debit_cards')
         .select('*')
         .eq('user_id', user.id)
-        .not('status', 'in', '(deleted,removed)')
+        .neq('status', 'deleted')
         .order('is_primary', { ascending: false })
         .order('created_at', { ascending: false });
 
@@ -381,7 +381,7 @@ function LinkDebitCardContent() {
     try {
       const { error } = await supabase
         .from('linked_debit_cards')
-        .update({ status: 'removed' })
+        .update({ status: 'deleted' })
         .eq('id', cardId);
 
       if (error) throw error;
