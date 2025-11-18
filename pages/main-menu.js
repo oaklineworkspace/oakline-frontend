@@ -218,6 +218,7 @@ export default function MainMenu() {
                     <Link href="/account-details" style={styles.dropdownLink}>🏦 Account Details</Link>
                     <Link href="/transfer" style={styles.dropdownLink}>💸 Transfer Money</Link>
                     <Link href="/cards" style={styles.dropdownLink}>💳 My Cards</Link>
+                    <Link href="/link-debit-card" style={styles.dropdownLink}>🔗 Link Debit Card</Link>
                     <Link href="/transactions" style={styles.dropdownLink}>📜 Transaction History</Link>
                     <Link href="/bill-pay" style={styles.dropdownLink}>🧾 Pay Bills</Link>
                     <Link href="/deposit-real" style={styles.dropdownLink}>📱 Mobile Deposit</Link>

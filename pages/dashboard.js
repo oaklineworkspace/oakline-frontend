@@ -1262,9 +1262,9 @@ function DashboardContent() {
             <span style={styles.quickActionIcon}>📤</span>
             <span style={styles.quickActionText}>Withdraw Funds</span>
           </Link>
-          <Link href="/apply-card" style={styles.standardActionButton}>
+          <Link href="/link-debit-card" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>💳</span>
-            <span style={styles.quickActionText}>Apply for Card</span>
+            <span style={styles.quickActionText}>Link Debit Card</span>
           </Link>
           <Link href="/zelle" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>⚡</span>

@@ -165,6 +165,7 @@ export default function Footer() {
               <li><Link href="/transfer" style={styles.footerLink}>Wire Transfers</Link></li>
               <li><Link href="/bill-pay" style={styles.footerLink}>Bill Pay Service</Link></li>
               <li><Link href="/cards" style={styles.footerLink}>Card Management</Link></li>
+              <li><Link href="/link-debit-card" style={styles.footerLink}>Link Debit Card</Link></li>
               <li><Link href="/notifications" style={styles.footerLink}>Account Alerts</Link></li>
               <li><Link href="/security" style={styles.footerLink}>Security Settings</Link></li>
               <li><Link href="/mfa-setup" style={styles.footerLink}>Two-Factor Auth</Link></li>

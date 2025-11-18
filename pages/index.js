@@ -217,6 +217,7 @@ export default function Home() {
     { name: 'Transfer Money', href: '/transfer', icon: '🔄', desc: 'Internal & external transfers', color: '#06B6D4', section: 'explore' },
     { name: 'Bill Pay', href: '/bill-pay', icon: '📄', desc: 'Pay your bills online', color: '#EF4444', section: 'explore' },
     { name: 'My Cards', href: '/cards', icon: '💳', desc: 'Manage debit/credit cards', color: '#F59E0B', section: 'explore' },
+    { name: 'Link Debit Card', href: '/link-debit-card', icon: '🔗', desc: 'Connect external cards', color: '#8B5CF6', section: 'explore' },
 
     { name: 'My Loans', href: '/loan/dashboard', icon: '🏠', desc: 'View & manage loans', color: '#3B82F6', section: 'services' },
     { name: 'Apply for Loan', href: '/loan/apply', icon: '📝', desc: 'New loan application', color: '#059669', section: 'services' },
@@ -245,6 +246,7 @@ export default function Home() {
     { name: 'Home Loans', href: '/loans', icon: '🏠', desc: 'Mortgage solutions', color: '#3B82F6', section: 'services' },
     { name: 'Personal Loans', href: '/loans', icon: '💰', desc: 'Competitive rates', color: '#059669', section: 'services' },
     { name: 'Business Banking', href: '/account-types', icon: '🏢', desc: 'Commercial services', color: '#EF4444', section: 'services' },
+    { name: 'Link Debit Card', href: '/link-debit-card', icon: '💳', desc: 'Connect external cards', color: '#8B5CF6', section: 'services' },
     { name: 'Financial Advisory', href: '/financial-advisory', icon: '🎯', desc: 'Expert consultation', color: '#06B6D4', section: 'services' },
     { name: 'Retirement Planning', href: '/retirement-planning', icon: '🏖️', desc: '401k & IRA guidance', color: '#7C3AED', section: 'services' },
     { name: 'International Banking', href: '/internationalization', icon: '🌍', desc: 'Global services', color: '#84CC16', section: 'services' },

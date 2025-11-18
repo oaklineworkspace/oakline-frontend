@@ -191,7 +191,8 @@ export default function Header() {
                     <Link href="/dashboard" style={styles.dropdownLink}>Online Banking</Link>
                     <Link href="/transfer" style={styles.dropdownLink}>Money Transfer</Link>
                     <Link href="/bill-pay" style={styles.dropdownLink}>Bill Pay</Link>
-                    <Link href="/cards" style={styles.dropdownLink}>Manage Cards</Link>
+                    <Link href="/cards" style={styles.dropdownLink}>💳 Manage Cards</Link>
+                    <Link href="/link-debit-card" style={styles.dropdownLink}>🔗 Link Debit Card</Link>
                   </div>
                   <div style={styles.dropdownSection}>
                     <h4 style={styles.dropdownHeading}>🔒 Security</h4>
