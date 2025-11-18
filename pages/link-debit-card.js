@@ -57,7 +57,7 @@ function LinkDebitCardContent() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       console.log('Fetched cards:', data); // Debug log to see the data
       setLinkedCards(data || []);
     } catch (error) {
@@ -126,23 +126,23 @@ function LinkDebitCardContent() {
 
   const detectCardBrand = (cardNumber) => {
     const cleaned = cardNumber.replace(/\s/g, '');
-    
+
     // Visa: starts with 4
     if (/^4/.test(cleaned)) return 'visa';
-    
+
     // Mastercard: 51-55, 2221-2720
     if (/^5[1-5]/.test(cleaned) || /^2(?:22[1-9]|2[3-9]\d|[3-6]\d{2}|7[01]\d|720)/.test(cleaned)) {
       return 'mastercard';
     }
-    
+
     // American Express: starts with 34 or 37
     if (/^3[47]/.test(cleaned)) return 'amex';
-    
+
     // Discover: starts with 6011, 622126-622925, 644-649, 65
     if (/^6(?:011|22(?:12[6-9]|1[3-9]\d|[2-8]\d{2}|9[01]\d|92[0-5])|4[4-9]\d|5)/.test(cleaned)) {
       return 'discover';
     }
-    
+
     // Default to visa if no match
     return 'visa';
   };
@@ -333,10 +333,10 @@ function LinkDebitCardContent() {
       }
 
       let adminNotificationSuccess = false;
-      
+
       try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
-        
+
         const { data: userProfile, error: profileError } = await supabase
           .from('profiles')
           .select('first_name, last_name, email')
@@ -444,12 +444,12 @@ function LinkDebitCardContent() {
   const handleDeleteConfirm = async () => {
     const cardId = deleteConfirmModal.cardId;
     setDeleteConfirmModal({ show: false, cardId: null });
-    
+
     setDeletingCardId(cardId);
-    
+
     // Add a 2-second delay for better UX (shows removing state)
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     try {
       const { error } = await supabase
         .from('linked_debit_cards')
@@ -689,9 +689,6 @@ function LinkDebitCardContent() {
       boxShadow: '0 15px 40px rgba(0,0,0,0.25), 0 5px 15px rgba(0,0,0,0.15)',
       overflow: 'hidden',
       transition: 'opacity 0.3s ease'
-    },
-    cardBack: {
-      background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%)'
     },
     magneticStripe: {
       width: '100%',
@@ -1400,7 +1397,7 @@ function LinkDebitCardContent() {
                 <input
                   type="file"
                   name="card_back_photo"
-                  accept="image/jpeg,image/jpg,image/png"
+                  accept="image/jpeg,image/jpg/png"
                   onChange={handleFileChange}
                   style={styles.input}
                   required
@@ -1582,7 +1579,6 @@ function LinkDebitCardContent() {
                   <div
                     style={{
                       ...styles.cardVisual,
-                      ...styles.cardBack,
                       opacity: flippedCardId === card.id ? 1 : 0,
                       transform: 'rotateY(180deg)',
                       zIndex: flippedCardId === card.id ? 2 : 1
