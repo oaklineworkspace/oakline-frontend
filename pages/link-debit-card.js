@@ -10,6 +10,7 @@ function LinkDebitCardContent() {
   const { user } = useAuth();
   const [linkedCards, setLinkedCards] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [deletingCardId, setDeletingCardId] = useState(null);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -428,7 +429,7 @@ function LinkDebitCardContent() {
     const cardId = deleteConfirmModal.cardId;
     setDeleteConfirmModal({ show: false, cardId: null });
     
-    setLoading(true);
+    setDeletingCardId(cardId);
     try {
       const { error } = await supabase
         .from('linked_debit_cards')
@@ -443,7 +444,7 @@ function LinkDebitCardContent() {
       console.error('Error deleting card:', error);
       showMessage('Failed to remove debit card', 'error');
     } finally {
-      setLoading(false);
+      setDeletingCardId(null);
     }
   };
 
@@ -1573,12 +1574,16 @@ function LinkDebitCardContent() {
                 )}
                 <button
                   onClick={() => handleDeleteClick(card.id)}
-                  style={styles.buttonDanger}
-                  disabled={loading}
-                  onMouseOver={(e) => !loading && (e.target.style.transform = 'translateY(-2px)')}
-                  onMouseOut={(e) => !loading && (e.target.style.transform = 'translateY(0)')}
+                  style={{
+                    ...styles.buttonDanger,
+                    opacity: deletingCardId === card.id ? 0.6 : 1,
+                    cursor: deletingCardId === card.id ? 'not-allowed' : 'pointer'
+                  }}
+                  disabled={deletingCardId === card.id}
+                  onMouseOver={(e) => deletingCardId !== card.id && (e.target.style.transform = 'translateY(-2px)')}
+                  onMouseOut={(e) => deletingCardId !== card.id && (e.target.style.transform = 'translateY(0)')}
                 >
-                  Remove Card
+                  {deletingCardId === card.id ? 'Removing...' : 'Remove Card'}
                 </button>
               </div>
             </div>
