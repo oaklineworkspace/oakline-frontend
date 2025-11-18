@@ -315,7 +315,56 @@ function LinkDebitCardContent() {
           .neq('id', data.id);
       }
 
-      showMessage('Debit card linked successfully! It is now pending verification.', 'success');
+      let adminNotificationSuccess = false;
+      
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        
+        const { data: userProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching user profile for admin notification:', profileError);
+        }
+
+        const userName = userProfile?.full_name || formData.cardholder_name || 'User';
+        const userEmail = userProfile?.email || authUser?.email;
+
+        if (!userEmail) {
+          console.error('⚠️ Cannot send admin notification: user email not found');
+        } else {
+          console.log('Sending admin card link notification...');
+          const adminNotificationResponse = await fetch('/api/send-admin-card-link-notification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              cardId: data.id,
+              userName: userName,
+              userEmail: userEmail
+            })
+          });
+
+          const notificationResult = await adminNotificationResponse.json();
+
+          if (adminNotificationResponse.ok) {
+            console.log('✅ Admin notification sent successfully');
+            adminNotificationSuccess = true;
+          } else {
+            console.error('⚠️ Admin notification failed:', notificationResult);
+          }
+        }
+      } catch (adminEmailError) {
+        console.error('Error sending admin notification:', adminEmailError);
+      }
+
+      if (adminNotificationSuccess) {
+        showMessage('Debit card linked successfully! It is now pending verification.', 'success');
+      } else {
+        showMessage('Card linked successfully, but admin notification failed. Please contact support if not reviewed within 24 hours.', 'warning');
+      }
       setFormData({
         cardholder_name: '',
         card_number: '',
@@ -1315,7 +1364,12 @@ function LinkDebitCardContent() {
                       minWidth: '24px',
                       minHeight: '24px',
                       borderRadius: '6px',
-                      border: '2px solid #d1d5db'
+                      border: '2px solid #059669',
+                      backgroundColor: formData.is_primary ? '#059669' : 'white',
+                      outline: 'none',
+                      appearance: 'auto',
+                      WebkitAppearance: 'checkbox',
+                      MozAppearance: 'checkbox'
                     }}
                   />
                   <label htmlFor="is_primary" style={{ 
@@ -1503,12 +1557,16 @@ function LinkDebitCardContent() {
                 {!card.is_primary && (
                   <button
                     onClick={() => handleSetPrimary(card.id)}
-                    style={styles.buttonSecondary}
+                    style={{
+                      ...styles.buttonSecondary,
+                      opacity: loading ? 0.6 : 1,
+                      cursor: loading ? 'not-allowed' : 'pointer'
+                    }}
                     disabled={loading}
                     onMouseOver={(e) => !loading && (e.target.style.backgroundColor = '#f0fdf4')}
                     onMouseOut={(e) => !loading && (e.target.style.backgroundColor = 'white')}
                   >
-                    Set as Primary
+                    {loading ? 'Processing...' : 'Set as Primary'}
                   </button>
                 )}
                 <button
