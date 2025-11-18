@@ -26,6 +26,8 @@ function LinkDebitCardContent() {
     billing_zip: '',
     billing_country: 'United States',
     manual_billing_country: '',
+    bank_name: '',
+    manual_bank_name: '',
     card_brand: '',
     card_front_photo: null,
     card_back_photo: null,
@@ -279,6 +281,7 @@ function LinkDebitCardContent() {
           billing_state: formData.billing_state,
           billing_zip: formData.billing_zip,
           billing_country: formData.billing_country === 'Other' ? formData.manual_billing_country : formData.billing_country,
+          bank_name: formData.bank_name === 'Other' ? formData.manual_bank_name : formData.bank_name,
           is_primary: linkedCards.length === 0 ? true : formData.is_primary,
           status: 'pending',
           card_front_photo: cardFrontPhotoUrl,
@@ -315,6 +318,8 @@ function LinkDebitCardContent() {
         billing_zip: '',
         billing_country: 'United States',
         manual_billing_country: '',
+        bank_name: '',
+        manual_bank_name: '',
         card_brand: '',
         is_primary: false,
         card_front_photo: null,
@@ -848,6 +853,109 @@ function LinkDebitCardContent() {
                 </div>
               </div>
 
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Issuing Bank *</label>
+                <select
+                  name="bank_name"
+                  value={formData.bank_name}
+                  onChange={handleChange}
+                  style={styles.input}
+                  required
+                >
+                  <option value="">Select Bank</option>
+                  <optgroup label="🇺🇸 United States">
+                    <option value="Chase Bank">Chase Bank</option>
+                    <option value="Bank of America">Bank of America</option>
+                    <option value="Wells Fargo">Wells Fargo</option>
+                    <option value="Citibank">Citibank</option>
+                    <option value="U.S. Bank">U.S. Bank</option>
+                    <option value="PNC Bank">PNC Bank</option>
+                    <option value="Capital One">Capital One</option>
+                    <option value="TD Bank">TD Bank</option>
+                    <option value="Truist Bank">Truist Bank</option>
+                    <option value="Goldman Sachs">Goldman Sachs</option>
+                    <option value="American Express">American Express</option>
+                    <option value="Discover Bank">Discover Bank</option>
+                  </optgroup>
+                  <optgroup label="🇬🇧 United Kingdom">
+                    <option value="HSBC UK">HSBC UK</option>
+                    <option value="Barclays">Barclays</option>
+                    <option value="Lloyds Bank">Lloyds Bank</option>
+                    <option value="NatWest">NatWest</option>
+                    <option value="Santander UK">Santander UK</option>
+                    <option value="TSB Bank">TSB Bank</option>
+                    <option value="Metro Bank">Metro Bank</option>
+                  </optgroup>
+                  <optgroup label="🇨🇦 Canada">
+                    <option value="Royal Bank of Canada">Royal Bank of Canada (RBC)</option>
+                    <option value="TD Canada Trust">TD Canada Trust</option>
+                    <option value="Scotiabank">Scotiabank</option>
+                    <option value="BMO">Bank of Montreal (BMO)</option>
+                    <option value="CIBC">CIBC</option>
+                  </optgroup>
+                  <optgroup label="🇪🇺 Europe">
+                    <option value="Deutsche Bank">Deutsche Bank</option>
+                    <option value="BNP Paribas">BNP Paribas</option>
+                    <option value="Santander">Santander</option>
+                    <option value="ING Bank">ING Bank</option>
+                    <option value="Credit Agricole">Credit Agricole</option>
+                    <option value="UniCredit">UniCredit</option>
+                    <option value="Rabobank">Rabobank</option>
+                    <option value="Commerzbank">Commerzbank</option>
+                  </optgroup>
+                  <optgroup label="🇦🇺 Australia">
+                    <option value="Commonwealth Bank">Commonwealth Bank</option>
+                    <option value="Westpac">Westpac</option>
+                    <option value="ANZ">ANZ</option>
+                    <option value="NAB">National Australia Bank (NAB)</option>
+                  </optgroup>
+                  <optgroup label="🌏 Asia">
+                    <option value="ICBC">Industrial and Commercial Bank of China (ICBC)</option>
+                    <option value="China Construction Bank">China Construction Bank</option>
+                    <option value="Agricultural Bank of China">Agricultural Bank of China</option>
+                    <option value="Bank of China">Bank of China</option>
+                    <option value="HSBC Asia">HSBC Asia</option>
+                    <option value="DBS Bank">DBS Bank (Singapore)</option>
+                    <option value="OCBC Bank">OCBC Bank</option>
+                    <option value="UOB">United Overseas Bank (UOB)</option>
+                    <option value="HDFC Bank">HDFC Bank (India)</option>
+                    <option value="ICICI Bank">ICICI Bank (India)</option>
+                    <option value="State Bank of India">State Bank of India (SBI)</option>
+                    <option value="Mitsubishi UFJ">Mitsubishi UFJ Financial Group (Japan)</option>
+                    <option value="Sumitomo Mitsui">Sumitomo Mitsui Banking Corporation (Japan)</option>
+                  </optgroup>
+                  <optgroup label="🌎 Latin America">
+                    <option value="Banco do Brasil">Banco do Brasil</option>
+                    <option value="Itau Unibanco">Itau Unibanco</option>
+                    <option value="Bradesco">Bradesco</option>
+                    <option value="Banco Santander Mexico">Banco Santander Mexico</option>
+                    <option value="BBVA Mexico">BBVA Mexico</option>
+                  </optgroup>
+                  <optgroup label="🌍 Middle East & Africa">
+                    <option value="Emirates NBD">Emirates NBD</option>
+                    <option value="Qatar National Bank">Qatar National Bank</option>
+                    <option value="First Abu Dhabi Bank">First Abu Dhabi Bank (FAB)</option>
+                    <option value="Standard Bank">Standard Bank (South Africa)</option>
+                  </optgroup>
+                  <option value="Other">Other (Specify Below)</option>
+                </select>
+              </div>
+
+              {formData.bank_name === 'Other' && (
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Specify Bank Name *</label>
+                  <input
+                    type="text"
+                    name="manual_bank_name"
+                    value={formData.manual_bank_name}
+                    onChange={handleChange}
+                    style={styles.input}
+                    placeholder="Enter your bank name"
+                    required
+                  />
+                </div>
+              )}
+
               <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: '#1e293b', marginTop: '2rem', marginBottom: '1.25rem' }}>
                 Billing Address
               </h3>
@@ -1091,7 +1199,11 @@ function LinkDebitCardContent() {
                      onMouseOver={(e) => e.currentTarget.style.transform = 'rotateY(5deg) rotateX(5deg)'}
                      onMouseOut={(e) => e.currentTarget.style.transform = 'rotateY(0deg) rotateX(0deg)'}>
                   <div style={styles.cardVisualHeader}>
-                    <span style={styles.cardBankName}>BANK NAME</span>
+                    <span style={styles.cardBankName}>
+                      {formData.bank_name === 'Other' 
+                        ? (formData.manual_bank_name || 'BANK NAME')
+                        : (formData.bank_name || 'BANK NAME')}
+                    </span>
                     <span style={styles.cardTypeLabel}>DEBIT CARD</span>
                   </div>
 
