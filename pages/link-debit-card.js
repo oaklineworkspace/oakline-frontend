@@ -783,20 +783,22 @@ function LinkDebitCardContent() {
     },
     cardSmallLabel: {
       fontSize: '0.7rem',
-      opacity: 0.95,
+      opacity: 1,
       fontWeight: '700',
       marginBottom: '0.35rem',
       textTransform: 'uppercase',
       letterSpacing: '0.8px',
-      textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+      textShadow: '0 2px 4px rgba(0,0,0,0.6)',
+      color: '#FFFFFF'
     },
     cardholderNameDisplay: {
-      fontSize: '1rem',
+      fontSize: '1.05rem',
       fontWeight: '700',
       textTransform: 'uppercase',
       letterSpacing: '0.8px',
-      textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-      lineHeight: '1.4'
+      textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 3px rgba(0,0,0,0.9)',
+      lineHeight: '1.4',
+      color: '#FFFFFF'
     },
     cardExpiryDisplay: {
       fontSize: '0.95rem',
@@ -1635,13 +1637,15 @@ function LinkDebitCardContent() {
                     color: card.status === 'active' ? '#059669' : 
                            card.status === 'pending' ? '#f59e0b' : 
                            card.status === 'suspended' ? '#dc2626' : 
-                           card.status === 'expired' ? '#6b7280' : '#dc2626',
+                           card.status === 'expired' ? '#6b7280' : 
+                           card.status === 'deleted' ? '#6b7280' : '#dc2626', // Added deleted status case
                     fontWeight: '700'
                   }}>
                     {card.status === 'suspended' ? '⚠️ SUSPENDED' : 
                      card.status === 'expired' ? '⏰ EXPIRED' : 
                      card.status === 'pending' ? '⏳ PENDING' : 
-                     card.status === 'active' ? '✓ ACTIVE' : 
+                     card.status === 'active' ? '✓ ACTIVE' :
+                     card.status === 'deleted' ? '🚫 REMOVED' : // Display 'REMOVED' for deleted status
                      card.status.toUpperCase()}
                   </div>
                 </div>
