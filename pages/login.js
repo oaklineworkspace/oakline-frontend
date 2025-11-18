@@ -58,12 +58,13 @@ export default function SignInPage() {
         setLoadingStage(3);
         await new Promise(resolve => setTimeout(resolve, 600));
 
-        // Navigate to dashboard
+        // Navigate to dashboard - no message needed, the loading banner shows everything
         window.location.href = '/dashboard';
       }
 
     } catch (error) {
       setShowLoadingBanner(false);
+      setLoadingStage(0);
       setMessage(`Sign in failed: ${error.message}`);
       setLoading(false);
     }
