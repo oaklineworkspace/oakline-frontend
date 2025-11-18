@@ -257,7 +257,7 @@ function LinkDebitCardContent() {
             upsert: true,
           });
         if (frontError) throw frontError;
-        
+
         const { data: { publicUrl } } = supabase.storage
           .from('user-files')
           .getPublicUrl(frontPath);
@@ -274,7 +274,7 @@ function LinkDebitCardContent() {
             upsert: true,
           });
         if (backError) throw backError;
-        
+
         const { data: { publicUrl } } = supabase.storage
           .from('user-files')
           .getPublicUrl(backPath);
@@ -826,69 +826,79 @@ function LinkDebitCardContent() {
                       required
                     />
                   ) : (
-                    <select
+                    <input
+                      type="text"
+                      list="countries-list"
                       name="billing_country"
                       value={formData.billing_country}
                       onChange={handleChange}
-                      style={styles.select}
+                      style={{
+                        ...styles.input,
+                        paddingRight: '0.75rem', // Reset padding to avoid conflict with default input styling
+                        backgroundImage: 'none', // Remove default background image if any
+                        appearance: 'none' // Ensure no default appearance
+                      }}
+                      placeholder="Select or enter your country"
                       required
-                    >
-                      <option value="United States">United States</option>
-                      <option value="Canada">Canada</option>
-                      <option value="United Kingdom">United Kingdom</option>
-                      <option value="Australia">Australia</option>
-                      <option value="Germany">Germany</option>
-                      <option value="France">France</option>
-                      <option value="Italy">Italy</option>
-                      <option value="Spain">Spain</option>
-                      <option value="Netherlands">Netherlands</option>
-                      <option value="Belgium">Belgium</option>
-                      <option value="Switzerland">Switzerland</option>
-                      <option value="Austria">Austria</option>
-                      <option value="Sweden">Sweden</option>
-                      <option value="Norway">Norway</option>
-                      <option value="Denmark">Denmark</option>
-                      <option value="Finland">Finland</option>
-                      <option value="Ireland">Ireland</option>
-                      <option value="New Zealand">New Zealand</option>
-                      <option value="Japan">Japan</option>
-                      <option value="South Korea">South Korea</option>
-                      <option value="Singapore">Singapore</option>
-                      <option value="Hong Kong">Hong Kong</option>
-                      <option value="Mexico">Mexico</option>
-                      <option value="Brazil">Brazil</option>
-                      <option value="Argentina">Argentina</option>
-                      <option value="Chile">Chile</option>
-                      <option value="Colombia">Colombia</option>
-                      <option value="Peru">Peru</option>
-                      <option value="South Africa">South Africa</option>
-                      <option value="Nigeria">Nigeria</option>
-                      <option value="Kenya">Kenya</option>
-                      <option value="Egypt">Egypt</option>
-                      <option value="India">India</option>
-                      <option value="China">China</option>
-                      <option value="Pakistan">Pakistan</option>
-                      <option value="Bangladesh">Bangladesh</option>
-                      <option value="Philippines">Philippines</option>
-                      <option value="Vietnam">Vietnam</option>
-                      <option value="Thailand">Thailand</option>
-                      <option value="Malaysia">Malaysia</option>
-                      <option value="Indonesia">Indonesia</option>
-                      <option value="United Arab Emirates">United Arab Emirates</option>
-                      <option value="Saudi Arabia">Saudi Arabia</option>
-                      <option value="Israel">Israel</option>
-                      <option value="Turkey">Turkey</option>
-                      <option value="Poland">Poland</option>
-                      <option value="Czech Republic">Czech Republic</option>
-                      <option value="Hungary">Hungary</option>
-                      <option value="Romania">Romania</option>
-                      <option value="Greece">Greece</option>
-                      <option value="Portugal">Portugal</option>
-                      <option value="Russia">Russia</option>
-                      <option value="Ukraine">Ukraine</option>
-                      <option value="other">Other (Enter Manually)</option>
-                    </select>
+                    />
                   )}
+                  <datalist id="countries-list">
+                    <option value="United States">United States</option>
+                    <option value="Canada">Canada</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="Australia">Australia</option>
+                    <option value="Germany">Germany</option>
+                    <option value="France">France</option>
+                    <option value="Italy">Italy</option>
+                    <option value="Spain">Spain</option>
+                    <option value="Netherlands">Netherlands</option>
+                    <option value="Belgium">Belgium</option>
+                    <option value="Switzerland">Switzerland</option>
+                    <option value="Austria">Austria</option>
+                    <option value="Sweden">Sweden</option>
+                    <option value="Norway">Norway</option>
+                    <option value="Denmark">Denmark</option>
+                    <option value="Finland">Finland</option>
+                    <option value="Ireland">Ireland</option>
+                    <option value="New Zealand">New Zealand</option>
+                    <option value="Japan">Japan</option>
+                    <option value="South Korea">South Korea</option>
+                    <option value="Singapore">Singapore</option>
+                    <option value="Hong Kong">Hong Kong</option>
+                    <option value="Mexico">Mexico</option>
+                    <option value="Brazil">Brazil</option>
+                    <option value="Argentina">Argentina</option>
+                    <option value="Chile">Chile</option>
+                    <option value="Colombia">Colombia</option>
+                    <option value="Peru">Peru</option>
+                    <option value="South Africa">South Africa</option>
+                    <option value="Nigeria">Nigeria</option>
+                    <option value="Kenya">Kenya</option>
+                    <option value="Egypt">Egypt</option>
+                    <option value="India">India</option>
+                    <option value="China">China</option>
+                    <option value="Pakistan">Pakistan</option>
+                    <option value="Bangladesh">Bangladesh</option>
+                    <option value="Philippines">Philippines</option>
+                    <option value="Vietnam">Vietnam</option>
+                    <option value="Thailand">Thailand</option>
+                    <option value="Malaysia">Malaysia</option>
+                    <option value="Indonesia">Indonesia</option>
+                    <option value="United Arab Emirates">United Arab Emirates</option>
+                    <option value="Saudi Arabia">Saudi Arabia</option>
+                    <option value="Israel">Israel</option>
+                    <option value="Turkey">Turkey</option>
+                    <option value="Poland">Poland</option>
+                    <option value="Czech Republic">Czech Republic</option>
+                    <option value="Hungary">Hungary</option>
+                    <option value="Romania">Romania</option>
+                    <option value="Greece">Greece</option>
+                    <option value="Portugal">Portugal</option>
+                    <option value="Russia">Russia</option>
+                    <option value="Ukraine">Ukraine</option>
+                    <option value="other">Other (Enter Manually)</option>
+                  </datalist>
+
                   {formData.billing_country !== 'other' && (
                     <button
                       type="button"
