@@ -782,18 +782,21 @@ function LinkDebitCardContent() {
       alignItems: 'flex-end'
     },
     cardSmallLabel: {
-      fontSize: '0.65rem',
-      opacity: 0.85,
-      fontWeight: '600',
-      marginBottom: '0.25rem',
+      fontSize: '0.7rem',
+      opacity: 0.95,
+      fontWeight: '700',
+      marginBottom: '0.35rem',
       textTransform: 'uppercase',
-      letterSpacing: '0.5px'
+      letterSpacing: '0.8px',
+      textShadow: '0 1px 2px rgba(0,0,0,0.2)'
     },
     cardholderNameDisplay: {
-      fontSize: '0.95rem',
-      fontWeight: 'bold',
+      fontSize: '1rem',
+      fontWeight: '700',
       textTransform: 'uppercase',
-      letterSpacing: '0.5px'
+      letterSpacing: '0.8px',
+      textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+      lineHeight: '1.4'
     },
     cardExpiryDisplay: {
       fontSize: '0.95rem',
@@ -1558,14 +1561,22 @@ function LinkDebitCardContent() {
 
                     <div style={styles.cardVisualFooter}>
                       <div style={{ flex: 1 }}>
-                        <div style={styles.cardSmallLabel}>Cardholder Name</div>
-                        <div style={styles.cardholderNameDisplay}>
+                        <div style={styles.cardSmallLabel}>CARDHOLDER NAME</div>
+                        <div style={{
+                          ...styles.cardholderNameDisplay,
+                          textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                          fontWeight: '700',
+                          fontSize: '1.05rem'
+                        }}>
                           {(card.cardholder_name || 'CARDHOLDER').toUpperCase()}
                         </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={styles.cardSmallLabel}>Expires</div>
-                        <div style={styles.cardExpiryDisplay}>
+                        <div style={styles.cardSmallLabel}>EXPIRES</div>
+                        <div style={{
+                          ...styles.cardExpiryDisplay,
+                          textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                        }}>
                           {card.expiry_month}/{card.expiry_year}
                         </div>
                       </div>
