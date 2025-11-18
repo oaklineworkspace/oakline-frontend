@@ -415,6 +415,16 @@ function LinkDebitCardContent() {
     return icons[brand] || '💳'; // Default to card emoji
   };
 
+  const getCardBackgroundClass = (brand) => {
+    switch (brand) {
+      case 'visa': return { backgroundImage: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #1e3a8a 100%)' };
+      case 'mastercard': return { backgroundImage: 'linear-gradient(135deg, #dc2626 0%, #f87171 50%, #b91c1c 100%)' };
+      case 'amex': return { backgroundImage: 'linear-gradient(135deg, #15803d 0%, #4ade80 50%, #166534 100%)' };
+      case 'discover': return { backgroundImage: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #b45309 100%)' };
+      default: return { backgroundImage: 'linear-gradient(135deg, #6b7280 0%, #9ca3af 50%, #4b5563 100%)' };
+    }
+  };
+
   const styles = {
     container: {
       minHeight: '100vh',
@@ -624,6 +634,95 @@ function LinkDebitCardContent() {
       color: '#dc2626',
       fontSize: '0.75rem',
       marginTop: '0.25rem'
+    },
+    cardVisualContainer: {
+      marginBottom: '1.5rem',
+      display: 'flex',
+      justifyContent: 'center'
+    },
+    cardVisual: {
+      width: '100%',
+      maxWidth: '380px',
+      height: '220px',
+      background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #1e3a8a 100%)',
+      borderRadius: '16px',
+      padding: '1.5rem',
+      color: 'white',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      boxShadow: '0 8px 24px rgba(30, 64, 175, 0.3)',
+      position: 'relative'
+    },
+    cardVisualHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start'
+    },
+    cardBankName: {
+      fontSize: '0.9rem',
+      fontWeight: 'bold',
+      letterSpacing: '1px'
+    },
+    cardTypeLabel: {
+      fontSize: '0.75rem',
+      fontWeight: 'bold',
+      opacity: 0.9
+    },
+    cardChipSection: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      margin: '0.75rem 0'
+    },
+    cardChip: {
+      width: '45px',
+      height: '35px',
+      background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)',
+      borderRadius: '6px'
+    },
+    primaryBadgeCard: {
+      backgroundColor: '#059669',
+      color: 'white',
+      padding: '0.25rem 0.5rem',
+      borderRadius: '6px',
+      fontSize: '0.7rem',
+      fontWeight: '600'
+    },
+    cardNumberDisplay: {
+      fontSize: '1.3rem',
+      fontWeight: 'bold',
+      letterSpacing: '3px',
+      fontFamily: 'monospace',
+      textAlign: 'center',
+      margin: '0.5rem 0'
+    },
+    cardVisualFooter: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end'
+    },
+    cardSmallLabel: {
+      fontSize: '0.65rem',
+      opacity: 0.8,
+      fontWeight: 'bold',
+      marginBottom: '2px'
+    },
+    cardholderNameDisplay: {
+      fontSize: '0.85rem',
+      fontWeight: 'bold'
+    },
+    cardExpiryDisplay: {
+      fontSize: '0.85rem',
+      fontWeight: 'bold'
+    },
+    cardBrandLogo: {
+      position: 'absolute',
+      bottom: '1rem',
+      right: '1.5rem',
+      fontSize: '0.75rem',
+      fontWeight: 'bold',
+      opacity: 0.9
     }
   };
 
@@ -675,6 +774,50 @@ function LinkDebitCardContent() {
 
           {showForm && (
             <form onSubmit={handleSubmit} style={{ marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #e2e8f0' }}>
+              <div style={styles.cardVisualContainer}>
+                <div style={{ ...styles.cardVisual, ...getCardBackgroundClass(detectCardBrand(formData.card_number)) }}>
+                  <div style={styles.cardVisualHeader}>
+                    <span style={styles.cardBankName}>BANK NAME</span>
+                    {formData.cardholder_name && (
+                      <span style={styles.cardTypeLabel}>DEBIT CARD</span>
+                    )}
+                  </div>
+
+                  <div style={styles.cardChipSection}>
+                    <div style={styles.cardChip}></div>
+                    {formData.card_number && (
+                       <div style={styles.primaryBadgeCard}>PRIMARY</div>
+                    )}
+                  </div>
+
+                  {formData.card_number ? (
+                    <div style={styles.cardNumberDisplay}>
+                      {formatCardDisplay(formData.card_number.replace(/\s/g, ''))}
+                    </div>
+                  ) : (
+                    <div style={styles.cardNumberDisplay}>•••• •••• •••• ••••</div>
+                  )}
+
+                  <div style={styles.cardVisualFooter}>
+                    <div>
+                      <div style={styles.cardSmallLabel}>Cardholder Name</div>
+                      <div style={styles.cardholderNameDisplay}>
+                        {formData.cardholder_name || 'CARDHOLDER NAME'}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={styles.cardSmallLabel}>Expires</div>
+                      <div style={styles.cardExpiryDisplay}>
+                        {formData.expiry_month || 'MM'} / {formData.expiry_year || 'YYYY'}
+                      </div>
+                    </div>
+                  </div>
+                  {formData.card_brand && (
+                    <div style={styles.cardBrandLogo}>{formData.card_brand.toUpperCase()}</div>
+                  )}
+                </div>
+              </div>
+
               <div style={styles.formGroup}>
                 <label style={styles.label}>Cardholder Name *</label>
                 <input
