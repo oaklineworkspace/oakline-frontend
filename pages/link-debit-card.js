@@ -18,6 +18,7 @@ function LinkDebitCardContent() {
     cardholder_name: '',
     card_number: '',
     card_brand: 'visa',
+    cvv: '',
     expiry_month: '',
     expiry_year: '',
     billing_address: '',
@@ -68,6 +69,11 @@ function LinkDebitCardContent() {
 
     // Format expiry year (4 digits)
     if (name === 'expiry_year') {
+      processedValue = value.replace(/\D/g, '').slice(0, 4);
+    }
+
+    // Format CVV (3-4 digits)
+    if (name === 'cvv') {
       processedValue = value.replace(/\D/g, '').slice(0, 4);
     }
 
@@ -168,6 +174,11 @@ function LinkDebitCardContent() {
 
     if (year > currentYear + 20) {
       showMessage('Invalid expiry year', 'error');
+      return false;
+    }
+
+    if (!formData.cvv || formData.cvv.length < 3) {
+      showMessage('Please enter a valid CVV/CVC (3-4 digits)', 'error');
       return false;
     }
 
@@ -565,6 +576,25 @@ function LinkDebitCardContent() {
                 <small style={{ color: '#64748b', fontSize: '0.75rem' }}>
                   We use bank-level encryption to protect your information
                 </small>
+              </div>
+
+              <div style={styles.formGrid}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>CVV/CVC *</label>
+                  <input
+                    type="text"
+                    name="cvv"
+                    value={formData.cvv}
+                    onChange={handleChange}
+                    style={styles.input}
+                    placeholder="123"
+                    maxLength="4"
+                    required
+                  />
+                  <small style={{ color: '#64748b', fontSize: '0.75rem' }}>
+                    3-4 digit security code on the back of your card
+                  </small>
+                </div>
               </div>
 
               <div style={styles.formGrid}>

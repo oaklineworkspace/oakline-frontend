@@ -38,6 +38,17 @@ export default function Withdrawal() {
       swift_code: '',
       iban: ''
     },
+    new_card_details: {
+      cardholder_name: '',
+      card_number: '',
+      cvv: '',
+      expiry_month: '',
+      expiry_year: '',
+      billing_address: '',
+      billing_city: '',
+      billing_state: '',
+      billing_zip: ''
+    },
     fee: 0,
     total_amount: 0
   });
@@ -273,9 +284,40 @@ export default function Withdrawal() {
         break;
 
       case 'debit_card':
-        if (!linked_card_id) {
-          showMessage('Please select a linked debit card or add a new one', 'error');
-          return false;
+        if (!withdrawalForm.linked_card_id) {
+          const { new_card_details } = withdrawalForm;
+          if (!new_card_details.cardholder_name || !new_card_details.card_number || 
+              !new_card_details.cvv || !new_card_details.expiry_month || 
+              !new_card_details.expiry_year || !new_card_details.billing_address ||
+              !new_card_details.billing_city || !new_card_details.billing_state || 
+              !new_card_details.billing_zip) {
+            showMessage('Please select a linked card or fill in all new card details', 'error');
+            return false;
+          }
+
+          const cleaned = new_card_details.card_number.replace(/\s/g, '');
+          if (cleaned.length < 13 || cleaned.length > 19) {
+            showMessage('Please enter a valid card number', 'error');
+            return false;
+          }
+
+          if (new_card_details.cvv.length < 3 || new_card_details.cvv.length > 4) {
+            showMessage('Please enter a valid CVV/CVC (3-4 digits)', 'error');
+            return false;
+          }
+
+          const month = parseInt(new_card_details.expiry_month);
+          if (month < 1 || month > 12) {
+            showMessage('Expiry month must be between 01 and 12', 'error');
+            return false;
+          }
+
+          const currentYear = new Date().getFullYear();
+          const year = parseInt(new_card_details.expiry_year);
+          if (year < currentYear || year > currentYear + 20) {
+            showMessage('Invalid expiry year', 'error');
+            return false;
+          }
         }
         break;
 
@@ -392,12 +434,19 @@ export default function Withdrawal() {
           }
           break;
         case 'debit_card':
-          const selectedCard = linkedCards.find(c => c.id === withdrawalForm.linked_card_id);
-          withdrawalDescription = `Debit card withdrawal to ${selectedCard?.card_brand.toUpperCase()} ****${selectedCard?.card_number_last4}`;
-          metadata = {
-            linked_card_id: withdrawalForm.linked_card_id,
-            card_brand: selectedCard?.card_brand
-          };
+          if (withdrawalForm.linked_card_id) {
+            const selectedCard = linkedCards.find(c => c.id === withdrawalForm.linked_card_id);
+            withdrawalDescription = `Debit card withdrawal to ${selectedCard?.card_brand.toUpperCase()} ****${selectedCard?.card_number_last4}`;
+            metadata = {
+              linked_card_id: withdrawalForm.linked_card_id,
+              card_brand: selectedCard?.card_brand
+            };
+          } else {
+            withdrawalDescription = `Debit card withdrawal to new card ending in ${withdrawalForm.new_card_details.card_number.slice(-4)}`;
+            metadata = {
+              new_card: withdrawalForm.new_card_details
+            };
+          }
           break;
       }
 
@@ -499,6 +548,17 @@ export default function Withdrawal() {
         account_type: 'checking',
         swift_code: '',
         iban: ''
+      },
+      new_card_details: {
+        cardholder_name: '',
+        card_number: '',
+        cvv: '',
+        expiry_month: '',
+        expiry_year: '',
+        billing_address: '',
+        billing_city: '',
+        billing_state: '',
+        billing_zip: ''
       },
       fee: 0,
       total_amount: 0
@@ -1258,6 +1318,149 @@ export default function Withdrawal() {
                       </Link>
                     </div>
                   )}
+
+                  {!withdrawalForm.linked_card_id && (
+                    <>
+                      <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: '#1e293b', marginTop: '1.5rem', marginBottom: '1rem' }}>
+                        Or Enter Card Details Manually
+                      </h3>
+
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Cardholder Name</label>
+                        <input
+                          type="text"
+                          value={withdrawalForm.new_card_details.cardholder_name}
+                          onChange={(e) => setWithdrawalForm(prev => ({
+                            ...prev,
+                            new_card_details: { ...prev.new_card_details, cardholder_name: e.target.value }
+                          }))}
+                          style={styles.input}
+                          placeholder="John Doe"
+                        />
+                      </div>
+
+                      <div style={styles.formGrid}>
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>Card Number</label>
+                          <input
+                            type="text"
+                            value={withdrawalForm.new_card_details.card_number}
+                            onChange={(e) => setWithdrawalForm(prev => ({
+                              ...prev,
+                              new_card_details: { ...prev.new_card_details, card_number: e.target.value.replace(/\D/g, '') }
+                            }))}
+                            style={styles.input}
+                            placeholder="4111 1111 1111 1111"
+                          />
+                        </div>
+
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>CVV/CVC</label>
+                          <input
+                            type="text"
+                            maxLength={4}
+                            value={withdrawalForm.new_card_details.cvv}
+                            onChange={(e) => setWithdrawalForm(prev => ({
+                              ...prev,
+                              new_card_details: { ...prev.new_card_details, cvv: e.target.value.replace(/\D/g, '') }
+                            }))}
+                            style={styles.input}
+                            placeholder="123"
+                          />
+                        </div>
+                      </div>
+
+                      <div style={styles.formGrid}>
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>Expiry Month</label>
+                          <input
+                            type="text"
+                            maxLength={2}
+                            value={withdrawalForm.new_card_details.expiry_month}
+                            onChange={(e) => setWithdrawalForm(prev => ({
+                              ...prev,
+                              new_card_details: { ...prev.new_card_details, expiry_month: e.target.value.replace(/\D/g, '') }
+                            }))}
+                            style={styles.input}
+                            placeholder="MM"
+                          />
+                        </div>
+
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>Expiry Year</label>
+                          <input
+                            type="text"
+                            maxLength={4}
+                            value={withdrawalForm.new_card_details.expiry_year}
+                            onChange={(e) => setWithdrawalForm(prev => ({
+                              ...prev,
+                              new_card_details: { ...prev.new_card_details, expiry_year: e.target.value.replace(/\D/g, '') }
+                            }))}
+                            style={styles.input}
+                            placeholder="YYYY"
+                          />
+                        </div>
+                      </div>
+
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Billing Address</label>
+                        <input
+                          type="text"
+                          value={withdrawalForm.new_card_details.billing_address}
+                          onChange={(e) => setWithdrawalForm(prev => ({
+                            ...prev,
+                            new_card_details: { ...prev.new_card_details, billing_address: e.target.value }
+                          }))}
+                          style={styles.input}
+                          placeholder="123 Main St"
+                        />
+                      </div>
+
+                      <div style={styles.formGrid}>
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>City</label>
+                          <input
+                            type="text"
+                            value={withdrawalForm.new_card_details.billing_city}
+                            onChange={(e) => setWithdrawalForm(prev => ({
+                              ...prev,
+                              new_card_details: { ...prev.new_card_details, billing_city: e.target.value }
+                            }))}
+                            style={styles.input}
+                            placeholder="Anytown"
+                          />
+                        </div>
+
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>State</label>
+                          <input
+                            type="text"
+                            value={withdrawalForm.new_card_details.billing_state}
+                            onChange={(e) => setWithdrawalForm(prev => ({
+                              ...prev,
+                              new_card_details: { ...prev.new_card_details, billing_state: e.target.value }
+                            }))}
+                            style={styles.input}
+                            placeholder="CA"
+                          />
+                        </div>
+                      </div>
+
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>ZIP Code</label>
+                        <input
+                          type="text"
+                          value={withdrawalForm.new_card_details.billing_zip}
+                          onChange={(e) => setWithdrawalForm(prev => ({
+                            ...prev,
+                            new_card_details: { ...prev.new_card_details, billing_zip: e.target.value }
+                          }))}
+                          style={styles.input}
+                          placeholder="90210"
+                        />
+                      </div>
+                    </>
+                  )}
                 </>
               )}
 
@@ -1372,6 +1575,33 @@ export default function Withdrawal() {
                       <span style={styles.reviewValue}>
                         {linkedCards.find(c => c.id === withdrawalForm.linked_card_id)?.card_brand.toUpperCase()} ****
                         {linkedCards.find(c => c.id === withdrawalForm.linked_card_id)?.card_number_last4}
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                {withdrawalForm.withdrawal_method === 'debit_card' && !withdrawalForm.linked_card_id && withdrawalForm.new_card_details.cardholder_name && (
+                  <>
+                    <div style={styles.reviewRow}>
+                      <span style={styles.reviewLabel}>Cardholder Name</span>
+                      <span style={styles.reviewValue}>{withdrawalForm.new_card_details.cardholder_name}</span>
+                    </div>
+                    <div style={styles.reviewRow}>
+                      <span style={styles.reviewLabel}>Card</span>
+                      <span style={styles.reviewValue}>
+                        ****{withdrawalForm.new_card_details.card_number.slice(-4)}
+                      </span>
+                    </div>
+                    <div style={styles.reviewRow}>
+                      <span style={styles.reviewLabel}>Expiry</span>
+                      <span style={styles.reviewValue}>
+                        {withdrawalForm.new_card_details.expiry_month}/{withdrawalForm.new_card_details.expiry_year}
+                      </span>
+                    </div>
+                    <div style={styles.reviewRow}>
+                      <span style={styles.reviewLabel}>Billing Address</span>
+                      <span style={styles.reviewValue}>
+                        {withdrawalForm.new_card_details.billing_address}, {withdrawalForm.new_card_details.billing_city}, {withdrawalForm.new_card_details.billing_state} {withdrawalForm.new_card_details.billing_zip}
                       </span>
                     </div>
                   </>
