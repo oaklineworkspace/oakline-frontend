@@ -13,6 +13,7 @@ function LinkDebitCardContent() {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [flippedCardId, setFlippedCardId] = useState(null);
 
   const [formData, setFormData] = useState({
     cardholder_name: '',
@@ -431,6 +432,10 @@ function LinkDebitCardContent() {
     return logos[brand] || logos.visa;
   };
 
+  const handleCardFlip = (cardId) => {
+    setFlippedCardId(flippedCardId === cardId ? null : cardId);
+  };
+
   const styles = {
     container: {
       minHeight: '100vh',
@@ -544,10 +549,20 @@ function LinkDebitCardContent() {
       justifyContent: 'center',
       perspective: '1000px'
     },
-    cardVisual: {
+    cardFlipWrapper: {
       width: '100%',
       maxWidth: '450px',
       aspectRatio: '1.586',
+      position: 'relative',
+      transformStyle: 'preserve-3d',
+      transition: 'transform 0.6s',
+      cursor: 'pointer'
+    },
+    cardVisual: {
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+      backfaceVisibility: 'hidden',
       background: 'linear-gradient(135deg, #1434A4 0%, #2E5EAA 100%)',
       borderRadius: '18px',
       padding: '1.75rem 2rem',
@@ -556,9 +571,46 @@ function LinkDebitCardContent() {
       flexDirection: 'column',
       justifyContent: 'space-between',
       boxShadow: '0 15px 40px rgba(0,0,0,0.25), 0 5px 15px rgba(0,0,0,0.15)',
-      position: 'relative',
       overflow: 'hidden',
-      transition: 'transform 0.3s'
+      transition: 'opacity 0.3s, transform 0.6s'
+    },
+    cardBack: {
+      background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%)'
+    },
+    magneticStripe: {
+      width: '100%',
+      height: '45px',
+      backgroundColor: '#000',
+      marginTop: '20px'
+    },
+    cvvSection: {
+      backgroundColor: 'white',
+      color: 'black',
+      padding: '1rem',
+      margin: '20px 0',
+      borderRadius: '8px',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
+    },
+    cvvLabel: {
+      fontSize: '0.9rem',
+      fontWeight: 'bold'
+    },
+    cvvBox: {
+      backgroundColor: '#f3f4f6',
+      padding: '6px 12px',
+      borderRadius: '6px',
+      fontFamily: 'monospace',
+      fontSize: '1.1rem',
+      fontWeight: 'bold'
+    },
+    cardBackInfo: {
+      fontSize: '0.7rem',
+      opacity: 0.8
+    },
+    cardBackText: {
+      margin: '4px 0'
     },
     cardVisualHeader: {
       display: 'flex',
@@ -1202,54 +1254,95 @@ function LinkDebitCardContent() {
           {!showForm && linkedCards.map(card => (
             <div key={card.id} style={styles.cardItemContainer}>
               <div style={styles.cardVisualContainer}>
-                <div style={{ ...styles.cardVisual, ...getCardBackgroundClass(card.card_brand) }}
-                     onMouseOver={(e) => e.currentTarget.style.transform = 'rotateY(5deg) rotateX(5deg)'}
-                     onMouseOut={(e) => e.currentTarget.style.transform = 'rotateY(0deg) rotateX(0deg)'}>
-                  <div style={styles.cardVisualHeader}>
-                    <span style={styles.cardBankName}>
-                      {card.bank_name || 'BANK NAME'}
-                    </span>
-                    <span style={styles.cardTypeLabel}>DEBIT CARD</span>
-                  </div>
-
-                  <div style={styles.cardChipSection}>
-                    <div style={styles.cardChip}>
-                      <div style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        width: '70%',
-                        height: '60%',
-                        background: 'linear-gradient(45deg, rgba(0,0,0,0.1) 0%, transparent 50%, rgba(255,255,255,0.2) 100%)',
-                        borderRadius: '4px'
-                      }}></div>
+                <div
+                  style={{
+                    ...styles.cardFlipWrapper,
+                    transform: flippedCardId === card.id ? 'rotateY(180deg)' : 'rotateY(0deg)'
+                  }}
+                  onClick={() => handleCardFlip(card.id)}
+                >
+                  {/* Front of the card */}
+                  <div
+                    style={{
+                      ...styles.cardVisual,
+                      ...getCardBackgroundClass(card.card_brand),
+                      transform: flippedCardId === card.id ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                      zIndex: flippedCardId === card.id ? 1 : 2 // Ensure front is above back when not flipped
+                    }}
+                  >
+                    <div style={styles.cardVisualHeader}>
+                      <span style={styles.cardBankName}>
+                        {card.bank_name || 'BANK NAME'}
+                      </span>
+                      <span style={styles.cardTypeLabel}>DEBIT CARD</span>
                     </div>
-                    {card.is_primary && (
-                      <div style={styles.primaryBadgeCard}>PRIMARY</div>
-                    )}
-                  </div>
 
-                  <div style={styles.cardNumberDisplay}>
-                    •••• •••• •••• {card.card_number_last4}
-                  </div>
+                    <div style={styles.cardChipSection}>
+                      <div style={styles.cardChip}>
+                        <div style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          width: '70%',
+                          height: '60%',
+                          background: 'linear-gradient(45deg, rgba(0,0,0,0.1) 0%, transparent 50%, rgba(255,255,255,0.2) 100%)',
+                          borderRadius: '4px'
+                        }}></div>
+                      </div>
+                      {card.is_primary && (
+                        <div style={styles.primaryBadgeCard}>PRIMARY</div>
+                      )}
+                    </div>
 
-                  <div style={styles.cardVisualFooter}>
-                    <div>
-                      <div style={styles.cardSmallLabel}>Cardholder Name</div>
-                      <div style={styles.cardholderNameDisplay}>
-                        {card.cardholder_name}
+                    <div style={styles.cardNumberDisplay}>
+                      •••• •••• •••• {card.card_number_last4}
+                    </div>
+
+                    <div style={styles.cardVisualFooter}>
+                      <div>
+                        <div style={styles.cardSmallLabel}>Cardholder Name</div>
+                        <div style={styles.cardholderNameDisplay}>
+                          {card.cardholder_name}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={styles.cardSmallLabel}>Expires</div>
+                        <div style={styles.cardExpiryDisplay}>
+                          {card.expiry_month}/{card.expiry_year}
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <div style={styles.cardSmallLabel}>Expires</div>
-                      <div style={styles.cardExpiryDisplay}>
-                        {card.expiry_month}/{card.expiry_year}
-                      </div>
+                    <div style={styles.cardBrandLogoContainer}>
+                      {getCardBrandLogo(card.card_brand)}
                     </div>
                   </div>
-                  <div style={styles.cardBrandLogoContainer}>
-                    {getCardBrandLogo(card.card_brand)}
+
+                  {/* Back of the card */}
+                  <div
+                    style={{
+                      ...styles.cardVisual,
+                      ...styles.cardBack,
+                      transform: flippedCardId === card.id ? 'rotateY(0deg)' : 'rotateY(-180deg)',
+                      zIndex: flippedCardId === card.id ? 2 : 1 // Ensure back is above front when flipped
+                    }}
+                  >
+                    <div style={styles.magneticStripe}></div>
+                    <div style={styles.cvvSection}>
+                      <span style={styles.cvvLabel}>CVV</span>
+                      <span style={styles.cvvBox}>•••</span>
+                    </div>
+                    <div style={styles.cardBackInfo}>
+                      <p style={styles.cardBackText}>
+                        Please refer to your card issuer for details. This card is for verification purposes only.
+                      </p>
+                      <p style={styles.cardBackText}>
+                        Unauthorized use may lead to legal consequences.
+                      </p>
+                    </div>
+                    <div style={{ ...styles.cardBrandLogoContainer, bottom: '1.5rem', right: '2rem' }}>
+                      {getCardBrandLogo(card.card_brand)}
+                    </div>
                   </div>
                 </div>
               </div>
