@@ -17,7 +17,6 @@ function LinkDebitCardContent() {
   const [formData, setFormData] = useState({
     cardholder_name: '',
     card_number: '',
-    card_brand: 'visa',
     cvv: '',
     expiry_month: '',
     expiry_year: '',
@@ -26,7 +25,7 @@ function LinkDebitCardContent() {
     billing_state: '',
     billing_zip: '',
     billing_country: 'United States',
-    is_primary: false
+    card_brand: ''
   });
 
   useEffect(() => {
@@ -103,25 +102,25 @@ function LinkDebitCardContent() {
 
   const validateCardNumber = (cardNumber) => {
     const cleaned = cardNumber.replace(/\s/g, '');
-    
+
     // Luhn algorithm
     let sum = 0;
     let isEven = false;
-    
+
     for (let i = cleaned.length - 1; i >= 0; i--) {
       let digit = parseInt(cleaned.charAt(i), 10);
-      
+
       if (isEven) {
         digit *= 2;
         if (digit > 9) {
           digit -= 9;
         }
       }
-      
+
       sum += digit;
       isEven = !isEven;
     }
-    
+
     return sum % 10 === 0;
   };
 
@@ -163,6 +162,13 @@ function LinkDebitCardContent() {
       return false;
     }
 
+    // Validate CVV
+    if (!formData.cvv || formData.cvv.length < 3 || formData.cvv.length > 4) {
+      showMessage('Please enter a valid CVV/CVC (3-4 digits)');
+      return false;
+    }
+
+    // Validate expiry
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
     const year = parseInt(formData.expiry_year);
@@ -174,11 +180,6 @@ function LinkDebitCardContent() {
 
     if (year > currentYear + 20) {
       showMessage('Invalid expiry year', 'error');
-      return false;
-    }
-
-    if (!formData.cvv || formData.cvv.length < 3) {
-      showMessage('Please enter a valid CVV/CVC (3-4 digits)', 'error');
       return false;
     }
 
@@ -207,7 +208,7 @@ function LinkDebitCardContent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setLoading(true);
@@ -252,7 +253,7 @@ function LinkDebitCardContent() {
       setFormData({
         cardholder_name: '',
         card_number: '',
-        card_brand: 'visa',
+        cvv: '',
         expiry_month: '',
         expiry_year: '',
         billing_address: '',
@@ -260,7 +261,7 @@ function LinkDebitCardContent() {
         billing_state: '',
         billing_zip: '',
         billing_country: 'United States',
-        is_primary: false
+        card_brand: ''
       });
       setShowForm(false);
       fetchLinkedCards();

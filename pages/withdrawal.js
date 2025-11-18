@@ -20,11 +20,15 @@ export default function Withdrawal() {
   const [sentCode, setSentCode] = useState(false);
   const [generatedCode, setGeneratedCode] = useState('');
   const [isMobile, setIsMobile] = useState(false);
+  const [availableNetworks, setAvailableNetworks] = useState([]);
+  const [loadingNetworks, setLoadingNetworks] = useState(false);
 
   const [withdrawalForm, setWithdrawalForm] = useState({
     from_account_id: '',
     withdrawal_method: 'crypto_wallet',
     amount: '',
+    crypto_type: '',
+    network_type: '',
     crypto_asset_id: '',
     crypto_wallet_address: '',
     linked_bank_id: '',
@@ -78,6 +82,53 @@ export default function Withdrawal() {
     calculateFees();
   }, [withdrawalForm.amount, withdrawalForm.withdrawal_method]);
 
+  useEffect(() => {
+    if (withdrawalForm.crypto_type) {
+      fetchAvailableNetworks();
+    } else {
+      setAvailableNetworks([]);
+      setWithdrawalForm(prev => ({ ...prev, network_type: '', crypto_asset_id: '' }));
+    }
+  }, [withdrawalForm.crypto_type]);
+
+  useEffect(() => {
+    if (withdrawalForm.crypto_type && withdrawalForm.network_type) {
+      updateCryptoAssetId();
+    }
+  }, [withdrawalForm.crypto_type, withdrawalForm.network_type]);
+
+  const cryptoTypes = [
+    { value: 'Bitcoin', label: 'Bitcoin', icon: '₿', color: '#F7931A' },
+    { value: 'Tether USD', label: 'Tether', icon: '₮', color: '#26A17B' },
+    { value: 'Ethereum', label: 'Ethereum', icon: 'Ξ', color: '#627EEA' },
+    { value: 'BNB', label: 'Binance Coin', icon: 'B', color: '#F3BA2F' },
+    { value: 'USD Coin', label: 'USD Coin', icon: '$', color: '#007AFF' },
+    { value: 'Solana', label: 'Solana', icon: 'S', color: '#9945FF' },
+    { value: 'Cardano', label: 'Cardano', icon: 'A', color: '#0077fa' },
+    { value: 'Polygon', label: 'Polygon', icon: 'M', color: '#8247E5' },
+    { value: 'Avalanche', label: 'Avalanche', icon: 'A', color: '#E84142' },
+    { value: 'Litecoin', label: 'Litecoin', icon: 'Ł', color: '#345D9D' },
+    { value: 'XRP', label: 'XRP', icon: 'X', color: '#0070D0' },
+    { value: 'TON', label: 'TON', icon: 'T', color: '#007AFF' }
+  ];
+
+  const networkIconMap = {
+    'Bitcoin': '🟠',
+    'BNB Smart Chain (BEP20)': '🟡',
+    'Ethereum (ERC20)': '⚪',
+    'Arbitrum One': '🔵',
+    'Optimism': '🔴',
+    'Base': '🔷',
+    'Tron (TRC20)': '🔴',
+    'Solana (SOL)': '🟣',
+    'Polygon (MATIC)': '🟣',
+    'Avalanche (C-Chain)': '🔴',
+    'Litecoin': '⚪',
+    'XRP Ledger': '🔵',
+    'The Open Network (TON)': '🔵',
+    'Cardano': '🔵'
+  };
+
   const fetchUser = async () => {
     try {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -125,6 +176,66 @@ export default function Withdrawal() {
       setCryptoAssets(data || []);
     } catch (error) {
       console.error('Error fetching crypto assets:', error);
+    }
+  };
+
+  const fetchAvailableNetworks = async () => {
+    if (!withdrawalForm.crypto_type) {
+      setAvailableNetworks([]);
+      return;
+    }
+
+    setLoadingNetworks(true);
+
+    try {
+      const { data: cryptoAssets, error } = await supabase
+        .from('crypto_assets')
+        .select('network_type, confirmations_required, min_deposit')
+        .eq('crypto_type', withdrawalForm.crypto_type)
+        .eq('status', 'active')
+        .order('network_type');
+
+      if (error) {
+        console.error('Error fetching networks:', error);
+        setAvailableNetworks([]);
+        return;
+      }
+
+      if (cryptoAssets && cryptoAssets.length > 0) {
+        const networks = cryptoAssets.map(asset => ({
+          value: asset.network_type,
+          label: asset.network_type,
+          confirmations: asset.confirmations_required || 3,
+          minDeposit: asset.min_deposit || 0.001,
+          icon: networkIconMap[asset.network_type] || '🔹'
+        }));
+        setAvailableNetworks(networks);
+      } else {
+        setAvailableNetworks([]);
+      }
+    } catch (error) {
+      console.error('Error fetching networks:', error);
+      setAvailableNetworks([]);
+    } finally {
+      setLoadingNetworks(false);
+    }
+  };
+
+  const updateCryptoAssetId = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('crypto_assets')
+        .select('id')
+        .eq('crypto_type', withdrawalForm.crypto_type)
+        .eq('network_type', withdrawalForm.network_type)
+        .eq('status', 'active')
+        .single();
+
+      if (!error && data) {
+        setWithdrawalForm(prev => ({ ...prev, crypto_asset_id: data.id }));
+      }
+    } catch (error) {
+      console.error('Error updating crypto asset ID:', error);
     }
   };
 
@@ -250,8 +361,12 @@ export default function Withdrawal() {
 
     switch (withdrawal_method) {
       case 'crypto_wallet':
-        if (!crypto_asset_id) {
-          showMessage('Please select a cryptocurrency', 'error');
+        if (!withdrawalForm.crypto_type) {
+          showMessage('Please select a cryptocurrency type', 'error');
+          return false;
+        }
+        if (!withdrawalForm.network_type) {
+          showMessage('Please select a network type', 'error');
           return false;
         }
         if (!crypto_wallet_address) {
@@ -410,11 +525,11 @@ export default function Withdrawal() {
 
       switch (withdrawalForm.withdrawal_method) {
         case 'crypto_wallet':
-          const selectedCrypto = cryptoAssets.find(c => c.id === withdrawalForm.crypto_asset_id);
-          withdrawalDescription = `${selectedCrypto?.crypto_type} withdrawal via ${selectedCrypto?.network_type} to ${withdrawalForm.crypto_wallet_address.substring(0, 8)}...${withdrawalForm.crypto_wallet_address.substring(withdrawalForm.crypto_wallet_address.length - 6)}`;
+          withdrawalDescription = `${withdrawalForm.crypto_type} withdrawal via ${withdrawalForm.network_type} to ${withdrawalForm.crypto_wallet_address.substring(0, 8)}...${withdrawalForm.crypto_wallet_address.substring(withdrawalForm.crypto_wallet_address.length - 6)}`;
           metadata = {
-            crypto_type: selectedCrypto?.crypto_type,
-            network_type: selectedCrypto?.network_type,
+            crypto_type: withdrawalForm.crypto_type,
+            network_type: withdrawalForm.network_type,
+            crypto_asset_id: withdrawalForm.crypto_asset_id,
             wallet_address: withdrawalForm.crypto_wallet_address
           };
           break;
@@ -1090,34 +1205,87 @@ export default function Withdrawal() {
               {withdrawalForm.withdrawal_method === 'crypto_wallet' && (
                 <>
                   <div style={styles.formGroup}>
-                    <label style={styles.label}>Select Cryptocurrency & Network</label>
+                    <label style={styles.label}>Select Cryptocurrency Type</label>
                     <select
-                      value={withdrawalForm.crypto_asset_id}
-                      onChange={(e) => setWithdrawalForm(prev => ({ ...prev, crypto_asset_id: e.target.value }))}
+                      value={withdrawalForm.crypto_type}
+                      onChange={(e) => setWithdrawalForm(prev => ({ 
+                        ...prev, 
+                        crypto_type: e.target.value,
+                        network_type: '',
+                        crypto_asset_id: ''
+                      }))}
                       style={styles.select}
                     >
-                      <option value="">Select Cryptocurrency...</option>
-                      {cryptoAssets.map(crypto => (
-                        <option key={crypto.id} value={crypto.id}>
-                          {crypto.crypto_type} ({crypto.symbol}) - {crypto.network_type}
+                      <option value="">Select Cryptocurrency Type...</option>
+                      {cryptoTypes.map(crypto => (
+                        <option key={crypto.value} value={crypto.value}>
+                          {crypto.icon} {crypto.label}
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>Wallet Address</label>
-                    <input
-                      type="text"
-                      value={withdrawalForm.crypto_wallet_address}
-                      onChange={(e) => setWithdrawalForm(prev => ({ ...prev, crypto_wallet_address: e.target.value }))}
-                      style={styles.input}
-                      placeholder="Enter wallet address"
-                    />
-                    <small style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.5rem', display: 'block' }}>
-                      Please double-check the address. Cryptocurrency transactions cannot be reversed.
-                    </small>
-                  </div>
+                  {withdrawalForm.crypto_type && (
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Select Network</label>
+                      {loadingNetworks ? (
+                        <div style={{ textAlign: 'center', padding: '1rem', color: '#64748b' }}>
+                          Loading available networks...
+                        </div>
+                      ) : availableNetworks.length === 0 ? (
+                        <div style={{
+                          padding: '1rem',
+                          textAlign: 'center',
+                          backgroundColor: '#fef2f2',
+                          border: '2px solid #ef4444',
+                          borderRadius: '8px',
+                          color: '#991b1b',
+                          fontSize: '0.9rem'
+                        }}>
+                          No networks available for {withdrawalForm.crypto_type}. Please contact support.
+                        </div>
+                      ) : (
+                        <>
+                          <select
+                            value={withdrawalForm.network_type}
+                            onChange={(e) => setWithdrawalForm(prev => ({ 
+                              ...prev, 
+                              network_type: e.target.value 
+                            }))}
+                            style={styles.select}
+                          >
+                            <option value="">Select Network...</option>
+                            {availableNetworks.map(network => (
+                              <option key={network.value} value={network.value}>
+                                {network.icon} {network.label}
+                              </option>
+                            ))}
+                          </select>
+                          {withdrawalForm.network_type && (
+                            <small style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.5rem', display: 'block' }}>
+                              Network: {withdrawalForm.network_type} • Min withdrawal: {availableNetworks.find(n => n.value === withdrawalForm.network_type)?.minDeposit || '0.001'} {withdrawalForm.crypto_type}
+                            </small>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {withdrawalForm.crypto_type && withdrawalForm.network_type && (
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Wallet Address</label>
+                      <input
+                        type="text"
+                        value={withdrawalForm.crypto_wallet_address}
+                        onChange={(e) => setWithdrawalForm(prev => ({ ...prev, crypto_wallet_address: e.target.value }))}
+                        style={styles.input}
+                        placeholder={`Enter ${withdrawalForm.crypto_type} wallet address for ${withdrawalForm.network_type}`}
+                      />
+                      <small style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.5rem', display: 'block' }}>
+                        ⚠️ Please double-check the address and network. Cryptocurrency transactions cannot be reversed.
+                      </small>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -1509,18 +1677,18 @@ export default function Withdrawal() {
                   <span style={styles.reviewValue}>{getMethodLabel(withdrawalForm.withdrawal_method)}</span>
                 </div>
 
-                {withdrawalForm.withdrawal_method === 'crypto_wallet' && withdrawalForm.crypto_asset_id && (
+                {withdrawalForm.withdrawal_method === 'crypto_wallet' && withdrawalForm.crypto_type && withdrawalForm.network_type && (
                   <>
                     <div style={styles.reviewRow}>
                       <span style={styles.reviewLabel}>Cryptocurrency</span>
                       <span style={styles.reviewValue}>
-                        {cryptoAssets.find(c => c.id === withdrawalForm.crypto_asset_id)?.crypto_type}
+                        {cryptoTypes.find(c => c.value === withdrawalForm.crypto_type)?.label || withdrawalForm.crypto_type}
                       </span>
                     </div>
                     <div style={styles.reviewRow}>
                       <span style={styles.reviewLabel}>Network</span>
                       <span style={styles.reviewValue}>
-                        {cryptoAssets.find(c => c.id === withdrawalForm.crypto_asset_id)?.network_type}
+                        {withdrawalForm.network_type}
                       </span>
                     </div>
                     <div style={styles.reviewRow}>
