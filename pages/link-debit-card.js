@@ -555,7 +555,7 @@ function LinkDebitCardContent() {
       aspectRatio: '1.586',
       position: 'relative',
       transformStyle: 'preserve-3d',
-      transition: 'transform 0.6s',
+      transition: 'transform 0.6s ease',
       cursor: 'pointer'
     },
     cardVisual: {
@@ -563,6 +563,7 @@ function LinkDebitCardContent() {
       width: '100%',
       height: '100%',
       backfaceVisibility: 'hidden',
+      WebkitBackfaceVisibility: 'hidden',
       background: 'linear-gradient(135deg, #1434A4 0%, #2E5EAA 100%)',
       borderRadius: '18px',
       padding: '1.75rem 2rem',
@@ -572,7 +573,7 @@ function LinkDebitCardContent() {
       justifyContent: 'space-between',
       boxShadow: '0 15px 40px rgba(0,0,0,0.25), 0 5px 15px rgba(0,0,0,0.15)',
       overflow: 'hidden',
-      transition: 'opacity 0.3s, transform 0.6s'
+      transition: 'opacity 0.3s ease'
     },
     cardBack: {
       background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%)'
@@ -1266,8 +1267,8 @@ function LinkDebitCardContent() {
                     style={{
                       ...styles.cardVisual,
                       ...getCardBackgroundClass(card.card_brand),
-                      transform: flippedCardId === card.id ? 'rotateY(180deg)' : 'rotateY(0deg)',
-                      zIndex: flippedCardId === card.id ? 1 : 2 // Ensure front is above back when not flipped
+                      opacity: flippedCardId === card.id ? 0 : 1,
+                      zIndex: flippedCardId === card.id ? 1 : 2
                     }}
                   >
                     <div style={styles.cardVisualHeader}>
@@ -1323,8 +1324,9 @@ function LinkDebitCardContent() {
                     style={{
                       ...styles.cardVisual,
                       ...styles.cardBack,
-                      transform: flippedCardId === card.id ? 'rotateY(0deg)' : 'rotateY(-180deg)',
-                      zIndex: flippedCardId === card.id ? 2 : 1 // Ensure back is above front when flipped
+                      opacity: flippedCardId === card.id ? 1 : 0,
+                      transform: 'rotateY(180deg)',
+                      zIndex: flippedCardId === card.id ? 2 : 1
                     }}
                   >
                     <div style={styles.magneticStripe}></div>
