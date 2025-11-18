@@ -792,13 +792,19 @@ function LinkDebitCardContent() {
       color: '#FFFFFF'
     },
     cardholderNameDisplay: {
-      fontSize: '1.05rem',
+      fontSize: '0.95rem',
       fontWeight: '700',
       textTransform: 'uppercase',
-      letterSpacing: '0.8px',
+      letterSpacing: '0.5px',
       textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 3px rgba(0,0,0,0.9)',
-      lineHeight: '1.4',
-      color: '#FFFFFF'
+      lineHeight: '1.3',
+      color: '#FFFFFF',
+      wordBreak: 'break-word',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      display: '-webkit-box',
+      WebkitLineClamp: 2,
+      WebkitBoxOrient: 'vertical'
     },
     cardExpiryDisplay: {
       fontSize: '0.95rem',
@@ -1562,23 +1568,15 @@ function LinkDebitCardContent() {
                     </div>
 
                     <div style={styles.cardVisualFooter}>
-                      <div style={{ flex: 1 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={styles.cardSmallLabel}>CARDHOLDER NAME</div>
-                        <div style={{
-                          ...styles.cardholderNameDisplay,
-                          textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                          fontWeight: '700',
-                          fontSize: '1.05rem'
-                        }}>
+                        <div style={styles.cardholderNameDisplay}>
                           {(card.cardholder_name || 'CARDHOLDER').toUpperCase()}
                         </div>
                       </div>
-                      <div style={{ textAlign: 'right' }}>
+                      <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
                         <div style={styles.cardSmallLabel}>EXPIRES</div>
-                        <div style={{
-                          ...styles.cardExpiryDisplay,
-                          textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                        }}>
+                        <div style={styles.cardExpiryDisplay}>
                           {card.expiry_month}/{card.expiry_year}
                         </div>
                       </div>
