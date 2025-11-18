@@ -28,6 +28,9 @@ function LinkDebitCardContent() {
     card_brand: ''
   });
 
+  // State for form errors, used specifically for card number validation in this context
+  const [errors, setErrors] = useState({});
+
   useEffect(() => {
     if (user) {
       fetchLinkedCards();
@@ -56,9 +59,13 @@ function LinkDebitCardContent() {
     const { name, value, type, checked } = e.target;
     let processedValue = value;
 
-    // Format card number input (remove spaces, limit to 16 digits)
+    // Format card number input (remove spaces, limit to 19 digits)
     if (name === 'card_number') {
       processedValue = value.replace(/\s/g, '').slice(0, 19);
+      // Clear card number error if input is valid or field is cleared
+      if (processedValue.length === 0 || (processedValue.length >= 13 && processedValue.length <= 19 && /^\d+$/.test(processedValue))) {
+         setErrors(prev => ({ ...prev, cardNumber: '' }));
+      }
     }
 
     // Format expiry month (2 digits)
@@ -97,48 +104,45 @@ function LinkDebitCardContent() {
     if (/^5[1-5]/.test(cleaned)) return 'mastercard';
     if (/^3[47]/.test(cleaned)) return 'amex';
     if (/^6(?:011|5)/.test(cleaned)) return 'discover';
-    return 'visa';
+    return 'visa'; // Default to visa if not recognized
   };
 
   const validateCardNumber = (cardNumber) => {
-    const cleaned = cardNumber.replace(/\s/g, '');
+    const cleanedCardNumber = cardNumber.replace(/\s/g, '');
 
-    // Check if it's a valid length
-    if (cleaned.length < 13 || cleaned.length > 19) {
+    // Basic length check
+    if (cleanedCardNumber.length < 13 || cleanedCardNumber.length > 19) {
       return false;
     }
 
     // Check if it only contains digits
-    if (!/^\d+$/.test(cleaned)) {
+    if (!/^\d+$/.test(cleanedCardNumber)) {
       return false;
     }
 
-    // Luhn algorithm
-    let sum = 0;
-    let isEven = false;
-
-    for (let i = cleaned.length - 1; i >= 0; i--) {
-      let digit = parseInt(cleaned.charAt(i), 10);
-
-      if (isNaN(digit)) {
-        return false;
-      }
-
-      if (isEven) {
-        digit *= 2;
-        if (digit > 9) {
-          digit -= 9;
+    // Luhn algorithm validation
+    const luhnCheck = (num) => {
+      let sum = 0;
+      let isEven = false;
+      for (let i = num.length - 1; i >= 0; i--) {
+        let digit = parseInt(num[i], 10);
+        if (isEven) {
+          digit *= 2;
+          if (digit > 9) digit -= 9;
         }
+        sum += digit;
+        isEven = !isEven;
       }
+      return sum % 10 === 0;
+    };
 
-      sum += digit;
-      isEven = !isEven;
-    }
-
-    return sum % 10 === 0;
+    return luhnCheck(cleanedCardNumber);
   };
 
   const validateForm = () => {
+    // Resetting errors before re-validation
+    setErrors({});
+
     if (!formData.cardholder_name.trim()) {
       showMessage('Please enter the cardholder name', 'error');
       return false;
@@ -149,23 +153,26 @@ function LinkDebitCardContent() {
       return false;
     }
 
-    const cleaned = formData.card_number.replace(/\s/g, '');
-    if (cleaned.length < 13 || cleaned.length > 19) {
+    const cleanedCardNumber = formData.card_number.replace(/\s/g, '');
+    if (cleanedCardNumber.length < 13 || cleanedCardNumber.length > 19) {
+      setErrors(prev => ({ ...prev, cardNumber: 'Please enter a valid card number (13-19 digits)' }));
       showMessage('Please enter a valid card number (13-19 digits)', 'error');
       return false;
     }
 
-    if (!/^\d+$/.test(cleaned)) {
+    if (!/^\d+$/.test(cleanedCardNumber)) {
+      setErrors(prev => ({ ...prev, cardNumber: 'Card number must contain only digits' }));
       showMessage('Card number must contain only digits', 'error');
       return false;
     }
 
-    // Validate with Luhn algorithm, but allow bypass for test cards
-    const isTestCard = cleaned.startsWith('4111111111111111') || 
-                       cleaned.startsWith('5555555555554444') ||
-                       cleaned.startsWith('378282246310005');
-    
-    if (!isTestCard && !validateCardNumber(cleaned)) {
+    // Validate with Luhn algorithm, but allow bypass for known test cards (optional, for testing purposes)
+    const isTestCard = cleanedCardNumber.startsWith('4111111111111111') ||
+                       cleanedCardNumber.startsWith('5555555555554444') ||
+                       cleanedCardNumber.startsWith('378282246310005');
+
+    if (!isTestCard && !validateCardNumber(cleanedCardNumber)) {
+      setErrors(prev => ({ ...prev, cardNumber: 'Invalid card number. Please check and try again.' }));
       showMessage('Invalid card number. Please check and try again.', 'error');
       return false;
     }
@@ -176,7 +183,7 @@ function LinkDebitCardContent() {
     }
 
     const month = parseInt(formData.expiry_month);
-    if (month < 1 || month > 12) {
+    if (isNaN(month) || month < 1 || month > 12) {
       showMessage('Expiry month must be between 01 and 12', 'error');
       return false;
     }
@@ -188,7 +195,7 @@ function LinkDebitCardContent() {
 
     // Validate CVV
     if (!formData.cvv || formData.cvv.length < 3 || formData.cvv.length > 4) {
-      showMessage('Please enter a valid CVV/CVC (3-4 digits)');
+      showMessage('Please enter a valid CVV/CVC (3-4 digits)', 'error');
       return false;
     }
 
@@ -202,7 +209,7 @@ function LinkDebitCardContent() {
       return false;
     }
 
-    if (year > currentYear + 20) {
+    if (year > currentYear + 20) { // Limit future year to avoid typos
       showMessage('Invalid expiry year', 'error');
       return false;
     }
@@ -236,7 +243,7 @@ function LinkDebitCardContent() {
     if (!validateForm()) return;
 
     setLoading(true);
-    setMessage('');
+    setMessage(''); // Clear previous messages
 
     try {
       const cleaned = formData.card_number.replace(/\s/g, '');
@@ -258,22 +265,30 @@ function LinkDebitCardContent() {
           billing_zip: formData.billing_zip,
           billing_country: formData.billing_country,
           is_primary: linkedCards.length === 0 ? true : formData.is_primary,
-          status: 'active'
+          status: 'active' // Default to active upon linking
         }])
         .select()
         .single();
 
       if (error) throw error;
 
+      // If this card is set as primary and there are existing cards, update others
       if (formData.is_primary && linkedCards.length > 0) {
         await supabase
           .from('linked_debit_cards')
           .update({ is_primary: false })
           .eq('user_id', user.id)
-          .neq('id', data.id);
+          .neq('id', data.id); // Ensure we don't update the newly inserted card
+      } else if (linkedCards.length === 0) {
+        // If it's the first card, ensure it's marked as primary even if checkbox wasn't checked
+        await supabase
+          .from('linked_debit_cards')
+          .update({ is_primary: true })
+          .eq('id', data.id);
       }
 
       showMessage('Debit card linked successfully!', 'success');
+      // Reset form data
       setFormData({
         cardholder_name: '',
         card_number: '',
@@ -285,68 +300,82 @@ function LinkDebitCardContent() {
         billing_state: '',
         billing_zip: '',
         billing_country: 'United States',
-        card_brand: ''
+        card_brand: '',
+        is_primary: false // Reset checkbox
       });
       setShowForm(false);
-      fetchLinkedCards();
+      fetchLinkedCards(); // Refresh the list of linked cards
     } catch (error) {
       console.error('Error linking debit card:', error);
-      showMessage(error.message || 'Failed to link debit card', 'error');
+      showMessage(error.message || 'Failed to link debit card. Please check your details and try again.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   const handleSetPrimary = async (cardId) => {
+    setLoading(true);
     try {
+      // First, set all other cards for this user to not be primary
       await supabase
         .from('linked_debit_cards')
         .update({ is_primary: false })
         .eq('user_id', user.id);
 
+      // Then, set the selected card as primary
       await supabase
         .from('linked_debit_cards')
         .update({ is_primary: true })
         .eq('id', cardId);
 
       showMessage('Primary card updated', 'success');
-      fetchLinkedCards();
+      fetchLinkedCards(); // Refresh the list
     } catch (error) {
       console.error('Error setting primary:', error);
       showMessage('Failed to update primary card', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (cardId) => {
-    if (!confirm('Are you sure you want to remove this debit card?')) return;
+    if (!confirm('Are you sure you want to remove this debit card? This action cannot be undone.')) return;
 
+    setLoading(true);
     try {
-      await supabase
+      // Soft delete by updating status
+      const { error } = await supabase
         .from('linked_debit_cards')
-        .update({ status: 'deleted' })
+        .update({ status: 'deleted', deleted_at: new Date().toISOString() })
         .eq('id', cardId);
 
-      showMessage('Debit card removed', 'success');
-      fetchLinkedCards();
+      if (error) throw error;
+
+      showMessage('Debit card removed successfully', 'success');
+      fetchLinkedCards(); // Refresh the list
     } catch (error) {
       console.error('Error deleting card:', error);
       showMessage('Failed to remove debit card', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const formatCardDisplay = (cardNumber) => {
     const cleaned = cardNumber.replace(/\s/g, '');
+    // Insert spaces every 4 characters
     return cleaned.replace(/(.{4})/g, '$1 ').trim();
   };
 
   const getCardIcon = (brand) => {
+    // Using generic card emoji, could be extended with actual brand logos
     const icons = {
       visa: '💳',
       mastercard: '💳',
       amex: '💳',
       discover: '💳'
     };
-    return icons[brand] || '💳';
+    return icons[brand] || '💳'; // Default to card emoji
   };
 
   const styles = {
@@ -369,7 +398,9 @@ function LinkDebitCardContent() {
       backgroundColor: 'rgba(255,255,255,0.15)',
       borderRadius: '12px',
       fontWeight: '600',
-      transition: 'all 0.3s'
+      transition: 'all 0.3s',
+      display: 'inline-flex', // Use inline-flex for better alignment
+      alignItems: 'center'
     },
     main: {
       maxWidth: '1200px',
@@ -398,14 +429,17 @@ function LinkDebitCardContent() {
     buttonPrimary: {
       width: '100%',
       padding: '1rem',
-      backgroundColor: '#059669',
+      backgroundColor: '#059669', // Emerald green
       color: 'white',
       border: 'none',
       borderRadius: '12px',
       fontSize: '1rem',
       fontWeight: '700',
       cursor: 'pointer',
-      transition: 'all 0.3s'
+      transition: 'all 0.3s',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
     },
     formGroup: {
       marginBottom: '1.25rem'
@@ -424,7 +458,10 @@ function LinkDebitCardContent() {
       borderRadius: '12px',
       fontSize: '0.9375rem',
       transition: 'border-color 0.3s',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      '::placeholder': {
+        color: '#9ca3af'
+      }
     },
     select: {
       width: '100%',
@@ -433,14 +470,24 @@ function LinkDebitCardContent() {
       borderRadius: '12px',
       fontSize: '0.9375rem',
       backgroundColor: 'white',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      appearance: 'none', // Remove default dropdown arrow
+      backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'%3E%3C/polyline%3E%3C/svg%3E")',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'right 0.75rem center',
+      backgroundSize: '1em',
+      paddingRight: '2.5rem' // Make space for the custom arrow
     },
     cardItem: {
       backgroundColor: '#f8fafc',
       padding: '1.5rem',
       borderRadius: '12px',
       marginBottom: '1rem',
-      border: '2px solid #e2e8f0'
+      border: '2px solid #e2e8f0',
+      transition: 'box-shadow 0.3s'
+    },
+    cardItemHover: { // Style for hover effect
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
     },
     cardHeader: {
       display: 'flex',
@@ -466,7 +513,7 @@ function LinkDebitCardContent() {
     },
     cardDetails: {
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', // Adjusted minmax for better spacing
       gap: '1rem',
       marginBottom: '1rem'
     },
@@ -498,24 +545,33 @@ function LinkDebitCardContent() {
       borderRadius: '8px',
       fontSize: '0.875rem',
       fontWeight: '600',
-      cursor: 'pointer'
+      cursor: 'pointer',
+      transition: 'all 0.3s',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
     },
     buttonDanger: {
       flex: 1,
       padding: '0.625rem',
-      backgroundColor: '#dc2626',
+      backgroundColor: '#dc2626', // Red
       color: 'white',
       border: 'none',
       borderRadius: '8px',
       fontSize: '0.875rem',
       fontWeight: '600',
-      cursor: 'pointer'
+      cursor: 'pointer',
+      transition: 'all 0.3s',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
     },
     message: {
       padding: '1rem',
       borderRadius: '12px',
       marginBottom: '1rem',
-      border: '2px solid'
+      border: '2px solid',
+      textAlign: 'center'
     },
     emptyState: {
       textAlign: 'center',
@@ -526,6 +582,11 @@ function LinkDebitCardContent() {
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
       gap: '1rem'
+    },
+    errorText: {
+      color: '#dc2626',
+      fontSize: '0.75rem',
+      marginTop: '0.25rem'
     }
   };
 
@@ -533,14 +594,18 @@ function LinkDebitCardContent() {
     <div style={styles.container}>
       <div style={styles.header}>
         <Link href="/dashboard" style={styles.backLink}>
-          ← Back to Dashboard
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '0.5rem' }}>
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Back to Dashboard
         </Link>
       </div>
 
       <div style={styles.main}>
         <h1 style={styles.pageTitle}>Link Debit Card</h1>
         <p style={styles.pageSubtitle}>
-          Link your external debit card for quick withdrawals
+          Link your external debit card for quick withdrawals and seamless transactions.
         </p>
 
         {message && (
@@ -593,13 +658,17 @@ function LinkDebitCardContent() {
                   name="card_number"
                   value={formatCardDisplay(formData.card_number)}
                   onChange={handleChange}
-                  style={styles.input}
+                  style={{
+                    ...styles.input,
+                    borderColor: errors.cardNumber ? '#dc2626' : '#e2e8f0' // Highlight border if error
+                  }}
                   placeholder="4111 1111 1111 1111"
-                  maxLength="23"
+                  maxLength="19" // Max length including potential spaces during formatting
                   required
                 />
+                {errors.cardNumber && <p style={styles.errorText}>{errors.cardNumber}</p>}
                 <small style={{ color: '#64748b', fontSize: '0.75rem' }}>
-                  We use bank-level encryption to protect your information
+                  We use bank-level encryption to protect your information.
                 </small>
               </div>
 
@@ -617,38 +686,34 @@ function LinkDebitCardContent() {
                     required
                   />
                   <small style={{ color: '#64748b', fontSize: '0.75rem' }}>
-                    3-4 digit security code on the back of your card
+                    3-4 digit security code, usually on the back of your card.
                   </small>
                 </div>
-              </div>
-
-              <div style={styles.formGrid}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Expiry Month (MM) *</label>
-                  <input
-                    type="text"
-                    name="expiry_month"
-                    value={formData.expiry_month}
-                    onChange={handleChange}
-                    style={styles.input}
-                    placeholder="12"
-                    maxLength="2"
-                    required
-                  />
-                </div>
 
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Expiry Year (YYYY) *</label>
-                  <input
-                    type="text"
-                    name="expiry_year"
-                    value={formData.expiry_year}
-                    onChange={handleChange}
-                    style={styles.input}
-                    placeholder="2025"
-                    maxLength="4"
-                    required
-                  />
+                  <label style={styles.label}>Expiry Date *</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input
+                      type="text"
+                      name="expiry_month"
+                      value={formData.expiry_month}
+                      onChange={handleChange}
+                      style={{ ...styles.input, flex: 1 }}
+                      placeholder="MM (e.g., 12)"
+                      maxLength="2"
+                      required
+                    />
+                    <input
+                      type="text"
+                      name="expiry_year"
+                      value={formData.expiry_year}
+                      onChange={handleChange}
+                      style={{ ...styles.input, flex: 1 }}
+                      placeholder="YYYY (e.g., 2025)"
+                      maxLength="4"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -664,7 +729,7 @@ function LinkDebitCardContent() {
                   value={formData.billing_address}
                   onChange={handleChange}
                   style={styles.input}
-                  placeholder="123 Main Street"
+                  placeholder="123 Main Street, Apt 4B"
                   required
                 />
               </div>
@@ -684,7 +749,7 @@ function LinkDebitCardContent() {
                 </div>
 
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>State *</label>
+                  <label style={styles.label}>State / Province *</label>
                   <input
                     type="text"
                     name="billing_state"
@@ -699,7 +764,7 @@ function LinkDebitCardContent() {
 
               <div style={styles.formGrid}>
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>ZIP Code *</label>
+                  <label style={styles.label}>ZIP / Postal Code *</label>
                   <input
                     type="text"
                     name="billing_zip"
@@ -723,18 +788,20 @@ function LinkDebitCardContent() {
                     <option value="United States">United States</option>
                     <option value="Canada">Canada</option>
                     <option value="United Kingdom">United Kingdom</option>
+                    {/* Add more countries as needed */}
                   </select>
                 </div>
               </div>
 
               {linkedCards.length > 0 && (
-                <div style={{ ...styles.formGroup, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ ...styles.formGroup, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
                   <input
                     type="checkbox"
                     name="is_primary"
                     checked={formData.is_primary}
                     onChange={handleChange}
                     id="is_primary"
+                    style={{ cursor: 'pointer', accentColor: '#059669' }}
                   />
                   <label htmlFor="is_primary" style={{ ...styles.label, marginBottom: 0, cursor: 'pointer' }}>
                     Set as primary card
@@ -756,75 +823,82 @@ function LinkDebitCardContent() {
             </form>
           )}
 
-          {linkedCards.length === 0 && !showForm ? (
+          {!showForm && linkedCards.length === 0 && (
             <div style={styles.emptyState}>
               <p style={{ fontSize: '1.125rem', marginBottom: '0.5rem' }}>No linked debit cards yet</p>
-              <p>Click "Add New Card" to link your first debit card</p>
+              <p>Click "Add New Card" to link your first debit card and start withdrawing.</p>
             </div>
-          ) : (
-            linkedCards.map(card => (
-              <div key={card.id} style={styles.cardItem}>
-                <div style={styles.cardHeader}>
-                  <div style={styles.cardName}>
-                    {getCardIcon(card.card_brand)} {card.card_brand.toUpperCase()} •••• {card.card_number_last4}
-                  </div>
-                  {card.is_primary && (
-                    <div style={styles.primaryBadge}>PRIMARY</div>
-                  )}
-                </div>
+          )}
 
-                <div style={styles.cardDetails}>
-                  <div style={styles.detailItem}>
-                    <div style={styles.detailLabel}>Cardholder</div>
-                    <div style={styles.detailValue}>{card.cardholder_name}</div>
-                  </div>
-                  <div style={styles.detailItem}>
-                    <div style={styles.detailLabel}>Expiry</div>
-                    <div style={styles.detailValue}>{card.expiry_month}/{card.expiry_year}</div>
-                  </div>
-                  <div style={styles.detailItem}>
-                    <div style={styles.detailLabel}>Billing City</div>
-                    <div style={styles.detailValue}>{card.billing_city}, {card.billing_state}</div>
-                  </div>
-                  <div style={styles.detailItem}>
-                    <div style={styles.detailLabel}>Status</div>
-                    <div style={{
-                      ...styles.detailValue,
-                      color: card.status === 'active' ? '#059669' : '#f59e0b'
-                    }}>
-                      {card.status.toUpperCase()}
-                    </div>
-                  </div>
+          {!showForm && linkedCards.map(card => (
+            <div key={card.id} style={styles.cardItem}>
+              <div style={styles.cardHeader}>
+                <div style={styles.cardName}>
+                  {getCardIcon(card.card_brand)} {card.card_brand.toUpperCase()} •••• {card.card_number_last4}
                 </div>
+                {card.is_primary && (
+                  <div style={styles.primaryBadge}>PRIMARY</div>
+                )}
+              </div>
 
-                <div style={styles.buttonGroup}>
-                  {!card.is_primary && (
-                    <button
-                      onClick={() => handleSetPrimary(card.id)}
-                      style={styles.buttonSecondary}
-                    >
-                      Set as Primary
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handleDelete(card.id)}
-                    style={styles.buttonDanger}
-                  >
-                    Remove
-                  </button>
+              <div style={styles.cardDetails}>
+                <div style={styles.detailItem}>
+                  <div style={styles.detailLabel}>Cardholder</div>
+                  <div style={styles.detailValue}>{card.cardholder_name}</div>
+                </div>
+                <div style={styles.detailItem}>
+                  <div style={styles.detailLabel}>Expiry</div>
+                  <div style={styles.detailValue}>{card.expiry_month}/{card.expiry_year}</div>
+                </div>
+                <div style={styles.detailItem}>
+                  <div style={styles.detailLabel}>Billing Address</div>
+                  <div style={styles.detailValue}>{card.billing_city}, {card.billing_state} {card.billing_zip}</div>
+                </div>
+                <div style={styles.detailItem}>
+                  <div style={styles.detailLabel}>Status</div>
+                  <div style={{
+                    ...styles.detailValue,
+                    color: card.status === 'active' ? '#059669' : card.status === 'pending' ? '#f59e0b' : '#dc2626'
+                  }}>
+                    {card.status.toUpperCase()}
+                  </div>
                 </div>
               </div>
-            ))
-          )}
+
+              <div style={styles.buttonGroup}>
+                {!card.is_primary && (
+                  <button
+                    onClick={() => handleSetPrimary(card.id)}
+                    style={styles.buttonSecondary}
+                    disabled={loading}
+                  >
+                    Set as Primary
+                  </button>
+                )}
+                <button
+                  onClick={() => handleDelete(card.id)}
+                  style={styles.buttonDanger}
+                  disabled={loading}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
 
         <div style={{ ...styles.card, backgroundColor: '#f0f9ff', border: '2px solid #0ea5e9' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#0c4a6e', marginBottom: '0.75rem' }}>
-            🔒 Security Notice
+          <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#0c4a6e', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#075985' }}>
+              <rect x="3" y="11" width="18" height="13" rx="2" ry="2"></rect>
+              <path d="M7 15h10v4H7z"></path>
+              <line x1="8" y1="2" x2="8" y2="4"></line>
+              <line x1="16" y1="2" x2="16" y2="4"></line>
+            </svg>
+            Security Notice
           </h3>
           <p style={{ fontSize: '0.875rem', color: '#075985', lineHeight: '1.6', margin: 0 }}>
-            Your card information is encrypted and stored securely. We never store your full card number.
-            All transactions are processed through secure, PCI-compliant systems.
+            Your card information is encrypted and stored securely using industry-standard protocols. We never store your full card number. All transactions are processed through secure, PCI-compliant systems to ensure the safety of your financial data.
           </p>
         </div>
       </div>

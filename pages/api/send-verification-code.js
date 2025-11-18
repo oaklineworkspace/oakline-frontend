@@ -20,8 +20,10 @@ export default async function handler(req, res) {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Only check for existing applications if this is NOT a wire transfer verification
-    if (type !== 'wire_transfer') {
+    // Only check for existing applications if this is NOT a wire transfer or withdrawal verification
+    const skipApplicationCheck = type === 'wire_transfer' || type === 'withdrawal';
+    
+    if (!skipApplicationCheck) {
       const { data: existingApp } = await supabaseAdmin
         .from('applications')
         .select('email')
@@ -98,9 +100,36 @@ export default async function handler(req, res) {
       
       // Define email subject and content based on type
       const isWireTransfer = type === 'wire_transfer';
-      const emailSubject = isWireTransfer 
-        ? '🔐 Wire Transfer Verification Code - Oakline Bank'
-        : '🔐 Your Oakline Bank Verification Code';
+      const isWithdrawal = type === 'withdrawal';
+      
+      let emailSubject = '🔐 Your Oakline Bank Verification Code';
+      let verificationTitle = 'Email Verification';
+      let verificationMessage = 'Thank you for choosing Oakline Bank! Please use the verification code below to complete your application:';
+      let securityNotice = '';
+      
+      if (isWireTransfer) {
+        emailSubject = '🔐 Wire Transfer Verification Code - Oakline Bank';
+        verificationTitle = 'Wire Transfer Verification';
+        verificationMessage = 'To protect your account and ensure the security of your wire transfer, please verify this transaction with the code below:';
+        securityNotice = `
+          <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0;">
+            <p style="color: #92400e; font-size: 14px; margin: 0;">
+              <strong>🔒 Security Notice:</strong> This verification is required to authorize your wire transfer request.
+            </p>
+          </div>
+        `;
+      } else if (isWithdrawal) {
+        emailSubject = '🔐 Withdrawal Verification Code - Oakline Bank';
+        verificationTitle = 'Withdrawal Verification';
+        verificationMessage = 'To protect your account and ensure the security of your withdrawal, please verify this transaction with the code below:';
+        securityNotice = `
+          <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0;">
+            <p style="color: #92400e; font-size: 14px; margin: 0;">
+              <strong>🔒 Security Notice:</strong> This verification is required to authorize your withdrawal request.
+            </p>
+          </div>
+        `;
+      }
 
       // Define the email HTML structure
       const emailHtml = `
@@ -118,19 +147,10 @@ export default async function handler(req, res) {
               </div>
 
               <div style="background: white; padding: 40px 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                <h2 style="color: #1A3E6F; margin-top: 0;">${isWireTransfer ? 'Wire Transfer Verification' : 'Email Verification'}</h2>
-                <p style="color: #333; line-height: 1.6;">${isWireTransfer 
-                  ? 'To protect your account and ensure the security of your wire transfer, please verify this transaction with the code below:'
-                  : 'Thank you for choosing Oakline Bank! Please use the verification code below to complete your application:'
-                }</p>
+                <h2 style="color: #1A3E6F; margin-top: 0;">${verificationTitle}</h2>
+                <p style="color: #333; line-height: 1.6;">${verificationMessage}</p>
 
-                ${isWireTransfer ? `
-                <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 20px 0;">
-                  <p style="color: #92400e; font-size: 14px; margin: 0;">
-                    <strong>🔒 Security Notice:</strong> This verification is required to authorize your wire transfer request.
-                  </p>
-                </div>
-                ` : ''}
+                ${securityNotice}
 
                 <div style="background: #f5f6f8; border-left: 4px solid #FFC857; padding: 20px; margin: 25px 0; text-align: center;">
                   <div style="font-size: 32px; font-weight: bold; color: #1A3E6F; letter-spacing: 5px; font-family: 'Courier New', monospace;">
@@ -139,8 +159,8 @@ export default async function handler(req, res) {
                 </div>
 
                 <p style="color: #666; font-size: 14px; margin-top: 20px;">This code will expire in 15 minutes.</p>
-                <p style="color: #666; font-size: 14px;">${isWireTransfer 
-                  ? 'If you did not initiate this wire transfer, please contact our security team immediately.'
+                <p style="color: #666; font-size: 14px;">${isWireTransfer || isWithdrawal
+                  ? 'If you did not initiate this transaction, please contact our security team immediately.'
                   : 'If you didn\'t request this code, please ignore this email.'
                 }</p>
 
@@ -157,11 +177,13 @@ export default async function handler(req, res) {
         `;
 
       // Use the verify email type for verification codes
+      const emailType = (isWireTransfer || isWithdrawal) ? EMAIL_TYPES.SECURITY : EMAIL_TYPES.VERIFY;
+      
       await sendEmail({
         to: normalizedEmail,
         subject: emailSubject,
         html: emailHtml,
-        emailType: isWireTransfer ? EMAIL_TYPES.SECURITY : EMAIL_TYPES.VERIFY,
+        emailType: emailType,
         userId: userId
       });
 

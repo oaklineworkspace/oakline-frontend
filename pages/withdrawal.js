@@ -506,16 +506,14 @@ export default function Withdrawal() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const amount = parseFloat(withdrawalForm.amount);
-    if (amount >= 5000) {
-      if (!verificationCode || verificationCode.length !== 6) {
-        showMessage('Please enter the 6-digit verification code', 'error');
-        return;
-      }
-      if (verificationCode !== generatedCode) {
-        showMessage('Invalid verification code. Please try again.', 'error');
-        return;
-      }
+    // Require verification code for all withdrawals
+    if (!verificationCode || verificationCode.length !== 6) {
+      showMessage('Please enter the 6-digit verification code', 'error');
+      return;
+    }
+    if (verificationCode !== generatedCode) {
+      showMessage('Invalid verification code. Please try again.', 'error');
+      return;
     }
 
     setLoading(true);
@@ -1830,41 +1828,39 @@ export default function Withdrawal() {
                 </div>
               </div>
 
-              {parseFloat(withdrawalForm.amount) >= 5000 && (
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <div style={{ ...styles.infoBox, borderColor: '#f59e0b', backgroundColor: '#fffbeb' }}>
-                    <p style={{ fontSize: '0.875rem', color: '#78350f', marginBottom: '1rem' }}>
-                      🔐 For security purposes, withdrawals over $5,000 require email verification.
-                    </p>
-                    {!sentCode ? (
-                      <button
-                        onClick={sendVerificationCode}
-                        disabled={sendingCode}
-                        style={{
-                          ...styles.button,
-                          backgroundColor: '#f59e0b',
-                          color: 'white',
-                          opacity: sendingCode ? 0.6 : 1
-                        }}
-                      >
-                        {sendingCode ? 'Sending...' : 'Send Verification Code'}
-                      </button>
-                    ) : (
-                      <div style={styles.formGroup}>
-                        <label style={styles.label}>Enter 6-Digit Code</label>
-                        <input
-                          type="text"
-                          maxLength={6}
-                          value={verificationCode}
-                          onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
-                          style={styles.input}
-                          placeholder="000000"
-                        />
-                      </div>
-                    )}
-                  </div>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{ ...styles.infoBox, borderColor: '#f59e0b', backgroundColor: '#fffbeb' }}>
+                  <p style={{ fontSize: '0.875rem', color: '#78350f', marginBottom: '1rem' }}>
+                    🔐 For security purposes, all withdrawals require email verification.
+                  </p>
+                  {!sentCode ? (
+                    <button
+                      onClick={sendVerificationCode}
+                      disabled={sendingCode}
+                      style={{
+                        ...styles.button,
+                        backgroundColor: '#f59e0b',
+                        color: 'white',
+                        opacity: sendingCode ? 0.6 : 1
+                      }}
+                    >
+                      {sendingCode ? 'Sending...' : 'Send Verification Code'}
+                    </button>
+                  ) : (
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Enter 6-Digit Code</label>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                        style={styles.input}
+                        placeholder="000000"
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
 
               <form onSubmit={handleSubmit}>
                 <div style={styles.buttonGroup}>
