@@ -667,8 +667,8 @@ function LinkDebitCardContent() {
     cardFlipWrapper: {
       perspective: '1000px',
       width: '100%',
-      maxWidth: '380px',
-      height: '240px',
+      maxWidth: '420px',
+      height: '250px',
       position: 'relative',
       transformStyle: 'preserve-3d',
       transition: 'transform 0.6s',
