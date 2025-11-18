@@ -332,6 +332,8 @@ export default function SignInPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [emailPlaceholder, setEmailPlaceholder] = useState('Enter your email');
   const [passwordPlaceholder, setPasswordPlaceholder] = useState('Enter your password');
+  const [loadingStage, setLoadingStage] = useState(0);
+  const [showLoadingBanner, setShowLoadingBanner] = useState(false);
 
 
   useEffect(() => {
@@ -356,8 +358,20 @@ export default function SignInPage() {
     e.preventDefault();
     setLoading(true);
     setMessage('');
+    setShowLoadingBanner(true);
+
+    const loadingStages = [
+      'Verifying credentials',
+      'Authenticating account',
+      'Securing connection',
+      'Loading your dashboard'
+    ];
 
     try {
+      // Stage 1: Verifying credentials
+      setLoadingStage(0);
+      await new Promise(resolve => setTimeout(resolve, 600));
+
       const { data, error } = await signIn(formData.email, formData.password);
 
       if (error) {
@@ -369,16 +383,27 @@ export default function SignInPage() {
       if (data.user) {
         // Log successful login
         await logLoginActivity(true);
-        setMessage('Sign in successful! Redirecting to dashboard...');
-        // Force navigation to dashboard in same tab
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1000);
+
+        // Stage 2: Authenticating account
+        setLoadingStage(1);
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Stage 3: Securing connection
+        setLoadingStage(2);
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Stage 4: Loading dashboard
+        setLoadingStage(3);
+        await new Promise(resolve => setTimeout(resolve, 600));
+
+        // Navigate to dashboard - no message needed, the loading banner shows everything
+        window.location.href = '/dashboard';
       }
 
     } catch (error) {
+      setShowLoadingBanner(false);
+      setLoadingStage(0);
       setMessage(`Sign in failed: ${error.message}`);
-    } finally {
       setLoading(false);
     }
   };
@@ -530,7 +555,69 @@ export default function SignInPage() {
             </button>
           </form>
 
-          {message && (
+          {showLoadingBanner && (
+            <div style={{
+              marginTop: '1.5rem',
+              padding: '1.5rem',
+              backgroundColor: '#f0f9ff',
+              borderRadius: '12px',
+              border: '2px solid #0ea5e9',
+              boxShadow: '0 4px 12px rgba(14, 165, 233, 0.1)'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                marginBottom: '1rem'
+              }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  border: '3px solid #e0f2fe',
+                  borderTop: '3px solid #0ea5e9',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }}></div>
+                <div style={{ flex: 1 }}>
+                  <h4 style={{
+                    margin: 0,
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    color: '#0c4a6e'
+                  }}>
+                    Signing you in...
+                  </h4>
+                  <p style={{
+                    margin: '0.25rem 0 0 0',
+                    fontSize: '0.875rem',
+                    color: '#0369a1'
+                  }}>
+                    {['Verifying credentials', 'Authenticating account', 'Securing connection', 'Loading your dashboard'][loadingStage]}
+                  </p>
+                </div>
+              </div>
+              <div style={{
+                display: 'flex',
+                gap: '0.5rem',
+                alignItems: 'center'
+              }}>
+                {[0, 1, 2, 3].map((stage) => (
+                  <div
+                    key={stage}
+                    style={{
+                      flex: 1,
+                      height: '4px',
+                      backgroundColor: loadingStage >= stage ? '#0ea5e9' : '#e0f2fe',
+                      borderRadius: '2px',
+                      transition: 'background-color 0.3s ease'
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {message && !showLoadingBanner && (
             <div style={{
               ...styles.messageContainer,
               color: message.includes('failed') ? '#dc2626' : '#065f46',
