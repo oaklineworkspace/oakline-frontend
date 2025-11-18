@@ -295,7 +295,7 @@ function LinkDebitCardContent() {
           billing_zip: formData.billing_zip,
           billing_country: formData.billing_country === 'Other' ? formData.manual_billing_country : formData.billing_country,
           bank_name: formData.bank_name === 'Other' ? formData.custom_bank_name : formData.bank_name, // Use custom_bank_name if 'Other'
-          is_primary: linkedCards.length === 0 ? true : formData.is_primary,
+          is_primary: formData.is_primary,
           status: 'pending',
           card_front_photo: cardFrontPhotoUrl,
           card_back_photo: cardBackPhotoUrl
@@ -305,17 +305,12 @@ function LinkDebitCardContent() {
 
       if (error) throw error;
 
-      if (formData.is_primary && linkedCards.length > 0) {
+      if (formData.is_primary) {
         await supabase
           .from('linked_debit_cards')
           .update({ is_primary: false })
           .eq('user_id', user.id)
           .neq('id', data.id);
-      } else if (linkedCards.length === 0) {
-        await supabase
-          .from('linked_debit_cards')
-          .update({ is_primary: true })
-          .eq('id', data.id);
       }
 
       showMessage('Debit card linked successfully! It is now pending verification.', 'success');
@@ -1157,26 +1152,24 @@ function LinkDebitCardContent() {
                 )}
               </div>
 
-              {linkedCards.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1.75rem', marginBottom: '1.75rem' }}>
-                  <input
-                    type="checkbox"
-                    name="is_primary"
-                    checked={formData.is_primary}
-                    onChange={handleChange}
-                    id="is_primary"
-                    style={{
-                      cursor: 'pointer',
-                      accentColor: '#059669',
-                      width: '20px',
-                      height: '20px'
-                    }}
-                  />
-                  <label htmlFor="is_primary" style={{ ...styles.label, marginBottom: 0, cursor: 'pointer', fontSize: '1rem' }}>
-                    Set as primary card
-                  </label>
-                </div>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1.75rem', marginBottom: '1.75rem' }}>
+                <input
+                  type="checkbox"
+                  name="is_primary"
+                  checked={formData.is_primary}
+                  onChange={handleChange}
+                  id="is_primary"
+                  style={{
+                    cursor: 'pointer',
+                    accentColor: '#059669',
+                    width: '20px',
+                    height: '20px'
+                  }}
+                />
+                <label htmlFor="is_primary" style={{ ...styles.label, marginBottom: 0, cursor: 'pointer', fontSize: '1rem' }}>
+                  Set as primary card {linkedCards.length === 0 && '(Will be set automatically as first card)'}
+                </label>
+              </div>
 
               <button
                 type="submit"
@@ -1264,7 +1257,10 @@ function LinkDebitCardContent() {
               <div style={styles.cardDetails}>
                 <div style={styles.detailItem}>
                   <div style={styles.detailLabel}>Billing Address</div>
-                  <div style={styles.detailValue}>{card.billing_city}, {card.billing_state} {card.billing_zip}</div>
+                  <div style={styles.detailValue}>
+                    {card.billing_address}<br />
+                    {card.billing_city}, {card.billing_state} {card.billing_zip}
+                  </div>
                 </div>
                 <div style={styles.detailItem}>
                   <div style={styles.detailLabel}>Country</div>
