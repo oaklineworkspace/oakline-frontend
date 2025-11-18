@@ -1579,6 +1579,7 @@ function LinkDebitCardContent() {
                   <div
                     style={{
                       ...styles.cardVisual,
+                      ...getCardBackgroundByBank(card.bank_name, card.card_brand),
                       opacity: flippedCardId === card.id ? 1 : 0,
                       transform: 'rotateY(180deg)',
                       zIndex: flippedCardId === card.id ? 2 : 1
