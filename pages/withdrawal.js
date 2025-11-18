@@ -20,6 +20,7 @@ export default function Withdrawal() {
   const [sentCode, setSentCode] = useState(false);
   const [generatedCode, setGeneratedCode] = useState('');
   const [isMobile, setIsMobile] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(false);
   const [availableNetworks, setAvailableNetworks] = useState([]);
   const [loadingNetworks, setLoadingNetworks] = useState(false);
 
@@ -300,8 +301,10 @@ export default function Withdrawal() {
 
     switch (withdrawalForm.withdrawal_method) {
       case 'crypto_wallet':
-        fee = amount * 0.015; // 1.5% crypto network fee (minimum $5)
-        fee = Math.max(fee, 5.00);
+        // $5 fixed base fee + 1.5% network fee
+        const baseFee = 5.00;
+        const networkFee = amount * 0.015;
+        fee = baseFee + networkFee;
         break;
       case 'linked_bank':
         fee = 0.00; // Free ACH transfer to linked banks
@@ -470,17 +473,31 @@ export default function Withdrawal() {
   const sendVerificationCode = async () => {
     try {
       setSendingCode(true);
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      setGeneratedCode(code);
+      
+      const response = await fetch('/api/send-verification-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+          type: 'withdrawal',
+          userId: user.id
+        }),
+      });
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const data = await response.json();
 
-      console.log('Verification code:', code);
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send verification code');
+      }
+
+      setGeneratedCode(data.code);
       setSentCode(true);
       showMessage('Verification code sent to your email', 'success');
     } catch (error) {
       console.error('Error sending code:', error);
-      showMessage('Failed to send verification code', 'error');
+      showMessage(error.message || 'Failed to send verification code', 'error');
     } finally {
       setSendingCode(false);
     }
@@ -1144,7 +1161,7 @@ export default function Withdrawal() {
                   onChange={(e) => setWithdrawalForm(prev => ({ ...prev, withdrawal_method: e.target.value }))}
                   style={styles.select}
                 >
-                  <option value="crypto_wallet">💎 Cryptocurrency (1.5% fee, min $5)</option>
+                  <option value="crypto_wallet">💎 Cryptocurrency ($5 base + 1.5% network fee)</option>
                   <option value="linked_bank">🏦 Bank Account - ACH (Free, 1-3 business days)</option>
                   <option value="debit_card">💳 Debit Card - Instant ($5-$15 fee)</option>
                 </select>
@@ -1170,8 +1187,20 @@ export default function Withdrawal() {
                       <span>Amount:</span>
                       <span style={{ fontWeight: '600' }}>{formatCurrency(parseFloat(withdrawalForm.amount))}</span>
                     </div>
+                    {withdrawalForm.withdrawal_method === 'crypto_wallet' && (
+                      <>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.75rem', color: '#64748b' }}>
+                          <span>• Base Fee:</span>
+                          <span>{formatCurrency(5.00)}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.75rem', color: '#64748b' }}>
+                          <span>• Network Fee (1.5%):</span>
+                          <span>{formatCurrency(parseFloat(withdrawalForm.amount) * 0.015)}</span>
+                        </div>
+                      </>
+                    )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                      <span>Fee:</span>
+                      <span>Total Fee:</span>
                       <span style={{ fontWeight: '600' }}>{formatCurrency(withdrawalForm.fee)}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: '2px solid #0ea5e9' }}>
@@ -1779,8 +1808,20 @@ export default function Withdrawal() {
                   <span style={styles.reviewLabel}>Amount</span>
                   <span style={styles.reviewValue}>{formatCurrency(parseFloat(withdrawalForm.amount))}</span>
                 </div>
+                {withdrawalForm.withdrawal_method === 'crypto_wallet' && (
+                  <>
+                    <div style={{ ...styles.reviewRow, fontSize: '0.75rem', color: '#64748b', borderBottom: 'none', paddingBottom: '0.25rem' }}>
+                      <span style={styles.reviewLabel}>• Base Fee</span>
+                      <span style={styles.reviewValue}>{formatCurrency(5.00)}</span>
+                    </div>
+                    <div style={{ ...styles.reviewRow, fontSize: '0.75rem', color: '#64748b', paddingTop: '0.25rem' }}>
+                      <span style={styles.reviewLabel}>• Network Fee (1.5%)</span>
+                      <span style={styles.reviewValue}>{formatCurrency(parseFloat(withdrawalForm.amount) * 0.015)}</span>
+                    </div>
+                  </>
+                )}
                 <div style={styles.reviewRow}>
-                  <span style={styles.reviewLabel}>Fee</span>
+                  <span style={styles.reviewLabel}>Total Fee</span>
                   <span style={styles.reviewValue}>{formatCurrency(withdrawalForm.fee)}</span>
                 </div>
                 <div style={{ ...styles.reviewRow, borderTop: '2px solid #059669', paddingTop: '1rem', marginTop: '0.5rem', backgroundColor: '#f0fdf4', padding: '1rem', borderRadius: '8px' }}>
