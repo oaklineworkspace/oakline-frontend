@@ -247,25 +247,37 @@ function LinkDebitCardContent() {
       let cardBackPhotoUrl = null;
 
       if (formData.card_front_photo) {
+        const frontPath = `card_photos/${user.id}/card_front_${Date.now()}.jpg`;
         const { data: frontData, error: frontError } = await supabase.storage
-          .from('card_photos') // Assuming you have a bucket named 'card_photos'
-          .upload(`public/${user.id}/card_front_${Date.now()}.jpg`, formData.card_front_photo, {
+          .from('user-files')
+          .upload(frontPath, formData.card_front_photo, {
+            contentType: formData.card_front_photo.type,
             cacheControl: '3600',
             upsert: true,
           });
         if (frontError) throw frontError;
-        cardFrontPhotoUrl = `https://YOUR_SUPABASE_URL.supabase.co/storage/v1/object/public/card_photos/${frontData.path}`; // Construct URL
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('user-files')
+          .getPublicUrl(frontPath);
+        cardFrontPhotoUrl = publicUrl;
       }
 
       if (formData.card_back_photo) {
+        const backPath = `card_photos/${user.id}/card_back_${Date.now()}.jpg`;
         const { data: backData, error: backError } = await supabase.storage
-          .from('card_photos')
-          .upload(`public/${user.id}/card_back_${Date.now()}.jpg`, formData.card_back_photo, {
+          .from('user-files')
+          .upload(backPath, formData.card_back_photo, {
+            contentType: formData.card_back_photo.type,
             cacheControl: '3600',
             upsert: true,
           });
         if (backError) throw backError;
-        cardBackPhotoUrl = `https://YOUR_SUPABASE_URL.supabase.co/storage/v1/object/public/card_photos/${backData.path}`; // Construct URL
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('user-files')
+          .getPublicUrl(backPath);
+        cardBackPhotoUrl = publicUrl;
       }
 
 
@@ -820,7 +832,7 @@ function LinkDebitCardContent() {
                 Card Verification Photos
               </h3>
               <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '1rem' }}>
-                Please upload clear photos of the front and back of your card for verification. Cover the CVV on the back photo for security.
+                Please upload clear photos of the front and back of your card for verification.
               </p>
 
               <div style={styles.formGroup}>
@@ -855,9 +867,6 @@ function LinkDebitCardContent() {
                     ✓ {formData.card_back_photo.name}
                   </small>
                 )}
-                <small style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
-                  For security, please cover the CVV/CVC code before taking the photo.
-                </small>
               </div>
 
 
