@@ -872,38 +872,41 @@ function DashboardContent() {
           <div style={styles.summaryHeader}>
             <div style={styles.summaryHeaderLeft}>
               <h2 style={styles.sectionTitle}>Account Summary</h2>
-              <div style={styles.profilePictureContainer}>
-                {userProfile?.profile_picture && (
-                  <img
-                    src={userProfile.profile_picture}
-                    alt="Profile"
-                    style={styles.profilePictureInSummary}
-                  />
-                )}
-                {!userProfile?.profile_picture && (
-                  <div style={styles.profilePlaceholderInSummary}>
-                    <span style={styles.profilePlaceholderText}>
-                      {userProfile ?
-                        `${userProfile.first_name?.[0] || ''}${userProfile.last_name?.[0] || ''}`.toUpperCase() || '?'
-                        : '?'}
-                  </span>
+              <div style={styles.profilePictureWrapper}>
+                <div style={styles.profilePictureContainer}>
+                  {userProfile?.profile_picture && (
+                    <img
+                      src={userProfile.profile_picture}
+                      alt="Profile"
+                      style={styles.profilePictureInSummary}
+                    />
+                  )}
+                  {!userProfile?.profile_picture && (
+                    <div style={styles.profilePlaceholderInSummary}>
+                      <span style={styles.profilePlaceholderText}>
+                        {userProfile ?
+                          `${userProfile.first_name?.[0] || ''}${userProfile.last_name?.[0] || ''}`.toUpperCase() || '?'
+                          : '?'}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-              <Link
-                href="/profile"
-                style={styles.editProfileButton}
-                title="Edit Profile"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                  e.currentTarget.style.backgroundColor = '#2563eb';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.backgroundColor = '#1e40af';
-                }}
-              >
-                Edit
-              </Link>
+                <Link
+                  href="/profile"
+                  style={styles.editProfileButton}
+                  title="Edit Profile"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.05)';
+                    e.currentTarget.style.backgroundColor = '#2563eb';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.backgroundColor = '#1e40af';
+                  }}
+                >
+                  Edit
+                </Link>
+              </div>
             </div>
           </div>
           <span style={styles.lastUpdated}>Last updated: {new Date().toLocaleDateString()}</span>
@@ -974,7 +977,6 @@ function DashboardContent() {
               </div>
             </div>
           </div>
-        </div>
         </div>
       </section>
 
@@ -2146,8 +2148,13 @@ profilePlaceholderInSummary: {
   border: '3px solid #047857',
   boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
 },
+profilePictureWrapper: {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '0.5rem'
+},
 profilePictureContainer: {
-  position: 'relative',
   display: 'inline-block',
   width: '80px',
   height: '80px',
@@ -2157,24 +2164,21 @@ profilePictureContainer: {
   boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
 },
 editProfileButton: {
-  position: 'absolute',
-  bottom: '0',
-  right: '0',
   backgroundColor: '#1e40af',
   color: 'white',
-  borderRadius: '6px',
-  padding: '0.4rem 0.8rem',
+  borderRadius: '4px',
+  padding: '0.25rem 0.5rem',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  fontSize: '0.75rem',
+  fontSize: '0.65rem',
   fontWeight: '600',
   cursor: 'pointer',
   textDecoration: 'none',
   transition: 'all 0.3s ease',
-  border: '2px solid white',
-  boxShadow: '0 2px 8px rgba(30, 64, 175, 0.5)',
-  letterSpacing: '0.5px'
+  border: '1px solid white',
+  boxShadow: '0 1px 4px rgba(30, 64, 175, 0.3)',
+  letterSpacing: '0.3px'
 },
 userInfo: {
   display: 'flex',
