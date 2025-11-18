@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { supabase } from '../lib/supabaseClient';
 
 export default function Withdrawal() {
   const [user, setUser] = useState(null);
   const [accounts, setAccounts] = useState([]);
+  const [cryptoAssets, setCryptoAssets] = useState([]);
+  const [linkedBanks, setLinkedBanks] = useState([]);
+  const [linkedCards, setLinkedCards] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -21,14 +25,19 @@ export default function Withdrawal() {
     from_account_id: '',
     withdrawal_method: 'crypto_wallet',
     amount: '',
-    recipient_name: '',
-    recipient_account_number: '',
-    recipient_bank: '',
-    routing_number: '',
-    swift_code: '',
-    iban: '',
-    recipient_address: '',
-    purpose: '',
+    crypto_asset_id: '',
+    crypto_wallet_address: '',
+    linked_bank_id: '',
+    linked_card_id: '',
+    new_bank_details: {
+      account_holder_name: '',
+      bank_name: '',
+      account_number: '',
+      routing_number: '',
+      account_type: 'checking',
+      swift_code: '',
+      iban: ''
+    },
     fee: 0,
     total_amount: 0
   });
@@ -47,6 +56,9 @@ export default function Withdrawal() {
   useEffect(() => {
     if (user) {
       fetchAccounts();
+      fetchCryptoAssets();
+      fetchLinkedBanks();
+      fetchLinkedCards();
       fetchWithdrawals();
     }
   }, [user]);
@@ -90,6 +102,53 @@ export default function Withdrawal() {
     }
   };
 
+  const fetchCryptoAssets = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('crypto_assets')
+        .select('*')
+        .eq('status', 'active')
+        .order('crypto_type');
+
+      if (error) throw error;
+      setCryptoAssets(data || []);
+    } catch (error) {
+      console.error('Error fetching crypto assets:', error);
+    }
+  };
+
+  const fetchLinkedBanks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('linked_bank_accounts')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('status', ['pending', 'active'])
+        .order('is_primary', { ascending: false });
+
+      if (error) throw error;
+      setLinkedBanks(data || []);
+    } catch (error) {
+      console.error('Error fetching linked banks:', error);
+    }
+  };
+
+  const fetchLinkedCards = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('linked_debit_cards')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('status', ['pending', 'active'])
+        .order('is_primary', { ascending: false});
+
+      if (error) throw error;
+      setLinkedCards(data || []);
+    } catch (error) {
+      console.error('Error fetching linked cards:', error);
+    }
+  };
+
   const fetchWithdrawals = async () => {
     try {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -119,14 +178,14 @@ export default function Withdrawal() {
 
     switch (withdrawalForm.withdrawal_method) {
       case 'crypto_wallet':
-        fee = amount * 0.01; // 1% network fee (minimum $5)
+        fee = amount * 0.015; // 1.5% crypto network fee (minimum $5)
         fee = Math.max(fee, 5.00);
         break;
       case 'linked_bank':
-        fee = 0.00; // Free ACH transfer
+        fee = 0.00; // Free ACH transfer to linked banks
         break;
       case 'debit_card':
-        fee = amount >= 1000 ? 10.00 : 3.50; // Express: $10, Standard: $3.50
+        fee = amount >= 1000 ? 15.00 : 5.00; // Express withdrawal fee
         break;
       default:
         fee = 0;
@@ -167,8 +226,8 @@ export default function Withdrawal() {
       return false;
     }
 
-    if (parseFloat(withdrawalForm.amount) > 10000) {
-      showMessage('Single withdrawal limit is $10,000. Please contact support for higher amounts.', 'error');
+    if (parseFloat(withdrawalForm.amount) > 50000) {
+      showMessage('Single withdrawal limit is $50,000. Please contact support for higher amounts.', 'error');
       return false;
     }
 
@@ -176,39 +235,46 @@ export default function Withdrawal() {
   };
 
   const validateStep2 = () => {
-    const { withdrawal_method, recipient_name, recipient_account_number, routing_number, 
-            swift_code, iban, recipient_bank, recipient_address } = withdrawalForm;
+    const { withdrawal_method, crypto_asset_id, crypto_wallet_address, linked_bank_id, linked_card_id, new_bank_details } = withdrawalForm;
 
     switch (withdrawal_method) {
       case 'crypto_wallet':
-        if (!recipient_account_number) {
+        if (!crypto_asset_id) {
+          showMessage('Please select a cryptocurrency', 'error');
+          return false;
+        }
+        if (!crypto_wallet_address) {
           showMessage('Please enter the crypto wallet address', 'error');
           return false;
         }
-        if (recipient_account_number.length < 26) {
+        if (crypto_wallet_address.length < 26) {
           showMessage('Please enter a valid wallet address', 'error');
           return false;
         }
         break;
 
       case 'linked_bank':
-        if (!recipient_name || !recipient_account_number || !routing_number || !recipient_bank) {
-          showMessage('Please fill in all required bank account details', 'error');
+        if (!linked_bank_id && !new_bank_details.bank_name) {
+          showMessage('Please select a linked bank or provide new bank details', 'error');
           return false;
         }
-        if (routing_number.length !== 9) {
-          showMessage('Routing number must be 9 digits', 'error');
-          return false;
+        if (!linked_bank_id) {
+          // Validate new bank details
+          if (!new_bank_details.account_holder_name || !new_bank_details.bank_name || 
+              !new_bank_details.account_number || !new_bank_details.routing_number) {
+            showMessage('Please fill in all required bank details', 'error');
+            return false;
+          }
+          if (new_bank_details.routing_number.length !== 9) {
+            showMessage('Routing number must be 9 digits', 'error');
+            return false;
+          }
         }
         break;
 
       case 'debit_card':
-        if (!recipient_name || !recipient_account_number) {
-          showMessage('Please fill in all required card details', 'error');
-          return false;
-        }
-        if (recipient_account_number.length < 13 || recipient_account_number.length > 19) {
-          showMessage('Please enter a valid card number', 'error');
+        if (!linked_card_id) {
+          showMessage('Please select a linked debit card or add a new one', 'error');
           return false;
         }
         break;
@@ -298,15 +364,40 @@ export default function Withdrawal() {
       const balanceAfter = balanceBefore - totalAmount;
 
       let withdrawalDescription = '';
+      let metadata = {};
+
       switch (withdrawalForm.withdrawal_method) {
         case 'crypto_wallet':
-          withdrawalDescription = `Crypto wallet withdrawal to ${withdrawalForm.recipient_account_number.substring(0, 8)}...${withdrawalForm.recipient_account_number.substring(withdrawalForm.recipient_account_number.length - 6)}`;
+          const selectedCrypto = cryptoAssets.find(c => c.id === withdrawalForm.crypto_asset_id);
+          withdrawalDescription = `${selectedCrypto?.crypto_type} withdrawal via ${selectedCrypto?.network_type} to ${withdrawalForm.crypto_wallet_address.substring(0, 8)}...${withdrawalForm.crypto_wallet_address.substring(withdrawalForm.crypto_wallet_address.length - 6)}`;
+          metadata = {
+            crypto_type: selectedCrypto?.crypto_type,
+            network_type: selectedCrypto?.network_type,
+            wallet_address: withdrawalForm.crypto_wallet_address
+          };
           break;
         case 'linked_bank':
-          withdrawalDescription = `Bank transfer to ${withdrawalForm.recipient_name} at ${withdrawalForm.recipient_bank}`;
+          if (withdrawalForm.linked_bank_id) {
+            const selectedBank = linkedBanks.find(b => b.id === withdrawalForm.linked_bank_id);
+            withdrawalDescription = `Bank transfer to ${selectedBank?.bank_name} ****${selectedBank?.account_number.slice(-4)}`;
+            metadata = {
+              linked_bank_id: withdrawalForm.linked_bank_id,
+              bank_name: selectedBank?.bank_name
+            };
+          } else {
+            withdrawalDescription = `Bank transfer to ${withdrawalForm.new_bank_details.bank_name}`;
+            metadata = {
+              new_bank: withdrawalForm.new_bank_details
+            };
+          }
           break;
         case 'debit_card':
-          withdrawalDescription = `Debit card withdrawal to ${withdrawalForm.recipient_name}`;
+          const selectedCard = linkedCards.find(c => c.id === withdrawalForm.linked_card_id);
+          withdrawalDescription = `Debit card withdrawal to ${selectedCard?.card_brand.toUpperCase()} ****${selectedCard?.card_number_last4}`;
+          metadata = {
+            linked_card_id: withdrawalForm.linked_card_id,
+            card_brand: selectedCard?.card_brand
+          };
           break;
       }
 
@@ -321,9 +412,10 @@ export default function Withdrawal() {
           amount: amount,
           description: withdrawalDescription,
           reference: reference,
-          status: withdrawalForm.withdrawal_method === 'internal_transfer' ? 'completed' : 'pending',
+          status: 'pending',
           balance_before: balanceBefore,
-          balance_after: balanceAfter
+          balance_after: balanceAfter,
+          metadata: metadata
         }])
         .select()
         .single();
@@ -336,7 +428,7 @@ export default function Withdrawal() {
           account_id: withdrawalForm.from_account_id,
           type: 'fee',
           amount: fee,
-          description: `${withdrawalForm.withdrawal_method.replace('_', ' ')} fee`,
+          description: `${withdrawalForm.withdrawal_method.replace('_', ' ')} withdrawal fee`,
           reference: `FEE-${reference}`,
           status: 'completed',
           balance_before: balanceAfter,
@@ -347,7 +439,7 @@ export default function Withdrawal() {
       const { error: balanceError } = await supabase
         .from('accounts')
         .update({ 
-          balance: balanceAfter,
+          balance: balanceAfter - fee,
           updated_at: new Date().toISOString()
         })
         .eq('id', withdrawalForm.from_account_id);
@@ -357,8 +449,8 @@ export default function Withdrawal() {
       await supabase.from('notifications').insert([{
         user_id: currentUser.id,
         type: 'withdrawal',
-        title: 'Withdrawal Processed',
-        message: `$${amount.toFixed(2)} withdrawal processed via ${withdrawalForm.withdrawal_method.replace(/_/g, ' ')}`
+        title: 'Withdrawal Initiated',
+        message: `$${amount.toFixed(2)} withdrawal is being processed`
       }]);
 
       setReceiptData({
@@ -368,8 +460,7 @@ export default function Withdrawal() {
         total: totalAmount,
         method: withdrawalForm.withdrawal_method,
         account: selectedAccount,
-        recipient_name: withdrawalForm.recipient_name,
-        recipient_bank: withdrawalForm.recipient_bank,
+        description: withdrawalDescription,
         timestamp: new Date().toISOString()
       });
 
@@ -396,14 +487,19 @@ export default function Withdrawal() {
       from_account_id: accounts[0]?.id || '',
       withdrawal_method: 'crypto_wallet',
       amount: '',
-      recipient_name: '',
-      recipient_account_number: '',
-      recipient_bank: '',
-      routing_number: '',
-      swift_code: '',
-      iban: '',
-      recipient_address: '',
-      purpose: '',
+      crypto_asset_id: '',
+      crypto_wallet_address: '',
+      linked_bank_id: '',
+      linked_card_id: '',
+      new_bank_details: {
+        account_holder_name: '',
+        bank_name: '',
+        account_number: '',
+        routing_number: '',
+        account_type: 'checking',
+        swift_code: '',
+        iban: ''
+      },
       fee: 0,
       total_amount: 0
     });
@@ -429,8 +525,8 @@ export default function Withdrawal() {
   const getMethodLabel = (method) => {
     const labels = {
       crypto_wallet: '💎 Cryptocurrency Wallet',
-      linked_bank: '🏦 Linked Bank Account',
-      debit_card: '💳 Debit Card'
+      linked_bank: '🏦 Bank Account (ACH)',
+      debit_card: '💳 Debit Card (Instant)'
     };
     return labels[method] || method;
   };
@@ -459,13 +555,6 @@ export default function Withdrawal() {
       marginBottom: '2rem',
       flexWrap: 'wrap',
       gap: '1rem'
-    },
-    logo: {
-      fontSize: isMobile ? '1.5rem' : '2rem',
-      fontWeight: '800',
-      color: 'white',
-      textDecoration: 'none',
-      letterSpacing: '-0.02em'
     },
     backButton: {
       padding: isMobile ? '0.625rem 1.125rem' : '0.75rem 1.5rem',
@@ -553,15 +642,15 @@ export default function Withdrawal() {
       borderRadius: '16px',
       padding: isMobile ? '1.5rem' : '2rem',
       boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-      border: '1px solid #dc2626'
+      border: '1px solid #e2e8f0'
     },
     cardTitle: {
-      fontSize: isMobile ? '1.1rem' : '1.25rem',
+      fontSize: isMobile ? '1.25rem' : '1.5rem',
       fontWeight: '700',
       color: '#1a365d',
       marginBottom: '1.5rem',
       paddingBottom: '1rem',
-      borderBottom: '2px solid #dc2626'
+      borderBottom: '2px solid #059669'
     },
     formGroup: {
       marginBottom: '1.25rem'
@@ -585,7 +674,7 @@ export default function Withdrawal() {
       padding: '0.75rem',
       border: '2px solid #e2e8f0',
       borderRadius: '12px',
-      fontSize: '0.875rem',
+      fontSize: '0.9375rem',
       transition: 'border-color 0.3s',
       boxSizing: 'border-box'
     },
@@ -594,7 +683,7 @@ export default function Withdrawal() {
       padding: '0.75rem',
       border: '2px solid #e2e8f0',
       borderRadius: '12px',
-      fontSize: '0.875rem',
+      fontSize: '0.9375rem',
       backgroundColor: 'white',
       transition: 'border-color 0.3s',
       boxSizing: 'border-box'
@@ -617,7 +706,7 @@ export default function Withdrawal() {
     submitButton: {
       width: '100%',
       padding: '1rem',
-      backgroundColor: '#dc2626',
+      backgroundColor: '#059669',
       color: 'white',
       border: 'none',
       borderRadius: '12px',
@@ -625,7 +714,7 @@ export default function Withdrawal() {
       fontWeight: '700',
       cursor: 'pointer',
       transition: 'all 0.3s',
-      boxShadow: '0 6px 20px rgba(220, 38, 38, 0.4)',
+      boxShadow: '0 6px 20px rgba(5, 150, 105, 0.4)',
       marginTop: '1rem'
     },
     message: {
@@ -635,37 +724,39 @@ export default function Withdrawal() {
       border: '2px solid'
     },
     balanceInfo: {
-      backgroundColor: '#f8fafc',
-      padding: '1rem',
+      backgroundColor: '#f0f9ff',
+      padding: '1.25rem',
       borderRadius: '12px',
       marginTop: '1rem',
-      border: '1px solid #e2e8f0'
+      border: '2px solid #0ea5e9'
     },
     balanceLabel: {
-      fontSize: '0.75rem',
-      color: '#64748b',
-      marginBottom: '0.5rem'
+      fontSize: '0.875rem',
+      color: '#0c4a6e',
+      marginBottom: '0.5rem',
+      fontWeight: '600'
     },
     balanceValue: {
-      fontSize: '1.25rem',
+      fontSize: '1.5rem',
       fontWeight: '700',
-      color: '#1e293b'
+      color: '#075985'
     },
-    withdrawalsList: {
-      maxHeight: '600px',
-      overflowY: 'auto'
-    },
-    withdrawalItem: {
-      backgroundColor: '#f8fafc',
-      padding: '1rem',
+    infoBox: {
+      backgroundColor: '#f0fdf4',
+      border: '2px solid #059669',
       borderRadius: '12px',
-      marginBottom: '1rem',
-      border: '1px solid #e2e8f0'
+      padding: '1rem',
+      marginBottom: '1.5rem'
     },
-    emptyState: {
-      textAlign: 'center',
-      padding: '3rem 1rem',
-      color: '#64748b'
+    linkButton: {
+      color: '#059669',
+      textDecoration: 'none',
+      fontWeight: '600',
+      fontSize: '0.875rem',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '0.25rem',
+      marginTop: '0.5rem'
     },
     reviewSection: {
       backgroundColor: '#f8fafc',
@@ -675,12 +766,12 @@ export default function Withdrawal() {
       border: '2px solid #e2e8f0'
     },
     reviewTitle: {
-      fontSize: '1rem',
+      fontSize: '1.125rem',
       fontWeight: '700',
       color: '#1a365d',
       marginBottom: '1rem',
       paddingBottom: '0.75rem',
-      borderBottom: '2px solid #dc2626'
+      borderBottom: '2px solid #059669'
     },
     reviewRow: {
       display: 'flex',
@@ -705,9 +796,69 @@ export default function Withdrawal() {
   if (!user) {
     return (
       <div style={styles.container}>
-        <div style={{ ...styles.emptyState, color: 'white', paddingTop: '4rem' }}>
+        <div style={{ color: 'white', textAlign: 'center', paddingTop: '4rem' }}>
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Please sign in to continue</h2>
-          <a href="/sign-in" style={{ color: '#FFC857', textDecoration: 'underline' }}>Go to Sign In</a>
+          <Link href="/sign-in" style={{ color: '#FFC857', textDecoration: 'underline' }}>Go to Sign In</Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (showReceipt && receiptData) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.main}>
+          <div style={{ ...styles.card, maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>✅</div>
+            <h2 style={{ fontSize: '2rem', fontWeight: '800', color: '#059669', marginBottom: '0.5rem' }}>
+              Withdrawal Initiated!
+            </h2>
+            <p style={{ color: '#64748b', marginBottom: '2rem' }}>
+              Your withdrawal request has been submitted and is being processed
+            </p>
+
+            <div style={styles.reviewSection}>
+              <h3 style={styles.reviewTitle}>Withdrawal Details</h3>
+              <div style={styles.reviewRow}>
+                <span style={styles.reviewLabel}>Reference</span>
+                <span style={styles.reviewValue}>{receiptData.reference}</span>
+              </div>
+              <div style={styles.reviewRow}>
+                <span style={styles.reviewLabel}>Amount</span>
+                <span style={styles.reviewValue}>{formatCurrency(receiptData.amount)}</span>
+              </div>
+              <div style={styles.reviewRow}>
+                <span style={styles.reviewLabel}>Fee</span>
+                <span style={styles.reviewValue}>{formatCurrency(receiptData.fee)}</span>
+              </div>
+              <div style={{ ...styles.reviewRow, borderTop: '2px solid #059669', marginTop: '0.5rem', backgroundColor: '#f0fdf4' }}>
+                <span style={{ ...styles.reviewLabel, fontWeight: '700' }}>Total Deducted</span>
+                <span style={{ ...styles.reviewValue, color: '#059669', fontSize: '1.125rem' }}>{formatCurrency(receiptData.total)}</span>
+              </div>
+              <div style={styles.reviewRow}>
+                <span style={styles.reviewLabel}>Method</span>
+                <span style={styles.reviewValue}>{getMethodLabel(receiptData.method)}</span>
+              </div>
+              <div style={styles.reviewRow}>
+                <span style={styles.reviewLabel}>Account</span>
+                <span style={styles.reviewValue}>****{receiptData.account.account_number.slice(-4)}</span>
+              </div>
+              <div style={{ ...styles.reviewRow, borderBottom: 'none' }}>
+                <span style={styles.reviewLabel}>Date</span>
+                <span style={styles.reviewValue}>{formatDate(receiptData.timestamp)}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={closeReceipt}
+              style={{
+                ...styles.submitButton,
+                backgroundColor: '#059669'
+              }}
+            >
+              Done
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -723,803 +874,591 @@ export default function Withdrawal() {
       `}</style>
 
       <div style={styles.container}>
-        {sendingCode && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(26, 54, 93, 0.95)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 9999,
-            backdropFilter: 'blur(8px)'
-          }}>
-            <div style={{
-              width: '80px',
-              height: '80px',
-              border: '6px solid rgba(255,255,255,0.2)',
-              borderTop: '6px solid #dc2626',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              marginBottom: '2rem'
-            }}></div>
-            <h2 style={{
-              color: 'white',
-              fontSize: isMobile ? '1.5rem' : '2rem',
-              fontWeight: '700',
-              marginBottom: '1rem',
-              textAlign: 'center'
-            }}>
-              📧 Sending Verification Code
-            </h2>
-            <p style={{
-              color: 'rgba(255,255,255,0.9)',
-              fontSize: isMobile ? '1rem' : '1.125rem',
-              textAlign: 'center',
-              maxWidth: '500px',
-              lineHeight: '1.6',
-              padding: '0 1rem'
-            }}>
-              Please wait while we send a 6-digit security code to <strong>{user?.email}</strong>
-            </p>
-            <div style={{
-              marginTop: '2rem',
-              padding: '1rem 2rem',
-              backgroundColor: 'rgba(220, 38, 38, 0.2)',
-              borderRadius: '12px',
-              border: '2px solid rgba(220, 38, 38, 0.5)',
-              color: 'rgba(255,255,255,0.9)',
-              fontSize: '0.875rem',
-              textAlign: 'center'
-            }}>
-              🔒 This process is secured with bank-level encryption
-            </div>
-          </div>
-        )}
+        <div style={styles.header}>
+          <Link href="/dashboard" style={styles.backButton}>
+            ← Back to Dashboard
+          </Link>
+        </div>
 
-        <header style={styles.header}>
-          <a href="/dashboard" style={styles.logo}>🏦 Oakline Bank</a>
-          <a href="/dashboard" style={styles.backButton}>← Back to Dashboard</a>
-        </header>
-
-        <main style={styles.main}>
-          <h1 style={styles.pageTitle}>💸 Withdrawal Services</h1>
+        <div style={styles.main}>
+          <h1 style={styles.pageTitle}>Withdraw Funds</h1>
           <p style={styles.pageSubtitle}>
-            Transfer funds securely to your cryptocurrency wallet, bank account, or debit card
+            Transfer money from your account to your wallet, bank, or card
           </p>
 
-          {showReceipt && receiptData ? (
+          {/* Step Indicator */}
+          <div style={styles.stepIndicator}>
+            <div style={styles.step}>
+              <div style={{
+                ...styles.stepCircle,
+                backgroundColor: currentStep >= 1 ? '#059669' : '#94a3b8',
+                color: 'white',
+                borderColor: currentStep === 1 ? 'white' : 'transparent'
+              }}>
+                1
+              </div>
+              <div style={styles.stepLabel}>Amount & Method</div>
+            </div>
             <div style={{
-              maxWidth: '700px',
-              margin: '0 auto',
-              backgroundColor: 'rgba(255,255,255,0.98)',
-              borderRadius: '16px',
-              padding: isMobile ? '2rem' : '3rem',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-              border: '2px solid #059669'
+              ...styles.stepDivider,
+              backgroundColor: currentStep >= 2 ? '#059669' : 'rgba(255,255,255,0.3)'
+            }} />
+            <div style={styles.step}>
+              <div style={{
+                ...styles.stepCircle,
+                backgroundColor: currentStep >= 2 ? '#059669' : '#94a3b8',
+                color: 'white',
+                borderColor: currentStep === 2 ? 'white' : 'transparent'
+              }}>
+                2
+              </div>
+              <div style={styles.stepLabel}>Destination Details</div>
+            </div>
+            <div style={{
+              ...styles.stepDivider,
+              backgroundColor: currentStep >= 3 ? '#059669' : 'rgba(255,255,255,0.3)'
+            }} />
+            <div style={styles.step}>
+              <div style={{
+                ...styles.stepCircle,
+                backgroundColor: currentStep >= 3 ? '#059669' : '#94a3b8',
+                color: 'white',
+                borderColor: currentStep === 3 ? 'white' : 'transparent'
+              }}>
+                3
+              </div>
+              <div style={styles.stepLabel}>Review & Confirm</div>
+            </div>
+          </div>
+
+          {message && (
+            <div style={{
+              ...styles.message,
+              backgroundColor: messageType === 'success' ? '#d1fae5' : '#fee2e2',
+              borderColor: messageType === 'success' ? '#059669' : '#dc2626',
+              color: messageType === 'success' ? '#065f46' : '#991b1b'
             }}>
-              <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                <div style={{
-                  width: '80px',
-                  height: '80px',
-                  backgroundColor: '#dcfce7',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 1.5rem',
-                  fontSize: '2.5rem'
-                }}>
-                  ✅
-                </div>
-                <h2 style={{ fontSize: isMobile ? '1.5rem' : '2rem', color: '#059669', marginBottom: '0.5rem', fontWeight: '800' }}>
-                  Withdrawal Successful!
-                </h2>
-                <p style={{ color: '#64748b', fontSize: '0.9375rem' }}>
-                  Your withdrawal has been processed
-                </p>
+              {message}
+            </div>
+          )}
+
+          {/* Step 1: Amount and Method */}
+          {currentStep === 1 && (
+            <div style={styles.card}>
+              <h2 style={styles.cardTitle}>Step 1: Amount & Withdrawal Method</h2>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>From Account</label>
+                <select
+                  value={withdrawalForm.from_account_id}
+                  onChange={(e) => setWithdrawalForm(prev => ({ ...prev, from_account_id: e.target.value }))}
+                  style={styles.select}
+                >
+                  {accounts.map(acc => (
+                    <option key={acc.id} value={acc.id}>
+                      {acc.account_type.toUpperCase()} - ****{acc.account_number.slice(-4)} (Balance: {formatCurrency(acc.balance)})
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div style={styles.reviewSection}>
-                <div style={styles.reviewRow}>
-                  <span style={styles.reviewLabel}>Reference Number</span>
-                  <span style={{ ...styles.reviewValue, color: '#dc2626', fontWeight: '700' }}>{receiptData.reference}</span>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Withdrawal Method</label>
+                <select
+                  value={withdrawalForm.withdrawal_method}
+                  onChange={(e) => setWithdrawalForm(prev => ({ ...prev, withdrawal_method: e.target.value }))}
+                  style={styles.select}
+                >
+                  <option value="crypto_wallet">💎 Cryptocurrency (1.5% fee, min $5)</option>
+                  <option value="linked_bank">🏦 Bank Account - ACH (Free, 1-3 business days)</option>
+                  <option value="debit_card">💳 Debit Card - Instant ($5-$15 fee)</option>
+                </select>
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Amount (USD)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={withdrawalForm.amount}
+                  onChange={(e) => setWithdrawalForm(prev => ({ ...prev, amount: e.target.value }))}
+                  style={styles.input}
+                  placeholder="0.00"
+                />
+              </div>
+
+              {withdrawalForm.amount > 0 && (
+                <div style={styles.balanceInfo}>
+                  <div style={styles.balanceLabel}>Withdrawal Summary</div>
+                  <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#0c4a6e' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                      <span>Amount:</span>
+                      <span style={{ fontWeight: '600' }}>{formatCurrency(parseFloat(withdrawalForm.amount))}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                      <span>Fee:</span>
+                      <span style={{ fontWeight: '600' }}>{formatCurrency(withdrawalForm.fee)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: '2px solid #0ea5e9' }}>
+                      <span style={{ fontWeight: '700' }}>Total:</span>
+                      <span style={{ fontWeight: '700', fontSize: '1.125rem' }}>{formatCurrency(withdrawalForm.total_amount)}</span>
+                    </div>
+                  </div>
                 </div>
+              )}
+
+              <div style={styles.buttonGroup}>
+                <button
+                  onClick={handleNextStep}
+                  style={{
+                    ...styles.button,
+                    backgroundColor: '#059669',
+                    color: 'white'
+                  }}
+                >
+                  Continue →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Destination Details */}
+          {currentStep === 2 && (
+            <div style={styles.card}>
+              <h2 style={styles.cardTitle}>Step 2: Destination Details</h2>
+
+              {withdrawalForm.withdrawal_method === 'crypto_wallet' && (
+                <>
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Select Cryptocurrency & Network</label>
+                    <select
+                      value={withdrawalForm.crypto_asset_id}
+                      onChange={(e) => setWithdrawalForm(prev => ({ ...prev, crypto_asset_id: e.target.value }))}
+                      style={styles.select}
+                    >
+                      <option value="">Select Cryptocurrency...</option>
+                      {cryptoAssets.map(crypto => (
+                        <option key={crypto.id} value={crypto.id}>
+                          {crypto.crypto_type} ({crypto.symbol}) - {crypto.network_type}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Wallet Address</label>
+                    <input
+                      type="text"
+                      value={withdrawalForm.crypto_wallet_address}
+                      onChange={(e) => setWithdrawalForm(prev => ({ ...prev, crypto_wallet_address: e.target.value }))}
+                      style={styles.input}
+                      placeholder="Enter wallet address"
+                    />
+                    <small style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.5rem', display: 'block' }}>
+                      Please double-check the address. Cryptocurrency transactions cannot be reversed.
+                    </small>
+                  </div>
+                </>
+              )}
+
+              {withdrawalForm.withdrawal_method === 'linked_bank' && (
+                <>
+                  {linkedBanks.length > 0 ? (
+                    <>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Select Linked Bank Account</label>
+                        <select
+                          value={withdrawalForm.linked_bank_id}
+                          onChange={(e) => setWithdrawalForm(prev => ({ ...prev, linked_bank_id: e.target.value }))}
+                          style={styles.select}
+                        >
+                          <option value="">Select bank or add new...</option>
+                          {linkedBanks.map(bank => (
+                            <option key={bank.id} value={bank.id}>
+                              {bank.bank_name} - {bank.account_type.toUpperCase()} ****{bank.account_number.slice(-4)}
+                              {bank.is_primary ? ' (Primary)' : ''}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div style={styles.infoBox}>
+                        <p style={{ fontSize: '0.875rem', color: '#065f46', margin: 0 }}>
+                          💡 <strong>No linked bank?</strong>{' '}
+                          <Link href="/link-bank-account" style={styles.linkButton}>
+                            Add a new bank account →
+                          </Link>
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div style={styles.infoBox}>
+                      <p style={{ fontSize: '0.875rem', color: '#065f46', marginBottom: '1rem' }}>
+                        <strong>No linked bank accounts found.</strong> You can add a bank account for faster future withdrawals.
+                      </p>
+                      <Link href="/link-bank-account" style={styles.linkButton}>
+                        Add Bank Account →
+                      </Link>
+                    </div>
+                  )}
+
+                  {!withdrawalForm.linked_bank_id && (
+                    <>
+                      <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: '#1e293b', marginTop: '1.5rem', marginBottom: '1rem' }}>
+                        Or Enter Bank Details Manually
+                      </h3>
+
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Account Holder Name</label>
+                        <input
+                          type="text"
+                          value={withdrawalForm.new_bank_details.account_holder_name}
+                          onChange={(e) => setWithdrawalForm(prev => ({
+                            ...prev,
+                            new_bank_details: { ...prev.new_bank_details, account_holder_name: e.target.value }
+                          }))}
+                          style={styles.input}
+                          placeholder="John Doe"
+                        />
+                      </div>
+
+                      <div style={styles.formGrid}>
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>Bank Name</label>
+                          <input
+                            type="text"
+                            value={withdrawalForm.new_bank_details.bank_name}
+                            onChange={(e) => setWithdrawalForm(prev => ({
+                              ...prev,
+                              new_bank_details: { ...prev.new_bank_details, bank_name: e.target.value }
+                            }))}
+                            style={styles.input}
+                            placeholder="Bank of America"
+                          />
+                        </div>
+
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>Account Type</label>
+                          <select
+                            value={withdrawalForm.new_bank_details.account_type}
+                            onChange={(e) => setWithdrawalForm(prev => ({
+                              ...prev,
+                              new_bank_details: { ...prev.new_bank_details, account_type: e.target.value }
+                            }))}
+                            style={styles.select}
+                          >
+                            <option value="checking">Checking</option>
+                            <option value="savings">Savings</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div style={styles.formGrid}>
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>Account Number</label>
+                          <input
+                            type="text"
+                            value={withdrawalForm.new_bank_details.account_number}
+                            onChange={(e) => setWithdrawalForm(prev => ({
+                              ...prev,
+                              new_bank_details: { ...prev.new_bank_details, account_number: e.target.value }
+                            }))}
+                            style={styles.input}
+                            placeholder="1234567890"
+                          />
+                        </div>
+
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>Routing Number (9 digits)</label>
+                          <input
+                            type="text"
+                            maxLength={9}
+                            value={withdrawalForm.new_bank_details.routing_number}
+                            onChange={(e) => setWithdrawalForm(prev => ({
+                              ...prev,
+                              new_bank_details: { ...prev.new_bank_details, routing_number: e.target.value.replace(/\D/g, '') }
+                            }))}
+                            style={styles.input}
+                            placeholder="021000021"
+                          />
+                        </div>
+                      </div>
+
+                      <div style={styles.formGrid}>
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>SWIFT Code (Optional)</label>
+                          <input
+                            type="text"
+                            value={withdrawalForm.new_bank_details.swift_code}
+                            onChange={(e) => setWithdrawalForm(prev => ({
+                              ...prev,
+                              new_bank_details: { ...prev.new_bank_details, swift_code: e.target.value }
+                            }))}
+                            style={styles.input}
+                            placeholder="BOFAUS3N"
+                          />
+                        </div>
+
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>IBAN (Optional)</label>
+                          <input
+                            type="text"
+                            value={withdrawalForm.new_bank_details.iban}
+                            onChange={(e) => setWithdrawalForm(prev => ({
+                              ...prev,
+                              new_bank_details: { ...prev.new_bank_details, iban: e.target.value }
+                            }))}
+                            style={styles.input}
+                            placeholder="GB82 WEST 1234 5698 7654 32"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+
+              {withdrawalForm.withdrawal_method === 'debit_card' && (
+                <>
+                  {linkedCards.length > 0 ? (
+                    <>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Select Linked Debit Card</label>
+                        <select
+                          value={withdrawalForm.linked_card_id}
+                          onChange={(e) => setWithdrawalForm(prev => ({ ...prev, linked_card_id: e.target.value }))}
+                          style={styles.select}
+                        >
+                          <option value="">Select card...</option>
+                          {linkedCards.map(card => (
+                            <option key={card.id} value={card.id}>
+                              {card.card_brand.toUpperCase()} ****{card.card_number_last4}
+                              {card.is_primary ? ' (Primary)' : ''}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div style={styles.infoBox}>
+                        <p style={{ fontSize: '0.875rem', color: '#065f46', margin: 0 }}>
+                          💡 <strong>Need to add a card?</strong>{' '}
+                          <Link href="/link-debit-card" style={styles.linkButton}>
+                            Link a new debit card →
+                          </Link>
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div style={styles.infoBox}>
+                      <p style={{ fontSize: '0.875rem', color: '#065f46', marginBottom: '1rem' }}>
+                        <strong>No linked debit cards found.</strong> Please add a debit card to use this withdrawal method.
+                      </p>
+                      <Link href="/link-debit-card" style={styles.linkButton}>
+                        Link Debit Card →
+                      </Link>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <div style={styles.buttonGroup}>
+                <button
+                  onClick={handlePreviousStep}
+                  style={{
+                    ...styles.button,
+                    backgroundColor: 'white',
+                    color: '#059669',
+                    border: '2px solid #059669'
+                  }}
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={handleNextStep}
+                  style={{
+                    ...styles.button,
+                    backgroundColor: '#059669',
+                    color: 'white'
+                  }}
+                >
+                  Continue →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Review & Confirm */}
+          {currentStep === 3 && (
+            <div style={styles.card}>
+              <h2 style={styles.cardTitle}>Step 3: Review & Confirm</h2>
+
+              <div style={styles.reviewSection}>
+                <h3 style={styles.reviewTitle}>Withdrawal Summary</h3>
                 <div style={styles.reviewRow}>
                   <span style={styles.reviewLabel}>From Account</span>
                   <span style={styles.reviewValue}>
-                    {receiptData.account.account_type.toUpperCase()} •••{receiptData.account.account_number.slice(-4)}
+                    {accounts.find(a => a.id === withdrawalForm.from_account_id)?.account_type.toUpperCase()} ****
+                    {accounts.find(a => a.id === withdrawalForm.from_account_id)?.account_number.slice(-4)}
                   </span>
                 </div>
                 <div style={styles.reviewRow}>
                   <span style={styles.reviewLabel}>Withdrawal Method</span>
-                  <span style={styles.reviewValue}>{getMethodLabel(receiptData.method)}</span>
+                  <span style={styles.reviewValue}>{getMethodLabel(withdrawalForm.withdrawal_method)}</span>
                 </div>
-                {receiptData.recipient_name && (
-                  <div style={styles.reviewRow}>
-                    <span style={styles.reviewLabel}>Recipient</span>
-                    <span style={styles.reviewValue}>{receiptData.recipient_name}</span>
-                  </div>
+
+                {withdrawalForm.withdrawal_method === 'crypto_wallet' && withdrawalForm.crypto_asset_id && (
+                  <>
+                    <div style={styles.reviewRow}>
+                      <span style={styles.reviewLabel}>Cryptocurrency</span>
+                      <span style={styles.reviewValue}>
+                        {cryptoAssets.find(c => c.id === withdrawalForm.crypto_asset_id)?.crypto_type}
+                      </span>
+                    </div>
+                    <div style={styles.reviewRow}>
+                      <span style={styles.reviewLabel}>Network</span>
+                      <span style={styles.reviewValue}>
+                        {cryptoAssets.find(c => c.id === withdrawalForm.crypto_asset_id)?.network_type}
+                      </span>
+                    </div>
+                    <div style={styles.reviewRow}>
+                      <span style={styles.reviewLabel}>Wallet Address</span>
+                      <span style={styles.reviewValue}>
+                        {withdrawalForm.crypto_wallet_address.substring(0, 10)}...{withdrawalForm.crypto_wallet_address.substring(withdrawalForm.crypto_wallet_address.length - 8)}
+                      </span>
+                    </div>
+                  </>
                 )}
-                {receiptData.recipient_bank && (
-                  <div style={styles.reviewRow}>
-                    <span style={styles.reviewLabel}>Bank</span>
-                    <span style={styles.reviewValue}>{receiptData.recipient_bank}</span>
-                  </div>
+
+                {withdrawalForm.withdrawal_method === 'linked_bank' && withdrawalForm.linked_bank_id && (
+                  <>
+                    <div style={styles.reviewRow}>
+                      <span style={styles.reviewLabel}>Bank</span>
+                      <span style={styles.reviewValue}>
+                        {linkedBanks.find(b => b.id === withdrawalForm.linked_bank_id)?.bank_name}
+                      </span>
+                    </div>
+                    <div style={styles.reviewRow}>
+                      <span style={styles.reviewLabel}>Account</span>
+                      <span style={styles.reviewValue}>
+                        ****{linkedBanks.find(b => b.id === withdrawalForm.linked_bank_id)?.account_number.slice(-4)}
+                      </span>
+                    </div>
+                  </>
                 )}
+
+                {withdrawalForm.withdrawal_method === 'linked_bank' && !withdrawalForm.linked_bank_id && withdrawalForm.new_bank_details.bank_name && (
+                  <>
+                    <div style={styles.reviewRow}>
+                      <span style={styles.reviewLabel}>Bank</span>
+                      <span style={styles.reviewValue}>{withdrawalForm.new_bank_details.bank_name}</span>
+                    </div>
+                    <div style={styles.reviewRow}>
+                      <span style={styles.reviewLabel}>Account Holder</span>
+                      <span style={styles.reviewValue}>{withdrawalForm.new_bank_details.account_holder_name}</span>
+                    </div>
+                    <div style={styles.reviewRow}>
+                      <span style={styles.reviewLabel}>Account</span>
+                      <span style={styles.reviewValue}>
+                        ****{withdrawalForm.new_bank_details.account_number.slice(-4)}
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                {withdrawalForm.withdrawal_method === 'debit_card' && withdrawalForm.linked_card_id && (
+                  <>
+                    <div style={styles.reviewRow}>
+                      <span style={styles.reviewLabel}>Card</span>
+                      <span style={styles.reviewValue}>
+                        {linkedCards.find(c => c.id === withdrawalForm.linked_card_id)?.card_brand.toUpperCase()} ****
+                        {linkedCards.find(c => c.id === withdrawalForm.linked_card_id)?.card_number_last4}
+                      </span>
+                    </div>
+                  </>
+                )}
+
                 <div style={styles.reviewRow}>
                   <span style={styles.reviewLabel}>Amount</span>
-                  <span style={styles.reviewValue}>{formatCurrency(receiptData.amount)}</span>
-                </div>
-                {receiptData.fee > 0 && (
-                  <div style={styles.reviewRow}>
-                    <span style={styles.reviewLabel}>Processing Fee</span>
-                    <span style={styles.reviewValue}>{formatCurrency(receiptData.fee)}</span>
-                  </div>
-                )}
-                <div style={{...styles.reviewRow, borderTop: '2px solid #dc2626', paddingTop: '1rem', marginTop: '0.5rem', backgroundColor: '#fee2e2'}}>
-                  <span style={{...styles.reviewLabel, fontWeight: '700', fontSize: '1rem', color: '#1a365d'}}>Total Withdrawn</span>
-                  <span style={{...styles.reviewValue, fontWeight: '700', fontSize: '1.25rem', color: '#dc2626'}}>
-                    {formatCurrency(receiptData.total)}
-                  </span>
+                  <span style={styles.reviewValue}>{formatCurrency(parseFloat(withdrawalForm.amount))}</span>
                 </div>
                 <div style={styles.reviewRow}>
-                  <span style={styles.reviewLabel}>Date & Time</span>
-                  <span style={styles.reviewValue}>{formatDate(receiptData.timestamp)}</span>
+                  <span style={styles.reviewLabel}>Fee</span>
+                  <span style={styles.reviewValue}>{formatCurrency(withdrawalForm.fee)}</span>
+                </div>
+                <div style={{ ...styles.reviewRow, borderTop: '2px solid #059669', paddingTop: '1rem', marginTop: '0.5rem', backgroundColor: '#f0fdf4', padding: '1rem', borderRadius: '8px' }}>
+                  <span style={{ ...styles.reviewLabel, fontWeight: '700', color: '#065f46' }}>Total Deduction</span>
+                  <span style={{ ...styles.reviewValue, color: '#059669', fontSize: '1.25rem' }}>{formatCurrency(withdrawalForm.total_amount)}</span>
                 </div>
               </div>
 
-              <button
-                onClick={closeReceipt}
-                style={{
-                  ...styles.submitButton,
-                  backgroundColor: '#059669',
-                  boxShadow: '0 6px 20px rgba(5, 150, 105, 0.4)'
-                }}
-              >
-                Make Another Withdrawal
-              </button>
-
-              <div style={{
-                marginTop: '1.5rem',
-                padding: '1rem',
-                backgroundColor: '#fffbeb',
-                borderRadius: '12px',
-                border: '1px solid #fbbf24',
-                fontSize: '0.875rem',
-                color: '#92400e'
-              }}>
-                <strong>📋 Important:</strong> Please save this reference number for your records.
-                {receiptData.method !== 'internal_transfer' && receiptData.method !== 'debit_card' && 
-                  ' Processing typically takes 1-3 business days.'
-                }
-              </div>
-            </div>
-          ) : accounts.length === 0 ? (
-            <div style={{
-              maxWidth: '700px',
-              margin: '0 auto',
-              backgroundColor: 'rgba(255,255,255,0.98)',
-              borderRadius: '16px',
-              padding: '3rem',
-              textAlign: 'center',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.15)'
-            }}>
-              <div style={{ fontSize: '4rem', marginBottom: '1.5rem' }}>🏦</div>
-              <h3 style={{ fontSize: '1.5rem', color: '#1e293b', marginBottom: '1rem' }}>No Active Accounts</h3>
-              <p>You need an active account to make withdrawals. Please contact support.</p>
-            </div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: currentStep === 1 ? (isMobile ? '1fr' : '1fr 1fr') : '1fr',
-              gap: '2rem',
-              marginBottom: '2rem',
-              maxWidth: currentStep === 1 ? '1400px' : '800px',
-              margin: currentStep === 1 ? '0 auto 2rem auto' : '0 auto'
-            }}>
-              <div style={styles.card}>
-                <h2 style={styles.cardTitle}>
-                  {currentStep === 1 && '💰 Step 1: Withdrawal Details'}
-                  {currentStep === 2 && '📋 Step 2: Recipient Information'}
-                  {currentStep === 3 && '🔐 Step 3: Review & Confirm'}
-                </h2>
-
-                {message && (
-                  <div style={{
-                    ...styles.message,
-                    backgroundColor: messageType === 'success' ? '#dcfce7' : messageType === 'error' ? '#fee2e2' : '#dbeafe',
-                    borderColor: messageType === 'success' ? '#059669' : messageType === 'error' ? '#dc2626' : '#3b82f6',
-                    color: messageType === 'success' ? '#065f46' : messageType === 'error' ? '#991b1b' : '#1e40af'
-                  }}>
-                    {message}
-                  </div>
-                )}
-
-                <div style={styles.stepIndicator}>
-                  <div style={styles.step}>
-                    <div style={{
-                      ...styles.stepCircle,
-                      backgroundColor: currentStep >= 1 ? '#dc2626' : 'rgba(255,255,255,0.2)',
-                      color: currentStep >= 1 ? 'white' : 'rgba(255,255,255,0.6)',
-                      borderColor: currentStep === 1 ? '#FFC857' : 'transparent',
-                      transform: currentStep === 1 ? 'scale(1.05)' : 'scale(1)'
-                    }}>
-                      {currentStep > 1 ? '✓' : '1'}
-                    </div>
-                    <span style={{
-                      ...styles.stepLabel,
-                      opacity: currentStep >= 1 ? 1 : 0.6,
-                      fontWeight: currentStep === 1 ? '700' : '600'
-                    }}>
-                      Withdrawal Details
-                    </span>
-                  </div>
-                  <div style={{
-                    ...styles.stepDivider,
-                    backgroundColor: currentStep >= 2 ? '#dc2626' : 'rgba(255,255,255,0.3)'
-                  }}></div>
-                  <div style={styles.step}>
-                    <div style={{
-                      ...styles.stepCircle,
-                      backgroundColor: currentStep >= 2 ? '#dc2626' : 'rgba(255,255,255,0.2)',
-                      color: currentStep >= 2 ? 'white' : 'rgba(255,255,255,0.6)',
-                      borderColor: currentStep === 2 ? '#FFC857' : 'transparent',
-                      transform: currentStep === 2 ? 'scale(1.05)' : 'scale(1)'
-                    }}>
-                      {currentStep > 2 ? '✓' : '2'}
-                    </div>
-                    <span style={{
-                      ...styles.stepLabel,
-                      opacity: currentStep >= 2 ? 1 : 0.6,
-                      fontWeight: currentStep === 2 ? '700' : '600'
-                    }}>
-                      Recipient Info
-                    </span>
-                  </div>
-                  <div style={{
-                    ...styles.stepDivider,
-                    backgroundColor: currentStep >= 3 ? '#dc2626' : 'rgba(255,255,255,0.3)'
-                  }}></div>
-                  <div style={styles.step}>
-                    <div style={{
-                      ...styles.stepCircle,
-                      backgroundColor: currentStep >= 3 ? '#dc2626' : 'rgba(255,255,255,0.2)',
-                      color: currentStep >= 3 ? 'white' : 'rgba(255,255,255,0.6)',
-                      borderColor: currentStep === 3 ? '#FFC857' : 'transparent',
-                      transform: currentStep === 3 ? 'scale(1.05)' : 'scale(1)'
-                    }}>
-                      {currentStep > 3 ? '✓' : '3'}
-                    </div>
-                    <span style={{
-                      ...styles.stepLabel,
-                      opacity: currentStep >= 3 ? 1 : 0.6,
-                      fontWeight: currentStep === 3 ? '700' : '600'
-                    }}>
-                      Review & Confirm
-                    </span>
-                  </div>
-                </div>
-
-                <form onSubmit={handleSubmit}>
-                  {currentStep === 1 && (
-                    <>
+              {parseFloat(withdrawalForm.amount) >= 5000 && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <div style={{ ...styles.infoBox, borderColor: '#f59e0b', backgroundColor: '#fffbeb' }}>
+                    <p style={{ fontSize: '0.875rem', color: '#78350f', marginBottom: '1rem' }}>
+                      🔐 For security purposes, withdrawals over $5,000 require email verification.
+                    </p>
+                    {!sentCode ? (
+                      <button
+                        onClick={sendVerificationCode}
+                        disabled={sendingCode}
+                        style={{
+                          ...styles.button,
+                          backgroundColor: '#f59e0b',
+                          color: 'white',
+                          opacity: sendingCode ? 0.6 : 1
+                        }}
+                      >
+                        {sendingCode ? 'Sending...' : 'Send Verification Code'}
+                      </button>
+                    ) : (
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>From Account *</label>
-                        <select
-                          style={styles.select}
-                          value={withdrawalForm.from_account_id}
-                          onChange={(e) => setWithdrawalForm(prev => ({ ...prev, from_account_id: e.target.value }))}
-                          required
-                        >
-                          {accounts.map(account => (
-                            <option key={account.id} value={account.id}>
-                              {account.account_type.toUpperCase()} •••{account.account_number.slice(-4)} - {formatCurrency(account.balance)}
-                            </option>
-                          ))}
-                        </select>
-                        {withdrawalForm.from_account_id && (
-                          <div style={styles.balanceInfo}>
-                            <div style={styles.balanceLabel}>Available Balance</div>
-                            <div style={styles.balanceValue}>
-                              {formatCurrency(accounts.find(a => a.id === withdrawalForm.from_account_id)?.balance || 0)}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div style={styles.formGroup}>
-                        <label style={styles.label}>Withdrawal Method *</label>
-                        <select
-                          style={styles.select}
-                          value={withdrawalForm.withdrawal_method}
-                          onChange={(e) => setWithdrawalForm(prev => ({ ...prev, withdrawal_method: e.target.value }))}
-                          required
-                        >
-                          <option value="">Select withdrawal method</option>
-                          <option value="crypto_wallet">💎 Cryptocurrency Wallet - Withdraw to USDT, BTC, ETH & more (Fast & Global)</option>
-                          <option value="linked_bank">🏦 Linked Bank Account - ACH transfer to your verified bank account (1-3 business days)</option>
-                          <option value="debit_card">💳 Debit Card - Instant withdrawal to your linked debit card (Standard or Express)</option>
-                        </select>
-                        {withdrawalForm.withdrawal_method && (
-                          <div style={{
-                            marginTop: '0.75rem',
-                            padding: '0.75rem 1rem',
-                            backgroundColor: '#f0f9ff',
-                            borderRadius: '8px',
-                            border: '1px solid #bfdbfe',
-                            fontSize: '0.85rem',
-                            lineHeight: '1.5'
-                          }}>
-                            {withdrawalForm.withdrawal_method === 'crypto_wallet' && (
-                              <>
-                                <strong>💎 Cryptocurrency Withdrawal:</strong>
-                                <ul style={{ margin: '0.5rem 0 0 1.25rem', paddingLeft: 0 }}>
-                                  <li>Supports USDT, BTC, ETH, and other major cryptocurrencies</li>
-                                  <li>Network fee: 1% (minimum $5.00)</li>
-                                  <li>Processing time: 10-30 minutes after network confirmation</li>
-                                  <li>You can link a new wallet or use an existing one</li>
-                                </ul>
-                              </>
-                            )}
-                            {withdrawalForm.withdrawal_method === 'linked_bank' && (
-                              <>
-                                <strong>🏦 Bank Account Withdrawal:</strong>
-                                <ul style={{ margin: '0.5rem 0 0 1.25rem', paddingLeft: 0 }}>
-                                  <li>Free ACH transfer to your verified bank account</li>
-                                  <li>Processing time: 1-3 business days</li>
-                                  <li>You can link a new bank account or use an existing one</li>
-                                  <li>Bank account must be in your name</li>
-                                </ul>
-                              </>
-                            )}
-                            {withdrawalForm.withdrawal_method === 'debit_card' && (
-                              <>
-                                <strong>💳 Debit Card Withdrawal:</strong>
-                                <ul style={{ margin: '0.5rem 0 0 1.25rem', paddingLeft: 0 }}>
-                                  <li>Standard: $3.50 fee, 2-5 business days</li>
-                                  <li>Express (for amounts ≥ $1,000): $10.00 fee, same day</li>
-                                  <li>You can link a new card or use an existing one</li>
-                                  <li>Card must be a debit card (Visa, Mastercard, or Discover)</li>
-                                </ul>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      <div style={styles.formGroup}>
-                        <label style={styles.label}>Withdrawal Amount ($) *</label>
+                        <label style={styles.label}>Enter 6-Digit Code</label>
                         <input
-                          type="number"
+                          type="text"
+                          maxLength={6}
+                          value={verificationCode}
+                          onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                           style={styles.input}
-                          value={withdrawalForm.amount}
-                          onChange={(e) => setWithdrawalForm(prev => ({ ...prev, amount: e.target.value }))}
-                          placeholder="0.00"
-                          step="0.01"
-                          min="0.01"
-                          max="10000"
-                          required
+                          placeholder="000000"
                         />
                       </div>
-
-                      {withdrawalForm.fee > 0 && (
-                        <div style={{
-                          backgroundColor: '#fffbeb',
-                          border: '2px solid #fbbf24',
-                          borderRadius: '12px',
-                          padding: '1rem',
-                          marginBottom: '1rem'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                            <span style={{ fontSize: '0.875rem', color: '#92400e', fontWeight: '600' }}>Withdrawal Amount:</span>
-                            <span style={{ fontSize: '0.9375rem', color: '#92400e', fontWeight: '700' }}>{formatCurrency(parseFloat(withdrawalForm.amount) || 0)}</span>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                            <span style={{ fontSize: '0.875rem', color: '#92400e', fontWeight: '600' }}>Processing Fee:</span>
-                            <span style={{ fontSize: '0.9375rem', color: '#92400e', fontWeight: '700' }}>{formatCurrency(withdrawalForm.fee)}</span>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.5rem', borderTop: '2px solid #fbbf24' }}>
-                            <span style={{ fontSize: '1rem', color: '#92400e', fontWeight: '700' }}>Total Deduction:</span>
-                            <span style={{ fontSize: '1.125rem', color: '#dc2626', fontWeight: '800' }}>{formatCurrency(withdrawalForm.total_amount)}</span>
-                          </div>
-                        </div>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={handleNextStep}
-                        style={{
-                          ...styles.submitButton,
-                          backgroundColor: '#dc2626',
-                          opacity: (!withdrawalForm.amount || parseFloat(withdrawalForm.amount) <= 0) ? 0.5 : 1,
-                          cursor: (!withdrawalForm.amount || parseFloat(withdrawalForm.amount) <= 0) ? 'not-allowed' : 'pointer'
-                        }}
-                        disabled={!withdrawalForm.amount || parseFloat(withdrawalForm.amount) <= 0}
-                      >
-                        Continue to Recipient Details →
-                      </button>
-                    </>
-                  )}
-
-                  {currentStep === 2 && (
-                    <>
-                      {withdrawalForm.withdrawal_method === 'crypto_wallet' && (
-                        <>
-                          <div style={styles.formGroup}>
-                            <label style={styles.label}>Crypto Wallet Address *</label>
-                            <input
-                              type="text"
-                              style={styles.input}
-                              value={withdrawalForm.recipient_account_number}
-                              onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_account_number: e.target.value }))}
-                              placeholder="Enter USDT, BTC, or ETH wallet address"
-                              required
-                            />
-                            <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>
-                              Please double-check the wallet address. Transactions to crypto wallets are irreversible.
-                            </p>
-                          </div>
-                          <div style={styles.formGroup}>
-                            <label style={styles.label}>Cryptocurrency Type *</label>
-                            <select
-                              style={styles.select}
-                              value={withdrawalForm.purpose}
-                              onChange={(e) => setWithdrawalForm(prev => ({ ...prev, purpose: e.target.value }))}
-                              required
-                            >
-                              <option value="">Select cryptocurrency</option>
-                              <option value="USDT">USDT (Tether)</option>
-                              <option value="BTC">BTC (Bitcoin)</option>
-                              <option value="ETH">ETH (Ethereum)</option>
-                            </select>
-                          </div>
-                          <div style={styles.formGroup}>
-                            <label style={styles.label}>Network *</label>
-                            <select
-                              style={styles.select}
-                              value={withdrawalForm.recipient_name}
-                              onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_name: e.target.value }))}
-                              required
-                            >
-                              <option value="">Select network</option>
-                              <option value="ERC-20">ERC-20 (Ethereum)</option>
-                              <option value="TRC-20">TRC-20 (Tron)</option>
-                              <option value="BEP-20">BEP-20 (BSC)</option>
-                            </select>
-                          </div>
-                        </>
-                      )}
-
-                      {withdrawalForm.withdrawal_method === 'linked_bank' && (
-                        <>
-                          <div style={styles.formGrid}>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>Account Holder Name *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.recipient_name}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_name: e.target.value }))}
-                                placeholder="Full name on account"
-                                required
-                              />
-                            </div>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>Bank Name *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.recipient_bank}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_bank: e.target.value }))}
-                                placeholder="Bank name"
-                                required
-                              />
-                            </div>
-                          </div>
-                          <div style={styles.formGrid}>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>Routing Number *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.routing_number}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, routing_number: e.target.value.replace(/\D/g, '').slice(0, 9) }))}
-                                placeholder="123456789"
-                                maxLength="9"
-                                required
-                              />
-                            </div>
-                            <div style={styles.formGroup}>
-                              <label style={styles.label}>Account Number *</label>
-                              <input
-                                type="text"
-                                style={styles.input}
-                                value={withdrawalForm.recipient_account_number}
-                                onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_account_number: e.target.value }))}
-                                placeholder="Account number"
-                                required
-                              />
-                            </div>
-                          </div>
-                        </>
-                      )}
-
-                      {withdrawalForm.withdrawal_method === 'debit_card' && (
-                        <>
-                          <div style={styles.formGroup}>
-                            <label style={styles.label}>Cardholder Name *</label>
-                            <input
-                              type="text"
-                              style={styles.input}
-                              value={withdrawalForm.recipient_name}
-                              onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_name: e.target.value }))}
-                              placeholder="Name on the debit card"
-                              required
-                            />
-                          </div>
-                          <div style={styles.formGroup}>
-                            <label style={styles.label}>Debit Card Number *</label>
-                            <input
-                              type="text"
-                              style={styles.input}
-                              value={withdrawalForm.recipient_account_number}
-                              onChange={(e) => setWithdrawalForm(prev => ({ ...prev, recipient_account_number: e.target.value.replace(/\D/g, '').slice(0, 19) }))}
-                              placeholder="Enter 13-19 digit card number"
-                              maxLength="19"
-                              required
-                            />
-                          </div>
-                        </>
-                      )}
-
-                      <div style={styles.buttonGroup}>
-                        <button
-                          type="button"
-                          onClick={handlePreviousStep}
-                          style={{
-                            ...styles.button,
-                            backgroundColor: '#64748b',
-                            color: 'white'
-                          }}
-                        >
-                          ← Back
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleNextStep}
-                          style={{
-                            ...styles.button,
-                            backgroundColor: '#dc2626',
-                            color: 'white'
-                          }}
-                        >
-                          Review Withdrawal →
-                        </button>
-                      </div>
-                    </>
-                  )}
-
-                  {currentStep === 3 && (
-                    <>
-                      {parseFloat(withdrawalForm.amount) >= 5000 && (
-                        <div style={{
-                          backgroundColor: sentCode ? '#dcfce7' : '#fef3c7',
-                          border: `2px solid ${sentCode ? '#059669' : '#f59e0b'}`,
-                          borderRadius: '12px',
-                          padding: '1.5rem',
-                          marginBottom: '1.5rem',
-                          textAlign: 'center'
-                        }}>
-                          <p style={{ fontSize: '1rem', color: sentCode ? '#047857' : '#92400e', margin: '0 0 0.5rem 0', fontWeight: '700' }}>
-                            🔐 Security Verification Required
-                          </p>
-                          <p style={{ fontSize: '0.9375rem', color: sentCode ? '#047857' : '#92400e', margin: 0, lineHeight: '1.6' }}>
-                            A 6-digit verification code has been sent to your email address:<br />
-                            <strong style={{ fontSize: '1rem' }}>{user?.email}</strong>
-                          </p>
-                        </div>
-                      )}
-
-                      {parseFloat(withdrawalForm.amount) >= 5000 && (
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>Enter Verification Code *</label>
-                          <input
-                            type="text"
-                            style={{
-                              ...styles.input,
-                              fontSize: '1.75rem',
-                              textAlign: 'center',
-                              letterSpacing: '0.75rem',
-                              fontWeight: '700',
-                              padding: '1rem'
-                            }}
-                            value={verificationCode}
-                            onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                            placeholder="000000"
-                            maxLength="6"
-                            required
-                            disabled={sendingCode}
-                          />
-                          <button
-                            type="button"
-                            onClick={sendVerificationCode}
-                            disabled={sendingCode}
-                            style={{
-                              marginTop: '0.75rem',
-                              padding: '0.875rem 1.25rem',
-                              backgroundColor: sendingCode ? '#e5e7eb' : '#dc2626',
-                              color: sendingCode ? '#9ca3af' : 'white',
-                              border: 'none',
-                              borderRadius: '12px',
-                              fontSize: '0.9375rem',
-                              fontWeight: '600',
-                              cursor: sendingCode ? 'not-allowed' : 'pointer',
-                              width: '100%',
-                              transition: 'all 0.3s ease'
-                            }}
-                          >
-                            {sendingCode ? 'Sending Code...' : sentCode ? '🔄 Resend Verification Code' : '📧 Send Verification Code'}
-                          </button>
-                        </div>
-                      )}
-
-                      <div style={styles.reviewSection}>
-                        <div style={styles.reviewTitle}>Final Confirmation</div>
-
-                        <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Withdrawal Method</span>
-                          <span style={styles.reviewValue}>{getMethodLabel(withdrawalForm.withdrawal_method)}</span>
-                        </div>
-
-                        <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>From Account</span>
-                          <span style={styles.reviewValue}>
-                            {accounts.find(a => a.id === withdrawalForm.from_account_id)?.account_type?.toUpperCase()} •••{accounts.find(a => a.id === withdrawalForm.from_account_id)?.account_number?.slice(-4)}
-                          </span>
-                        </div>
-
-                        {withdrawalForm.recipient_name && (
-                          <div style={styles.reviewRow}>
-                            <span style={styles.reviewLabel}>Recipient Name</span>
-                            <span style={styles.reviewValue}>{withdrawalForm.recipient_name}</span>
-                          </div>
-                        )}
-
-                        {withdrawalForm.recipient_bank && (
-                          <div style={styles.reviewRow}>
-                            <span style={styles.reviewLabel}>Recipient Bank</span>
-                            <span style={styles.reviewValue}>{withdrawalForm.recipient_bank}</span>
-                          </div>
-                        )}
-
-                        {withdrawalForm.recipient_account_number && (
-                          <div style={styles.reviewRow}>
-                            <span style={styles.reviewLabel}>Account Number</span>
-                            <span style={styles.reviewValue}>•••••{withdrawalForm.recipient_account_number.slice(-4)}</span>
-                          </div>
-                        )}
-
-                        {withdrawalForm.routing_number && (
-                          <div style={styles.reviewRow}>
-                            <span style={styles.reviewLabel}>Routing Number</span>
-                            <span style={styles.reviewValue}>{withdrawalForm.routing_number}</span>
-                          </div>
-                        )}
-
-                        {withdrawalForm.swift_code && (
-                          <div style={styles.reviewRow}>
-                            <span style={styles.reviewLabel}>SWIFT Code</span>
-                            <span style={styles.reviewValue}>{withdrawalForm.swift_code}</span>
-                          </div>
-                        )}
-
-                        <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Withdrawal Amount</span>
-                          <span style={styles.reviewValue}>{formatCurrency(parseFloat(withdrawalForm.amount))}</span>
-                        </div>
-
-                        {withdrawalForm.fee > 0 && (
-                          <div style={styles.reviewRow}>
-                            <span style={styles.reviewLabel}>Processing Fee</span>
-                            <span style={styles.reviewValue}>{formatCurrency(withdrawalForm.fee)}</span>
-                          </div>
-                        )}
-
-                        <div style={{...styles.reviewRow, borderTop: '2px solid #dc2626', paddingTop: '1rem', marginTop: '0.5rem', backgroundColor: '#fee2e2'}}>
-                          <span style={{...styles.reviewLabel, fontWeight: '700', fontSize: '1rem', color: '#1a365d'}}>Total Deduction</span>
-                          <span style={{...styles.reviewValue, fontWeight: '700', fontSize: '1.25rem', color: '#dc2626'}}>
-                            {formatCurrency(withdrawalForm.total_amount)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div style={styles.buttonGroup}>
-                        <button
-                          type="button"
-                          onClick={handlePreviousStep}
-                          style={{
-                            ...styles.button,
-                            backgroundColor: '#64748b',
-                            color: 'white'
-                          }}
-                        >
-                          ← Back
-                        </button>
-                        <button
-                          type="submit"
-                          style={{
-                            ...styles.button,
-                            backgroundColor: loading ? '#cbd5e1' : '#dc2626',
-                            color: 'white',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            opacity: loading ? 0.7 : 1
-                          }}
-                          disabled={loading || (parseFloat(withdrawalForm.amount) >= 5000 && (!verificationCode || verificationCode.length !== 6))}
-                        >
-                          {loading ? '🔄 Processing...' : '✓ Confirm Withdrawal'}
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </form>
-              </div>
-
-              {currentStep === 1 && (
-                <div style={styles.card}>
-                  <h2 style={styles.cardTitle}>📋 Recent Withdrawals</h2>
-                  <div style={styles.withdrawalsList}>
-                    {withdrawals.length === 0 ? (
-                      <div style={styles.emptyState}>
-                        <p style={{ fontSize: '2rem' }}>📋</p>
-                        <p>No withdrawal history yet</p>
-                      </div>
-                    ) : (
-                      withdrawals.map(withdrawal => (
-                        <div key={withdrawal.id} style={styles.withdrawalItem}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                            <div>
-                              <div style={{ fontSize: '1rem', fontWeight: '600', color: '#1e293b', marginBottom: '0.25rem' }}>
-                                {withdrawal.description || 'Withdrawal'}
-                              </div>
-                              <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                                {formatDate(withdrawal.created_at)}
-                              </div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                              <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#dc2626' }}>
-                                -{formatCurrency(withdrawal.amount)}
-                              </div>
-                              <div style={{
-                                display: 'inline-block',
-                                padding: '0.25rem 0.75rem',
-                                borderRadius: '20px',
-                                fontSize: '0.75rem',
-                                fontWeight: '600',
-                                marginTop: '0.25rem',
-                                backgroundColor: getStatusColor(withdrawal.status),
-                                color: 'white'
-                              }}>
-                                {withdrawal.status.toUpperCase()}
-                              </div>
-                            </div>
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>
-                            Ref: {withdrawal.reference}
-                          </div>
-                        </div>
-                      ))
                     )}
                   </div>
                 </div>
               )}
+
+              <form onSubmit={handleSubmit}>
+                <div style={styles.buttonGroup}>
+                  <button
+                    type="button"
+                    onClick={handlePreviousStep}
+                    style={{
+                      ...styles.button,
+                      backgroundColor: 'white',
+                      color: '#059669',
+                      border: '2px solid #059669'
+                    }}
+                  >
+                    ← Back
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    style={{
+                      ...styles.button,
+                      backgroundColor: '#059669',
+                      color: 'white',
+                      opacity: loading ? 0.6 : 1,
+                      cursor: loading ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {loading ? 'Processing...' : `Confirm Withdrawal`}
+                  </button>
+                </div>
+              </form>
             </div>
           )}
-        </main>
+        </div>
       </div>
     </>
   );
