@@ -25,6 +25,7 @@ function LinkDebitCardContent() {
     billing_state: '',
     billing_zip: '',
     billing_country: 'United States',
+    manual_billing_country: '',
     card_brand: '',
     card_front_photo: null, // Added for photo upload
     card_back_photo: null    // Added for photo upload
@@ -294,11 +295,11 @@ function LinkDebitCardContent() {
           billing_city: formData.billing_city,
           billing_state: formData.billing_state,
           billing_zip: formData.billing_zip,
-          billing_country: formData.billing_country,
+          billing_country: formData.billing_country === 'other' ? formData.manual_billing_country : formData.billing_country,
           is_primary: linkedCards.length === 0 ? true : formData.is_primary,
           status: 'pending', // Changed to 'pending' for manual verification
-          card_front_photo_url: cardFrontPhotoUrl, // Store photo URLs
-          card_back_photo_url: cardBackPhotoUrl    // Store photo URLs
+          card_front_photo: cardFrontPhotoUrl, // Store photo URLs
+          card_back_photo: cardBackPhotoUrl    // Store photo URLs
         }])
         .select()
         .single();
@@ -333,6 +334,7 @@ function LinkDebitCardContent() {
         billing_state: '',
         billing_zip: '',
         billing_country: 'United States',
+        manual_billing_country: '',
         card_brand: '',
         is_primary: false, // Reset checkbox
         card_front_photo: null, // Reset photos
@@ -813,18 +815,130 @@ function LinkDebitCardContent() {
 
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Country *</label>
-                  <select
-                    name="billing_country"
-                    value={formData.billing_country}
-                    onChange={handleChange}
-                    style={styles.select}
-                    required
-                  >
-                    <option value="United States">United States</option>
-                    <option value="Canada">Canada</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    {/* Add more countries as needed */}
-                  </select>
+                  {formData.billing_country === 'other' ? (
+                    <input
+                      type="text"
+                      name="manual_billing_country"
+                      value={formData.manual_billing_country || ''}
+                      onChange={handleChange}
+                      style={styles.input}
+                      placeholder="Enter your country"
+                      required
+                    />
+                  ) : (
+                    <select
+                      name="billing_country"
+                      value={formData.billing_country}
+                      onChange={handleChange}
+                      style={styles.select}
+                      required
+                    >
+                      <option value="United States">United States</option>
+                      <option value="Canada">Canada</option>
+                      <option value="United Kingdom">United Kingdom</option>
+                      <option value="Australia">Australia</option>
+                      <option value="Germany">Germany</option>
+                      <option value="France">France</option>
+                      <option value="Italy">Italy</option>
+                      <option value="Spain">Spain</option>
+                      <option value="Netherlands">Netherlands</option>
+                      <option value="Belgium">Belgium</option>
+                      <option value="Switzerland">Switzerland</option>
+                      <option value="Austria">Austria</option>
+                      <option value="Sweden">Sweden</option>
+                      <option value="Norway">Norway</option>
+                      <option value="Denmark">Denmark</option>
+                      <option value="Finland">Finland</option>
+                      <option value="Ireland">Ireland</option>
+                      <option value="New Zealand">New Zealand</option>
+                      <option value="Japan">Japan</option>
+                      <option value="South Korea">South Korea</option>
+                      <option value="Singapore">Singapore</option>
+                      <option value="Hong Kong">Hong Kong</option>
+                      <option value="Mexico">Mexico</option>
+                      <option value="Brazil">Brazil</option>
+                      <option value="Argentina">Argentina</option>
+                      <option value="Chile">Chile</option>
+                      <option value="Colombia">Colombia</option>
+                      <option value="Peru">Peru</option>
+                      <option value="South Africa">South Africa</option>
+                      <option value="Nigeria">Nigeria</option>
+                      <option value="Kenya">Kenya</option>
+                      <option value="Egypt">Egypt</option>
+                      <option value="India">India</option>
+                      <option value="China">China</option>
+                      <option value="Pakistan">Pakistan</option>
+                      <option value="Bangladesh">Bangladesh</option>
+                      <option value="Philippines">Philippines</option>
+                      <option value="Vietnam">Vietnam</option>
+                      <option value="Thailand">Thailand</option>
+                      <option value="Malaysia">Malaysia</option>
+                      <option value="Indonesia">Indonesia</option>
+                      <option value="United Arab Emirates">United Arab Emirates</option>
+                      <option value="Saudi Arabia">Saudi Arabia</option>
+                      <option value="Israel">Israel</option>
+                      <option value="Turkey">Turkey</option>
+                      <option value="Poland">Poland</option>
+                      <option value="Czech Republic">Czech Republic</option>
+                      <option value="Hungary">Hungary</option>
+                      <option value="Romania">Romania</option>
+                      <option value="Greece">Greece</option>
+                      <option value="Portugal">Portugal</option>
+                      <option value="Russia">Russia</option>
+                      <option value="Ukraine">Ukraine</option>
+                      <option value="other">Other (Enter Manually)</option>
+                    </select>
+                  )}
+                  {formData.billing_country !== 'other' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          billing_country: 'other',
+                          manual_billing_country: ''
+                        }));
+                      }}
+                      style={{
+                        marginTop: '0.5rem',
+                        padding: '0.5rem',
+                        backgroundColor: 'transparent',
+                        color: '#059669',
+                        border: '1px solid #059669',
+                        borderRadius: '8px',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                        fontWeight: '600'
+                      }}
+                    >
+                      My country is not listed
+                    </button>
+                  )}
+                  {formData.billing_country === 'other' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          billing_country: 'United States',
+                          manual_billing_country: ''
+                        }));
+                      }}
+                      style={{
+                        marginTop: '0.5rem',
+                        padding: '0.5rem',
+                        backgroundColor: 'transparent',
+                        color: '#059669',
+                        border: '1px solid #059669',
+                        borderRadius: '8px',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                        fontWeight: '600'
+                      }}
+                    >
+                      Select from list
+                    </button>
+                  )}
                 </div>
               </div>
 
