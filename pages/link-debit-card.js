@@ -1496,6 +1496,24 @@ function LinkDebitCardContent() {
 
           {!showForm && linkedCards.map(card => (
             <div key={card.id} style={styles.cardItemContainer}>
+              {card.is_primary && (
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '1rem',
+                  backgroundColor: '#10b981',
+                  color: 'white',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '8px',
+                  fontSize: '0.85rem',
+                  fontWeight: '700',
+                  letterSpacing: '0.5px',
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)'
+                }}>
+                  ⭐ PRIMARY CARD
+                </div>
+              )}
               <div style={styles.cardVisualContainer}>
                 <div
                   style={{
@@ -1533,9 +1551,6 @@ function LinkDebitCardContent() {
                           borderRadius: '4px'
                         }}></div>
                       </div>
-                      {card.is_primary && (
-                        <div style={styles.primaryBadgeCard}>PRIMARY</div>
-                      )}
                     </div>
 
                     <div style={styles.cardNumberDisplay}>
@@ -1546,7 +1561,7 @@ function LinkDebitCardContent() {
                       <div>
                         <div style={styles.cardSmallLabel}>Cardholder Name</div>
                         <div style={styles.cardholderNameDisplay}>
-                          {card.cardholder_name}
+                          {card.cardholder_name.toUpperCase()}
                         </div>
                       </div>
                       <div>
