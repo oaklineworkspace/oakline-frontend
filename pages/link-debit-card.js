@@ -723,11 +723,16 @@ function LinkDebitCardContent() {
       fontWeight: 'bold'
     },
     cardBackInfo: {
-      fontSize: '0.7rem',
-      opacity: 0.8
+      fontSize: 'clamp(0.6rem, 1.8vw, 0.7rem)',
+      opacity: 0.9,
+      lineHeight: '1.3',
+      marginTop: '0.5rem'
     },
     cardBackText: {
-      margin: '4px 0'
+      margin: '0.25rem 0',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis'
     },
     cardVisualHeader: {
       display: 'flex',
