@@ -1292,23 +1292,55 @@ function LinkDebitCardContent() {
                 )}
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1.75rem', marginBottom: '1.75rem' }}>
-                <input
-                  type="checkbox"
-                  name="is_primary"
-                  checked={formData.is_primary}
-                  onChange={handleChange}
-                  id="is_primary"
-                  style={{
-                    cursor: 'pointer',
-                    accentColor: '#059669',
-                    width: '20px',
-                    height: '20px'
-                  }}
-                />
-                <label htmlFor="is_primary" style={{ ...styles.label, marginBottom: 0, cursor: 'pointer', fontSize: '1rem' }}>
-                  Set as primary card {linkedCards.length === 0 && '(Will be set automatically as first card)'}
-                </label>
+              <div style={{ 
+                marginTop: '2rem', 
+                marginBottom: '2rem',
+                padding: '1.25rem',
+                backgroundColor: '#f8fafc',
+                borderRadius: '12px',
+                border: '2px solid #e2e8f0'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <input
+                    type="checkbox"
+                    name="is_primary"
+                    checked={formData.is_primary}
+                    onChange={handleChange}
+                    id="is_primary"
+                    style={{
+                      cursor: 'pointer',
+                      accentColor: '#059669',
+                      width: '24px',
+                      height: '24px',
+                      minWidth: '24px',
+                      minHeight: '24px',
+                      borderRadius: '6px',
+                      border: '2px solid #d1d5db'
+                    }}
+                  />
+                  <label htmlFor="is_primary" style={{ 
+                    cursor: 'pointer', 
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    color: '#1e293b',
+                    margin: 0,
+                    lineHeight: '1.5'
+                  }}>
+                    Set as primary card
+                  </label>
+                </div>
+                {linkedCards.length === 0 && (
+                  <p style={{
+                    fontSize: '0.875rem',
+                    color: '#64748b',
+                    marginTop: '0.75rem',
+                    marginBottom: 0,
+                    marginLeft: '2.5rem',
+                    lineHeight: '1.5'
+                  }}>
+                    This will be automatically set as your primary card since it's your first card.
+                  </p>
+                )}
               </div>
 
               <button
