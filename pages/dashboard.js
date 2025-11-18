@@ -894,7 +894,7 @@ function DashboardContent() {
                 style={styles.editProfileButton}
                 title="Edit Profile"
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.1)';
+                  e.currentTarget.style.transform = 'scale(1.05)';
                   e.currentTarget.style.backgroundColor = '#2563eb';
                 }}
                 onMouseLeave={(e) => {
@@ -902,7 +902,7 @@ function DashboardContent() {
                   e.currentTarget.style.backgroundColor = '#1e40af';
                 }}
               >
-                ✏️
+                Edit
               </Link>
             </div>
           </div>
@@ -2158,22 +2158,23 @@ profilePictureContainer: {
 },
 editProfileButton: {
   position: 'absolute',
-  bottom: '5px',
-  right: '5px',
+  bottom: '0',
+  right: '0',
   backgroundColor: '#1e40af',
   color: 'white',
-  borderRadius: '50%',
-  width: '30px',
-  height: '30px',
+  borderRadius: '6px',
+  padding: '0.4rem 0.8rem',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  fontSize: '1.2rem',
+  fontSize: '0.75rem',
+  fontWeight: '600',
   cursor: 'pointer',
   textDecoration: 'none',
   transition: 'all 0.3s ease',
-  border: 'none',
-  boxShadow: '0 2px 6px rgba(30, 64, 175, 0.4)'
+  border: '2px solid white',
+  boxShadow: '0 2px 8px rgba(30, 64, 175, 0.5)',
+  letterSpacing: '0.5px'
 },
 userInfo: {
   display: 'flex',
