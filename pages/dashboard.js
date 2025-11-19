@@ -105,7 +105,7 @@ function DashboardContent() {
         const accountIds = accountsData.map(acc => acc.id);
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        
+
         const { data: txData, error: txError } = await supabase
           .from('transactions')
           .select(`
@@ -2038,25 +2038,28 @@ navItem: {
 navButton: {
   display: 'flex',
   alignItems: 'center',
-  gap: '0.3rem',
-  padding: '0.4rem 0.6rem',
+  gap: '0.25rem',
+  padding: '0.4rem 0.5rem',
   backgroundColor: 'rgba(255,255,255,0.1)',
   color: 'white',
   border: 'none',
   borderRadius: '6px',
   cursor: 'pointer',
-  fontSize: '0.75rem',
+  fontSize: '0.7rem',
   fontWeight: '500',
   transition: 'all 0.2s',
   whiteSpace: 'nowrap',
-  width: '110px'
+  minWidth: '105px',
+  maxWidth: '105px',
+  justifyContent: 'center'
 },
 navIcon: {
   fontSize: '1rem'
 },
 navArrow: {
-  fontSize: '0.7rem',
-  transition: 'transform 0.2s'
+  fontSize: '0.6rem',
+  transition: 'transform 0.2s',
+  marginLeft: '0.1rem'
 },
 dropdown: {
   position: 'absolute',
@@ -2268,65 +2271,84 @@ phoneIcon: {
 },
 
 // Mobile Styles
-'@media (max-width: 768px)': {
-  headerContainer: {
-    flexDirection: 'column',
-    padding: '0.75rem',
-    minHeight: 'auto',
-    gap: '0.75rem'
+  '@media (max-width: 768px)': {
+    headerContainer: {
+      flexDirection: 'column',
+      padding: '0.75rem',
+      minHeight: 'auto',
+      gap: '0.75rem'
+    },
+    mainNav: {
+      width: '100%',
+      justifyContent: 'space-around',
+      order: 2
+    },
+    navButton: {
+      padding: '0.35rem 0.45rem',
+      fontSize: '0.65rem',
+      gap: '0.15rem',
+      minWidth: '95px',
+      maxWidth: '95px'
+    },
+    userSection: {
+      order: 1,
+      width: '100%',
+      justifyContent: 'flex-end'
+    },
+    main: {
+      padding: '0.75rem 0.5rem'
+    },
+    summaryCards: {
+      gridTemplateColumns: '1fr',
+      gap: '0.75rem'
+    },
+    summaryCard: {
+      padding: '1rem'
+    },
+    quickActions: {
+      gridTemplateColumns: 'repeat(2, 1fr)',
+      gap: '0.5rem'
+    },
+    quickAction: {
+      padding: '1rem 0.5rem'
+    },
+    sectionTitle: {
+      fontSize: '1.1rem'
+    },
+    accountItem: {
+      padding: '1rem 0.75rem'
+    },
+    accountBalance: {
+      fontSize: '1.5rem'
+    }
   },
-  mainNav: {
-    width: '100%',
-    justifyContent: 'space-around',
-    order: 2
+  '@media (max-width: 480px)': {
+    navButton: {
+      fontSize: '0.6rem',
+      padding: '0.3rem 0.35rem',
+      minWidth: '85px',
+      maxWidth: '85px'
+    },
+    navArrow: {
+      fontSize: '0.5rem'
+    },
+    actionButton: {
+      fontSize: '0.65rem',
+      padding: '0.25rem 0.4rem'
+    },
+    main: {
+      padding: '0.5rem 0.25rem'
+    },
+    quickActions: {
+      gridTemplateColumns: '1fr'
+    },
+    accountItem: {
+      padding: '0.875rem 0.5rem'
+    },
+    accountBalance: {
+      fontSize: '1.3rem'
+    }
   },
-  navButton: {
-    padding: '0.4rem 0.5rem',
-    fontSize: '0.7rem',
-    gap: '0.2rem'
-  },
-  userSection: {
-    order: 1,
-    width: '100%',
-    justifyContent: 'flex-end'
-  },
-  main: {
-    padding: '0.75rem 0.5rem'
-  },
-  summaryCards: {
-    gridTemplateColumns: '1fr',
-    gap: '0.75rem'
-  },
-  summaryCard: {
-    padding: '1rem'
-  },
-  quickActions: {
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '0.5rem'
-  },
-  quickAction: {
-    padding: '1rem 0.5rem'
-  },
-  sectionTitle: {
-    fontSize: '1.1rem'
-  }
-},
-'@media (max-width: 480px)': {
-  navButton: {
-    fontSize: '0.65rem',
-    padding: '0.3rem 0.4rem'
-  },
-  actionButton: {
-    fontSize: '0.65rem',
-    padding: '0.25rem 0.4rem'
-  },
-  main: {
-    padding: '0.5rem 0.25rem'
-  },
-  quickActions: {
-    gridTemplateColumns: '1fr'
-  }
-},
 main: {
   maxWidth: '100%',
   margin: '0',
@@ -2523,7 +2545,7 @@ balanceCardFooter: {
   marginTop: '1.5rem',
   paddingTop: '1.5rem',
   borderTop: '1px solid rgba(255, 255, 255, 0.2)',
-  justifyContent: 'space-between', // Changed to space-between to push add funds button to the right
+  justifyContent: 'space-between',
   alignItems: 'center'
 },
 balanceFooterItem: {
@@ -2560,7 +2582,7 @@ quickAction: {
   padding: '1.5rem 1rem',
   background: '#f8fafc',
   borderRadius: '10px',
-  border: '2px solid #e2e8f0',
+  border: '1px solid #e2e8f0',
   textDecoration: 'none',
   color: '#374151',
   transition: 'all 0.2s',
@@ -2622,7 +2644,10 @@ accountsSection: {
   borderRadius: '12px',
   padding: '1.5rem',
   boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-  border: '1px solid #e2e8f0'
+  border: '1px solid #e2e8f0',
+    '@media (max-width: 768px)': {
+      padding: '1rem'
+    }
 },
 sectionHeaderWithAction: {
   display: 'flex',
@@ -3018,9 +3043,9 @@ addFundsButton: {
 },
 addFundsDropdown: {
   position: 'absolute',
-  bottom: '100%', // Position above the button
+  bottom: '100%',
   right: '0',
-  marginBottom: '0.5rem', // Space between button and dropdown
+  marginBottom: '0.5rem',
   backgroundColor: 'white',
   borderRadius: '12px',
   boxShadow: '0 10px 30px rgba(0,0,0,0.2)',

@@ -417,6 +417,35 @@
   }
 }
 
+/* Landscape orientation fixes for mobile */
+@media (max-width: 896px) and (orientation: landscape) {
+  .accountsSection {
+    padding: 0.75rem !important;
+  }
+
+  .accountItem {
+    padding: 0.75rem !important;
+    min-height: 60px !important;
+  }
+
+  .accountBalance {
+    font-size: 1.3rem !important;
+  }
+
+  .sectionTitle {
+    font-size: 1rem !important;
+  }
+
+  .accountName {
+    font-size: 0.85rem !important;
+  }
+
+  .cardsCarousel {
+    max-height: 300px !important;
+    padding-bottom: 0.5rem !important;
+  }
+}
+
 /* iPhone portrait specific styles */
 @media (max-width: 430px) and (orientation: portrait) {
   /* Ensure language selector is always visible on all iPhones */
