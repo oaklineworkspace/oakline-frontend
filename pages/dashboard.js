@@ -28,7 +28,6 @@ function DashboardContent() {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [accountDetailsExpanded, setAccountDetailsExpanded] = useState(false);
-  const [showAccountBalances, setShowAccountBalances] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -992,17 +991,7 @@ function DashboardContent() {
       <section style={styles.accountsSection}>
         <div style={styles.sectionHeaderWithAction}>
           <h3 style={styles.sectionTitle}>Account Details</h3>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <button
-              onClick={() => setShowAccountBalances(!showAccountBalances)}
-              style={styles.balanceToggleButton}
-              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-            >
-              {showAccountBalances ? '👁️' : '🔒'}
-            </button>
-            <Link href="/account-details" style={styles.viewAllLink}>View All Details →</Link>
-          </div>
+          <Link href="/account-details" style={styles.viewAllLink}>View All Details →</Link>
         </div>
 
         <div style={styles.accountsList}>
@@ -1021,7 +1010,7 @@ function DashboardContent() {
                 </div>
               </div>
               <div style={styles.accountBalance}>
-                {showAccountBalances ? formatCurrency(account.balance || 0) : '•••••'}
+                {showBalance ? formatCurrency(account.balance || 0) : '•••••'}
               </div>
             </div>
           ))}
@@ -1244,8 +1233,12 @@ function DashboardContent() {
                              status?.toLowerCase() === 'reversed' ? '#6b7280' :
                              (isCredit ? '#059669' : '#dc2626')
                     }}>
-                      {isCredit ? '+' : '-'}
-                      {formatCurrency(Math.abs(amount))}
+                      {showBalance ? (
+                        <>
+                          {isCredit ? '+' : '-'}
+                          {formatCurrency(Math.abs(amount))}
+                        </>
+                      ) : '•••••'}
                     </div>
                     <div style={{
                       ...styles.statusBadge,
