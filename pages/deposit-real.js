@@ -20,6 +20,8 @@ export default function DepositReal() {
   const [error, setError] = useState('');
   const [pageLoading, setPageLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(true);
+  const [uploadProgress, setUploadProgress] = useState({ front: false, back: false });
 
   useEffect(() => {
     const checkMobile = () => {
@@ -83,12 +85,32 @@ export default function DepositReal() {
     const file = e.target.files[0];
     if (!file) return;
 
+    setError('');
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic'];
+    if (!validTypes.includes(file.type.toLowerCase())) {
+      setError('Please upload a valid image file (JPEG, PNG, or HEIC)');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      setError('Image file size must be less than 10MB');
+      return;
+    }
+
     if (type === 'front') {
+      setUploadProgress({ ...uploadProgress, front: true });
       setCheckFront(file);
       setFrontPreview(URL.createObjectURL(file));
+      setTimeout(() => setUploadProgress({ ...uploadProgress, front: false }), 500);
     } else {
+      setUploadProgress({ ...uploadProgress, back: true });
       setCheckBack(file);
       setBackPreview(URL.createObjectURL(file));
+      setTimeout(() => setUploadProgress({ ...uploadProgress, back: false }), 500);
     }
   };
 
@@ -357,6 +379,63 @@ export default function DepositReal() {
       fontWeight: '500',
       border: '2px solid'
     },
+    instructionsCard: {
+      background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+      border: '2px solid #3b82f6',
+      borderRadius: '16px',
+      padding: isMobile ? '1.25rem' : '1.75rem',
+      marginBottom: isMobile ? '1.5rem' : '2rem',
+      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.15)'
+    },
+    instructionsHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: isMobile ? '1rem' : '1.25rem',
+      paddingBottom: '0.75rem',
+      borderBottom: '2px solid #3b82f6'
+    },
+    instructionsTitle: {
+      fontSize: isMobile ? '1.1rem' : '1.25rem',
+      fontWeight: '700',
+      color: '#1e40af',
+      margin: 0
+    },
+    closeInstructions: {
+      background: 'transparent',
+      border: 'none',
+      fontSize: '1.5rem',
+      color: '#3b82f6',
+      cursor: 'pointer',
+      padding: '0.25rem 0.5rem',
+      transition: 'color 0.3s',
+      fontWeight: 'bold'
+    },
+    instructionsContent: {
+      display: 'grid',
+      gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+      gap: isMobile ? '1.25rem' : '1.5rem'
+    },
+    instructionSection: {
+      background: 'white',
+      borderRadius: '10px',
+      padding: isMobile ? '1rem' : '1.25rem',
+      border: '1px solid #bfdbfe'
+    },
+    instructionSubtitle: {
+      fontSize: isMobile ? '0.95rem' : '1.05rem',
+      fontWeight: '700',
+      color: '#1e40af',
+      marginTop: 0,
+      marginBottom: '0.75rem'
+    },
+    instructionList: {
+      margin: 0,
+      paddingLeft: '1.25rem',
+      color: '#1e3a8a',
+      fontSize: isMobile ? '0.85rem' : '0.9rem',
+      lineHeight: '1.8'
+    },
     securityNote: {
       marginTop: isMobile ? '1.5rem' : '2rem',
       padding: isMobile ? '1.25rem' : '1.5rem',
@@ -454,6 +533,44 @@ export default function DepositReal() {
                 borderColor: '#fca5a5'
               }}>
                 {error}
+              </div>
+            )}
+
+            {showInstructions && !message?.includes('successful') && (
+              <div style={styles.instructionsCard}>
+                <div style={styles.instructionsHeader}>
+                  <h3 style={styles.instructionsTitle}>📋 Check Deposit Guidelines</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowInstructions(false)}
+                    style={styles.closeInstructions}
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div style={styles.instructionsContent}>
+                  <div style={styles.instructionSection}>
+                    <h4 style={styles.instructionSubtitle}>✓ Tips for Best Results:</h4>
+                    <ul style={styles.instructionList}>
+                      <li>Endorse the back of your check with your signature</li>
+                      <li>Place check on a dark, contrasting surface</li>
+                      <li>Ensure all four corners are visible in the photo</li>
+                      <li>Use good lighting - avoid shadows and glare</li>
+                      <li>Keep the check flat and camera steady</li>
+                      <li>Make sure all text is clear and readable</li>
+                    </ul>
+                  </div>
+                  <div style={styles.instructionSection}>
+                    <h4 style={styles.instructionSubtitle}>ℹ️ Important Information:</h4>
+                    <ul style={styles.instructionList}>
+                      <li>Maximum deposit amount: $5,000 per check</li>
+                      <li>Deposits are typically available in 1-2 business days</li>
+                      <li>Keep your physical check for 14 days after deposit</li>
+                      <li>Write "Mobile Deposit" on the check after submission</li>
+                      <li>Supported formats: JPEG, PNG, HEIC (max 10MB)</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             )}
 
