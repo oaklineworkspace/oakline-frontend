@@ -488,14 +488,14 @@ const styles = {
   },
   securityText: {
     fontSize: '1.05rem',
-    color: 'white',
+    color: '#10b981',
     margin: '0 0 0.25rem 0',
     fontWeight: '700',
     textAlign: 'left'
   },
   securitySubtext: {
     fontSize: '0.9rem',
-    color: 'rgba(255, 255, 255, 0.95)',
+    color: '#10b981',
     margin: 0,
     fontWeight: '600',
     textAlign: 'left'
@@ -777,10 +777,10 @@ const styles = {
     margin: 0
   },
   securityWarningBanner: {
-    backgroundColor: '#dc2626',
+    backgroundColor: '#1A3E6F',
     overflow: 'hidden',
     padding: '0.75rem 0',
-    borderTop: '2px solid #991b1b'
+    borderTop: '2px solid #2A5490'
   },
   scrollingText: {
     display: 'flex',
