@@ -144,7 +144,7 @@ export default function LoginPage() {
         visibility: loading ? 'hidden' : 'visible',
         transition: 'opacity 0.3s ease, visibility 0.3s ease'
       }}>
-        {/* Professional Header - Logo on Left */}
+        {/* Professional Header - Logo Centered */}
         <header style={styles.header}>
           <div style={styles.headerContent}>
             <Link href="/" style={styles.logoLink}>
@@ -158,6 +158,17 @@ export default function LoginPage() {
                 <span style={styles.brandTagline}>Secure Banking Platform</span>
               </div>
             </Link>
+          </div>
+          {/* Security Warning Scrolling Banner */}
+          <div style={styles.securityWarningBanner}>
+            <div style={styles.scrollingText}>
+              <span style={styles.warningText}>
+                🔒 IMPORTANT SECURITY NOTICE: Never share your password, PIN, or account details with anyone. Oakline Bank will NEVER ask for your password via email, phone, or text. Protect your account - Keep your credentials confidential. 🔒
+              </span>
+              <span style={styles.warningText}>
+                🔒 IMPORTANT SECURITY NOTICE: Never share your password, PIN, or account details with anyone. Oakline Bank will NEVER ask for your password via email, phone, or text. Protect your account - Keep your credentials confidential. 🔒
+              </span>
+            </div>
           </div>
         </header>
 
@@ -292,7 +303,7 @@ export default function LoginPage() {
         {/* Footer */}
         <footer style={styles.footer}>
           <p style={styles.footerText}>
-            © 2024 Oakline Bank. All rights reserved. Member FDIC.
+            © 2025 Oakline Bank. All rights reserved. Member FDIC.
           </p>
         </footer>
       </div>
@@ -311,6 +322,11 @@ export default function LoginPage() {
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
+        }
+
+        @keyframes scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
 
         input[type="checkbox"] {
@@ -443,44 +459,45 @@ const styles = {
     lineHeight: '1.6'
   },
   securityBadge: {
-    padding: '1.25rem 1.5rem',
-    backgroundColor: 'rgba(5, 150, 105, 0.15)',
+    padding: '1.5rem 2rem',
+    backgroundColor: 'rgba(16, 185, 129, 0.25)',
     borderRadius: '16px',
     backdropFilter: 'blur(10px)',
-    border: '2px solid rgba(5, 150, 105, 0.3)',
+    border: '2px solid rgba(16, 185, 129, 0.5)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '1rem',
-    maxWidth: '350px',
+    gap: '1.25rem',
+    maxWidth: '380px',
     margin: '2rem auto 0',
-    boxShadow: '0 4px 15px rgba(5, 150, 105, 0.2)'
+    boxShadow: '0 8px 25px rgba(16, 185, 129, 0.4)'
   },
   securityIconWrapper: {
-    width: '48px',
-    height: '48px',
+    width: '56px',
+    height: '56px',
     borderRadius: '50%',
-    background: 'rgba(5, 150, 105, 0.2)',
+    background: 'rgba(16, 185, 129, 0.35)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0
+    flexShrink: 0,
+    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
   },
   securityIcon: {
-    fontSize: '1.5rem'
+    fontSize: '1.75rem'
   },
   securityText: {
-    fontSize: '0.95rem',
+    fontSize: '1.05rem',
     color: 'white',
     margin: '0 0 0.25rem 0',
-    fontWeight: '600',
+    fontWeight: '700',
     textAlign: 'left'
   },
   securitySubtext: {
-    fontSize: '0.8rem',
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: '0.9rem',
+    color: 'rgba(255, 255, 255, 0.95)',
     margin: 0,
-    fontWeight: '500',
+    fontWeight: '600',
     textAlign: 'left'
   },
   pageContainer: {
@@ -503,7 +520,7 @@ const styles = {
     margin: '0 auto',
     padding: '1rem 1.5rem',
     display: 'flex',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     alignItems: 'center'
   },
   logoLink: {
@@ -758,5 +775,23 @@ const styles = {
     color: 'rgba(255, 255, 255, 0.9)',
     fontSize: '0.85rem',
     margin: 0
+  },
+  securityWarningBanner: {
+    backgroundColor: '#dc2626',
+    overflow: 'hidden',
+    padding: '0.75rem 0',
+    borderTop: '2px solid #991b1b'
+  },
+  scrollingText: {
+    display: 'flex',
+    whiteSpace: 'nowrap',
+    animation: 'scroll 30s linear infinite'
+  },
+  warningText: {
+    color: 'white',
+    fontSize: '0.9rem',
+    fontWeight: '600',
+    paddingRight: '100px',
+    display: 'inline-block'
   }
 };
