@@ -25,6 +25,9 @@ The application is built with **Next.js 14.2.3** and React 18.2.0, utilizing SSR
 - **Transaction Standardization**: All transfer operations use `debit` and `credit` transaction types, with a complete audit trail including `balance_before`, `balance_after`, `reference`, `user_id`, and `created_at`. Transaction icons are mapped for various types, and reference numbers are displayed with copy-to-clipboard functionality.
 - **Zelle Payment System**: Comprehensive Zelle® integration with features like sending money, managing contacts, viewing transaction history, QR code generation, real-time balance updates, email verification codes, and transaction notifications. Security includes two-factor verification and spending limits.
 - **Content Expansion**: Includes 10 new informational banking pages covering personal finance, retirement planning, green banking, digital wallets, promotions, business insights, community impact, financial tools, security awareness, and customer stories.
+- **Card Application System** (Nov 2025): Enhanced apply-card page with active card detection that shows existing cards as informational notice while allowing replacement requests. Features include professional loading overlay with stage-based progress messages, success banner with animated checkmark and auto-redirect to cards page, and comprehensive validation.
+- **Check Deposit System** (Nov 2025): Comprehensive deposit-real page for mobile check deposits with detailed photo-taking instructions, file validation (JPEG/PNG/HEIC, max 10MB), helpful tips for quality photos, and $5,000 maximum deposit limit with 1-2 business day processing.
+- **Sign-In Page UX** (Nov 2025): Fixed scrolling security warning banner to prevent text overlap by adjusting height and overflow properties.
 
 ## External Dependencies
 
