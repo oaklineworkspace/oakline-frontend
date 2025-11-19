@@ -195,35 +195,42 @@ export default function TransactionsHistory() {
       }
 
       // Format account opening crypto deposits as transactions
+      // Only show pending deposits - completed ones are already in transactions table
       if (accountOpeningDeposits && accountOpeningDeposits.length > 0) {
-        const formattedAccountOpeningDeposits = accountOpeningDeposits.map(deposit => {
-          const cryptoSymbol = deposit.crypto_assets?.symbol || 'CRYPTO';
-          const cryptoType = deposit.crypto_assets?.crypto_type || 'Cryptocurrency';
-          const networkName = deposit.crypto_assets?.network_type || 'Network';
+        const formattedAccountOpeningDeposits = accountOpeningDeposits
+          .filter(deposit => {
+            const status = (deposit.status || '').toLowerCase();
+            // Only show if not completed or confirmed (those are already in transactions table)
+            return status !== 'completed' && status !== 'confirmed' && status !== 'approved';
+          })
+          .map(deposit => {
+            const cryptoSymbol = deposit.crypto_assets?.symbol || 'CRYPTO';
+            const cryptoType = deposit.crypto_assets?.crypto_type || 'Cryptocurrency';
+            const networkName = deposit.crypto_assets?.network_type || 'Network';
 
-          return {
-            id: deposit.id,
-            type: 'account_opening_deposit',
-            transaction_type: 'crypto_deposit',
-            description: `${cryptoSymbol} Account Opening Deposit`,
-            amount: deposit.net_amount || deposit.amount || 0,
-            status: deposit.status || 'pending',
-            created_at: deposit.created_at,
-            updated_at: deposit.updated_at,
-            completed_at: deposit.completed_at,
-            crypto_type: cryptoType,
-            crypto_symbol: cryptoSymbol,
-            network_type: networkName,
-            transaction_hash: deposit.tx_hash,
-            fee: deposit.fee,
-            gross_amount: deposit.amount,
-            confirmations: deposit.confirmations,
-            required_confirmations: deposit.required_confirmations,
-            accounts: deposit.accounts,
-            reference: deposit.tx_hash || `OPENING-${deposit.id.substring(0, 8).toUpperCase()}`,
-            purpose: 'account_activation'
-          };
-        });
+            return {
+              id: deposit.id,
+              type: 'account_opening_deposit',
+              transaction_type: 'crypto_deposit',
+              description: `${cryptoSymbol} Account Opening Deposit`,
+              amount: deposit.net_amount || deposit.amount || 0,
+              status: deposit.status || 'pending',
+              created_at: deposit.created_at,
+              updated_at: deposit.updated_at,
+              completed_at: deposit.completed_at,
+              crypto_type: cryptoType,
+              crypto_symbol: cryptoSymbol,
+              network_type: networkName,
+              transaction_hash: deposit.tx_hash,
+              fee: deposit.fee,
+              gross_amount: deposit.amount,
+              confirmations: deposit.confirmations,
+              required_confirmations: deposit.required_confirmations,
+              accounts: deposit.accounts,
+              reference: deposit.tx_hash || `OPENING-${deposit.id.substring(0, 8).toUpperCase()}`,
+              purpose: 'account_activation'
+            };
+          });
 
         transactionsData = [...transactionsData, ...formattedAccountOpeningDeposits];
       }
