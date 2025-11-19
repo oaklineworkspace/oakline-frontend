@@ -76,72 +76,61 @@ export default function LoginPage() {
       {loading && (
         <div style={styles.verificationOverlay}>
           <div style={styles.verificationContent}>
-            {/* Bank Logo */}
+            {/* Bank Logo - Full Color */}
             <div style={styles.logoContainerLoading}>
               <img 
                 src="/images/Oakline_Bank_logo_design_c1b04ae0.png" 
                 alt="Oakline Bank" 
                 style={styles.logoImageLoading}
               />
+              <div style={styles.loadingBrandInfo}>
+                <h1 style={styles.loadingBrandName}>Oakline Bank</h1>
+                <p style={styles.loadingBrandTagline}>Secure Banking Platform</p>
+              </div>
             </div>
 
-            {/* Animated Progress Ring */}
-            <div style={styles.progressRingContainer}>
-              <svg style={styles.progressRing} width="120" height="120">
-                <circle
-                  style={styles.progressRingCircleBackground}
-                  cx="60"
-                  cy="60"
-                  r="54"
-                />
-                <circle
+            {/* Elegant Progress Bar */}
+            <div style={styles.progressBarContainer}>
+              <div style={styles.progressBarTrack}>
+                <div 
                   style={{
-                    ...styles.progressRingCircle,
-                    strokeDashoffset: 339.292 - (339.292 * (loadingStage + 1)) / 4
+                    ...styles.progressBarFill,
+                    width: `${((loadingStage + 1) / 4) * 100}%`
                   }}
-                  cx="60"
-                  cy="60"
-                  r="54"
-                />
-              </svg>
+                ></div>
+              </div>
               <div style={styles.progressPercentage}>
                 {Math.round(((loadingStage + 1) / 4) * 100)}%
               </div>
             </div>
 
             {/* Stage Message */}
-            <h2 style={styles.verificationTitle}>
-              {loadingStage === 0 && 'Verifying Credentials'}
-              {loadingStage === 1 && 'Authenticating Account'}
-              {loadingStage === 2 && 'Securing Connection'}
-              {loadingStage === 3 && 'Finalizing Login'}
-            </h2>
+            <div style={styles.loadingMessageContainer}>
+              <h2 style={styles.verificationTitle}>
+                {loadingStage === 0 && 'Verifying Credentials'}
+                {loadingStage === 1 && 'Authenticating Account'}
+                {loadingStage === 2 && 'Securing Connection'}
+                {loadingStage === 3 && 'Preparing Dashboard'}
+              </h2>
 
-            <p style={styles.verificationSubtitle}>
-              Please wait while we securely sign you in...
-            </p>
-
-            {/* Professional Progress Dots */}
-            <div style={styles.progressDots}>
-              {[0, 1, 2, 3].map((stage) => (
-                <div
-                  key={stage}
-                  style={{
-                    ...styles.progressDot,
-                    backgroundColor: stage <= loadingStage ? '#ffffff' : 'rgba(255, 255, 255, 0.3)',
-                    transform: stage === loadingStage ? 'scale(1.4)' : 'scale(1)',
-                    boxShadow: stage === loadingStage ? '0 0 20px rgba(255, 255, 255, 0.8)' : 'none'
-                  }}
-                ></div>
-              ))}
+              <p style={styles.verificationSubtitle}>
+                Please wait while we securely sign you in to your account
+              </p>
             </div>
 
-            {/* Security Badge */}
+            {/* Animated Security Badge */}
             <div style={styles.securityBadge}>
-              <div style={styles.securityIcon}>🔐</div>
-              <p style={styles.securityText}>
-                256-bit SSL Encryption Active
-              </p>
+              <div style={styles.securityIconWrapper}>
+                <span style={styles.securityIcon}>🔐</span>
+              </div>
+              <div>
+                <p style={styles.securityText}>
+                  Bank-Level Security
+                </p>
+                <p style={styles.securitySubtext}>
+                  256-bit SSL Encryption
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -165,13 +154,9 @@ export default function LoginPage() {
               />
               <div style={styles.brandInfo}>
                 <h1 style={styles.brandName}>Oakline Bank</h1>
-                <span style={styles.brandTagline}>Secure Banking</span>
+                <span style={styles.brandTagline}>Secure Banking Platform</span>
               </div>
             </Link>
-            <div style={styles.headerRight}>
-              <span style={styles.helpText}>Need Help?</span>
-              <span style={styles.phoneNumber}>📞 1-800-OAKLINE</span>
-            </div>
           </div>
         </header>
 
@@ -372,7 +357,7 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'linear-gradient(135deg, #1a365d 0%, #2563eb 100%)',
+    background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -381,110 +366,136 @@ const styles = {
   },
   verificationContent: {
     textAlign: 'center',
-    maxWidth: '500px',
-    padding: '2rem',
-    width: '100%'
+    maxWidth: '550px',
+    padding: '3rem 2rem',
+    width: '100%',
+    background: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: '24px',
+    backdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255, 200, 87, 0.2)',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
   },
   logoContainerLoading: {
-    marginBottom: '2rem',
+    marginBottom: '2.5rem',
     display: 'flex',
-    justifyContent: 'center'
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '1rem'
   },
   logoImageLoading: {
-    height: '80px',
+    height: '100px',
     width: 'auto',
-    filter: 'brightness(0) invert(1)',
     animation: 'pulse 2s ease-in-out infinite'
   },
-  progressRingContainer: {
-    position: 'relative',
-    margin: '2rem auto',
-    width: '120px',
-    height: '120px'
+  loadingBrandInfo: {
+    textAlign: 'center'
   },
-  progressRing: {
-    transform: 'rotate(-90deg)'
+  loadingBrandName: {
+    fontSize: '2rem',
+    fontWeight: '700',
+    color: 'white',
+    margin: '0.5rem 0 0.25rem 0',
+    letterSpacing: '1px'
   },
-  progressRingCircleBackground: {
-    fill: 'none',
-    stroke: 'rgba(255, 255, 255, 0.2)',
-    strokeWidth: '8'
+  loadingBrandTagline: {
+    fontSize: '0.95rem',
+    color: '#FFC857',
+    margin: 0,
+    fontWeight: '500'
   },
-  progressRingCircle: {
-    fill: 'none',
-    stroke: '#ffffff',
-    strokeWidth: '8',
-    strokeDasharray: '339.292',
-    strokeLinecap: 'round',
-    transition: 'stroke-dashoffset 0.5s ease'
+  progressBarContainer: {
+    margin: '2.5rem 0',
+    width: '100%'
+  },
+  progressBarTrack: {
+    width: '100%',
+    height: '8px',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: '10px',
+    overflow: 'hidden',
+    marginBottom: '1rem'
+  },
+  progressBarFill: {
+    height: '100%',
+    background: 'linear-gradient(90deg, #FFC857 0%, #FFD687 100%)',
+    borderRadius: '10px',
+    transition: 'width 0.5s ease',
+    boxShadow: '0 0 20px rgba(255, 200, 87, 0.6)'
   },
   progressPercentage: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    fontSize: '1.5rem',
+    fontSize: '1.25rem',
     fontWeight: '700',
-    color: 'white'
+    color: '#FFC857',
+    textAlign: 'center'
+  },
+  loadingMessageContainer: {
+    margin: '2rem 0'
   },
   verificationTitle: {
     fontSize: '1.5rem',
     fontWeight: '700',
     color: 'white',
     marginBottom: '0.75rem',
-    margin: 0
+    margin: '0 0 0.75rem 0'
   },
   verificationSubtitle: {
     fontSize: '1rem',
-    color: 'rgba(255, 255, 255, 0.9)',
-    marginBottom: '2rem',
+    color: 'rgba(255, 255, 255, 0.85)',
+    margin: 0,
     lineHeight: '1.6'
   },
-  progressDots: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '1rem',
-    marginBottom: '2.5rem'
-  },
-  progressDot: {
-    width: '12px',
-    height: '12px',
-    borderRadius: '50%',
-    transition: 'all 0.3s ease'
-  },
   securityBadge: {
-    padding: '1rem 1.5rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: '12px',
+    padding: '1.25rem 1.5rem',
+    backgroundColor: 'rgba(255, 200, 87, 0.15)',
+    borderRadius: '16px',
     backdropFilter: 'blur(10px)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
+    border: '2px solid rgba(255, 200, 87, 0.3)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '0.75rem',
-    maxWidth: '300px',
-    margin: '0 auto'
+    gap: '1rem',
+    maxWidth: '350px',
+    margin: '2rem auto 0',
+    boxShadow: '0 4px 15px rgba(255, 200, 87, 0.2)'
+  },
+  securityIconWrapper: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '50%',
+    background: 'rgba(255, 200, 87, 0.2)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0
   },
   securityIcon: {
     fontSize: '1.5rem'
   },
   securityText: {
-    fontSize: '0.9rem',
-    color: 'rgba(255, 255, 255, 0.95)',
+    fontSize: '0.95rem',
+    color: 'white',
+    margin: '0 0 0.25rem 0',
+    fontWeight: '600',
+    textAlign: 'left'
+  },
+  securitySubtext: {
+    fontSize: '0.8rem',
+    color: 'rgba(255, 200, 87, 0.9)',
     margin: 0,
-    fontWeight: '500'
+    fontWeight: '500',
+    textAlign: 'left'
   },
   pageContainer: {
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    background: 'linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%)'
+    background: 'linear-gradient(135deg, #F5F6F8 0%, #e0f2fe 100%)'
   },
   header: {
-    background: '#1a365d',
-    borderBottom: '3px solid #2563eb',
-    boxShadow: '0 2px 8px rgba(26, 54, 93, 0.2)',
+    background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
+    borderBottom: '3px solid #FFC857',
+    boxShadow: '0 4px 12px rgba(26, 62, 111, 0.3)',
     position: 'sticky',
     top: 0,
     zIndex: 100
@@ -494,10 +505,8 @@ const styles = {
     margin: '0 auto',
     padding: '1rem 1.5rem',
     display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: '1rem',
-    flexWrap: 'wrap'
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   logoLink: {
     display: 'flex',
@@ -507,7 +516,7 @@ const styles = {
     color: 'white'
   },
   logoImage: {
-    height: '50px',
+    height: '60px',
     width: 'auto'
   },
   brandInfo: {
@@ -515,30 +524,16 @@ const styles = {
     flexDirection: 'column'
   },
   brandName: {
-    fontSize: '1.5rem',
+    fontSize: '1.8rem',
     fontWeight: '700',
     margin: 0,
-    color: 'white'
+    color: 'white',
+    letterSpacing: '0.5px'
   },
   brandTagline: {
-    fontSize: '0.75rem',
-    color: '#bfdbfe',
+    fontSize: '0.85rem',
+    color: '#FFC857',
     fontWeight: '500'
-  },
-  headerRight: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-    gap: '0.25rem'
-  },
-  helpText: {
-    fontSize: '0.75rem',
-    color: '#bfdbfe'
-  },
-  phoneNumber: {
-    fontSize: '0.9rem',
-    fontWeight: '600',
-    color: 'white'
   },
   loginCard: {
     flex: 1,
@@ -755,12 +750,13 @@ const styles = {
     fontWeight: '600'
   },
   footer: {
-    background: '#1a365d',
+    background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
     padding: '1.5rem',
-    textAlign: 'center'
+    textAlign: 'center',
+    borderTop: '2px solid #FFC857'
   },
   footerText: {
-    color: '#bfdbfe',
+    color: 'rgba(255, 255, 255, 0.9)',
     fontSize: '0.85rem',
     margin: 0
   }
