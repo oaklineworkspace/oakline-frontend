@@ -165,9 +165,6 @@ export default function LoginPage() {
               <span style={styles.warningText}>
                 🔒 IMPORTANT SECURITY NOTICE: Never share your password, PIN, or account details with anyone. Oakline Bank will NEVER ask for your password via email, phone, or text. Protect your account - Keep your credentials confidential. 🔒
               </span>
-              <span style={styles.warningText}>
-                🔒 IMPORTANT SECURITY NOTICE: Never share your password, PIN, or account details with anyone. Oakline Bank will NEVER ask for your password via email, phone, or text. Protect your account - Keep your credentials confidential. 🔒
-              </span>
             </div>
           </div>
         </header>
