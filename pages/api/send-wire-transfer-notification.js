@@ -78,11 +78,11 @@ export default async function handler(req, res) {
             </p>
 
             <!-- Transfer Amount -->
-            <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 2rem; border-radius: 12px; text-align: center; border: 2px solid #3b82f6; margin: 24px 0;">
-              <div style="color: #1e40af; font-size: 14px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">
-                Transfer Amount
+            <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 2rem; border-radius: 12px; text-align: center; border: 3px solid #065f46; margin: 24px 0; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);">
+              <div style="color: #ffffff; font-size: 14px; font-weight: 700; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.95;">
+                TRANSFER AMOUNT
               </div>
-              <div style="color: #1e40af; font-size: 36px; font-weight: 800; margin: 0;">
+              <div style="color: #ffffff; font-size: 42px; font-weight: 900; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.2); letter-spacing: -0.02em;">
                 ${formatCurrency(amount)}
               </div>
             </div>

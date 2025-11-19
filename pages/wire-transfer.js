@@ -33,6 +33,7 @@ export default function WireTransfer() {
   const [receiptData, setReceiptData] = useState(null);
   const [selectedTransfer, setSelectedTransfer] = useState(null); // For transfer details modal
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [wireForm, setWireForm] = useState({
     from_account_id: '',
@@ -198,6 +199,13 @@ export default function WireTransfer() {
         setSendingCode(true);
         await sendVerificationCode();
       }
+    } else if (currentStep === 3) {
+      if (verificationCode !== sentCode) {
+        setMessage('Invalid verification code');
+        setMessageType('error');
+        return;
+      }
+      setCurrentStep(4);
     }
   };
 
@@ -246,6 +254,7 @@ export default function WireTransfer() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setIsSubmitting(true);
     setMessage('');
 
     try {
@@ -394,6 +403,7 @@ export default function WireTransfer() {
       setMessageType('error');
     } finally {
       setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -1086,7 +1096,29 @@ export default function WireTransfer() {
                 opacity: currentStep >= 3 ? 1 : 0.6,
                 fontWeight: currentStep === 3 ? '700' : '600'
               }}>
-                Verify & Submit
+                Verify Code
+              </span>
+            </div>
+            <div style={{
+              ...styles.stepDivider,
+              backgroundColor: currentStep >= 4 ? '#059669' : 'rgba(255,255,255,0.3)'
+            }}></div>
+            <div style={styles.step}>
+              <div style={{
+                ...styles.stepCircle,
+                backgroundColor: currentStep >= 4 ? '#059669' : 'rgba(255,255,255,0.2)',
+                color: currentStep >= 4 ? 'white' : 'rgba(255,255,255,0.6)',
+                borderColor: currentStep === 4 ? '#FFC857' : 'transparent',
+                transform: currentStep === 4 ? 'scale(1.05)' : 'scale(1)'
+              }}>
+                {currentStep > 4 ? '✓' : '4'}
+              </div>
+              <span style={{
+                ...styles.stepLabel,
+                opacity: currentStep >= 4 ? 1 : 0.6,
+                fontWeight: currentStep === 4 ? '700' : '600'
+              }}>
+                Submit Transfer
               </span>
             </div>
           </div>
@@ -1123,7 +1155,8 @@ export default function WireTransfer() {
                 <h2 style={styles.cardTitle}>
                   {currentStep === 1 && '📝 Step 1: Transfer Details'}
                   {currentStep === 2 && '👁️ Step 2: Review & Confirm'}
-                  {currentStep === 3 && '🔐 Step 3: Verify & Submit'}
+                  {currentStep === 3 && '🔐 Step 3: Verify Code'}
+                  {currentStep === 4 && '✅ Step 4: Final Confirmation'}
                 </h2>
 
                 <form onSubmit={handleSubmit}>
@@ -1715,8 +1748,53 @@ export default function WireTransfer() {
                         </button>
                       </div>
 
+                      <div style={{
+                        backgroundColor: '#fef3c7',
+                        border: '2px solid #f59e0b',
+                        borderRadius: '10px',
+                        padding: '1rem',
+                        marginTop: '1.5rem',
+                        marginBottom: '1.5rem'
+                      }}>
+                        <p style={{ fontSize: '0.875rem', color: '#92400e', margin: 0 }}>
+                          <strong>🔐 Important:</strong> Enter the 6-digit code from your email to proceed to the final confirmation step.
+                        </p>
+                      </div>
+
+                      <div style={styles.buttonGroup}>
+                        <button
+                          type="button"
+                          onClick={handlePreviousStep}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: '#64748b',
+                            color: 'white'
+                          }}
+                        >
+                          ← Back
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleNextStep}
+                          disabled={!verificationCode || verificationCode.length !== 6}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: (!verificationCode || verificationCode.length !== 6) ? '#cbd5e1' : '#059669',
+                            color: 'white',
+                            cursor: (!verificationCode || verificationCode.length !== 6) ? 'not-allowed' : 'pointer',
+                            opacity: (!verificationCode || verificationCode.length !== 6) ? 0.7 : 1
+                          }}
+                        >
+                          Proceed to Confirmation →
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {currentStep === 4 && (
+                    <>
                       <div style={styles.reviewSection}>
-                        <div style={styles.reviewTitle}>Final Confirmation</div>
+                        <div style={styles.reviewTitle}>✅ Final Confirmation</div>
 
                         <div style={styles.reviewRow}>
                           <span style={styles.reviewLabel}>Transfer Type</span>
@@ -2124,6 +2202,77 @@ export default function WireTransfer() {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full Loading Overlay when Submitting Transfer */}
+      {isSubmitting && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          backdropFilter: 'blur(8px)'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: isMobile ? '2.5rem 1.5rem' : '3rem 2.5rem',
+            textAlign: 'center',
+            maxWidth: '500px',
+            width: '90%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.4)'
+          }}>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              border: '6px solid #e2e8f0',
+              borderTop: '6px solid #059669',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 2rem'
+            }}></div>
+            <h2 style={{
+              fontSize: isMobile ? '1.5rem' : '1.75rem',
+              fontWeight: '700',
+              color: '#1a365d',
+              marginBottom: '1rem',
+              letterSpacing: '-0.02em'
+            }}>
+              Processing Your Wire Transfer
+            </h2>
+            <p style={{
+              fontSize: isMobile ? '1rem' : '1.125rem',
+              color: '#4a5568',
+              marginBottom: '1.5rem',
+              lineHeight: '1.6'
+            }}>
+              Please wait while we securely process your wire transfer request...
+            </p>
+            <div style={{
+              backgroundColor: '#f0fdf4',
+              border: '2px solid #059669',
+              borderRadius: '12px',
+              padding: '1rem',
+              marginTop: '1.5rem'
+            }}>
+              <p style={{
+                fontSize: '0.875rem',
+                color: '#047857',
+                margin: 0,
+                fontWeight: '600',
+                lineHeight: '1.6'
+              }}>
+                🔐 Your transaction is being securely processed. Do not close this window or navigate away.
+              </p>
             </div>
           </div>
         </div>

@@ -374,22 +374,14 @@ export default function SignInPage() {
               }}
             >
               {loading ? (
-                <span style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.75rem'
-                }}>
-                  <div style={{
-                    width: '20px',
-                    height: '20px',
-                    border: '2px solid transparent',
-                    borderTop: '2px solid white',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite'
-                  }}></div>
-                  Signing In...
-                </span>
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  border: '2px solid transparent',
+                  borderTop: '2px solid white',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }}></div>
               ) : (
                 <>
                   <span style={{ fontSize: '1.2rem' }}>🔐</span>
