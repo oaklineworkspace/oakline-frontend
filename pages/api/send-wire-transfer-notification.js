@@ -58,7 +58,7 @@ export default async function handler(req, res) {
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
           <!-- Header -->
           <div style="background: linear-gradient(135deg, #1a365d 0%, #059669 100%); padding: 32px 24px; text-align: center;">
-            <div style="color: #ffffff; font-size: 32px; margin-bottom: 8px;">🏦</div>
+            <img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://oakline-bank.theoaklinebank.com'}/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style="width: 80px; height: 80px; margin-bottom: 8px;" />
             <div style="color: #ffffff; font-size: 28px; font-weight: 700; margin-bottom: 8px;">Oakline Bank</div>
             <div style="color: #ffffff; opacity: 0.9; font-size: 16px;">Wire Transfer Confirmation</div>
           </div>
