@@ -1371,7 +1371,7 @@ function DashboardContent() {
                         el.scrollTo({ left: currentScroll + cardWidth, behavior: 'smooth' });
                       }
                     }
-                  }, 3000); // Auto-scroll every 3 seconds
+                  }, 5000); // Auto-scroll every 5 seconds
                 };
                 
                 const handleMouseEnter = () => {
