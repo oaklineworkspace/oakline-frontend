@@ -877,6 +877,15 @@ function DashboardContent() {
         </div>
       </header>
 
+      {/* Security Warning Scrolling Banner */}
+      <div style={styles.securityWarningBanner}>
+        <div style={styles.scrollingText} className="scrollingText">
+          <span style={styles.warningText}>
+            🔒 SECURITY ALERT: Protect Your Account! Oakline Bank will NEVER ask for your password, PIN, or security codes via email, phone call, or text message. Beware of phishing scams and suspicious emails. Always verify communications directly through our official website or by calling our verified customer service number. Never click on suspicious links or share your one-time passwords with anyone. Report any suspicious activity immediately to our security team. Your security is our top priority! 🔒
+          </span>
+        </div>
+      </div>
+
       {/* Main Dashboard Content */}
       <main style={styles.main}>
         {/* Account Summary Section */}
@@ -2081,6 +2090,34 @@ headerContainer: {
   alignItems: 'center',
   minHeight: '70px',
   gap: '1rem'
+},
+securityWarningBanner: {
+  background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+  overflow: 'hidden',
+  padding: '0.75rem 0',
+  borderTop: '2px solid #fca5a5',
+  borderBottom: '2px solid #fca5a5',
+  position: 'relative',
+  height: '3rem',
+  display: 'flex',
+  alignItems: 'center'
+},
+scrollingText: {
+  display: 'flex',
+  whiteSpace: 'nowrap',
+  animation: 'scroll 45s linear infinite',
+  willChange: 'transform',
+  gap: '0'
+},
+warningText: {
+  color: 'white',
+  fontSize: '0.9rem',
+  fontWeight: '700',
+  paddingRight: '200px',
+  display: 'inline-block',
+  letterSpacing: '0.5px',
+  textShadow: '0 2px 4px rgba(0,0,0,0.4)',
+  lineHeight: '1.4'
 },
 headerLeft: {
   display: 'flex',
