@@ -21,40 +21,75 @@
 
 /* Portrait mode specific fixes */
 @media (max-width: 768px) and (orientation: portrait) {
-  /* Account Details Section */
+  /* Account Details Section - Restructured for portrait */
   .accountItem,
   div[style*="accountItem"] {
     display: flex !important;
-    flex-direction: row !important;
+    flex-direction: column !important;
     align-items: center !important;
-    justify-content: space-between !important;
-    gap: 0.75rem !important;
-    padding: 1rem !important;
+    justify-content: center !important;
+    gap: 1rem !important;
+    padding: 1.25rem !important;
+    text-align: center !important;
   }
 
   /* Account Info Container */
   .accountInfo,
   div[style*="accountInfo"] {
     display: flex !important;
+    flex-direction: column !important;
     align-items: center !important;
-    gap: 0.75rem !important;
-    flex: 1 !important;
-    min-width: 0 !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+    order: 1 !important;
   }
 
-  /* Account Balance - ensure full number displays */
+  /* Account Type Icon */
+  .accountTypeIcon,
+  div[style*="accountTypeIcon"] {
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* Account Details (name and number) */
+  .accountDetails,
+  div[style*="accountDetails"] {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  /* Account Name */
+  .accountName,
+  div[style*="accountName"],
+  h4[style*="accountName"] {
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  /* Account Number */
+  .accountNumber,
+  span[style*="accountNumber"] {
+    text-align: center !important;
+  }
+
+  /* Account Balance - below account info in portrait */
   .accountBalance,
   div[style*="accountBalance"] {
-    font-size: 1.2rem !important;
+    font-size: 1.6rem !important;
     white-space: normal !important;
     word-break: normal !important;
-    text-align: right !important;
+    text-align: center !important;
     line-height: 1.2 !important;
-    flex-shrink: 0 !important;
-    min-width: fit-content !important;
+    width: 100% !important;
+    order: 2 !important;
+    margin-top: 0.75rem !important;
+    padding-top: 0.75rem !important;
+    border-top: 1px solid rgba(226, 232, 240, 0.6) !important;
   }
 
-  /* Total Balance Amount - ensure complete display */
+  /* Total Balance Amount - centered and properly sized */
   .balanceAmount,
   div[style*="balanceAmount"] {
     font-size: 1.5rem !important;
@@ -63,13 +98,27 @@
     overflow: visible !important;
     line-height: 1.2 !important;
     max-width: 100% !important;
+    text-align: center !important;
+    margin: 0 auto !important;
+    padding: 0 1rem !important;
   }
 
-  /* Balance Card Container */
+  /* Balance Card Container - centered */
   .balanceAmountContainer,
   div[style*="balanceAmountContainer"] {
     overflow: visible !important;
     width: 100% !important;
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Balance Sub Info - centered */
+  .balanceSubInfo,
+  div[style*="balanceSubInfo"] {
+    text-align: center !important;
   }
 
   /* Cards Carousel Scroll Hint */
@@ -513,22 +562,33 @@
 
 /* Smaller portrait screens - additional fixes */
 @media (max-width: 480px) and (orientation: portrait) {
-  /* Account balance sizing */
+  /* Account balance sizing - centered */
   .accountBalance,
   div[style*="accountBalance"] {
-    font-size: 1rem !important;
+    font-size: 1.4rem !important;
+    text-align: center !important;
   }
 
-  /* Total balance sizing */
+  /* Total balance sizing - centered */
   .balanceAmount,
   div[style*="balanceAmount"] {
     font-size: 1.3rem !important;
+    text-align: center !important;
+    padding: 0 0.5rem !important;
   }
 
-  /* Account name sizing */
+  /* Account name sizing - centered */
   .accountName,
-  div[style*="accountName"] {
-    font-size: 0.85rem !important;
+  div[style*="accountName"],
+  h4[style*="accountName"] {
+    font-size: 0.9rem !important;
+    text-align: center !important;
+  }
+
+  /* Account item padding adjustment */
+  .accountItem,
+  div[style*="accountItem"] {
+    padding: 1rem !important;
   }
 }
 

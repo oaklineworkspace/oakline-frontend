@@ -2515,7 +2515,8 @@ balanceToggleButton: {
 balanceAmountContainer: {
   margin: '1.5rem 0',
   width: '100%',
-  overflow: 'visible'
+  overflow: 'visible',
+  textAlign: 'center'
 },
 balanceAmount: {
   fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
@@ -2528,7 +2529,8 @@ balanceAmount: {
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   display: 'block',
   color: 'white',
-  lineHeight: '1.2'
+  lineHeight: '1.2',
+  textAlign: 'center'
 },
 balanceSubInfo: {
   fontSize: '0.85rem',
@@ -2712,6 +2714,7 @@ accountItem: {
   transition: 'all 0.3s ease',
   cursor: 'pointer',
   boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+  flexWrap: 'wrap'
 },
 accountInfo: {
   display: 'flex',
