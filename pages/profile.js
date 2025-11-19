@@ -193,7 +193,7 @@ export default function Profile() {
     setImageScale(parseFloat(e.target.value));
   };
 
-  const handleCrop = () => {
+  const handleCrop = async () => {
     if (!imageRef.current || !canvasRef.current || !cropContainerRef.current) return;
 
     const canvas = canvasRef.current;
@@ -259,14 +259,75 @@ export default function Profile() {
     );
     ctx.restore();
 
-    canvas.toBlob((blob) => {
+    canvas.toBlob(async (blob) => {
       const croppedFile = new File([blob], 'profile-picture.jpg', { type: 'image/jpeg' });
+      const previewUrl = URL.createObjectURL(blob);
+      
       setProfilePicture(croppedFile);
-      setCroppedImage(URL.createObjectURL(blob));
+      setCroppedImage(previewUrl);
       setShowCropper(false);
+      
       // Save the current crop settings for next time
       setSavedCropSettings({ position: imagePosition, scale: imageScale });
+      
+      // Automatically upload after cropping
+      await uploadCroppedImage(croppedFile);
     }, 'image/jpeg', 0.95);
+  };
+
+  const uploadCroppedImage = async (file) => {
+    if (!user?.id) {
+      setMessage('Unable to upload - please log in again');
+      return;
+    }
+
+    setUploadingPicture(true);
+    setMessage('');
+    
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `profile-pictures/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('user-files')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('user-files')
+        .getPublicUrl(filePath);
+
+      const profilePictureUrl = data.publicUrl;
+
+      const { data: updateData, error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          profile_picture: profilePictureUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+        .select();
+
+      if (updateError) throw updateError;
+
+      if (!updateData || updateData.length === 0) {
+        throw new Error('Profile not found. Please contact customer support at +1 (636) 635-6122');
+      }
+
+      setUserProfile(prev => ({ ...(prev || {}), profile_picture: profilePictureUrl }));
+      setProfilePicture(null);
+      setMessage('Profile picture updated successfully!');
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      setMessage(error.message || 'Failed to upload profile picture. Please try again.');
+    } finally {
+      setUploadingPicture(false);
+    }
   };
 
   const cancelCrop = () => {
@@ -469,8 +530,8 @@ export default function Profile() {
               <button onClick={cancelCrop} style={styles.cropperCancelButton}>
                 Cancel
               </button>
-              <button onClick={handleCrop} style={styles.cropperCropButton}>
-                Crop & Upload
+              <button onClick={handleCrop} disabled={uploadingPicture} style={uploadingPicture ? styles.cropperCropButtonDisabled : styles.cropperCropButton}>
+                {uploadingPicture ? 'Uploading...' : 'Crop & Upload'}
               </button>
             </div>
           </div>
@@ -507,17 +568,8 @@ export default function Profile() {
               id="profile-picture-input"
             />
             <label htmlFor="profile-picture-input" style={styles.fileLabel}>
-              {profilePicture ? 'Change Photo' : 'Choose File'}
+              Change Photo
             </label>
-            {profilePicture && (
-              <button 
-                onClick={uploadProfilePicture}
-                disabled={uploadingPicture}
-                style={uploadingPicture ? styles.uploadButtonDisabled : styles.uploadButton}
-              >
-                {uploadingPicture ? 'Uploading...' : 'Upload Picture'}
-              </button>
-            )}
             <p style={styles.uploadHint}>Maximum file size: 5MB. Supported formats: JPG, PNG, GIF</p>
           </div>
         </div>
@@ -1231,5 +1283,16 @@ const styles = {
     fontWeight: '500',
     cursor: 'pointer',
     transition: 'background 0.2s'
+  },
+  cropperCropButtonDisabled: {
+    padding: '10px 20px',
+    backgroundColor: '#94a3b8',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'not-allowed',
+    opacity: 0.7
   }
 };

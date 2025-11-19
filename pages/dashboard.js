@@ -776,10 +776,17 @@ function DashboardContent() {
 
           <nav style={styles.mainNav}>
             <div style={styles.navItem}>
-              <button style={styles.navButton} onClick={(e) => { e.stopPropagation(); toggleDropdown('main'); }}>
-                <span style={styles.navIcon}>☰</span>
-                Banking Menu
-                <span style={styles.navArrow}>▼</span>
+              <button
+                style={styles.navButton}
+                onClick={(e) => { e.stopPropagation(); toggleDropdown('main'); }}
+              >
+                <div style={styles.hamburgerIcon}>
+                  <span style={styles.hamburgerLine}></span>
+                  <span style={styles.hamburgerLine}></span>
+                  <span style={styles.hamburgerLine}></span>
+                </div>
+                <span style={styles.dropdownText}>Banking Menu</span>
+                <span style={styles.dropdownArrow}>▼</span>
               </button>
               {dropdownOpen.main && (
                 <div style={styles.dropdown}>
@@ -3117,5 +3124,51 @@ dropdownItemTitle: {
 dropdownItemDesc: {
   fontSize: '0.8rem',
   color: '#64748b'
-}
+},
+dropdownButton: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    padding: '0.75rem 1.25rem',
+    background: 'rgba(255, 255, 255, 0.15)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    borderRadius: '12px',
+    color: 'white',
+    fontSize: '0.95rem',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    backdropFilter: 'blur(10px)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    position: 'relative'
+  },
+  hamburgerIcon: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '3px',
+    width: '18px',
+    flexShrink: 0
+  },
+  hamburgerLine: {
+    width: '100%',
+    height: '2px',
+    backgroundColor: 'white',
+    borderRadius: '2px',
+    display: 'block'
+  },
+  dropdownText: {
+    fontSize: '0.95rem',
+    fontWeight: '500',
+    flexShrink: 0,
+    display: 'inline-block'
+  },
+  dropdownArrow: {
+    fontSize: '0.75rem',
+    flexShrink: 0,
+    display: 'inline-block',
+    marginLeft: '0.25rem'
+  },
 };
