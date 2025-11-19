@@ -19,6 +19,71 @@
   font-size: 0.7rem !important;
 }
 
+/* Portrait mode specific fixes */
+@media (max-width: 768px) and (orientation: portrait) {
+  /* Account Details Section */
+  .accountItem,
+  div[style*="accountItem"] {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.75rem !important;
+    padding: 1rem !important;
+  }
+
+  /* Account Info Container */
+  .accountInfo,
+  div[style*="accountInfo"] {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  /* Account Balance - ensure full number displays */
+  .accountBalance,
+  div[style*="accountBalance"] {
+    font-size: 1.2rem !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    text-align: right !important;
+    line-height: 1.2 !important;
+    flex-shrink: 0 !important;
+    min-width: fit-content !important;
+  }
+
+  /* Total Balance Amount - ensure complete display */
+  .balanceAmount,
+  div[style*="balanceAmount"] {
+    font-size: 1.5rem !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow: visible !important;
+    line-height: 1.2 !important;
+    max-width: 100% !important;
+  }
+
+  /* Balance Card Container */
+  .balanceAmountContainer,
+  div[style*="balanceAmountContainer"] {
+    overflow: visible !important;
+    width: 100% !important;
+  }
+
+  /* Cards Carousel Scroll Hint */
+  .cardsCarousel::after {
+    content: '← Swipe →';
+    display: block;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+    font-weight: 500;
+  }
+}
+
 /* Mobile portrait - logo on left, language selector on right */
 @media (max-width: 768px) and (orientation: portrait) {
   .topHeaderRow {
@@ -443,6 +508,27 @@
   .cardsCarousel {
     max-height: 300px !important;
     padding-bottom: 0.5rem !important;
+  }
+}
+
+/* Smaller portrait screens - additional fixes */
+@media (max-width: 480px) and (orientation: portrait) {
+  /* Account balance sizing */
+  .accountBalance,
+  div[style*="accountBalance"] {
+    font-size: 1rem !important;
+  }
+
+  /* Total balance sizing */
+  .balanceAmount,
+  div[style*="balanceAmount"] {
+    font-size: 1.3rem !important;
+  }
+
+  /* Account name sizing */
+  .accountName,
+  div[style*="accountName"] {
+    font-size: 0.85rem !important;
   }
 }
 

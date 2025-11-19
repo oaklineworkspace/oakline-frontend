@@ -479,12 +479,13 @@ function DashboardContent() {
   };
 
   const formatCurrency = (amount) => {
+    const value = Math.abs(amount || 0);
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }).format(Math.abs(amount || 0));
+    }).format(value);
   };
 
   const formatDate = (dateString) => {
@@ -1325,6 +1326,20 @@ function DashboardContent() {
             <h3 style={styles.sectionTitle}>My Cards</h3>
             <Link href="/cards" style={styles.viewAllLink}>Manage Cards →</Link>
           </div>
+
+          {cards.length > 1 && (
+            <div style={{
+              fontSize: '0.85rem',
+              color: '#64748b',
+              marginBottom: '0.75rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              <span>👉</span>
+              <span>Swipe left or right to view all your cards</span>
+            </div>
+          )}
 
           <div style={styles.cardsCarousel}>
             {cards.map(card => (
@@ -2503,16 +2518,17 @@ balanceAmountContainer: {
   overflow: 'visible'
 },
 balanceAmount: {
-  fontSize: 'clamp(2rem, 3.5vw, 2.5rem)',
+  fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
   fontWeight: '700',
   marginBottom: '0.5rem',
   letterSpacing: '0.5px',
-  wordBreak: 'keep-all',
-  whiteSpace: 'nowrap',
+  wordBreak: 'normal',
+  whiteSpace: 'normal',
   overflow: 'visible',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   display: 'block',
-  color: 'white'
+  color: 'white',
+  lineHeight: '1.2'
 },
 balanceSubInfo: {
   fontSize: '0.85rem',
@@ -2684,9 +2700,10 @@ expandAccountsButton: {
   gap: '0.5rem'
 },
 accountItem: {
-  display: 'grid',
-  gridTemplateColumns: 'auto 1fr auto',
+  display: 'flex',
+  flexDirection: 'row',
   alignItems: 'center',
+  justifyContent: 'space-between',
   gap: '1rem',
   padding: '1.25rem',
   background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
@@ -2734,12 +2751,15 @@ accountNumber: {
   fontWeight: '500'
 },
 accountBalance: {
-  fontSize: '2rem',
+  fontSize: '1.5rem',
   fontWeight: 'bold',
   color: '#1e40af',
   textAlign: 'right',
-  whiteSpace: 'nowrap',
-  letterSpacing: '-0.5px'
+  whiteSpace: 'normal',
+  letterSpacing: '-0.5px',
+  wordBreak: 'normal',
+  lineHeight: '1.2',
+  minWidth: 'fit-content'
 },
 transactionsSection: {
   background: 'white',
@@ -2855,7 +2875,27 @@ cardsCarousel: {
   scrollSnapType: 'x mandatory',
   WebkitOverflowScrolling: 'touch',
   scrollbarWidth: 'thin',
-  scrollbarColor: '#cbd5e1 #f1f5f9'
+  scrollbarColor: '#cbd5e1 #f1f5f9',
+  position: 'relative'
+},
+cardsScrollIndicator: {
+  display: 'flex',
+  justifyContent: 'center',
+  gap: '0.5rem',
+  marginTop: '0.75rem',
+  alignItems: 'center'
+},
+scrollDot: {
+  width: '8px',
+  height: '8px',
+  borderRadius: '50%',
+  backgroundColor: '#e2e8f0',
+  transition: 'all 0.3s ease'
+},
+scrollDotActive: {
+  width: '24px',
+  borderRadius: '4px',
+  backgroundColor: '#1e40af'
 },
 cardContainer: {
   display: 'flex',
