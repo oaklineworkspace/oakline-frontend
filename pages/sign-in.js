@@ -798,17 +798,17 @@ const styles = {
     margin: 0
   },
   securityWarningBanner: {
-    backgroundColor: '#dc2626',
+    background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
     overflow: 'hidden',
     padding: '1rem 0',
-    borderTop: '3px solid #991b1b',
-    borderBottom: '3px solid #991b1b',
+    borderTop: '3px solid #059669',
+    borderBottom: '3px solid #059669',
     position: 'relative'
   },
   scrollingText: {
     display: 'flex',
     whiteSpace: 'nowrap',
-    animation: 'scroll 40s linear infinite',
+    animation: 'scroll 38s linear infinite',
     willChange: 'transform'
   },
   warningText: {
