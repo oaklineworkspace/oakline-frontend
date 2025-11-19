@@ -1241,12 +1241,8 @@ function DashboardContent() {
                              status?.toLowerCase() === 'reversed' ? '#6b7280' :
                              (isCredit ? '#059669' : '#dc2626')
                     }}>
-                      {showBalance ? (
-                        <>
-                          {isCredit ? '+' : '-'}
-                          {formatCurrency(Math.abs(amount))}
-                        </>
-                      ) : '••••'}
+                      {isCredit ? '+' : '-'}
+                      {formatCurrency(Math.abs(amount))}
                     </div>
                     <div style={{
                       ...styles.statusBadge,
@@ -1341,10 +1337,14 @@ function DashboardContent() {
               marginBottom: '0.75rem',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem'
+              gap: '0.5rem',
+              padding: '0.5rem 0.75rem',
+              backgroundColor: '#f8fafc',
+              borderRadius: '8px',
+              border: '1px solid #e2e8f0'
             }}>
-              <span>👉</span>
-              <span>Swipe left or right to view all your cards</span>
+              <span style={{ fontSize: '1rem' }}>💳</span>
+              <span style={{ fontWeight: '500' }}>Scroll to view all {cards.length} cards</span>
             </div>
           )}
 
