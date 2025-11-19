@@ -28,6 +28,7 @@ function DashboardContent() {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [accountDetailsExpanded, setAccountDetailsExpanded] = useState(false);
+  const [showAccountBalances, setShowAccountBalances] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -991,11 +992,21 @@ function DashboardContent() {
       <section style={styles.accountsSection}>
         <div style={styles.sectionHeaderWithAction}>
           <h3 style={styles.sectionTitle}>Account Details</h3>
-          <Link href="/account-details" style={styles.viewAllLink}>View All Details →</Link>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <button
+              onClick={() => setShowAccountBalances(!showAccountBalances)}
+              style={styles.balanceToggleButton}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+            >
+              {showAccountBalances ? '👁️' : '🔒'}
+            </button>
+            <Link href="/account-details" style={styles.viewAllLink}>View All Details →</Link>
+          </div>
         </div>
 
         <div style={styles.accountsList}>
-          {accounts.slice(0, accountDetailsExpanded ? accounts.length : 2).map(account => (
+          {accounts.slice(0, accountDetailsExpanded ? accounts.length : 1).map(account => (
             <div key={account.id} style={styles.accountItem}>
               <div style={styles.accountInfo}>
                 <div style={styles.accountTypeIcon}>
@@ -1004,26 +1015,26 @@ function DashboardContent() {
                 </div>
                 <div style={styles.accountDetails}>
                   <h4 style={styles.accountName}>
-                    {account.account_type ? account.account_type.replace('_', ' ').toUpperCase() : 'Account'}
+                    {account.account_type ? account.account_type.replace(/_/g, ' ').toUpperCase() : 'Account'}
                   </h4>
                   <span style={styles.accountNumber}>****{account.account_number?.slice(-4)}</span>
                 </div>
               </div>
               <div style={styles.accountBalance}>
-                {formatCurrency(account.balance || 0)}
+                {showAccountBalances ? formatCurrency(account.balance || 0) : '•••••'}
               </div>
             </div>
           ))}
         </div>
 
-        {accounts.length > 2 && (
+        {accounts.length > 1 && (
           <button
             onClick={() => setAccountDetailsExpanded(!accountDetailsExpanded)}
             style={styles.expandAccountsButton}
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e0e7ff'}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
-            {accountDetailsExpanded ? '▲ Show Less' : `▼ Show ${accounts.length - 2} More Account${accounts.length - 2 > 1 ? 's' : ''}`}
+            {accountDetailsExpanded ? '▲ Show Less' : `▼ Show ${accounts.length - 1} More Account${accounts.length - 1 > 1 ? 's' : ''}`}
           </button>
         )}
       </section>
@@ -1322,7 +1333,7 @@ function DashboardContent() {
             <Link href="/cards" style={styles.viewAllLink}>Manage Cards →</Link>
           </div>
 
-          <div style={styles.cardsGrid}>
+          <div style={styles.cardsCarousel}>
             {cards.map(card => (
               <div key={card.id} style={styles.cardContainer}>
                 <div
@@ -2035,18 +2046,17 @@ navButton: {
   display: 'flex',
   alignItems: 'center',
   gap: '0.3rem',
-  padding: '0.5rem 0.75rem',
+  padding: '0.4rem 0.6rem',
   backgroundColor: 'rgba(255,255,255,0.1)',
   color: 'white',
   border: 'none',
   borderRadius: '6px',
   cursor: 'pointer',
-  fontSize: '0.8rem',
+  fontSize: '0.75rem',
   fontWeight: '500',
   transition: 'all 0.2s',
   whiteSpace: 'nowrap',
-  minWidth: 'auto',
-  maxWidth: '140px'
+  width: '110px'
 },
 navIcon: {
   fontSize: '1rem'
@@ -2694,7 +2704,10 @@ accountName: {
   color: '#1e293b',
   margin: '0 0 0.35rem 0',
   textTransform: 'capitalize',
-  letterSpacing: '0.3px'
+  letterSpacing: '0.3px',
+  whiteSpace: 'normal',
+  wordBreak: 'break-word',
+  lineHeight: '1.3'
 },
 accountNumber: {
   fontSize: '0.85rem',
@@ -2703,8 +2716,8 @@ accountNumber: {
   fontWeight: '500'
 },
 accountBalance: {
-  fontSize: '1.25rem',
-  fontWeight: '800',
+  fontSize: '2rem',
+  fontWeight: 'bold',
   color: '#1e40af',
   textAlign: 'right',
   whiteSpace: 'nowrap',
@@ -2815,10 +2828,25 @@ cardsGrid: {
   gap: '1.5rem',
   marginTop: '1rem'
 },
+cardsCarousel: {
+  display: 'flex',
+  overflowX: 'auto',
+  gap: '1.5rem',
+  marginTop: '1rem',
+  paddingBottom: '1rem',
+  scrollSnapType: 'x mandatory',
+  WebkitOverflowScrolling: 'touch',
+  scrollbarWidth: 'thin',
+  scrollbarColor: '#cbd5e1 #f1f5f9'
+},
 cardContainer: {
   display: 'flex',
   flexDirection: 'column',
-  gap: '1rem'
+  gap: '1rem',
+  minWidth: '360px',
+  maxWidth: '360px',
+  scrollSnapAlign: 'start',
+  flexShrink: 0
 },
 cardFlipWrapper: {
   perspective: '1000px',
