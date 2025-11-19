@@ -1362,16 +1362,16 @@ function DashboardContent() {
               if (el && cards.length > 1) {
                 let scrollInterval;
                 let isHovering = false;
-                
+
                 const startAutoScroll = () => {
                   if (scrollInterval) clearInterval(scrollInterval);
-                  
+
                   scrollInterval = setInterval(() => {
                     if (!isHovering && el) {
                       const cardWidth = 360 + 24; // card width + gap
                       const maxScroll = el.scrollWidth - el.clientWidth;
                       const currentScroll = el.scrollLeft;
-                      
+
                       if (currentScroll >= maxScroll - 10) {
                         // Reset to beginning smoothly
                         el.scrollTo({ left: 0, behavior: 'smooth' });
@@ -1382,34 +1382,34 @@ function DashboardContent() {
                     }
                   }, 5000); // Auto-scroll every 5 seconds
                 };
-                
+
                 const handleMouseEnter = () => {
                   isHovering = true;
                 };
-                
+
                 const handleMouseLeave = () => {
                   isHovering = false;
                 };
-                
+
                 const handleTouchStart = () => {
                   isHovering = true;
                   if (scrollInterval) clearInterval(scrollInterval);
                 };
-                
+
                 const handleTouchEnd = () => {
                   setTimeout(() => {
                     isHovering = false;
                     startAutoScroll();
                   }, 2000);
                 };
-                
+
                 el.addEventListener('mouseenter', handleMouseEnter);
                 el.addEventListener('mouseleave', handleMouseLeave);
                 el.addEventListener('touchstart', handleTouchStart);
                 el.addEventListener('touchend', handleTouchEnd);
-                
+
                 startAutoScroll();
-                
+
                 // Cleanup function - but don't return it from ref callback
                 el._cleanup = () => {
                   if (scrollInterval) clearInterval(scrollInterval);
@@ -2092,32 +2092,27 @@ headerContainer: {
   gap: '1rem'
 },
 securityWarningBanner: {
-  background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+  background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
   overflow: 'hidden',
-  padding: '0.75rem 0',
-  borderTop: '2px solid #fca5a5',
-  borderBottom: '2px solid #fca5a5',
-  position: 'relative',
-  height: '3rem',
-  display: 'flex',
-  alignItems: 'center'
+  padding: '1rem 0',
+  borderTop: '3px solid #059669',
+  borderBottom: '3px solid #059669',
+  position: 'relative'
 },
 scrollingText: {
   display: 'flex',
   whiteSpace: 'nowrap',
-  animation: 'scroll 45s linear infinite',
-  willChange: 'transform',
-  gap: '0'
+  animation: 'scroll 38s linear infinite',
+  willChange: 'transform'
 },
 warningText: {
   color: 'white',
-  fontSize: '0.9rem',
+  fontSize: '1rem',
   fontWeight: '700',
-  paddingRight: '200px',
+  paddingRight: '150px',
   display: 'inline-block',
   letterSpacing: '0.5px',
-  textShadow: '0 2px 4px rgba(0,0,0,0.4)',
-  lineHeight: '1.4'
+  textShadow: '0 2px 4px rgba(0,0,0,0.3)'
 },
 headerLeft: {
   display: 'flex',
