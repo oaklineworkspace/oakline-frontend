@@ -214,30 +214,23 @@ export default function Profile() {
     const containerCenterX = containerRect.width / 2;
     const containerCenterY = containerRect.height / 2;
 
-    // Original image dimensions
-    const originalWidth = image.naturalWidth;
-    const originalHeight = image.naturalHeight;
+    // Get image display dimensions
+    const imageRect = image.getBoundingClientRect();
+    const containerOffset = container.getBoundingClientRect();
     
-    // With transformOrigin 'center center', the image's center point is the anchor
-    // Before transform: center is at (originalWidth/2, originalHeight/2) from top-left
-    // After translate: center moves to that position plus imagePosition
-    const imageCenterX = originalWidth / 2 + imagePosition.x;
-    const imageCenterY = originalHeight / 2 + imagePosition.y;
+    // Calculate the position of the crop circle center relative to the displayed image
+    const cropCenterRelativeToImageX = containerCenterX - (imageRect.left - containerOffset.left);
+    const cropCenterRelativeToImageY = containerCenterY - (imageRect.top - containerOffset.top);
     
-    // Vector from image center to crop circle center (in displayed coordinates)
-    const deltaX = containerCenterX - imageCenterX;
-    const deltaY = containerCenterY - imageCenterY;
+    // Convert displayed coordinates to original image coordinates
+    const scaleRatioX = image.naturalWidth / imageRect.width;
+    const scaleRatioY = image.naturalHeight / imageRect.height;
     
-    // Convert this vector to original image coordinates (before scaling)
-    const deltaOriginalX = deltaX / imageScale;
-    const deltaOriginalY = deltaY / imageScale;
-    
-    // Find the crop center position in original image coordinates
-    const cropCenterOriginalX = originalWidth / 2 + deltaOriginalX;
-    const cropCenterOriginalY = originalHeight / 2 + deltaOriginalY;
+    const cropCenterOriginalX = cropCenterRelativeToImageX * scaleRatioX;
+    const cropCenterOriginalY = cropCenterRelativeToImageY * scaleRatioY;
     
     // Calculate crop radius in original image coordinates
-    const cropRadiusOriginal = cropCircleRadius / imageScale;
+    const cropRadiusOriginal = cropCircleRadius * scaleRatioX;
     
     // Calculate the source rectangle on the original image
     const sourceX = cropCenterOriginalX - cropRadiusOriginal;

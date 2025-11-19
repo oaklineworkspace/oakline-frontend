@@ -1246,7 +1246,7 @@ function DashboardContent() {
                           {isCredit ? '+' : '-'}
                           {formatCurrency(Math.abs(amount))}
                         </>
-                      ) : '•••••'}
+                      ) : '••••'}
                     </div>
                     <div style={{
                       ...styles.statusBadge,
