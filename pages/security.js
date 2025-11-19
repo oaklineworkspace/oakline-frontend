@@ -241,6 +241,21 @@ export default function Security() {
             {securitySettings.twoFactorEnabled ? 'Manage 2FA' : 'Setup 2FA'}
           </button>
         </div>
+
+        <div style={styles.settingRow}>
+          <div style={styles.settingInfo}>
+            <h3 style={styles.settingLabel}>Transaction PIN</h3>
+            <p style={styles.settingDescription}>
+              Set up a PIN to authorize wire transfers and sensitive transactions
+            </p>
+          </div>
+          <button 
+            style={styles.actionButton}
+            onClick={() => router.push('/setup-transaction-pin')}
+          >
+            Setup PIN
+          </button>
+        </div>
       </div>
 
       {/* Security Alerts */}
