@@ -51,7 +51,7 @@ export default function LoginPage() {
         setLoadingStage(3);
         await new Promise(resolve => setTimeout(resolve, 600));
 
-        // Navigate to dashboard - no loading stage needed on dashboard
+        // Navigate to dashboard
         router.push('/dashboard');
       }
 
@@ -76,17 +76,18 @@ export default function LoginPage() {
       {loading && (
         <div style={styles.verificationOverlay}>
           <div style={styles.verificationContent}>
-            {/* Bank Logo - Full Color */}
+            {/* Bank Logo */}
             <div style={styles.logoContainerLoading}>
               <img 
                 src="/images/Oakline_Bank_logo_design_c1b04ae0.png" 
                 alt="Oakline Bank" 
                 style={styles.logoImageLoading}
               />
-              <div style={styles.loadingBrandInfo}>
-                <h1 style={styles.loadingBrandName}>Oakline Bank</h1>
-                <p style={styles.loadingBrandTagline}>Secure Banking Platform</p>
-              </div>
+            </div>
+
+            <div style={styles.loadingBrandInfo}>
+              <h1 style={styles.loadingBrandName}>Oakline Bank</h1>
+              <p style={styles.loadingBrandTagline}>Secure Banking Platform</p>
             </div>
 
             {/* Elegant Progress Bar */}
@@ -143,7 +144,7 @@ export default function LoginPage() {
         visibility: loading ? 'hidden' : 'visible',
         transition: 'opacity 0.3s ease, visibility 0.3s ease'
       }}>
-        {/* Professional Header */}
+        {/* Professional Header - Logo on Left */}
         <header style={styles.header}>
           <div style={styles.headerContent}>
             <Link href="/" style={styles.logoLink}>
@@ -160,128 +161,130 @@ export default function LoginPage() {
           </div>
         </header>
 
-        {/* Login Card */}
-        <div style={styles.loginCard}>
-          {/* Card Header */}
-          <div style={styles.cardHeader}>
-            <div style={styles.lockIcon}>🔒</div>
-            <h2 style={styles.cardTitle}>Sign In</h2>
-            <p style={styles.cardSubtitle}>Enter your credentials to access your account</p>
-          </div>
+        {/* Login Card Container */}
+        <div style={styles.mainContent}>
+          <div style={styles.loginCard}>
+            {/* Card Header */}
+            <div style={styles.cardHeader}>
+              <div style={styles.lockIcon}>🔒</div>
+              <h2 style={styles.cardTitle}>Sign In</h2>
+              <p style={styles.cardSubtitle}>Enter your credentials to access your account</p>
+            </div>
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} style={styles.form}>
-            {/* Email Input */}
-            <div style={styles.inputGroup}>
-              <label style={styles.label}>Email Address</label>
-              <div style={styles.inputWrapper}>
-                <span style={styles.inputIcon}>📧</span>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="your.email@example.com"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  style={styles.input}
-                  autoComplete="email"
-                />
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} style={styles.form}>
+              {/* Email Input */}
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Email Address</label>
+                <div style={styles.inputWrapper}>
+                  <span style={styles.inputIcon}>📧</span>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="your.email@example.com"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    style={styles.input}
+                    autoComplete="email"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Password Input */}
-            <div style={styles.inputGroup}>
-              <label style={styles.label}>Password</label>
-              <div style={styles.inputWrapper}>
-                <span style={styles.inputIcon}>🔒</span>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  placeholder="Enter your password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  style={styles.input}
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={styles.passwordToggle}
-                >
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
-                </button>
+              {/* Password Input */}
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Password</label>
+                <div style={styles.inputWrapper}>
+                  <span style={styles.inputIcon}>🔒</span>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    placeholder="Enter your password"
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    style={styles.input}
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={styles.passwordToggle}
+                  >
+                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* Remember Me & Forgot Password */}
-            <div style={styles.formOptions}>
-              <label style={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  style={styles.checkbox}
-                />
-                <span style={styles.checkboxText}>Remember me</span>
-              </label>
-              <Link href="/reset-password" style={styles.forgotLink}>
-                Forgot password?
-              </Link>
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div style={styles.errorMessage}>
-                <span style={styles.errorIcon}>⚠️</span>
-                <span>{error}</span>
+              {/* Remember Me & Forgot Password */}
+              <div style={styles.formOptions}>
+                <label style={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    style={styles.checkbox}
+                  />
+                  <span style={styles.checkboxText}>Remember me</span>
+                </label>
+                <Link href="/reset-password" style={styles.forgotLink}>
+                  Forgot password?
+                </Link>
               </div>
-            )}
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading || !formData.email || !formData.password}
-              style={{
-                ...styles.submitButton,
-                opacity: (loading || !formData.email || !formData.password) ? 0.6 : 1,
-                cursor: (loading || !formData.email || !formData.password) ? 'not-allowed' : 'pointer'
-              }}
-            >
-              {loading ? 'Signing in...' : 'Sign In'}
-            </button>
-          </form>
+              {/* Error Message */}
+              {error && (
+                <div style={styles.errorMessage}>
+                  <span style={styles.errorIcon}>⚠️</span>
+                  <span>{error}</span>
+                </div>
+              )}
 
-          {/* Divider */}
-          <div style={styles.divider}>
-            <span style={styles.dividerLine}></span>
-            <span style={styles.dividerText}>or</span>
-            <span style={styles.dividerLine}></span>
-          </div>
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading || !formData.email || !formData.password}
+                style={{
+                  ...styles.submitButton,
+                  opacity: (loading || !formData.email || !formData.password) ? 0.6 : 1,
+                  cursor: (loading || !formData.email || !formData.password) ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {loading ? 'Signing in...' : 'Sign In'}
+              </button>
+            </form>
 
-          {/* Sign Up Link */}
-          <div style={styles.signupSection}>
-            <p style={styles.signupText}>
-              Don't have an account?{' '}
-              <Link href="/apply" style={styles.signupLink}>
-                Open Account
-              </Link>
-            </p>
-          </div>
-
-          {/* Trust Badges */}
-          <div style={styles.trustBadges}>
-            <div style={styles.trustBadge}>
-              <span style={styles.trustIcon}>🔐</span>
-              <span style={styles.trustText}>SSL Secured</span>
+            {/* Divider */}
+            <div style={styles.divider}>
+              <span style={styles.dividerLine}></span>
+              <span style={styles.dividerText}>or</span>
+              <span style={styles.dividerLine}></span>
             </div>
-            <div style={styles.trustBadge}>
-              <span style={styles.trustIcon}>🏛️</span>
-              <span style={styles.trustText}>FDIC Insured</span>
+
+            {/* Sign Up Link */}
+            <div style={styles.signupSection}>
+              <p style={styles.signupText}>
+                Don't have an account?{' '}
+                <Link href="/apply" style={styles.signupLink}>
+                  Open Account
+                </Link>
+              </p>
             </div>
-            <div style={styles.trustBadge}>
-              <span style={styles.trustIcon}>✓</span>
-              <span style={styles.trustText}>SOC 2 Certified</span>
+
+            {/* Trust Badges */}
+            <div style={styles.trustBadges}>
+              <div style={styles.trustBadge}>
+                <span style={styles.trustIcon}>🔐</span>
+                <span style={styles.trustText}>SSL Secured</span>
+              </div>
+              <div style={styles.trustBadge}>
+                <span style={styles.trustIcon}>🏛️</span>
+                <span style={styles.trustText}>FDIC Insured</span>
+              </div>
+              <div style={styles.trustBadge}>
+                <span style={styles.trustIcon}>✓</span>
+                <span style={styles.trustText}>SOC 2 Certified</span>
+              </div>
             </div>
           </div>
         </div>
@@ -310,11 +313,6 @@ export default function LoginPage() {
           to { opacity: 1; }
         }
 
-        @keyframes progressRing {
-          0% { stroke-dashoffset: 339.292; }
-          100% { stroke-dashoffset: 0; }
-        }
-
         input[type="checkbox"] {
           appearance: auto;
           -webkit-appearance: auto;
@@ -341,7 +339,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'linear-gradient(135deg, #1a365d 0%, #2563eb 100%)'
+    background: 'linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)'
   },
   spinner: {
     width: '50px',
@@ -357,7 +355,7 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
+    background: 'linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -368,27 +366,27 @@ const styles = {
     textAlign: 'center',
     maxWidth: '550px',
     padding: '3rem 2rem',
-    width: '100%',
+    width: '90%',
     background: 'rgba(255, 255, 255, 0.05)',
     borderRadius: '24px',
     backdropFilter: 'blur(20px)',
-    border: '1px solid rgba(255, 200, 87, 0.2)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
     boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
   },
   logoContainerLoading: {
-    marginBottom: '2.5rem',
+    marginBottom: '1.5rem',
     display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '1rem'
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   logoImageLoading: {
-    height: '100px',
+    height: '80px',
     width: 'auto',
     animation: 'pulse 2s ease-in-out infinite'
   },
   loadingBrandInfo: {
-    textAlign: 'center'
+    textAlign: 'center',
+    marginBottom: '2rem'
   },
   loadingBrandName: {
     fontSize: '2rem',
@@ -399,7 +397,7 @@ const styles = {
   },
   loadingBrandTagline: {
     fontSize: '0.95rem',
-    color: '#FFC857',
+    color: 'rgba(255, 255, 255, 0.8)',
     margin: 0,
     fontWeight: '500'
   },
@@ -417,15 +415,15 @@ const styles = {
   },
   progressBarFill: {
     height: '100%',
-    background: 'linear-gradient(90deg, #FFC857 0%, #FFD687 100%)',
+    background: 'linear-gradient(90deg, #059669 0%, #10b981 100%)',
     borderRadius: '10px',
     transition: 'width 0.5s ease',
-    boxShadow: '0 0 20px rgba(255, 200, 87, 0.6)'
+    boxShadow: '0 0 20px rgba(5, 150, 105, 0.6)'
   },
   progressPercentage: {
     fontSize: '1.25rem',
     fontWeight: '700',
-    color: '#FFC857',
+    color: '#10b981',
     textAlign: 'center'
   },
   loadingMessageContainer: {
@@ -446,23 +444,23 @@ const styles = {
   },
   securityBadge: {
     padding: '1.25rem 1.5rem',
-    backgroundColor: 'rgba(255, 200, 87, 0.15)',
+    backgroundColor: 'rgba(5, 150, 105, 0.15)',
     borderRadius: '16px',
     backdropFilter: 'blur(10px)',
-    border: '2px solid rgba(255, 200, 87, 0.3)',
+    border: '2px solid rgba(5, 150, 105, 0.3)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '1rem',
     maxWidth: '350px',
     margin: '2rem auto 0',
-    boxShadow: '0 4px 15px rgba(255, 200, 87, 0.2)'
+    boxShadow: '0 4px 15px rgba(5, 150, 105, 0.2)'
   },
   securityIconWrapper: {
     width: '48px',
     height: '48px',
     borderRadius: '50%',
-    background: 'rgba(255, 200, 87, 0.2)',
+    background: 'rgba(5, 150, 105, 0.2)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -480,7 +478,7 @@ const styles = {
   },
   securitySubtext: {
     fontSize: '0.8rem',
-    color: 'rgba(255, 200, 87, 0.9)',
+    color: 'rgba(255, 255, 255, 0.7)',
     margin: 0,
     fontWeight: '500',
     textAlign: 'left'
@@ -490,11 +488,11 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    background: 'linear-gradient(135deg, #F5F6F8 0%, #e0f2fe 100%)'
+    background: 'linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)'
   },
   header: {
     background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
-    borderBottom: '3px solid #FFC857',
+    borderBottom: '3px solid #059669',
     boxShadow: '0 4px 12px rgba(26, 62, 111, 0.3)',
     position: 'sticky',
     top: 0,
@@ -505,7 +503,7 @@ const styles = {
     margin: '0 auto',
     padding: '1rem 1.5rem',
     display: 'flex',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center'
   },
   logoLink: {
@@ -532,28 +530,30 @@ const styles = {
   },
   brandTagline: {
     fontSize: '0.85rem',
-    color: '#FFC857',
+    color: 'rgba(255, 255, 255, 0.8)',
     fontWeight: '500'
   },
-  loginCard: {
+  mainContent: {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
     padding: '2rem 1rem',
+    width: '100%'
+  },
+  loginCard: {
     width: '100%',
     maxWidth: '480px',
-    margin: '0 auto'
+    backgroundColor: 'white',
+    borderRadius: '20px',
+    boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+    overflow: 'hidden'
   },
   cardHeader: {
     textAlign: 'center',
-    marginBottom: '2rem',
-    width: '100%',
-    background: 'white',
     padding: '2rem',
-    borderRadius: '16px 16px 0 0',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+    background: 'white'
   },
   lockIcon: {
     fontSize: '3rem',
@@ -732,8 +732,7 @@ const styles = {
     width: '100%',
     background: 'white',
     padding: '1.5rem 2rem 2rem',
-    borderRadius: '0 0 16px 16px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+    borderRadius: '0 0 20px 20px'
   },
   trustBadge: {
     display: 'flex',
@@ -753,7 +752,7 @@ const styles = {
     background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
     padding: '1.5rem',
     textAlign: 'center',
-    borderTop: '2px solid #FFC857'
+    borderTop: '2px solid #059669'
   },
   footerText: {
     color: 'rgba(255, 255, 255, 0.9)',
