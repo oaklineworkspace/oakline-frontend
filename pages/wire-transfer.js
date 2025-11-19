@@ -34,6 +34,8 @@ export default function WireTransfer() {
   const [selectedTransfer, setSelectedTransfer] = useState(null); // For transfer details modal
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [transactionPin, setTransactionPin] = useState('');
+  const [verifyingPin, setVerifyingPin] = useState(false);
 
   const [wireForm, setWireForm] = useState({
     from_account_id: '',
@@ -206,6 +208,9 @@ export default function WireTransfer() {
         return;
       }
       setCurrentStep(4);
+    } else if (currentStep === 4) {
+      // Verify PIN before proceeding to final confirmation
+      await verifyTransactionPin();
     }
   };
 
@@ -248,6 +253,49 @@ export default function WireTransfer() {
       setMessageType('error');
     } finally {
       setSendingCode(false);
+    }
+  };
+
+  const verifyTransactionPin = async () => {
+    if (!transactionPin || transactionPin.length < 4) {
+      setMessage('Please enter your transaction PIN');
+      setMessageType('error');
+      return;
+    }
+
+    setVerifyingPin(true);
+    setMessage('');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const response = await fetch('/api/verify-transaction-pin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          pin: transactionPin,
+          type: 'wire_transfer'
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Invalid PIN');
+      }
+
+      setMessage('PIN verified successfully');
+      setMessageType('success');
+      setCurrentStep(5);
+    } catch (error) {
+      console.error('Error verifying PIN:', error);
+      setMessage(error.message || 'Invalid PIN. Please try again.');
+      setMessageType('error');
+    } finally {
+      setVerifyingPin(false);
     }
   };
 
@@ -1096,7 +1144,7 @@ export default function WireTransfer() {
                 opacity: currentStep >= 3 ? 1 : 0.6,
                 fontWeight: currentStep === 3 ? '700' : '600'
               }}>
-                Verify Code
+                Email Code
               </span>
             </div>
             <div style={{
@@ -1118,7 +1166,29 @@ export default function WireTransfer() {
                 opacity: currentStep >= 4 ? 1 : 0.6,
                 fontWeight: currentStep === 4 ? '700' : '600'
               }}>
-                Submit Transfer
+                Verify PIN
+              </span>
+            </div>
+            <div style={{
+              ...styles.stepDivider,
+              backgroundColor: currentStep >= 5 ? '#059669' : 'rgba(255,255,255,0.3)'
+            }}></div>
+            <div style={styles.step}>
+              <div style={{
+                ...styles.stepCircle,
+                backgroundColor: currentStep >= 5 ? '#059669' : 'rgba(255,255,255,0.2)',
+                color: currentStep >= 5 ? 'white' : 'rgba(255,255,255,0.6)',
+                borderColor: currentStep === 5 ? '#FFC857' : 'transparent',
+                transform: currentStep === 5 ? 'scale(1.05)' : 'scale(1)'
+              }}>
+                {currentStep > 5 ? '✓' : '5'}
+              </div>
+              <span style={{
+                ...styles.stepLabel,
+                opacity: currentStep >= 5 ? 1 : 0.6,
+                fontWeight: currentStep === 5 ? '700' : '600'
+              }}>
+                Submit
               </span>
             </div>
           </div>
@@ -1792,6 +1862,90 @@ export default function WireTransfer() {
                   )}
 
                   {currentStep === 4 && (
+                    <>
+                      <div style={{
+                        backgroundColor: '#f0fdf4',
+                        border: '2px solid #059669',
+                        borderRadius: '12px',
+                        padding: '1.5rem',
+                        marginBottom: '1.5rem',
+                        textAlign: 'center'
+                      }}>
+                        <p style={{ fontSize: '1rem', color: '#047857', margin: '0 0 0.5rem 0', fontWeight: '700' }}>
+                          🔐 Transaction PIN Required
+                        </p>
+                        <p style={{ fontSize: '0.9375rem', color: '#047857', margin: 0, lineHeight: '1.6' }}>
+                          For your security, please enter your transaction PIN to authorize this wire transfer.
+                        </p>
+                      </div>
+
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Enter Your Transaction PIN *</label>
+                        <input
+                          type="password"
+                          maxLength={6}
+                          value={transactionPin}
+                          onChange={(e) => setTransactionPin(e.target.value.replace(/\D/g, ''))}
+                          style={{
+                            ...styles.input,
+                            fontSize: '1.5rem',
+                            textAlign: 'center',
+                            letterSpacing: '0.5rem',
+                            fontWeight: '700',
+                            padding: '1rem'
+                          }}
+                          placeholder="••••••"
+                          required
+                        />
+                        <p style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '0.5rem' }}>
+                          Don't have a transaction PIN? <a href="/security" style={{ color: '#059669', textDecoration: 'underline' }}>Set it up in Security settings</a>
+                        </p>
+                      </div>
+
+                      <div style={{
+                        backgroundColor: '#fef3c7',
+                        border: '2px solid #f59e0b',
+                        borderRadius: '10px',
+                        padding: '1rem',
+                        marginTop: '1.5rem',
+                        marginBottom: '1.5rem'
+                      }}>
+                        <p style={{ fontSize: '0.875rem', color: '#92400e', margin: 0 }}>
+                          <strong>🔐 Important:</strong> Your transaction PIN adds an extra layer of security. Never share your PIN with anyone.
+                        </p>
+                      </div>
+
+                      <div style={styles.buttonGroup}>
+                        <button
+                          type="button"
+                          onClick={handlePreviousStep}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: '#64748b',
+                            color: 'white'
+                          }}
+                        >
+                          ← Back
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleNextStep}
+                          disabled={!transactionPin || transactionPin.length < 4 || verifyingPin}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? '#cbd5e1' : '#059669',
+                            color: 'white',
+                            cursor: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? 'not-allowed' : 'pointer',
+                            opacity: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? 0.7 : 1
+                          }}
+                        >
+                          {verifyingPin ? '🔄 Verifying...' : 'Verify PIN & Continue →'}
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {currentStep === 5 && (
                     <>
                       <div style={styles.reviewSection}>
                         <div style={styles.reviewTitle}>✅ Final Confirmation</div>
