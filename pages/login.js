@@ -127,166 +127,191 @@ export default function LoginPage() {
         ...styles.pageContainer,
         display: loading ? 'none' : 'flex'
       }}>
-        {/* Left Side - Branding */}
-        <div style={styles.brandingSide}>
-          <div style={styles.brandingContent}>
-            <div style={styles.brandLogo}>
+        {/* Combined Content for Mobile Portrait */}
+        <div style={styles.contentWrapper}>
+          
+          {/* Logo and Branding Header - Visible on Mobile */}
+          <div style={styles.mobileHeader}>
+            <div style={styles.mobileLogo}>
               <div style={styles.logoIcon}>🏦</div>
-              <h1 style={styles.brandName}>Oakline Bank</h1>
+              <h1 style={styles.mobileBrandName}>Oakline Bank</h1>
             </div>
-            
-            <h2 style={styles.brandingTitle}>
-              Welcome Back to Modern Banking
-            </h2>
-            
-            <p style={styles.brandingSubtitle}>
-              Access your accounts securely from anywhere, anytime
-            </p>
+            <p style={styles.mobileTagline}>Secure Modern Banking</p>
+          </div>
 
-            {/* Features List */}
-            <div style={styles.featuresList}>
-              <div style={styles.featureItem}>
-                <span style={styles.featureIcon}>✓</span>
-                <span style={styles.featureText}>Bank-level Security</span>
+          {/* Login Form Container */}
+          <div style={styles.formSide}>
+            <div style={styles.formContainer}>
+              {/* Header */}
+              <div style={styles.formHeader}>
+                <h2 style={styles.formTitle}>Sign In</h2>
+                <p style={styles.formSubtitle}>Enter your credentials to access your account</p>
               </div>
-              <div style={styles.featureItem}>
-                <span style={styles.featureIcon}>✓</span>
-                <span style={styles.featureText}>Instant Transfers</span>
+
+              {/* Login Form */}
+              <form onSubmit={handleSubmit} style={styles.form}>
+                {/* Email Input */}
+                <div style={styles.inputGroup}>
+                  <label style={styles.label}>Email Address</label>
+                  <div style={styles.inputWrapper}>
+                    <span style={styles.inputIcon}>📧</span>
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="your.email@example.com"
+                      required
+                      value={formData.email}
+                      onChange={handleChange}
+                      style={styles.input}
+                      autoComplete="email"
+                    />
+                  </div>
+                </div>
+
+                {/* Password Input */}
+                <div style={styles.inputGroup}>
+                  <label style={styles.label}>Password</label>
+                  <div style={styles.inputWrapper}>
+                    <span style={styles.inputIcon}>🔒</span>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      placeholder="Enter your password"
+                      required
+                      value={formData.password}
+                      onChange={handleChange}
+                      style={styles.input}
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={styles.passwordToggle}
+                    >
+                      {showPassword ? '👁️' : '👁️‍🗨️'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Remember Me & Forgot Password */}
+                <div style={styles.formOptions}>
+                  <label style={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      style={styles.checkbox}
+                    />
+                    <span style={styles.checkboxText}>Remember me</span>
+                  </label>
+                  <Link href="/reset-password" style={styles.forgotLink}>
+                    Forgot password?
+                  </Link>
+                </div>
+
+                {/* Error Message */}
+                {error && (
+                  <div style={styles.errorMessage}>
+                    <span style={styles.errorIcon}>⚠️</span>
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={loading || !formData.email || !formData.password}
+                  style={{
+                    ...styles.submitButton,
+                    opacity: (loading || !formData.email || !formData.password) ? 0.6 : 1,
+                    cursor: (loading || !formData.email || !formData.password) ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {loading ? 'Signing in...' : 'Sign In'}
+                </button>
+              </form>
+
+              {/* Divider */}
+              <div style={styles.divider}>
+                <span style={styles.dividerLine}></span>
+                <span style={styles.dividerText}>or</span>
+                <span style={styles.dividerLine}></span>
               </div>
-              <div style={styles.featureItem}>
-                <span style={styles.featureIcon}>✓</span>
-                <span style={styles.featureText}>24/7 Access</span>
+
+              {/* Sign Up Link */}
+              <div style={styles.signupSection}>
+                <p style={styles.signupText}>
+                  Don't have an account?{' '}
+                  <Link href="/apply" style={styles.signupLink}>
+                    Open Account
+                  </Link>
+                </p>
               </div>
-              <div style={styles.featureItem}>
-                <span style={styles.featureIcon}>✓</span>
-                <span style={styles.featureText}>Mobile Banking</span>
+
+              {/* Trust Badges */}
+              <div style={styles.trustBadges}>
+                <div style={styles.trustBadge}>
+                  <span style={styles.trustIcon}>🔐</span>
+                  <span style={styles.trustText}>SSL Secured</span>
+                </div>
+                <div style={styles.trustBadge}>
+                  <span style={styles.trustIcon}>🏛️</span>
+                  <span style={styles.trustText}>FDIC Insured</span>
+                </div>
+                <div style={styles.trustBadge}>
+                  <span style={styles.trustIcon}>✓</span>
+                  <span style={styles.trustText}>SOC 2 Certified</span>
+                </div>
+              </div>
+
+              {/* Features List - Mobile */}
+              <div style={styles.mobileFeaturesList}>
+                <div style={styles.mobileFeatureItem}>
+                  <span style={styles.featureIcon}>✓</span>
+                  <span style={styles.featureText}>Bank-level Security</span>
+                </div>
+                <div style={styles.mobileFeatureItem}>
+                  <span style={styles.featureIcon}>✓</span>
+                  <span style={styles.featureText}>24/7 Access</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Right Side - Login Form */}
-        <div style={styles.formSide}>
-          <div style={styles.formContainer}>
-            {/* Header */}
-            <div style={styles.formHeader}>
-              <h2 style={styles.formTitle}>Sign In</h2>
-              <p style={styles.formSubtitle}>Enter your credentials to access your account</p>
-            </div>
-
-            {/* Login Form */}
-            <form onSubmit={handleSubmit} style={styles.form}>
-              {/* Email Input */}
-              <div style={styles.inputGroup}>
-                <label style={styles.label}>Email Address</label>
-                <div style={styles.inputWrapper}>
-                  <span style={styles.inputIcon}>📧</span>
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="your.email@example.com"
-                    required
-                    value={formData.email}
-                    onChange={handleChange}
-                    style={styles.input}
-                    autoComplete="email"
-                  />
-                </div>
+          {/* Branding Side - Hidden on Mobile Portrait */}
+          <div style={styles.brandingSide}>
+            <div style={styles.brandingContent}>
+              <div style={styles.brandLogo}>
+                <div style={styles.logoIcon}>🏦</div>
+                <h1 style={styles.brandName}>Oakline Bank</h1>
               </div>
-
-              {/* Password Input */}
-              <div style={styles.inputGroup}>
-                <label style={styles.label}>Password</label>
-                <div style={styles.inputWrapper}>
-                  <span style={styles.inputIcon}>🔒</span>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    placeholder="Enter your password"
-                    required
-                    value={formData.password}
-                    onChange={handleChange}
-                    style={styles.input}
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={styles.passwordToggle}
-                  >
-                    {showPassword ? '👁️' : '👁️‍🗨️'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Remember Me & Forgot Password */}
-              <div style={styles.formOptions}>
-                <label style={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    style={styles.checkbox}
-                  />
-                  <span style={styles.checkboxText}>Remember me</span>
-                </label>
-                <Link href="/reset-password" style={styles.forgotLink}>
-                  Forgot password?
-                </Link>
-              </div>
-
-              {/* Error Message */}
-              {error && (
-                <div style={styles.errorMessage}>
-                  <span style={styles.errorIcon}>⚠️</span>
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={loading || !formData.email || !formData.password}
-                style={{
-                  ...styles.submitButton,
-                  opacity: (loading || !formData.email || !formData.password) ? 0.6 : 1,
-                  cursor: (loading || !formData.email || !formData.password) ? 'not-allowed' : 'pointer'
-                }}
-              >
-                {loading ? 'Signing in...' : 'Sign In'}
-              </button>
-            </form>
-
-            {/* Divider */}
-            <div style={styles.divider}>
-              <span style={styles.dividerLine}></span>
-              <span style={styles.dividerText}>or</span>
-              <span style={styles.dividerLine}></span>
-            </div>
-
-            {/* Sign Up Link */}
-            <div style={styles.signupSection}>
-              <p style={styles.signupText}>
-                Don't have an account?{' '}
-                <Link href="/apply" style={styles.signupLink}>
-                  Open Account
-                </Link>
+              
+              <h2 style={styles.brandingTitle}>
+                Welcome Back to Modern Banking
+              </h2>
+              
+              <p style={styles.brandingSubtitle}>
+                Access your accounts securely from anywhere, anytime
               </p>
-            </div>
 
-            {/* Trust Badges */}
-            <div style={styles.trustBadges}>
-              <div style={styles.trustBadge}>
-                <span style={styles.trustIcon}>🔐</span>
-                <span style={styles.trustText}>SSL Secured</span>
-              </div>
-              <div style={styles.trustBadge}>
-                <span style={styles.trustIcon}>🏛️</span>
-                <span style={styles.trustText}>FDIC Insured</span>
-              </div>
-              <div style={styles.trustBadge}>
-                <span style={styles.trustIcon}>✓</span>
-                <span style={styles.trustText}>SOC 2 Certified</span>
+              {/* Features List */}
+              <div style={styles.featuresList}>
+                <div style={styles.featureItem}>
+                  <span style={styles.featureIcon}>✓</span>
+                  <span style={styles.featureText}>Bank-level Security</span>
+                </div>
+                <div style={styles.featureItem}>
+                  <span style={styles.featureIcon}>✓</span>
+                  <span style={styles.featureText}>Instant Transfers</span>
+                </div>
+                <div style={styles.featureItem}>
+                  <span style={styles.featureIcon}>✓</span>
+                  <span style={styles.featureText}>24/7 Access</span>
+                </div>
+                <div style={styles.featureItem}>
+                  <span style={styles.featureIcon}>✓</span>
+                  <span style={styles.featureText}>Mobile Banking</span>
+                </div>
               </div>
             </div>
           </div>
@@ -312,6 +337,13 @@ export default function LoginPage() {
           to {
             opacity: 1;
             transform: translateY(0);
+          }
+        }
+
+        /* Mobile Portrait Styles */
+        @media (max-width: 768px) and (orientation: portrait) {
+          input, select, textarea {
+            font-size: 16px !important;
           }
         }
       `}</style>
@@ -416,7 +448,39 @@ const styles = {
   pageContainer: {
     minHeight: '100vh',
     display: 'flex',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    backgroundColor: '#f8fafc',
+    overflow: 'auto'
+  },
+  contentWrapper: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row',
+    minHeight: '100vh'
+  },
+  mobileHeader: {
+    display: 'none',
+    textAlign: 'center',
+    padding: '1.5rem 1rem 1rem',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    color: 'white'
+  },
+  mobileLogo: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.75rem',
+    marginBottom: '0.5rem'
+  },
+  mobileBrandName: {
+    fontSize: '1.5rem',
+    fontWeight: '700',
+    margin: 0
+  },
+  mobileTagline: {
+    fontSize: '0.9rem',
+    opacity: 0.9,
+    margin: 0
   },
   brandingSide: {
     flex: 1,
@@ -479,37 +543,38 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '3rem',
-    backgroundColor: '#f8fafc'
+    padding: '2rem 1rem',
+    backgroundColor: '#f8fafc',
+    overflowY: 'auto'
   },
   formContainer: {
     width: '100%',
     maxWidth: '450px',
     backgroundColor: 'white',
     borderRadius: '24px',
-    padding: '3rem',
+    padding: '2rem 1.5rem',
     boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)'
   },
   formHeader: {
-    marginBottom: '2.5rem',
+    marginBottom: '2rem',
     textAlign: 'center'
   },
   formTitle: {
-    fontSize: '2rem',
+    fontSize: '1.8rem',
     fontWeight: '700',
     color: '#1e293b',
     marginBottom: '0.5rem',
     margin: 0
   },
   formSubtitle: {
-    fontSize: '1rem',
+    fontSize: '0.95rem',
     color: '#64748b',
     margin: 0
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '1.5rem'
+    gap: '1.25rem'
   },
   inputGroup: {
     display: 'flex',
@@ -517,7 +582,7 @@ const styles = {
     gap: '0.5rem'
   },
   label: {
-    fontSize: '0.95rem',
+    fontSize: '0.9rem',
     fontWeight: '600',
     color: '#334155'
   },
@@ -534,7 +599,7 @@ const styles = {
   },
   input: {
     width: '100%',
-    padding: '1rem 1rem 1rem 3rem',
+    padding: '0.875rem 1rem 0.875rem 3rem',
     border: '2px solid #e2e8f0',
     borderRadius: '12px',
     fontSize: '1rem',
@@ -560,7 +625,9 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    fontSize: '0.9rem'
+    fontSize: '0.85rem',
+    flexWrap: 'wrap',
+    gap: '0.5rem'
   },
   checkboxLabel: {
     display: 'flex',
@@ -588,12 +655,12 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.75rem',
-    padding: '1rem',
+    padding: '0.875rem',
     backgroundColor: '#fee2e2',
     border: '2px solid #fca5a5',
     borderRadius: '12px',
     color: '#dc2626',
-    fontSize: '0.9rem',
+    fontSize: '0.85rem',
     fontWeight: '600'
   },
   errorIcon: {
@@ -601,12 +668,12 @@ const styles = {
   },
   submitButton: {
     width: '100%',
-    padding: '1.125rem',
+    padding: '1rem',
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     color: 'white',
     border: 'none',
     borderRadius: '12px',
-    fontSize: '1.05rem',
+    fontSize: '1rem',
     fontWeight: '700',
     transition: 'all 0.3s ease',
     boxShadow: '0 10px 25px rgba(102, 126, 234, 0.4)',
@@ -616,7 +683,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '1rem',
-    margin: '2rem 0'
+    margin: '1.5rem 0'
   },
   dividerLine: {
     flex: 1,
@@ -625,16 +692,16 @@ const styles = {
   },
   dividerText: {
     color: '#94a3b8',
-    fontSize: '0.9rem',
+    fontSize: '0.85rem',
     fontWeight: '500'
   },
   signupSection: {
     textAlign: 'center',
-    marginBottom: '2rem'
+    marginBottom: '1.5rem'
   },
   signupText: {
     color: '#64748b',
-    fontSize: '1rem',
+    fontSize: '0.95rem',
     margin: 0
   },
   signupLink: {
@@ -646,9 +713,10 @@ const styles = {
   trustBadges: {
     display: 'flex',
     justifyContent: 'center',
-    gap: '1.5rem',
-    paddingTop: '2rem',
-    borderTop: '1px solid #e2e8f0'
+    gap: '1rem',
+    paddingTop: '1.5rem',
+    borderTop: '1px solid #e2e8f0',
+    flexWrap: 'wrap'
   },
   trustBadge: {
     display: 'flex',
@@ -660,8 +728,85 @@ const styles = {
     fontSize: '1.5rem'
   },
   trustText: {
-    fontSize: '0.75rem',
+    fontSize: '0.7rem',
     color: '#64748b',
     fontWeight: '600'
+  },
+  mobileFeaturesList: {
+    display: 'none',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: '1.5rem',
+    marginTop: '1rem',
+    paddingTop: '1rem',
+    borderTop: '1px solid #e2e8f0'
+  },
+  mobileFeatureItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    fontSize: '0.85rem',
+    color: '#475569'
+  },
+
+  // Mobile Portrait Responsive Styles
+  '@media (max-width: 768px) and (orientation: portrait)': {
+    pageContainer: {
+      flexDirection: 'column'
+    },
+    contentWrapper: {
+      flexDirection: 'column'
+    },
+    mobileHeader: {
+      display: 'block'
+    },
+    brandingSide: {
+      display: 'none'
+    },
+    formSide: {
+      padding: '1rem 0.75rem',
+      minHeight: 'auto'
+    },
+    formContainer: {
+      padding: '1.5rem 1.25rem',
+      borderRadius: '20px',
+      maxWidth: '100%'
+    },
+    formTitle: {
+      fontSize: '1.5rem'
+    },
+    formSubtitle: {
+      fontSize: '0.85rem'
+    },
+    input: {
+      padding: '0.75rem 0.875rem 0.75rem 2.75rem',
+      fontSize: '16px'
+    },
+    submitButton: {
+      padding: '0.875rem',
+      fontSize: '0.95rem'
+    },
+    mobileFeaturesList: {
+      display: 'flex'
+    },
+    trustBadges: {
+      gap: '0.75rem'
+    },
+    trustIcon: {
+      fontSize: '1.25rem'
+    },
+    trustText: {
+      fontSize: '0.65rem'
+    }
+  },
+
+  // Landscape and larger screens
+  '@media (min-width: 769px), (orientation: landscape)': {
+    mobileHeader: {
+      display: 'none'
+    },
+    mobileFeaturesList: {
+      display: 'none'
+    }
   }
 };
