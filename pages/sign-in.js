@@ -800,24 +800,29 @@ const styles = {
   securityWarningBanner: {
     background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
     overflow: 'hidden',
-    padding: '1rem 0',
+    padding: '0.875rem 0',
     borderTop: '3px solid #059669',
     borderBottom: '3px solid #059669',
-    position: 'relative'
+    position: 'relative',
+    height: '3.5rem',
+    display: 'flex',
+    alignItems: 'center'
   },
   scrollingText: {
     display: 'flex',
     whiteSpace: 'nowrap',
     animation: 'scroll 38s linear infinite',
-    willChange: 'transform'
+    willChange: 'transform',
+    gap: '0'
   },
   warningText: {
     color: 'white',
-    fontSize: '1rem',
+    fontSize: '0.95rem',
     fontWeight: '700',
     paddingRight: '150px',
     display: 'inline-block',
     letterSpacing: '0.5px',
-    textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+    textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+    lineHeight: '1.4'
   }
 };
