@@ -27,6 +27,7 @@ function DashboardContent() {
   const [addFundsDropdownVisible, setAddFundsDropdownVisible] = useState(false); // State to control add funds dropdown visibility
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [accountDetailsExpanded, setAccountDetailsExpanded] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -102,6 +103,9 @@ function DashboardContent() {
 
       if (accountsData && accountsData.length > 0) {
         const accountIds = accountsData.map(acc => acc.id);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
         const { data: txData, error: txError } = await supabase
           .from('transactions')
           .select(`
@@ -112,8 +116,9 @@ function DashboardContent() {
             )
           `)
           .in('account_id', accountIds)
+          .gte('created_at', thirtyDaysAgo.toISOString())
           .order('created_at', { ascending: false })
-          .limit(50);
+          .limit(10);
 
         if (!txError && txData) {
           transactionsData = txData || [];
@@ -365,10 +370,9 @@ function DashboardContent() {
         return tx;
       });
 
-      // Sort all transactions and limit to 10
+      // Sort all transactions (already limited to 10 from last 30 days in query)
       transactionsData = transactionsData
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        .slice(0, 10);
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
       setTransactions(transactionsData);
 
@@ -508,7 +512,7 @@ function DashboardContent() {
 
   const getUserDisplayName = () => {
     if (userProfile) {
-      return `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim();
+      return userProfile.first_name || `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim();
     }
     return user?.email?.split('@')[0] || 'User';
   };
@@ -991,7 +995,7 @@ function DashboardContent() {
         </div>
 
         <div style={styles.accountsList}>
-          {accounts.map(account => (
+          {accounts.slice(0, accountDetailsExpanded ? accounts.length : 2).map(account => (
             <div key={account.id} style={styles.accountItem}>
               <div style={styles.accountInfo}>
                 <div style={styles.accountTypeIcon}>
@@ -1011,6 +1015,17 @@ function DashboardContent() {
             </div>
           ))}
         </div>
+
+        {accounts.length > 2 && (
+          <button
+            onClick={() => setAccountDetailsExpanded(!accountDetailsExpanded)}
+            style={styles.expandAccountsButton}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e0e7ff'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            {accountDetailsExpanded ? '▲ Show Less' : `▼ Show ${accounts.length - 2} More Account${accounts.length - 2 > 1 ? 's' : ''}`}
+          </button>
+        )}
       </section>
 
       {/* Recent Transactions - Moved after Account Details */}
@@ -1235,8 +1250,8 @@ function DashboardContent() {
           ) : (
             <div style={styles.emptyState}>
               <span style={styles.emptyIcon}>📭</span>
-              <h4 style={styles.emptyTitle}>No recent transactions</h4>
-              <p style={styles.emptyDesc}>Your transaction history will appear here.</p>
+              <h4 style={styles.emptyTitle}>No recent transactions in the last 30 days</h4>
+              <p style={styles.emptyDesc}>Your transaction history will appear here when you make transactions.</p>
             </div>
           )}
         </div>
@@ -2621,6 +2636,23 @@ accountsList: {
   display: 'flex',
   flexDirection: 'column',
   gap: '1rem'
+},
+expandAccountsButton: {
+  width: '100%',
+  padding: '0.75rem',
+  marginTop: '0.5rem',
+  backgroundColor: 'transparent',
+  color: '#1e40af',
+  border: '1px solid #e2e8f0',
+  borderRadius: '8px',
+  fontSize: '0.9rem',
+  fontWeight: '600',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '0.5rem'
 },
 accountItem: {
   display: 'flex',
