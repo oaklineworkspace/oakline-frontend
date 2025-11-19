@@ -2045,7 +2045,8 @@ navButton: {
   fontWeight: '500',
   transition: 'all 0.2s',
   whiteSpace: 'nowrap',
-  minWidth: 'auto'
+  minWidth: 'auto',
+  maxWidth: '140px'
 },
 navIcon: {
   fontSize: '1rem'
@@ -2655,47 +2656,59 @@ expandAccountsButton: {
   gap: '0.5rem'
 },
 accountItem: {
-  display: 'flex',
-  justifyContent: 'space-between',
+  display: 'grid',
+  gridTemplateColumns: 'auto 1fr auto',
   alignItems: 'center',
-  padding: '1rem',
-  background: '#f8fafc',
-  borderRadius: '8px',
+  gap: '1rem',
+  padding: '1.25rem',
+  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+  borderRadius: '12px',
   border: '1px solid #e2e8f0',
   transition: 'all 0.3s ease',
   cursor: 'pointer',
-  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+  boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
 },
 accountInfo: {
   display: 'flex',
   alignItems: 'center',
-  gap: '1rem'
+  gap: '1rem',
+  minWidth: 0
 },
 accountTypeIcon: {
-  fontSize: '1.5rem',
-  padding: '0.5rem',
-  background: '#eff6ff',
-  borderRadius: '8px'
+  fontSize: '1.8rem',
+  padding: '0.75rem',
+  background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+  borderRadius: '12px',
+  border: '1px solid #bfdbfe',
+  flexShrink: 0
 },
 accountDetails: {
   display: 'flex',
-  flexDirection: 'column'
+  flexDirection: 'column',
+  minWidth: 0,
+  overflow: 'hidden'
 },
 accountName: {
-  fontSize: '1rem',
-  fontWeight: '600',
+  fontSize: '0.95rem',
+  fontWeight: '700',
   color: '#1e293b',
-  margin: '0 0 0.25rem 0'
+  margin: '0 0 0.35rem 0',
+  textTransform: 'capitalize',
+  letterSpacing: '0.3px'
 },
 accountNumber: {
-  fontSize: '0.8rem',
+  fontSize: '0.85rem',
   color: '#64748b',
-  fontFamily: 'monospace'
+  fontFamily: 'monospace',
+  fontWeight: '500'
 },
 accountBalance: {
-  fontSize: '1.2rem',
-  fontWeight: 'bold',
-  color: '#1e40af'
+  fontSize: '1.25rem',
+  fontWeight: '800',
+  color: '#1e40af',
+  textAlign: 'right',
+  whiteSpace: 'nowrap',
+  letterSpacing: '-0.5px'
 },
 transactionsSection: {
   background: 'white',
