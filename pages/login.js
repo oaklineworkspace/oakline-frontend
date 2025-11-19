@@ -325,8 +325,18 @@ export default function LoginPage() {
         }
 
         @keyframes scroll {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+          0% { 
+            transform: translateX(0); 
+          }
+          100% { 
+            transform: translateX(-50%); 
+          }
+        }
+
+        @media (hover: hover) {
+          .scrollingText:hover {
+            animation-play-state: paused;
+          }
         }
 
         input[type="checkbox"] {
@@ -509,8 +519,8 @@ const styles = {
   },
   header: {
     background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
-    borderBottom: '3px solid #059669',
-    boxShadow: '0 4px 12px rgba(26, 62, 111, 0.3)',
+    borderBottom: '4px solid #059669',
+    boxShadow: '0 6px 20px rgba(26, 62, 111, 0.4)',
     position: 'sticky',
     top: 0,
     zIndex: 100
@@ -518,37 +528,42 @@ const styles = {
   headerContent: {
     maxWidth: '1200px',
     margin: '0 auto',
-    padding: '1rem 1.5rem',
+    padding: '1.25rem 2rem',
     display: 'flex',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center'
   },
   logoLink: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.75rem',
+    gap: '1rem',
     textDecoration: 'none',
-    color: 'white'
+    color: 'white',
+    transition: 'transform 0.2s ease'
   },
   logoImage: {
-    height: '60px',
-    width: 'auto'
+    height: '70px',
+    width: 'auto',
+    filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.2))'
   },
   brandInfo: {
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    gap: '0.25rem'
   },
   brandName: {
-    fontSize: '1.8rem',
+    fontSize: '2rem',
     fontWeight: '700',
     margin: 0,
     color: 'white',
-    letterSpacing: '0.5px'
+    letterSpacing: '1px',
+    textShadow: '0 2px 4px rgba(0,0,0,0.2)'
   },
   brandTagline: {
-    fontSize: '0.85rem',
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '500'
+    fontSize: '0.9rem',
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontWeight: '600',
+    letterSpacing: '0.3px'
   },
   mainContent: {
     flex: 1,
@@ -561,33 +576,38 @@ const styles = {
   },
   loginCard: {
     width: '100%',
-    maxWidth: '480px',
+    maxWidth: '500px',
     backgroundColor: 'white',
-    borderRadius: '20px',
-    boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-    overflow: 'hidden'
+    borderRadius: '24px',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+    overflow: 'hidden',
+    border: '1px solid rgba(26, 62, 111, 0.1)'
   },
   cardHeader: {
     textAlign: 'center',
-    padding: '2rem',
-    background: 'white'
+    padding: '2.5rem 2rem',
+    background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
+    borderBottom: '2px solid #e2e8f0'
   },
   lockIcon: {
-    fontSize: '3rem',
-    marginBottom: '1rem'
+    fontSize: '3.5rem',
+    marginBottom: '1.25rem',
+    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
   },
   cardTitle: {
-    fontSize: '2rem',
+    fontSize: '2.25rem',
     fontWeight: '700',
     color: '#1a365d',
-    marginBottom: '0.5rem',
-    margin: 0
+    marginBottom: '0.75rem',
+    margin: 0,
+    letterSpacing: '0.5px'
   },
   cardSubtitle: {
-    fontSize: '0.95rem',
+    fontSize: '1rem',
     color: '#64748b',
     margin: 0,
-    marginTop: '0.5rem'
+    marginTop: '0.5rem',
+    fontWeight: '500'
   },
   form: {
     width: '100%',
@@ -620,15 +640,16 @@ const styles = {
   },
   input: {
     width: '100%',
-    padding: '1rem 1.25rem 1rem 3rem',
+    padding: '1.125rem 1.5rem 1.125rem 3.25rem',
     border: '2px solid #e2e8f0',
     borderRadius: '12px',
     fontSize: '16px',
-    transition: 'all 0.2s ease',
+    transition: 'all 0.3s ease',
     boxSizing: 'border-box',
     outline: 'none',
     backgroundColor: '#f8fafc',
-    color: '#1e293b'
+    color: '#1e293b',
+    fontWeight: '500'
   },
   passwordToggle: {
     position: 'absolute',
@@ -777,21 +798,26 @@ const styles = {
     margin: 0
   },
   securityWarningBanner: {
-    backgroundColor: '#1A3E6F',
+    backgroundColor: '#dc2626',
     overflow: 'hidden',
-    padding: '0.75rem 0',
-    borderTop: '2px solid #2A5490'
+    padding: '1rem 0',
+    borderTop: '3px solid #991b1b',
+    borderBottom: '3px solid #991b1b',
+    position: 'relative'
   },
   scrollingText: {
     display: 'flex',
     whiteSpace: 'nowrap',
-    animation: 'scroll 30s linear infinite'
+    animation: 'scroll 40s linear infinite',
+    willChange: 'transform'
   },
   warningText: {
     color: 'white',
-    fontSize: '0.9rem',
-    fontWeight: '600',
-    paddingRight: '100px',
-    display: 'inline-block'
+    fontSize: '1rem',
+    fontWeight: '700',
+    paddingRight: '150px',
+    display: 'inline-block',
+    letterSpacing: '0.5px',
+    textShadow: '0 2px 4px rgba(0,0,0,0.3)'
   }
 };

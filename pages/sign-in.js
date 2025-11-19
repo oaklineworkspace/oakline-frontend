@@ -1,16 +1,17 @@
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
 
-export default function SignInPage() {
+export default function LoginPage() {
   const router = useRouter();
   const { signIn } = useAuth();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberDevice, setRememberDevice] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [loadingStage, setLoadingStage] = useState(0);
 
@@ -20,19 +21,13 @@ export default function SignInPage() {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage('');
-
-    const loadingStages = [
-      'Verifying credentials',
-      'Authenticating account',
-      'Securing connection',
-      'Loading your dashboard'
-    ];
+    setError('');
 
     try {
       // Stage 1: Verifying credentials
@@ -52,440 +47,266 @@ export default function SignInPage() {
         setLoadingStage(2);
         await new Promise(resolve => setTimeout(resolve, 700));
 
-        // Stage 4: Loading dashboard
+        // Stage 4: Finalizing login
         setLoadingStage(3);
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await new Promise(resolve => setTimeout(resolve, 600));
 
         // Navigate to dashboard
-        window.location.href = '/dashboard';
+        router.push('/dashboard');
       }
 
     } catch (error) {
       setLoadingStage(0);
-      setMessage(`Sign in failed: ${error.message}`);
+      setError(error.message || 'Sign in failed. Please check your credentials.');
       setLoading(false);
     }
   };
 
   if (!isMounted) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div style={{
-          width: '50px',
-          height: '50px',
-          border: '5px solid rgba(255,255,255,0.3)',
-          borderTop: '5px solid white',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite'
-        }}></div>
+      <div style={styles.loadingScreen}>
+        <div style={styles.spinner}></div>
       </div>
     );
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1rem',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      
-      {/* Login Form - Hidden when loading */}
-      <div style={{
-        width: '100%',
-        maxWidth: '480px',
-        backgroundColor: 'white',
-        borderRadius: '24px',
-        boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)',
-        padding: '3rem 2.5rem',
-        opacity: loading ? 0 : 1,
-        transform: loading ? 'scale(0.95)' : 'scale(1)',
-        transition: 'all 0.3s ease',
-        pointerEvents: loading ? 'none' : 'auto',
-        position: 'relative',
-        zIndex: loading ? 1 : 10
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <div style={{
-            fontSize: '3rem',
-            marginBottom: '1rem'
-          }}>🏦</div>
-          <h1 style={{
-            fontSize: '2rem',
-            fontWeight: '700',
-            color: '#1e293b',
-            marginBottom: '0.5rem',
-            margin: 0
-          }}>Oakline Bank</h1>
-          <p style={{
-            fontSize: '0.95rem',
-            color: '#64748b',
-            margin: 0
-          }}>Sign in to your account</p>
-        </div>
-
-        <form onSubmit={handleSubmit} style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1.25rem'
-        }}>
-          {/* Email Input */}
-          <div>
-            <input
-              type="email"
-              name="email"
-              placeholder="Email address"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              autoComplete="email"
-              style={{
-                width: '100%',
-                padding: '1rem 1.25rem',
-                border: '2px solid #e2e8f0',
-                borderRadius: '12px',
-                fontSize: '1rem',
-                transition: 'all 0.2s ease',
-                boxSizing: 'border-box',
-                outline: 'none',
-                backgroundColor: '#f8fafc',
-                color: '#1e293b'
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#2563eb';
-                e.target.style.backgroundColor = '#ffffff';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e2e8f0';
-                e.target.style.backgroundColor = '#f8fafc';
-              }}
-            />
-          </div>
-
-          {/* Password Input */}
-          <div>
-            <div style={{ 
-              position: 'relative', 
-              display: 'flex', 
-              alignItems: 'center' 
-            }}>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                placeholder="Password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                autoComplete="current-password"
-                style={{
-                  width: '100%',
-                  padding: '1rem 3.5rem 1rem 1.25rem',
-                  border: '2px solid #e2e8f0',
-                  borderRadius: '12px',
-                  fontSize: '1rem',
-                  transition: 'all 0.2s ease',
-                  boxSizing: 'border-box',
-                  outline: 'none',
-                  backgroundColor: '#f8fafc',
-                  color: '#1e293b'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#2563eb';
-                  e.target.style.backgroundColor = '#ffffff';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#e2e8f0';
-                  e.target.style.backgroundColor = '#f8fafc';
-                }}
+    <>
+      {/* Professional Full-Screen Loading Overlay */}
+      {loading && (
+        <div style={styles.verificationOverlay}>
+          <div style={styles.verificationContent}>
+            {/* Bank Logo */}
+            <div style={styles.logoContainerLoading}>
+              <img 
+                src="/images/Oakline_Bank_logo_design_c1b04ae0.png" 
+                alt="Oakline Bank" 
+                style={styles.logoImageLoading}
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute',
-                  right: '1rem',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '1.4rem',
-                  padding: '0.5rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'transform 0.2s ease',
-                  zIndex: 10
-                }}
-                onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
-                onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-              >
-                {showPassword ? '🙈' : '🙉'}
-              </button>
             </div>
 
-            {/* Forgot Password */}
-            <Link 
-              href="/reset-password" 
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                color: '#2563eb',
-                textDecoration: 'none',
-                fontSize: '0.9rem',
-                fontWeight: '600',
-                marginTop: '0.75rem',
-                transition: 'color 0.2s ease'
-              }}
-              onMouseEnter={(e) => e.target.style.color = '#1e40af'}
-              onMouseLeave={(e) => e.target.style.color = '#2563eb'}
-            >
-              🔐 Forgot your password?
-            </Link>
-          </div>
+            <div style={styles.loadingBrandInfo}>
+              <h1 style={styles.loadingBrandName}>Oakline Bank</h1>
+              <p style={styles.loadingBrandTagline}>Secure Banking Platform</p>
+            </div>
 
-          {/* Remember Device */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            marginTop: '0.25rem'
-          }}>
-            <input
-              type="checkbox"
-              id="rememberDevice"
-              checked={rememberDevice}
-              onChange={(e) => setRememberDevice(e.target.checked)}
-              style={{
-                width: '20px',
-                height: '20px',
-                cursor: 'pointer',
-                accentColor: '#10b981',
-                border: '2px solid #10b981',
-                borderRadius: '4px'
-              }}
-            />
-            <label 
-              htmlFor="rememberDevice"
-              style={{
-                fontSize: '0.95rem',
-                color: '#475569',
-                fontWeight: '500',
-                cursor: 'pointer',
-                userSelect: 'none'
-              }}
-            >
-              Remember this device
-            </label>
-          </div>
-
-          {/* Sign In Button */}
-          <button
-            type="submit"
-            disabled={loading || !formData.email || !formData.password}
-            style={{
-              width: '100%',
-              padding: '1.125rem 1.5rem',
-              background: (loading || !formData.email || !formData.password) 
-                ? 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)' 
-                : 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '1.05rem',
-              fontWeight: '700',
-              transition: 'all 0.3s ease',
-              cursor: (loading || !formData.email || !formData.password) ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginTop: '0.5rem',
-              boxShadow: (loading || !formData.email || !formData.password) 
-                ? 'none' 
-                : '0 10px 25px rgba(37, 99, 235, 0.4)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-            onMouseEnter={(e) => {
-              if (!loading && formData.email && formData.password) {
-                e.target.style.transform = 'translateY(-2px)';
-                e.target.style.boxShadow = '0 15px 35px rgba(37, 99, 235, 0.5)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!loading && formData.email && formData.password) {
-                e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = '0 10px 25px rgba(37, 99, 235, 0.4)';
-              }
-            }}
-          >
-            {(loading || !formData.email || !formData.password) ? (
-              <span style={{ opacity: 0.7 }}>Sign In</span>
-            ) : (
-              'Sign In'
-            )}
-          </button>
-        </form>
-
-        {/* Error Message */}
-        {message && !loading && (
-          <div style={{
-            marginTop: '1.5rem',
-            padding: '1rem 1.25rem',
-            borderRadius: '12px',
-            textAlign: 'center',
-            fontSize: '0.9rem',
-            fontWeight: '600',
-            color: '#dc2626',
-            backgroundColor: '#fee2e2',
-            border: '2px solid #fca5a5'
-          }}>
-            {message}
-          </div>
-        )}
-
-        {/* Footer Links */}
-        <div style={{
-          marginTop: '2rem',
-          padding: '1.25rem 0 0',
-          borderTop: '1px solid #e2e8f0',
-          textAlign: 'center'
-        }}>
-          <p style={{
-            fontSize: '0.9rem',
-            color: '#64748b',
-            margin: 0
-          }}>
-            Don't have an account?{' '}
-            <Link 
-              href="/apply" 
-              style={{
-                color: '#2563eb',
-                textDecoration: 'none',
-                fontWeight: '700'
-              }}
-              onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
-              onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
-            >
-              Open Account
-            </Link>
-          </p>
-        </div>
-      </div>
-
-      {/* Full-Screen Verification Overlay */}
-      {loading && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          animation: 'fadeIn 0.3s ease'
-        }}>
-          <div style={{
-            textAlign: 'center',
-            maxWidth: '500px',
-            padding: '2rem'
-          }}>
-            {/* Animated Spinner */}
-            <div style={{
-              width: '80px',
-              height: '80px',
-              border: '6px solid rgba(255, 255, 255, 0.2)',
-              borderTop: '6px solid white',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              margin: '0 auto 2.5rem'
-            }}></div>
-
-            {/* Main Message */}
-            <h2 style={{
-              fontSize: '2rem',
-              fontWeight: '700',
-              color: 'white',
-              marginBottom: '1rem',
-              margin: 0
-            }}>
-              {loadingStage === 0 && 'Verifying credentials'}
-              {loadingStage === 1 && 'Authenticating account'}
-              {loadingStage === 2 && 'Securing connection'}
-              {loadingStage === 3 && 'Loading your dashboard'}
-            </h2>
-
-            <p style={{
-              fontSize: '1.1rem',
-              color: 'rgba(255, 255, 255, 0.9)',
-              marginBottom: '2.5rem',
-              lineHeight: '1.6'
-            }}>
-              Please wait while we securely sign you in...
-            </p>
-
-            {/* Progress Indicators */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: '1rem',
-              marginTop: '2rem'
-            }}>
-              {[0, 1, 2, 3].map((stage) => (
-                <div
-                  key={stage}
+            {/* Elegant Progress Bar */}
+            <div style={styles.progressBarContainer}>
+              <div style={styles.progressBarTrack}>
+                <div 
                   style={{
-                    width: '12px',
-                    height: '12px',
-                    borderRadius: '50%',
-                    backgroundColor: stage <= loadingStage 
-                      ? 'white' 
-                      : 'rgba(255, 255, 255, 0.3)',
-                    transition: 'all 0.3s ease',
-                    transform: stage === loadingStage ? 'scale(1.3)' : 'scale(1)',
-                    boxShadow: stage === loadingStage 
-                      ? '0 0 20px rgba(255, 255, 255, 0.8)' 
-                      : 'none'
+                    ...styles.progressBarFill,
+                    width: `${((loadingStage + 1) / 4) * 100}%`
                   }}
                 ></div>
-              ))}
+              </div>
+              <div style={styles.progressPercentage}>
+                {Math.round(((loadingStage + 1) / 4) * 100)}%
+              </div>
             </div>
 
-            {/* Security Notice */}
-            <div style={{
-              marginTop: '3rem',
-              padding: '1.25rem 1.5rem',
-              backgroundColor: 'rgba(255, 255, 255, 0.15)',
-              borderRadius: '12px',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)'
-            }}>
-              <p style={{
-                fontSize: '0.9rem',
-                color: 'rgba(255, 255, 255, 0.95)',
-                margin: 0,
-                lineHeight: '1.6',
-                fontWeight: '500'
-              }}>
-                🔐 Your connection is secured with 256-bit SSL encryption
+            {/* Stage Message */}
+            <div style={styles.loadingMessageContainer}>
+              <h2 style={styles.verificationTitle}>
+                {loadingStage === 0 && 'Verifying Credentials'}
+                {loadingStage === 1 && 'Authenticating Account'}
+                {loadingStage === 2 && 'Securing Connection'}
+                {loadingStage === 3 && 'Preparing Dashboard'}
+              </h2>
+
+              <p style={styles.verificationSubtitle}>
+                Please wait while we securely sign you in to your account
               </p>
+            </div>
+
+            {/* Animated Security Badge */}
+            <div style={styles.securityBadge}>
+              <div style={styles.securityIconWrapper}>
+                <span style={styles.securityIcon}>🔐</span>
+              </div>
+              <div>
+                <p style={styles.securityText}>
+                  Bank-Level Security
+                </p>
+                <p style={styles.securitySubtext}>
+                  256-bit SSL Encryption
+                </p>
+              </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Main Login Page */}
+      <div style={{
+        ...styles.pageContainer,
+        opacity: loading ? 0 : 1,
+        visibility: loading ? 'hidden' : 'visible',
+        transition: 'opacity 0.3s ease, visibility 0.3s ease'
+      }}>
+        {/* Professional Header - Logo on Left */}
+        <header style={styles.header}>
+          <div style={styles.headerContent}>
+            <Link href="/" style={styles.logoLink}>
+              <img 
+                src="/images/Oakline_Bank_logo_design_c1b04ae0.png" 
+                alt="Oakline Bank" 
+                style={styles.logoImage}
+              />
+              <div style={styles.brandInfo}>
+                <h1 style={styles.brandName}>Oakline Bank</h1>
+                <span style={styles.brandTagline}>Secure Banking Platform</span>
+              </div>
+            </Link>
+          </div>
+          {/* Security Warning Scrolling Banner */}
+          <div style={styles.securityWarningBanner}>
+            <div style={styles.scrollingText} className="scrollingText">
+              <span style={styles.warningText}>
+                🔒 IMPORTANT SECURITY NOTICE: Never share your password, PIN, or account details with anyone. Oakline Bank will NEVER ask for your password via email, phone, or text. Protect your account - Keep your credentials confidential. 🔒
+              </span>
+              <span style={styles.warningText}>
+                🔒 IMPORTANT SECURITY NOTICE: Never share your password, PIN, or account details with anyone. Oakline Bank will NEVER ask for your password via email, phone, or text. Protect your account - Keep your credentials confidential. 🔒
+              </span>
+            </div>
+          </div>
+        </header>
+
+        {/* Login Card Container */}
+        <div style={styles.mainContent}>
+          <div style={styles.loginCard}>
+            {/* Card Header */}
+            <div style={styles.cardHeader}>
+              <div style={styles.lockIcon}>🔒</div>
+              <h2 style={styles.cardTitle}>Sign In</h2>
+              <p style={styles.cardSubtitle}>Enter your credentials to access your account</p>
+            </div>
+
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} style={styles.form}>
+              {/* Email Input */}
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Email Address</label>
+                <div style={styles.inputWrapper}>
+                  <span style={styles.inputIcon}>📧</span>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="your.email@example.com"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    style={styles.input}
+                    autoComplete="email"
+                  />
+                </div>
+              </div>
+
+              {/* Password Input */}
+              <div style={styles.inputGroup}>
+                <label style={styles.label}>Password</label>
+                <div style={styles.inputWrapper}>
+                  <span style={styles.inputIcon}>🔒</span>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    placeholder="Enter your password"
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    style={styles.input}
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={styles.passwordToggle}
+                  >
+                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Remember Me & Forgot Password */}
+              <div style={styles.formOptions}>
+                <label style={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    style={styles.checkbox}
+                  />
+                  <span style={styles.checkboxText}>Remember me</span>
+                </label>
+                <Link href="/reset-password" style={styles.forgotLink}>
+                  Forgot password?
+                </Link>
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div style={styles.errorMessage}>
+                  <span style={styles.errorIcon}>⚠️</span>
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading || !formData.email || !formData.password}
+                style={{
+                  ...styles.submitButton,
+                  opacity: (loading || !formData.email || !formData.password) ? 0.6 : 1,
+                  cursor: (loading || !formData.email || !formData.password) ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {loading ? 'Signing in...' : 'Sign In'}
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div style={styles.divider}>
+              <span style={styles.dividerLine}></span>
+              <span style={styles.dividerText}>or</span>
+              <span style={styles.dividerLine}></span>
+            </div>
+
+            {/* Sign Up Link */}
+            <div style={styles.signupSection}>
+              <p style={styles.signupText}>
+                Don't have an account?{' '}
+                <Link href="/apply" style={styles.signupLink}>
+                  Open Account
+                </Link>
+              </p>
+            </div>
+
+            {/* Trust Badges */}
+            <div style={styles.trustBadges}>
+              <div style={styles.trustBadge}>
+                <span style={styles.trustIcon}>🔐</span>
+                <span style={styles.trustText}>SSL Secured</span>
+              </div>
+              <div style={styles.trustBadge}>
+                <span style={styles.trustIcon}>🏛️</span>
+                <span style={styles.trustText}>FDIC Insured</span>
+              </div>
+              <div style={styles.trustBadge}>
+                <span style={styles.trustIcon}>✓</span>
+                <span style={styles.trustText}>SOC 2 Certified</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <footer style={styles.footer}>
+          <p style={styles.footerText}>
+            © 2025 Oakline Bank. All rights reserved. Member FDIC.
+          </p>
+        </footer>
+      </div>
 
       <style jsx>{`
         @keyframes spin {
@@ -493,12 +314,28 @@ export default function SignInPage() {
           100% { transform: rotate(360deg); }
         }
 
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+
         @keyframes fadeIn {
-          from {
-            opacity: 0;
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes scroll {
+          0% { 
+            transform: translateX(0); 
           }
-          to {
-            opacity: 1;
+          100% { 
+            transform: translateX(-50%); 
+          }
+        }
+
+        @media (hover: hover) {
+          .scrollingText:hover {
+            animation-play-state: paused;
           }
         }
 
@@ -506,7 +343,481 @@ export default function SignInPage() {
           appearance: auto;
           -webkit-appearance: auto;
         }
+
+        input, select, textarea {
+          font-size: 16px !important;
+        }
+
+        @media (max-width: 768px) {
+          .headerContent {
+            flex-direction: column;
+            gap: 0.75rem;
+          }
+        }
       `}</style>
-    </div>
+    </>
   );
 }
+
+const styles = {
+  loadingScreen: {
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)'
+  },
+  spinner: {
+    width: '50px',
+    height: '50px',
+    border: '5px solid rgba(255,255,255,0.3)',
+    borderTop: '5px solid white',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite'
+  },
+  verificationOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999,
+    animation: 'fadeIn 0.3s ease'
+  },
+  verificationContent: {
+    textAlign: 'center',
+    maxWidth: '550px',
+    padding: '3rem 2rem',
+    width: '90%',
+    background: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: '24px',
+    backdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+  },
+  logoContainerLoading: {
+    marginBottom: '1.5rem',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  logoImageLoading: {
+    height: '80px',
+    width: 'auto',
+    animation: 'pulse 2s ease-in-out infinite'
+  },
+  loadingBrandInfo: {
+    textAlign: 'center',
+    marginBottom: '2rem'
+  },
+  loadingBrandName: {
+    fontSize: '2rem',
+    fontWeight: '700',
+    color: 'white',
+    margin: '0.5rem 0 0.25rem 0',
+    letterSpacing: '1px'
+  },
+  loadingBrandTagline: {
+    fontSize: '0.95rem',
+    color: 'rgba(255, 255, 255, 0.8)',
+    margin: 0,
+    fontWeight: '500'
+  },
+  progressBarContainer: {
+    margin: '2.5rem 0',
+    width: '100%'
+  },
+  progressBarTrack: {
+    width: '100%',
+    height: '8px',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: '10px',
+    overflow: 'hidden',
+    marginBottom: '1rem'
+  },
+  progressBarFill: {
+    height: '100%',
+    background: 'linear-gradient(90deg, #059669 0%, #10b981 100%)',
+    borderRadius: '10px',
+    transition: 'width 0.5s ease',
+    boxShadow: '0 0 20px rgba(5, 150, 105, 0.6)'
+  },
+  progressPercentage: {
+    fontSize: '1.25rem',
+    fontWeight: '700',
+    color: '#10b981',
+    textAlign: 'center'
+  },
+  loadingMessageContainer: {
+    margin: '2rem 0'
+  },
+  verificationTitle: {
+    fontSize: '1.5rem',
+    fontWeight: '700',
+    color: 'white',
+    marginBottom: '0.75rem',
+    margin: '0 0 0.75rem 0'
+  },
+  verificationSubtitle: {
+    fontSize: '1rem',
+    color: 'rgba(255, 255, 255, 0.85)',
+    margin: 0,
+    lineHeight: '1.6'
+  },
+  securityBadge: {
+    padding: '1.5rem 2rem',
+    backgroundColor: 'rgba(16, 185, 129, 0.25)',
+    borderRadius: '16px',
+    backdropFilter: 'blur(10px)',
+    border: '2px solid rgba(16, 185, 129, 0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '1.25rem',
+    maxWidth: '380px',
+    margin: '2rem auto 0',
+    boxShadow: '0 8px 25px rgba(16, 185, 129, 0.4)'
+  },
+  securityIconWrapper: {
+    width: '56px',
+    height: '56px',
+    borderRadius: '50%',
+    background: 'rgba(16, 185, 129, 0.35)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+  },
+  securityIcon: {
+    fontSize: '1.75rem'
+  },
+  securityText: {
+    fontSize: '1.05rem',
+    color: '#10b981',
+    margin: '0 0 0.25rem 0',
+    fontWeight: '700',
+    textAlign: 'left'
+  },
+  securitySubtext: {
+    fontSize: '0.9rem',
+    color: '#10b981',
+    margin: 0,
+    fontWeight: '600',
+    textAlign: 'left'
+  },
+  pageContainer: {
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    background: 'linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)'
+  },
+  header: {
+    background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
+    borderBottom: '4px solid #059669',
+    boxShadow: '0 6px 20px rgba(26, 62, 111, 0.4)',
+    position: 'sticky',
+    top: 0,
+    zIndex: 100
+  },
+  headerContent: {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '1.25rem 2rem',
+    display: 'flex',
+    justifyContent: 'flex-start',
+    alignItems: 'center'
+  },
+  logoLink: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    textDecoration: 'none',
+    color: 'white',
+    transition: 'transform 0.2s ease'
+  },
+  logoImage: {
+    height: '70px',
+    width: 'auto',
+    filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.2))'
+  },
+  brandInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.25rem'
+  },
+  brandName: {
+    fontSize: '2rem',
+    fontWeight: '700',
+    margin: 0,
+    color: 'white',
+    letterSpacing: '1px',
+    textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+  },
+  brandTagline: {
+    fontSize: '0.9rem',
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontWeight: '600',
+    letterSpacing: '0.3px'
+  },
+  mainContent: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '2rem 1rem',
+    width: '100%'
+  },
+  loginCard: {
+    width: '100%',
+    maxWidth: '500px',
+    backgroundColor: 'white',
+    borderRadius: '24px',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+    overflow: 'hidden',
+    border: '1px solid rgba(26, 62, 111, 0.1)'
+  },
+  cardHeader: {
+    textAlign: 'center',
+    padding: '2.5rem 2rem',
+    background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
+    borderBottom: '2px solid #e2e8f0'
+  },
+  lockIcon: {
+    fontSize: '3.5rem',
+    marginBottom: '1.25rem',
+    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+  },
+  cardTitle: {
+    fontSize: '2.25rem',
+    fontWeight: '700',
+    color: '#1a365d',
+    marginBottom: '0.75rem',
+    margin: 0,
+    letterSpacing: '0.5px'
+  },
+  cardSubtitle: {
+    fontSize: '1rem',
+    color: '#64748b',
+    margin: 0,
+    marginTop: '0.5rem',
+    fontWeight: '500'
+  },
+  form: {
+    width: '100%',
+    background: 'white',
+    padding: '2rem',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.25rem'
+  },
+  inputGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem'
+  },
+  label: {
+    fontSize: '0.9rem',
+    fontWeight: '600',
+    color: '#1a365d'
+  },
+  inputWrapper: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center'
+  },
+  inputIcon: {
+    position: 'absolute',
+    left: '1rem',
+    fontSize: '1.2rem',
+    pointerEvents: 'none'
+  },
+  input: {
+    width: '100%',
+    padding: '1.125rem 1.5rem 1.125rem 3.25rem',
+    border: '2px solid #e2e8f0',
+    borderRadius: '12px',
+    fontSize: '16px',
+    transition: 'all 0.3s ease',
+    boxSizing: 'border-box',
+    outline: 'none',
+    backgroundColor: '#f8fafc',
+    color: '#1e293b',
+    fontWeight: '500'
+  },
+  passwordToggle: {
+    position: 'absolute',
+    right: '1rem',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '1.4rem',
+    padding: '0.5rem',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'transform 0.2s ease',
+    zIndex: 10
+  },
+  formOptions: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    fontSize: '0.85rem',
+    flexWrap: 'wrap',
+    gap: '0.5rem'
+  },
+  checkboxLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    cursor: 'pointer'
+  },
+  checkbox: {
+    width: '20px',
+    height: '20px',
+    cursor: 'pointer',
+    accentColor: '#2563eb'
+  },
+  checkboxText: {
+    color: '#475569',
+    fontWeight: '500'
+  },
+  forgotLink: {
+    color: '#2563eb',
+    textDecoration: 'none',
+    fontWeight: '600',
+    transition: 'color 0.2s'
+  },
+  errorMessage: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '1rem 1.25rem',
+    backgroundColor: '#fee2e2',
+    border: '2px solid #fca5a5',
+    borderRadius: '12px',
+    color: '#dc2626',
+    fontSize: '0.9rem',
+    fontWeight: '600'
+  },
+  errorIcon: {
+    fontSize: '1.2rem'
+  },
+  submitButton: {
+    width: '100%',
+    padding: '1.125rem 1.5rem',
+    background: 'linear-gradient(135deg, #1a365d 0%, #2563eb 100%)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '12px',
+    fontSize: '1.05rem',
+    fontWeight: '700',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 12px rgba(26, 54, 93, 0.3)',
+    marginTop: '0.5rem'
+  },
+  divider: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    margin: '1.5rem 0',
+    width: '100%',
+    background: 'white',
+    padding: '0 2rem'
+  },
+  dividerLine: {
+    flex: 1,
+    height: '1px',
+    backgroundColor: '#e2e8f0'
+  },
+  dividerText: {
+    color: '#94a3b8',
+    fontSize: '0.85rem',
+    fontWeight: '500'
+  },
+  signupSection: {
+    textAlign: 'center',
+    marginBottom: '1.5rem',
+    width: '100%',
+    background: 'white',
+    padding: '0 2rem'
+  },
+  signupText: {
+    color: '#64748b',
+    fontSize: '0.9rem',
+    margin: 0
+  },
+  signupLink: {
+    color: '#2563eb',
+    textDecoration: 'none',
+    fontWeight: '700',
+    transition: 'color 0.2s'
+  },
+  trustBadges: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '1rem',
+    paddingTop: '1.5rem',
+    borderTop: '1px solid #e2e8f0',
+    flexWrap: 'wrap',
+    width: '100%',
+    background: 'white',
+    padding: '1.5rem 2rem 2rem',
+    borderRadius: '0 0 20px 20px'
+  },
+  trustBadge: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '0.5rem'
+  },
+  trustIcon: {
+    fontSize: '1.5rem'
+  },
+  trustText: {
+    fontSize: '0.7rem',
+    color: '#64748b',
+    fontWeight: '600'
+  },
+  footer: {
+    background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
+    padding: '1.5rem',
+    textAlign: 'center',
+    borderTop: '2px solid #059669'
+  },
+  footerText: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: '0.85rem',
+    margin: 0
+  },
+  securityWarningBanner: {
+    backgroundColor: '#dc2626',
+    overflow: 'hidden',
+    padding: '1rem 0',
+    borderTop: '3px solid #991b1b',
+    borderBottom: '3px solid #991b1b',
+    position: 'relative'
+  },
+  scrollingText: {
+    display: 'flex',
+    whiteSpace: 'nowrap',
+    animation: 'scroll 40s linear infinite',
+    willChange: 'transform'
+  },
+  warningText: {
+    color: 'white',
+    fontSize: '1rem',
+    fontWeight: '700',
+    paddingRight: '150px',
+    display: 'inline-block',
+    letterSpacing: '0.5px',
+    textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+  }
+};
