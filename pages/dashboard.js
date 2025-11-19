@@ -715,7 +715,7 @@ function DashboardContent() {
         a[style*="quickAction"]:hover {
           transform: translateY(-2px) !important;
           box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
-          border-color: #1e40af !important;
+          border-color: #1e3a8a !important;
           background: #ffffff !important;
         }
 
@@ -2764,7 +2764,8 @@ accountBalance: {
   fontSize: '1.5rem',
   fontWeight: 'bold',
   color: '#1e40af',
-  textAlign: 'right',
+  textAlign: 'center',
+  width: '100%',
   whiteSpace: 'normal',
   letterSpacing: '-0.5px',
   wordBreak: 'normal',
