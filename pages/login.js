@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -46,12 +47,12 @@ export default function LoginPage() {
         setLoadingStage(2);
         await new Promise(resolve => setTimeout(resolve, 700));
 
-        // Stage 4: Loading dashboard
+        // Stage 4: Finalizing login
         setLoadingStage(3);
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await new Promise(resolve => setTimeout(resolve, 600));
 
-        // Navigate to dashboard
-        window.location.href = '/dashboard';
+        // Navigate to dashboard - no loading stage needed on dashboard
+        router.push('/dashboard');
       }
 
     } catch (error) {
@@ -71,31 +72,56 @@ export default function LoginPage() {
 
   return (
     <>
-      {/* Full-Screen Verification Overlay - Shown when loading */}
+      {/* Professional Full-Screen Loading Overlay */}
       {loading && (
         <div style={styles.verificationOverlay}>
           <div style={styles.verificationContent}>
-            {/* Animated Logo */}
-            <div style={styles.logoContainer}>
-              <div style={styles.animatedLogo}>🏦</div>
+            {/* Bank Logo */}
+            <div style={styles.logoContainerLoading}>
+              <img 
+                src="/images/Oakline_Bank_logo_design_c1b04ae0.png" 
+                alt="Oakline Bank" 
+                style={styles.logoImageLoading}
+              />
             </div>
 
-            {/* Progress Spinner */}
-            <div style={styles.progressSpinner}></div>
+            {/* Animated Progress Ring */}
+            <div style={styles.progressRingContainer}>
+              <svg style={styles.progressRing} width="120" height="120">
+                <circle
+                  style={styles.progressRingCircleBackground}
+                  cx="60"
+                  cy="60"
+                  r="54"
+                />
+                <circle
+                  style={{
+                    ...styles.progressRingCircle,
+                    strokeDashoffset: 339.292 - (339.292 * (loadingStage + 1)) / 4
+                  }}
+                  cx="60"
+                  cy="60"
+                  r="54"
+                />
+              </svg>
+              <div style={styles.progressPercentage}>
+                {Math.round(((loadingStage + 1) / 4) * 100)}%
+              </div>
+            </div>
 
             {/* Stage Message */}
             <h2 style={styles.verificationTitle}>
               {loadingStage === 0 && 'Verifying Credentials'}
               {loadingStage === 1 && 'Authenticating Account'}
               {loadingStage === 2 && 'Securing Connection'}
-              {loadingStage === 3 && 'Loading Dashboard'}
+              {loadingStage === 3 && 'Finalizing Login'}
             </h2>
 
             <p style={styles.verificationSubtitle}>
               Please wait while we securely sign you in...
             </p>
 
-            {/* Progress Dots */}
+            {/* Professional Progress Dots */}
             <div style={styles.progressDots}>
               {[0, 1, 2, 3].map((stage) => (
                 <div
@@ -121,20 +147,41 @@ export default function LoginPage() {
         </div>
       )}
 
-      {/* Main Login Page - Hidden when loading */}
+      {/* Main Login Page */}
       <div style={{
         ...styles.pageContainer,
         opacity: loading ? 0 : 1,
-        transform: loading ? 'scale(0.95)' : 'scale(1)',
-        transition: 'all 0.3s ease',
-        pointerEvents: loading ? 'none' : 'auto'
+        visibility: loading ? 'hidden' : 'visible',
+        transition: 'opacity 0.3s ease, visibility 0.3s ease'
       }}>
+        {/* Professional Header */}
+        <header style={styles.header}>
+          <div style={styles.headerContent}>
+            <Link href="/" style={styles.logoLink}>
+              <img 
+                src="/images/Oakline_Bank_logo_design_c1b04ae0.png" 
+                alt="Oakline Bank" 
+                style={styles.logoImage}
+              />
+              <div style={styles.brandInfo}>
+                <h1 style={styles.brandName}>Oakline Bank</h1>
+                <span style={styles.brandTagline}>Secure Banking</span>
+              </div>
+            </Link>
+            <div style={styles.headerRight}>
+              <span style={styles.helpText}>Need Help?</span>
+              <span style={styles.phoneNumber}>📞 1-800-OAKLINE</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Login Card */}
         <div style={styles.loginCard}>
-          {/* Header with Logo */}
-          <div style={styles.header}>
-            <div style={styles.logoIcon}>🏦</div>
-            <h1 style={styles.brandName}>Oakline Bank</h1>
-            <p style={styles.tagline}>Sign in to your account</p>
+          {/* Card Header */}
+          <div style={styles.cardHeader}>
+            <div style={styles.lockIcon}>🔒</div>
+            <h2 style={styles.cardTitle}>Sign In</h2>
+            <p style={styles.cardSubtitle}>Enter your credentials to access your account</p>
           </div>
 
           {/* Login Form */}
@@ -177,7 +224,7 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   style={styles.passwordToggle}
                 >
-                  {showPassword ? '🙈' : '🙉'}
+                  {showPassword ? '👁️' : '👁️‍🗨️'}
                 </button>
               </div>
             </div>
@@ -194,7 +241,7 @@ export default function LoginPage() {
                 <span style={styles.checkboxText}>Remember me</span>
               </label>
               <Link href="/reset-password" style={styles.forgotLink}>
-                🔐 Forgot password?
+                Forgot password?
               </Link>
             </div>
 
@@ -253,6 +300,13 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
+
+        {/* Footer */}
+        <footer style={styles.footer}>
+          <p style={styles.footerText}>
+            © 2024 Oakline Bank. All rights reserved. Member FDIC.
+          </p>
+        </footer>
       </div>
 
       <style jsx>{`
@@ -267,12 +321,13 @@ export default function LoginPage() {
         }
 
         @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes progressRing {
+          0% { stroke-dashoffset: 339.292; }
+          100% { stroke-dashoffset: 0; }
         }
 
         input[type="checkbox"] {
@@ -280,9 +335,15 @@ export default function LoginPage() {
           -webkit-appearance: auto;
         }
 
-        /* Ensure inputs don't zoom on mobile */
         input, select, textarea {
           font-size: 16px !important;
+        }
+
+        @media (max-width: 768px) {
+          .headerContent {
+            flex-direction: column;
+            gap: 0.75rem;
+          }
         }
       `}</style>
     </>
@@ -295,7 +356,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    background: 'linear-gradient(135deg, #1a365d 0%, #2563eb 100%)'
   },
   spinner: {
     width: '50px',
@@ -311,7 +372,7 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, #1a365d 0%, #2563eb 100%)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -321,42 +382,69 @@ const styles = {
   verificationContent: {
     textAlign: 'center',
     maxWidth: '500px',
-    padding: '2rem'
+    padding: '2rem',
+    width: '100%'
   },
-  logoContainer: {
-    marginBottom: '2rem'
+  logoContainerLoading: {
+    marginBottom: '2rem',
+    display: 'flex',
+    justifyContent: 'center'
   },
-  animatedLogo: {
-    fontSize: '4rem',
+  logoImageLoading: {
+    height: '80px',
+    width: 'auto',
+    filter: 'brightness(0) invert(1)',
     animation: 'pulse 2s ease-in-out infinite'
   },
-  progressSpinner: {
-    width: '80px',
-    height: '80px',
-    border: '6px solid rgba(255, 255, 255, 0.2)',
-    borderTop: '6px solid white',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-    margin: '0 auto 2rem'
+  progressRingContainer: {
+    position: 'relative',
+    margin: '2rem auto',
+    width: '120px',
+    height: '120px'
+  },
+  progressRing: {
+    transform: 'rotate(-90deg)'
+  },
+  progressRingCircleBackground: {
+    fill: 'none',
+    stroke: 'rgba(255, 255, 255, 0.2)',
+    strokeWidth: '8'
+  },
+  progressRingCircle: {
+    fill: 'none',
+    stroke: '#ffffff',
+    strokeWidth: '8',
+    strokeDasharray: '339.292',
+    strokeLinecap: 'round',
+    transition: 'stroke-dashoffset 0.5s ease'
+  },
+  progressPercentage: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    fontSize: '1.5rem',
+    fontWeight: '700',
+    color: 'white'
   },
   verificationTitle: {
-    fontSize: '2rem',
+    fontSize: '1.5rem',
     fontWeight: '700',
     color: 'white',
-    marginBottom: '1rem',
+    marginBottom: '0.75rem',
     margin: 0
   },
   verificationSubtitle: {
-    fontSize: '1.1rem',
+    fontSize: '1rem',
     color: 'rgba(255, 255, 255, 0.9)',
-    marginBottom: '2.5rem',
+    marginBottom: '2rem',
     lineHeight: '1.6'
   },
   progressDots: {
     display: 'flex',
     justifyContent: 'center',
     gap: '1rem',
-    marginBottom: '3rem'
+    marginBottom: '2.5rem'
   },
   progressDot: {
     width: '12px',
@@ -365,7 +453,7 @@ const styles = {
     transition: 'all 0.3s ease'
   },
   securityBadge: {
-    padding: '1.25rem 1.5rem',
+    padding: '1rem 1.5rem',
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: '12px',
     backdropFilter: 'blur(10px)',
@@ -373,7 +461,9 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '0.75rem'
+    gap: '0.75rem',
+    maxWidth: '300px',
+    margin: '0 auto'
   },
   securityIcon: {
     fontSize: '1.5rem'
@@ -387,41 +477,110 @@ const styles = {
   pageContainer: {
     minHeight: '100vh',
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: 'column',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    padding: '1rem'
-  },
-  loginCard: {
-    width: '100%',
-    maxWidth: '480px',
-    backgroundColor: 'white',
-    borderRadius: '24px',
-    padding: '3rem 2.5rem',
-    boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)'
+    background: 'linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%)'
   },
   header: {
-    textAlign: 'center',
-    marginBottom: '2.5rem'
+    background: '#1a365d',
+    borderBottom: '3px solid #2563eb',
+    boxShadow: '0 2px 8px rgba(26, 54, 93, 0.2)',
+    position: 'sticky',
+    top: 0,
+    zIndex: 100
   },
-  logoIcon: {
+  headerContent: {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '1rem 1.5rem',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '1rem',
+    flexWrap: 'wrap'
+  },
+  logoLink: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    textDecoration: 'none',
+    color: 'white'
+  },
+  logoImage: {
+    height: '50px',
+    width: 'auto'
+  },
+  brandInfo: {
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  brandName: {
+    fontSize: '1.5rem',
+    fontWeight: '700',
+    margin: 0,
+    color: 'white'
+  },
+  brandTagline: {
+    fontSize: '0.75rem',
+    color: '#bfdbfe',
+    fontWeight: '500'
+  },
+  headerRight: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: '0.25rem'
+  },
+  helpText: {
+    fontSize: '0.75rem',
+    color: '#bfdbfe'
+  },
+  phoneNumber: {
+    fontSize: '0.9rem',
+    fontWeight: '600',
+    color: 'white'
+  },
+  loginCard: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '2rem 1rem',
+    width: '100%',
+    maxWidth: '480px',
+    margin: '0 auto'
+  },
+  cardHeader: {
+    textAlign: 'center',
+    marginBottom: '2rem',
+    width: '100%',
+    background: 'white',
+    padding: '2rem',
+    borderRadius: '16px 16px 0 0',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+  },
+  lockIcon: {
     fontSize: '3rem',
     marginBottom: '1rem'
   },
-  brandName: {
+  cardTitle: {
     fontSize: '2rem',
     fontWeight: '700',
-    color: '#1e293b',
+    color: '#1a365d',
     marginBottom: '0.5rem',
     margin: 0
   },
-  tagline: {
+  cardSubtitle: {
     fontSize: '0.95rem',
     color: '#64748b',
-    margin: 0
+    margin: 0,
+    marginTop: '0.5rem'
   },
   form: {
+    width: '100%',
+    background: 'white',
+    padding: '2rem',
     display: 'flex',
     flexDirection: 'column',
     gap: '1.25rem'
@@ -434,7 +593,7 @@ const styles = {
   label: {
     fontSize: '0.9rem',
     fontWeight: '600',
-    color: '#334155'
+    color: '#1a365d'
   },
   inputWrapper: {
     position: 'relative',
@@ -491,20 +650,17 @@ const styles = {
     width: '20px',
     height: '20px',
     cursor: 'pointer',
-    accentColor: '#667eea'
+    accentColor: '#2563eb'
   },
   checkboxText: {
     color: '#475569',
     fontWeight: '500'
   },
   forgotLink: {
-    color: '#667eea',
+    color: '#2563eb',
     textDecoration: 'none',
     fontWeight: '600',
-    transition: 'color 0.2s',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '0.35rem'
+    transition: 'color 0.2s'
   },
   errorMessage: {
     display: 'flex',
@@ -524,21 +680,24 @@ const styles = {
   submitButton: {
     width: '100%',
     padding: '1.125rem 1.5rem',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, #1a365d 0%, #2563eb 100%)',
     color: 'white',
     border: 'none',
     borderRadius: '12px',
     fontSize: '1.05rem',
     fontWeight: '700',
     transition: 'all 0.3s ease',
-    boxShadow: '0 10px 25px rgba(102, 126, 234, 0.4)',
+    boxShadow: '0 4px 12px rgba(26, 54, 93, 0.3)',
     marginTop: '0.5rem'
   },
   divider: {
     display: 'flex',
     alignItems: 'center',
     gap: '1rem',
-    margin: '1.5rem 0'
+    margin: '1.5rem 0',
+    width: '100%',
+    background: 'white',
+    padding: '0 2rem'
   },
   dividerLine: {
     flex: 1,
@@ -552,7 +711,10 @@ const styles = {
   },
   signupSection: {
     textAlign: 'center',
-    marginBottom: '1.5rem'
+    marginBottom: '1.5rem',
+    width: '100%',
+    background: 'white',
+    padding: '0 2rem'
   },
   signupText: {
     color: '#64748b',
@@ -560,7 +722,7 @@ const styles = {
     margin: 0
   },
   signupLink: {
-    color: '#667eea',
+    color: '#2563eb',
     textDecoration: 'none',
     fontWeight: '700',
     transition: 'color 0.2s'
@@ -571,7 +733,12 @@ const styles = {
     gap: '1rem',
     paddingTop: '1.5rem',
     borderTop: '1px solid #e2e8f0',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
+    width: '100%',
+    background: 'white',
+    padding: '1.5rem 2rem 2rem',
+    borderRadius: '0 0 16px 16px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
   },
   trustBadge: {
     display: 'flex',
@@ -586,5 +753,15 @@ const styles = {
     fontSize: '0.7rem',
     color: '#64748b',
     fontWeight: '600'
+  },
+  footer: {
+    background: '#1a365d',
+    padding: '1.5rem',
+    textAlign: 'center'
+  },
+  footerText: {
+    color: '#bfdbfe',
+    fontSize: '0.85rem',
+    margin: 0
   }
 };
