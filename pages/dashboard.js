@@ -1374,31 +1374,43 @@ function DashboardContent() {
                   }, 3000); // Auto-scroll every 3 seconds
                 };
                 
-                el.addEventListener('mouseenter', () => {
+                const handleMouseEnter = () => {
                   isHovering = true;
-                });
+                };
                 
-                el.addEventListener('mouseleave', () => {
+                const handleMouseLeave = () => {
                   isHovering = false;
-                });
+                };
                 
-                el.addEventListener('touchstart', () => {
+                const handleTouchStart = () => {
                   isHovering = true;
                   if (scrollInterval) clearInterval(scrollInterval);
-                });
+                };
                 
-                el.addEventListener('touchend', () => {
+                const handleTouchEnd = () => {
                   setTimeout(() => {
                     isHovering = false;
                     startAutoScroll();
                   }, 2000);
-                });
+                };
+                
+                el.addEventListener('mouseenter', handleMouseEnter);
+                el.addEventListener('mouseleave', handleMouseLeave);
+                el.addEventListener('touchstart', handleTouchStart);
+                el.addEventListener('touchend', handleTouchEnd);
                 
                 startAutoScroll();
                 
-                return () => {
+                // Cleanup function - but don't return it from ref callback
+                el._cleanup = () => {
                   if (scrollInterval) clearInterval(scrollInterval);
+                  el.removeEventListener('mouseenter', handleMouseEnter);
+                  el.removeEventListener('mouseleave', handleMouseLeave);
+                  el.removeEventListener('touchstart', handleTouchStart);
+                  el.removeEventListener('touchend', handleTouchEnd);
                 };
+              } else if (el && el._cleanup) {
+                el._cleanup();
               }
             }}
             style={styles.cardsCarousel}>
@@ -2579,7 +2591,7 @@ balanceAmountContainer: {
   textAlign: 'center'
 },
 balanceAmount: {
-  fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
+  fontSize: 'clamp(1.575rem, 4.2vw, 2.625rem)',
   fontWeight: '700',
   marginBottom: '0.5rem',
   letterSpacing: '0.5px',
