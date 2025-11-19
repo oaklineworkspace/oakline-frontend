@@ -1344,11 +1344,64 @@ function DashboardContent() {
               border: '1px solid #e2e8f0'
             }}>
               <span style={{ fontSize: '1rem' }}>💳</span>
-              <span style={{ fontWeight: '500' }}>Scroll to view all {cards.length} cards</span>
+              <span style={{ fontWeight: '500' }}>👉 Swipe left or right to view all your cards</span>
             </div>
           )}
 
-          <div style={styles.cardsCarousel}>
+          <div 
+            ref={(el) => {
+              if (el && cards.length > 1) {
+                let scrollInterval;
+                let isHovering = false;
+                
+                const startAutoScroll = () => {
+                  if (scrollInterval) clearInterval(scrollInterval);
+                  
+                  scrollInterval = setInterval(() => {
+                    if (!isHovering && el) {
+                      const cardWidth = 360 + 24; // card width + gap
+                      const maxScroll = el.scrollWidth - el.clientWidth;
+                      const currentScroll = el.scrollLeft;
+                      
+                      if (currentScroll >= maxScroll - 10) {
+                        // Reset to beginning smoothly
+                        el.scrollTo({ left: 0, behavior: 'smooth' });
+                      } else {
+                        // Scroll to next card
+                        el.scrollTo({ left: currentScroll + cardWidth, behavior: 'smooth' });
+                      }
+                    }
+                  }, 3000); // Auto-scroll every 3 seconds
+                };
+                
+                el.addEventListener('mouseenter', () => {
+                  isHovering = true;
+                });
+                
+                el.addEventListener('mouseleave', () => {
+                  isHovering = false;
+                });
+                
+                el.addEventListener('touchstart', () => {
+                  isHovering = true;
+                  if (scrollInterval) clearInterval(scrollInterval);
+                });
+                
+                el.addEventListener('touchend', () => {
+                  setTimeout(() => {
+                    isHovering = false;
+                    startAutoScroll();
+                  }, 2000);
+                });
+                
+                startAutoScroll();
+                
+                return () => {
+                  if (scrollInterval) clearInterval(scrollInterval);
+                };
+              }
+            }}
+            style={styles.cardsCarousel}>
             {cards.map(card => (
               <div key={card.id} style={styles.cardContainer}>
                 <div
