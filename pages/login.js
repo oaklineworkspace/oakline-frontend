@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
+import StatusMessageBanner from '../components/StatusMessageBanner';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -83,8 +84,17 @@ export default function LoginPage() {
 
   return (
     <>
-      {/* Professional Full-Screen Loading Overlay */}
-      {loading && (
+      {/* Full-Screen Banned Message - Replaces everything when user is banned */}
+      {error && typeof error === 'object' && error.type ? (
+        <div style={styles.fullScreenBannedContainer}>
+          <StatusMessageBanner
+            type={error.type}
+            reason={error.reason}
+            contactEmail="support@theoaklinebank.com"
+          />
+        </div>
+      ) : loading ? (
+        /* Professional Full-Screen Loading Overlay */
         <div style={styles.verificationOverlay}>
           <div style={styles.verificationContent}>
             {/* Bank Logo */}
@@ -146,15 +156,14 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Main Login Page */}
-      <div style={{
-        ...styles.pageContainer,
-        opacity: loading ? 0 : 1,
-        visibility: loading ? 'hidden' : 'visible',
-        transition: 'opacity 0.3s ease, visibility 0.3s ease'
-      }}>
+      ) : (
+        /* Main Login Page */
+        <div style={{
+          ...styles.pageContainer,
+          opacity: loading ? 0 : 1,
+          visibility: loading ? 'hidden' : 'visible',
+          transition: 'opacity 0.3s ease, visibility 0.3s ease'
+        }}>
         {/* Professional Header - Logo Centered */}
         <header style={styles.header}>
           <div style={styles.headerContent}>
@@ -251,69 +260,12 @@ export default function LoginPage() {
                 </Link>
               </div>
 
-              {/* Error Message */}
-              {error && (
-                <>
-                  {typeof error === 'object' && error.type === 'banned' ? (
-                    <div style={styles.bannedMessage}>
-                      <div style={styles.bannedHeader}>
-                        <span style={styles.bannedIcon}>🚫</span>
-                        <h3 style={styles.bannedTitle}>Account Access Suspended</h3>
-                      </div>
-                      <p style={styles.bannedText}>
-                        We regret to inform you that your account access has been temporarily suspended.
-                        {error.reason && ` Reason: ${error.reason}`}
-                      </p>
-                      <div style={styles.bannedContactSection}>
-                        <p style={styles.bannedContactTitle}>
-                          <strong>To resolve this matter, please contact us:</strong>
-                        </p>
-                        <div style={styles.contactMethods}>
-                          {error.bankDetails?.bank_phone && (
-                            <div style={styles.contactMethod}>
-                              <span style={styles.contactIcon}>📞</span>
-                              <div>
-                                <div style={styles.contactLabel}>Phone Support</div>
-                                <a href={`tel:${error.bankDetails.bank_phone}`} style={styles.contactValue}>
-                                  {error.bankDetails.bank_phone}
-                                </a>
-                              </div>
-                            </div>
-                          )}
-                          {error.bankDetails?.email_contact && (
-                            <div style={styles.contactMethod}>
-                              <span style={styles.contactIcon}>✉️</span>
-                              <div>
-                                <div style={styles.contactLabel}>Email Support</div>
-                                <a href={`mailto:${error.bankDetails.email_contact}`} style={styles.contactValue}>
-                                  {error.bankDetails.email_contact}
-                                </a>
-                              </div>
-                            </div>
-                          )}
-                          {error.bankDetails?.address && (
-                            <div style={styles.contactMethod}>
-                              <span style={styles.contactIcon}>📍</span>
-                              <div>
-                                <div style={styles.contactLabel}>Visit Us</div>
-                                <div style={styles.contactValue}>{error.bankDetails.address}</div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <p style={styles.bannedFooter}>
-                          Our customer service team is available Monday - Friday, 9:00 AM - 5:00 PM EST, 
-                          and Saturday 9:00 AM - 1:00 PM EST. We're here to help resolve this matter.
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={styles.errorMessage}>
-                      <span style={styles.errorIcon}>⚠️</span>
-                      <span>{error}</span>
-                    </div>
-                  )}
-                </>
+              {/* Error Message - Only show simple errors here */}
+              {error && typeof error === 'string' && (
+                <div style={styles.errorMessage}>
+                  <span style={styles.errorIcon}>⚠️</span>
+                  <span>{error}</span>
+                </div>
               )}
 
               {/* Submit Button */}
@@ -371,7 +323,8 @@ export default function LoginPage() {
             © 2025 Oakline Bank. All rights reserved. Member FDIC.
           </p>
         </footer>
-      </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes spin {
@@ -968,5 +921,21 @@ const styles = {
     display: 'inline-block',
     letterSpacing: '0.5px',
     textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+  },
+  fullScreenBannedContainer: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100vw',
+    height: '100vh',
+    background: 'linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '2rem',
+    zIndex: 10000,
+    overflow: 'auto'
   }
 };
