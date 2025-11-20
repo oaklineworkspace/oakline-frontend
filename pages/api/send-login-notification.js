@@ -30,9 +30,9 @@ export default async function handler(req, res) {
 
     // If no settings exist or loginAlerts is disabled, don't send notification
     if (settingsError || !securitySettings || !securitySettings.loginalerts) {
-      return res.status(200).json({ 
-        success: true, 
-        message: 'Login notifications disabled' 
+      return res.status(200).json({
+        success: true,
+        message: 'Login notifications disabled'
       });
     }
 
@@ -43,8 +43,8 @@ export default async function handler(req, res) {
       .eq('id', user.id)
       .single();
 
-    const userName = profile?.first_name 
-      ? `${profile.first_name} ${profile.last_name || ''}`.trim() 
+    const userName = profile?.first_name
+      ? `${profile.first_name} ${profile.last_name || ''}`.trim()
       : 'Valued Customer';
 
     // Get bank details for phone number
@@ -83,7 +83,7 @@ export default async function handler(req, res) {
             'User-Agent': 'Oakline-Bank-App/1.0'
           }
         });
-        
+
         if (geoResponse.ok) {
           const geoData = await geoResponse.json();
           if (!geoData.error) {
@@ -114,73 +114,62 @@ export default async function handler(req, res) {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
       </head>
-      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8fafc;">
-        <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 30px; text-align: center; border-radius: 12px 12px 0 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          <h1 style="color: white; margin: 0; font-size: 26px; font-weight: 600;">🔐 Account Access Notification</h1>
+      <body style="font-family: Arial, sans-serif; line-height: 1.5; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: #1e40af; padding: 25px; text-align: center; border-radius: 8px 8px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 22px;">🔐 Account Login Alert</h1>
         </div>
-        
-        <div style="background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-          <p style="font-size: 16px; margin-bottom: 10px; font-weight: 500;">Dear ${userName},</p>
-          
-          <p style="font-size: 15px; color: #475569; margin-bottom: 20px; line-height: 1.6;">
-            A successful login to your Oakline Bank account was detected. Please review the access details below:
+
+        <div style="background: #fff; padding: 25px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px;">
+          <p style="font-size: 15px; margin-bottom: 8px;">Dear ${userName},</p>
+
+          <p style="font-size: 14px; color: #555; margin-bottom: 18px;">
+            Your account was accessed. Review the details:
           </p>
-          
-          <div style="background: #f8fafc; border: 2px solid #3b82f6; border-radius: 10px; padding: 25px; margin: 25px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <h3 style="margin: 0 0 18px 0; color: #1e40af; font-size: 18px; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Access Details</h3>
-            
-            <table style="width: 100%; font-size: 14px; border-collapse: separate; border-spacing: 0 8px;">
+
+          <div style="background: #f5f5f5; border: 2px solid #3b82f6; border-radius: 8px; padding: 18px; margin: 18px 0;">
+            <table style="width: 100%; font-size: 13px;">
               <tr>
-                <td style="padding: 10px 12px; color: #64748b; font-weight: 600; width: 35%; vertical-align: top;">📅 Date & Time:</td>
-                <td style="padding: 10px 12px; color: #1e293b; font-weight: 500; background: #ffffff; border-radius: 6px;">${formattedDate}</td>
+                <td style="padding: 6px 0; color: #666; width: 30%;">📅 Time:</td>
+                <td style="padding: 6px 0; color: #000;">${formattedDate}</td>
               </tr>
               <tr>
-                <td style="padding: 10px 12px; color: #64748b; font-weight: 600; vertical-align: top;">📍 Location:</td>
-                <td style="padding: 10px 12px; color: #1e293b; font-weight: 500; background: #ffffff; border-radius: 6px;">${actualCity && actualCity !== 'Unknown' ? `${actualCity}, ${actualCountry}` : 'Location not available'}</td>
+                <td style="padding: 6px 0; color: #666;">📍 Location:</td>
+                <td style="padding: 6px 0; color: #000;">${actualCity !== 'Unknown' ? `${actualCity}, ${actualCountry}` : 'Not available'}</td>
               </tr>
               <tr>
-                <td style="padding: 10px 12px; color: #64748b; font-weight: 600; vertical-align: top;">📱 Device:</td>
-                <td style="padding: 10px 12px; color: #1e293b; font-weight: 500; background: #ffffff; border-radius: 6px;">${device_model || device_type || 'Unknown Device'}</td>
+                <td style="padding: 6px 0; color: #666;">📱 Device:</td>
+                <td style="padding: 6px 0; color: #000;">${device_model || device_type || 'Unknown'}</td>
               </tr>
               <tr>
-                <td style="padding: 10px 12px; color: #64748b; font-weight: 600; vertical-align: top;">💻 Operating System:</td>
-                <td style="padding: 10px 12px; color: #1e293b; font-weight: 500; background: #ffffff; border-radius: 6px;">${os || 'Unknown'}</td>
+                <td style="padding: 6px 0; color: #666;">💻 System:</td>
+                <td style="padding: 6px 0; color: #000;">${os || 'Unknown'}</td>
               </tr>
               <tr>
-                <td style="padding: 10px 12px; color: #64748b; font-weight: 600; vertical-align: top;">🌐 Browser:</td>
-                <td style="padding: 10px 12px; color: #1e293b; font-weight: 500; background: #ffffff; border-radius: 6px;">${browser || 'Unknown'}</td>
+                <td style="padding: 6px 0; color: #666;">🌐 Browser:</td>
+                <td style="padding: 6px 0; color: #000;">${browser || 'Unknown'}</td>
               </tr>
               <tr>
-                <td style="padding: 10px 12px; color: #64748b; font-weight: 600; vertical-align: top;">🔢 IP Address:</td>
-                <td style="padding: 10px 12px; color: #1e293b; font-weight: 500; background: #ffffff; border-radius: 6px;">${actualIp || 'Not available'}</td>
+                <td style="padding: 6px 0; color: #666;">🔢 IP:</td>
+                <td style="padding: 6px 0; color: #000;">${actualIp || 'N/A'}</td>
               </tr>
             </table>
           </div>
-          
-          <div style="background: #dcfce7; border-left: 5px solid #16a34a; padding: 16px 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-            <p style="margin: 0; font-size: 14px; color: #166534; line-height: 1.6;">
-              <strong style="display: block; margin-bottom: 5px;">✅ If You Recognize This Activity</strong>
-              No further action is required. You may disregard this notification.
+
+          <div style="background: #d1fae5; border-left: 4px solid #10b981; padding: 12px 15px; margin: 15px 0; border-radius: 4px;">
+            <p style="margin: 0; font-size: 13px; color: #065f46;">
+              <strong>✅ This was you?</strong><br>No action needed.
             </p>
           </div>
-          
-          <div style="background: #fee2e2; border-left: 5px solid #dc2626; padding: 16px 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-            <p style="margin: 0; font-size: 14px; color: #991b1b; line-height: 1.6;">
-              <strong style="display: block; margin-bottom: 5px;">⚠️ If You Do Not Recognize This Activity</strong>
-              Please take immediate action to secure your account by changing your password and contacting our security team at <a href="mailto:security@theoaklinebank.com" style="color: #991b1b; font-weight: 600; text-decoration: none;">security@theoaklinebank.com</a> or call us at ${supportPhone}.
+
+          <div style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 12px 15px; margin: 15px 0; border-radius: 4px;">
+            <p style="margin: 0; font-size: 13px; color: #991b1b;">
+              <strong>⚠️ Not you?</strong><br>Change password now & contact security@theoaklinebank.com or ${supportPhone}
             </p>
           </div>
-          
-          <div style="background: #f1f5f9; padding: 20px; margin: 25px 0; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <p style="margin: 0 0 10px 0; font-size: 13px; color: #64748b; line-height: 1.6;">
-              <strong style="color: #475569;">Security Reminder:</strong> Oakline Bank will never ask you to share your password, PIN, or verification codes via email or phone. Please report any suspicious communications immediately.
-            </p>
-          </div>
-          
-          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #e2e8f0;">
-            <p style="font-size: 13px; color: #64748b; margin: 5px 0; font-weight: 500;">Oakline Bank - Your Trusted Financial Partner</p>
-            <p style="font-size: 12px; color: #94a3b8; margin: 5px 0;">This is an automated security notification. Please do not reply to this email.</p>
-            <p style="font-size: 11px; color: #cbd5e1; margin: 8px 0 0 0;">© ${new Date().getFullYear()} Oakline Bank. All rights reserved. Member FDIC.</p>
+
+          <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
+            <p style="font-size: 12px; color: #666; margin: 3px 0;">Oakline Bank</p>
+            <p style="font-size: 11px; color: #999; margin: 3px 0;">Automated notification. Do not reply.</p>
           </div>
         </div>
       </body>
@@ -188,38 +177,31 @@ export default async function handler(req, res) {
     `;
 
     const emailText = `
-      ACCOUNT ACCESS NOTIFICATION - Oakline Bank
-      
+      ACCOUNT LOGIN ALERT - Oakline Bank
+
       Dear ${userName},
-      
-      A successful login to your Oakline Bank account was detected. Please review the access details below:
-      
-      ACCESS DETAILS:
+
+      Your account was accessed. Review the details:
+
+      DETAILS:
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      Date & Time: ${formattedDate}
-      Location: ${actualCity && actualCity !== 'Unknown' ? `${actualCity}, ${actualCountry}` : 'Location not available'}
-      Device: ${device_model || device_type || 'Unknown Device'}
-      Operating System: ${os || 'Unknown'}
+      Time: ${formattedDate}
+      Location: ${actualCity !== 'Unknown' ? `${actualCity}, ${actualCountry}` : 'Not available'}
+      Device: ${device_model || device_type || 'Unknown'}
+      System: ${os || 'Unknown'}
       Browser: ${browser || 'Unknown'}
-      IP Address: ${actualIp || 'Not available'}
+      IP: ${actualIp || 'N/A'}
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      
-      ✅ IF YOU RECOGNIZE THIS ACTIVITY:
-      No further action is required. You may disregard this notification.
-      
-      ⚠️ IF YOU DO NOT RECOGNIZE THIS ACTIVITY:
-      Please take immediate action to secure your account by:
-      1. Changing your password immediately
-      2. Contacting our security team at security@theoaklinebank.com
-      3. Or calling us at ${supportPhone}
-      
-      SECURITY REMINDER:
-      Oakline Bank will never ask you to share your password, PIN, or verification codes via email or phone. Please report any suspicious communications immediately.
-      
+
+      ✅ This was you?
+      No action needed.
+
+      ⚠️ Not you?
+      Change password now & contact security@theoaklinebank.com or ${supportPhone}
+
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      Oakline Bank - Your Trusted Financial Partner
-      This is an automated security notification. Please do not reply to this email.
-      © ${new Date().getFullYear()} Oakline Bank. All rights reserved. Member FDIC.
+      Oakline Bank
+      Automated notification. Do not reply.
     `;
 
     try {

@@ -108,16 +108,16 @@ export default function Settings() {
   const saveSetting = async (key, value) => {
     const previousValue = settings[key];
     setSaveStatus('saving');
-    
+
     try {
       const updatedSettings = { ...settings, [key]: value };
 
       const categories = {
         notification_settings: ['email_notifications', 'sms_notifications', 'push_notifications', 
                                 'transaction_alerts', 'low_balance_alerts', 'security_alerts', 
-                                'marketing_emails', 'monthly_statements', 'email_frequency', 
-                                'login_notifications'],
-        security_settings: ['two_factor_enabled', 'biometric_login', 'session_timeout'],
+                                'marketing_emails', 'monthly_statements', 'email_frequency'],
+        security_settings: ['two_factor_enabled', 'biometric_login', 'session_timeout', 
+                           'login_notification_mode', 'require_login_code'],
         privacy_settings: ['data_sharing', 'analytics_tracking', 'third_party_sharing'],
         preferences: ['low_balance_threshold', 'transaction_alert_amount', 'preferred_language', 
                      'currency', 'theme', 'statement_delivery', 'auto_save_enabled']
@@ -154,16 +154,16 @@ export default function Settings() {
 
   const saveAllPendingChanges = async () => {
     setSaveStatus('saving');
-    
+
     try {
       const updatedSettings = { ...settings, ...pendingChanges };
 
       const categories = {
         notification_settings: ['email_notifications', 'sms_notifications', 'push_notifications', 
                                 'transaction_alerts', 'low_balance_alerts', 'security_alerts', 
-                                'marketing_emails', 'monthly_statements', 'email_frequency', 
-                                'login_notifications'],
-        security_settings: ['two_factor_enabled', 'biometric_login', 'session_timeout'],
+                                'marketing_emails', 'monthly_statements', 'email_frequency'],
+        security_settings: ['two_factor_enabled', 'biometric_login', 'session_timeout', 
+                           'login_notification_mode', 'require_login_code'],
         privacy_settings: ['data_sharing', 'analytics_tracking', 'third_party_sharing'],
         preferences: ['low_balance_threshold', 'transaction_alert_amount', 'preferred_language', 
                      'currency', 'theme', 'statement_delivery', 'auto_save_enabled']
@@ -201,7 +201,7 @@ export default function Settings() {
 
   const handleToggle = (key) => {
     const newValue = !settings[key];
-    
+
     if (settings.auto_save_enabled && key !== 'auto_save_enabled') {
       saveSetting(key, newValue);
     } else {
@@ -657,6 +657,37 @@ export default function Settings() {
                     <option value="240">4 hours</option>
                   </select>
                 </div>
+
+                <div style={styles.settingItem}>
+                  <div style={styles.settingInfo}>
+                    <div style={styles.settingName}>Login Notification Mode</div>
+                    <div style={styles.settingDesc}>Choose how you want to be notified about logins</div>
+                  </div>
+                  <select
+                    style={styles.select}
+                    value={settings.login_notification_mode || 'all'}
+                    onChange={(e) => handleSelectChange('login_notification_mode', e.target.value)}
+                  >
+                    <option value="all">All login attempts</option>
+                    <option value="new_device">New device logins only</option>
+                  </select>
+                </div>
+
+                <div style={styles.settingItem}>
+                  <div style={styles.settingInfo}>
+                    <div style={styles.settingName}>Require Login Confirmation Code</div>
+                    <div style={styles.settingDesc}>Require a code for all logins, even from recognized devices</div>
+                  </div>
+                  <label style={styles.toggle}>
+                    <input
+                      type="checkbox"
+                      checked={settings.require_login_code}
+                      onChange={() => handleToggle('require_login_code')}
+                      style={styles.toggleInput}
+                    />
+                    <span style={settings.require_login_code ? styles.toggleOn : styles.toggleOff}></span>
+                  </label>
+                </div>
               </div>
 
               <div style={styles.settingGroup}>
@@ -922,7 +953,7 @@ export default function Settings() {
 
               <div style={styles.dangerZone}>
                 <h3 style={styles.dangerTitle}>⚠️ Danger Zone</h3>
-                
+
                 <div style={styles.dangerItem}>
                   <div style={styles.dangerInfo}>
                     <div style={styles.dangerName}>Deactivate Account</div>

@@ -10,6 +10,17 @@ ADD COLUMN IF NOT EXISTS loginNotificationMode TEXT DEFAULT 'all'
   CHECK (loginNotificationMode IN ('all', 'new_devices_only', 'off')),
 ADD COLUMN IF NOT EXISTS requireLoginCode BOOLEAN DEFAULT false;
 
+-- 1b. Create pin_reset_codes table for transaction PIN resets
+CREATE TABLE IF NOT EXISTS public.pin_reset_codes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT NOT NULL,
+  code_hash TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- 2. Create user_devices table to track known devices
 CREATE TABLE IF NOT EXISTS public.user_devices (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -94,6 +105,21 @@ CREATE POLICY "System can insert codes"
 
 CREATE POLICY "System can update codes"
   ON public.login_verification_codes FOR UPDATE
+  USING (true);
+
+-- 9b. Enable RLS and create policies for pin_reset_codes
+ALTER TABLE public.pin_reset_codes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own PIN reset codes"
+  ON public.pin_reset_codes FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "System can insert PIN reset codes"
+  ON public.pin_reset_codes FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "System can update PIN reset codes"
+  ON public.pin_reset_codes FOR UPDATE
   USING (true);
 
 -- 10. Update existing user_security_settings to use new format
