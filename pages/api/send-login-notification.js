@@ -47,6 +47,15 @@ export default async function handler(req, res) {
       ? `${profile.first_name} ${profile.last_name || ''}`.trim() 
       : 'Valued Customer';
 
+    // Get bank details for phone number
+    const { data: bankDetails } = await supabaseAdmin
+      .from('bank_details')
+      .select('phone')
+      .limit(1)
+      .single();
+
+    const supportPhone = bankDetails?.phone || '+1 (636) 635-6122';
+
     // Get login details from the activity log
     const {
       ip_address,
@@ -157,7 +166,7 @@ export default async function handler(req, res) {
           <div style="background: #fee2e2; border-left: 5px solid #dc2626; padding: 16px 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
             <p style="margin: 0; font-size: 14px; color: #991b1b; line-height: 1.6;">
               <strong style="display: block; margin-bottom: 5px;">⚠️ If You Do Not Recognize This Activity</strong>
-              Please take immediate action to secure your account by changing your password and contacting our security team at <a href="mailto:security@theoaklinebank.com" style="color: #991b1b; font-weight: 600; text-decoration: none;">security@theoaklinebank.com</a> or call us at 1-800-OAKLINE.
+              Please take immediate action to secure your account by changing your password and contacting our security team at <a href="mailto:security@theoaklinebank.com" style="color: #991b1b; font-weight: 600; text-decoration: none;">security@theoaklinebank.com</a> or call us at ${supportPhone}.
             </p>
           </div>
           
@@ -201,7 +210,7 @@ export default async function handler(req, res) {
       Please take immediate action to secure your account by:
       1. Changing your password immediately
       2. Contacting our security team at security@theoaklinebank.com
-      3. Or calling us at 1-800-OAKLINE
+      3. Or calling us at ${supportPhone}
       
       SECURITY REMINDER:
       Oakline Bank will never ask you to share your password, PIN, or verification codes via email or phone. Please report any suspicious communications immediately.
