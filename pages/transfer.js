@@ -1277,8 +1277,8 @@ export default function Transfer() {
           )}
 
           <div style={styles.welcomeSection}>
-            <h1 style={styles.welcomeTitle}>Transfer Between Your Accounts</h1>
-            <p style={styles.welcomeSubtitle}>Move money instantly between your Oakline accounts</p>
+            <h1 style={styles.welcomeTitle}>Transfer Funds</h1>
+            <p style={styles.welcomeSubtitle}>Send money between your accounts, to other Oakline customers, or to external banks</p>
           </div>
 
           <div style={styles.transferOptions}>

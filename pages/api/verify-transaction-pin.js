@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('transaction_pin')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .single();
 
     if (profileError || !profile) {
