@@ -618,7 +618,8 @@ export default function Transfer() {
     container: {
       minHeight: '100vh',
       backgroundColor: '#0a1f44',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      overflowX: 'hidden'
     },
     header: {
       backgroundColor: '#1a365d',
@@ -754,6 +755,8 @@ export default function Transfer() {
       fontSize: '0.875rem',
       backgroundColor: 'white',
       transition: 'border-color 0.3s',
+      width: '100%',
+      maxWidth: '100%',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap'
@@ -780,7 +783,9 @@ export default function Transfer() {
     accountInfoValue: {
       fontSize: '0.95rem',
       fontWeight: '700',
-      color: '#1e293b'
+      color: '#1e293b',
+      wordBreak: 'break-word',
+      overflowWrap: 'break-word'
     },
     submitButton: {
       width: '100%',

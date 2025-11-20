@@ -1529,7 +1529,7 @@ export default function WireTransfer() {
                             style={styles.input}
                             value={wireForm.recipient_first_name}
                             onChange={(e) => handleInputChange('recipient_first_name', e.target.value)}
-                            placeholder="John"
+                            placeholder="Michael"
                             required
                           />
                         </div>
@@ -1552,7 +1552,7 @@ export default function WireTransfer() {
                             style={styles.input}
                             value={wireForm.recipient_last_name}
                             onChange={(e) => handleInputChange('recipient_last_name', e.target.value)}
-                            placeholder="Doe"
+                            placeholder="Rodriguez"
                             required
                           />
                         </div>
@@ -1585,53 +1585,54 @@ export default function WireTransfer() {
                           style={styles.input}
                           value={wireForm.recipient_bank}
                           onChange={(e) => handleInputChange('recipient_bank', e.target.value)}
-                          placeholder="e.g., Chase Bank"
+                          placeholder="e.g., Wells Fargo Bank"
                           required
                         />
                       </div>
 
-                      <div style={styles.formGroup}>
-                        <label style={styles.label}>Recipient Bank Country *</label>
-                        <select
-                          style={styles.select}
-                          value={wireForm.recipient_bank_country}
-                          onChange={(e) => {
-                            const newCountry = e.target.value;
-                            handleInputChange('recipient_bank_country', newCountry);
-                            // If switching to US, reset transfer type and clear routing/swift if necessary
-                            if (newCountry === 'United States') {
-                              handleInputChange('transfer_type', 'domestic');
-                              // Clear potentially conflicting international fields
-                              handleInputChange('swift_code', '');
-                              // Ensure routing number is validated as US ABA
-                              if (wireForm.routing_number) {
-                                const validation = validateRoutingNumber(wireForm.routing_number, 'domestic', 'United States');
-                                setValidationErrors(prev => ({ ...prev, routing_number: validation.valid ? '' : validation.error }));
+                      {wireForm.transfer_type === 'international' && (
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>Recipient Bank Country *</label>
+                          <select
+                            style={styles.select}
+                            value={wireForm.recipient_bank_country}
+                            onChange={(e) => {
+                              const newCountry = e.target.value;
+                              handleInputChange('recipient_bank_country', newCountry);
+                              // If switching to US, reset transfer type and clear routing/swift if necessary
+                              if (newCountry === 'United States') {
+                                handleInputChange('transfer_type', 'domestic');
+                                // Clear potentially conflicting international fields
+                                handleInputChange('swift_code', '');
+                                // Ensure routing number is validated as US ABA
+                                if (wireForm.routing_number) {
+                                  const validation = validateRoutingNumber(wireForm.routing_number, 'domestic', 'United States');
+                                  setValidationErrors(prev => ({ ...prev, routing_number: validation.valid ? '' : validation.error }));
+                                }
+                              } else {
+                                // If switching away from US, ensure transfer type is international and clear US-specific fields
+                                handleInputChange('transfer_type', 'international');
+                                handleInputChange('routing_number', ''); // Clear ABA number
+                                // If SWIFT is needed, prompt for it (handled by validation below)
                               }
-                            } else {
-                              // If switching away from US, ensure transfer type is international and clear US-specific fields
-                              handleInputChange('transfer_type', 'international');
-                              handleInputChange('routing_number', ''); // Clear ABA number
-                              // If SWIFT is needed, prompt for it (handled by validation below)
-                            }
-                            // Recalculate total as fees might change
-                            calculateTotal();
-                          }}
-                          required
-                        >
-                          <option value="United States">🇺🇸 United States</option>
-                          <option value="Canada">🇨🇦 Canada</option>
-                          <option value="United Kingdom">🇬🇧 United Kingdom</option>
-                          <option value="Australia">🇦🇺 Australia</option>
-                          <option value="Germany">🇩🇪 Germany</option>
-                          <option value="France">🇫🇷 France</option>
-                          <option value="India">🇮🇳 India</option>
-                          <option value="Japan">🇯🇵 Japan</option>
-                          <option value="Singapore">🇸🇬 Singapore</option>
-                          <option value="Mexico">🇲🇽 Mexico</option>
-                          <option value="Other">Other</option>
-                        </select>
-                      </div>
+                              // Recalculate total as fees might change
+                              calculateTotal();
+                            }}
+                            required
+                          >
+                            <option value="Canada">🇨🇦 Canada</option>
+                            <option value="United Kingdom">🇬🇧 United Kingdom</option>
+                            <option value="Australia">🇦🇺 Australia</option>
+                            <option value="Germany">🇩🇪 Germany</option>
+                            <option value="France">🇫🇷 France</option>
+                            <option value="India">🇮🇳 India</option>
+                            <option value="Japan">🇯🇵 Japan</option>
+                            <option value="Singapore">🇸🇬 Singapore</option>
+                            <option value="Mexico">🇲🇽 Mexico</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                      )}
 
                       <div style={styles.formGroup}>
                         <label style={styles.label}>Recipient Account Number *</label>
@@ -1777,7 +1778,7 @@ export default function WireTransfer() {
                           style={styles.input}
                           value={wireForm.recipient_bank_address}
                           onChange={(e) => handleInputChange('recipient_bank_address', e.target.value)}
-                          placeholder="123 Main Street"
+                          placeholder="456 Oak Avenue"
                           required
                         />
                       </div>
