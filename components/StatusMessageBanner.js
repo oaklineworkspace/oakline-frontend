@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 
 export default function StatusMessageBanner({ type, reason, contactEmail = 'support@theoaklinebank.com' }) {
@@ -5,36 +6,36 @@ export default function StatusMessageBanner({ type, reason, contactEmail = 'supp
 
   const statusConfig = {
     banned: {
-      emoji: '🚫',
+      emoji: '🔒',
       title: 'Account Restricted',
       message: 'Your account access has been restricted.',
-      gradient: 'linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%)',
-      bgColor: '#991b1b',
-      borderColor: '#b91c1c'
+      gradient: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+      bgColor: '#1e3a8a',
+      borderColor: '#3b82f6'
     },
     suspended: {
       emoji: '⏸️',
       title: 'Account Suspended',
       message: 'Your account has been temporarily suspended.',
-      gradient: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
-      bgColor: '#92400e',
-      borderColor: '#d97706'
+      gradient: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+      bgColor: '#1e3a8a',
+      borderColor: '#3b82f6'
     },
     locked: {
       emoji: '🔒',
       title: 'Account Locked',
       message: 'Your account is locked for security reasons.',
-      gradient: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)',
+      gradient: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
       bgColor: '#1e3a8a',
-      borderColor: '#1e40af'
+      borderColor: '#3b82f6'
     },
     closed: {
       emoji: '❌',
       title: 'Account Closed',
       message: 'This account has been closed and cannot be accessed.',
-      gradient: 'linear-gradient(135deg, #4b5563 0%, #374151 100%)',
-      bgColor: '#374151',
-      borderColor: '#4b5563'
+      gradient: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+      bgColor: '#1e3a8a',
+      borderColor: '#3b82f6'
     }
   };
 
@@ -167,17 +168,17 @@ const styles = {
     lineHeight: '1.6',
   },
   reasonBox: {
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: '12px',
     padding: '1rem',
     marginBottom: '1.5rem',
     textAlign: 'left',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
   },
   reasonLabel: {
     display: 'block',
     fontSize: '0.875rem',
-    color: '#fbbf24',
+    color: '#93c5fd',
     marginBottom: '0.5rem',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
@@ -199,7 +200,7 @@ const styles = {
   contactLabel: {
     display: 'block',
     fontSize: '0.875rem',
-    color: '#fbbf24',
+    color: '#93c5fd',
     marginBottom: '0.25rem',
     fontWeight: '600',
   },
@@ -240,7 +241,7 @@ const styles = {
   },
   contactButton: {
     backgroundColor: '#ffffff',
-    color: '#1f2937',
+    color: '#1e40af',
     border: 'none',
     borderRadius: '8px',
     padding: '0.75rem 1.5rem',
