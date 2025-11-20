@@ -203,8 +203,17 @@ export default function LoginPage() {
 
   return (
     <>
-      {/* Professional Full-Screen Loading Overlay */}
-      {loading && (
+      {/* Full-Screen Banned Message - Replaces everything when user is banned */}
+      {error && typeof error === 'object' && error.type ? (
+        <div style={styles.fullScreenBannedContainer}>
+          <StatusMessageBanner
+            type={error.type}
+            reason={error.reason}
+            contactEmail="support@theoaklinebank.com"
+          />
+        </div>
+      ) : loading ? (
+        /* Professional Full-Screen Loading Overlay */
         <div style={styles.verificationOverlay}>
           <div style={styles.verificationContent}>
             {/* Bank Logo */}
@@ -266,25 +275,9 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Full-Screen Banned Message - Replaces everything when user is banned */}
-      {error && typeof error === 'object' && error.type ? (
-        <div style={styles.fullScreenBannedContainer}>
-          <StatusMessageBanner
-            type={error.type}
-            reason={error.reason}
-            contactEmail="support@theoaklinebank.com"
-          />
-        </div>
       ) : (
         /* Main Login Page */
-        <div style={{
-          ...styles.pageContainer,
-          opacity: loading ? 0 : 1,
-          visibility: loading ? 'hidden' : 'visible',
-          transition: 'opacity 0.3s ease, visibility 0.3s ease'
-        }}>
+        <div style={styles.pageContainer}>
           {/* Professional Header - Logo on Left */}
           <header style={styles.header}>
             <div style={styles.headerContent}>
