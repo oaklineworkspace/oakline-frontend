@@ -203,6 +203,34 @@ export default function LoginPage() {
 
   return (
     <>
+      {/* Full-Screen Banned User Message Overlay */}
+      {error && typeof error === 'object' && error.type && (
+        <div style={styles.verificationOverlay}>
+          <div style={styles.verificationContent}>
+            {/* Bank Logo */}
+            <div style={styles.logoContainerLoading}>
+              <img 
+                src="/images/Oakline_Bank_logo_design_c1b04ae0.png" 
+                alt="Oakline Bank" 
+                style={styles.logoImageLoading}
+              />
+            </div>
+
+            <div style={styles.loadingBrandInfo}>
+              <h1 style={styles.loadingBrandName}>Oakline Bank</h1>
+              <p style={styles.loadingBrandTagline}>Secure Banking Platform</p>
+            </div>
+
+            {/* Banned User Message */}
+            <StatusMessageBanner
+              type={error.type}
+              reason={error.reason}
+              contactEmail="support@theoaklinebank.com"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Professional Full-Screen Loading Overlay */}
       {loading && (
         <div style={styles.verificationOverlay}>
@@ -271,8 +299,8 @@ export default function LoginPage() {
       {/* Main Login Page */}
       <div style={{
         ...styles.pageContainer,
-        opacity: loading ? 0 : 1,
-        visibility: loading ? 'hidden' : 'visible',
+        opacity: (loading || (error && typeof error === 'object' && error.type)) ? 0 : 1,
+        visibility: (loading || (error && typeof error === 'object' && error.type)) ? 'hidden' : 'visible',
         transition: 'opacity 0.3s ease, visibility 0.3s ease'
       }}>
         {/* Professional Header - Logo on Left */}
@@ -371,22 +399,12 @@ export default function LoginPage() {
                 </Link>
               </div>
 
-              {/* Error Message */}
-              {error && (
-                <>
-                  {typeof error === 'object' && error.type ? (
-                    <StatusMessageBanner
-                      type={error.type}
-                      reason={error.reason}
-                      contactEmail="support@theoaklinebank.com"
-                    />
-                  ) : (
-                    <div style={styles.errorMessage}>
-                      <span style={styles.errorIcon}>⚠️</span>
-                      <span>{error}</span>
-                    </div>
-                  )}
-                </>
+              {/* Error Message - Only show simple errors here */}
+              {error && typeof error === 'string' && (
+                <div style={styles.errorMessage}>
+                  <span style={styles.errorIcon}>⚠️</span>
+                  <span>{error}</span>
+                </div>
               )}
 
               {/* Submit Button */}
