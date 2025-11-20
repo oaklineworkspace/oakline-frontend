@@ -302,8 +302,8 @@ export default function LoginPage() {
                           )}
                         </div>
                         <p style={styles.bannedFooter}>
-                          Our customer service team is available Monday - Friday, 9:00 AM - 5:00 PM, 
-                          and Saturday 9:00 AM - 1:00 PM to assist you.
+                          Our customer service team is available Monday - Friday, 9:00 AM - 5:00 PM EST, 
+                          and Saturday 9:00 AM - 1:00 PM EST. We're here to help resolve this matter.
                         </p>
                       </div>
                     </div>

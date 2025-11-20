@@ -85,7 +85,7 @@ export const AuthProvider = ({ children }) => {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('is_banned, ban_reason')
-          .eq('user_id', data.user.id)
+          .eq('id', data.user.id)
           .single();
 
         if (profile?.is_banned) {
@@ -100,7 +100,7 @@ export const AuthProvider = ({ children }) => {
             data: null,
             error: {
               message: 'ACCOUNT_BANNED',
-              ban_reason: profile.ban_reason,
+              ban_reason: profile.ban_reason || 'Account suspended for security reasons',
               bank_details: bankData.bankDetails
             }
           };
