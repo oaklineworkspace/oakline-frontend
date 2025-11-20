@@ -47,11 +47,14 @@ export default function WireTransfer() {
     cities: [],
     counties: []
   });
+  const [usBanks, setUsBanks] = useState([]);
   const [showManualState, setShowManualState] = useState(false);
   const [showManualCity, setShowManualCity] = useState(false);
   const [showManualCounty, setShowManualCounty] = useState(false);
+  const [showManualBank, setShowManualBank] = useState(false);
   const [loadingStates, setLoadingStates] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
+  const [loadingBanks, setLoadingBanks] = useState(false);
 
   const [wireForm, setWireForm] = useState({
     from_account_id: '',
@@ -92,6 +95,12 @@ export default function WireTransfer() {
       fetchCities(wireForm.recipient_bank_country, wireForm.recipient_bank_state);
     }
   }, [wireForm.recipient_bank_state, wireForm.recipient_bank_country, showManualState]);
+
+  useEffect(() => {
+    if (wireForm.recipient_bank_country === 'United States') {
+      fetchUSBanks();
+    }
+  }, [wireForm.recipient_bank_country]);
 
   const fetchStates = async (countryCode) => {
     if (countryCode === 'Other') {
@@ -154,6 +163,27 @@ export default function WireTransfer() {
       setShowManualCity(true);
     } finally {
       setLoadingCities(false);
+    }
+  };
+
+  const fetchUSBanks = async () => {
+    setLoadingBanks(true);
+    try {
+      const response = await fetch('/api/locations/us-banks');
+      if (response.ok) {
+        const data = await response.json();
+        setUsBanks(data.banks || []);
+        setShowManualBank(false);
+      } else {
+        setUsBanks([]);
+        setShowManualBank(true);
+      }
+    } catch (error) {
+      console.error('Error fetching US banks:', error);
+      setUsBanks([]);
+      setShowManualBank(true);
+    } finally {
+      setLoadingBanks(false);
     }
   };
 
@@ -1587,14 +1617,86 @@ export default function WireTransfer() {
 
                       <div style={styles.formGroup}>
                         <label style={styles.label}>Recipient Bank Name *</label>
-                        <input
-                          type="text"
-                          style={styles.input}
-                          value={wireForm.recipient_bank}
-                          onChange={(e) => handleInputChange('recipient_bank', e.target.value)}
-                          placeholder="Example: Wells Fargo Bank (Enter your bank's name)"
-                          required
-                        />
+                        {wireForm.recipient_bank_country === 'United States' && !showManualBank && usBanks.length > 0 ? (
+                          <>
+                            <select
+                              style={styles.select}
+                              value={wireForm.recipient_bank}
+                              onChange={(e) => {
+                                const selectedBank = e.target.value;
+                                handleInputChange('recipient_bank', selectedBank);
+                                if (selectedBank === 'Other/Manual Entry') {
+                                  setShowManualBank(true);
+                                  handleInputChange('recipient_bank', '');
+                                }
+                              }}
+                              required
+                              disabled={loadingBanks}
+                            >
+                              <option value="">
+                                {loadingBanks ? 'Loading banks...' : 'Select Bank'}
+                              </option>
+                              {usBanks.map(bank => (
+                                <option key={bank.id} value={bank.name}>
+                                  {bank.name}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowManualBank(true);
+                                handleInputChange('recipient_bank', '');
+                              }}
+                              style={{
+                                marginTop: '0.5rem',
+                                padding: '0.5rem 1rem',
+                                backgroundColor: '#f3f4f6',
+                                border: '1px solid #d1d5db',
+                                borderRadius: '6px',
+                                fontSize: '0.875rem',
+                                cursor: 'pointer',
+                                color: '#374151',
+                                fontWeight: '500'
+                              }}
+                            >
+                              ✏️ Enter bank name manually
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <input
+                              type="text"
+                              style={styles.input}
+                              value={wireForm.recipient_bank}
+                              onChange={(e) => handleInputChange('recipient_bank', e.target.value)}
+                              placeholder="Example: Wells Fargo Bank (Enter your bank's name)"
+                              required
+                            />
+                            {wireForm.recipient_bank_country === 'United States' && usBanks.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowManualBank(false);
+                                  handleInputChange('recipient_bank', '');
+                                }}
+                                style={{
+                                  marginTop: '0.5rem',
+                                  padding: '0.5rem 1rem',
+                                  backgroundColor: '#f3f4f6',
+                                  border: '1px solid #d1d5db',
+                                  borderRadius: '6px',
+                                  fontSize: '0.875rem',
+                                  cursor: 'pointer',
+                                  color: '#374151',
+                                  fontWeight: '500'
+                                }}
+                              >
+                                📋 Select from bank list
+                              </button>
+                            )}
+                          </>
+                        )}
                       </div>
 
                       {wireForm.transfer_type === 'international' && (
