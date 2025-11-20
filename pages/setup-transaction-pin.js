@@ -117,6 +117,16 @@ export default function SetupTransactionPin() {
         throw new Error(data.error || 'Failed to set transaction PIN');
       }
 
+      // Send email notification (non-blocking)
+      fetch('/api/send-pin-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ actionType: 'setup' })
+      }).catch(err => console.error('Email notification failed:', err));
+
       setMessage(hasPin ? 'Transaction PIN updated successfully!' : 'Transaction PIN created successfully!');
       setFormData({ currentPin: '', newPin: '', confirmPin: '' });
       setHasPin(true);
@@ -124,7 +134,7 @@ export default function SetupTransactionPin() {
       // Redirect after success
       setTimeout(() => {
         router.push('/security');
-      }, 2000);
+      }, 3000);
 
     } catch (error) {
       console.error('Error setting PIN:', error);
@@ -153,6 +163,25 @@ export default function SetupTransactionPin() {
 
   return (
     <div style={styles.container}>
+      {/* Success Modal Overlay */}
+      {message && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.successModal}>
+            <div style={styles.checkmarkCircle}>
+              <div style={styles.checkmark}>✓</div>
+            </div>
+            <h2 style={styles.modalTitle}>Success!</h2>
+            <p style={styles.modalMessage}>{message}</p>
+            <p style={styles.modalSubtext}>
+              A confirmation email has been sent to your registered email address.
+            </p>
+            <div style={styles.modalFooter}>
+              <p style={styles.redirectText}>Redirecting to Security Settings...</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.headerTop}>
@@ -173,10 +202,6 @@ export default function SetupTransactionPin() {
           ← Back to Security
         </button>
       </div>
-
-      {message && (
-        <div style={styles.successMessage}>{message}</div>
-      )}
 
       {error && (
         <div style={styles.errorMessage}>{error}</div>
@@ -320,6 +345,24 @@ export default function SetupTransactionPin() {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
+        @keyframes slideIn {
+          from {
+            transform: translateY(-50px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        @keyframes scaleIn {
+          from {
+            transform: scale(0);
+          }
+          to {
+            transform: scale(1);
+          }
+        }
       `}</style>
     </div>
   );
@@ -382,6 +425,75 @@ const styles = {
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
     marginBottom: '15px'
+  },
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999,
+    padding: '20px'
+  },
+  successModal: {
+    backgroundColor: 'white',
+    borderRadius: '20px',
+    padding: '40px 30px',
+    maxWidth: '500px',
+    width: '100%',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+    textAlign: 'center',
+    animation: 'slideIn 0.3s ease-out'
+  },
+  checkmarkCircle: {
+    width: '80px',
+    height: '80px',
+    borderRadius: '50%',
+    backgroundColor: '#dcfce7',
+    border: '4px solid #16a34a',
+    margin: '0 auto 20px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    animation: 'scaleIn 0.4s ease-out'
+  },
+  checkmark: {
+    fontSize: '48px',
+    color: '#16a34a',
+    fontWeight: 'bold'
+  },
+  modalTitle: {
+    fontSize: '28px',
+    fontWeight: 'bold',
+    color: '#1e293b',
+    margin: '0 0 15px 0'
+  },
+  modalMessage: {
+    fontSize: '18px',
+    color: '#1e293b',
+    margin: '0 0 10px 0',
+    fontWeight: '500'
+  },
+  modalSubtext: {
+    fontSize: '14px',
+    color: '#64748b',
+    margin: '0 0 25px 0',
+    lineHeight: '1.5'
+  },
+  modalFooter: {
+    borderTop: '1px solid #e2e8f0',
+    paddingTop: '20px',
+    marginTop: '10px'
+  },
+  redirectText: {
+    fontSize: '14px',
+    color: '#3b82f6',
+    fontWeight: '500',
+    margin: 0
   },
   successMessage: {
     backgroundColor: '#dcfce7',
