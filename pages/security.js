@@ -574,6 +574,16 @@ export default function Security() {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
         .toggleOn::before {
           background-color: white;
         }
@@ -1051,21 +1061,3 @@ const styles = {
     minWidth: '160px'
   }
 };
-
-// Add keyframe animation for modal
-const styleSheet = document.createElement('style');
-styleSheet.textContent = `
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-`;
-if (typeof document !== 'undefined') {
-  document.head.appendChild(styleSheet);
-}
