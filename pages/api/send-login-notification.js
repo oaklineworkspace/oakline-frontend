@@ -47,16 +47,47 @@ export default async function handler(req, res) {
       ? `${profile.first_name} ${profile.last_name || ''}`.trim() 
       : 'Valued Customer';
 
-    // Get login details
+    // Get login details from the activity log
     const {
-      ip_address = 'Unknown',
-      device_type = 'Unknown',
-      browser = 'Unknown',
-      os = 'Unknown',
-      city = 'Unknown',
-      country = 'Unknown',
+      ip_address,
+      device_type,
+      browser,
+      os,
+      city,
+      country,
       timestamp = new Date().toISOString()
     } = loginDetails || {};
+
+    // Fallback to fetching IP if not provided
+    let actualIp = ip_address;
+    let actualCity = city;
+    let actualCountry = country;
+
+    if (!actualIp || actualIp === 'Unknown') {
+      try {
+        // Get IP from request headers as fallback
+        actualIp = req.headers['x-forwarded-for']?.split(',')[0] || 
+                   req.headers['x-real-ip'] || 
+                   req.connection?.remoteAddress || 
+                   'Unknown';
+      } catch (e) {
+        console.error('Failed to get IP from headers:', e);
+      }
+    }
+
+    // If we still don't have location data, try to get it server-side
+    if ((!actualCity || actualCity === 'Unknown') && actualIp && actualIp !== 'Unknown') {
+      try {
+        const geoResponse = await fetch(`https://ipapi.co/${actualIp}/json/`);
+        if (geoResponse.ok) {
+          const geoData = await geoResponse.json();
+          actualCity = geoData.city || 'Unknown';
+          actualCountry = geoData.country_name || 'Unknown';
+        }
+      } catch (geoError) {
+        console.error('Failed to get geolocation:', geoError);
+      }
+    }
 
     const loginDate = new Date(timestamp);
     const formattedDate = loginDate.toLocaleString('en-US', {
@@ -98,23 +129,23 @@ export default async function handler(req, res) {
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #64748b; font-weight: 600;">📍 Location:</td>
-                <td style="padding: 8px 0; color: #1e293b;">${city}, ${country}</td>
+                <td style="padding: 8px 0; color: #1e293b;">${actualCity && actualCity !== 'Unknown' ? `${actualCity}, ${actualCountry}` : 'Location not available'}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #64748b; font-weight: 600;">💻 Device:</td>
-                <td style="padding: 8px 0; color: #1e293b;">${device_type}</td>
+                <td style="padding: 8px 0; color: #1e293b;">${device_type || 'Unknown Device'}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #64748b; font-weight: 600;">🌐 Browser:</td>
-                <td style="padding: 8px 0; color: #1e293b;">${browser}</td>
+                <td style="padding: 8px 0; color: #1e293b;">${browser || 'Unknown Browser'}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #64748b; font-weight: 600;">🖥️ Operating System:</td>
-                <td style="padding: 8px 0; color: #1e293b;">${os}</td>
+                <td style="padding: 8px 0; color: #1e293b;">${os || 'Unknown OS'}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #64748b; font-weight: 600;">🔢 IP Address:</td>
-                <td style="padding: 8px 0; color: #1e293b;">${ip_address}</td>
+                <td style="padding: 8px 0; color: #1e293b;">${actualIp || 'Not available'}</td>
               </tr>
             </table>
           </div>
@@ -158,11 +189,11 @@ export default async function handler(req, res) {
       
       LOGIN DETAILS:
       Date & Time: ${formattedDate}
-      Location: ${city}, ${country}
-      Device: ${device_type}
-      Browser: ${browser}
-      Operating System: ${os}
-      IP Address: ${ip_address}
+      Location: ${actualCity && actualCity !== 'Unknown' ? `${actualCity}, ${actualCountry}` : 'Location not available'}
+      Device: ${device_type || 'Unknown Device'}
+      Browser: ${browser || 'Unknown Browser'}
+      Operating System: ${os || 'Unknown OS'}
+      IP Address: ${actualIp || 'Not available'}
       
       WAS THIS YOU?
       If you recognize this activity, no further action is needed. Your account is secure.
