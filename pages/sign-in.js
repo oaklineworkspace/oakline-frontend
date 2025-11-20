@@ -833,10 +833,10 @@ const styles = {
     alignItems: 'center',
     gap: '0.75rem',
     padding: '1rem 1.25rem',
-    backgroundColor: '#dbeafe',
-    border: '2px solid #3b82f6',
+    backgroundColor: '#3b82f6',
+    border: '2px solid #1e40af',
     borderRadius: '12px',
-    color: '#1e40af',
+    color: '#ffffff',
     fontSize: '0.9rem',
     fontWeight: '600'
   },
