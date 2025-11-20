@@ -60,6 +60,7 @@ export default async function handler(req, res) {
     const {
       ip_address,
       device_type,
+      device_model,
       browser,
       os,
       city,
@@ -138,8 +139,8 @@ export default async function handler(req, res) {
                 <td style="padding: 10px 12px; color: #1e293b; font-weight: 500; background: #ffffff; border-radius: 6px;">${actualCity && actualCity !== 'Unknown' ? `${actualCity}, ${actualCountry}` : 'Location not available'}</td>
               </tr>
               <tr>
-                <td style="padding: 10px 12px; color: #64748b; font-weight: 600; vertical-align: top;">📱 Device Type:</td>
-                <td style="padding: 10px 12px; color: #1e293b; font-weight: 500; background: #ffffff; border-radius: 6px;">${loginDetails?.device_model || device_type || 'Unknown'}</td>
+                <td style="padding: 10px 12px; color: #64748b; font-weight: 600; vertical-align: top;">📱 Device:</td>
+                <td style="padding: 10px 12px; color: #1e293b; font-weight: 500; background: #ffffff; border-radius: 6px;">${device_model || device_type || 'Unknown Device'}</td>
               </tr>
               <tr>
                 <td style="padding: 10px 12px; color: #64748b; font-weight: 600; vertical-align: top;">💻 Operating System:</td>
@@ -197,7 +198,7 @@ export default async function handler(req, res) {
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       Date & Time: ${formattedDate}
       Location: ${actualCity && actualCity !== 'Unknown' ? `${actualCity}, ${actualCountry}` : 'Location not available'}
-      Device Type: ${loginDetails?.device_model || device_type || 'Unknown'}
+      Device: ${device_model || device_type || 'Unknown Device'}
       Operating System: ${os || 'Unknown'}
       Browser: ${browser || 'Unknown'}
       IP Address: ${actualIp || 'Not available'}
