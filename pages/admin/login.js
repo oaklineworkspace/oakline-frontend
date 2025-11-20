@@ -16,5 +16,6 @@
         } catch (err) {
           setError('This admin account has been banned. Please contact the system administrator.');
         }
+        setLoading(false);
         return;
       }

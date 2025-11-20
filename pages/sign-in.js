@@ -71,6 +71,8 @@ export default function LoginPage() {
             console.error('Error fetching ban reason:', profileError);
             setError('Your account has been restricted. Please contact support for more information.');
           }
+          setLoading(false);
+          setLoadingStage(0);
           return;
         } else {
           throw authError; // Throw other errors to be caught by the catch block
@@ -155,6 +157,8 @@ export default function LoginPage() {
           } else {
             setError('Your account access has been restricted. Please contact support at +1 (636) 635-6122 for assistance.');
           }
+          setLoading(false);
+          setLoadingStage(0);
           return;
         }
 
