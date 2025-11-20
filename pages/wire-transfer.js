@@ -163,8 +163,18 @@ export default function WireTransfer() {
   };
 
   const validateRoutingNumber = (routing) => {
+    // Check if routing number exists
+    if (!routing || routing.trim() === '') {
+      return { valid: false, error: 'Routing number is required' };
+    }
+
+    // Check if routing number is less than 9 digits
+    if (routing.length < 9) {
+      return { valid: false, error: `Routing number must be exactly 9 digits (you entered ${routing.length})` };
+    }
+
     // Must be exactly 9 digits
-    if (!routing || routing.length !== 9) {
+    if (routing.length !== 9) {
       return { valid: false, error: 'Routing number must be exactly 9 digits' };
     }
 
