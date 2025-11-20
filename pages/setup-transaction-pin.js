@@ -188,8 +188,7 @@ export default function SetupTransactionPin() {
         <div>
           <h3 style={styles.infoTitle}>Transaction PIN Security</h3>
           <p style={styles.infoText}>
-            Your transaction PIN is required to authorize all wire transfers, large transactions, 
-            and other sensitive operations. This adds an extra layer of security to your account.
+            Your Transaction PIN serves as a critical security measure for all financial operations within your Oakline Bank account. This secure 4 or 6-digit code is required to authorize wire transfers, domestic and international transactions, large withdrawals, bill payments, fund transfers, and other sensitive banking operations. By implementing this additional layer of authentication, we ensure that only you can approve and execute transactions, protecting your account from unauthorized access and fraudulent activities.
           </p>
         </div>
       </div>
@@ -203,7 +202,16 @@ export default function SetupTransactionPin() {
         <form onSubmit={handleSubmit}>
           {hasPin && (
             <div style={styles.formGroup}>
-              <label style={styles.label}>Current PIN *</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label style={styles.label}>Current PIN *</label>
+                <button
+                  type="button"
+                  onClick={() => router.push('/reset-transaction-pin')}
+                  style={styles.forgotPinLink}
+                >
+                  Forgot PIN?
+                </button>
+              </div>
               <div style={styles.pinInputWrapper}>
                 <input
                   type={showPins.current ? 'text' : 'password'}
@@ -554,6 +562,17 @@ const styles = {
     color: '#92400e',
     lineHeight: '1.8',
     paddingLeft: '20px',
+    margin: 0
+  },
+  forgotPinLink: {
+    background: 'none',
+    border: 'none',
+    color: '#3b82f6',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    padding: 0,
     margin: 0
   }
 };
