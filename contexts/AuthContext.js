@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
-import { logAuthActivity, ActivityActions } from '../lib/activityLogger';
+import { logAuthActivity, ActivityActions, logLoginActivity } from '../lib/activityLogger';
 
 const AuthContext = createContext({});
 
@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }) => {
         },
         body: JSON.stringify({ loginDetails })
       });
-      
+
       if (!response.ok) {
         console.error('Failed to send login notification');
       }
@@ -106,6 +106,10 @@ export const AuthProvider = ({ children }) => {
         email: data.user.email,
         login_method: 'email_password'
       });
+
+      // Enhanced login activity logging with geolocation
+      // This will also send the login notification email with complete location data
+      await logLoginActivity(true);
 
       // Send login notification email (non-blocking)
       const loginDetails = {

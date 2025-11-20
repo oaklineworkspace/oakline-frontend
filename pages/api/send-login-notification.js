@@ -55,34 +55,31 @@ export default async function handler(req, res) {
       os,
       city,
       country,
+      timezone,
+      isp,
       timestamp = new Date().toISOString()
     } = loginDetails || {};
 
-    // Fallback to fetching IP if not provided
-    let actualIp = ip_address;
-    let actualCity = city;
-    let actualCountry = country;
+    // Use provided data from client, with fallback
+    let actualIp = ip_address || 'Unknown';
+    let actualCity = city || 'Unknown';
+    let actualCountry = country || 'Unknown';
 
-    if (!actualIp || actualIp === 'Unknown') {
+    // Only try server-side lookup if we truly don't have location data
+    if (actualCity === 'Unknown' && actualIp && actualIp !== 'Unknown') {
       try {
-        // Get IP from request headers as fallback
-        actualIp = req.headers['x-forwarded-for']?.split(',')[0] || 
-                   req.headers['x-real-ip'] || 
-                   req.connection?.remoteAddress || 
-                   'Unknown';
-      } catch (e) {
-        console.error('Failed to get IP from headers:', e);
-      }
-    }
-
-    // If we still don't have location data, try to get it server-side
-    if ((!actualCity || actualCity === 'Unknown') && actualIp && actualIp !== 'Unknown') {
-      try {
-        const geoResponse = await fetch(`https://ipapi.co/${actualIp}/json/`);
+        const geoResponse = await fetch(`https://ipapi.co/${actualIp}/json/`, {
+          headers: {
+            'User-Agent': 'Oakline-Bank-App/1.0'
+          }
+        });
+        
         if (geoResponse.ok) {
           const geoData = await geoResponse.json();
-          actualCity = geoData.city || 'Unknown';
-          actualCountry = geoData.country_name || 'Unknown';
+          if (!geoData.error) {
+            actualCity = geoData.city || 'Unknown';
+            actualCountry = geoData.country_name || 'Unknown';
+          }
         }
       } catch (geoError) {
         console.error('Failed to get geolocation:', geoError);
