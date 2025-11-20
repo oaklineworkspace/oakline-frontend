@@ -69,7 +69,7 @@ export default function WireTransfer() {
     recipient_bank_state: '',
     recipient_bank_county: '',
     recipient_bank_zip: '',
-    recipient_bank_country: 'United States',
+    recipient_bank_country: '',
     swift_code: '',
     routing_number: '',
     amount: '',
@@ -85,10 +85,15 @@ export default function WireTransfer() {
   }, []);
 
   useEffect(() => {
-    if (wireForm.recipient_bank_country) {
-      fetchStates(wireForm.recipient_bank_country);
+    // Automatically set country based on transfer type
+    const country = wireForm.transfer_type === 'domestic' ? 'United States' : '';
+    if (country !== wireForm.recipient_bank_country) {
+      setWireForm(prev => ({ ...prev, recipient_bank_country: country }));
     }
-  }, [wireForm.recipient_bank_country]);
+    if (country) {
+      fetchStates(country);
+    }
+  }, [wireForm.transfer_type]);
 
   useEffect(() => {
     if (wireForm.recipient_bank_state && !showManualState) {
@@ -97,10 +102,10 @@ export default function WireTransfer() {
   }, [wireForm.recipient_bank_state, wireForm.recipient_bank_country, showManualState]);
 
   useEffect(() => {
-    if (wireForm.recipient_bank_country === 'United States') {
+    if (wireForm.transfer_type === 'domestic') {
       fetchUSBanks();
     }
-  }, [wireForm.recipient_bank_country]);
+  }, [wireForm.transfer_type]);
 
   const fetchStates = async (countryCode) => {
     if (countryCode === 'Other') {
@@ -398,11 +403,7 @@ export default function WireTransfer() {
       return false;
     }
 
-    if (!wireForm.recipient_bank_country) {
-      setMessage('Please enter recipient bank country');
-      setMessageType('error');
-      return false;
-    }
+    
 
     // Validate account number based on transfer type
     const accountValidation = validateAccountNumber(wireForm.recipient_account, wireForm.transfer_type);
@@ -422,21 +423,21 @@ export default function WireTransfer() {
       }
     }
 
-    // Validate routing number only if provided or if US domestic
+    // Validate routing number only if provided or if domestic
     if (wireForm.routing_number) {
       const routingValidation = validateRoutingNumber(
         wireForm.routing_number,
         wireForm.transfer_type,
-        wireForm.recipient_bank_country
+        wireForm.transfer_type === 'domestic' ? 'United States' : ''
       );
       if (!routingValidation.valid) {
         setMessage(routingValidation.error);
         setMessageType('error');
         return false;
       }
-    } else if (wireForm.recipient_bank_country === 'United States') {
+    } else if (wireForm.transfer_type === 'domestic') {
       // US transfers require routing number
-      setMessage('US transfers require a routing number');
+      setMessage('Domestic transfers require a routing number');
       setMessageType('error');
       return false;
     }
@@ -700,7 +701,7 @@ export default function WireTransfer() {
         recipient_bank_state: '',
         recipient_bank_county: '',
         recipient_bank_zip: '',
-        recipient_bank_country: 'United States',
+        recipient_bank_country: '',
         swift_code: '',
         routing_number: '',
         amount: '',
@@ -931,25 +932,34 @@ export default function WireTransfer() {
     },
     input: {
       width: '100%',
-      padding: '0.75rem',
-      border: '2px solid #e2e8f0',
+      padding: '0.875rem 1rem',
+      border: '2px solid transparent',
       borderRadius: '12px',
-      fontSize: '0.875rem',
-      transition: 'border-color 0.3s',
-      boxSizing: 'border-box'
+      fontSize: '0.9375rem',
+      transition: 'all 0.3s ease',
+      boxSizing: 'border-box',
+      background: 'linear-gradient(white, white) padding-box, linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%) border-box',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+      fontWeight: '500',
+      color: '#1e293b'
     },
     select: {
       width: '100%',
-      padding: '0.75rem',
-      border: '2px solid #e2e8f0',
+      padding: '0.875rem 1rem',
+      border: '2px solid transparent',
       borderRadius: '12px',
-      fontSize: '0.875rem',
+      fontSize: '0.9375rem',
       backgroundColor: 'white',
-      transition: 'border-color 0.3s',
+      transition: 'all 0.3s ease',
       boxSizing: 'border-box',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap'
+      whiteSpace: 'nowrap',
+      background: 'linear-gradient(white, white) padding-box, linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%) border-box',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+      fontWeight: '500',
+      color: '#1e293b',
+      cursor: 'pointer'
     },
     checkboxContainer: {
       display: 'flex',
@@ -1617,7 +1627,7 @@ export default function WireTransfer() {
 
                       <div style={styles.formGroup}>
                         <label style={styles.label}>Recipient Bank Name *</label>
-                        {wireForm.recipient_bank_country === 'United States' && !showManualBank && usBanks.length > 0 ? (
+                        {wireForm.transfer_type === 'domestic' && !showManualBank && usBanks.length > 0 ? (
                           <>
                             <select
                               style={styles.select}
@@ -1673,7 +1683,7 @@ export default function WireTransfer() {
                               placeholder="Example: Wells Fargo Bank (Enter your bank's name)"
                               required
                             />
-                            {wireForm.recipient_bank_country === 'United States' && usBanks.length > 0 && (
+                            {wireForm.transfer_type === 'domestic' && usBanks.length > 0 && (
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1699,119 +1709,7 @@ export default function WireTransfer() {
                         )}
                       </div>
 
-                      {wireForm.transfer_type === 'international' && (
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>Recipient Bank Country *</label>
-                          {wireForm.recipient_bank_country === 'Other' ? (
-                            <input
-                              type="text"
-                              style={styles.input}
-                              value={wireForm.recipient_bank_country === 'Other' ? '' : wireForm.recipient_bank_country}
-                              onChange={(e) => handleInputChange('recipient_bank_country', e.target.value)}
-                              placeholder="Enter country name"
-                              required
-                            />
-                          ) : (
-                            <select
-                              style={styles.select}
-                              value={wireForm.recipient_bank_country}
-                              onChange={(e) => {
-                                const newCountry = e.target.value;
-                                handleInputChange('recipient_bank_country', newCountry);
-                                // If switching to US, reset transfer type and clear routing/swift if necessary
-                                if (newCountry === 'United States') {
-                                  handleInputChange('transfer_type', 'domestic');
-                                  // Clear potentially conflicting international fields
-                                  handleInputChange('swift_code', '');
-                                  // Ensure routing number is validated as US ABA
-                                  if (wireForm.routing_number) {
-                                    const validation = validateRoutingNumber(wireForm.routing_number, 'domestic', 'United States');
-                                    setValidationErrors(prev => ({ ...prev, routing_number: validation.valid ? '' : validation.error }));
-                                  }
-                                } else if (newCountry !== 'Other') {
-                                  // If switching away from US, ensure transfer type is international and clear US-specific fields
-                                  handleInputChange('transfer_type', 'international');
-                                  handleInputChange('routing_number', ''); // Clear ABA number
-                                  // If SWIFT is needed, prompt for it (handled by validation below)
-                                }
-                                // Recalculate total as fees might change
-                                calculateTotal();
-                              }}
-                              required
-                            >
-                              <option value="Canada">🇨🇦 Canada</option>
-                              <option value="United Kingdom">🇬🇧 United Kingdom</option>
-                              <option value="Australia">🇦🇺 Australia</option>
-                              <option value="Germany">🇩🇪 Germany</option>
-                              <option value="France">🇫🇷 France</option>
-                              <option value="Italy">🇮🇹 Italy</option>
-                              <option value="Spain">🇪🇸 Spain</option>
-                              <option value="Netherlands">🇳🇱 Netherlands</option>
-                              <option value="Switzerland">🇨🇭 Switzerland</option>
-                              <option value="Belgium">🇧🇪 Belgium</option>
-                              <option value="Sweden">🇸🇪 Sweden</option>
-                              <option value="Norway">🇳🇴 Norway</option>
-                              <option value="Denmark">🇩🇰 Denmark</option>
-                              <option value="India">🇮🇳 India</option>
-                              <option value="China">🇨🇳 China</option>
-                              <option value="Japan">🇯🇵 Japan</option>
-                              <option value="South Korea">🇰🇷 South Korea</option>
-                              <option value="Singapore">🇸🇬 Singapore</option>
-                              <option value="Hong Kong">🇭🇰 Hong Kong</option>
-                              <option value="Malaysia">🇲🇾 Malaysia</option>
-                              <option value="Thailand">🇹🇭 Thailand</option>
-                              <option value="Philippines">🇵🇭 Philippines</option>
-                              <option value="Indonesia">🇮🇩 Indonesia</option>
-                              <option value="Vietnam">🇻🇳 Vietnam</option>
-                              <option value="United Arab Emirates">🇦🇪 United Arab Emirates</option>
-                              <option value="Saudi Arabia">🇸🇦 Saudi Arabia</option>
-                              <option value="Israel">🇮🇱 Israel</option>
-                              <option value="Turkey">🇹🇷 Turkey</option>
-                              <option value="South Africa">🇿🇦 South Africa</option>
-                              <option value="Nigeria">🇳🇬 Nigeria</option>
-                              <option value="Kenya">🇰🇪 Kenya</option>
-                              <option value="Egypt">🇪🇬 Egypt</option>
-                              <option value="Mexico">🇲🇽 Mexico</option>
-                              <option value="Brazil">🇧🇷 Brazil</option>
-                              <option value="Argentina">🇦🇷 Argentina</option>
-                              <option value="Chile">🇨🇱 Chile</option>
-                              <option value="Colombia">🇨🇴 Colombia</option>
-                              <option value="Peru">🇵🇪 Peru</option>
-                              <option value="New Zealand">🇳🇿 New Zealand</option>
-                              <option value="Ireland">🇮🇪 Ireland</option>
-                              <option value="Portugal">🇵🇹 Portugal</option>
-                              <option value="Poland">🇵🇱 Poland</option>
-                              <option value="Czech Republic">🇨🇿 Czech Republic</option>
-                              <option value="Austria">🇦🇹 Austria</option>
-                              <option value="Greece">🇬🇷 Greece</option>
-                              <option value="Russia">🇷🇺 Russia</option>
-                              <option value="Ukraine">🇺🇦 Ukraine</option>
-                              <option value="Other">🌍 Other (Enter Manually)</option>
-                            </select>
-                          )}
-                          {wireForm.recipient_bank_country !== 'Other' && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                handleInputChange('recipient_bank_country', 'Other');
-                              }}
-                              style={{
-                                marginTop: '0.5rem',
-                                padding: '0.5rem 1rem',
-                                backgroundColor: '#f3f4f6',
-                                border: '1px solid #d1d5db',
-                                borderRadius: '6px',
-                                fontSize: '0.875rem',
-                                cursor: 'pointer',
-                                color: '#374151',
-                                fontWeight: '500'
-                              }}
-                            >
-                              ✏️ Enter country manually
-                            </button>
-                          )}
-                        </div>
-                      )}
+                      
 
                       <div style={styles.formGroup}>
                         <label style={styles.label}>Recipient Account Number *</label>
@@ -1819,11 +1717,13 @@ export default function WireTransfer() {
                           type="text"
                           style={{
                             ...styles.input,
-                            borderColor: validationErrors.recipient_account ? '#dc2626' : '#e2e8f0'
+                            borderImage: validationErrors.recipient_account 
+                              ? 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%) 1' 
+                              : 'none'
                           }}
                           value={wireForm.recipient_account}
                           onChange={(e) => {
-                            const value = wireForm.recipient_bank_country === 'United States'
+                            const value = wireForm.transfer_type === 'domestic'
                               ? e.target.value.replace(/\D/g, '').slice(0, 17) // Domestic US: digits only, 4-17
                               : e.target.value.toUpperCase().replace(/[^A-Z0-9\s-]/g, '').slice(0, 34); // International: alphanumeric, spaces, hyphens, up to 34
                             handleInputChange('recipient_account', value);
@@ -1837,25 +1737,25 @@ export default function WireTransfer() {
                               }
                             }
                           }}
-                          placeholder={wireForm.recipient_bank_country === 'United States' ? 'Example: 1234567890 (Enter 4-17 digit account number)' : 'Example: GB29NWBK60161331926819 (Enter IBAN or account number)'}
-                          maxLength={wireForm.recipient_bank_country === 'United States' ? '17' : '34'}
+                          placeholder={wireForm.transfer_type === 'domestic' ? '1234567890' : 'GB29NWBK60161331926819'}
+                          maxLength={wireForm.transfer_type === 'domestic' ? '17' : '34'}
                           required
                         />
                         {validationErrors.recipient_account ? (
-                          <div style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.375rem', fontWeight: '600' }}>
+                          <div style={{ fontSize: '0.8125rem', color: '#dc2626', marginTop: '0.5rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                             ⚠️ {validationErrors.recipient_account}
                           </div>
                         ) : (
-                          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.375rem' }}>
-                            {wireForm.recipient_bank_country === 'United States'
-                              ? 'US account numbers are 4-17 digits'
-                              : 'International account numbers (IBAN): 8-34 alphanumeric characters'
+                          <div style={{ fontSize: '0.8125rem', color: '#64748b', marginTop: '0.5rem' }}>
+                            {wireForm.transfer_type === 'domestic'
+                              ? 'Enter 4-17 digit account number'
+                              : 'Enter IBAN or account number (8-34 characters)'
                             }
                           </div>
                         )}
                       </div>
 
-                      {wireForm.recipient_bank_country !== 'United States' && (
+                      {wireForm.transfer_type === 'international' && (
                         <div style={styles.formGroup}>
                           <label style={styles.label}>
                             SWIFT/BIC Code *
@@ -1897,31 +1797,32 @@ export default function WireTransfer() {
 
                       <div style={styles.formGroup}>
                         <label style={styles.label}>
-                          Routing/Transit Number {wireForm.recipient_bank_country === 'United States' ? '*' : '(Optional)'}
-                          {wireForm.recipient_bank_country === 'United States' && ' (ABA)'}
+                          {wireForm.transfer_type === 'domestic' ? 'Routing Number (ABA) *' : 'Routing/Transit Number (Optional)'}
                         </label>
                         <input
                           type="text"
                           style={{
                             ...styles.input,
-                            borderColor: validationErrors.routing_number ? '#dc2626' : '#e2e8f0'
+                            borderImage: validationErrors.routing_number 
+                              ? 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%) 1' 
+                              : 'none'
                           }}
                           value={wireForm.routing_number}
                           onChange={(e) => {
-                            // For US, only allow digits and limit to 9
+                            // For domestic US, only allow digits and limit to 9
                             // For international, allow alphanumeric up to 11 characters
-                            const value = wireForm.recipient_bank_country === 'United States'
+                            const value = wireForm.transfer_type === 'domestic'
                               ? e.target.value.replace(/\D/g, '').slice(0, 9)
                               : e.target.value.toUpperCase().replace(/[^A-Z0-9\s-]/g, '').slice(0, 11);
                             handleInputChange('routing_number', value);
                             setValidationErrors(prev => ({ ...prev, routing_number: '' }));
                           }}
                           onBlur={() => {
-                            if (wireForm.routing_number) {
+                            if (wireForm.routing_number && wireForm.transfer_type === 'domestic') {
                               const validation = validateRoutingNumber(
                                 wireForm.routing_number,
                                 wireForm.transfer_type,
-                                wireForm.recipient_bank_country
+                                'United States'
                               );
                               if (!validation.valid) {
                                 setValidationErrors(prev => ({ ...prev, routing_number: validation.error }));
@@ -1929,22 +1830,22 @@ export default function WireTransfer() {
                             }
                           }}
                           placeholder={
-                            wireForm.recipient_bank_country === 'United States'
-                              ? 'Example: 021000021 (Enter 9-digit ABA routing number)'
-                              : 'Example: UK-123456, CA-12345678 (Optional - if required by bank)'
+                            wireForm.transfer_type === 'domestic'
+                              ? '021000021'
+                              : 'UK-123456, CA-12345678 (Optional)'
                           }
-                          maxLength={wireForm.recipient_bank_country === 'United States' ? '9' : '11'}
-                          required={wireForm.recipient_bank_country === 'United States'}
+                          maxLength={wireForm.transfer_type === 'domestic' ? '9' : '11'}
+                          required={wireForm.transfer_type === 'domestic'}
                         />
                         {validationErrors.routing_number ? (
-                          <div style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.375rem', fontWeight: '600' }}>
+                          <div style={{ fontSize: '0.8125rem', color: '#dc2626', marginTop: '0.5rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                             ⚠️ {validationErrors.routing_number}
                           </div>
                         ) : (
-                          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.375rem' }}>
-                            {wireForm.recipient_bank_country === 'United States'
-                              ? 'US: 9-digit ABA routing number (Required)'
-                              : 'Optional: Format varies by country (UK: 6 digits, CA: 8 digits, AU: 6 digits, IN: 11 chars)'
+                          <div style={{ fontSize: '0.8125rem', color: '#64748b', marginTop: '0.5rem' }}>
+                            {wireForm.transfer_type === 'domestic'
+                              ? 'Enter 9-digit ABA routing number'
+                              : 'Optional - Format varies by country (UK: 6 digits, CA: 8 digits, AU: 6 digits)'
                             }
                           </div>
                         )}
