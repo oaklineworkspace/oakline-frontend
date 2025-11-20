@@ -71,6 +71,25 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, [router]);
 
+  const sendLoginNotification = async (session, loginDetails) => {
+    try {
+      const response = await fetch('/api/send-login-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ loginDetails })
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to send login notification');
+      }
+    } catch (error) {
+      console.error('Error sending login notification:', error);
+    }
+  };
+
   const signIn = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -82,10 +101,23 @@ export const AuthProvider = ({ children }) => {
         email,
         reason: error.message
       });
-    } else if (data.user) {
+    } else if (data.user && data.session) {
       await logAuthActivity(ActivityActions.LOGIN_SUCCESS, {
         email: data.user.email,
         login_method: 'email_password'
+      });
+
+      // Send login notification email (non-blocking)
+      const loginDetails = {
+        ip_address: 'Unknown',
+        device_type: /mobile/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
+        browser: navigator.userAgent.match(/(firefox|msie|chrome|safari|trident)/i)?.[0] || 'Unknown',
+        os: navigator.platform || 'Unknown',
+        timestamp: new Date().toISOString()
+      };
+
+      sendLoginNotification(data.session, loginDetails).catch(err => {
+        console.error('Login notification failed:', err);
       });
     }
 
