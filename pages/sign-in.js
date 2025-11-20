@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -19,12 +18,12 @@ export default function LoginPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    
+
     const urlParams = new URLSearchParams(window.location.search);
     const blocked = urlParams.get('blocked');
     const reason = urlParams.get('reason');
     const urlError = urlParams.get('error');
-    
+
     if (blocked) {
       setError({
         type: blocked,
@@ -50,9 +49,33 @@ export default function LoginPage() {
       setLoadingStage(0);
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      const { data, error } = await signIn(formData.email, formData.password);
+      const { data, error: authError } = await signIn(formData.email, formData.password);
 
-      if (error) throw error;
+      if (authError) {
+        // Check if the error message indicates the user is banned
+        if (authError.message && authError.message.toLowerCase().includes('banned')) {
+          // Fetch the actual ban reason from profiles table
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('ban_reason, is_banned')
+              .eq('email', formData.email)
+              .single();
+
+            if (profile && profile.is_banned && profile.ban_reason) {
+              setError(profile.ban_reason);
+            } else {
+              setError('Your account has been restricted. Please contact support for more information.');
+            }
+          } catch (profileError) {
+            console.error('Error fetching ban reason:', profileError);
+            setError('Your account has been restricted. Please contact support for more information.');
+          }
+          return;
+        } else {
+          throw authError; // Throw other errors to be caught by the catch block
+        }
+      }
 
       if (data.user) {
         // Stage 2: Checking account status
@@ -60,7 +83,7 @@ export default function LoginPage() {
         await new Promise(resolve => setTimeout(resolve, 500));
 
         const { data: { session: currentSession } } = await supabase.auth.getSession();
-        
+
         const statusResponse = await fetch('/api/check-account-status', {
           method: 'POST',
           headers: { 
@@ -92,7 +115,7 @@ export default function LoginPage() {
           await supabase.auth.signOut({ scope: 'local' });
           setLoading(false);
           setLoadingStage(0);
-          
+
           let blockReason = '';
           if (accountStatus.blockingType === 'banned') {
             blockReason = accountStatus.ban_reason;
@@ -106,6 +129,35 @@ export default function LoginPage() {
           });
           return;
         }
+
+        // Additional check: verify profile status after successful auth
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('is_banned, status, ban_reason')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Profile fetch error:', profileError);
+        }
+
+        // If user is banned or has restricted status, sign them out
+        if (profile && (profile.is_banned === true || ['suspended', 'closed'].includes(profile.status))) {
+          await supabase.auth.signOut();
+
+          // Show the actual ban reason from profiles table
+          if (profile.ban_reason) {
+            setError(profile.ban_reason);
+          } else if (profile.is_banned) {
+            setError('Your account has been permanently banned. Please contact support at +1 (636) 635-6122 for assistance.');
+          } else if (profile.status === 'suspended') {
+            setError('Your account has been temporarily suspended. Please contact support at +1 (636) 635-6122 for assistance.');
+          } else {
+            setError('Your account access has been restricted. Please contact support at +1 (636) 635-6122 for assistance.');
+          }
+          return;
+        }
+
 
         // Stage 3: Authenticating account
         setLoadingStage(2);
@@ -121,7 +173,7 @@ export default function LoginPage() {
 
     } catch (error) {
       setLoadingStage(0);
-      
+
       // Handle banned user (backwards compatibility)
       if (error.message === 'ACCOUNT_BANNED') {
         setError({
@@ -132,7 +184,7 @@ export default function LoginPage() {
       } else {
         setError(error.message || 'Sign in failed. Please check your credentials.');
       }
-      
+
       setLoading(false);
     }
   };
