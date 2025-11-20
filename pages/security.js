@@ -12,7 +12,7 @@ export default function Security() {
     twoFactorEnabled: false,
     emailAlerts: true,
     smsAlerts: false,
-    loginAlerts: true,
+    loginNotifications: 'all_logins', // Changed from loginAlerts to be more descriptive
     transactionAlerts: true,
     fraudAlerts: true
   });
@@ -65,13 +65,24 @@ export default function Security() {
           twoFactorEnabled: data.twofactorenabled || false,
           emailAlerts: data.emailalerts !== undefined ? data.emailalerts : true,
           smsAlerts: data.smsalerts || false,
-          loginAlerts: data.loginalerts !== undefined ? data.loginalerts : true,
+          loginNotifications: data.login_notifications || 'all_logins', // Default to 'all_logins' if not set
           transactionAlerts: data.transactionalerts !== undefined ? data.transactionalerts : true,
           fraudAlerts: data.fraudalerts !== undefined ? data.fraudalerts : true
+        });
+      } else {
+        // If no settings exist, set defaults and potentially create a new row
+        setSecuritySettings({
+          twoFactorEnabled: false,
+          emailAlerts: true,
+          smsAlerts: false,
+          loginNotifications: 'all_logins',
+          transactionAlerts: true,
+          fraudAlerts: true
         });
       }
     } catch (error) {
       console.error('Error loading security settings:', error);
+      setError('Failed to load security settings.');
     }
   };
 
@@ -144,7 +155,7 @@ export default function Security() {
         twofactorenabled: updatedSettings.twoFactorEnabled,
         emailalerts: updatedSettings.emailAlerts,
         smsalerts: updatedSettings.smsAlerts,
-        loginalerts: updatedSettings.loginAlerts,
+        login_notifications: updatedSettings.loginNotifications, // Use the new key
         transactionalerts: updatedSettings.transactionAlerts,
         fraudalerts: updatedSettings.fraudAlerts,
         updated_at: new Date().toISOString()
@@ -163,7 +174,8 @@ export default function Security() {
     } catch (error) {
       console.error('Failed to update security setting:', error);
       setError(`Failed to update security setting: ${error.message}`);
-      setSecuritySettings(securitySettings);
+      // Revert local state if DB update fails
+      await loadSecuritySettings(user.id); 
       setTimeout(() => setError(''), 5000);
     }
   };
@@ -284,18 +296,19 @@ export default function Security() {
           <div style={styles.settingInfo}>
             <h3 style={styles.settingLabel}>Login Notifications</h3>
             <p style={styles.settingDescription}>
-              Enable or disable all login notifications
+              Configure when you want to receive notifications for logins
             </p>
           </div>
-          <label style={styles.toggleContainer}>
-            <input
-              type="checkbox"
-              checked={securitySettings.loginAlerts}
-              onChange={(e) => updateSecuritySetting('loginAlerts', e.target.checked)}
-              style={styles.toggleInput}
-            />
-            <span style={securitySettings.loginAlerts ? styles.toggleOn : styles.toggleOff}></span>
-          </label>
+          <select
+            value={securitySettings.loginNotifications}
+            onChange={(e) => updateSecuritySetting('loginNotifications', e.target.value)}
+            style={styles.select}
+          >
+            <option value="all_logins">All Logins</option>
+            <option value="new_device">New Device Only</option>
+            <option value="new_login">New Login Location</option>
+            <option value="both">Both New Device & Location</option>
+          </select>
         </div>
 
         <div style={styles.settingRow}>
@@ -333,20 +346,19 @@ export default function Security() {
             <span style={securitySettings.fraudAlerts ? styles.toggleOn : styles.toggleOff}></span>
           </label>
         </div>
+      </div>
 
-        <div style={{...styles.settingRow, border: 'none', paddingTop: '20px', marginTop: '20px', borderTop: '2px solid #e2e8f0'}}>
-          <div style={styles.settingInfo}>
-            <h3 style={styles.settingLabel}>⚙️ Advanced Login Settings</h3>
-            <p style={styles.settingDescription}>
-              Configure when to receive login notifications and manage login security codes
-            </p>
-          </div>
-          <button 
-            style={styles.actionButton}
-            onClick={() => router.push('/settings')}
-          >
-            Configure
-          </button>
+      {/* Advanced Login Settings Info Box */}
+      <div style={styles.infoBox}>
+        <span style={styles.infoIcon}>💡</span>
+        <div>
+          <h3 style={styles.infoTitle}>Advanced Login Settings</h3>
+          <p style={styles.infoText}>
+            The login notification settings above control when you receive alerts. 
+            For more detailed control over security codes for every login or new device, 
+            please visit the 'Configure' section which is typically part of a more advanced 
+            two-factor authentication setup or a dedicated security management panel.
+          </p>
         </div>
       </div>
 
@@ -482,6 +494,12 @@ export default function Security() {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        .toggleOn::before {
+          background-color: white;
+        }
+        .toggleOff::before {
+          background-color: white;
         }
       `}</style>
     </div>
@@ -672,6 +690,46 @@ const styles = {
       transition: '0.4s',
       borderRadius: '50%'
     }
+  },
+  select: {
+    minWidth: '200px',
+    maxWidth: '300px',
+    padding: '10px 15px',
+    border: '2px solid #e2e8f0',
+    borderRadius: '8px',
+    fontSize: '14px',
+    color: '#1e293b',
+    backgroundColor: 'white',
+    cursor: 'pointer',
+    outline: 'none',
+    transition: 'border-color 0.2s'
+  },
+  infoBox: {
+    display: 'flex',
+    gap: '15px',
+    padding: '20px',
+    backgroundColor: '#eff6ff',
+    borderRadius: '12px',
+    border: '1px solid #bfdbfe',
+    marginTop: '20px',
+    margin: '20px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+  },
+  infoIcon: {
+    fontSize: '24px',
+    flexShrink: 0,
+    color: '#3b82f6'
+  },
+  infoTitle: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#1e40af',
+    marginBottom: '8px'
+  },
+  infoText: {
+    fontSize: '14px',
+    color: '#1e40af',
+    lineHeight: '1.6'
   },
   actionsGrid: {
     display: 'grid',
