@@ -271,8 +271,8 @@ export default function LoginPage() {
       {/* Main Login Page */}
       <div style={{
         ...styles.pageContainer,
-        opacity: (loading || (error && typeof error === 'object' && error.type)) ? 0 : 1,
-        visibility: (loading || (error && typeof error === 'object' && error.type)) ? 'hidden' : 'visible',
+        opacity: loading ? 0 : 1,
+        visibility: loading ? 'hidden' : 'visible',
         transition: 'opacity 0.3s ease, visibility 0.3s ease'
       }}>
         {/* Professional Header - Logo on Left */}
@@ -290,7 +290,19 @@ export default function LoginPage() {
               </div>
             </Link>
           </div>
-          {/* Security Warning Scrolling Banner */}
+        </header>
+
+        {/* Banned User Message Banner - Shows in place of scrolling security banner */}
+        {error && typeof error === 'object' && error.type ? (
+          <div style={styles.bannedMessageWrapper}>
+            <StatusMessageBanner
+              type={error.type}
+              reason={error.reason}
+              contactEmail="support@theoaklinebank.com"
+            />
+          </div>
+        ) : (
+          /* Security Warning Scrolling Banner */
           <div style={styles.securityWarningBanner}>
             <div style={styles.scrollingText} className="scrollingText">
               <span style={styles.warningText}>
@@ -298,7 +310,7 @@ export default function LoginPage() {
               </span>
             </div>
           </div>
-        </header>
+        )}
 
         {/* Login Card Container */}
         <div style={styles.mainContent}>
@@ -309,17 +321,6 @@ export default function LoginPage() {
               <h2 style={styles.cardTitle}>Sign In</h2>
               <p style={styles.cardSubtitle}>Enter your credentials to access your account</p>
             </div>
-
-            {/* Banned User Message Banner - Shows above login form */}
-            {error && typeof error === 'object' && error.type && (
-              <div style={styles.bannedMessageContainer}>
-                <StatusMessageBanner
-                  type={error.type}
-                  reason={error.reason}
-                  contactEmail="support@theoaklinebank.com"
-                />
-              </div>
-            )}
 
             {/* Login Form */}
             <form onSubmit={handleSubmit} style={styles.form}>
@@ -565,10 +566,6 @@ const styles = {
     color: 'rgba(255, 255, 255, 0.8)',
     margin: 0,
     fontWeight: '500'
-  },
-  bannedMessageContainer: {
-    padding: '0 2rem 1rem',
-    background: 'white'
   },
   progressBarContainer: {
     margin: '2.5rem 0',
@@ -1023,6 +1020,15 @@ const styles = {
     color: 'rgba(255, 255, 255, 0.9)',
     fontSize: '0.85rem',
     margin: 0
+  },
+  bannedMessageWrapper: {
+    width: '100%',
+    padding: '1.5rem',
+    background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '200px'
   },
   securityWarningBanner: {
     background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
