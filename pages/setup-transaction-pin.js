@@ -117,19 +117,29 @@ export default function SetupTransactionPin() {
         throw new Error(data.error || 'Failed to set transaction PIN');
       }
 
-      // Send email notification (non-blocking)
-      fetch('/api/send-pin-notification', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ actionType: 'setup' })
-      }).catch(err => console.error('Email notification failed:', err));
-
       setMessage(hasPin ? 'Transaction PIN updated successfully!' : 'Transaction PIN created successfully!');
       setFormData({ currentPin: '', newPin: '', confirmPin: '' });
       setHasPin(true);
+
+      // Send email notification (non-blocking but with error handling)
+      try {
+        const emailResponse = await fetch('/api/send-pin-notification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({ actionType: hasPin ? 'reset' : 'setup' })
+        });
+
+        if (!emailResponse.ok) {
+          console.error('Email notification failed:', await emailResponse.text());
+        } else {
+          console.log('Email notification sent successfully');
+        }
+      } catch (emailErr) {
+        console.error('Email notification error:', emailErr);
+      }
 
       // Redirect after success
       setTimeout(() => {
@@ -347,11 +357,11 @@ export default function SetupTransactionPin() {
         }
         @keyframes slideIn {
           from {
-            transform: translateY(-50px);
+            transform: translateY(-50px) scale(0.9);
             opacity: 0;
           }
           to {
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
             opacity: 1;
           }
         }
@@ -361,6 +371,14 @@ export default function SetupTransactionPin() {
           }
           to {
             transform: scale(1);
+          }
+        }
+        @keyframes pulse {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.05);
           }
         }
       `}</style>
@@ -432,45 +450,50 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 9999,
-    padding: '20px'
+    zIndex: 99999,
+    padding: '20px',
+    backdropFilter: 'blur(4px)'
   },
   successModal: {
     backgroundColor: 'white',
-    borderRadius: '20px',
-    padding: '40px 30px',
-    maxWidth: '500px',
+    borderRadius: '24px',
+    padding: '50px 40px',
+    maxWidth: '520px',
     width: '100%',
-    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+    boxShadow: '0 25px 80px rgba(0,0,0,0.4)',
     textAlign: 'center',
-    animation: 'slideIn 0.3s ease-out'
+    animation: 'slideIn 0.4s ease-out',
+    border: '3px solid #16a34a'
   },
   checkmarkCircle: {
-    width: '80px',
-    height: '80px',
+    width: '100px',
+    height: '100px',
     borderRadius: '50%',
     backgroundColor: '#dcfce7',
-    border: '4px solid #16a34a',
-    margin: '0 auto 20px',
+    border: '5px solid #16a34a',
+    margin: '0 auto 25px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    animation: 'scaleIn 0.4s ease-out'
+    animation: 'scaleIn 0.5s ease-out',
+    boxShadow: '0 8px 20px rgba(22, 163, 74, 0.3)'
   },
   checkmark: {
-    fontSize: '48px',
+    fontSize: '60px',
     color: '#16a34a',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    animation: 'scaleIn 0.6s ease-out 0.2s both'
   },
   modalTitle: {
-    fontSize: '28px',
+    fontSize: '32px',
     fontWeight: 'bold',
-    color: '#1e293b',
-    margin: '0 0 15px 0'
+    color: '#16a34a',
+    margin: '0 0 20px 0',
+    textShadow: '0 2px 4px rgba(0,0,0,0.1)'
   },
   modalMessage: {
     fontSize: '18px',
@@ -507,13 +530,15 @@ const styles = {
   },
   errorMessage: {
     backgroundColor: '#fee2e2',
-    border: '2px solid #dc2626',
+    border: '3px solid #dc2626',
     color: '#dc2626',
-    padding: '15px 20px',
+    padding: '18px 24px',
     borderRadius: '12px',
     margin: '20px',
-    fontSize: '15px',
-    fontWeight: '500'
+    fontSize: '16px',
+    fontWeight: '600',
+    boxShadow: '0 4px 12px rgba(220, 38, 38, 0.2)',
+    animation: 'slideIn 0.3s ease-out'
   },
   infoCard: {
     backgroundColor: '#eff6ff',

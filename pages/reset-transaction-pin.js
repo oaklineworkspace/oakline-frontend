@@ -155,17 +155,28 @@ export default function ResetTransactionPin() {
         throw new Error(data.error || 'Failed to reset PIN');
       }
 
-      // Send email notification (non-blocking)
-      fetch('/api/send-pin-notification', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ actionType: 'reset' })
-      }).catch(err => console.error('Email notification failed:', err));
-
       setMessage('✅ Transaction PIN reset successfully!');
+
+      // Send email notification with better error handling
+      try {
+        const emailResponse = await fetch('/api/send-pin-notification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({ actionType: 'reset' })
+        });
+
+        if (!emailResponse.ok) {
+          console.error('Email notification failed:', await emailResponse.text());
+        } else {
+          console.log('Email notification sent successfully');
+        }
+      } catch (emailErr) {
+        console.error('Email notification error:', emailErr);
+      }
+
       setTimeout(() => {
         router.push('/security');
       }, 3000);

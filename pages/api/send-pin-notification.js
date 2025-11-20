@@ -154,6 +154,8 @@ export default async function handler(req, res) {
     `;
 
     try {
+      console.log(`Attempting to send PIN ${action} notification to ${user.email}`);
+      
       await sendEmail({
         to: user.email,
         subject: `🔒 ${actionTitle} Successful`,
@@ -163,18 +165,20 @@ export default async function handler(req, res) {
         userId: user.id
       });
 
-      console.log(`PIN ${action} notification sent to ${user.email}`);
+      console.log(`✅ PIN ${action} notification sent successfully to ${user.email}`);
 
       return res.status(200).json({
         success: true,
         message: 'PIN notification sent successfully'
       });
     } catch (emailError) {
-      console.error('Failed to send PIN notification email:', emailError);
+      console.error('❌ Failed to send PIN notification email:', emailError);
+      console.error('Email error details:', emailError.message);
       // Don't fail the request if email sending fails
-      return res.status(200).json({
-        success: true,
-        message: 'PIN updated but notification email failed'
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to send email notification',
+        message: emailError.message
       });
     }
 
