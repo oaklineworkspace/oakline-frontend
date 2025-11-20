@@ -268,41 +268,41 @@ export default function LoginPage() {
         </div>
       )}
 
-      {/* Main Login Page */}
-      <div style={{
-        ...styles.pageContainer,
-        opacity: loading ? 0 : 1,
-        visibility: loading ? 'hidden' : 'visible',
-        transition: 'opacity 0.3s ease, visibility 0.3s ease'
-      }}>
-        {/* Professional Header - Logo on Left */}
-        <header style={styles.header}>
-          <div style={styles.headerContent}>
-            <Link href="/" style={styles.logoLink}>
-              <img 
-                src="/images/Oakline_Bank_logo_design_c1b04ae0.png" 
-                alt="Oakline Bank" 
-                style={styles.logoImage}
-              />
-              <div style={styles.brandInfo}>
-                <h1 style={styles.brandName}>Oakline Bank</h1>
-                <span style={styles.brandTagline}>Secure Banking Platform</span>
-              </div>
-            </Link>
-          </div>
-        </header>
+      {/* Full-Screen Banned Message - Replaces everything when user is banned */}
+      {error && typeof error === 'object' && error.type ? (
+        <div style={styles.fullScreenBannedContainer}>
+          <StatusMessageBanner
+            type={error.type}
+            reason={error.reason}
+            contactEmail="support@theoaklinebank.com"
+          />
+        </div>
+      ) : (
+        /* Main Login Page */
+        <div style={{
+          ...styles.pageContainer,
+          opacity: loading ? 0 : 1,
+          visibility: loading ? 'hidden' : 'visible',
+          transition: 'opacity 0.3s ease, visibility 0.3s ease'
+        }}>
+          {/* Professional Header - Logo on Left */}
+          <header style={styles.header}>
+            <div style={styles.headerContent}>
+              <Link href="/" style={styles.logoLink}>
+                <img 
+                  src="/images/Oakline_Bank_logo_design_c1b04ae0.png" 
+                  alt="Oakline Bank" 
+                  style={styles.logoImage}
+                />
+                <div style={styles.brandInfo}>
+                  <h1 style={styles.brandName}>Oakline Bank</h1>
+                  <span style={styles.brandTagline}>Secure Banking Platform</span>
+                </div>
+              </Link>
+            </div>
+          </header>
 
-        {/* Banned User Message Banner - Shows in place of scrolling security banner */}
-        {error && typeof error === 'object' && error.type ? (
-          <div style={styles.bannedMessageWrapper}>
-            <StatusMessageBanner
-              type={error.type}
-              reason={error.reason}
-              contactEmail="support@theoaklinebank.com"
-            />
-          </div>
-        ) : (
-          /* Security Warning Scrolling Banner */
+          {/* Security Warning Scrolling Banner */}
           <div style={styles.securityWarningBanner}>
             <div style={styles.scrollingText} className="scrollingText">
               <span style={styles.warningText}>
@@ -310,13 +310,9 @@ export default function LoginPage() {
               </span>
             </div>
           </div>
-        )}
 
-        {/* Login Card Container - Only show if not banned */}
-        <div style={{
-          ...styles.mainContent,
-          display: (error && typeof error === 'object' && error.type) ? 'none' : 'flex'
-        }}>
+          {/* Login Card Container */}
+          <div style={styles.mainContent}>
           <div style={styles.loginCard}>
             {/* Card Header */}
             <div style={styles.cardHeader}>
@@ -444,12 +440,13 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <footer style={styles.footer}>
-          <p style={styles.footerText}>
-            © 2025 Oakline Bank. All rights reserved. Member FDIC.
-          </p>
-        </footer>
-      </div>
+          <footer style={styles.footer}>
+            <p style={styles.footerText}>
+              © 2025 Oakline Bank. All rights reserved. Member FDIC.
+            </p>
+          </footer>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes spin {
@@ -1024,18 +1021,21 @@ const styles = {
     fontSize: '0.85rem',
     margin: 0
   },
-  bannedMessageWrapper: {
-    width: '100%',
-    padding: '1.5rem',
-    background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
+  fullScreenBannedContainer: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100vw',
+    height: '100vh',
+    background: 'linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: '200px',
-    position: 'sticky',
-    top: 0,
-    zIndex: 101, // Ensure it's above the header
-    boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
+    padding: '2rem',
+    zIndex: 10000,
+    overflow: 'auto'
   },
   securityWarningBanner: {
     background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',

@@ -120,16 +120,17 @@ export default function StatusMessageBanner({ type, reason, contactEmail = 'supp
 const styles = {
   container: {
     width: '100%',
-    maxWidth: '800px',
+    maxWidth: '900px',
     margin: '0 auto',
     padding: '0',
   },
   banner: {
-    borderRadius: '12px',
-    border: '2px solid',
-    padding: '1.5rem',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    borderRadius: '20px',
+    border: '3px solid',
+    padding: '2.5rem',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
     animation: 'slideDown 0.3s ease-out',
+    backdropFilter: 'blur(10px)',
   },
   iconSection: {
     display: 'flex',
