@@ -192,6 +192,25 @@ export default function SetupTransactionPin() {
         </div>
       )}
 
+      {/* Error Modal Overlay */}
+      {error && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.errorModal}>
+            <div style={styles.errorCircle}>
+              <div style={styles.errorIcon}>✕</div>
+            </div>
+            <h2 style={styles.errorModalTitle}>Error!</h2>
+            <p style={styles.errorModalMessage}>{error}</p>
+            <button 
+              onClick={() => setError('')}
+              style={styles.errorModalButton}
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.headerTop}>
@@ -212,10 +231,6 @@ export default function SetupTransactionPin() {
           ← Back to Security
         </button>
       </div>
-
-      {error && (
-        <div style={styles.errorMessage}>{error}</div>
-      )}
 
       {/* Info Card */}
       <div style={styles.infoCard}>
@@ -528,17 +543,61 @@ const styles = {
     fontSize: '15px',
     fontWeight: '500'
   },
-  errorMessage: {
+  errorModal: {
+    backgroundColor: 'white',
+    borderRadius: '24px',
+    padding: '50px 40px',
+    maxWidth: '520px',
+    width: '100%',
+    boxShadow: '0 25px 80px rgba(0,0,0,0.4)',
+    textAlign: 'center',
+    animation: 'slideIn 0.4s ease-out',
+    border: '3px solid #dc2626'
+  },
+  errorCircle: {
+    width: '100px',
+    height: '100px',
+    borderRadius: '50%',
     backgroundColor: '#fee2e2',
-    border: '3px solid #dc2626',
+    border: '5px solid #dc2626',
+    margin: '0 auto 25px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    animation: 'scaleIn 0.5s ease-out',
+    boxShadow: '0 8px 20px rgba(220, 38, 38, 0.3)'
+  },
+  errorIcon: {
+    fontSize: '60px',
     color: '#dc2626',
-    padding: '18px 24px',
-    borderRadius: '12px',
-    margin: '20px',
+    fontWeight: 'bold',
+    animation: 'scaleIn 0.6s ease-out 0.2s both'
+  },
+  errorModalTitle: {
+    fontSize: '32px',
+    fontWeight: 'bold',
+    color: '#dc2626',
+    margin: '0 0 20px 0',
+    textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  },
+  errorModalMessage: {
+    fontSize: '18px',
+    color: '#1e293b',
+    margin: '0 0 30px 0',
+    fontWeight: '500',
+    lineHeight: '1.5'
+  },
+  errorModalButton: {
+    backgroundColor: '#dc2626',
+    color: 'white',
+    border: 'none',
+    padding: '14px 40px',
+    borderRadius: '10px',
     fontSize: '16px',
     fontWeight: '600',
-    boxShadow: '0 4px 12px rgba(220, 38, 38, 0.2)',
-    animation: 'slideIn 0.3s ease-out'
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(220, 38, 38, 0.4)',
+    transition: 'all 0.3s ease'
   },
   infoCard: {
     backgroundColor: '#eff6ff',

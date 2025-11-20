@@ -212,6 +212,41 @@ export default function ResetTransactionPin() {
 
   return (
     <div style={styles.container}>
+      {/* Success Modal Overlay */}
+      {message && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.successModal}>
+            <div style={styles.checkmarkCircle}>
+              <div style={styles.checkmark}>✓</div>
+            </div>
+            <h2 style={styles.modalTitle}>Success!</h2>
+            <p style={styles.modalMessage}>{message}</p>
+            <p style={styles.modalSubtext}>
+              A confirmation email has been sent to your registered email address.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal Overlay */}
+      {error && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.errorModal}>
+            <div style={styles.errorCircle}>
+              <div style={styles.errorIcon}>✕</div>
+            </div>
+            <h2 style={styles.errorModalTitle}>Error!</h2>
+            <p style={styles.errorModalMessage}>{error}</p>
+            <button 
+              onClick={() => setError('')}
+              style={styles.errorModalButton}
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
+
       <div style={styles.header}>
         <div style={styles.headerTop}>
           <h1 style={styles.title}>Reset Transaction PIN</h1>
@@ -229,14 +264,6 @@ export default function ResetTransactionPin() {
           ← Back to Security
         </button>
       </div>
-
-      {message && (
-        <div style={styles.successMessage}>{message}</div>
-      )}
-
-      {error && (
-        <div style={styles.errorMessage}>{error}</div>
-      )}
 
       {/* Progress Indicator */}
       <div style={styles.progressContainer}>
@@ -412,6 +439,24 @@ export default function ResetTransactionPin() {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
+        @keyframes slideIn {
+          from {
+            transform: translateY(-50px) scale(0.9);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+          }
+        }
+        @keyframes scaleIn {
+          from {
+            transform: scale(0);
+          }
+          to {
+            transform: scale(1);
+          }
+        }
       `}</style>
     </div>
   );
@@ -476,25 +521,124 @@ const styles = {
     animation: 'spin 1s linear infinite',
     marginBottom: '15px'
   },
-  successMessage: {
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 99999,
+    padding: '20px',
+    backdropFilter: 'blur(4px)'
+  },
+  successModal: {
+    backgroundColor: 'white',
+    borderRadius: '24px',
+    padding: '50px 40px',
+    maxWidth: '520px',
+    width: '100%',
+    boxShadow: '0 25px 80px rgba(0,0,0,0.4)',
+    textAlign: 'center',
+    animation: 'slideIn 0.4s ease-out',
+    border: '3px solid #16a34a'
+  },
+  checkmarkCircle: {
+    width: '100px',
+    height: '100px',
+    borderRadius: '50%',
     backgroundColor: '#dcfce7',
-    border: '2px solid #16a34a',
-    color: '#166534',
-    padding: '15px 20px',
-    borderRadius: '12px',
-    margin: '20px',
-    fontSize: '15px',
+    border: '5px solid #16a34a',
+    margin: '0 auto 25px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    animation: 'scaleIn 0.5s ease-out',
+    boxShadow: '0 8px 20px rgba(22, 163, 74, 0.3)'
+  },
+  checkmark: {
+    fontSize: '60px',
+    color: '#16a34a',
+    fontWeight: 'bold',
+    animation: 'scaleIn 0.6s ease-out 0.2s both'
+  },
+  modalTitle: {
+    fontSize: '32px',
+    fontWeight: 'bold',
+    color: '#16a34a',
+    margin: '0 0 20px 0',
+    textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  },
+  modalMessage: {
+    fontSize: '18px',
+    color: '#1e293b',
+    margin: '0 0 10px 0',
     fontWeight: '500'
   },
-  errorMessage: {
+  modalSubtext: {
+    fontSize: '14px',
+    color: '#64748b',
+    margin: '0 0 25px 0',
+    lineHeight: '1.5'
+  },
+  errorModal: {
+    backgroundColor: 'white',
+    borderRadius: '24px',
+    padding: '50px 40px',
+    maxWidth: '520px',
+    width: '100%',
+    boxShadow: '0 25px 80px rgba(0,0,0,0.4)',
+    textAlign: 'center',
+    animation: 'slideIn 0.4s ease-out',
+    border: '3px solid #dc2626'
+  },
+  errorCircle: {
+    width: '100px',
+    height: '100px',
+    borderRadius: '50%',
     backgroundColor: '#fee2e2',
-    border: '2px solid #dc2626',
+    border: '5px solid #dc2626',
+    margin: '0 auto 25px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    animation: 'scaleIn 0.5s ease-out',
+    boxShadow: '0 8px 20px rgba(220, 38, 38, 0.3)'
+  },
+  errorIcon: {
+    fontSize: '60px',
     color: '#dc2626',
-    padding: '15px 20px',
-    borderRadius: '12px',
-    margin: '20px',
-    fontSize: '15px',
-    fontWeight: '500'
+    fontWeight: 'bold',
+    animation: 'scaleIn 0.6s ease-out 0.2s both'
+  },
+  errorModalTitle: {
+    fontSize: '32px',
+    fontWeight: 'bold',
+    color: '#dc2626',
+    margin: '0 0 20px 0',
+    textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  },
+  errorModalMessage: {
+    fontSize: '18px',
+    color: '#1e293b',
+    margin: '0 0 30px 0',
+    fontWeight: '500',
+    lineHeight: '1.5'
+  },
+  errorModalButton: {
+    backgroundColor: '#dc2626',
+    color: 'white',
+    border: 'none',
+    padding: '14px 40px',
+    borderRadius: '10px',
+    fontSize: '16px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(220, 38, 38, 0.4)',
+    transition: 'all 0.3s ease'
   },
   progressContainer: {
     display: 'flex',
