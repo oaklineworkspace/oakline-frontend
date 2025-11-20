@@ -71,9 +71,49 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, [router]);
 
-  // Real-time ban detection - sign out user if they get banned
+  // Real-time account status detection - sign out user if their account is blocked
   useEffect(() => {
     if (!user?.id) return;
+
+    const checkAccountStatus = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (!currentSession?.access_token) {
+          return;
+        }
+
+        const response = await fetch('/api/check-account-status', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentSession.access_token}`
+          },
+          body: JSON.stringify({ userId: user.id })
+        });
+
+        if (response.ok) {
+          const accountStatus = await response.json();
+          
+          if (accountStatus?.isBlocked) {
+            console.log('Account is blocked, signing out...', accountStatus.blockingType);
+            
+            await supabase.auth.signOut();
+            
+            const params = new URLSearchParams({
+              blocked: accountStatus.blockingType,
+              reason: accountStatus.ban_reason || accountStatus.locked_reason || ''
+            });
+            router.push(`/sign-in?${params.toString()}`);
+          }
+        }
+      } catch (error) {
+        console.error('Account status check error:', error);
+      }
+    };
+
+    checkAccountStatus();
+    const statusCheckInterval = setInterval(checkAccountStatus, 60000);
 
     const channel = supabase
       .channel('profile-changes')
@@ -86,21 +126,21 @@ export const AuthProvider = ({ children }) => {
           filter: `id=eq.${user.id}`
         },
         async (payload) => {
-          // Check if user was banned
-          if (payload.new.is_banned === true && payload.old.is_banned === false) {
-            console.log('User has been banned, signing out...');
-            
-            // Sign out immediately
-            await supabase.auth.signOut();
-            
-            // Redirect to login with ban message
-            router.push('/sign-in');
+          const statusChanged = 
+            (payload.new.is_banned === true && payload.old.is_banned === false) ||
+            (payload.new.status !== payload.old.status && 
+             ['suspended', 'closed'].includes(payload.new.status));
+
+          if (statusChanged) {
+            console.log('Account status changed, checking and signing out...');
+            await checkAccountStatus();
           }
         }
       )
       .subscribe();
 
     return () => {
+      clearInterval(statusCheckInterval);
       supabase.removeChannel(channel);
     };
   }, [user?.id, router]);

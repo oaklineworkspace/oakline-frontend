@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
+import StatusMessageBanner from '../components/StatusMessageBanner';
+import { supabase } from '../lib/supabaseClient';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,6 +19,20 @@ export default function LoginPage() {
 
   useEffect(() => {
     setIsMounted(true);
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const blocked = urlParams.get('blocked');
+    const reason = urlParams.get('reason');
+    const urlError = urlParams.get('error');
+    
+    if (blocked) {
+      setError({
+        type: blocked,
+        reason: reason || ''
+      });
+    } else if (urlError === 'verification_failed' || urlError === 'status_check_failed') {
+      setError('Unable to verify account status. Please try again or contact support.');
+    }
   }, []);
 
   const handleChange = (e) => {
@@ -39,15 +55,63 @@ export default function LoginPage() {
       if (error) throw error;
 
       if (data.user) {
-        // Stage 2: Authenticating account
+        // Stage 2: Checking account status
         setLoadingStage(1);
-        await new Promise(resolve => setTimeout(resolve, 700));
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        // Stage 3: Securing connection
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        const statusResponse = await fetch('/api/check-account-status', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentSession?.access_token}`
+          },
+          body: JSON.stringify({ userId: data.user.id })
+        });
+
+        if (!statusResponse.ok) {
+          await supabase.auth.signOut({ scope: 'local' });
+          setLoading(false);
+          setLoadingStage(0);
+          setError('Unable to verify account status. Please contact support at support@theoaklinebank.com.');
+          return;
+        }
+
+        const accountStatus = await statusResponse.json();
+
+        if (!accountStatus || accountStatus.isBlocked === undefined) {
+          await supabase.auth.signOut({ scope: 'local' });
+          setLoading(false);
+          setLoadingStage(0);
+          setError('Account verification failed. Please contact support at support@theoaklinebank.com.');
+          return;
+        }
+
+        if (accountStatus.isBlocked) {
+          await supabase.auth.signOut({ scope: 'local' });
+          setLoading(false);
+          setLoadingStage(0);
+          
+          let blockReason = '';
+          if (accountStatus.blockingType === 'banned') {
+            blockReason = accountStatus.ban_reason;
+          } else if (accountStatus.blockingType === 'locked') {
+            blockReason = accountStatus.locked_reason;
+          }
+
+          setError({
+            type: accountStatus.blockingType,
+            reason: blockReason
+          });
+          return;
+        }
+
+        // Stage 3: Authenticating account
         setLoadingStage(2);
         await new Promise(resolve => setTimeout(resolve, 700));
 
-        // Stage 4: Finalizing login
+        // Stage 4: Securing connection
         setLoadingStage(3);
         await new Promise(resolve => setTimeout(resolve, 600));
 
@@ -58,7 +122,7 @@ export default function LoginPage() {
     } catch (error) {
       setLoadingStage(0);
       
-      // Handle banned user
+      // Handle banned user (backwards compatibility)
       if (error.message === 'ACCOUNT_BANNED') {
         setError({
           type: 'banned',
@@ -254,59 +318,12 @@ export default function LoginPage() {
               {/* Error Message */}
               {error && (
                 <>
-                  {typeof error === 'object' && error.type === 'banned' ? (
-                    <div style={styles.bannedMessage}>
-                      <div style={styles.bannedHeader}>
-                        <span style={styles.bannedIcon}>🚫</span>
-                        <h3 style={styles.bannedTitle}>Account Access Suspended</h3>
-                      </div>
-                      <p style={styles.bannedText}>
-                        We regret to inform you that your account access has been temporarily suspended.
-                        {error.reason && ` Reason: ${error.reason}`}
-                      </p>
-                      <div style={styles.bannedContactSection}>
-                        <p style={styles.bannedContactTitle}>
-                          <strong>To resolve this matter, please contact us:</strong>
-                        </p>
-                        <div style={styles.contactMethods}>
-                          {error.bankDetails?.bank_phone && (
-                            <div style={styles.contactMethod}>
-                              <span style={styles.contactIcon}>📞</span>
-                              <div>
-                                <div style={styles.contactLabel}>Phone Support</div>
-                                <a href={`tel:${error.bankDetails.bank_phone}`} style={styles.contactValue}>
-                                  {error.bankDetails.bank_phone}
-                                </a>
-                              </div>
-                            </div>
-                          )}
-                          {error.bankDetails?.email_contact && (
-                            <div style={styles.contactMethod}>
-                              <span style={styles.contactIcon}>✉️</span>
-                              <div>
-                                <div style={styles.contactLabel}>Email Support</div>
-                                <a href={`mailto:${error.bankDetails.email_contact}`} style={styles.contactValue}>
-                                  {error.bankDetails.email_contact}
-                                </a>
-                              </div>
-                            </div>
-                          )}
-                          {error.bankDetails?.address && (
-                            <div style={styles.contactMethod}>
-                              <span style={styles.contactIcon}>📍</span>
-                              <div>
-                                <div style={styles.contactLabel}>Visit Us</div>
-                                <div style={styles.contactValue}>{error.bankDetails.address}</div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        <p style={styles.bannedFooter}>
-                          Our customer service team is available Monday - Friday, 9:00 AM - 5:00 PM EST, 
-                          and Saturday 9:00 AM - 1:00 PM EST. We're here to help resolve this matter.
-                        </p>
-                      </div>
-                    </div>
+                  {typeof error === 'object' && error.type ? (
+                    <StatusMessageBanner
+                      type={error.type}
+                      reason={error.reason}
+                      contactEmail="support@theoaklinebank.com"
+                    />
                   ) : (
                     <div style={styles.errorMessage}>
                       <span style={styles.errorIcon}>⚠️</span>

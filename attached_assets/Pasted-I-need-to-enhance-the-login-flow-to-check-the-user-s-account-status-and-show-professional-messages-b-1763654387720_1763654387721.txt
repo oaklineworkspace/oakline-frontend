@@ -1,0 +1,72 @@
+I need to enhance the login flow to check the user's account status and show professional messages based on their status.
+Current behavior: When a user tries to login, it just shows "User is banned" in a red banner.
+Required changes:
+1. After successful authentication in the login API, check the user's profile for these status fields:
+   - is_banned (boolean)
+   - ban_reason (text)
+   - account_locked (boolean) - from user_security_settings table
+   - locked_reason (text) - from user_security_settings table
+2. Add a new "status" field to the profiles table:
+   - Type: text
+   - Values: 'active', 'suspended', 'closed', 'pending'
+   - Default: 'active'
+3. Display professional status messages:
+   - If is_banned = true: Show "🚫 Account Banned - Your account has been permanently banned. Reason: {ban_reason}. Contact support@theoaklinebank.com for assistance."
+   - If status = 'suspended': Show "⏸️ Account Suspended - Your account has been temporarily suspended. Please contact support@theoaklinebank.com to resolve this issue."
+   - If account_locked = true: Show "🔒 Account Locked - Your account is locked for security reasons. Reason: {locked_reason}. Contact support@theoaklinebank.com."
+   - If status = 'closed': Show "❌ Account Closed - This account has been closed and cannot be accessed."
+4. Prevent login for users with any of these statuses (banned, suspended, locked, closed).
+5. Style the message banners professionally with:
+   - Different colors for each status (red for banned, orange for suspended, blue for locked, gray for closed)
+   - Clear, user-friendly language
+   - Contact information prominently displayed
+Prompt 2: Update Sign-In and Sign-Up Pages
+Update both the sign-in (pages/sign-in.js) and sign-up (pages/sign-up.js) pages to check account status after authentication.
+Implementation steps:
+1. After successful Supabase authentication, make an API call to check the user profile:
+   ```javascript
+   const response = await fetch('/api/check-account-status', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ userId: session.user.id })
+   });
+   const { status, is_banned, ban_reason, account_locked, locked_reason } = await response.json();
+Create the API endpoint at pages/api/check-account-status.js that:
+Queries the profiles table for: status, is_banned, ban_reason
+Queries user_security_settings table for: account_locked, locked_reason
+Returns the combined status information
+If any blocking status is detected, prevent login and show the appropriate message banner.
+Replace the current "User is banned" error banner with a professional StatusMessageBanner component that:
+Takes props: type ('banned', 'suspended', 'locked', 'closed'), reason, contactEmail
+Renders with appropriate styling and icons
+Includes a "Contact Support" button that opens email to support
+---
+## **Prompt 3: Create Status Message Banner Component**
+Create a new reusable component at components/StatusMessageBanner.js for displaying account status messages professionally.
+
+Component specifications:
+
+Props:
+
+type: 'banned' | 'suspended' | 'locked' | 'closed'
+reason: string (optional)
+contactEmail: string (default: 'support@theoaklinebank.com')
+Design:
+
+Use gradient backgrounds matching the status severity
+Include appropriate emoji icons (🚫, ⏸️, 🔒, ❌)
+Show clear, professional messaging
+Display reason if provided
+Include "Contact Support" button that opens mailto link
+Make it responsive and accessible
+Example usage:
+
+<StatusMessageBanner 
+  type="suspended" 
+  reason="Suspicious activity detected" 
+  contactEmail="support@theoaklinebank.com" 
+/>
+Style to match the existing banking theme with professional colors and typography.
+
+---
+These prompts will help your frontend team implement a professional account status checking system that displays appropriate messages based on user account state.
