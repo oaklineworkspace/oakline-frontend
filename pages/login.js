@@ -718,10 +718,10 @@ const styles = {
     alignItems: 'center',
     gap: '0.75rem',
     padding: '1rem 1.25rem',
-    backgroundColor: '#fee2e2',
-    border: '2px solid #fca5a5',
+    backgroundColor: '#dbeafe',
+    border: '2px solid #3b82f6',
     borderRadius: '12px',
-    color: '#dc2626',
+    color: '#1e40af',
     fontSize: '0.9rem',
     fontWeight: '600'
   },
