@@ -57,7 +57,18 @@ export default function LoginPage() {
 
     } catch (error) {
       setLoadingStage(0);
-      setError(error.message || 'Sign in failed. Please check your credentials.');
+      
+      // Handle banned user
+      if (error.message === 'ACCOUNT_BANNED') {
+        setError({
+          type: 'banned',
+          reason: error.ban_reason,
+          bankDetails: error.bank_details
+        });
+      } else {
+        setError(error.message || 'Sign in failed. Please check your credentials.');
+      }
+      
       setLoading(false);
     }
   };
@@ -242,10 +253,67 @@ export default function LoginPage() {
 
               {/* Error Message */}
               {error && (
-                <div style={styles.errorMessage}>
-                  <span style={styles.errorIcon}>⚠️</span>
-                  <span>{error}</span>
-                </div>
+                <>
+                  {typeof error === 'object' && error.type === 'banned' ? (
+                    <div style={styles.bannedMessage}>
+                      <div style={styles.bannedHeader}>
+                        <span style={styles.bannedIcon}>🚫</span>
+                        <h3 style={styles.bannedTitle}>Account Access Suspended</h3>
+                      </div>
+                      <p style={styles.bannedText}>
+                        We regret to inform you that your account access has been temporarily suspended.
+                        {error.reason && ` Reason: ${error.reason}`}
+                      </p>
+                      <div style={styles.bannedContactSection}>
+                        <p style={styles.bannedContactTitle}>
+                          <strong>To resolve this matter, please contact us:</strong>
+                        </p>
+                        <div style={styles.contactMethods}>
+                          {error.bankDetails?.bank_phone && (
+                            <div style={styles.contactMethod}>
+                              <span style={styles.contactIcon}>📞</span>
+                              <div>
+                                <div style={styles.contactLabel}>Phone Support</div>
+                                <a href={`tel:${error.bankDetails.bank_phone}`} style={styles.contactValue}>
+                                  {error.bankDetails.bank_phone}
+                                </a>
+                              </div>
+                            </div>
+                          )}
+                          {error.bankDetails?.email_contact && (
+                            <div style={styles.contactMethod}>
+                              <span style={styles.contactIcon}>✉️</span>
+                              <div>
+                                <div style={styles.contactLabel}>Email Support</div>
+                                <a href={`mailto:${error.bankDetails.email_contact}`} style={styles.contactValue}>
+                                  {error.bankDetails.email_contact}
+                                </a>
+                              </div>
+                            </div>
+                          )}
+                          {error.bankDetails?.address && (
+                            <div style={styles.contactMethod}>
+                              <span style={styles.contactIcon}>📍</span>
+                              <div>
+                                <div style={styles.contactLabel}>Visit Us</div>
+                                <div style={styles.contactValue}>{error.bankDetails.address}</div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <p style={styles.bannedFooter}>
+                          Our customer service team is available Monday - Friday, 9:00 AM - 5:00 PM, 
+                          and Saturday 9:00 AM - 1:00 PM to assist you.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={styles.errorMessage}>
+                      <span style={styles.errorIcon}>⚠️</span>
+                      <span>{error}</span>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Submit Button */}
@@ -706,6 +774,90 @@ const styles = {
   },
   errorIcon: {
     fontSize: '1.2rem'
+  },
+  bannedMessage: {
+    backgroundColor: '#fef2f2',
+    border: '2px solid #dc2626',
+    borderRadius: '16px',
+    padding: '1.5rem',
+    marginBottom: '1rem'
+  },
+  bannedHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    marginBottom: '1rem',
+    paddingBottom: '1rem',
+    borderBottom: '1px solid #fca5a5'
+  },
+  bannedIcon: {
+    fontSize: '2rem'
+  },
+  bannedTitle: {
+    fontSize: '1.25rem',
+    fontWeight: '700',
+    color: '#991b1b',
+    margin: 0
+  },
+  bannedText: {
+    fontSize: '0.95rem',
+    color: '#7f1d1d',
+    lineHeight: '1.6',
+    marginBottom: '1.25rem'
+  },
+  bannedContactSection: {
+    backgroundColor: '#fff',
+    borderRadius: '12px',
+    padding: '1.25rem',
+    border: '1px solid #fca5a5'
+  },
+  bannedContactTitle: {
+    fontSize: '0.95rem',
+    color: '#991b1b',
+    marginBottom: '1rem',
+    margin: '0 0 1rem 0'
+  },
+  contactMethods: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+    marginBottom: '1rem'
+  },
+  contactMethod: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '0.75rem',
+    padding: '0.75rem',
+    backgroundColor: '#fef2f2',
+    borderRadius: '8px',
+    border: '1px solid #fee2e2'
+  },
+  contactIcon: {
+    fontSize: '1.5rem'
+  },
+  contactLabel: {
+    fontSize: '0.75rem',
+    color: '#7f1d1d',
+    fontWeight: '600',
+    marginBottom: '0.25rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
+  },
+  contactValue: {
+    fontSize: '0.95rem',
+    color: '#dc2626',
+    fontWeight: '600',
+    textDecoration: 'none',
+    display: 'block'
+  },
+  bannedFooter: {
+    fontSize: '0.8rem',
+    color: '#7f1d1d',
+    fontStyle: 'italic',
+    margin: '0.75rem 0 0 0',
+    paddingTop: '0.75rem',
+    borderTop: '1px solid #fee2e2',
+    lineHeight: '1.5'
   },
   submitButton: {
     width: '100%',

@@ -72,28 +72,50 @@ export const AuthProvider = ({ children }) => {
   }, [router]);
 
   const signIn = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
+      if (error) throw error;
+
+      // Check if user is banned
+      if (data.user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('is_banned, ban_reason')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (profile?.is_banned) {
+          // Sign out the banned user immediately
+          await supabase.auth.signOut();
+
+          // Fetch bank details for contact information
+          const bankDetailsResponse = await fetch('/api/bank-details');
+          const bankData = await bankDetailsResponse.json();
+
+          return {
+            data: null,
+            error: {
+              message: 'ACCOUNT_BANNED',
+              ban_reason: profile.ban_reason,
+              bank_details: bankData.bankDetails
+            }
+          };
+        }
+      }
+
+      return { data, error: null };
+    } catch (error) {
+      // Log login failure with specific error details
       await logAuthActivity(ActivityActions.LOGIN_FAILED, {
         email,
         reason: error.message
       });
-    } else if (data.user && data.session) {
-      await logAuthActivity(ActivityActions.LOGIN_SUCCESS, {
-        email: data.user.email,
-        login_method: 'email_password'
-      });
-
-      // Enhanced login activity logging with geolocation
-      // This will also send the login notification email with complete location data
-      await logLoginActivity(true);
+      return { data: null, error };
     }
-
-    return { data, error };
   };
 
   const signUp = async (email, password, options = {}) => {
