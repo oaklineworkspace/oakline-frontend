@@ -42,6 +42,17 @@ export default function WireTransfer() {
     recipient_account: ''
   });
 
+  const [locationData, setLocationData] = useState({
+    states: [],
+    cities: [],
+    counties: []
+  });
+  const [showManualState, setShowManualState] = useState(false);
+  const [showManualCity, setShowManualCity] = useState(false);
+  const [showManualCounty, setShowManualCounty] = useState(false);
+  const [loadingStates, setLoadingStates] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
+
   const [wireForm, setWireForm] = useState({
     from_account_id: '',
     transfer_type: 'domestic',
@@ -53,6 +64,7 @@ export default function WireTransfer() {
     recipient_bank_address: '',
     recipient_bank_city: '',
     recipient_bank_state: '',
+    recipient_bank_county: '',
     recipient_bank_zip: '',
     recipient_bank_country: 'United States',
     swift_code: '',
@@ -68,6 +80,82 @@ export default function WireTransfer() {
   useEffect(() => {
     checkUserAndFetchData();
   }, []);
+
+  useEffect(() => {
+    if (wireForm.recipient_bank_country) {
+      fetchStates(wireForm.recipient_bank_country);
+    }
+  }, [wireForm.recipient_bank_country]);
+
+  useEffect(() => {
+    if (wireForm.recipient_bank_state && !showManualState) {
+      fetchCities(wireForm.recipient_bank_country, wireForm.recipient_bank_state);
+    }
+  }, [wireForm.recipient_bank_state, wireForm.recipient_bank_country, showManualState]);
+
+  const fetchStates = async (countryCode) => {
+    if (countryCode === 'Other') {
+      setLocationData(prev => ({ ...prev, states: [], cities: [], counties: [] }));
+      setShowManualState(true);
+      setShowManualCity(true);
+      setShowManualCounty(true);
+      return;
+    }
+
+    setLoadingStates(true);
+    try {
+      const response = await fetch(`/api/locations/states?country_code=${countryCode}`);
+      if (response.ok) {
+        const data = await response.json();
+        setLocationData(prev => ({ ...prev, states: data.states || [], cities: [], counties: [] }));
+        if (!data.states || data.states.length === 0) {
+          setShowManualState(true);
+          setShowManualCity(true);
+          setShowManualCounty(true);
+        } else {
+          setShowManualState(false);
+        }
+      } else {
+        setLocationData(prev => ({ ...prev, states: [], cities: [], counties: [] }));
+        setShowManualState(true);
+        setShowManualCity(true);
+        setShowManualCounty(true);
+      }
+    } catch (error) {
+      console.error('Error fetching states:', error);
+      setLocationData(prev => ({ ...prev, states: [], cities: [], counties: [] }));
+      setShowManualState(true);
+      setShowManualCity(true);
+      setShowManualCounty(true);
+    } finally {
+      setLoadingStates(false);
+    }
+  };
+
+  const fetchCities = async (countryCode, stateCode) => {
+    setLoadingCities(true);
+    try {
+      const response = await fetch(`/api/locations/cities?country_code=${countryCode}&state_code=${stateCode}`);
+      if (response.ok) {
+        const data = await response.json();
+        setLocationData(prev => ({ ...prev, cities: data.cities || [], counties: [] }));
+        if (!data.cities || data.cities.length === 0) {
+          setShowManualCity(true);
+        } else {
+          setShowManualCity(false);
+        }
+      } else {
+        setLocationData(prev => ({ ...prev, cities: [], counties: [] }));
+        setShowManualCity(true);
+      }
+    } catch (error) {
+      console.error('Error fetching cities:', error);
+      setLocationData(prev => ({ ...prev, cities: [], counties: [] }));
+      setShowManualCity(true);
+    } finally {
+      setLoadingCities(false);
+    }
+  };
 
   const checkUserAndFetchData = async () => {
     try {
@@ -573,6 +661,7 @@ export default function WireTransfer() {
         recipient_bank_address: '',
         recipient_bank_city: '',
         recipient_bank_state: '',
+        recipient_bank_county: '',
         recipient_bank_zip: '',
         recipient_bank_country: 'United States',
         swift_code: '',
@@ -1693,40 +1782,148 @@ export default function WireTransfer() {
                         />
                       </div>
 
-                      <div style={styles.formGrid}>
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>City *</label>
-                          <input
-                            type="text"
-                            style={styles.input}
-                            value={wireForm.recipient_bank_city}
-                            onChange={(e) => handleInputChange('recipient_bank_city', e.target.value)}
-                            placeholder="City"
-                            required
-                          />
-                        </div>
-
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>State/Province</label>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>State/Province *</label>
+                        {showManualState ? (
                           <input
                             type="text"
                             style={styles.input}
                             value={wireForm.recipient_bank_state}
                             onChange={(e) => handleInputChange('recipient_bank_state', e.target.value)}
-                            placeholder="State"
+                            placeholder="Enter State/Province"
+                            required
                           />
-                        </div>
+                        ) : (
+                          <select
+                            style={styles.select}
+                            value={wireForm.recipient_bank_state}
+                            onChange={(e) => {
+                              handleInputChange('recipient_bank_state', e.target.value);
+                              handleInputChange('recipient_bank_city', '');
+                            }}
+                            disabled={loadingStates}
+                            required
+                          >
+                            <option value="">
+                              {loadingStates ? 'Loading states...' : 'Select State/Province'}
+                            </option>
+                            {locationData.states.map(state => (
+                              <option key={state.id} value={state.code}>
+                                {state.name}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                        {locationData.states.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowManualState(!showManualState);
+                              handleInputChange('recipient_bank_state', '');
+                              handleInputChange('recipient_bank_city', '');
+                              setShowManualCity(false);
+                            }}
+                            style={{
+                              marginTop: '0.5rem',
+                              padding: '0.5rem 1rem',
+                              backgroundColor: '#f3f4f6',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '6px',
+                              fontSize: '0.875rem',
+                              cursor: 'pointer',
+                              color: '#374151',
+                              fontWeight: '500'
+                            }}
+                          >
+                            {showManualState ? '📋 Select from list' : '✏️ Enter manually'}
+                          </button>
+                        )}
+                      </div>
 
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>ZIP/Postal Code</label>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>City *</label>
+                        {showManualCity ? (
                           <input
                             type="text"
                             style={styles.input}
-                            value={wireForm.recipient_bank_zip}
-                            onChange={(e) => handleInputChange('recipient_bank_zip', e.target.value)}
-                            placeholder="ZIP"
+                            value={wireForm.recipient_bank_city}
+                            onChange={(e) => handleInputChange('recipient_bank_city', e.target.value)}
+                            placeholder="Enter City"
+                            required
                           />
-                        </div>
+                        ) : (
+                          <select
+                            style={styles.select}
+                            value={wireForm.recipient_bank_city}
+                            onChange={(e) => handleInputChange('recipient_bank_city', e.target.value)}
+                            disabled={loadingCities || !wireForm.recipient_bank_state}
+                            required
+                          >
+                            <option value="">
+                              {loadingCities ? 'Loading cities...' : wireForm.recipient_bank_state ? 'Select City' : 'Select state first'}
+                            </option>
+                            {locationData.cities.map(city => (
+                              <option key={city.id} value={city.name}>
+                                {city.name}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                        {locationData.cities.length > 0 && !showManualState && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowManualCity(!showManualCity);
+                              handleInputChange('recipient_bank_city', '');
+                            }}
+                            style={{
+                              marginTop: '0.5rem',
+                              padding: '0.5rem 1rem',
+                              backgroundColor: '#f3f4f6',
+                              border: '1px solid #d1d5db',
+                              borderRadius: '6px',
+                              fontSize: '0.875rem',
+                              cursor: 'pointer',
+                              color: '#374151',
+                              fontWeight: '500'
+                            }}
+                          >
+                            {showManualCity ? '📋 Select from list' : '✏️ Enter manually'}
+                          </button>
+                        )}
+                      </div>
+
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>County (Optional)</label>
+                        {showManualCounty ? (
+                          <input
+                            type="text"
+                            style={styles.input}
+                            value={wireForm.recipient_bank_county || ''}
+                            onChange={(e) => handleInputChange('recipient_bank_county', e.target.value)}
+                            placeholder="Enter County"
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            style={styles.input}
+                            value={wireForm.recipient_bank_county || ''}
+                            onChange={(e) => handleInputChange('recipient_bank_county', e.target.value)}
+                            placeholder="Enter County"
+                          />
+                        )}
+                      </div>
+
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>ZIP/Postal Code *</label>
+                        <input
+                          type="text"
+                          style={styles.input}
+                          value={wireForm.recipient_bank_zip}
+                          onChange={(e) => handleInputChange('recipient_bank_zip', e.target.value)}
+                          placeholder="ZIP/Postal Code"
+                          required
+                        />
                       </div>
 
                       <div style={styles.formGroup}>
@@ -1927,7 +2124,8 @@ export default function WireTransfer() {
                           <span style={styles.reviewLabel}>Bank Address</span>
                           <span style={styles.reviewValue}>
                             {wireForm.recipient_bank_address}, {wireForm.recipient_bank_city},
-                            {wireForm.recipient_bank_state} {wireForm.recipient_bank_zip}
+                            {wireForm.recipient_bank_county ? `${wireForm.recipient_bank_county}, ` : ''}
+                            {wireForm.recipient_bank_state} {wireForm.recipient_bank_zip}, {wireForm.recipient_bank_country}
                           </span>
                         </div>
 
