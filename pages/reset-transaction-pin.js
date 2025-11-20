@@ -72,7 +72,7 @@ export default function ResetTransactionPin() {
         throw new Error(data.error || 'Failed to send verification code');
       }
 
-      setMessage('A verification code has been sent to your email. Please check your inbox.');
+      // Don't set message here - just move to step 2
       setCountdown(60);
       setStep(2);
     } catch (error) {
@@ -238,7 +238,7 @@ export default function ResetTransactionPin() {
   return (
     <div style={styles.container}>
       {/* Success Modal Overlay */}
-      {message && (
+      {message && message.includes('successfully') && (
         <div style={styles.modalOverlay}>
           <div style={styles.successModal}>
             <div style={styles.checkmarkCircle}>
@@ -349,6 +349,15 @@ export default function ResetTransactionPin() {
       {/* Step 2: Verify Code */}
       {step === 2 && (
         <div style={styles.card}>
+          <div style={styles.successBanner}>
+            <span style={styles.successBannerIcon}>✅</span>
+            <div>
+              <strong>Verification code sent!</strong>
+              <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem' }}>
+                Please check your email inbox for the 6-digit code.
+              </p>
+            </div>
+          </div>
           <h2 style={styles.cardTitle}>Enter Verification Code</h2>
           <p style={styles.description}>
             We've sent a 6-digit verification code to <strong>{email}</strong>. Please enter the code below.
@@ -702,6 +711,20 @@ const styles = {
     cursor: 'pointer',
     boxShadow: '0 4px 12px rgba(220, 38, 38, 0.4)',
     transition: 'all 0.3s ease'
+  },
+  successBanner: {
+    backgroundColor: '#f0fdf4',
+    border: '2px solid #22c55e',
+    borderRadius: '12px',
+    padding: '1rem',
+    marginBottom: '1.5rem',
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '0.75rem'
+  },
+  successBannerIcon: {
+    fontSize: '1.5rem',
+    flexShrink: 0
   },
   progressContainer: {
     display: 'flex',
