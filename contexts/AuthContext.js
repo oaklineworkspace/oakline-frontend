@@ -71,6 +71,40 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, [router]);
 
+  // Real-time ban detection - sign out user if they get banned
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`
+        },
+        async (payload) => {
+          // Check if user was banned
+          if (payload.new.is_banned === true && payload.old.is_banned === false) {
+            console.log('User has been banned, signing out...');
+            
+            // Sign out immediately
+            await supabase.auth.signOut();
+            
+            // Redirect to login with ban message
+            router.push('/sign-in');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, router]);
+
   const signIn = async (email, password) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -89,12 +123,22 @@ export const AuthProvider = ({ children }) => {
           .single();
 
         if (profile?.is_banned) {
-          // Sign out the banned user immediately
+          // Sign out the banned user from all sessions
+          await supabase.auth.admin.signOut(data.user.id);
+          
+          // Also sign out from current session
           await supabase.auth.signOut();
 
           // Fetch bank details for contact information
           const bankDetailsResponse = await fetch('/api/bank-details');
           const bankData = await bankDetailsResponse.json();
+
+          // Log the banned login attempt
+          await logAuthActivity(ActivityActions.LOGIN_FAILED, {
+            email,
+            userId: data.user.id,
+            reason: 'Account banned - ' + (profile.ban_reason || 'Security reasons')
+          });
 
           return {
             data: null,
