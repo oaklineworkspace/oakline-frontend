@@ -209,7 +209,7 @@ export default function LoginPage() {
           <StatusMessageBanner
             type={error.type}
             reason={error.reason}
-            contactEmail="support@theoaklinebank.com"
+            contactEmail="security@theoaklinebank.com"
           />
         </div>
       ) : loading ? (
@@ -375,11 +375,28 @@ export default function LoginPage() {
                 </Link>
               </div>
 
-              {/* Error Message - Only show simple errors here */}
+              {/* Error Message - Professional restriction banner */}
               {error && typeof error === 'string' && (
-                <div style={styles.errorMessage}>
-                  <span style={styles.errorIcon}>⚠️</span>
-                  <span>{error}</span>
+                <div style={styles.restrictionBanner}>
+                  <div style={styles.restrictionHeader}>
+                    <span style={styles.restrictionIcon}>⚠️</span>
+                    <span style={styles.restrictionTitle}>Account Access Restricted</span>
+                  </div>
+                  <p style={styles.restrictionReason}>{error}</p>
+                  <div style={styles.restrictionContact}>
+                    <p style={styles.contactPrompt}>For assistance, please contact our security team:</p>
+                    <div style={styles.contactDetails}>
+                      <div style={styles.contactItem}>
+                        <span style={styles.contactIcon}>✉️</span>
+                        <a href="mailto:security@theoaklinebank.com" style={styles.contactLink}>
+                          security@theoaklinebank.com
+                        </a>
+                      </div>
+                    </div>
+                    <p style={styles.supportHours}>
+                      Available Monday - Friday, 9:00 AM - 5:00 PM EST
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -842,6 +859,77 @@ const styles = {
   },
   errorIcon: {
     fontSize: '1.2rem'
+  },
+  restrictionBanner: {
+    backgroundColor: '#3b82f6',
+    border: '2px solid #1e40af',
+    borderRadius: '12px',
+    padding: '1.25rem',
+    marginBottom: '1rem'
+  },
+  restrictionHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    marginBottom: '1rem',
+    paddingBottom: '1rem',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.3)'
+  },
+  restrictionIcon: {
+    fontSize: '1.5rem'
+  },
+  restrictionTitle: {
+    fontSize: '1.1rem',
+    fontWeight: '700',
+    color: '#ffffff'
+  },
+  restrictionReason: {
+    fontSize: '0.95rem',
+    color: '#ffffff',
+    lineHeight: '1.6',
+    marginBottom: '1rem',
+    margin: '0 0 1rem 0'
+  },
+  restrictionContact: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: '8px',
+    padding: '1rem',
+    border: '1px solid rgba(255, 255, 255, 0.2)'
+  },
+  contactPrompt: {
+    fontSize: '0.9rem',
+    color: '#ffffff',
+    fontWeight: '600',
+    marginBottom: '0.75rem',
+    margin: '0 0 0.75rem 0'
+  },
+  contactDetails: {
+    marginBottom: '0.75rem'
+  },
+  contactItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.5rem',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: '6px',
+    marginBottom: '0.5rem'
+  },
+  contactIcon: {
+    fontSize: '1.2rem'
+  },
+  contactLink: {
+    color: '#ffffff',
+    textDecoration: 'none',
+    fontWeight: '600',
+    fontSize: '0.95rem'
+  },
+  supportHours: {
+    fontSize: '0.85rem',
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontStyle: 'italic',
+    margin: 0,
+    textAlign: 'center'
   },
   bannedMessage: {
     backgroundColor: '#fef2f2',

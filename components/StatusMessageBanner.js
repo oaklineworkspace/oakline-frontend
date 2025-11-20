@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 
-export default function StatusMessageBanner({ type, reason, contactEmail = 'support@theoaklinebank.com' }) {
+export default function StatusMessageBanner({ type, reason, contactEmail = 'security@theoaklinebank.com' }) {
   const [copied, setCopied] = useState(false);
 
   const statusConfig = {
