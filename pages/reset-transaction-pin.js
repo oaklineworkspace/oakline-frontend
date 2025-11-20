@@ -123,7 +123,7 @@ export default function ResetTransactionPin() {
         throw new Error('Verification code has expired. Please request a new one.');
       }
 
-      setMessage('Code verified successfully! Please enter your new PIN.');
+      // Move to step 3 without setting a message to avoid modal overlay
       setStep(3);
     } catch (error) {
       console.error('Error verifying code:', error);
