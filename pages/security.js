@@ -28,6 +28,8 @@ export default function Security() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const router = useRouter();
 
@@ -169,8 +171,14 @@ export default function Security() {
 
       if (error) throw error;
 
-      setMessage('✅ Security setting updated successfully');
-      setTimeout(() => setMessage(''), 3000);
+      setSuccessMessage('✅ Security setting updated successfully');
+      setShowSuccessModal(true);
+      
+      // Auto-close modal after 3 seconds
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        setSuccessMessage('');
+      }, 3000);
     } catch (error) {
       console.error('Failed to update security setting:', error);
       setError(`Failed to update security setting: ${error.message}`);
@@ -288,7 +296,9 @@ export default function Security() {
               onChange={(e) => updateSecuritySetting('emailAlerts', e.target.checked)}
               style={styles.toggleInput}
             />
-            <span style={securitySettings.emailAlerts ? styles.toggleOn : styles.toggleOff}></span>
+            <span style={securitySettings.emailAlerts ? styles.toggleOn : styles.toggleOff}>
+              {securitySettings.emailAlerts ? 'ON' : 'OFF'}
+            </span>
           </label>
         </div>
 
@@ -306,7 +316,9 @@ export default function Security() {
               onChange={(e) => updateSecuritySetting('loginNotifications', e.target.checked ? 'all_logins' : 'off')}
               style={styles.toggleInput}
             />
-            <span style={securitySettings.loginNotifications === 'all_logins' ? styles.toggleOn : styles.toggleOff}></span>
+            <span style={securitySettings.loginNotifications === 'all_logins' ? styles.toggleOn : styles.toggleOff}>
+              {securitySettings.loginNotifications === 'all_logins' ? 'ON' : 'OFF'}
+            </span>
           </label>
         </div>
 
@@ -325,7 +337,9 @@ export default function Security() {
               disabled={securitySettings.loginNotifications === 'all_logins'}
               style={styles.toggleInput}
             />
-            <span style={securitySettings.loginNotifications === 'new_device' ? styles.toggleOn : (securitySettings.loginNotifications === 'all_logins' ? styles.toggleDisabled : styles.toggleOff)}></span>
+            <span style={securitySettings.loginNotifications === 'new_device' ? styles.toggleOn : (securitySettings.loginNotifications === 'all_logins' ? styles.toggleDisabled : styles.toggleOff)}>
+              {securitySettings.loginNotifications === 'new_device' ? 'ON' : 'OFF'}
+            </span>
           </label>
         </div>
 
@@ -344,7 +358,9 @@ export default function Security() {
               disabled={securitySettings.loginNotifications === 'all_logins'}
               style={styles.toggleInput}
             />
-            <span style={securitySettings.loginNotifications === 'new_login' ? styles.toggleOn : (securitySettings.loginNotifications === 'all_logins' ? styles.toggleDisabled : styles.toggleOff)}></span>
+            <span style={securitySettings.loginNotifications === 'new_login' ? styles.toggleOn : (securitySettings.loginNotifications === 'all_logins' ? styles.toggleDisabled : styles.toggleOff)}>
+              {securitySettings.loginNotifications === 'new_login' ? 'ON' : 'OFF'}
+            </span>
           </label>
         </div>
 
@@ -363,7 +379,9 @@ export default function Security() {
               disabled={securitySettings.loginNotifications === 'all_logins'}
               style={styles.toggleInput}
             />
-            <span style={securitySettings.loginNotifications === 'both' ? styles.toggleOn : (securitySettings.loginNotifications === 'all_logins' ? styles.toggleDisabled : styles.toggleOff)}></span>
+            <span style={securitySettings.loginNotifications === 'both' ? styles.toggleOn : (securitySettings.loginNotifications === 'all_logins' ? styles.toggleDisabled : styles.toggleOff)}>
+              {securitySettings.loginNotifications === 'both' ? 'ON' : 'OFF'}
+            </span>
           </label>
         </div>
 
@@ -381,7 +399,9 @@ export default function Security() {
               onChange={(e) => updateSecuritySetting('transactionAlerts', e.target.checked)}
               style={styles.toggleInput}
             />
-            <span style={securitySettings.transactionAlerts ? styles.toggleOn : styles.toggleOff}></span>
+            <span style={securitySettings.transactionAlerts ? styles.toggleOn : styles.toggleOff}>
+              {securitySettings.transactionAlerts ? 'ON' : 'OFF'}
+            </span>
           </label>
         </div>
 
@@ -399,7 +419,9 @@ export default function Security() {
               onChange={(e) => updateSecuritySetting('fraudAlerts', e.target.checked)}
               style={styles.toggleInput}
             />
-            <span style={securitySettings.fraudAlerts ? styles.toggleOn : styles.toggleOff}></span>
+            <span style={securitySettings.fraudAlerts ? styles.toggleOn : styles.toggleOff}>
+              {securitySettings.fraudAlerts ? 'ON' : 'OFF'}
+            </span>
           </label>
         </div>
       </div>
@@ -433,6 +455,19 @@ export default function Security() {
           </button>
         </div>
       </div>
+
+      {/* Success Modal Overlay */}
+      {showSuccessModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.successModal}>
+            <div style={styles.checkmarkCircle}>
+              <div style={styles.checkmark}>✓</div>
+            </div>
+            <h2 style={styles.modalTitle}>Success!</h2>
+            <p style={styles.modalMessage}>{successMessage}</p>
+          </div>
+        </div>
+      )}
 
       {/* Password Change Modal */}
       {showPasswordModal && (
@@ -698,9 +733,16 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#cbd5e0',
-    transition: '0.4s',
-    borderRadius: '28px',
+    backgroundColor: '#e5e7eb',
+    transition: '0.3s',
+    borderRadius: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    padding: '0 8px',
+    fontSize: '10px',
+    fontWeight: '700',
+    color: '#6b7280',
     '::before': {
       position: 'absolute',
       content: '""',
@@ -709,8 +751,9 @@ const styles = {
       left: '4px',
       bottom: '4px',
       backgroundColor: 'white',
-      transition: '0.4s',
-      borderRadius: '50%'
+      transition: '0.3s',
+      borderRadius: '10px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
     }
   },
   toggleOn: {
@@ -721,8 +764,15 @@ const styles = {
     right: 0,
     bottom: 0,
     backgroundColor: '#10b981',
-    transition: '0.4s',
-    borderRadius: '28px',
+    transition: '0.3s',
+    borderRadius: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    padding: '0 8px',
+    fontSize: '10px',
+    fontWeight: '700',
+    color: 'white',
     '::before': {
       position: 'absolute',
       content: '""',
@@ -731,8 +781,9 @@ const styles = {
       left: '32px',
       bottom: '4px',
       backgroundColor: 'white',
-      transition: '0.4s',
-      borderRadius: '50%'
+      transition: '0.3s',
+      borderRadius: '10px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
     }
   },
   toggleDisabled: {
@@ -742,10 +793,17 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#9ca3af',
-    transition: '0.4s',
-    borderRadius: '28px',
+    backgroundColor: '#d1d5db',
+    transition: '0.3s',
+    borderRadius: '14px',
     opacity: 0.5,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    padding: '0 8px',
+    fontSize: '10px',
+    fontWeight: '700',
+    color: '#9ca3af',
     '::before': {
       position: 'absolute',
       content: '""',
@@ -754,9 +812,60 @@ const styles = {
       left: '4px',
       bottom: '4px',
       backgroundColor: 'white',
-      transition: '0.4s',
-      borderRadius: '50%'
+      transition: '0.3s',
+      borderRadius: '10px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
     }
+  },
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999,
+    padding: '20px'
+  },
+  successModal: {
+    backgroundColor: 'white',
+    borderRadius: '20px',
+    padding: '40px 30px',
+    maxWidth: '400px',
+    width: '100%',
+    textAlign: 'center',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    animation: 'slideIn 0.3s ease-out'
+  },
+  checkmarkCircle: {
+    width: '80px',
+    height: '80px',
+    borderRadius: '50%',
+    backgroundColor: '#d1fae5',
+    margin: '0 auto 20px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  checkmark: {
+    fontSize: '48px',
+    color: '#059669',
+    fontWeight: 'bold'
+  },
+  modalTitle: {
+    fontSize: '28px',
+    fontWeight: '700',
+    color: '#059669',
+    margin: '0 0 15px 0'
+  },
+  modalMessage: {
+    fontSize: '16px',
+    color: '#374151',
+    margin: '0',
+    lineHeight: '1.5'
   },
   select: {
     minWidth: '200px',
@@ -829,19 +938,6 @@ const styles = {
     fontSize: '13px',
     color: '#64748b',
     margin: 0
-  },
-  modalOverlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 9999,
-    padding: '20px'
   },
   modal: {
     backgroundColor: 'white',
@@ -955,3 +1051,21 @@ const styles = {
     minWidth: '160px'
   }
 };
+
+// Add keyframe animation for modal
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+if (typeof document !== 'undefined') {
+  document.head.appendChild(styleSheet);
+}
