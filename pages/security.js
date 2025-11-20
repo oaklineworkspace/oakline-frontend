@@ -294,21 +294,77 @@ export default function Security() {
 
         <div style={styles.settingRow}>
           <div style={styles.settingInfo}>
-            <h3 style={styles.settingLabel}>Login Notifications</h3>
+            <h3 style={styles.settingLabel}>Notify on All Logins</h3>
             <p style={styles.settingDescription}>
-              Configure when you want to receive notifications for logins
+              Receive notifications for every login to your account
             </p>
           </div>
-          <select
-            value={securitySettings.loginNotifications}
-            onChange={(e) => updateSecuritySetting('loginNotifications', e.target.value)}
-            style={styles.select}
-          >
-            <option value="all_logins">All Logins</option>
-            <option value="new_device">New Device Only</option>
-            <option value="new_login">New Login Location</option>
-            <option value="both">Both New Device & Location</option>
-          </select>
+          <label style={styles.toggleContainer}>
+            <input
+              type="checkbox"
+              checked={securitySettings.loginNotifications === 'all_logins'}
+              onChange={(e) => updateSecuritySetting('loginNotifications', e.target.checked ? 'all_logins' : 'off')}
+              style={styles.toggleInput}
+            />
+            <span style={securitySettings.loginNotifications === 'all_logins' ? styles.toggleOn : styles.toggleOff}></span>
+          </label>
+        </div>
+
+        <div style={styles.settingRow}>
+          <div style={styles.settingInfo}>
+            <h3 style={styles.settingLabel}>Notify on New Device Only</h3>
+            <p style={styles.settingDescription}>
+              Receive notifications only when logging in from a new device
+            </p>
+          </div>
+          <label style={styles.toggleContainer}>
+            <input
+              type="checkbox"
+              checked={securitySettings.loginNotifications === 'new_device'}
+              onChange={(e) => updateSecuritySetting('loginNotifications', e.target.checked ? 'new_device' : 'off')}
+              disabled={securitySettings.loginNotifications === 'all_logins'}
+              style={styles.toggleInput}
+            />
+            <span style={securitySettings.loginNotifications === 'new_device' ? styles.toggleOn : (securitySettings.loginNotifications === 'all_logins' ? styles.toggleDisabled : styles.toggleOff)}></span>
+          </label>
+        </div>
+
+        <div style={styles.settingRow}>
+          <div style={styles.settingInfo}>
+            <h3 style={styles.settingLabel}>Notify on New Location Only</h3>
+            <p style={styles.settingDescription}>
+              Receive notifications only when logging in from a new location
+            </p>
+          </div>
+          <label style={styles.toggleContainer}>
+            <input
+              type="checkbox"
+              checked={securitySettings.loginNotifications === 'new_login'}
+              onChange={(e) => updateSecuritySetting('loginNotifications', e.target.checked ? 'new_login' : 'off')}
+              disabled={securitySettings.loginNotifications === 'all_logins'}
+              style={styles.toggleInput}
+            />
+            <span style={securitySettings.loginNotifications === 'new_login' ? styles.toggleOn : (securitySettings.loginNotifications === 'all_logins' ? styles.toggleDisabled : styles.toggleOff)}></span>
+          </label>
+        </div>
+
+        <div style={styles.settingRow}>
+          <div style={styles.settingInfo}>
+            <h3 style={styles.settingLabel}>Notify on New Device & Location</h3>
+            <p style={styles.settingDescription}>
+              Receive notifications for both new devices and new locations
+            </p>
+          </div>
+          <label style={styles.toggleContainer}>
+            <input
+              type="checkbox"
+              checked={securitySettings.loginNotifications === 'both'}
+              onChange={(e) => updateSecuritySetting('loginNotifications', e.target.checked ? 'both' : 'off')}
+              disabled={securitySettings.loginNotifications === 'all_logins'}
+              style={styles.toggleInput}
+            />
+            <span style={securitySettings.loginNotifications === 'both' ? styles.toggleOn : (securitySettings.loginNotifications === 'all_logins' ? styles.toggleDisabled : styles.toggleOff)}></span>
+          </label>
         </div>
 
         <div style={styles.settingRow}>
@@ -348,19 +404,7 @@ export default function Security() {
         </div>
       </div>
 
-      {/* Advanced Login Settings Info Box */}
-      <div style={styles.infoBox}>
-        <span style={styles.infoIcon}>💡</span>
-        <div>
-          <h3 style={styles.infoTitle}>Advanced Login Settings</h3>
-          <p style={styles.infoText}>
-            The login notification settings above control when you receive alerts. 
-            For more detailed control over security codes for every login or new device, 
-            please visit the 'Configure' section which is typically part of a more advanced 
-            two-factor authentication setup or a dedicated security management panel.
-          </p>
-        </div>
-      </div>
+      
 
       {/* Quick Actions */}
       <div style={styles.card}>
@@ -685,6 +729,29 @@ const styles = {
       height: '20px',
       width: '20px',
       left: '32px',
+      bottom: '4px',
+      backgroundColor: 'white',
+      transition: '0.4s',
+      borderRadius: '50%'
+    }
+  },
+  toggleDisabled: {
+    position: 'absolute',
+    cursor: 'not-allowed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#9ca3af',
+    transition: '0.4s',
+    borderRadius: '28px',
+    opacity: 0.5,
+    '::before': {
+      position: 'absolute',
+      content: '""',
+      height: '20px',
+      width: '20px',
+      left: '4px',
       bottom: '4px',
       backgroundColor: 'white',
       transition: '0.4s',

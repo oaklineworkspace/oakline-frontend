@@ -98,6 +98,31 @@ export default function ResetTransactionPin() {
         throw new Error('Verification code must be 6 digits');
       }
 
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Session expired. Please log in again.');
+      }
+
+      // Verify the code exists and is valid
+      const { data: codeData, error: codeError } = await supabase
+        .from('pin_reset_codes')
+        .select('*')
+        .eq('email', email)
+        .eq('used', false)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (codeError || !codeData) {
+        throw new Error('Invalid or expired verification code');
+      }
+
+      // Check if code has expired (15 minutes)
+      const expiresAt = new Date(codeData.expires_at);
+      if (new Date() > expiresAt) {
+        throw new Error('Verification code has expired. Please request a new one.');
+      }
+
       setMessage('Code verified successfully! Please enter your new PIN.');
       setStep(3);
     } catch (error) {
