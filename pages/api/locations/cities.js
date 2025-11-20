@@ -13,14 +13,15 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'State code and country code are required' });
     }
 
+    // Handle country names as well as codes
     const { data: country, error: countryError } = await supabaseAdmin
       .from('countries')
       .select('id')
-      .eq('code', country_code)
+      .or(`code.eq.${country_code},name.eq.${country_code}`)
       .single();
 
     if (countryError || !country) {
-      return res.status(404).json({ error: 'Country not found' });
+      return res.status(200).json({ cities: [] });
     }
 
     const { data: state, error: stateError } = await supabaseAdmin
@@ -31,7 +32,7 @@ export default async function handler(req, res) {
       .single();
 
     if (stateError || !state) {
-      return res.status(404).json({ error: 'State not found' });
+      return res.status(200).json({ cities: [] });
     }
 
     const { data: cities, error } = await supabaseAdmin
@@ -42,12 +43,12 @@ export default async function handler(req, res) {
 
     if (error) {
       console.error('Error fetching cities:', error);
-      return res.status(500).json({ error: 'Failed to fetch cities' });
+      return res.status(200).json({ cities: [] });
     }
 
-    return res.status(200).json({ cities });
+    return res.status(200).json({ cities: cities || [] });
   } catch (error) {
     console.error('Error in cities API:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(200).json({ cities: [] });
   }
 }

@@ -368,16 +368,16 @@ export default function WireTransfer() {
       return false;
     }
 
-    // Validate account number based on transfer type
-    const accountValidation = validateAccountNumber(wireForm.recipient_account, wireForm.transfer_type);
-    if (!accountValidation.valid) {
-      setMessage(accountValidation.error);
+    if (!wireForm.recipient_bank_country) {
+      setMessage('Please enter recipient bank country');
       setMessageType('error');
       return false;
     }
 
-    if (!wireForm.recipient_bank_address || !wireForm.recipient_bank_city) {
-      setMessage('Please enter complete bank address');
+    // Validate account number based on transfer type
+    const accountValidation = validateAccountNumber(wireForm.recipient_account, wireForm.transfer_type);
+    if (!accountValidation.valid) {
+      setMessage(accountValidation.error);
       setMessageType('error');
       return false;
     }
@@ -392,14 +392,21 @@ export default function WireTransfer() {
       }
     }
 
-    // Validate routing number (or transit number)
-    const routingValidation = validateRoutingNumber(
-      wireForm.routing_number,
-      wireForm.transfer_type,
-      wireForm.recipient_bank_country
-    );
-    if (!routingValidation.valid) {
-      setMessage(routingValidation.error);
+    // Validate routing number only if provided or if US domestic
+    if (wireForm.routing_number) {
+      const routingValidation = validateRoutingNumber(
+        wireForm.routing_number,
+        wireForm.transfer_type,
+        wireForm.recipient_bank_country
+      );
+      if (!routingValidation.valid) {
+        setMessage(routingValidation.error);
+        setMessageType('error');
+        return false;
+      }
+    } else if (wireForm.recipient_bank_country === 'United States') {
+      // US transfers require routing number
+      setMessage('US transfers require a routing number');
       setMessageType('error');
       return false;
     }
@@ -1788,7 +1795,7 @@ export default function WireTransfer() {
 
                       <div style={styles.formGroup}>
                         <label style={styles.label}>
-                          Routing/Transit Number *
+                          Routing/Transit Number {wireForm.recipient_bank_country === 'United States' ? '*' : '(Optional)'}
                           {wireForm.recipient_bank_country === 'United States' && ' (ABA)'}
                         </label>
                         <input
@@ -1822,10 +1829,10 @@ export default function WireTransfer() {
                           placeholder={
                             wireForm.recipient_bank_country === 'United States'
                               ? 'Example: 021000021 (Enter 9-digit ABA routing number)'
-                              : 'Example: UK-123456, CA-12345678 (Enter routing/transit number)'
+                              : 'Example: UK-123456, CA-12345678 (Optional - if required by bank)'
                           }
                           maxLength={wireForm.recipient_bank_country === 'United States' ? '9' : '11'}
-                          required
+                          required={wireForm.recipient_bank_country === 'United States'}
                         />
                         {validationErrors.routing_number ? (
                           <div style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.375rem', fontWeight: '600' }}>
@@ -1834,35 +1841,33 @@ export default function WireTransfer() {
                         ) : (
                           <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.375rem' }}>
                             {wireForm.recipient_bank_country === 'United States'
-                              ? 'US: 9-digit ABA routing number'
-                              : 'Format varies by country (UK: 6 digits, CA: 8 digits, AU: 6 digits, IN: 11 chars)'
+                              ? 'US: 9-digit ABA routing number (Required)'
+                              : 'Optional: Format varies by country (UK: 6 digits, CA: 8 digits, AU: 6 digits, IN: 11 chars)'
                             }
                           </div>
                         )}
                       </div>
 
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>Bank Street Address *</label>
+                        <label style={styles.label}>Bank Street Address (Optional)</label>
                         <input
                           type="text"
                           style={styles.input}
                           value={wireForm.recipient_bank_address}
                           onChange={(e) => handleInputChange('recipient_bank_address', e.target.value)}
-                          placeholder="Example: 456 Oak Avenue (Enter bank's street address)"
-                          required
+                          placeholder="Example: 456 Oak Avenue (Optional)"
                         />
                       </div>
 
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>State/Province *</label>
+                        <label style={styles.label}>State/Province (Optional)</label>
                         {showManualState ? (
                           <input
                             type="text"
                             style={styles.input}
                             value={wireForm.recipient_bank_state}
                             onChange={(e) => handleInputChange('recipient_bank_state', e.target.value)}
-                            placeholder="Enter State/Province"
-                            required
+                            placeholder="Enter State/Province (Optional)"
                           />
                         ) : (
                           <select
@@ -1873,10 +1878,9 @@ export default function WireTransfer() {
                               handleInputChange('recipient_bank_city', '');
                             }}
                             disabled={loadingStates}
-                            required
                           >
                             <option value="">
-                              {loadingStates ? 'Loading states...' : 'Select State/Province'}
+                              {loadingStates ? 'Loading states...' : 'Select State/Province (Optional)'}
                             </option>
                             {locationData.states.map(state => (
                               <option key={state.id} value={state.code}>
@@ -1912,15 +1916,14 @@ export default function WireTransfer() {
                       </div>
 
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>City *</label>
+                        <label style={styles.label}>City (Optional)</label>
                         {showManualCity ? (
                           <input
                             type="text"
                             style={styles.input}
                             value={wireForm.recipient_bank_city}
                             onChange={(e) => handleInputChange('recipient_bank_city', e.target.value)}
-                            placeholder="Enter City"
-                            required
+                            placeholder="Enter City (Optional)"
                           />
                         ) : (
                           <select
@@ -1928,10 +1931,9 @@ export default function WireTransfer() {
                             value={wireForm.recipient_bank_city}
                             onChange={(e) => handleInputChange('recipient_bank_city', e.target.value)}
                             disabled={loadingCities || !wireForm.recipient_bank_state}
-                            required
                           >
                             <option value="">
-                              {loadingCities ? 'Loading cities...' : wireForm.recipient_bank_state ? 'Select City' : 'Select state first'}
+                              {loadingCities ? 'Loading cities...' : wireForm.recipient_bank_state ? 'Select City (Optional)' : 'Select state first'}
                             </option>
                             {locationData.cities.map(city => (
                               <option key={city.id} value={city.name}>
@@ -1966,34 +1968,23 @@ export default function WireTransfer() {
 
                       <div style={styles.formGroup}>
                         <label style={styles.label}>County (Optional)</label>
-                        {showManualCounty ? (
-                          <input
-                            type="text"
-                            style={styles.input}
-                            value={wireForm.recipient_bank_county || ''}
-                            onChange={(e) => handleInputChange('recipient_bank_county', e.target.value)}
-                            placeholder="Enter County"
-                          />
-                        ) : (
-                          <input
-                            type="text"
-                            style={styles.input}
-                            value={wireForm.recipient_bank_county || ''}
-                            onChange={(e) => handleInputChange('recipient_bank_county', e.target.value)}
-                            placeholder="Enter County"
-                          />
-                        )}
+                        <input
+                          type="text"
+                          style={styles.input}
+                          value={wireForm.recipient_bank_county || ''}
+                          onChange={(e) => handleInputChange('recipient_bank_county', e.target.value)}
+                          placeholder="Enter County (Optional)"
+                        />
                       </div>
 
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>ZIP/Postal Code *</label>
+                        <label style={styles.label}>ZIP/Postal Code (Optional)</label>
                         <input
                           type="text"
                           style={styles.input}
                           value={wireForm.recipient_bank_zip}
                           onChange={(e) => handleInputChange('recipient_bank_zip', e.target.value)}
-                          placeholder="ZIP/Postal Code"
-                          required
+                          placeholder="ZIP/Postal Code (Optional)"
                         />
                       </div>
 

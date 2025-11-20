@@ -13,14 +13,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Country code is required' });
     }
 
+    // Handle country names as well as codes
     const { data: country, error: countryError } = await supabaseAdmin
       .from('countries')
       .select('id')
-      .eq('code', country_code)
+      .or(`code.eq.${country_code},name.eq.${country_code}`)
       .single();
 
     if (countryError || !country) {
-      return res.status(404).json({ error: 'Country not found' });
+      // If country not found in database, return empty array (not an error for UI)
+      return res.status(200).json({ states: [] });
     }
 
     const { data: states, error } = await supabaseAdmin
@@ -31,12 +33,12 @@ export default async function handler(req, res) {
 
     if (error) {
       console.error('Error fetching states:', error);
-      return res.status(500).json({ error: 'Failed to fetch states' });
+      return res.status(200).json({ states: [] });
     }
 
-    return res.status(200).json({ states });
+    return res.status(200).json({ states: states || [] });
   } catch (error) {
     console.error('Error in states API:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(200).json({ states: [] });
   }
 }
