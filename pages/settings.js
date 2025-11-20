@@ -602,41 +602,40 @@ export default function Settings() {
           {/* Security Tab */}
           {activeTab === 'security' && (
             <div style={styles.tabContent}>
-              <div style={styles.sectionTitle}>🔒 Security Settings</div>
-              <div style={styles.sectionDesc}>Protect your account with advanced security features</div>
+              <div style={styles.sectionTitle}>🔒 Security & Login Settings</div>
+              <div style={styles.sectionDesc}>Manage login notifications and security preferences</div>
 
               <div style={styles.settingGroup}>
-                <h3 style={styles.groupTitle}>Authentication</h3>
+                <h3 style={styles.groupTitle}>Login Security</h3>
 
                 <div style={styles.settingItem}>
                   <div style={styles.settingInfo}>
-                    <div style={styles.settingName}>🔐 Two-Factor Authentication (2FA)</div>
-                    <div style={styles.settingDesc}>Add an extra layer of security with 2FA</div>
+                    <div style={styles.settingName}>📧 Login Notification Mode</div>
+                    <div style={styles.settingDesc}>Choose when to receive login notifications</div>
                   </div>
-                  <label style={styles.toggle}>
-                    <input
-                      type="checkbox"
-                      checked={settings.two_factor_enabled}
-                      onChange={() => handleToggle('two_factor_enabled')}
-                      style={styles.toggleInput}
-                    />
-                    <span style={settings.two_factor_enabled ? styles.toggleOn : styles.toggleOff}></span>
-                  </label>
+                  <select
+                    style={styles.select}
+                    value={settings.login_notification_mode || 'all'}
+                    onChange={(e) => handleSelectChange('login_notification_mode', e.target.value)}
+                  >
+                    <option value="all">Notify for every login (all devices)</option>
+                    <option value="new_device">Notify for new devices only</option>
+                  </select>
                 </div>
 
                 <div style={styles.settingItem}>
                   <div style={styles.settingInfo}>
-                    <div style={styles.settingName}>👆 Biometric Login</div>
-                    <div style={styles.settingDesc}>Use fingerprint or face recognition to log in</div>
+                    <div style={styles.settingName}>🔐 Require Login Confirmation Code</div>
+                    <div style={styles.settingDesc}>Require email verification code for all logins (recommended for maximum security)</div>
                   </div>
                   <label style={styles.toggle}>
                     <input
                       type="checkbox"
-                      checked={settings.biometric_login}
-                      onChange={() => handleToggle('biometric_login')}
+                      checked={settings.require_login_code}
+                      onChange={() => handleToggle('require_login_code')}
                       style={styles.toggleInput}
                     />
-                    <span style={settings.biometric_login ? styles.toggleOn : styles.toggleOff}></span>
+                    <span style={settings.require_login_code ? styles.toggleOn : styles.toggleOff}></span>
                   </label>
                 </div>
 
@@ -657,72 +656,46 @@ export default function Settings() {
                     <option value="240">4 hours</option>
                   </select>
                 </div>
+              </div>
 
-                <div style={styles.settingItem}>
-                  <div style={styles.settingInfo}>
-                    <div style={styles.settingName}>Login Notification Mode</div>
-                    <div style={styles.settingDesc}>Choose how you want to be notified about logins</div>
+              <div style={styles.infoBox}>
+                <div style={styles.infoIcon}>💡</div>
+                <div>
+                  <div style={styles.infoTitle}>Login Notification Modes Explained</div>
+                  <div style={styles.infoText}>
+                    <strong>Every login:</strong> You'll receive an email notification each time you log in, regardless of the device.<br/><br/>
+                    <strong>New devices only:</strong> You'll only be notified when logging in from a device we haven't seen before.<br/><br/>
+                    <strong>Login confirmation code:</strong> When enabled, you'll need to enter a code sent to your email for every login attempt, even from trusted devices.
                   </div>
-                  <select
-                    style={styles.select}
-                    value={settings.login_notification_mode || 'all'}
-                    onChange={(e) => handleSelectChange('login_notification_mode', e.target.value)}
-                  >
-                    <option value="all">All login attempts</option>
-                    <option value="new_device">New device logins only</option>
-                  </select>
-                </div>
-
-                <div style={styles.settingItem}>
-                  <div style={styles.settingInfo}>
-                    <div style={styles.settingName}>Require Login Confirmation Code</div>
-                    <div style={styles.settingDesc}>Require a code for all logins, even from recognized devices</div>
-                  </div>
-                  <label style={styles.toggle}>
-                    <input
-                      type="checkbox"
-                      checked={settings.require_login_code}
-                      onChange={() => handleToggle('require_login_code')}
-                      style={styles.toggleInput}
-                    />
-                    <span style={settings.require_login_code ? styles.toggleOn : styles.toggleOff}></span>
-                  </label>
                 </div>
               </div>
 
               <div style={styles.settingGroup}>
-                <h3 style={styles.groupTitle}>Account Management</h3>
+                <h3 style={styles.groupTitle}>Security Center</h3>
 
                 <div style={styles.actionItem}>
                   <div style={styles.actionInfo}>
-                    <div style={styles.actionName}>🔑 Change Password</div>
-                    <div style={styles.actionDesc}>Update your account password for better security</div>
+                    <div style={styles.actionName}>🔑 Password & Authentication</div>
+                    <div style={styles.actionDesc}>Change password, setup 2FA, and manage authentication methods</div>
                   </div>
                   <button 
                     style={styles.actionButton}
                     onClick={() => router.push('/security')}
                   >
-                    Change
+                    Go to Security
                   </button>
                 </div>
 
                 <div style={styles.actionItem}>
                   <div style={styles.actionInfo}>
-                    <div style={styles.actionName}>📱 Manage Devices</div>
-                    <div style={styles.actionDesc}>View and manage devices connected to your account</div>
+                    <div style={styles.actionName}>🔒 Transaction PIN</div>
+                    <div style={styles.actionDesc}>Setup or reset your PIN for sensitive transactions</div>
                   </div>
-                  <button style={styles.actionButton}>
-                    Manage
-                  </button>
-                </div>
-
-                <div style={styles.actionItem}>
-                  <div style={styles.actionInfo}>
-                    <div style={styles.actionName}>📜 Activity Log</div>
-                    <div style={styles.actionDesc}>Review recent account activity and login history</div>
-                  </div>
-                  <button style={styles.actionButton}>
-                    View Log
+                  <button 
+                    style={styles.actionButton}
+                    onClick={() => router.push('/setup-transaction-pin')}
+                  >
+                    Manage PIN
                   </button>
                 </div>
               </div>

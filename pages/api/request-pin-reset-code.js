@@ -1,4 +1,3 @@
-
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 import { sendEmail } from '../../lib/email';
 import bcrypt from 'bcryptjs';
@@ -83,23 +82,23 @@ export default async function handler(req, res) {
             <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 40px; text-align: center;">
               <h1 style="color: white; margin: 0; font-size: 28px;">🔐 Transaction PIN Reset</h1>
             </div>
-            
+
             <div style="padding: 40px;">
               <p style="font-size: 16px; color: #1e293b; margin-bottom: 20px;">
                 Dear ${userName},
               </p>
-              
+
               <p style="font-size: 15px; color: #475569; line-height: 1.6; margin-bottom: 25px;">
                 We received a request to reset your Transaction PIN. Use the code below to complete the reset:
               </p>
-              
+
               <div style="background: #f1f5f9; border: 2px solid #3b82f6; border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0;">
                 <p style="font-size: 14px; color: #64748b; margin: 0 0 10px 0; font-weight: 600;">VERIFICATION CODE</p>
                 <p style="font-size: 42px; font-weight: bold; color: #1e40af; margin: 0; letter-spacing: 8px; font-family: 'Courier New', monospace;">
                   ${verificationCode}
                 </p>
               </div>
-              
+
               <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 25px 0; border-radius: 5px;">
                 <p style="margin: 0; font-size: 14px; color: #92400e;">
                   <strong>⚠️ Important:</strong><br>
@@ -108,12 +107,12 @@ export default async function handler(req, res) {
                   • If you didn't request this, contact security@theoaklinebank.com
                 </p>
               </div>
-              
+
               <p style="font-size: 13px; color: #94a3b8; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
                 This is an automated security notification from Oakline Bank.
               </p>
             </div>
-            
+
             <div style="background: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
               <p style="font-size: 13px; color: #94a3b8; margin: 5px 0;">Oakline Bank - Your Financial Partner</p>
               <p style="font-size: 12px; color: #cbd5e1; margin: 5px 0;">Automated notification. Do not reply.</p>
@@ -125,19 +124,19 @@ export default async function handler(req, res) {
 
     const emailText = `
       Transaction PIN Reset - Oakline Bank
-      
+
       Dear ${userName},
-      
+
       We received a request to reset your Transaction PIN.
-      
+
       Your Verification Code: ${verificationCode}
-      
+
       This code will expire in 15 minutes.
-      
+
       IMPORTANT:
       - Never share this code with anyone
       - If you didn't request this reset, contact us at security@theoaklinebank.com
-      
+
       Oakline Bank - Your Financial Partner
     `;
 

@@ -284,7 +284,7 @@ export default function Security() {
           <div style={styles.settingInfo}>
             <h3 style={styles.settingLabel}>Login Notifications</h3>
             <p style={styles.settingDescription}>
-              Get notified when someone signs into your account
+              Enable or disable all login notifications
             </p>
           </div>
           <label style={styles.toggleContainer}>
@@ -302,7 +302,7 @@ export default function Security() {
           <div style={styles.settingInfo}>
             <h3 style={styles.settingLabel}>Transaction Alerts</h3>
             <p style={styles.settingDescription}>
-              Receive notifications for all transactions
+              Receive notifications for all account transactions
             </p>
           </div>
           <label style={styles.toggleContainer}>
@@ -332,6 +332,21 @@ export default function Security() {
             />
             <span style={securitySettings.fraudAlerts ? styles.toggleOn : styles.toggleOff}></span>
           </label>
+        </div>
+
+        <div style={{...styles.settingRow, border: 'none', paddingTop: '20px', marginTop: '20px', borderTop: '2px solid #e2e8f0'}}>
+          <div style={styles.settingInfo}>
+            <h3 style={styles.settingLabel}>⚙️ Advanced Login Settings</h3>
+            <p style={styles.settingDescription}>
+              Configure when to receive login notifications and manage login security codes
+            </p>
+          </div>
+          <button 
+            style={styles.actionButton}
+            onClick={() => router.push('/settings')}
+          >
+            Configure
+          </button>
         </div>
       </div>
 
