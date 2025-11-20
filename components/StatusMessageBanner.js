@@ -120,8 +120,8 @@ export default function StatusMessageBanner({ type, reason, contactEmail = 'supp
 const styles = {
   container: {
     width: '100%',
-    maxWidth: '100%',
-    margin: '0',
+    maxWidth: '800px',
+    margin: '0 auto',
     padding: '0',
   },
   banner: {

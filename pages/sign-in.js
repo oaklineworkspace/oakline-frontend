@@ -312,8 +312,11 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Login Card Container */}
-        <div style={styles.mainContent}>
+        {/* Login Card Container - Only show if not banned */}
+        <div style={{
+          ...styles.mainContent,
+          display: (error && typeof error === 'object' && error.type) ? 'none' : 'flex'
+        }}>
           <div style={styles.loginCard}>
             {/* Card Header */}
             <div style={styles.cardHeader}>
@@ -1028,7 +1031,11 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: '200px'
+    minHeight: '200px',
+    position: 'sticky',
+    top: 0,
+    zIndex: 101, // Ensure it's above the header
+    boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
   },
   securityWarningBanner: {
     background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
