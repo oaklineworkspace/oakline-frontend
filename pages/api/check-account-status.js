@@ -2,6 +2,57 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('Missing Supabase configuration');
+}
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    // Fetch complete profile information
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('status, status_reason, is_banned, ban_reason, ban_display_message, closure_reason, suspension_start_date, suspension_end_date')
+      .eq('id', userId)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      return res.status(500).json({ error: 'Failed to fetch profile' });
+    }
+
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    // Return comprehensive status information
+    return res.status(200).json({
+      status: profile.status,
+      is_banned: profile.is_banned,
+      reason: profile.status_reason || profile.ban_reason || profile.closure_reason || null,
+      display_message: profile.ban_display_message || null,
+      suspension_start_date: profile.suspension_start_date,
+      suspension_end_date: profile.suspension_end_date,
+      is_active: profile.status === 'active' && !profile.is_banned
+    });
+
+  } catch (error) {
+    console.error('Error in check-account-status:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export default async function handler(req, res) {

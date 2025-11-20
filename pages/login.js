@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -58,7 +57,7 @@ export default function LoginPage() {
 
     } catch (error) {
       setLoadingStage(0);
-      
+
       // Handle banned user
       if (error.message === 'ACCOUNT_BANNED') {
         setError({
@@ -69,7 +68,7 @@ export default function LoginPage() {
       } else {
         setError(error.message || 'Sign in failed. Please check your credentials.');
       }
-      
+
       setLoading(false);
     }
   };
