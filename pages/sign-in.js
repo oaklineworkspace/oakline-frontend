@@ -203,34 +203,6 @@ export default function LoginPage() {
 
   return (
     <>
-      {/* Full-Screen Banned User Message Overlay */}
-      {error && typeof error === 'object' && error.type && (
-        <div style={styles.verificationOverlay}>
-          <div style={styles.verificationContent}>
-            {/* Bank Logo */}
-            <div style={styles.logoContainerLoading}>
-              <img 
-                src="/images/Oakline_Bank_logo_design_c1b04ae0.png" 
-                alt="Oakline Bank" 
-                style={styles.logoImageLoading}
-              />
-            </div>
-
-            <div style={styles.loadingBrandInfo}>
-              <h1 style={styles.loadingBrandName}>Oakline Bank</h1>
-              <p style={styles.loadingBrandTagline}>Secure Banking Platform</p>
-            </div>
-
-            {/* Banned User Message */}
-            <StatusMessageBanner
-              type={error.type}
-              reason={error.reason}
-              contactEmail="support@theoaklinebank.com"
-            />
-          </div>
-        </div>
-      )}
-
       {/* Professional Full-Screen Loading Overlay */}
       {loading && (
         <div style={styles.verificationOverlay}>
@@ -337,6 +309,17 @@ export default function LoginPage() {
               <h2 style={styles.cardTitle}>Sign In</h2>
               <p style={styles.cardSubtitle}>Enter your credentials to access your account</p>
             </div>
+
+            {/* Banned User Message Banner - Shows above login form */}
+            {error && typeof error === 'object' && error.type && (
+              <div style={styles.bannedMessageContainer}>
+                <StatusMessageBanner
+                  type={error.type}
+                  reason={error.reason}
+                  contactEmail="support@theoaklinebank.com"
+                />
+              </div>
+            )}
 
             {/* Login Form */}
             <form onSubmit={handleSubmit} style={styles.form}>
@@ -582,6 +565,10 @@ const styles = {
     color: 'rgba(255, 255, 255, 0.8)',
     margin: 0,
     fontWeight: '500'
+  },
+  bannedMessageContainer: {
+    padding: '0 2rem 1rem',
+    background: 'white'
   },
   progressBarContainer: {
     margin: '2.5rem 0',

@@ -6,35 +6,35 @@ export default function StatusMessageBanner({ type, reason, contactEmail = 'supp
   const statusConfig = {
     banned: {
       emoji: '🚫',
-      title: 'Account Banned',
-      message: 'Your account has been permanently banned.',
-      gradient: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
-      bgColor: '#7f1d1d',
-      borderColor: '#dc2626'
+      title: 'Account Restricted',
+      message: 'Your account access has been restricted.',
+      gradient: 'linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%)',
+      bgColor: '#991b1b',
+      borderColor: '#b91c1c'
     },
     suspended: {
       emoji: '⏸️',
       title: 'Account Suspended',
       message: 'Your account has been temporarily suspended.',
-      gradient: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-      bgColor: '#7c2d12',
-      borderColor: '#ea580c'
+      gradient: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
+      bgColor: '#92400e',
+      borderColor: '#d97706'
     },
     locked: {
       emoji: '🔒',
       title: 'Account Locked',
       message: 'Your account is locked for security reasons.',
-      gradient: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
+      gradient: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)',
       bgColor: '#1e3a8a',
-      borderColor: '#2563eb'
+      borderColor: '#1e40af'
     },
     closed: {
       emoji: '❌',
       title: 'Account Closed',
       message: 'This account has been closed and cannot be accessed.',
-      gradient: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
+      gradient: 'linear-gradient(135deg, #4b5563 0%, #374151 100%)',
       bgColor: '#374151',
-      borderColor: '#6b7280'
+      borderColor: '#4b5563'
     }
   };
 
@@ -120,17 +120,16 @@ export default function StatusMessageBanner({ type, reason, contactEmail = 'supp
 const styles = {
   container: {
     width: '100%',
-    maxWidth: '600px',
-    margin: '0 auto 2rem',
-    padding: '0 1rem',
+    maxWidth: '100%',
+    margin: '0',
+    padding: '0',
   },
   banner: {
-    borderRadius: '16px',
+    borderRadius: '12px',
     border: '2px solid',
-    padding: '2rem',
-    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
-    backdropFilter: 'blur(10px)',
-    animation: 'slideDown 0.5s ease-out',
+    padding: '1.5rem',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    animation: 'slideDown 0.3s ease-out',
   },
   iconSection: {
     display: 'flex',
@@ -138,8 +137,8 @@ const styles = {
     marginBottom: '1.5rem',
   },
   iconCircle: {
-    width: '80px',
-    height: '80px',
+    width: '60px',
+    height: '60px',
     borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
@@ -147,21 +146,23 @@ const styles = {
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
   },
   emoji: {
-    fontSize: '40px',
+    fontSize: '32px',
   },
   contentSection: {
     textAlign: 'center',
   },
   title: {
-    fontSize: '1.75rem',
+    fontSize: '1.5rem',
     fontWeight: '700',
     color: '#ffffff',
     marginBottom: '0.5rem',
+    margin: '0 0 0.5rem 0',
   },
   message: {
-    fontSize: '1.1rem',
+    fontSize: '1rem',
     color: '#f3f4f6',
-    marginBottom: '1.5rem',
+    marginBottom: '1.25rem',
+    margin: '0 0 1.25rem 0',
     lineHeight: '1.6',
   },
   reasonBox: {
