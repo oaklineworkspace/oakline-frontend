@@ -259,6 +259,28 @@ export default function InternalTransfer() {
     }).format(amount || 0);
   };
 
+  const formatCompactCurrency = (amount) => {
+    const value = amount || 0;
+    if (Math.abs(value) >= 1000000000) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        notation: 'compact',
+        compactDisplay: 'short',
+        maximumFractionDigits: 2
+      }).format(value);
+    } else if (Math.abs(value) >= 1000000) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        notation: 'compact',
+        compactDisplay: 'short',
+        maximumFractionDigits: 1
+      }).format(value);
+    }
+    return formatCurrency(value);
+  };
+
   const verifyRecipient = async () => {
     if (!recipientAccountNumber || recipientAccountNumber.length < 10) {
       setMessage('Please enter a valid account number (at least 10 digits)');
@@ -578,7 +600,10 @@ export default function InternalTransfer() {
       backgroundColor: 'white',
       transition: 'all 0.3s',
       boxSizing: 'border-box',
-      outline: 'none'
+      outline: 'none',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap'
     },
     input: {
       width: '100%',
@@ -1058,7 +1083,7 @@ export default function InternalTransfer() {
                 >
                   {accounts.map(account => (
                     <option key={account.id} value={account.id}>
-                      {getAccountTypeIcon(account.account_type)} {account.account_type?.replace('_', ' ')?.toUpperCase()} - ****{account.account_number?.slice(-4)} - {formatCurrency(account.balance || 0)}
+                      {getAccountTypeIcon(account.account_type)} {account.account_type?.replace('_', ' ')?.toUpperCase()} - ****{account.account_number?.slice(-4)} - {formatCompactCurrency(account.balance || 0)}
                     </option>
                   ))}
                 </select>

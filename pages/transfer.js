@@ -324,6 +324,28 @@ export default function Transfer() {
     }).format(amount || 0);
   };
 
+  const formatCompactCurrency = (amount) => {
+    const value = amount || 0;
+    if (Math.abs(value) >= 1000000000) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        notation: 'compact',
+        compactDisplay: 'short',
+        maximumFractionDigits: 2
+      }).format(value);
+    } else if (Math.abs(value) >= 1000000) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        notation: 'compact',
+        compactDisplay: 'short',
+        maximumFractionDigits: 1
+      }).format(value);
+    }
+    return formatCurrency(value);
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString('en-US', {
       year: 'numeric',
@@ -731,7 +753,10 @@ export default function Transfer() {
       borderRadius: '12px',
       fontSize: '0.875rem',
       backgroundColor: 'white',
-      transition: 'border-color 0.3s'
+      transition: 'border-color 0.3s',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap'
     },
     input: {
       padding: '0.75rem',

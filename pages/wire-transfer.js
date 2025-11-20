@@ -135,6 +135,28 @@ export default function WireTransfer() {
     }).format(amount || 0);
   };
 
+  const formatCompactCurrency = (amount) => {
+    const value = amount || 0;
+    if (Math.abs(value) >= 1000000000) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        notation: 'compact',
+        compactDisplay: 'short',
+        maximumFractionDigits: 2
+      }).format(value);
+    } else if (Math.abs(value) >= 1000000) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        notation: 'compact',
+        compactDisplay: 'short',
+        maximumFractionDigits: 1
+      }).format(value);
+    }
+    return formatCurrency(value);
+  };
+
   const validateStep1 = () => {
     if (!wireForm.from_account_id) {
       setMessage('Please select a source account');
@@ -676,7 +698,10 @@ export default function WireTransfer() {
       fontSize: '0.875rem',
       backgroundColor: 'white',
       transition: 'border-color 0.3s',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap'
     },
     checkboxContainer: {
       display: 'flex',
