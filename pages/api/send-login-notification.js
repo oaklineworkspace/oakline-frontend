@@ -122,8 +122,8 @@ export default async function handler(req, res) {
         <div style="background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
           <p style="font-size: 16px; margin-bottom: 10px; font-weight: 500;">Dear ${userName},</p>
           
-          <p style="font-size: 15px; color: #475569; margin-bottom: 25px; line-height: 1.7;">
-            We are writing to inform you that a successful login to your Oakline Bank account has been detected. As part of our commitment to maintaining the highest standards of account security, we have recorded the following access details for your review:
+          <p style="font-size: 15px; color: #475569; margin-bottom: 20px; line-height: 1.6;">
+            A successful login to your Oakline Bank account was detected. Please review the access details below:
           </p>
           
           <div style="background: #f8fafc; border: 2px solid #3b82f6; border-radius: 10px; padding: 25px; margin: 25px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
@@ -192,7 +192,7 @@ export default async function handler(req, res) {
       
       Dear ${userName},
       
-      We are writing to inform you that a successful login to your Oakline Bank account has been detected. As part of our commitment to maintaining the highest standards of account security, we have recorded the following access details for your review:
+      A successful login to your Oakline Bank account was detected. Please review the access details below:
       
       ACCESS DETAILS:
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
