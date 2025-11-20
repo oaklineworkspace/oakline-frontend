@@ -1529,7 +1529,7 @@ export default function WireTransfer() {
                             style={styles.input}
                             value={wireForm.recipient_first_name}
                             onChange={(e) => handleInputChange('recipient_first_name', e.target.value)}
-                            placeholder="Michael"
+                            placeholder="Example: Michael"
                             required
                           />
                         </div>
@@ -1552,7 +1552,7 @@ export default function WireTransfer() {
                             style={styles.input}
                             value={wireForm.recipient_last_name}
                             onChange={(e) => handleInputChange('recipient_last_name', e.target.value)}
-                            placeholder="Rodriguez"
+                            placeholder="Example: Rodriguez"
                             required
                           />
                         </div>
@@ -1585,7 +1585,7 @@ export default function WireTransfer() {
                           style={styles.input}
                           value={wireForm.recipient_bank}
                           onChange={(e) => handleInputChange('recipient_bank', e.target.value)}
-                          placeholder="e.g., Wells Fargo Bank"
+                          placeholder="Example: Wells Fargo Bank (Enter your bank's name)"
                           required
                         />
                       </div>
@@ -1593,44 +1593,114 @@ export default function WireTransfer() {
                       {wireForm.transfer_type === 'international' && (
                         <div style={styles.formGroup}>
                           <label style={styles.label}>Recipient Bank Country *</label>
-                          <select
-                            style={styles.select}
-                            value={wireForm.recipient_bank_country}
-                            onChange={(e) => {
-                              const newCountry = e.target.value;
-                              handleInputChange('recipient_bank_country', newCountry);
-                              // If switching to US, reset transfer type and clear routing/swift if necessary
-                              if (newCountry === 'United States') {
-                                handleInputChange('transfer_type', 'domestic');
-                                // Clear potentially conflicting international fields
-                                handleInputChange('swift_code', '');
-                                // Ensure routing number is validated as US ABA
-                                if (wireForm.routing_number) {
-                                  const validation = validateRoutingNumber(wireForm.routing_number, 'domestic', 'United States');
-                                  setValidationErrors(prev => ({ ...prev, routing_number: validation.valid ? '' : validation.error }));
+                          {wireForm.recipient_bank_country === 'Other' ? (
+                            <input
+                              type="text"
+                              style={styles.input}
+                              value={wireForm.recipient_bank_country === 'Other' ? '' : wireForm.recipient_bank_country}
+                              onChange={(e) => handleInputChange('recipient_bank_country', e.target.value)}
+                              placeholder="Enter country name"
+                              required
+                            />
+                          ) : (
+                            <select
+                              style={styles.select}
+                              value={wireForm.recipient_bank_country}
+                              onChange={(e) => {
+                                const newCountry = e.target.value;
+                                handleInputChange('recipient_bank_country', newCountry);
+                                // If switching to US, reset transfer type and clear routing/swift if necessary
+                                if (newCountry === 'United States') {
+                                  handleInputChange('transfer_type', 'domestic');
+                                  // Clear potentially conflicting international fields
+                                  handleInputChange('swift_code', '');
+                                  // Ensure routing number is validated as US ABA
+                                  if (wireForm.routing_number) {
+                                    const validation = validateRoutingNumber(wireForm.routing_number, 'domestic', 'United States');
+                                    setValidationErrors(prev => ({ ...prev, routing_number: validation.valid ? '' : validation.error }));
+                                  }
+                                } else if (newCountry !== 'Other') {
+                                  // If switching away from US, ensure transfer type is international and clear US-specific fields
+                                  handleInputChange('transfer_type', 'international');
+                                  handleInputChange('routing_number', ''); // Clear ABA number
+                                  // If SWIFT is needed, prompt for it (handled by validation below)
                                 }
-                              } else {
-                                // If switching away from US, ensure transfer type is international and clear US-specific fields
-                                handleInputChange('transfer_type', 'international');
-                                handleInputChange('routing_number', ''); // Clear ABA number
-                                // If SWIFT is needed, prompt for it (handled by validation below)
-                              }
-                              // Recalculate total as fees might change
-                              calculateTotal();
-                            }}
-                            required
-                          >
-                            <option value="Canada">🇨🇦 Canada</option>
-                            <option value="United Kingdom">🇬🇧 United Kingdom</option>
-                            <option value="Australia">🇦🇺 Australia</option>
-                            <option value="Germany">🇩🇪 Germany</option>
-                            <option value="France">🇫🇷 France</option>
-                            <option value="India">🇮🇳 India</option>
-                            <option value="Japan">🇯🇵 Japan</option>
-                            <option value="Singapore">🇸🇬 Singapore</option>
-                            <option value="Mexico">🇲🇽 Mexico</option>
-                            <option value="Other">Other</option>
-                          </select>
+                                // Recalculate total as fees might change
+                                calculateTotal();
+                              }}
+                              required
+                            >
+                              <option value="Canada">🇨🇦 Canada</option>
+                              <option value="United Kingdom">🇬🇧 United Kingdom</option>
+                              <option value="Australia">🇦🇺 Australia</option>
+                              <option value="Germany">🇩🇪 Germany</option>
+                              <option value="France">🇫🇷 France</option>
+                              <option value="Italy">🇮🇹 Italy</option>
+                              <option value="Spain">🇪🇸 Spain</option>
+                              <option value="Netherlands">🇳🇱 Netherlands</option>
+                              <option value="Switzerland">🇨🇭 Switzerland</option>
+                              <option value="Belgium">🇧🇪 Belgium</option>
+                              <option value="Sweden">🇸🇪 Sweden</option>
+                              <option value="Norway">🇳🇴 Norway</option>
+                              <option value="Denmark">🇩🇰 Denmark</option>
+                              <option value="India">🇮🇳 India</option>
+                              <option value="China">🇨🇳 China</option>
+                              <option value="Japan">🇯🇵 Japan</option>
+                              <option value="South Korea">🇰🇷 South Korea</option>
+                              <option value="Singapore">🇸🇬 Singapore</option>
+                              <option value="Hong Kong">🇭🇰 Hong Kong</option>
+                              <option value="Malaysia">🇲🇾 Malaysia</option>
+                              <option value="Thailand">🇹🇭 Thailand</option>
+                              <option value="Philippines">🇵🇭 Philippines</option>
+                              <option value="Indonesia">🇮🇩 Indonesia</option>
+                              <option value="Vietnam">🇻🇳 Vietnam</option>
+                              <option value="United Arab Emirates">🇦🇪 United Arab Emirates</option>
+                              <option value="Saudi Arabia">🇸🇦 Saudi Arabia</option>
+                              <option value="Israel">🇮🇱 Israel</option>
+                              <option value="Turkey">🇹🇷 Turkey</option>
+                              <option value="South Africa">🇿🇦 South Africa</option>
+                              <option value="Nigeria">🇳🇬 Nigeria</option>
+                              <option value="Kenya">🇰🇪 Kenya</option>
+                              <option value="Egypt">🇪🇬 Egypt</option>
+                              <option value="Mexico">🇲🇽 Mexico</option>
+                              <option value="Brazil">🇧🇷 Brazil</option>
+                              <option value="Argentina">🇦🇷 Argentina</option>
+                              <option value="Chile">🇨🇱 Chile</option>
+                              <option value="Colombia">🇨🇴 Colombia</option>
+                              <option value="Peru">🇵🇪 Peru</option>
+                              <option value="New Zealand">🇳🇿 New Zealand</option>
+                              <option value="Ireland">🇮🇪 Ireland</option>
+                              <option value="Portugal">🇵🇹 Portugal</option>
+                              <option value="Poland">🇵🇱 Poland</option>
+                              <option value="Czech Republic">🇨🇿 Czech Republic</option>
+                              <option value="Austria">🇦🇹 Austria</option>
+                              <option value="Greece">🇬🇷 Greece</option>
+                              <option value="Russia">🇷🇺 Russia</option>
+                              <option value="Ukraine">🇺🇦 Ukraine</option>
+                              <option value="Other">🌍 Other (Enter Manually)</option>
+                            </select>
+                          )}
+                          {wireForm.recipient_bank_country !== 'Other' && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleInputChange('recipient_bank_country', 'Other');
+                              }}
+                              style={{
+                                marginTop: '0.5rem',
+                                padding: '0.5rem 1rem',
+                                backgroundColor: '#f3f4f6',
+                                border: '1px solid #d1d5db',
+                                borderRadius: '6px',
+                                fontSize: '0.875rem',
+                                cursor: 'pointer',
+                                color: '#374151',
+                                fontWeight: '500'
+                              }}
+                            >
+                              ✏️ Enter country manually
+                            </button>
+                          )}
                         </div>
                       )}
 
@@ -1658,7 +1728,7 @@ export default function WireTransfer() {
                               }
                             }
                           }}
-                          placeholder={wireForm.recipient_bank_country === 'United States' ? '4-17 digits' : 'IBAN or Account Number (8-34 characters)'}
+                          placeholder={wireForm.recipient_bank_country === 'United States' ? 'Example: 1234567890 (Enter 4-17 digit account number)' : 'Example: GB29NWBK60161331926819 (Enter IBAN or account number)'}
                           maxLength={wireForm.recipient_bank_country === 'United States' ? '17' : '34'}
                           required
                         />
@@ -1700,7 +1770,7 @@ export default function WireTransfer() {
                                 }
                               }
                             }}
-                            placeholder="e.g., CHASUS33XXX (8 or 11 characters)"
+                            placeholder="Example: CHASUS33XXX (Enter bank's SWIFT/BIC code)"
                             maxLength="11"
                             required
                           />
@@ -1751,8 +1821,8 @@ export default function WireTransfer() {
                           }}
                           placeholder={
                             wireForm.recipient_bank_country === 'United States'
-                              ? '9-digit ABA routing (e.g., 021000021)'
-                              : 'Routing/transit number (e.g., UK: 123456, CA: 12345678)'
+                              ? 'Example: 021000021 (Enter 9-digit ABA routing number)'
+                              : 'Example: UK-123456, CA-12345678 (Enter routing/transit number)'
                           }
                           maxLength={wireForm.recipient_bank_country === 'United States' ? '9' : '11'}
                           required
@@ -1778,7 +1848,7 @@ export default function WireTransfer() {
                           style={styles.input}
                           value={wireForm.recipient_bank_address}
                           onChange={(e) => handleInputChange('recipient_bank_address', e.target.value)}
-                          placeholder="456 Oak Avenue"
+                          placeholder="Example: 456 Oak Avenue (Enter bank's street address)"
                           required
                         />
                       </div>
