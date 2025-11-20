@@ -3,6 +3,9 @@ import { sendEmail } from '../../lib/email';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
+import { supabaseAdmin } from '../../lib/supabaseAdmin';
+import { sendEmail } from '../../lib/email';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -22,6 +25,114 @@ export default async function handler(req, res) {
     }
 
     const { email } = req.body;
+
+    // Generate 6-digit verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+
+    // Store verification code in database
+    const { error: insertError } = await supabaseAdmin
+      .from('pin_reset_codes')
+      .insert({
+        user_id: user.id,
+        code: verificationCode,
+        expires_at: expiresAt.toISOString(),
+        created_at: new Date().toISOString()
+      });
+
+    if (insertError) {
+      console.error('Error storing verification code:', insertError);
+      return res.status(500).json({ error: 'Failed to generate verification code' });
+    }
+
+    // Get user profile for personalized email
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('first_name, last_name')
+      .eq('id', user.id)
+      .single();
+
+    const userName = profile?.first_name 
+      ? `${profile.first_name} ${profile.last_name || ''}`.trim() 
+      : 'Valued Customer';
+
+    // Send verification code via email
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8fafc;">
+          <div style="max-width: 600px; margin: 40px auto; background: white; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 40px; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 28px;">Transaction PIN Reset</h1>
+            </div>
+            
+            <div style="padding: 40px;">
+              <p style="font-size: 16px; color: #1e293b; margin-bottom: 20px;">
+                Dear ${userName},
+              </p>
+              
+              <p style="font-size: 15px; color: #475569; line-height: 1.6; margin-bottom: 25px;">
+                You requested to reset your Transaction PIN. Use the verification code below to proceed with your PIN reset:
+              </p>
+              
+              <div style="background: #f1f5f9; border: 2px solid #3b82f6; border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0;">
+                <p style="font-size: 14px; color: #64748b; margin: 0 0 10px 0; font-weight: 600;">VERIFICATION CODE</p>
+                <p style="font-size: 42px; font-weight: bold; color: #1e40af; margin: 0; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+                  ${verificationCode}
+                </p>
+              </div>
+              
+              <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 25px 0; border-radius: 5px;">
+                <p style="margin: 0; font-size: 14px; color: #92400e;">
+                  <strong>⚠️ Important:</strong> This code will expire in 15 minutes. If you didn't request this PIN reset, please contact our security team immediately.
+                </p>
+              </div>
+              
+              <p style="font-size: 13px; color: #94a3b8; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                For security reasons, never share this code with anyone, including Oakline Bank staff.
+              </p>
+            </div>
+            
+            <div style="background: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+              <p style="font-size: 13px; color: #94a3b8; margin: 5px 0;">Oakline Bank - Your Financial Partner</p>
+              <p style="font-size: 12px; color: #cbd5e1; margin: 5px 0;">This is an automated security notification.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const emailText = `
+      Transaction PIN Reset - Oakline Bank
+      
+      Dear ${userName},
+      
+      You requested to reset your Transaction PIN. Use the verification code below:
+      
+      VERIFICATION CODE: ${verificationCode}
+      
+      This code will expire in 15 minutes.
+      
+      If you didn't request this PIN reset, please contact our security team immediately.
+      
+      Oakline Bank - Your Financial Partner
+    `;
+
+    await sendEmail({
+      to: email,
+      subject: 'Transaction PIN Reset Code - Oakline Bank',
+      html: emailHtml,
+      text: emailText
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Verification code sent successfully'
+    });
 
     if (!email || email !== user.email) {
       return res.status(400).json({ error: 'Invalid email address' });

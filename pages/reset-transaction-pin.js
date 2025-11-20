@@ -224,6 +224,15 @@ export default function ResetTransactionPin() {
             <p style={styles.modalSubtext}>
               A confirmation email has been sent to your registered email address.
             </p>
+            <div style={styles.modalFooter}>
+              <button 
+                onClick={() => router.push('/security')}
+                style={styles.goBackButton}
+              >
+                Go to Security Settings
+              </button>
+              <p style={styles.autoRedirectText}>Auto-redirecting in a few seconds...</p>
+            </div>
           </div>
         </div>
       )}
@@ -583,6 +592,35 @@ const styles = {
     color: '#64748b',
     margin: '0 0 25px 0',
     lineHeight: '1.5'
+  },
+  modalFooter: {
+    borderTop: '1px solid #e2e8f0',
+    paddingTop: '25px',
+    marginTop: '10px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    alignItems: 'center'
+  },
+  goBackButton: {
+    backgroundColor: '#3b82f6',
+    color: 'white',
+    border: 'none',
+    padding: '14px 32px',
+    borderRadius: '10px',
+    fontSize: '16px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)',
+    transition: 'all 0.3s ease',
+    width: '100%',
+    maxWidth: '280px'
+  },
+  autoRedirectText: {
+    fontSize: '13px',
+    color: '#94a3b8',
+    fontStyle: 'italic',
+    margin: 0
   },
   errorModal: {
     backgroundColor: 'white',
