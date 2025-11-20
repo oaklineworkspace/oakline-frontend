@@ -104,73 +104,60 @@ export default async function handler(req, res) {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
       </head>
-      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">🔐 New Login Detected</h1>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.5; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 25px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">🔐 New Login Detected</h1>
         </div>
         
-        <div style="background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 10px 10px;">
-          <p style="font-size: 16px; margin-bottom: 20px;">Dear ${userName},</p>
+        <div style="background: #ffffff; padding: 25px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 10px 10px;">
+          <p style="font-size: 15px; margin-bottom: 15px;">Dear ${userName},</p>
           
-          <p style="font-size: 15px; color: #64748b; margin-bottom: 25px;">
-            We're writing to inform you that your Oakline Bank account was accessed. For your security, we wanted to make you aware of this login activity.
+          <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;">
+            Your Oakline Bank account was accessed. Here are the details:
           </p>
           
-          <div style="background: #f8fafc; border: 2px solid #3b82f6; border-radius: 10px; padding: 25px; margin: 25px 0;">
-            <h3 style="margin-top: 0; color: #1e40af; font-size: 18px;">Login Details</h3>
+          <div style="background: #f8fafc; border: 2px solid #3b82f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h3 style="margin: 0 0 12px 0; color: #1e40af; font-size: 16px;">Login Details</h3>
             
-            <table style="width: 100%; font-size: 14px;">
+            <table style="width: 100%; font-size: 13px;">
               <tr>
-                <td style="padding: 8px 0; color: #64748b; font-weight: 600;">📅 Date & Time:</td>
-                <td style="padding: 8px 0; color: #1e293b;">${formattedDate}</td>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">📅 Date & Time:</td>
+                <td style="padding: 6px 0; color: #1e293b;">${formattedDate}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; color: #64748b; font-weight: 600;">📍 Location:</td>
-                <td style="padding: 8px 0; color: #1e293b;">${actualCity && actualCity !== 'Unknown' ? `${actualCity}, ${actualCountry}` : 'Location not available'}</td>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">📍 Location:</td>
+                <td style="padding: 6px 0; color: #1e293b;">${actualCity && actualCity !== 'Unknown' ? `${actualCity}, ${actualCountry}` : 'Location not available'}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; color: #64748b; font-weight: 600;">💻 Device:</td>
-                <td style="padding: 8px 0; color: #1e293b;">${device_type || 'Unknown Device'}</td>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">💻 Device:</td>
+                <td style="padding: 6px 0; color: #1e293b;">${device_type || 'Unknown'}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; color: #64748b; font-weight: 600;">🌐 Browser:</td>
-                <td style="padding: 8px 0; color: #1e293b;">${browser || 'Unknown Browser'}</td>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">🌐 Browser:</td>
+                <td style="padding: 6px 0; color: #1e293b;">${browser || 'Unknown'}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; color: #64748b; font-weight: 600;">🖥️ Operating System:</td>
-                <td style="padding: 8px 0; color: #1e293b;">${os || 'Unknown OS'}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #64748b; font-weight: 600;">🔢 IP Address:</td>
-                <td style="padding: 8px 0; color: #1e293b;">${actualIp || 'Not available'}</td>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">🔢 IP:</td>
+                <td style="padding: 6px 0; color: #1e293b;">${actualIp || 'Not available'}</td>
               </tr>
             </table>
           </div>
           
-          <div style="background: #dcfce7; border-left: 4px solid #16a34a; padding: 15px; margin: 25px 0; border-radius: 5px;">
-            <p style="margin: 0; font-size: 14px; color: #166534;">
-              <strong>✅ Was this you?</strong><br>
-              If you recognize this activity, no further action is needed. Your account is secure.
+          <div style="background: #dcfce7; border-left: 4px solid #16a34a; padding: 12px; margin: 15px 0; border-radius: 4px;">
+            <p style="margin: 0; font-size: 13px; color: #166534;">
+              <strong>✅ Recognize this?</strong> No action needed.
             </p>
           </div>
           
-          <div style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 15px; margin: 25px 0; border-radius: 5px;">
-            <p style="margin: 0; font-size: 14px; color: #991b1b;">
-              <strong>⚠️ Don't recognize this login?</strong><br>
-              If you did not authorize this login, please take immediate action:<br>
-              • Change your password immediately<br>
-              • Review your recent account activity<br>
-              • Contact our security team: security@theoaklinebank.com
+          <div style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 12px; margin: 15px 0; border-radius: 4px;">
+            <p style="margin: 0; font-size: 13px; color: #991b1b;">
+              <strong>⚠️ Don't recognize this?</strong> Change your password and contact security@theoaklinebank.com immediately.
             </p>
           </div>
           
-          <p style="font-size: 13px; color: #94a3b8; margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
-            You can manage your security notification settings in your account's Security Settings page.
-          </p>
-          
-          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #e2e8f0;">
-            <p style="font-size: 13px; color: #94a3b8; margin: 5px 0;">Oakline Bank - Your Financial Partner</p>
-            <p style="font-size: 12px; color: #cbd5e1; margin: 5px 0;">This is an automated security notification. Please do not reply to this email.</p>
+          <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+            <p style="font-size: 12px; color: #94a3b8; margin: 3px 0;">Oakline Bank - Your Financial Partner</p>
+            <p style="font-size: 11px; color: #cbd5e1; margin: 3px 0;">Automated security notification. Do not reply.</p>
           </div>
         </div>
       </body>
@@ -182,29 +169,21 @@ export default async function handler(req, res) {
       
       Dear ${userName},
       
-      We're writing to inform you that your Oakline Bank account was accessed.
+      Your Oakline Bank account was accessed. Here are the details:
       
       LOGIN DETAILS:
       Date & Time: ${formattedDate}
       Location: ${actualCity && actualCity !== 'Unknown' ? `${actualCity}, ${actualCountry}` : 'Location not available'}
-      Device: ${device_type || 'Unknown Device'}
-      Browser: ${browser || 'Unknown Browser'}
-      Operating System: ${os || 'Unknown OS'}
+      Device: ${device_type || 'Unknown'}
+      Browser: ${browser || 'Unknown'}
       IP Address: ${actualIp || 'Not available'}
       
-      WAS THIS YOU?
-      If you recognize this activity, no further action is needed. Your account is secure.
+      ✅ RECOGNIZE THIS? No action needed.
       
-      DON'T RECOGNIZE THIS LOGIN?
-      If you did not authorize this login, please take immediate action:
-      - Change your password immediately
-      - Review your recent account activity
-      - Contact our security team: security@theoaklinebank.com
-      
-      You can manage your security notification settings in your account's Security Settings page.
+      ⚠️ DON'T RECOGNIZE THIS? Change your password and contact security@theoaklinebank.com immediately.
       
       Oakline Bank - Your Financial Partner
-      This is an automated security notification.
+      Automated security notification. Do not reply.
     `;
 
     try {
