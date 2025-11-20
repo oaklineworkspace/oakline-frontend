@@ -861,8 +861,8 @@ const styles = {
     fontSize: '1.2rem'
   },
   restrictionBanner: {
-    backgroundColor: '#3b82f6',
-    border: '2px solid #1e40af',
+    backgroundColor: '#ffffff',
+    border: '2px solid #3b82f6',
     borderRadius: '12px',
     padding: '1.25rem',
     marginBottom: '1rem'
@@ -873,7 +873,7 @@ const styles = {
     gap: '0.75rem',
     marginBottom: '1rem',
     paddingBottom: '1rem',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.3)'
+    borderBottom: '1px solid rgba(59, 130, 246, 0.2)'
   },
   restrictionIcon: {
     fontSize: '1.5rem'
@@ -881,24 +881,24 @@ const styles = {
   restrictionTitle: {
     fontSize: '1.1rem',
     fontWeight: '700',
-    color: '#ffffff'
+    color: '#1e40af'
   },
   restrictionReason: {
     fontSize: '0.95rem',
-    color: '#ffffff',
+    color: '#1e3a8a',
     lineHeight: '1.6',
     marginBottom: '1rem',
     margin: '0 0 1rem 0'
   },
   restrictionContact: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: '#eff6ff',
     borderRadius: '8px',
     padding: '1rem',
-    border: '1px solid rgba(255, 255, 255, 0.2)'
+    border: '1px solid #3b82f6'
   },
   contactPrompt: {
     fontSize: '0.9rem',
-    color: '#ffffff',
+    color: '#1e40af',
     fontWeight: '600',
     marginBottom: '0.75rem',
     margin: '0 0 0.75rem 0'
@@ -911,7 +911,7 @@ const styles = {
     alignItems: 'center',
     gap: '0.5rem',
     padding: '0.5rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#dbeafe',
     borderRadius: '6px',
     marginBottom: '0.5rem'
   },
@@ -919,14 +919,14 @@ const styles = {
     fontSize: '1.2rem'
   },
   contactLink: {
-    color: '#ffffff',
+    color: '#1e40af',
     textDecoration: 'none',
     fontWeight: '600',
     fontSize: '0.95rem'
   },
   supportHours: {
     fontSize: '0.85rem',
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: '#1e40af',
     fontStyle: 'italic',
     margin: 0,
     textAlign: 'center'
