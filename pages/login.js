@@ -191,10 +191,11 @@ export default function LoginPage() {
 
         // Send login notification if enabled
         try {
-          // Parse browser and OS info from userAgent
+          // Parse browser, OS, and device info from userAgent
           const ua = navigator?.userAgent || '';
           let browser = 'Unknown';
           let os = 'Unknown';
+          let deviceType = 'Desktop';
           
           if (ua.includes('Chrome') && !ua.includes('Edge')) {
             browser = ua.includes('Edg') ? 'Edge' : 'Chrome';
@@ -208,10 +209,28 @@ export default function LoginPage() {
             os = 'Windows';
           } else if (ua.includes('Mac')) {
             os = 'macOS';
-          } else if (ua.includes('iPhone') || ua.includes('iPad')) {
+          } else if (ua.includes('iPhone')) {
             os = 'iOS';
+            deviceType = 'iPhone';
+          } else if (ua.includes('iPad')) {
+            os = 'iOS';
+            deviceType = 'iPad';
           } else if (ua.includes('Android')) {
             os = 'Android';
+            // Try to detect Android device model
+            if (ua.includes('Samsung')) {
+              deviceType = 'Samsung Galaxy';
+            } else if (ua.includes('Pixel')) {
+              deviceType = 'Google Pixel';
+            } else if (ua.includes('OnePlus')) {
+              deviceType = 'OnePlus';
+            } else if (ua.includes('Huawei')) {
+              deviceType = 'Huawei';
+            } else if (ua.includes('Xiaomi')) {
+              deviceType = 'Xiaomi';
+            } else {
+              deviceType = 'Android Device';
+            }
           } else if (ua.includes('Linux')) {
             os = 'Linux';
           }
@@ -224,7 +243,7 @@ export default function LoginPage() {
             },
             body: JSON.stringify({
               loginDetails: {
-                device_type: 'Browser',
+                device_type: deviceType,
                 browser: browser,
                 os: os,
                 timestamp: new Date().toISOString()
