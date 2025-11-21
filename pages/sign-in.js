@@ -106,17 +106,18 @@ export default function LoginPage() {
           await supabase.auth.signOut({ scope: 'local' });
           setLoading(false);
           setLoadingStage(0);
-          setError('Unable to verify account status. Please contact support at support@theoaklinebank.com.');
+          setError('Unable to verify account status. Please try again or contact support.');
           return;
         }
 
         const accountStatus = await statusResponse.json();
+        const supportEmail = accountStatus?.supportEmail || 'support@theoaklinebank.com';
 
         if (!accountStatus || accountStatus.isBlocked === undefined) {
           await supabase.auth.signOut({ scope: 'local' });
           setLoading(false);
           setLoadingStage(0);
-          setError('Account verification failed. Please contact support at support@theoaklinebank.com.');
+          setError('Account verification failed. Please try again or contact support.');
           return;
         }
 
@@ -129,13 +130,15 @@ export default function LoginPage() {
           let blockReason = accountStatus.reason || 
                            accountStatus.status_reason || 
                            accountStatus.ban_reason || 
+                           accountStatus.suspension_reason ||
                            accountStatus.locked_reason || 
                            accountStatus.closure_reason || 
                            '';
 
           setError({
             type: accountStatus.blockingType,
-            reason: blockReason
+            reason: blockReason,
+            supportEmail: supportEmail
           });
           setErrorType('restriction_error');
           return;
@@ -235,7 +238,7 @@ export default function LoginPage() {
           <StatusMessageBanner
             type={error.type}
             reason={error.reason}
-            contactEmail="security@theoaklinebank.com"
+            contactEmail={error.supportEmail || "support@theoaklinebank.com"}
             onBack={() => {
               setError('');
               setFormData({ email: '', password: '' });

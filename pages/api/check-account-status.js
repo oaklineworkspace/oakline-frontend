@@ -47,10 +47,19 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Forbidden. You can only check your own account status.' });
     }
 
+    // Fetch bank details for contact email
+    const { data: bankDetails, error: bankError } = await supabaseAdmin
+      .from('bank_details')
+      .select('email_support, email_contact, email_info')
+      .limit(1)
+      .single();
+
+    const supportEmail = bankDetails?.email_support || bankDetails?.email_contact || 'support@theoaklinebank.com';
+
     // Fetch complete profile information including all reason fields
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('status, status_reason, is_banned, ban_reason, ban_display_message, closure_reason, suspension_start_date, suspension_end_date')
+      .select('status, status_reason, is_banned, ban_reason, ban_display_message, closure_reason, locked_reason, suspension_reason, suspension_start_date, suspension_end_date')
       .eq('id', userId)
       .single();
 
@@ -65,7 +74,8 @@ export default async function handler(req, res) {
           status_reason: null,
           account_locked: false,
           locked_reason: null,
-          isBlocked: false
+          isBlocked: false,
+          supportEmail: supportEmail
         });
       }
       return res.status(500).json({ error: 'Failed to fetch profile' });
@@ -112,11 +122,13 @@ export default async function handler(req, res) {
       ban_display_message: profile?.ban_display_message || null,
       account_locked: securitySettings?.account_locked || false,
       locked_reason: securitySettings?.locked_reason || null,
+      suspension_reason: profile?.suspension_reason || null,
       suspension_start_date: profile?.suspension_start_date || null,
       suspension_end_date: profile?.suspension_end_date || null,
       isBlocked,
       blockingType,
-      reason
+      reason,
+      supportEmail: supportEmail
     });
 
   } catch (error) {
