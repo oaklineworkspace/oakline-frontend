@@ -32,6 +32,8 @@ function DashboardContent() {
   const [cryptoDepositsExpanded, setCryptoDepositsExpanded] = useState(true);
   const [quickActionsExpanded, setQuickActionsExpanded] = useState(true);
   const [expandedAccountCard, setExpandedAccountCard] = useState(null);
+  const [balanceCardExpanded, setBalanceCardExpanded] = useState(true);
+  const [cardsExpanded, setCardsExpanded] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -953,70 +955,100 @@ function DashboardContent() {
           <span style={styles.lastUpdated}>Last updated: {new Date().toLocaleDateString()}</span>
 
           <div style={styles.summaryCards}>
-          <div style={styles.primaryBalanceCard}>
+          <div style={{
+            ...styles.primaryBalanceCard,
+            cursor: 'pointer',
+            transition: 'all 0.3s ease'
+          }}
+          onClick={() => setBalanceCardExpanded(!balanceCardExpanded)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)';
+            e.currentTarget.style.transform = 'translateY(-4px)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = 'none';
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+          >
             <div style={styles.balanceCardHeader}>
               <div style={styles.balanceHeaderInfo}>
                 <h3 style={styles.balanceCardLabel}>Total Available Balance</h3>
                 <span style={styles.balanceCardSubtext}>Across {accounts.length} account{accounts.length !== 1 ? 's' : ''}</span>
               </div>
-              <button
-                onClick={() => setShowBalance(!showBalance)}
-                style={styles.balanceToggleButton}
-                aria-label={showBalance ? 'Hide balance' : 'Show balance'}
-              >
-                {showBalance ? '👁️' : '👁️‍🗨️'}
-              </button>
-            </div>
-            <div style={styles.balanceAmountContainer}>
-              <div style={styles.balanceAmount}>
-                {showBalance
-                  ? new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: 'USD',
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  }).format(getTotalBalance())
-                  : '••••••'
-                }
-              </div>
-              <div style={styles.balanceSubInfo}>
-                Available Balance • Updated {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-              </div>
-            </div>
-            <div style={styles.balanceCardFooter}>
-              <div style={styles.balanceFooterItem}>
-                <span style={styles.footerText}>FDIC Insured</span>
-              </div>
-              {/* Add Funds Button */}
-              <div style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setAddFundsDropdownVisible(!addFundsDropdownVisible);
+                    setShowBalance(!showBalance);
                   }}
-                  style={styles.addFundsButton}
+                  style={styles.balanceToggleButton}
+                  aria-label={showBalance ? 'Hide balance' : 'Show balance'}
                 >
-                  Add Funds
-                  <span style={{ fontSize: '0.7rem' }}>▼</span>
+                  {showBalance ? '👁️' : '👁️‍🗨️'}
                 </button>
-                {addFundsDropdownVisible && (
-                  <div style={styles.addFundsDropdown}>
-                    <Link href="/deposit-crypto" style={styles.addFundsDropdownItem}>
-                      <div>
-                        <div style={styles.dropdownItemTitle}>₿ Crypto Deposit</div>
-                        <div style={styles.dropdownItemDesc}>Add funds to your balance using cryptocurrency</div>
-                      </div>
-                    </Link>
-                    <Link href="/deposit-real" style={styles.addFundsDropdownItem}>
-                      <div>
-                        <div style={styles.dropdownItemTitle}>📱 Mobile Check Deposit</div>
-                        <div style={styles.dropdownItemDesc}>Add funds to your balance using mobile check</div>
-                      </div>
-                    </Link>
-                  </div>
-                )}
+                <span style={{
+                  ...styles.dropdownChevronButton,
+                  transform: balanceCardExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.3s ease'
+                }}>
+                  ▼
+                </span>
               </div>
             </div>
+            {balanceCardExpanded && (
+            <>
+              <div style={styles.balanceAmountContainer}>
+                <div style={styles.balanceAmount}>
+                  {showBalance
+                    ? new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: 'USD',
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    }).format(getTotalBalance())
+                    : '••••••'
+                  }
+                </div>
+                <div style={styles.balanceSubInfo}>
+                  Available Balance • Updated {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                </div>
+              </div>
+              <div style={styles.balanceCardFooter}>
+                <div style={styles.balanceFooterItem}>
+                  <span style={styles.footerText}>FDIC Insured</span>
+                </div>
+                {/* Add Funds Button */}
+                <div style={{ position: 'relative' }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAddFundsDropdownVisible(!addFundsDropdownVisible);
+                    }}
+                    style={styles.addFundsButton}
+                  >
+                    Add Funds
+                    <span style={{ fontSize: '0.7rem' }}>▼</span>
+                  </button>
+                  {addFundsDropdownVisible && (
+                    <div style={styles.addFundsDropdown}>
+                      <Link href="/deposit-crypto" style={styles.addFundsDropdownItem}>
+                        <div>
+                          <div style={styles.dropdownItemTitle}>₿ Crypto Deposit</div>
+                          <div style={styles.dropdownItemDesc}>Add funds to your balance using cryptocurrency</div>
+                        </div>
+                      </Link>
+                      <Link href="/deposit-real" style={styles.addFundsDropdownItem}>
+                        <div>
+                          <div style={styles.dropdownItemTitle}>📱 Mobile Check Deposit</div>
+                          <div style={styles.dropdownItemDesc}>Add funds to your balance using mobile check</div>
+                        </div>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+            )}
           </div>
         </div>
       </section>
@@ -1442,10 +1474,23 @@ function DashboardContent() {
         <section style={styles.cardsSection}>
           <div style={styles.sectionHeaderWithAction}>
             <h3 style={styles.sectionTitle}>My Cards</h3>
-            <Link href="/cards" style={styles.viewAllLink}>Manage Cards →</Link>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+              <button
+                onClick={() => setCardsExpanded(!cardsExpanded)}
+                style={{
+                  ...styles.dropdownChevronButton,
+                  transform: cardsExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.3s ease'
+                }}
+                title={cardsExpanded ? 'Collapse cards' : 'Expand cards'}
+              >
+                ▼
+              </button>
+              <Link href="/cards" style={styles.viewAllLink}>Manage Cards →</Link>
+            </div>
           </div>
 
-          {cards.length > 1 && (
+          {cardsExpanded && cards.length > 1 && (
             <div style={{
               fontSize: '0.85rem',
               color: '#64748b',
@@ -1463,7 +1508,7 @@ function DashboardContent() {
             </div>
           )}
 
-          <div 
+          {cardsExpanded && (<div 
             ref={(el) => {
               if (el && cards.length > 1) {
                 let scrollInterval;
@@ -1630,6 +1675,7 @@ function DashboardContent() {
               </div>
             ))}
           </div>
+          )}
         </section>
       )}
 
