@@ -1066,25 +1066,21 @@ function DashboardContent() {
       {/* Recent Transactions - Moved after Account Details */}
       <section style={styles.transactionsSection}>
         <div style={styles.sectionHeaderWithAction}>
-          <button
-            onClick={() => setTransactionsExpanded(!transactionsExpanded)}
-            style={{
-              ...styles.dropdownSectionButton,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
-          >
-            <h3 style={styles.sectionTitle}>Recent Transactions</h3>
-            <span style={{
-              ...styles.dropdownChevron,
-              transform: transactionsExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 0.3s ease'
-            }}>
+          <h3 style={styles.sectionTitle}>Recent Transactions</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <button
+              onClick={() => setTransactionsExpanded(!transactionsExpanded)}
+              style={{
+                ...styles.dropdownChevronButton,
+                transform: transactionsExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.3s ease'
+              }}
+              title={transactionsExpanded ? 'Collapse transactions' : 'Expand transactions'}
+            >
               ▼
-            </span>
-          </button>
-          <Link href="/transactions" style={styles.viewAllLink}>View All →</Link>
+            </button>
+            <Link href="/transactions" style={styles.viewAllLink}>View All →</Link>
+          </div>
         </div>
 
         {transactionsExpanded && (
@@ -1568,25 +1564,21 @@ function DashboardContent() {
       {cryptoDeposits.length > 0 && (
         <section style={styles.transactionsSection}>
           <div style={styles.sectionHeaderWithAction}>
-            <button
-              onClick={() => setCryptoDepositsExpanded(!cryptoDepositsExpanded)}
-              style={{
-                ...styles.dropdownSectionButton,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}
-            >
-              <h3 style={styles.sectionTitle}>Crypto Deposits</h3>
-              <span style={{
-                ...styles.dropdownChevron,
-                transform: cryptoDepositsExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                transition: 'transform 0.3s ease'
-              }}>
+            <h3 style={styles.sectionTitle}>Crypto Deposits</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+              <button
+                onClick={() => setCryptoDepositsExpanded(!cryptoDepositsExpanded)}
+                style={{
+                  ...styles.dropdownChevronButton,
+                  transform: cryptoDepositsExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.3s ease'
+                }}
+                title={cryptoDepositsExpanded ? 'Collapse deposits' : 'Expand deposits'}
+              >
                 ▼
-              </span>
-            </button>
-            <Link href="/crypto-deposits" style={styles.viewAllLink}>View All Deposits →</Link>
+              </button>
+              <Link href="/crypto-deposits" style={styles.viewAllLink}>View All Deposits →</Link>
+            </div>
           </div>
 
           {cryptoDepositsExpanded && (
@@ -3325,21 +3317,21 @@ dropdownButton: {
     display: 'inline-block',
     marginLeft: '0.25rem'
   },
-  dropdownSectionButton: {
+  dropdownChevronButton: {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    padding: 0,
+    padding: '0.4rem 0.6rem',
     margin: 0,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem'
-  },
-  dropdownChevron: {
-    fontSize: '1rem',
+    fontSize: '1.2rem',
     fontWeight: 'bold',
     color: '#1a365d',
     display: 'flex',
-    alignItems: 'center'
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.3s ease',
+    borderRadius: '6px',
+    minWidth: '36px',
+    minHeight: '36px'
   }
 };
