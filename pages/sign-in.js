@@ -144,7 +144,7 @@ export default function LoginPage() {
         // Additional check: verify profile status after successful auth
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('is_banned, status, ban_reason')
+          .select('is_banned, status, ban_reason, ban_display_message, suspension_reason, status_reason, closure_reason, locked_reason')
           .eq('id', data.user.id)
           .single();
 
@@ -152,20 +152,37 @@ export default function LoginPage() {
           console.error('Profile fetch error:', profileError);
         }
 
-        // If user is banned or has restricted status, sign them out
-        if (profile && (profile.is_banned === true || ['suspended', 'closed'].includes(profile.status))) {
-          await supabase.auth.signOut();
+        // Check for any account restrictions
+        let restrictionType = null;
+        let restrictionMessage = null;
 
-          // Show the actual ban reason from profiles table
-          if (profile.ban_reason) {
-            setError(profile.ban_reason);
-          } else if (profile.is_banned) {
-            setError('Your account has been permanently banned. Please contact support at +1 (636) 635-6122 for assistance.');
+        if (profile) {
+          if (profile.is_banned === true) {
+            restrictionType = 'banned';
+            restrictionMessage = profile.ban_reason || profile.ban_display_message || 'Your account has been permanently banned.';
           } else if (profile.status === 'suspended') {
-            setError('Your account has been temporarily suspended. Please contact support at +1 (636) 635-6122 for assistance.');
-          } else {
-            setError('Your account access has been restricted. Please contact support at +1 (636) 635-6122 for assistance.');
+            restrictionType = 'suspended';
+            restrictionMessage = profile.suspension_reason || profile.status_reason || 'Your account has been temporarily suspended.';
+          } else if (profile.status === 'closed') {
+            restrictionType = 'closed';
+            restrictionMessage = profile.closure_reason || profile.status_reason || 'Your account has been closed.';
+          } else if (profile.locked_reason) {
+            restrictionType = 'locked';
+            restrictionMessage = profile.locked_reason;
+          } else if (['suspended', 'closed', 'blocked'].includes(profile.status)) {
+            restrictionType = profile.status;
+            restrictionMessage = profile.status_reason || `Your account access has been restricted due to ${profile.status} status.`;
           }
+        }
+
+        // If any restriction is found, sign them out and display banner
+        if (restrictionType) {
+          await supabase.auth.signOut();
+          setError({
+            type: restrictionType,
+            reason: restrictionMessage
+          });
+          setErrorType('restriction_error');
           setLoading(false);
           setLoadingStage(0);
           return;
