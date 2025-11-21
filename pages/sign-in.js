@@ -197,24 +197,24 @@ export default function LoginPage() {
           let os = 'Unknown';
           let deviceType = 'Desktop';
           
-          if (ua.includes('Chrome') && !ua.includes('Edge')) {
-            browser = ua.includes('Edg') ? 'Edge' : 'Chrome';
-          } else if (ua.includes('Safari')) {
-            browser = 'Safari';
-          } else if (ua.includes('Firefox')) {
-            browser = 'Firefox';
-          }
-          
-          if (ua.includes('Windows')) {
-            os = 'Windows';
-          } else if (ua.includes('Mac')) {
-            os = 'macOS';
-          } else if (ua.includes('iPhone')) {
+          // Check for mobile devices FIRST (before desktop OS) since mobile useragents contain both
+          if (ua.includes('iPhone')) {
             os = 'iOS';
             deviceType = 'iPhone';
+            // iPhone Chrome shows as "CriOS"
+            if (ua.includes('CriOS')) {
+              browser = 'Chrome';
+            } else if (ua.includes('Safari')) {
+              browser = 'Safari';
+            }
           } else if (ua.includes('iPad')) {
             os = 'iOS';
             deviceType = 'iPad';
+            if (ua.includes('CriOS')) {
+              browser = 'Chrome';
+            } else if (ua.includes('Safari')) {
+              browser = 'Safari';
+            }
           } else if (ua.includes('Android')) {
             os = 'Android';
             // Try to detect Android device model
@@ -231,8 +231,31 @@ export default function LoginPage() {
             } else {
               deviceType = 'Android Device';
             }
-          } else if (ua.includes('Linux')) {
-            os = 'Linux';
+            // Browser detection for Android
+            if (ua.includes('Chrome') && !ua.includes('Edge')) {
+              browser = 'Chrome';
+            } else if (ua.includes('Firefox')) {
+              browser = 'Firefox';
+            } else if (ua.includes('Safari')) {
+              browser = 'Safari';
+            }
+          } else {
+            // Desktop detection
+            if (ua.includes('Windows')) {
+              os = 'Windows';
+            } else if (ua.includes('Mac')) {
+              os = 'macOS';
+            } else if (ua.includes('Linux')) {
+              os = 'Linux';
+            }
+            // Browser detection for desktop
+            if (ua.includes('Chrome') && !ua.includes('Edge')) {
+              browser = 'Chrome';
+            } else if (ua.includes('Safari')) {
+              browser = 'Safari';
+            } else if (ua.includes('Firefox')) {
+              browser = 'Firefox';
+            }
           }
           
           await fetch('/api/send-login-notification', {
