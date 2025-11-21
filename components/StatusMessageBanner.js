@@ -25,9 +25,9 @@ export default function StatusMessageBanner({ type, reason, contactEmail = 'secu
       emoji: '⏸️',
       title: 'Account Suspended',
       message: 'Your account has been temporarily suspended.',
-      gradient: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
-      bgColor: '#1e3a8a',
-      borderColor: '#3b82f6'
+      gradient: 'linear-gradient(135deg, #001f3f 0%, #003366 100%)',
+      bgColor: '#001f3f',
+      borderColor: '#003366'
     },
     locked: {
       emoji: '🔒',
