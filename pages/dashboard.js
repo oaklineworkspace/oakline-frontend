@@ -3146,14 +3146,20 @@ cardsGrid: {
 cardsCarousel: {
   display: 'flex',
   overflowX: 'auto',
+  overflowY: 'hidden',
   gap: '1.5rem',
   marginTop: '1rem',
   paddingBottom: '1rem',
   scrollSnapType: 'x mandatory',
+  scrollBehavior: 'smooth',
   WebkitOverflowScrolling: 'touch',
   scrollbarWidth: 'thin',
   scrollbarColor: '#cbd5e1 #f1f5f9',
-  position: 'relative'
+  position: 'relative',
+  width: '100%',
+  maxWidth: '100%',
+  minHeight: '280px',
+  boxSizing: 'border-box'
 },
 cardsScrollIndicator: {
   display: 'flex',
