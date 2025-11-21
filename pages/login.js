@@ -175,7 +175,8 @@ export default function LoginPage() {
           await supabase.auth.signOut();
           setError({
             type: restrictionType,
-            reason: restrictionMessage
+            reason: restrictionMessage,
+            supportEmail: supportEmail
           });
           setErrorType('restriction_error');
           setLoading(false);
