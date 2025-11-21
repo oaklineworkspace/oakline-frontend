@@ -75,7 +75,11 @@ export default function LoginPage() {
           setLoadingStage(0);
           return;
         } else {
-          throw authError; // Throw other errors to be caught by the catch block
+          // Show the actual auth error (e.g., invalid credentials)
+          setLoading(false);
+          setLoadingStage(0);
+          setError(authError.message || 'Invalid email or password. Please try again.');
+          return;
         }
       }
 
