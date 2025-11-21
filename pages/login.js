@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
 import StatusMessageBanner from '../components/StatusMessageBanner';
+import { supabase } from '../lib/supabaseClient';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,6 +19,20 @@ export default function LoginPage() {
 
   useEffect(() => {
     setIsMounted(true);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const blocked = urlParams.get('blocked');
+    const reason = urlParams.get('reason');
+    const urlError = urlParams.get('error');
+
+    if (blocked) {
+      setError({
+        type: blocked,
+        reason: reason || ''
+      });
+    } else if (urlError === 'verification_failed' || urlError === 'status_check_failed') {
+      setError('Unable to verify account status. Please try again or contact support.');
+    }
   }, []);
 
   const handleChange = (e) => {
@@ -34,20 +50,126 @@ export default function LoginPage() {
       setLoadingStage(0);
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      const { data, error } = await signIn(formData.email, formData.password);
+      const { data, error: authError } = await signIn(formData.email, formData.password);
 
-      if (error) throw error;
+      if (authError) {
+        // Check if the error message indicates the user is banned
+        if (authError.message && authError.message.toLowerCase().includes('banned')) {
+          // Fetch the actual ban reason from profiles table
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('ban_reason, is_banned')
+              .eq('email', formData.email)
+              .single();
+
+            if (profile && profile.is_banned && profile.ban_reason) {
+              setError(profile.ban_reason);
+            } else {
+              setError('Your account has been restricted. Please contact support for more information.');
+            }
+          } catch (profileError) {
+            console.error('Error fetching ban reason:', profileError);
+            setError('Your account has been restricted. Please contact support for more information.');
+          }
+          setLoading(false);
+          setLoadingStage(0);
+          return;
+        } else {
+          throw authError; // Throw other errors to be caught by the catch block
+        }
+      }
 
       if (data.user) {
-        // Stage 2: Authenticating account
+        // Stage 2: Checking account status
         setLoadingStage(1);
-        await new Promise(resolve => setTimeout(resolve, 700));
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        // Stage 3: Securing connection
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+
+        const statusResponse = await fetch('/api/check-account-status', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentSession?.access_token}`
+          },
+          body: JSON.stringify({ userId: data.user.id })
+        });
+
+        if (!statusResponse.ok) {
+          await supabase.auth.signOut({ scope: 'local' });
+          setLoading(false);
+          setLoadingStage(0);
+          setError('Unable to verify account status. Please contact support at support@theoaklinebank.com.');
+          return;
+        }
+
+        const accountStatus = await statusResponse.json();
+
+        if (!accountStatus || accountStatus.isBlocked === undefined) {
+          await supabase.auth.signOut({ scope: 'local' });
+          setLoading(false);
+          setLoadingStage(0);
+          setError('Account verification failed. Please contact support at support@theoaklinebank.com.');
+          return;
+        }
+
+        if (accountStatus.isBlocked) {
+          await supabase.auth.signOut({ scope: 'local' });
+          setLoading(false);
+          setLoadingStage(0);
+
+          // Use the actual reason from profile table
+          let blockReason = accountStatus.reason || 
+                           accountStatus.status_reason || 
+                           accountStatus.ban_reason || 
+                           accountStatus.locked_reason || 
+                           accountStatus.closure_reason || 
+                           '';
+
+          setError({
+            type: accountStatus.blockingType,
+            reason: blockReason
+          });
+          return;
+        }
+
+        // Additional check: verify profile status after successful auth
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('is_banned, status, ban_reason')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Profile fetch error:', profileError);
+        }
+
+        // If user is banned or has restricted status, sign them out
+        if (profile && (profile.is_banned === true || ['suspended', 'closed'].includes(profile.status))) {
+          await supabase.auth.signOut();
+
+          // Show the actual ban reason from profiles table
+          if (profile.ban_reason) {
+            setError(profile.ban_reason);
+          } else if (profile.is_banned) {
+            setError('Your account has been permanently banned. Please contact support at +1 (636) 635-6122 for assistance.');
+          } else if (profile.status === 'suspended') {
+            setError('Your account has been temporarily suspended. Please contact support at +1 (636) 635-6122 for assistance.');
+          } else {
+            setError('Your account access has been restricted. Please contact support at +1 (636) 635-6122 for assistance.');
+          }
+          setLoading(false);
+          setLoadingStage(0);
+          return;
+        }
+
+
+        // Stage 3: Authenticating account
         setLoadingStage(2);
         await new Promise(resolve => setTimeout(resolve, 700));
 
-        // Stage 4: Finalizing login
+        // Stage 4: Securing connection
         setLoadingStage(3);
         await new Promise(resolve => setTimeout(resolve, 600));
 
@@ -58,7 +180,7 @@ export default function LoginPage() {
     } catch (error) {
       setLoadingStage(0);
 
-      // Handle banned user
+      // Handle banned user (backwards compatibility)
       if (error.message === 'ACCOUNT_BANNED') {
         setError({
           type: 'banned',
@@ -90,6 +212,10 @@ export default function LoginPage() {
             type={error.type}
             reason={error.reason}
             contactEmail="security@theoaklinebank.com"
+            onBack={() => {
+              setError('');
+              setFormData({ email: '', password: '' });
+            }}
           />
         </div>
       ) : loading ? (
@@ -157,39 +283,35 @@ export default function LoginPage() {
         </div>
       ) : (
         /* Main Login Page */
-        <div style={{
-          ...styles.pageContainer,
-          opacity: loading ? 0 : 1,
-          visibility: loading ? 'hidden' : 'visible',
-          transition: 'opacity 0.3s ease, visibility 0.3s ease'
-        }}>
-        {/* Professional Header - Logo Centered */}
-        <header style={styles.header}>
-          <div style={styles.headerContent}>
-            <Link href="/" style={styles.logoLink}>
-              <img 
-                src="/images/Oakline_Bank_logo_design_c1b04ae0.png" 
-                alt="Oakline Bank" 
-                style={styles.logoImage}
-              />
-              <div style={styles.brandInfo}>
-                <h1 style={styles.brandName}>Oakline Bank</h1>
-                <span style={styles.brandTagline}>Secure Banking Platform</span>
-              </div>
-            </Link>
-          </div>
+        <div style={styles.pageContainer}>
+          {/* Professional Header - Logo on Left */}
+          <header style={styles.header}>
+            <div style={styles.headerContent}>
+              <Link href="/" style={styles.logoLink}>
+                <img 
+                  src="/images/Oakline_Bank_logo_design_c1b04ae0.png" 
+                  alt="Oakline Bank" 
+                  style={styles.logoImage}
+                />
+                <div style={styles.brandInfo}>
+                  <h1 style={styles.brandName}>Oakline Bank</h1>
+                  <span style={styles.brandTagline}>Secure Banking Platform</span>
+                </div>
+              </Link>
+            </div>
+          </header>
+
           {/* Security Warning Scrolling Banner */}
           <div style={styles.securityWarningBanner}>
-            <div style={styles.scrollingText}>
+            <div style={styles.scrollingText} className="scrollingText">
               <span style={styles.warningText}>
                 🔒 IMPORTANT SECURITY NOTICE: Never share your password, PIN, or account details with anyone. Oakline Bank will NEVER ask for your password via email, phone, or text. Protect your account - Keep your credentials confidential. 🔒
               </span>
             </div>
           </div>
-        </header>
 
-        {/* Login Card Container */}
-        <div style={styles.mainContent}>
+          {/* Login Card Container */}
+          <div style={styles.mainContent}>
           <div style={styles.loginCard}>
             {/* Card Header */}
             <div style={styles.cardHeader}>
@@ -334,11 +456,11 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <footer style={styles.footer}>
-          <p style={styles.footerText}>
-            © 2025 Oakline Bank. All rights reserved. Member FDIC.
-          </p>
-        </footer>
+          <footer style={styles.footer}>
+            <p style={styles.footerText}>
+              © 2025 Oakline Bank. All rights reserved. Member FDIC.
+            </p>
+          </footer>
         </div>
       )}
 
@@ -872,9 +994,6 @@ const styles = {
     borderRadius: '8px',
     border: '1px solid #fee2e2'
   },
-  contactIcon: {
-    fontSize: '1.5rem'
-  },
   contactLabel: {
     fontSize: '0.75rem',
     color: '#7f1d1d',
@@ -986,29 +1105,6 @@ const styles = {
     fontSize: '0.85rem',
     margin: 0
   },
-  securityWarningBanner: {
-    background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
-    overflow: 'hidden',
-    padding: '1rem 0',
-    borderTop: '3px solid #059669',
-    borderBottom: '3px solid #059669',
-    position: 'relative'
-  },
-  scrollingText: {
-    display: 'flex',
-    whiteSpace: 'nowrap',
-    animation: 'scroll 38s linear infinite',
-    willChange: 'transform'
-  },
-  warningText: {
-    color: 'white',
-    fontSize: '1rem',
-    fontWeight: '700',
-    paddingRight: '150px',
-    display: 'inline-block',
-    letterSpacing: '0.5px',
-    textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-  },
   fullScreenBannedContainer: {
     position: 'fixed',
     top: 0,
@@ -1024,5 +1120,33 @@ const styles = {
     padding: '2rem',
     zIndex: 10000,
     overflow: 'auto'
+  },
+  securityWarningBanner: {
+    background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
+    overflow: 'hidden',
+    padding: '0.875rem 0',
+    borderTop: '3px solid #059669',
+    borderBottom: '3px solid #059669',
+    position: 'relative',
+    height: '3.5rem',
+    display: 'flex',
+    alignItems: 'center'
+  },
+  scrollingText: {
+    display: 'flex',
+    whiteSpace: 'nowrap',
+    animation: 'scroll 38s linear infinite',
+    willChange: 'transform',
+    gap: '0'
+  },
+  warningText: {
+    color: 'white',
+    fontSize: '0.95rem',
+    fontWeight: '700',
+    paddingRight: '150px',
+    display: 'inline-block',
+    letterSpacing: '0.5px',
+    textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+    lineHeight: '1.4'
   }
 };
