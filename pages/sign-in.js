@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [errorType, setErrorType] = useState(''); // 'auth_error' or 'restriction_error'
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -37,6 +38,7 @@ export default function LoginPage() {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setError('');
+    setErrorType('');
   };
 
   const handleSubmit = async (e) => {
@@ -79,6 +81,7 @@ export default function LoginPage() {
           setLoading(false);
           setLoadingStage(0);
           setError(authError.message || 'Invalid email or password. Please try again.');
+          setErrorType('auth_error');
           return;
         }
       }
@@ -134,6 +137,7 @@ export default function LoginPage() {
             type: accountStatus.blockingType,
             reason: blockReason
           });
+          setErrorType('restriction_error');
           return;
         }
 
@@ -384,8 +388,16 @@ export default function LoginPage() {
                 </Link>
               </div>
 
+              {/* Error Message - Simple auth errors */}
+              {error && typeof error === 'string' && errorType === 'auth_error' && (
+                <div style={styles.simpleErrorMessage}>
+                  <span style={styles.errorIcon}>⚠️</span>
+                  <span>{error}</span>
+                </div>
+              )}
+
               {/* Error Message - Professional restriction banner */}
-              {error && typeof error === 'string' && (
+              {error && typeof error === 'string' && errorType === 'restriction_error' && (
                 <div style={styles.restrictionBanner}>
                   <div style={styles.restrictionHeader}>
                     <span style={styles.restrictionIcon}>⚠️</span>
@@ -868,6 +880,19 @@ const styles = {
   },
   errorIcon: {
     fontSize: '1.2rem'
+  },
+  simpleErrorMessage: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '0.875rem 1rem',
+    backgroundColor: '#fee2e2',
+    border: '1px solid #fca5a5',
+    borderRadius: '8px',
+    color: '#7f1d1d',
+    fontSize: '0.9rem',
+    fontWeight: '500',
+    marginBottom: '1rem'
   },
   restrictionBanner: {
     backgroundColor: '#ffffff',
