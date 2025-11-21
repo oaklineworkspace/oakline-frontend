@@ -92,6 +92,20 @@ export default async function handler(req, res) {
       console.error('Security settings query error:', securityError);
     }
 
+    // Fetch restriction reason from account_restriction_reasons if restriction_reason_id exists
+    let restrictionReasonText = null;
+    if (profile?.restriction_reason_id) {
+      const { data: restrictionReason } = await supabaseAdmin
+        .from('account_restriction_reasons')
+        .select('reason_text, category, severity_level')
+        .eq('id', profile.restriction_reason_id)
+        .single();
+      
+      if (restrictionReason) {
+        restrictionReasonText = restrictionReason.reason_text;
+      }
+    }
+
     // Determine if account is blocked
     const isBlocked = 
       profile?.is_banned === true ||
@@ -106,7 +120,10 @@ export default async function handler(req, res) {
     else if (profile?.status === 'suspended') blockingType = 'suspended';
     else if (profile?.status === 'closed') blockingType = 'closed';
 
-    // Get the actual reason from the profile table
+    // Get the suspension reason from profile
+    const suspensionReason = profile?.suspension_reason || null;
+    
+    // Get other reasons as fallback
     const reason = profile?.status_reason || 
                    profile?.ban_reason || 
                    profile?.closure_reason || 
@@ -122,7 +139,8 @@ export default async function handler(req, res) {
       restriction_display_message: profile?.restriction_display_message || null,
       account_locked: securitySettings?.account_locked || false,
       locked_reason: securitySettings?.locked_reason || null,
-      suspension_reason: profile?.suspension_reason || null,
+      suspension_reason: suspensionReason,
+      restriction_reason: restrictionReasonText,
       suspension_start_date: profile?.suspension_start_date || null,
       suspension_end_date: profile?.suspension_end_date || null,
       isBlocked,

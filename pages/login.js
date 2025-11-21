@@ -126,18 +126,34 @@ export default function LoginPage() {
           setLoading(false);
           setLoadingStage(0);
 
-          // Use the actual reason from profile table
-          let blockReason = accountStatus.reason || 
+          // Build combined restriction message
+          const suspensionReason = accountStatus.suspension_reason || null;
+          const restrictionReason = accountStatus.restriction_reason || null;
+          
+          let combinedReason = '';
+          if (suspensionReason && restrictionReason) {
+            // Both exist - show both stacked
+            combinedReason = suspensionReason;
+          } else if (suspensionReason) {
+            // Only suspension reason
+            combinedReason = suspensionReason;
+          } else if (restrictionReason) {
+            // Only restriction reason
+            combinedReason = restrictionReason;
+          } else {
+            // Fallback to other reasons
+            combinedReason = accountStatus.reason || 
                            accountStatus.status_reason || 
                            accountStatus.ban_reason || 
-                           accountStatus.suspension_reason ||
                            accountStatus.locked_reason || 
                            accountStatus.closure_reason || 
-                           '';
+                           'Your account access has been restricted.';
+          }
 
           setError({
             type: accountStatus.blockingType,
-            reason: blockReason,
+            reason: combinedReason,
+            additionalReason: (suspensionReason && restrictionReason) ? restrictionReason : null,
             supportEmail: supportEmail
           });
           setErrorType('restriction_error');

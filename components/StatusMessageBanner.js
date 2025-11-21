@@ -1,7 +1,12 @@
-
 import { useState } from 'react';
 
-export default function StatusMessageBanner({ type, reason, contactEmail = 'security@theoaklinebank.com', onBack }) {
+export default function StatusMessageBanner({
+  type = 'suspended',
+  reason = '',
+  additionalReason = null,
+  contactEmail = 'security@theoaklinebank.com',
+  onBack
+}) {
   const [copied, setCopied] = useState(false);
 
   const handleBackToLogin = () => {
@@ -51,7 +56,7 @@ export default function StatusMessageBanner({ type, reason, contactEmail = 'secu
 
   const handleContactSupport = () => {
     const subject = encodeURIComponent(`${config.title} - Support Request`);
-    const body = encodeURIComponent(`Hello Support Team,\n\nI am contacting you regarding my ${type} account.\n\n${reason ? `Reason: ${reason}\n\n` : ''}Please assist me with this matter.\n\nThank you.`);
+    const body = encodeURIComponent(`Hello Support Team,\n\nI am contacting you regarding my ${type} account.\n\n${reason ? `Reason: ${reason}\n\n` : ''}${additionalReason ? `Additional Restriction: ${additionalReason}\n\n` : ''}Please assist me with this matter.\n\nThank you.`);
     window.location.href = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
   };
 
@@ -79,11 +84,18 @@ export default function StatusMessageBanner({ type, reason, contactEmail = 'secu
         <div style={styles.contentSection}>
           <h3 style={styles.title}>{config.title}</h3>
           <p style={styles.message}>{config.message}</p>
-          
+
           {reason && (
             <div style={styles.reasonBox}>
-              <strong style={styles.reasonLabel}>Reason:</strong>
+              <strong style={styles.reasonLabel}>REASON</strong>
               <span style={styles.reasonText}>{reason}</span>
+            </div>
+          )}
+
+          {additionalReason && (
+            <div style={styles.reasonBox}>
+              <strong style={styles.reasonLabel}>ADDITIONAL RESTRICTION</strong>
+              <span style={styles.reasonText}>{additionalReason}</span>
             </div>
           )}
 
@@ -304,5 +316,15 @@ const styles = {
     transition: 'all 0.3s',
     width: '100%',
     textAlign: 'center',
+  },
+  additionalReasonText: {
+    fontSize: '0.9rem',
+    color: '#1e40af',
+    lineHeight: '1.6',
+    margin: 0,
+    padding: '0.75rem',
+    backgroundColor: '#dbeafe',
+    borderRadius: '6px',
+    borderLeft: '3px solid #3b82f6'
   },
 };
