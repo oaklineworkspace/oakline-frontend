@@ -28,6 +28,8 @@ function DashboardContent() {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [accountDetailsExpanded, setAccountDetailsExpanded] = useState(false);
+  const [transactionsExpanded, setTransactionsExpanded] = useState(true);
+  const [cryptoDepositsExpanded, setCryptoDepositsExpanded] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -1064,10 +1066,28 @@ function DashboardContent() {
       {/* Recent Transactions - Moved after Account Details */}
       <section style={styles.transactionsSection}>
         <div style={styles.sectionHeaderWithAction}>
-          <h3 style={styles.sectionTitle}>Recent Transactions</h3>
+          <button
+            onClick={() => setTransactionsExpanded(!transactionsExpanded)}
+            style={{
+              ...styles.dropdownSectionButton,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
+          >
+            <h3 style={styles.sectionTitle}>Recent Transactions</h3>
+            <span style={{
+              ...styles.dropdownChevron,
+              transform: transactionsExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.3s ease'
+            }}>
+              ▼
+            </span>
+          </button>
           <Link href="/transactions" style={styles.viewAllLink}>View All →</Link>
         </div>
 
+        {transactionsExpanded && (
         <div style={styles.transactionsList}>
           {transactions.length > 0 ? (
             transactions.map(tx => {
