@@ -59,7 +59,7 @@ export default async function handler(req, res) {
     // Fetch complete profile information including all reason fields
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('status, is_banned, ban_reason')
+      .select('status, is_banned, ban_reason, suspension_reason, restriction_display_message')
       .eq('id', userId)
       .single();
 
@@ -113,6 +113,8 @@ export default async function handler(req, res) {
       status: profile?.status || 'active',
       is_banned: profile?.is_banned || false,
       ban_reason: profile?.ban_reason || null,
+      suspension_reason: profile?.suspension_reason || null,
+      restriction_display_message: profile?.restriction_display_message || null,
       account_locked: securitySettings?.account_locked || false,
       locked_reason: securitySettings?.locked_reason || null,
       isBlocked,
