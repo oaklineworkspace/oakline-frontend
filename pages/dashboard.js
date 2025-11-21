@@ -3325,4 +3325,21 @@ dropdownButton: {
     display: 'inline-block',
     marginLeft: '0.25rem'
   },
+  dropdownSectionButton: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: 0,
+    margin: 0,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem'
+  },
+  dropdownChevron: {
+    fontSize: '1rem',
+    fontWeight: 'bold',
+    color: '#1a365d',
+    display: 'flex',
+    alignItems: 'center'
+  }
 };
