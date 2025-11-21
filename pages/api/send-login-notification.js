@@ -24,12 +24,12 @@ export default async function handler(req, res) {
     // Check if user has login notifications enabled
     const { data: securitySettings, error: settingsError } = await supabaseAdmin
       .from('user_security_settings')
-      .select('loginalerts')
+      .select('login_notifications')
       .eq('user_id', user.id)
       .single();
 
-    // If no settings exist or loginAlerts is disabled, don't send notification
-    if (settingsError || !securitySettings || !securitySettings.loginalerts) {
+    // If no settings exist or login_notifications is disabled, don't send notification
+    if (settingsError || !securitySettings || !securitySettings.login_notifications || securitySettings.login_notifications === 'none') {
       return res.status(200).json({
         success: true,
         message: 'Login notifications disabled'

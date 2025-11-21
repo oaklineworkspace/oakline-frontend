@@ -188,6 +188,27 @@ export default function LoginPage() {
         setLoadingStage(2);
         await new Promise(resolve => setTimeout(resolve, 700));
 
+        // Send login notification if enabled
+        try {
+          await fetch('/api/send-login-notification', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${currentSession?.access_token}`
+            },
+            body: JSON.stringify({
+              loginDetails: {
+                ip_address: 'Browser',
+                device_type: navigator?.userAgent || 'Unknown',
+                browser: navigator?.userAgent?.split(' ').pop() || 'Unknown',
+                timestamp: new Date().toISOString()
+              }
+            })
+          });
+        } catch (notifError) {
+          console.error('Failed to send login notification:', notifError);
+        }
+
         // Stage 4: Securing connection
         setLoadingStage(3);
         await new Promise(resolve => setTimeout(resolve, 600));
