@@ -104,7 +104,10 @@ export const AuthProvider = ({ children }) => {
               blocked: accountStatus.blockingType,
               reason: accountStatus.ban_reason || accountStatus.locked_reason || ''
             });
-            router.push(`/sign-in?${params.toString()}`);
+            
+            // Stay on current login/sign-in page instead of redirecting
+            const currentPage = router.pathname.includes('/login') ? '/login' : '/sign-in';
+            router.push(`${currentPage}?${params.toString()}`);
           }
         }
       } catch (error) {
