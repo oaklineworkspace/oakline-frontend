@@ -163,7 +163,7 @@ export default function LoginPage() {
         // Additional check: verify profile status after successful auth
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('is_banned, status, ban_reason, restriction_display_message, suspension_reason, status_reason, closure_reason, locked_reason')
+          .select('is_banned, status, ban_reason')
           .eq('id', data.user.id)
           .single();
 
@@ -178,19 +178,13 @@ export default function LoginPage() {
         if (profile) {
           if (profile.is_banned === true) {
             restrictionType = 'banned';
-            restrictionMessage = profile.ban_reason || profile.restriction_display_message || 'Your account has been permanently banned.';
+            restrictionMessage = profile.ban_reason || 'Your account has been permanently banned.';
           } else if (profile.status === 'suspended') {
             restrictionType = 'suspended';
-            restrictionMessage = profile.suspension_reason || profile.status_reason || 'Your account has been temporarily suspended.';
+            restrictionMessage = 'Your account has been temporarily suspended.';
           } else if (profile.status === 'closed') {
             restrictionType = 'closed';
-            restrictionMessage = profile.closure_reason || profile.status_reason || 'Your account has been closed.';
-          } else if (profile.locked_reason) {
-            restrictionType = 'locked';
-            restrictionMessage = profile.locked_reason;
-          } else if (['suspended', 'closed', 'blocked'].includes(profile.status)) {
-            restrictionType = profile.status;
-            restrictionMessage = profile.status_reason || `Your account access has been restricted due to ${profile.status} status.`;
+            restrictionMessage = 'Your account has been closed.';
           }
         }
 

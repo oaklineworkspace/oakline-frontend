@@ -59,7 +59,7 @@ export default async function handler(req, res) {
     // Fetch complete profile information including all reason fields
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('status, status_reason, is_banned, ban_reason, restriction_display_message, closure_reason, suspension_reason, suspension_start_date, suspension_end_date, restriction_reason_id')
+      .select('status, is_banned, ban_reason')
       .eq('id', userId)
       .single();
 
@@ -92,24 +92,6 @@ export default async function handler(req, res) {
       console.error('Security settings query error:', securityError);
     }
 
-    // Fetch restriction reason from account_restriction_reasons if restriction_reason_id exists
-    let restrictionReasonText = null;
-    if (profile?.restriction_reason_id) {
-      const { data: restrictionReason, error: restrictionError } = await supabaseAdmin
-        .from('account_restriction_reasons')
-        .select('reason_text, category, severity_level')
-        .eq('id', profile.restriction_reason_id)
-        .single();
-      
-      if (restrictionError) {
-        console.error('Restriction reason query error:', restrictionError);
-      }
-      
-      if (restrictionReason) {
-        restrictionReasonText = restrictionReason.reason_text;
-      }
-    }
-
     // Determine if account is blocked
     const isBlocked = 
       profile?.is_banned === true ||
@@ -124,29 +106,15 @@ export default async function handler(req, res) {
     else if (profile?.status === 'suspended') blockingType = 'suspended';
     else if (profile?.status === 'closed') blockingType = 'closed';
 
-    // Get the suspension reason from profile
-    const suspensionReason = profile?.suspension_reason || null;
-    
-    // Get other reasons as fallback
-    const reason = profile?.status_reason || 
-                   profile?.ban_reason || 
-                   profile?.closure_reason || 
-                   securitySettings?.locked_reason || 
-                   null;
+    // Get the actual reason from the profile table
+    const reason = profile?.ban_reason || null;
 
     return res.status(200).json({
       status: profile?.status || 'active',
       is_banned: profile?.is_banned || false,
       ban_reason: profile?.ban_reason || null,
-      status_reason: profile?.status_reason || null,
-      closure_reason: profile?.closure_reason || null,
-      restriction_display_message: profile?.restriction_display_message || null,
       account_locked: securitySettings?.account_locked || false,
       locked_reason: securitySettings?.locked_reason || null,
-      suspension_reason: suspensionReason,
-      restriction_reason: restrictionReasonText,
-      suspension_start_date: profile?.suspension_start_date || null,
-      suspension_end_date: profile?.suspension_end_date || null,
       isBlocked,
       blockingType,
       reason,
