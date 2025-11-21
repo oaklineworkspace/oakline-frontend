@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -993,6 +992,9 @@ const styles = {
     backgroundColor: '#fef2f2',
     borderRadius: '8px',
     border: '1px solid #fee2e2'
+  },
+  contactIcon: {
+    fontSize: '1.5rem'
   },
   contactLabel: {
     fontSize: '0.75rem',
