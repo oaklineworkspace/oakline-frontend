@@ -902,9 +902,6 @@ function DashboardContent() {
           <span style={styles.warningText}>
             🔒 SECURITY ALERT: Protect Your Account! Oakline Bank will NEVER ask for your password, PIN, or security codes via email, phone call, or text message. Beware of phishing scams and suspicious emails. Always verify communications directly through our official website or by calling our verified customer service number. Never click on suspicious links or share your one-time passwords with anyone. Report any suspicious activity immediately to our security team. Your security is our top priority! 🔒
           </span>
-          <span style={styles.warningText}>
-            🔒 SECURITY ALERT: Protect Your Account! Oakline Bank will NEVER ask for your password, PIN, or security codes via email, phone call, or text message. Beware of phishing scams and suspicious emails. Always verify communications directly through our official website or by calling our verified customer service number. Never click on suspicious links or share your one-time passwords with anyone. Report any suspicious activity immediately to our security team. Your security is our top priority! 🔒
-          </span>
         </div>
       </div>
 
