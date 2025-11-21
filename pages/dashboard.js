@@ -3445,7 +3445,7 @@ dropdownButton: {
     margin: 0,
     fontSize: '1.2rem',
     fontWeight: 'bold',
-    color: '#1a365d',
+    color: 'white',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
