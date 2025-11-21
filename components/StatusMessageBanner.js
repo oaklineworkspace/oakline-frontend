@@ -60,16 +60,6 @@ export default function StatusMessageBanner({
     window.location.href = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
   };
 
-  const copyEmail = async () => {
-    try {
-      await navigator.clipboard.writeText(contactEmail);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  };
-
   return (
     <div style={styles.container}>
       <div style={{ ...styles.banner, background: config.gradient, borderColor: config.borderColor }}>
@@ -103,17 +93,7 @@ export default function StatusMessageBanner({
           <div style={styles.contactSection}>
             <div style={styles.contactInfo}>
               <span style={styles.contactLabel}>Need help?</span>
-              <span style={styles.contactText}>Contact us at:</span>
-              <div style={styles.emailContainer}>
-                <span style={styles.emailText}>{contactEmail}</span>
-                <button
-                  onClick={copyEmail}
-                  style={styles.copyButton}
-                  title="Copy email address"
-                >
-                  {copied ? '✓ Copied' : '📋 Copy'}
-                </button>
-              </div>
+              <span style={styles.contactText}>Choose how to reach us:</span>
             </div>
 
             {/* Action Buttons */}
@@ -121,6 +101,7 @@ export default function StatusMessageBanner({
               <button
                 onClick={handleContactSupport}
                 style={styles.contactButton}
+                title={`Send email to ${contactEmail}`}
               >
                 📧 Email Support
               </button>
