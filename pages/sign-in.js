@@ -118,12 +118,13 @@ export default function LoginPage() {
           setLoading(false);
           setLoadingStage(0);
 
-          let blockReason = '';
-          if (accountStatus.blockingType === 'banned') {
-            blockReason = accountStatus.ban_reason;
-          } else if (accountStatus.blockingType === 'locked') {
-            blockReason = accountStatus.locked_reason;
-          }
+          // Use the actual reason from profile table
+          let blockReason = accountStatus.reason || 
+                           accountStatus.status_reason || 
+                           accountStatus.ban_reason || 
+                           accountStatus.locked_reason || 
+                           accountStatus.closure_reason || 
+                           '';
 
           setError({
             type: accountStatus.blockingType,
@@ -210,6 +211,10 @@ export default function LoginPage() {
             type={error.type}
             reason={error.reason}
             contactEmail="security@theoaklinebank.com"
+            onBack={() => {
+              setError('');
+              setFormData({ email: '', password: '' });
+            }}
           />
         </div>
       ) : loading ? (

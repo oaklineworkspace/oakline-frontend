@@ -1,8 +1,16 @@
 
 import { useState } from 'react';
 
-export default function StatusMessageBanner({ type, reason, contactEmail = 'security@theoaklinebank.com' }) {
+export default function StatusMessageBanner({ type, reason, contactEmail = 'security@theoaklinebank.com', onBack }) {
   const [copied, setCopied] = useState(false);
+
+  const handleBackToLogin = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      window.location.href = '/sign-in';
+    }
+  };
 
   const statusConfig = {
     banned: {
@@ -110,6 +118,16 @@ export default function StatusMessageBanner({ type, reason, contactEmail = 'secu
               >
                 📞 Call Support
               </a>
+            </div>
+
+            {/* Back to Login Button */}
+            <div style={styles.backButtonContainer}>
+              <button
+                onClick={handleBackToLogin}
+                style={styles.backButton}
+              >
+                ← Back to Login
+              </button>
             </div>
           </div>
         </div>
@@ -267,6 +285,24 @@ const styles = {
     display: 'inline-block',
     flex: '1',
     minWidth: '150px',
+    textAlign: 'center',
+  },
+  backButtonContainer: {
+    marginTop: '1.5rem',
+    paddingTop: '1rem',
+    borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+  },
+  backButton: {
+    backgroundColor: 'transparent',
+    color: '#ffffff',
+    border: '2px solid rgba(255, 255, 255, 0.5)',
+    borderRadius: '8px',
+    padding: '0.75rem 2rem',
+    fontSize: '1rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.3s',
+    width: '100%',
     textAlign: 'center',
   },
 };
