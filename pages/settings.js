@@ -682,7 +682,7 @@ export default function Settings() {
                     style={styles.actionButton}
                     onClick={() => router.push('/security')}
                   >
-                    Go to Security
+                    Security Settings
                   </button>
                 </div>
 
