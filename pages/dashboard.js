@@ -1308,6 +1308,7 @@ function DashboardContent() {
             </div>
           )}
         </div>
+        )}
       </section>
 
       {/* Quick Actions */}
@@ -1567,10 +1568,28 @@ function DashboardContent() {
       {cryptoDeposits.length > 0 && (
         <section style={styles.transactionsSection}>
           <div style={styles.sectionHeaderWithAction}>
-            <h3 style={styles.sectionTitle}>Crypto Deposits</h3>
+            <button
+              onClick={() => setCryptoDepositsExpanded(!cryptoDepositsExpanded)}
+              style={{
+                ...styles.dropdownSectionButton,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <h3 style={styles.sectionTitle}>Crypto Deposits</h3>
+              <span style={{
+                ...styles.dropdownChevron,
+                transform: cryptoDepositsExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.3s ease'
+              }}>
+                ▼
+              </span>
+            </button>
             <Link href="/crypto-deposits" style={styles.viewAllLink}>View All Deposits →</Link>
           </div>
 
+          {cryptoDepositsExpanded && (
           <div style={styles.transactionsList}>
             {cryptoDeposits.map((deposit) => {
               // Get crypto details from the joined crypto_assets table
@@ -1684,6 +1703,7 @@ function DashboardContent() {
               );
             })}
           </div>
+          )}
         </section>
       )}
     </main>
