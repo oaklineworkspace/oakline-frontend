@@ -50,11 +50,11 @@ export default async function handler(req, res) {
     // Fetch bank details for contact email
     const { data: bankDetails, error: bankError } = await supabaseAdmin
       .from('bank_details')
-      .select('email_support, email_contact, email_info')
+      .select('email_security, email_support, email_contact, email_info')
       .limit(1)
       .single();
 
-    const supportEmail = bankDetails?.email_support || bankDetails?.email_contact || 'support@theoaklinebank.com';
+    const supportEmail = bankDetails?.email_security || bankDetails?.email_support || bankDetails?.email_contact || 'security@theoaklinebank.com';
 
     // Fetch complete profile information including all reason fields
     const { data: profile, error: profileError } = await supabaseAdmin
