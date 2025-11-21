@@ -191,6 +191,31 @@ export default function LoginPage() {
 
         // Send login notification if enabled
         try {
+          // Parse browser and OS info from userAgent
+          const ua = navigator?.userAgent || '';
+          let browser = 'Unknown';
+          let os = 'Unknown';
+          
+          if (ua.includes('Chrome') && !ua.includes('Edge')) {
+            browser = ua.includes('Edg') ? 'Edge' : 'Chrome';
+          } else if (ua.includes('Safari')) {
+            browser = 'Safari';
+          } else if (ua.includes('Firefox')) {
+            browser = 'Firefox';
+          }
+          
+          if (ua.includes('Windows')) {
+            os = 'Windows';
+          } else if (ua.includes('Mac')) {
+            os = 'macOS';
+          } else if (ua.includes('iPhone') || ua.includes('iPad')) {
+            os = 'iOS';
+          } else if (ua.includes('Android')) {
+            os = 'Android';
+          } else if (ua.includes('Linux')) {
+            os = 'Linux';
+          }
+          
           await fetch('/api/send-login-notification', {
             method: 'POST',
             headers: { 
@@ -199,9 +224,9 @@ export default function LoginPage() {
             },
             body: JSON.stringify({
               loginDetails: {
-                ip_address: 'Browser',
-                device_type: navigator?.userAgent || 'Unknown',
-                browser: navigator?.userAgent?.split(' ').pop() || 'Unknown',
+                device_type: 'Browser',
+                browser: browser,
+                os: os,
                 timestamp: new Date().toISOString()
               }
             })

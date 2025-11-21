@@ -58,11 +58,10 @@ export default async function handler(req, res) {
 
     // Get login details from the activity log
     const {
-      ip_address,
       device_type,
       device_model,
-      browser,
-      os,
+      browser: clientBrowser,
+      os: clientOs,
       city,
       country,
       timezone,
@@ -70,10 +69,20 @@ export default async function handler(req, res) {
       timestamp = new Date().toISOString()
     } = loginDetails || {};
 
-    // Use provided data from client, with fallback
-    let actualIp = ip_address || 'Unknown';
+    // Extract real IP from request headers
+    let actualIp = req.headers['x-forwarded-for'] || 
+                   req.headers['x-real-ip'] || 
+                   req.socket?.remoteAddress || 
+                   'Unknown';
+    
+    // Handle x-forwarded-for which can be comma-separated
+    if (actualIp && actualIp.includes(',')) {
+      actualIp = actualIp.split(',')[0].trim();
+    }
+    
     let actualCity = city || 'Unknown';
     let actualCountry = country || 'Unknown';
+    let actualOs = clientOs || 'Unknown';
 
     // Only try server-side lookup if we truly don't have location data
     if (actualCity === 'Unknown' && actualIp && actualIp !== 'Unknown') {
@@ -142,11 +151,11 @@ export default async function handler(req, res) {
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #666;">💻 System:</td>
-                <td style="padding: 6px 0; color: #000;">${os || 'Unknown'}</td>
+                <td style="padding: 6px 0; color: #000;">${actualOs}</td>
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #666;">🌐 Browser:</td>
-                <td style="padding: 6px 0; color: #000;">${browser || 'Unknown'}</td>
+                <td style="padding: 6px 0; color: #000;">${clientBrowser || 'Unknown'}</td>
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #666;">🔢 IP:</td>
@@ -188,8 +197,8 @@ export default async function handler(req, res) {
       Time: ${formattedDate}
       Location: ${actualCity !== 'Unknown' ? `${actualCity}, ${actualCountry}` : 'Not available'}
       Device: ${device_model || device_type || 'Unknown'}
-      System: ${os || 'Unknown'}
-      Browser: ${browser || 'Unknown'}
+      System: ${actualOs}
+      Browser: ${clientBrowser || 'Unknown'}
       IP: ${actualIp || 'N/A'}
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
