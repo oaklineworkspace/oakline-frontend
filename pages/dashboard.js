@@ -1383,8 +1383,7 @@ function DashboardContent() {
             ▼
           </button>
         </div>
-        {quickActionsExpanded && (
-        <div style={styles.quickActions}>
+        {quickActionsExpanded && (<div style={styles.quickActions}>
           <Link href="/transfer" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>💸</span>
             <span style={styles.quickActionText}>Transfer Money</span>
@@ -1433,8 +1432,7 @@ function DashboardContent() {
             <span style={styles.quickActionIcon}>➕</span>
             <span style={styles.quickActionText}>Request Additional Account</span>
           </Link>
-        </div>
-        )}
+        </div>)}
       </section>
 
 
