@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import Header from '../components/Header';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 export default function Messages() {
   const router = useRouter();
@@ -157,7 +157,7 @@ export default function Messages() {
   if (!user) {
     return (
       <div style={styles.container}>
-        <Header />
+        <MessagesHeader />
         <div style={styles.content}>
           <div style={styles.loginPrompt}>
             <h1 style={styles.loginTitle}>Please Log In</h1>
@@ -178,32 +178,28 @@ export default function Messages() {
       </Head>
 
       <div style={styles.container}>
-        <Header />
+        <MessagesHeader />
 
         <main style={styles.main}>
-          <div style={styles.header}>
-            <div style={styles.titleSection}>
-              <h1 style={styles.title}>Messages</h1>
-              {threads.filter(t => t.status === 'open').length > 0 && (
-                <span style={styles.unreadBadge}>
-                  {threads.filter(t => t.status === 'open').length}
-                </span>
-              )}
+          <div style={styles.pageHeader}>
+            <div style={styles.headerLeft}>
+              <h1 style={styles.pageTitle}>💬 Messages</h1>
+              <p style={styles.pageSubtitle}>Connect with our support team securely</p>
             </div>
             <button 
               onClick={() => setShowNewThread(!showNewThread)}
-              style={styles.newButton}
+              style={styles.newConversationButton}
               disabled={creating}
             >
-              {showNewThread ? '✕ Cancel' : '✉ New Conversation'}
+              ✉️ New Conversation
             </button>
           </div>
 
           {showNewThread && (
             <div style={styles.newThreadSection}>
               <div style={styles.newThreadHeader}>
-                <h3 style={styles.newThreadTitle}>Start New Conversation</h3>
-                <span style={styles.secureIndicator}>🔒 Secure</span>
+                <h3 style={styles.newThreadTitle}>Start a New Conversation</h3>
+                <span style={styles.secureIndicator}>🔒 End-to-End Secure</span>
               </div>
               <input
                 value={newThreadSubject}
@@ -217,7 +213,7 @@ export default function Messages() {
                 onChange={(e) => setNewThreadMessage(e.target.value)}
                 placeholder="Type your message here..."
                 style={styles.textarea}
-                rows="4"
+                rows="5"
                 disabled={creating}
               />
               <div style={styles.newThreadActions}>
@@ -229,7 +225,7 @@ export default function Messages() {
                   }}
                   disabled={!newThreadSubject.trim() || !newThreadMessage.trim() || creating}
                 >
-                  {creating ? 'Creating...' : 'Start Conversation'}
+                  {creating ? 'Creating...' : '📤 Start Conversation'}
                 </button>
               </div>
             </div>
@@ -264,7 +260,7 @@ export default function Messages() {
                         {getStatusLabel(thread.status)}
                       </span>
                       {thread.admin_id && (
-                        <span style={styles.assignedLabel}>Assigned to Admin</span>
+                        <span style={styles.assignedLabel}>👤 Assigned to Admin</span>
                       )}
                     </div>
                   </div>
@@ -274,12 +270,12 @@ export default function Messages() {
               <div style={styles.emptyState}>
                 <div style={styles.emptyIcon}>💬</div>
                 <h3 style={styles.emptyTitle}>No Conversations Yet</h3>
-                <p style={styles.emptyMessage}>Start a conversation with our support team</p>
+                <p style={styles.emptyMessage}>Start a conversation with our support team to get help</p>
                 <button 
                   onClick={() => setShowNewThread(true)}
                   style={styles.emptyButton}
                 >
-                  Start Your First Conversation
+                  📬 Start Your First Conversation
                 </button>
               </div>
             )}
@@ -290,85 +286,153 @@ export default function Messages() {
   );
 }
 
+function MessagesHeader() {
+  return (
+    <header style={styles.header}>
+      <div style={styles.headerContent}>
+        <div style={styles.headerLeft}>
+          <Link href="/" style={styles.logoLink}>
+            <img src="/images/logo-primary.png" alt="Oakline Bank" style={styles.logo} />
+            <span style={styles.bankTitle}>Oakline Bank</span>
+          </Link>
+        </div>
+        <div style={styles.navLinks}>
+          <Link href="/dashboard" style={styles.headerLink}>Dashboard</Link>
+          <Link href="/messages" style={{...styles.headerLink, color: '#1e40af', fontWeight: '600'}}>Messages</Link>
+          <Link href="/support" style={styles.headerLink}>Support</Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+
 const styles = {
   container: {
     minHeight: '100vh',
     backgroundColor: '#f8fafc',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
   },
+  header: {
+    backgroundColor: '#ffffff',
+    borderBottom: '1px solid #e2e8f0',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+    sticky: 'top',
+    zIndex: 100
+  },
+  headerContent: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '1rem 1.5rem',
+    maxWidth: '1200px',
+    margin: '0 auto'
+  },
+  headerLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem'
+  },
+  logoLink: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    textDecoration: 'none'
+  },
+  logo: {
+    height: '40px',
+    width: 'auto'
+  },
+  bankTitle: {
+    fontSize: '1.25rem',
+    fontWeight: '700',
+    color: '#1a3e6f'
+  },
+  navLinks: {
+    display: 'flex',
+    gap: '1.5rem',
+    alignItems: 'center'
+  },
+  headerLink: {
+    color: '#6b7280',
+    textDecoration: 'none',
+    fontSize: '0.95rem',
+    fontWeight: '500',
+    transition: 'color 0.2s',
+    padding: '0.5rem 0.75rem',
+    borderRadius: '6px'
+  },
   content: {
     padding: '2rem 1rem'
   },
   main: {
-    padding: '1rem',
-    maxWidth: '100%',
+    padding: '2rem 1rem',
+    maxWidth: '1000px',
     margin: '0 auto'
   },
-  header: {
+  pageHeader: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1rem',
-    flexWrap: 'wrap',
-    gap: '0.5rem'
+    alignItems: 'flex-start',
+    marginBottom: '2rem',
+    gap: '1rem',
+    flexWrap: 'wrap'
   },
-  titleSection: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem'
+  headerLeft: {
+    flex: 1
   },
-  title: {
-    fontSize: 'clamp(1.5rem, 6vw, 2rem)',
+  pageTitle: {
+    fontSize: 'clamp(1.75rem, 5vw, 2.25rem)',
     color: '#1e293b',
     margin: 0,
     fontWeight: '700'
   },
-  unreadBadge: {
-    backgroundColor: '#dc2626',
-    color: 'white',
-    padding: '0.25rem 0.5rem',
-    borderRadius: '12px',
-    fontSize: '0.8rem',
-    fontWeight: '600',
-    minWidth: '20px',
-    textAlign: 'center'
+  pageSubtitle: {
+    fontSize: '1rem',
+    color: '#64748b',
+    margin: '0.5rem 0 0 0',
+    fontWeight: '400'
   },
-  newButton: {
-    backgroundColor: '#059669',
+  newConversationButton: {
+    backgroundColor: '#1e40af',
     color: 'white',
     border: 'none',
-    padding: '0.5rem 1rem',
+    padding: '0.75rem 1.5rem',
     borderRadius: '8px',
     cursor: 'pointer',
     fontWeight: '600',
-    fontSize: '0.85rem'
+    fontSize: '0.95rem',
+    whiteSpace: 'nowrap',
+    transition: 'all 0.2s'
   },
   newThreadSection: {
     backgroundColor: 'white',
-    padding: '1rem',
+    padding: '1.5rem',
     borderRadius: '12px',
-    marginBottom: '1rem',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    marginBottom: '1.5rem',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
     border: '1px solid #e2e8f0'
   },
   newThreadHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '0.75rem',
+    marginBottom: '1rem',
     flexWrap: 'wrap',
     gap: '0.5rem'
   },
   newThreadTitle: {
     margin: 0,
-    fontSize: '1rem',
+    fontSize: '1.1rem',
     fontWeight: '600',
     color: '#1e293b'
   },
   secureIndicator: {
-    fontSize: '0.8rem',
+    fontSize: '0.85rem',
     color: '#059669',
-    fontWeight: '500'
+    fontWeight: '500',
+    backgroundColor: '#ecfdf5',
+    padding: '0.35rem 0.75rem',
+    borderRadius: '6px'
   },
   input: {
     width: '100%',
@@ -387,9 +451,9 @@ const styles = {
     border: '1px solid #d1d5db',
     fontSize: '0.9rem',
     fontFamily: 'inherit',
-    marginBottom: '0.75rem',
+    marginBottom: '1rem',
     resize: 'vertical',
-    minHeight: '100px',
+    minHeight: '120px',
     lineHeight: '1.5',
     boxSizing: 'border-box'
   },
@@ -402,12 +466,12 @@ const styles = {
     backgroundColor: '#1e40af',
     color: 'white',
     border: 'none',
-    padding: '0.5rem 1rem',
+    padding: '0.75rem 1.5rem',
     borderRadius: '8px',
     cursor: 'pointer',
-    fontWeight: '500',
-    fontSize: '0.85rem',
-    flex: '1'
+    fontWeight: '600',
+    fontSize: '0.9rem',
+    transition: 'all 0.2s'
   },
   sendingButton: {
     backgroundColor: '#9ca3af',
@@ -416,19 +480,22 @@ const styles = {
   threadsContainer: {
     backgroundColor: 'white',
     borderRadius: '12px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
     border: '1px solid #e2e8f0',
     overflow: 'hidden'
   },
   threadsList: {
-    maxHeight: '70vh',
+    maxHeight: 'none',
     overflow: 'auto'
   },
   threadItem: {
     padding: '1rem',
     borderBottom: '1px solid #f1f5f9',
     cursor: 'pointer',
-    transition: 'background-color 0.2s'
+    transition: 'background-color 0.2s',
+    ':hover': {
+      backgroundColor: '#f8fafc'
+    }
   },
   threadHeader: {
     display: 'flex',
@@ -436,12 +503,12 @@ const styles = {
     alignItems: 'center',
     marginBottom: '0.5rem',
     flexWrap: 'wrap',
-    gap: '0.25rem'
+    gap: '0.5rem'
   },
   threadSubject: {
     fontWeight: '600',
     color: '#1e293b',
-    fontSize: '0.9rem'
+    fontSize: '0.95rem'
   },
   threadDate: {
     color: '#64748b',
@@ -450,23 +517,24 @@ const styles = {
   threadPreview: {
     color: '#64748b',
     fontSize: '0.85rem',
-    lineHeight: '1.3',
+    lineHeight: '1.4',
     marginBottom: '0.5rem'
   },
   threadFooter: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center'
+    alignItems: 'center',
+    gap: '1rem'
   },
   statusBadge: {
-    padding: '0.2rem 0.5rem',
-    borderRadius: '4px',
-    fontSize: '0.7rem',
+    padding: '0.3rem 0.6rem',
+    borderRadius: '6px',
+    fontSize: '0.75rem',
     fontWeight: '600',
     textTransform: 'uppercase'
   },
   assignedLabel: {
-    fontSize: '0.7rem',
+    fontSize: '0.75rem',
     color: '#6b7280',
     fontStyle: 'italic'
   },
@@ -476,18 +544,19 @@ const styles = {
     color: '#64748b'
   },
   emptyIcon: {
-    fontSize: '3rem',
+    fontSize: '3.5rem',
     marginBottom: '1rem'
   },
   emptyTitle: {
-    fontSize: '1.3rem',
+    fontSize: '1.4rem',
     fontWeight: '600',
     color: '#1e293b',
-    margin: '0 0 0.5rem 0'
+    margin: '0 0 0.75rem 0'
   },
   emptyMessage: {
     margin: '0 0 1.5rem 0',
-    fontSize: '1rem'
+    fontSize: '1rem',
+    color: '#64748b'
   },
   emptyButton: {
     backgroundColor: '#1e40af',
@@ -496,8 +565,9 @@ const styles = {
     padding: '0.75rem 1.5rem',
     borderRadius: '8px',
     cursor: 'pointer',
-    fontWeight: '500',
-    fontSize: '0.9rem'
+    fontWeight: '600',
+    fontSize: '0.95rem',
+    transition: 'all 0.2s'
   },
   loadingContainer: {
     display: 'flex',
@@ -508,24 +578,25 @@ const styles = {
     backgroundColor: '#f8fafc'
   },
   spinner: {
-    width: '32px',
-    height: '32px',
-    border: '3px solid #e2e8f0',
-    borderTop: '3px solid #1e40af',
+    width: '40px',
+    height: '40px',
+    border: '4px solid #e2e8f0',
+    borderTop: '4px solid #1e40af',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite'
   },
   loadingText: {
     marginTop: '1rem',
     color: '#64748b',
-    fontSize: '1rem'
+    fontSize: '1rem',
+    fontWeight: '500'
   },
   loginPrompt: {
     textAlign: 'center',
-    padding: '2rem 1rem',
+    padding: '3rem 1rem',
     backgroundColor: 'white',
     borderRadius: '12px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
     margin: '2rem auto',
     maxWidth: '400px'
   },
@@ -547,6 +618,6 @@ const styles = {
     color: 'white',
     textDecoration: 'none',
     borderRadius: '8px',
-    fontWeight: '500'
+    fontWeight: '600'
   }
 };

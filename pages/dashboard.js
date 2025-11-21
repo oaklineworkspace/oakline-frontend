@@ -855,7 +855,6 @@ function DashboardContent() {
                   <div style={styles.dropdownDivider}></div>
                   <div style={styles.dropdownSection}>
                     <h4 style={styles.dropdownSectionTitle}>❓ Help & Support</h4>
-                    <Link href="/support" style={styles.dropdownLink}>🎧 Customer Support</Link>
                     <Link href="/faq" style={styles.dropdownLink}>❓ FAQ</Link>
                     <Link href="/financial-education" style={styles.dropdownLink}>📚 Financial Education</Link>
                     <Link href="/calculators" style={styles.dropdownLink}>🧮 Financial Calculators</Link>
