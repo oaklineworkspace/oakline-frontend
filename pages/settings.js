@@ -352,7 +352,7 @@ export default function Settings() {
                   ...styles.tab,
                   ...(activeTab === 'security' ? styles.activeTab : {})
                 }}
-                onClick={() => setActiveTab('security')}
+                onClick={() => router.push('/security')}
               >
                 🔒 Security
               </button>
