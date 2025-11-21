@@ -1065,82 +1065,83 @@ function DashboardContent() {
 
         <div style={styles.accountsList}>
           {accounts.slice(0, accountDetailsExpanded ? accounts.length : 1).map(account => (
-            <div 
-              key={account.id}
-              onClick={() => setExpandedAccountCard(expandedAccountCard === account.id ? null : account.id)}
-              style={{
-                ...styles.accountItem,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              <div style={styles.accountInfo}>
-                <div style={styles.accountTypeIcon}>
-                  {account.account_type === 'checking' ? '🏦' :
-                   account.account_type === 'savings' ? '💰' : '📊'}
+            <div key={`account-${account.id}`}>
+              <div 
+                onClick={() => setExpandedAccountCard(expandedAccountCard === account.id ? null : account.id)}
+                style={{
+                  ...styles.accountItem,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <div style={styles.accountInfo}>
+                  <div style={styles.accountTypeIcon}>
+                    {account.account_type === 'checking' ? '🏦' :
+                     account.account_type === 'savings' ? '💰' : '📊'}
+                  </div>
+                  <div style={styles.accountDetails}>
+                    <h4 style={styles.accountName}>
+                      {account.account_type ? account.account_type.replace(/_/g, ' ').toUpperCase() : 'Account'}
+                    </h4>
+                    <span style={styles.accountNumber}>****{account.account_number?.slice(-4)}</span>
+                  </div>
                 </div>
-                <div style={styles.accountDetails}>
-                  <h4 style={styles.accountName}>
-                    {account.account_type ? account.account_type.replace(/_/g, ' ').toUpperCase() : 'Account'}
-                  </h4>
-                  <span style={styles.accountNumber}>****{account.account_number?.slice(-4)}</span>
+                <div style={styles.accountBalanceWithChevron}>
+                  <div style={styles.accountBalance}>
+                    {showBalance ? formatCurrency(account.balance || 0) : '•••••'}
+                  </div>
+                  <span style={{
+                    ...styles.cardDropdownChevron,
+                    transform: expandedAccountCard === account.id ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.3s ease'
+                  }}>
+                    ▼
+                  </span>
                 </div>
               </div>
-              <div style={styles.accountBalanceWithChevron}>
-                <div style={styles.accountBalance}>
-                  {showBalance ? formatCurrency(account.balance || 0) : '•••••'}
+              {expandedAccountCard === account.id && (
+                <div style={styles.accountDetailsExpanded}>
+                  <div style={styles.expandedDetailRow}>
+                    <span style={styles.expandedDetailLabel}>Full Account Number:</span>
+                    <span style={styles.expandedDetailValue}>{account.account_number || 'N/A'}</span>
+                  </div>
+                  <div style={styles.expandedDetailRow}>
+                    <span style={styles.expandedDetailLabel}>Account Type:</span>
+                    <span style={styles.expandedDetailValue}>{account.account_type?.replace(/_/g, ' ').toUpperCase()}</span>
+                  </div>
+                  <div style={styles.expandedDetailRow}>
+                    <span style={styles.expandedDetailLabel}>Current Balance:</span>
+                    <span style={{...styles.expandedDetailValue, color: '#059669', fontWeight: '700'}}>
+                      {showBalance ? formatCurrency(account.balance || 0) : '•••••'}
+                    </span>
+                  </div>
+                  <div style={styles.expandedDetailRow}>
+                    <span style={styles.expandedDetailLabel}>Status:</span>
+                    <span style={styles.expandedDetailValue}>
+                      <span style={{
+                        backgroundColor: '#d1fae5',
+                        color: '#059669',
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '6px',
+                        fontSize: '0.85rem',
+                        fontWeight: '600'
+                      }}>
+                        Active
+                      </span>
+                    </span>
+                  </div>
                 </div>
-                <span style={{
-                  ...styles.cardDropdownChevron,
-                  transform: expandedAccountCard === account.id ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.3s ease'
-                }}>
-                  ▼
-                </span>
-              </div>
+              )}
             </div>
           ))}
-          {expandedAccountCard && accounts.find(a => a.id === expandedAccountCard) && (
-            <div style={styles.accountDetailsExpanded}>
-              <div style={styles.expandedDetailRow}>
-                <span style={styles.expandedDetailLabel}>Full Account Number:</span>
-                <span style={styles.expandedDetailValue}>{accounts.find(a => a.id === expandedAccountCard)?.account_number || 'N/A'}</span>
-              </div>
-              <div style={styles.expandedDetailRow}>
-                <span style={styles.expandedDetailLabel}>Account Type:</span>
-                <span style={styles.expandedDetailValue}>{accounts.find(a => a.id === expandedAccountCard)?.account_type?.replace(/_/g, ' ').toUpperCase()}</span>
-              </div>
-              <div style={styles.expandedDetailRow}>
-                <span style={styles.expandedDetailLabel}>Current Balance:</span>
-                <span style={{...styles.expandedDetailValue, color: '#059669', fontWeight: '700'}}>
-                  {showBalance ? formatCurrency(accounts.find(a => a.id === expandedAccountCard)?.balance || 0) : '•••••'}
-                </span>
-              </div>
-              <div style={styles.expandedDetailRow}>
-                <span style={styles.expandedDetailLabel}>Status:</span>
-                <span style={styles.expandedDetailValue}>
-                  <span style={{
-                    backgroundColor: '#d1fae5',
-                    color: '#059669',
-                    padding: '0.25rem 0.75rem',
-                    borderRadius: '6px',
-                    fontSize: '0.85rem',
-                    fontWeight: '600'
-                  }}>
-                    Active
-                  </span>
-                </span>
-              </div>
-            </div>
-          )}
         </div>
 
         {accounts.length > 1 && (
