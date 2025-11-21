@@ -662,55 +662,72 @@ const styles = {
     justifyContent: 'center',
     gap: '1.25rem',
     maxWidth: '380px',
-    margin: '0 auto'
+    margin: '2rem auto 0',
+    boxShadow: '0 8px 25px rgba(16, 185, 129, 0.4)'
   },
   securityIconWrapper: {
-    fontSize: '2.5rem'
+    width: '56px',
+    height: '56px',
+    borderRadius: '50%',
+    background: 'rgba(16, 185, 129, 0.35)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
   },
   securityIcon: {
-    fontSize: '2rem'
+    fontSize: '1.75rem'
   },
   securityText: {
-    fontSize: '0.95rem',
+    fontSize: '1.05rem',
+    color: '#10b981',
+    margin: '0 0 0.25rem 0',
     fontWeight: '700',
-    color: '#ffffff',
-    margin: 0,
-    lineHeight: '1.2'
+    textAlign: 'left'
   },
   securitySubtext: {
-    fontSize: '0.8rem',
-    color: 'rgba(255, 255, 255, 0.7)',
-    margin: '0.25rem 0 0 0',
-    lineHeight: '1.2'
+    fontSize: '0.9rem',
+    color: '#10b981',
+    margin: 0,
+    fontWeight: '600',
+    textAlign: 'left'
   },
   pageContainer: {
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
-    background: 'linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%)'
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    background: 'linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)'
   },
   header: {
     background: 'linear-gradient(135deg, #1A3E6F 0%, #2A5490 100%)',
-    padding: '1.5rem 2rem',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+    borderBottom: '4px solid #059669',
+    boxShadow: '0 6px 20px rgba(26, 62, 111, 0.4)',
+    position: 'sticky',
+    top: 0,
+    zIndex: 100
   },
   headerContent: {
     maxWidth: '1200px',
     margin: '0 auto',
+    padding: '1.25rem 2rem',
     display: 'flex',
-    alignItems: 'center',
-    width: '100%'
+    justifyContent: 'flex-start',
+    alignItems: 'center'
   },
   logoLink: {
     display: 'flex',
     alignItems: 'center',
     gap: '1rem',
     textDecoration: 'none',
-    color: 'white'
+    color: 'white',
+    transition: 'transform 0.2s ease'
   },
   logoImage: {
-    height: '50px',
-    width: 'auto'
+    height: '70px',
+    width: 'auto',
+    filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.2))'
   },
   brandInfo: {
     display: 'flex',
@@ -718,176 +735,219 @@ const styles = {
     gap: '0.25rem'
   },
   brandName: {
-    fontSize: '1.75rem',
+    fontSize: '2rem',
     fontWeight: '700',
+    margin: 0,
     color: 'white',
-    margin: 0
+    letterSpacing: '1px',
+    textShadow: '0 2px 4px rgba(0,0,0,0.2)'
   },
   brandTagline: {
-    fontSize: '0.85rem',
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '500'
+    fontSize: '0.9rem',
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontWeight: '600',
+    letterSpacing: '0.3px'
   },
   mainContent: {
     flex: 1,
     display: 'flex',
+    flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
     padding: '2rem 1rem',
-    maxWidth: '100%'
+    width: '100%'
   },
   loginCard: {
-    background: 'white',
-    borderRadius: '20px',
-    boxShadow: '0 15px 45px rgba(0, 0, 0, 0.1)',
-    maxWidth: '500px',
     width: '100%',
+    maxWidth: '500px',
+    backgroundColor: 'white',
+    borderRadius: '24px',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
     overflow: 'hidden',
-    border: '1px solid rgba(0, 0, 0, 0.05)'
+    border: '1px solid rgba(26, 62, 111, 0.1)'
   },
   cardHeader: {
-    background: 'linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%)',
-    padding: '2rem 2rem 1.5rem',
     textAlign: 'center',
-    borderBottom: '1px solid #e2e8f0'
+    padding: '2.5rem 2rem',
+    background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
+    borderBottom: '2px solid #e2e8f0'
   },
   lockIcon: {
-    fontSize: '2.5rem',
-    marginBottom: '0.5rem'
+    fontSize: '3.5rem',
+    marginBottom: '1.25rem',
+    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
   },
   cardTitle: {
-    fontSize: '1.75rem',
+    fontSize: '2.25rem',
     fontWeight: '700',
-    color: '#1a202c',
-    margin: '0.5rem 0 0.5rem 0'
+    color: '#1a365d',
+    marginBottom: '0.75rem',
+    margin: 0,
+    letterSpacing: '0.5px'
   },
   cardSubtitle: {
-    fontSize: '0.9rem',
-    color: '#718096',
-    margin: 0
+    fontSize: '1rem',
+    color: '#64748b',
+    margin: 0,
+    marginTop: '0.5rem',
+    fontWeight: '500'
   },
   form: {
-    padding: '2rem'
+    width: '100%',
+    background: 'white',
+    padding: '2rem',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.25rem'
   },
   inputGroup: {
-    marginBottom: '1.5rem'
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem'
   },
   label: {
-    display: 'block',
     fontSize: '0.9rem',
     fontWeight: '600',
-    color: '#2d3748',
-    marginBottom: '0.5rem'
+    color: '#1a365d'
   },
   inputWrapper: {
+    position: 'relative',
     display: 'flex',
-    alignItems: 'center',
-    border: '2px solid #e2e8f0',
-    borderRadius: '10px',
-    padding: '0 1rem',
-    background: '#f7fafc',
-    transition: 'all 0.3s'
+    alignItems: 'center'
   },
   inputIcon: {
-    fontSize: '1.25rem',
-    marginRight: '0.75rem',
-    color: '#4a5568'
+    position: 'absolute',
+    left: '1rem',
+    fontSize: '1.2rem',
+    pointerEvents: 'none'
   },
   input: {
-    flex: 1,
-    padding: '0.875rem 0',
-    border: 'none',
-    background: 'transparent',
-    fontSize: '0.95rem',
-    color: '#2d3748',
-    outline: 'none'
+    width: '100%',
+    padding: '1.125rem 1.5rem 1.125rem 3.25rem',
+    border: '2px solid #e2e8f0',
+    borderRadius: '12px',
+    fontSize: '16px',
+    transition: 'all 0.3s ease',
+    boxSizing: 'border-box',
+    outline: 'none',
+    backgroundColor: '#f8fafc',
+    color: '#1e293b',
+    fontWeight: '500'
   },
   passwordToggle: {
+    position: 'absolute',
+    right: '1rem',
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '1.1rem',
-    padding: '0 0.5rem',
-    color: '#4a5568'
+    fontSize: '1.4rem',
+    padding: '0.5rem',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'transform 0.2s ease',
+    zIndex: 10
   },
   formOptions: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '1.5rem',
-    fontSize: '0.85rem'
+    fontSize: '0.85rem',
+    flexWrap: 'wrap',
+    gap: '0.5rem'
   },
   checkboxLabel: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    cursor: 'pointer',
-    color: '#2d3748'
-  },
-  checkbox: {
     cursor: 'pointer'
   },
+  checkbox: {
+    width: '20px',
+    height: '20px',
+    cursor: 'pointer',
+    accentColor: '#2563eb'
+  },
   checkboxText: {
-    fontSize: '0.85rem',
-    color: '#4a5568'
+    color: '#475569',
+    fontWeight: '500'
   },
   forgotLink: {
     color: '#2563eb',
     textDecoration: 'none',
+    fontWeight: '600',
+    transition: 'color 0.2s'
+  },
+  errorMessage: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '1rem 1.25rem',
+    backgroundColor: '#3b82f6',
+    border: '2px solid #1e40af',
+    borderRadius: '12px',
+    color: '#ffffff',
+    fontSize: '0.9rem',
     fontWeight: '600'
   },
-  simpleErrorMessage: {
-    background: '#fee2e2',
-    border: '2px solid #fca5a5',
-    color: '#991b1b',
-    padding: '1rem',
-    borderRadius: '8px',
-    marginBottom: '1.5rem',
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '0.75rem',
-    fontSize: '0.9rem'
-  },
   errorIcon: {
-    fontSize: '1.25rem',
-    flexShrink: 0
+    fontSize: '1.2rem'
+  },
+  simpleErrorMessage: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '0.875rem 1rem',
+    backgroundColor: '#fee2e2',
+    border: '1px solid #fca5a5',
+    borderRadius: '8px',
+    color: '#7f1d1d',
+    fontSize: '0.9rem',
+    fontWeight: '500',
+    marginBottom: '1rem'
   },
   restrictionBanner: {
-    background: 'linear-gradient(135deg, #001f3f 0%, #003d7a 100%)',
-    border: '2px solid #0d47a1',
-    color: 'white',
-    padding: '1.5rem',
+    backgroundColor: '#ffffff',
+    border: '2px solid #3b82f6',
     borderRadius: '12px',
-    marginBottom: '1.5rem'
+    padding: '1.25rem',
+    marginBottom: '1rem'
   },
   restrictionHeader: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.75rem',
-    marginBottom: '1rem'
+    marginBottom: '1rem',
+    paddingBottom: '1rem',
+    borderBottom: '1px solid rgba(59, 130, 246, 0.2)'
   },
   restrictionIcon: {
     fontSize: '1.5rem'
   },
   restrictionTitle: {
+    fontSize: '1.1rem',
     fontWeight: '700',
-    fontSize: '1rem'
+    color: '#1e40af'
   },
   restrictionReason: {
-    margin: '0 0 1rem 0',
-    lineHeight: '1.5',
-    fontSize: '0.95rem'
+    fontSize: '0.95rem',
+    color: '#1e3a8a',
+    lineHeight: '1.6',
+    marginBottom: '1rem',
+    margin: '0 0 1rem 0'
   },
   restrictionContact: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#eff6ff',
     borderRadius: '8px',
     padding: '1rem',
-    borderLeft: '3px solid #64b5f6'
+    border: '1px solid #3b82f6'
   },
   contactPrompt: {
-    margin: '0 0 0.75rem 0',
-    fontSize: '0.85rem',
-    color: 'rgba(255, 255, 255, 0.9)'
+    fontSize: '0.9rem',
+    color: '#1e40af',
+    fontWeight: '600',
+    marginBottom: '0.75rem',
+    margin: '0 0 0.75rem 0'
   },
   contactDetails: {
     marginBottom: '0.75rem'
@@ -895,22 +955,111 @@ const styles = {
   contactItem: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem'
+    gap: '0.5rem',
+    padding: '0.5rem',
+    backgroundColor: '#dbeafe',
+    borderRadius: '6px',
+    marginBottom: '0.5rem'
   },
   contactIcon: {
-    fontSize: '1rem'
+    fontSize: '1.2rem'
   },
   contactLink: {
-    color: '#e3f2fd',
+    color: '#1e40af',
     textDecoration: 'none',
     fontWeight: '600',
-    fontSize: '0.9rem'
+    fontSize: '0.95rem'
   },
   supportHours: {
-    margin: '0.75rem 0 0 0',
+    fontSize: '0.85rem',
+    color: '#1e40af',
+    fontStyle: 'italic',
+    margin: 0,
+    textAlign: 'center'
+  },
+  bannedMessage: {
+    backgroundColor: '#fef2f2',
+    border: '2px solid #dc2626',
+    borderRadius: '16px',
+    padding: '1.5rem',
+    marginBottom: '1rem'
+  },
+  bannedHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    marginBottom: '1rem',
+    paddingBottom: '1rem',
+    borderBottom: '1px solid #fca5a5'
+  },
+  bannedIcon: {
+    fontSize: '2rem'
+  },
+  bannedTitle: {
+    fontSize: '1.25rem',
+    fontWeight: '700',
+    color: '#991b1b',
+    margin: 0
+  },
+  bannedText: {
+    fontSize: '0.95rem',
+    color: '#7f1d1d',
+    lineHeight: '1.6',
+    marginBottom: '1.25rem'
+  },
+  bannedContactSection: {
+    backgroundColor: '#fff',
+    borderRadius: '12px',
+    padding: '1.25rem',
+    border: '1px solid #fca5a5'
+  },
+  bannedContactTitle: {
+    fontSize: '0.95rem',
+    color: '#991b1b',
+    marginBottom: '1rem',
+    margin: '0 0 1rem 0'
+  },
+  contactMethods: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+    marginBottom: '1rem'
+  },
+  contactMethod: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '0.75rem',
+    padding: '0.75rem',
+    backgroundColor: '#fef2f2',
+    borderRadius: '8px',
+    border: '1px solid #fee2e2'
+  },
+  contactIcon: {
+    fontSize: '1.5rem'
+  },
+  contactLabel: {
     fontSize: '0.75rem',
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontStyle: 'italic'
+    color: '#7f1d1d',
+    fontWeight: '600',
+    marginBottom: '0.25rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
+  },
+  contactValue: {
+    fontSize: '0.95rem',
+    color: '#dc2626',
+    fontWeight: '600',
+    textDecoration: 'none',
+    display: 'block'
+  },
+  bannedFooter: {
+    fontSize: '0.8rem',
+    color: '#7f1d1d',
+    fontStyle: 'italic',
+    margin: '0.75rem 0 0 0',
+    paddingTop: '0.75rem',
+    borderTop: '1px solid #fee2e2',
+    lineHeight: '1.5'
   },
   submitButton: {
     width: '100%',
