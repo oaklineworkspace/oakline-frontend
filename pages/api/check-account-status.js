@@ -59,7 +59,7 @@ export default async function handler(req, res) {
     // Fetch complete profile information including all reason fields
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('status, status_reason, is_banned, ban_reason, restriction_display_message, closure_reason, locked_reason, suspension_reason, suspension_start_date, suspension_end_date')
+      .select('status, status_reason, is_banned, ban_reason, restriction_display_message, closure_reason, suspension_reason, suspension_start_date, suspension_end_date, restriction_reason_id')
       .eq('id', userId)
       .single();
 
@@ -95,11 +95,15 @@ export default async function handler(req, res) {
     // Fetch restriction reason from account_restriction_reasons if restriction_reason_id exists
     let restrictionReasonText = null;
     if (profile?.restriction_reason_id) {
-      const { data: restrictionReason } = await supabaseAdmin
+      const { data: restrictionReason, error: restrictionError } = await supabaseAdmin
         .from('account_restriction_reasons')
         .select('reason_text, category, severity_level')
         .eq('id', profile.restriction_reason_id)
         .single();
+      
+      if (restrictionError) {
+        console.error('Restriction reason query error:', restrictionError);
+      }
       
       if (restrictionReason) {
         restrictionReasonText = restrictionReason.reason_text;
