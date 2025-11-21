@@ -988,6 +988,7 @@ function DashboardContent() {
                 </button>
                 <span style={{
                   ...styles.dropdownChevronButton,
+                  color: 'white',
                   transform: balanceCardExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
                   transition: 'transform 0.3s ease'
                 }}>
@@ -3445,7 +3446,7 @@ dropdownButton: {
     margin: 0,
     fontSize: '1.2rem',
     fontWeight: 'bold',
-    color: 'white',
+    color: '#1a365d',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
