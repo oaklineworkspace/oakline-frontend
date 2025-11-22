@@ -318,7 +318,7 @@ export default function LoginPage() {
         <div style={styles.fullScreenBannedContainer}>
           <StatusMessageBanner
             type={error.type}
-            reason={error.reason}
+            reason={error.reason || ''}
             contactEmail={error.supportEmail || "support@theoaklinebank.com"}
             onBack={() => {
               setError('');

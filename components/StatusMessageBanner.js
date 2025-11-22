@@ -185,6 +185,10 @@ const styles = {
     marginBottom: '1.5rem',
     textAlign: 'left',
     border: '1px solid rgba(255, 255, 255, 0.2)',
+    maxHeight: '200px',
+    overflowY: 'auto',
+    wordWrap: 'break-word',
+    whiteSpace: 'pre-wrap',
   },
   reasonLabel: {
     display: 'block',
@@ -198,6 +202,8 @@ const styles = {
     fontSize: '1rem',
     color: '#ffffff',
     lineHeight: '1.5',
+    wordWrap: 'break-word',
+    whiteSpace: 'pre-wrap',
   },
   contactSection: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
