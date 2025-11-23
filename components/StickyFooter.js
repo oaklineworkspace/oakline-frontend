@@ -256,21 +256,6 @@ export default function StickyFooter() {
                 </span>
               </Link>
             ))}
-
-            {/* Sign Out Button for Authenticated Users */}
-            {user && (
-              <button
-                onClick={handleSignOut}
-                style={{
-                  ...styles.navButton,
-                  background: '#ffffff',
-                  border: '1px solid #e5e7eb'
-                }}
-              >
-                <span style={styles.navIcon}>🔐</span>
-                <span style={styles.navText}>Sign Out</span>
-              </button>
-            )}
           </div>
         </div>
       </div>
