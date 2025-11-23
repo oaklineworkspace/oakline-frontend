@@ -33,11 +33,17 @@ export default function Security() {
 
   // Email Change Modal State
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailVerificationStep, setEmailVerificationStep] = useState('choose'); // 'choose', 'code', 'ssn'
   const [emailData, setEmailData] = useState({
     newEmail: '',
     confirmEmail: ''
   });
+  const [verificationData, setVerificationData] = useState({
+    verificationCode: '',
+    ssn: ''
+  });
   const [emailLoading, setEmailLoading] = useState(false);
+  const [codeHash, setCodeHash] = useState(null);
 
   const router = useRouter();
 
@@ -155,6 +161,42 @@ export default function Security() {
     }
   };
 
+  const sendVerificationCode = async () => {
+    setEmailLoading(true);
+    setError('');
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('❌ Session expired. Please log in again');
+      }
+
+      const response = await fetch('/api/send-email-verification-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send code');
+      }
+
+      setCodeHash(result.codeHash);
+      setEmailVerificationStep('code');
+      setMessage('✅ Verification code sent to ' + user?.email);
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      console.error('Send code error:', error);
+      setError(error.message);
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
   const handleEmailChange = async () => {
     setEmailLoading(true);
     setError('');
@@ -204,14 +246,18 @@ export default function Security() {
 
       setMessage('✅ Email changed successfully! Check your new email for confirmation.');
       setShowEmailModal(false);
+      setEmailVerificationStep('choose');
       setEmailData({
         newEmail: '',
         confirmEmail: ''
       });
+      setVerificationData({
+        verificationCode: '',
+        ssn: ''
+      });
 
       setTimeout(() => {
         setMessage('');
-        // Optionally refresh user data
         checkUser();
       }, 5000);
     } catch (error) {
@@ -568,82 +614,178 @@ export default function Security() {
               <h2 style={styles.modalTitle}>Change Email Address</h2>
               <button 
                 style={styles.closeButton}
-                onClick={() => setShowEmailModal(false)}
+                onClick={() => {
+                  setShowEmailModal(false);
+                  setEmailVerificationStep('choose');
+                  setVerificationData({ verificationCode: '', ssn: '' });
+                }}
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={(e) => { e.preventDefault(); handleEmailChange(); }}>
-              {message && (
-                <div style={styles.successMessage}>{message}</div>
-              )}
+            {message && (
+              <div style={styles.successMessage}>{message}</div>
+            )}
 
-              {error && (
-                <div style={styles.errorMessage}>{error}</div>
-              )}
+            {error && (
+              <div style={styles.errorMessage}>{error}</div>
+            )}
 
+            {emailVerificationStep === 'choose' && (
               <div style={styles.formGroup}>
-                <label style={styles.label}>Current Email</label>
-                <input
-                  type="email"
-                  value={user?.email || ''}
-                  disabled
-                  style={{...styles.input, backgroundColor: '#f1f5f9'}}
-                />
-              </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>New Email Address</label>
-                <input
-                  type="email"
-                  required
-                  value={emailData.newEmail}
-                  onChange={(e) => setEmailData({...emailData, newEmail: e.target.value})}
-                  style={styles.input}
-                  placeholder="Enter new email address"
-                />
-              </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Confirm New Email</label>
-                <input
-                  type="email"
-                  required
-                  value={emailData.confirmEmail}
-                  onChange={(e) => setEmailData({...emailData, confirmEmail: e.target.value})}
-                  style={styles.input}
-                  placeholder="Confirm your new email address"
-                />
-              </div>
-
-              <div style={styles.infoBox}>
-                <span style={styles.infoIcon}>ℹ️</span>
-                <div>
-                  <div style={styles.infoTitle}>Email Change Notice</div>
-                  <div style={styles.infoText}>
-                    A confirmation link will be sent to your new email address. You must verify it to complete the change.
+                <div style={styles.infoBox}>
+                  <span style={styles.infoIcon}>🔒</span>
+                  <div>
+                    <div style={styles.infoTitle}>Verify Your Identity</div>
+                    <div style={styles.infoText}>
+                      For your security, please verify your identity before changing your email.
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div style={styles.modalActions}>
-                <button 
-                  type="button"
-                  style={styles.cancelButton}
-                  onClick={() => setShowEmailModal(false)}
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  style={styles.submitButton}
-                  disabled={emailLoading}
-                >
-                  {emailLoading ? 'Updating...' : 'Change Email'}
-                </button>
+                <div style={{marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                  <button
+                    type="button"
+                    onClick={() => sendVerificationCode()}
+                    style={{...styles.submitButton, marginBottom: 0}}
+                    disabled={emailLoading}
+                  >
+                    📧 Send Code to {user?.email?.split('@')[1] ? user.email.substring(0, 3) + '***@' + user.email.split('@')[1] : '***'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEmailVerificationStep('ssn')}
+                    style={{...styles.cancelButton, marginBottom: 0, background: '#eff6ff', color: '#1e40af'}}
+                  >
+                    🆔 Verify with SSN
+                  </button>
+                </div>
               </div>
-            </form>
+            )}
+
+            {emailVerificationStep === 'code' && (
+              <form onSubmit={(e) => { e.preventDefault(); }}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Verification Code</label>
+                  <input
+                    type="text"
+                    maxLength="6"
+                    value={verificationData.verificationCode}
+                    onChange={(e) => setVerificationData({...verificationData, verificationCode: e.target.value.replace(/\D/g, '')})}
+                    style={styles.input}
+                    placeholder="Enter 6-digit code"
+                  />
+                  <p style={{fontSize: '12px', color: '#666', marginTop: '8px'}}>Code sent to {user?.email}</p>
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>New Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    value={emailData.newEmail}
+                    onChange={(e) => setEmailData({...emailData, newEmail: e.target.value})}
+                    style={styles.input}
+                    placeholder="Enter new email address"
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Confirm New Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={emailData.confirmEmail}
+                    onChange={(e) => setEmailData({...emailData, confirmEmail: e.target.value})}
+                    style={styles.input}
+                    placeholder="Confirm your new email address"
+                  />
+                </div>
+
+                <div style={styles.modalActions}>
+                  <button 
+                    type="button"
+                    style={styles.cancelButton}
+                    onClick={() => {
+                      setEmailVerificationStep('choose');
+                      setVerificationData({ verificationCode: '', ssn: '' });
+                    }}
+                  >
+                    Back
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={handleEmailChange}
+                    style={styles.submitButton}
+                    disabled={emailLoading || !verificationData.verificationCode}
+                  >
+                    {emailLoading ? 'Updating...' : 'Change Email'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {emailVerificationStep === 'ssn' && (
+              <form onSubmit={(e) => { e.preventDefault(); }}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Last 4 Digits of SSN</label>
+                  <input
+                    type="text"
+                    maxLength="4"
+                    value={verificationData.ssn}
+                    onChange={(e) => setVerificationData({...verificationData, ssn: e.target.value.replace(/\D/g, '')})}
+                    style={styles.input}
+                    placeholder="••••"
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>New Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    value={emailData.newEmail}
+                    onChange={(e) => setEmailData({...emailData, newEmail: e.target.value})}
+                    style={styles.input}
+                    placeholder="Enter new email address"
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Confirm New Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={emailData.confirmEmail}
+                    onChange={(e) => setEmailData({...emailData, confirmEmail: e.target.value})}
+                    style={styles.input}
+                    placeholder="Confirm your new email address"
+                  />
+                </div>
+
+                <div style={styles.modalActions}>
+                  <button 
+                    type="button"
+                    style={styles.cancelButton}
+                    onClick={() => {
+                      setEmailVerificationStep('choose');
+                      setVerificationData({ verificationCode: '', ssn: '' });
+                    }}
+                  >
+                    Back
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={handleEmailChange}
+                    style={styles.submitButton}
+                    disabled={emailLoading || !verificationData.ssn}
+                  >
+                    {emailLoading ? 'Updating...' : 'Change Email'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
