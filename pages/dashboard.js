@@ -902,11 +902,6 @@ function DashboardContent() {
                     <Link href="/branch-locator" style={styles.dropdownLink}>📍 Find Branch/ATM</Link>
                   </div>
                   <div style={styles.dropdownDivider}></div>
-                  <div style={styles.dropdownSection}>
-                    <button onClick={handleSignOut} style={styles.logoutDropdownButton}>
-                      Sign Out
-                    </button>
-                  </div>
                 </div>
               )}
             </div>
@@ -925,6 +920,9 @@ function DashboardContent() {
                     {userProfile.application_status === 'approved' || userProfile.application_status === 'completed' ? '✓ Verified' : `Status: ${userProfile.application_status || 'Pending'}`}
                   </span>
                 )}
+                <button onClick={handleSignOut} style={styles.headerSignOutButton}>
+                  Sign Out
+                </button>
               </div>
             </div>
           </div>
@@ -2556,6 +2554,20 @@ accountStatus: {
   fontSize: '0.75rem',
   fontWeight: '600',
   marginTop: '0.25rem'
+},
+headerSignOutButton: {
+  marginTop: '0.5rem',
+  padding: '0.4rem 0.8rem',
+  backgroundColor: '#dc2626',
+  color: 'white',
+  border: 'none',
+  borderRadius: '4px',
+  fontSize: '0.8rem',
+  fontWeight: '600',
+  cursor: 'pointer',
+  transition: 'all 0.2s',
+  width: '100%',
+  textAlign: 'center'
 },
 
 logoutButton: {
