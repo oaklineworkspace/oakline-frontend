@@ -47,6 +47,13 @@ function DashboardContent() {
     autoClaimPendingPayments();
   }, [user]); // Depend on user to ensure checkUser runs when user is available
 
+  // Load dashboard data when user is available
+  useEffect(() => {
+    if (user?.id) {
+      loadUserData(user.id);
+    }
+  }, [user?.id]);
+
   const autoClaimPendingPayments = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
