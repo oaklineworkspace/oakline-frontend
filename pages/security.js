@@ -575,6 +575,14 @@ export default function Security() {
             </div>
 
             <form onSubmit={(e) => { e.preventDefault(); handleEmailChange(); }}>
+              {message && (
+                <div style={styles.successMessage}>{message}</div>
+              )}
+
+              {error && (
+                <div style={styles.errorMessage}>{error}</div>
+              )}
+
               <div style={styles.formGroup}>
                 <label style={styles.label}>Current Email</label>
                 <input
