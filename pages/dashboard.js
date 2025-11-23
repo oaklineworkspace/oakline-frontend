@@ -34,12 +34,40 @@ function DashboardContent() {
   const [expandedAccountCard, setExpandedAccountCard] = useState(null);
   const [balanceCardExpanded, setBalanceCardExpanded] = useState(true);
   const [cardsExpanded, setCardsExpanded] = useState(true);
+  const [message, setMessage] = useState(''); // State for messages
+
+  const checkUser = () => { // Renamed from useEffect's callback for clarity
+    if (!user) {
+      router.push('/login');
+    }
+  };
 
   useEffect(() => {
-    if (user) {
-      loadUserData(user.id);
+    checkUser();
+    autoClaimPendingPayments();
+  }, [user]); // Depend on user to ensure checkUser runs when user is available
+
+  const autoClaimPendingPayments = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/oakline-pay-claim-pending', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      const data = await response.json();
+      if (data.success && data.claimed_count > 0) {
+        setMessage(`Welcome! You've claimed ${data.claimed_count} pending payment${data.claimed_count > 1 ? 's' : ''} totaling $${data.total_amount.toFixed(2)}`);
+      }
+    } catch (error) {
+      console.error('Auto-claim error:', error);
     }
-  }, [user]);
+  };
+
 
   const loadUserData = async (userId) => {
     setLoading(true);
@@ -1049,6 +1077,21 @@ function DashboardContent() {
             )}
           </div>
         </div>
+        {message && ( // Display the message from auto-claim
+          <div style={{
+            padding: '1rem',
+            backgroundColor: '#d1fae5',
+            color: '#065f46',
+            borderRadius: '8px',
+            marginBottom: '1rem',
+            fontSize: '0.9rem',
+            fontWeight: '500',
+            textAlign: 'center',
+            marginTop: '1rem'
+          }}>
+            {message}
+          </div>
+        )}
       </section>
 
       {/* Funding Notices for Pending Funding Accounts */}
@@ -1064,13 +1107,13 @@ function DashboardContent() {
         <div style={styles.accountsList}>
           {accounts.slice(0, accountDetailsExpanded ? accounts.length : 1).map(account => (
             <div key={`account-${account.id}`}>
-              <div 
-                onClick={() => setExpandedAccountCard(expandedAccountCard === account.id ? null : account.id)}
+              <div
                 style={{
                   ...styles.accountItem,
                   cursor: 'pointer',
                   transition: 'all 0.3s ease'
                 }}
+                onClick={() => setExpandedAccountCard(expandedAccountCard === account.id ? null : account.id)}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12)';
                   e.currentTarget.style.transform = 'translateY(-2px)';
@@ -1507,7 +1550,7 @@ function DashboardContent() {
             </div>
           )}
 
-          {cardsExpanded && (<div 
+          {cardsExpanded && (<div
             ref={(el) => {
               if (el && cards.length > 1) {
                 let scrollInterval;
@@ -3026,7 +3069,7 @@ accountNumber: {
 accountBalance: {
   fontSize: '1.5rem',
   fontWeight: 'bold',
-  color: '#1e40af',
+  color: '#1a36af',
   textAlign: 'center',
   width: '100%',
   whiteSpace: 'normal',
