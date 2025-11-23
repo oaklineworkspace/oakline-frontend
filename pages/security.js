@@ -31,6 +31,14 @@ export default function Security() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Email Change Modal State
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailData, setEmailData] = useState({
+    newEmail: '',
+    confirmEmail: ''
+  });
+  const [emailLoading, setEmailLoading] = useState(false);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -147,6 +155,74 @@ export default function Security() {
     }
   };
 
+  const handleEmailChange = async () => {
+    setEmailLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      if (!emailData.newEmail || !emailData.confirmEmail) {
+        throw new Error('⚠️ All fields are required');
+      }
+
+      if (emailData.newEmail !== emailData.confirmEmail) {
+        throw new Error('⚠️ Emails do not match');
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(emailData.newEmail)) {
+        throw new Error('⚠️ Please enter a valid email address');
+      }
+
+      if (emailData.newEmail === user.email) {
+        throw new Error('⚠️ New email must be different from current email');
+      }
+
+      // Get session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('❌ Session expired. Please log in again');
+      }
+
+      // Call email change API
+      const response = await fetch('/api/change-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          newEmail: emailData.newEmail
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to change email');
+      }
+
+      setMessage('✅ Email changed successfully! Check your new email for confirmation.');
+      setShowEmailModal(false);
+      setEmailData({
+        newEmail: '',
+        confirmEmail: ''
+      });
+
+      setTimeout(() => {
+        setMessage('');
+        // Optionally refresh user data
+        checkUser();
+      }, 5000);
+    } catch (error) {
+      console.error('Email change error:', error);
+      setError(error.message);
+      setTimeout(() => setError(''), 5000);
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
   const updateSecuritySetting = async (setting, value) => {
     try {
       const updatedSettings = { ...securitySettings, [setting]: value };
@@ -231,6 +307,21 @@ export default function Security() {
       {/* Password & Authentication */}
       <div style={styles.card}>
         <h2 style={styles.cardTitle}>🔐 Password & Authentication</h2>
+
+        <div style={styles.settingRow}>
+          <div style={styles.settingInfo}>
+            <h3 style={styles.settingLabel}>Change Email</h3>
+            <p style={styles.settingDescription}>
+              Update your email if it has been stolen or compromised
+            </p>
+          </div>
+          <button 
+            style={styles.actionButton}
+            onClick={() => setShowEmailModal(true)}
+          >
+            Change Email
+          </button>
+        </div>
 
         <div style={styles.settingRow}>
           <div style={styles.settingInfo}>
@@ -465,6 +556,86 @@ export default function Security() {
             </div>
             <h2 style={styles.modalTitle}>Success!</h2>
             <p style={styles.modalMessage}>{successMessage}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Email Change Modal */}
+      {showEmailModal && (
+        <div style={styles.modalOverlay} onClick={() => setShowEmailModal(false)}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>Change Email Address</h2>
+              <button 
+                style={styles.closeButton}
+                onClick={() => setShowEmailModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={(e) => { e.preventDefault(); handleEmailChange(); }}>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Current Email</label>
+                <input
+                  type="email"
+                  value={user?.email || ''}
+                  disabled
+                  style={{...styles.input, backgroundColor: '#f1f5f9'}}
+                />
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>New Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={emailData.newEmail}
+                  onChange={(e) => setEmailData({...emailData, newEmail: e.target.value})}
+                  style={styles.input}
+                  placeholder="Enter new email address"
+                />
+              </div>
+
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Confirm New Email</label>
+                <input
+                  type="email"
+                  required
+                  value={emailData.confirmEmail}
+                  onChange={(e) => setEmailData({...emailData, confirmEmail: e.target.value})}
+                  style={styles.input}
+                  placeholder="Confirm your new email address"
+                />
+              </div>
+
+              <div style={styles.infoBox}>
+                <span style={styles.infoIcon}>ℹ️</span>
+                <div>
+                  <div style={styles.infoTitle}>Email Change Notice</div>
+                  <div style={styles.infoText}>
+                    A confirmation link will be sent to your new email address. You must verify it to complete the change.
+                  </div>
+                </div>
+              </div>
+
+              <div style={styles.modalActions}>
+                <button 
+                  type="button"
+                  style={styles.cancelButton}
+                  onClick={() => setShowEmailModal(false)}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  style={styles.submitButton}
+                  disabled={emailLoading}
+                >
+                  {emailLoading ? 'Updating...' : 'Change Email'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
