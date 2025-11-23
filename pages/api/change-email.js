@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseAdmin = createClient(
+const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
 export default async function handler(req, res) {
@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     const token = authHeader.substring(7);
 
     // Verify the token by getting the user
-    const { data: { user: currentUser }, error: tokenError } = await supabaseAdmin.auth.getUser(token);
+    const { data: { user: currentUser }, error: tokenError } = await supabase.auth.getUser(token);
     if (tokenError || !currentUser) {
       return res.status(401).json({ error: 'Unauthorized - Invalid token' });
     }
@@ -35,31 +35,35 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'New email must be different from current email' });
     }
 
-    // Check if new email is already in use
-    try {
-      const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-      if (!listError && users) {
-        const emailExists = users.some(u => u.email === newEmail);
-        if (emailExists) {
-          return res.status(400).json({ error: 'Email already in use' });
-        }
+    // Create a Supabase client with the user's token
+    const userSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      { 
+        global: { 
+          headers: { 
+            Authorization: authHeader 
+          } 
+        } 
       }
-    } catch (listErr) {
-      console.log('Note: Could not list users to check email availability');
-    }
-
-    // Update email using admin API
-    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      currentUser.id,
-      { email: newEmail }
     );
+
+    // Update email using user's token
+    const { error: updateError } = await userSupabase.auth.updateUser({
+      email: newEmail
+    });
 
     if (updateError) {
       console.error('Auth update error:', updateError);
       return res.status(400).json({ error: updateError.message || 'Failed to change email' });
     }
 
-    // Update email in profiles table
+    // Update email in profiles table using the admin key for backend update
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+
     try {
       await supabaseAdmin
         .from('profiles')
@@ -81,11 +85,11 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: 'Email changed successfully. Please check your new email for confirmation.',
+      message: 'Email changed successfully. Check your new email for confirmation.',
       newEmail
     });
   } catch (error) {
     console.error('Email change error:', error);
-    return res.status(500).json({ error: 'Internal server error - ' + error.message });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }
