@@ -2600,6 +2600,9 @@ phoneIcon: {
 
 // Mobile Styles
   '@media (max-width: 768px)': {
+    container: {
+      paddingBottom: '80px'
+    },
     headerContainer: {
       flexDirection: 'column',
       padding: '0.75rem',
@@ -2609,14 +2612,17 @@ phoneIcon: {
     mainNav: {
       width: '100%',
       justifyContent: 'space-around',
-      order: 2
+      order: 2,
+      flexWrap: 'wrap',
+      gap: '0.5rem'
     },
     navButton: {
       padding: '0.35rem 0.45rem',
       fontSize: '0.65rem',
       gap: '0.15rem',
-      minWidth: '95px',
-      maxWidth: '95px'
+      minWidth: 'calc(50% - 0.25rem)',
+      maxWidth: 'calc(50% - 0.25rem)',
+      flex: '0 0 calc(50% - 0.25rem)'
     },
     userSection: {
       order: 1,
@@ -2624,7 +2630,7 @@ phoneIcon: {
       justifyContent: 'flex-end'
     },
     main: {
-      padding: '0.75rem 0.5rem'
+      padding: '0.75rem 0.5rem 100px 0.5rem'
     },
     summaryCards: {
       gridTemplateColumns: '1fr',
@@ -2651,21 +2657,34 @@ phoneIcon: {
     }
   },
   '@media (max-width: 480px)': {
+    container: {
+      paddingBottom: '80px'
+    },
     navButton: {
-      fontSize: '0.6rem',
-      padding: '0.3rem 0.35rem',
-      minWidth: '85px',
-      maxWidth: '85px'
+      fontSize: '0.55rem',
+      padding: '0.3rem 0.3rem',
+      minWidth: 'calc(50% - 0.25rem)',
+      maxWidth: 'calc(50% - 0.25rem)',
+      flex: '0 0 calc(50% - 0.25rem)',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis'
     },
     navArrow: {
       fontSize: '0.5rem'
+    },
+    dropdownText: {
+      fontSize: '0.55rem'
+    },
+    hamburgerIcon: {
+      width: '14px'
     },
     actionButton: {
       fontSize: '0.65rem',
       padding: '0.25rem 0.4rem'
     },
     main: {
-      padding: '0.5rem 0.25rem'
+      padding: '0.5rem 0.25rem 100px 0.25rem'
     },
     quickActions: {
       gridTemplateColumns: '1fr'
