@@ -5,12 +5,21 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+// Store verification codes in memory (shared with send-email-verification-code)
+// In production, use Redis or Database
+export const verificationCodes = new Map();
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { newEmail } = req.body;
+  const { newEmail, verificationCode, ssn } = req.body;
   const authHeader = req.headers.authorization;
 
   try {
@@ -33,6 +42,57 @@ export default async function handler(req, res) {
 
     if (newEmail === currentUser.email) {
       return res.status(400).json({ error: 'New email must be different from current email' });
+    }
+
+    // Verify user identity with either verification code or SSN
+    if (verificationCode) {
+      // Check verification code
+      const stored = verificationCodes.get(currentUser.id);
+      
+      if (!stored) {
+        return res.status(400).json({ error: 'No verification code sent. Please request a new one.' });
+      }
+
+      if (Date.now() > stored.expiresAt) {
+        verificationCodes.delete(currentUser.id);
+        return res.status(400).json({ error: 'Verification code expired. Please request a new one.' });
+      }
+
+      if (stored.code !== verificationCode) {
+        return res.status(400).json({ error: 'Invalid verification code' });
+      }
+
+      // Code is valid, clear it
+      verificationCodes.delete(currentUser.id);
+    } else if (ssn) {
+      // Verify SSN
+      if (!ssn || ssn.length !== 4) {
+        return res.status(400).json({ error: 'Invalid SSN format. Please enter last 4 digits.' });
+      }
+
+      // Get user's SSN from applications table
+      try {
+        const { data: appData, error: appError } = await supabaseAdmin
+          .from('applications')
+          .select('ssn')
+          .eq('user_id', currentUser.id)
+          .single();
+
+        if (appError || !appData) {
+          return res.status(400).json({ error: 'Could not verify identity. Please use email verification instead.' });
+        }
+
+        // Check if last 4 digits match
+        const lastFour = appData.ssn ? appData.ssn.slice(-4) : null;
+        if (lastFour !== ssn) {
+          return res.status(400).json({ error: 'SSN does not match our records' });
+        }
+      } catch (error) {
+        console.error('SSN verification error:', error);
+        return res.status(400).json({ error: 'Could not verify identity' });
+      }
+    } else {
+      return res.status(400).json({ error: 'Please verify your identity with either a verification code or SSN' });
     }
 
     // Create a Supabase client with the user's token
@@ -58,19 +118,14 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: updateError.message || 'Failed to change email' });
     }
 
-    // Update email in profiles table using the admin key for backend update
-    const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
-
+    // Update email in profiles table if it exists
     try {
       await supabaseAdmin
         .from('profiles')
         .update({ email: newEmail })
         .eq('id', currentUser.id);
     } catch (profileError) {
-      console.log('Note: profiles table update skipped or unavailable');
+      console.log('Note: profiles table update skipped');
     }
 
     // Update email in applications table
@@ -80,7 +135,7 @@ export default async function handler(req, res) {
         .update({ email: newEmail })
         .eq('user_id', currentUser.id);
     } catch (appError) {
-      console.log('Note: applications table update skipped or unavailable');
+      console.log('Note: applications table update skipped');
     }
 
     return res.status(200).json({
@@ -90,6 +145,6 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('Email change error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }

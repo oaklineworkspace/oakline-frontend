@@ -226,6 +226,17 @@ export default function Security() {
         throw new Error('❌ Session expired. Please log in again');
       }
 
+      // Build request body based on verification method
+      const requestBody = {
+        newEmail: emailData.newEmail
+      };
+
+      if (emailVerificationStep === 'code') {
+        requestBody.verificationCode = verificationData.verificationCode;
+      } else if (emailVerificationStep === 'ssn') {
+        requestBody.ssn = verificationData.ssn;
+      }
+
       // Call email change API
       const response = await fetch('/api/change-email', {
         method: 'POST',
@@ -233,9 +244,7 @@ export default function Security() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({
-          newEmail: emailData.newEmail
-        })
+        body: JSON.stringify(requestBody)
       });
 
       const result = await response.json();
