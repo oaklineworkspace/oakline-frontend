@@ -88,27 +88,32 @@ export default async function handler(req, res) {
     console.log('✅ Identity verified for user:', currentUser.id, 'for email change to:', newEmail);
 
     // Send verification code to new email address instead
+    const newEmailVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const codeExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    
+    // Store code
     try {
-      const { sendEmail } = await import('../../lib/email');
-      
-      // Generate verification code for new email
-      const newEmailVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-      const codeExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-      
-      // Store code
-      await supabaseAdmin
+      const { error: storeError } = await supabaseAdmin
         .from('email_verification_codes')
-        .upsert({
+        .insert({
           user_id: currentUser.id,
           new_email: newEmail,
           code: newEmailVerificationCode,
           expires_at: codeExpiry.toISOString(),
           verified: false
-        }, {
-          onConflict: 'user_id,new_email'
-        })
-        .catch(() => {});
+        });
 
+      if (storeError) {
+        console.error('Failed to store verification code:', storeError);
+      }
+    } catch (storageError) {
+      console.error('Error storing verification code:', storageError);
+    }
+
+    // Send email
+    try {
+      const { sendEmail } = await import('../../lib/email');
+      
       const verificationHtml = `
         <!DOCTYPE html>
         <html>
@@ -159,6 +164,7 @@ export default async function handler(req, res) {
         Never share this code with anyone.
       `;
 
+      console.log('📧 Sending verification email to:', newEmail);
       await sendEmail({
         to: newEmail,
         subject: '🔐 Verify Your New Email Address - Oakline Bank',
@@ -167,9 +173,9 @@ export default async function handler(req, res) {
         emailType: 'security',
         userId: currentUser.id
       });
+      console.log('✅ Verification email sent successfully to:', newEmail);
     } catch (emailError) {
       console.error('Failed to send verification email:', emailError);
-      // Continue - verification email will be sent in next step
     }
 
     return res.status(200).json({
