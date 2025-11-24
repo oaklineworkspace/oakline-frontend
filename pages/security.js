@@ -33,14 +33,15 @@ export default function Security() {
 
   // Email Change Modal State
   const [showEmailModal, setShowEmailModal] = useState(false);
-  const [emailVerificationStep, setEmailVerificationStep] = useState('choose'); // 'choose', 'code', 'ssn'
+  const [emailVerificationStep, setEmailVerificationStep] = useState('choose'); // 'choose', 'code', 'ssn', 'verify-new-email'
   const [emailData, setEmailData] = useState({
     newEmail: '',
     confirmEmail: ''
   });
   const [verificationData, setVerificationData] = useState({
     verificationCode: '',
-    ssn: ''
+    ssn: '',
+    newEmailCode: ''
   });
   const [emailLoading, setEmailLoading] = useState(false);
   const [codeHash, setCodeHash] = useState(null);
@@ -265,7 +266,7 @@ export default function Security() {
         requestBody.ssn = verificationData.ssn;
       }
 
-      // Call email change API
+      // Call email change API to send verification code to new email
       const response = await fetch('/api/change-email', {
         method: 'POST',
         headers: {
@@ -279,6 +280,54 @@ export default function Security() {
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to change email');
+      }
+
+      // Move to new email verification step
+      setEmailVerificationStep('verify-new-email');
+      setVerificationData({ ...verificationData, newEmailCode: '' });
+    } catch (error) {
+      console.error('Email change error:', error);
+      const errorMsg = error.message || 'Failed to change email. Please try again.';
+      setEmailErrorMessage(errorMsg);
+      setShowEmailError(true);
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const confirmNewEmailChange = async () => {
+    setEmailLoading(true);
+    setShowEmailError(false);
+    setEmailErrorMessage('');
+
+    try {
+      if (!verificationData.newEmailCode || verificationData.newEmailCode.length !== 6) {
+        throw new Error('⚠️ Please enter a valid 6-digit verification code');
+      }
+
+      // Get session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('❌ Session expired. Please log in again');
+      }
+
+      // Call confirm email change API
+      const response = await fetch('/api/confirm-email-change', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          verificationCode: verificationData.newEmailCode,
+          newEmail: emailData.newEmail
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to confirm email change');
       }
 
       // Show success modal
@@ -296,13 +345,14 @@ export default function Security() {
         });
         setVerificationData({
           verificationCode: '',
-          ssn: ''
+          ssn: '',
+          newEmailCode: ''
         });
         checkUser();
       }, 3000);
     } catch (error) {
-      console.error('Email change error:', error);
-      const errorMsg = error.message || 'Failed to change email. Please try again.';
+      console.error('Confirm email change error:', error);
+      const errorMsg = error.message || 'Failed to confirm email change. Please try again.';
       setEmailErrorMessage(errorMsg);
       setShowEmailError(true);
     } finally {
@@ -860,7 +910,7 @@ export default function Security() {
                     style={styles.cancelButton}
                     onClick={() => {
                       setEmailVerificationStep('choose');
-                      setVerificationData({ verificationCode: '', ssn: '' });
+                      setVerificationData({ verificationCode: '', ssn: '', newEmailCode: '' });
                     }}
                   >
                     Back
@@ -871,7 +921,55 @@ export default function Security() {
                     style={styles.submitButton}
                     disabled={emailLoading || !verificationData.ssn}
                   >
-                    {emailLoading ? 'Updating...' : 'Change Email'}
+                    {emailLoading ? 'Sending Code...' : 'Continue'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {emailVerificationStep === 'verify-new-email' && (
+              <form onSubmit={(e) => { e.preventDefault(); }}>
+                <div style={styles.infoBox}>
+                  <span style={styles.infoIcon}>📧</span>
+                  <div>
+                    <div style={styles.infoTitle}>Verify Your New Email</div>
+                    <div style={styles.infoText}>We've sent a 6-digit code to <strong>{emailData.newEmail}</strong>. Enter it below to confirm the email change.</div>
+                  </div>
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Verification Code</label>
+                  <input
+                    type="text"
+                    maxLength="6"
+                    value={verificationData.newEmailCode}
+                    onChange={(e) => setVerificationData({...verificationData, newEmailCode: e.target.value.replace(/\D/g, '')})}
+                    style={styles.input}
+                    placeholder="Enter 6-digit code"
+                    autoFocus
+                  />
+                  <p style={{fontSize: '12px', color: '#666', marginTop: '8px'}}>Code expires in 15 minutes</p>
+                </div>
+
+                <div style={styles.modalActions}>
+                  <button 
+                    type="button"
+                    style={styles.cancelButton}
+                    onClick={() => {
+                      setEmailVerificationStep('choose');
+                      setEmailData({ newEmail: '', confirmEmail: '' });
+                      setVerificationData({ verificationCode: '', ssn: '', newEmailCode: '' });
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={confirmNewEmailChange}
+                    style={styles.submitButton}
+                    disabled={emailLoading || !verificationData.newEmailCode}
+                  >
+                    {emailLoading ? 'Confirming...' : 'Confirm Email'}
                   </button>
                 </div>
               </form>
