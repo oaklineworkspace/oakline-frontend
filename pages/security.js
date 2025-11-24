@@ -695,7 +695,27 @@ export default function Security() {
             {emailVerificationStep === 'code' && (
               <form onSubmit={(e) => { e.preventDefault(); }}>
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Verification Code</label>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px'}}>
+                    <label style={styles.label}>Verification Code</label>
+                    <button
+                      type="button"
+                      onClick={sendVerificationCode}
+                      disabled={emailLoading}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#3b82f6',
+                        cursor: emailLoading ? 'not-allowed' : 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        textDecoration: 'underline',
+                        opacity: emailLoading ? 0.6 : 1,
+                        padding: 0
+                      }}
+                    >
+                      {emailLoading ? '⏳ Sending...' : '🔄 Resend Code'}
+                    </button>
+                  </div>
                   <input
                     type="text"
                     maxLength="6"
