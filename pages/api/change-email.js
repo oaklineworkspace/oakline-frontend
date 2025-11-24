@@ -38,6 +38,7 @@ export default async function handler(req, res) {
     }
 
     // Verify user identity with either verification code or SSN
+    let isCodeVerified = false;
     if (verificationCode) {
       // Check verification code
       const codeValidation = await validateVerificationCode(currentUser.id, verificationCode);
@@ -46,8 +47,8 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: codeValidation.error });
       }
 
-      // Code is valid, clear it
-      await clearVerificationCode(currentUser.id);
+      // Mark code as verified, but don't clear it yet (will clear after successful email update)
+      isCodeVerified = true;
     } else if (ssn) {
       // Verify SSN
       if (!ssn || ssn.length !== 4) {
@@ -100,6 +101,11 @@ export default async function handler(req, res) {
     if (updateError) {
       console.error('Auth update error:', updateError);
       return res.status(400).json({ error: updateError.message || 'Failed to change email' });
+    }
+
+    // Email update successful - NOW clear the verification code
+    if (isCodeVerified) {
+      await clearVerificationCode(currentUser.id);
     }
 
     // Update email in profiles table if it exists
