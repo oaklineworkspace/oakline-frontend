@@ -248,8 +248,8 @@ export default function LoginPage() {
         }
 
 
-        // Stage 3: Authenticating account
-        setLoadingStage(2);
+        // Stage 4: Authenticating account
+        setLoadingStage(3);
         await new Promise(resolve => setTimeout(resolve, 700));
 
         // Send login notification if enabled
@@ -340,8 +340,8 @@ export default function LoginPage() {
           console.error('Failed to send login notification:', notifError);
         }
 
-        // Stage 4: Securing connection
-        setLoadingStage(3);
+        // Stage 5: Securing connection
+        setLoadingStage(4);
         await new Promise(resolve => setTimeout(resolve, 600));
 
         // Navigate to dashboard
