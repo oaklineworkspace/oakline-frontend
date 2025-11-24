@@ -56,10 +56,10 @@ export default async function handler(req, res) {
 
     const supportEmail = bankDetails?.email_security || bankDetails?.email_support || bankDetails?.email_contact || 'security@theoaklinebank.com';
 
-    // Fetch complete profile information including all reason fields
+    // Fetch complete profile information including all reason fields and verification status
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('status, is_banned, ban_reason, suspension_reason, restriction_display_message')
+      .select('status, is_banned, ban_reason, suspension_reason, restriction_display_message, requires_verification, verification_reason')
       .eq('id', userId)
       .single();
 
@@ -92,12 +92,13 @@ export default async function handler(req, res) {
       console.error('Security settings query error:', securityError);
     }
 
-    // Determine if account is blocked
+    // Determine if account is blocked (including verification requirement)
     const isBlocked = 
       profile?.is_banned === true ||
       profile?.status === 'suspended' ||
       profile?.status === 'closed' ||
-      securitySettings?.account_locked === true;
+      securitySettings?.account_locked === true ||
+      profile?.requires_verification === true;
 
     // Determine the blocking type for UI
     let blockingType = null;
@@ -105,6 +106,7 @@ export default async function handler(req, res) {
     else if (securitySettings?.account_locked) blockingType = 'locked';
     else if (profile?.status === 'suspended') blockingType = 'suspended';
     else if (profile?.status === 'closed') blockingType = 'closed';
+    else if (profile?.requires_verification) blockingType = 'verification_required';
 
     // Get the actual reason from the profile table
     const reason = profile?.ban_reason || null;
@@ -117,6 +119,8 @@ export default async function handler(req, res) {
       restriction_display_message: profile?.restriction_display_message || null,
       account_locked: securitySettings?.account_locked || false,
       locked_reason: securitySettings?.locked_reason || null,
+      requires_verification: profile?.requires_verification || false,
+      verification_reason: profile?.verification_reason || null,
       isBlocked,
       blockingType,
       reason,

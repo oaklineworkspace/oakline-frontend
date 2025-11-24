@@ -96,18 +96,27 @@ export const AuthProvider = ({ children }) => {
           const accountStatus = await response.json();
           
           if (accountStatus?.isBlocked) {
-            console.log('Account is blocked, signing out...', accountStatus.blockingType);
-            
-            await supabase.auth.signOut();
-            
-            const params = new URLSearchParams({
-              blocked: accountStatus.blockingType,
-              reason: accountStatus.ban_reason || accountStatus.locked_reason || ''
-            });
-            
-            // Stay on current login/sign-in page instead of redirecting
-            const currentPage = router.pathname.includes('/login') ? '/login' : '/sign-in';
-            router.push(`${currentPage}?${params.toString()}`);
+            // Check if it's a verification requirement (don't sign out, redirect to verification)
+            if (accountStatus.blockingType === 'verification_required') {
+              console.log('Verification required, redirecting...');
+              if (router.pathname !== '/verify-identity') {
+                router.push('/verify-identity');
+              }
+            } else {
+              // For other blocks (banned, suspended, closed), sign out
+              console.log('Account is blocked, signing out...', accountStatus.blockingType);
+              
+              await supabase.auth.signOut();
+              
+              const params = new URLSearchParams({
+                blocked: accountStatus.blockingType,
+                reason: accountStatus.ban_reason || accountStatus.locked_reason || ''
+              });
+              
+              // Stay on current login/sign-in page instead of redirecting
+              const currentPage = router.pathname.includes('/login') ? '/login' : '/sign-in';
+              router.push(`${currentPage}?${params.toString()}`);
+            }
           }
         }
       } catch (error) {
@@ -134,8 +143,11 @@ export const AuthProvider = ({ children }) => {
             (payload.new.status !== payload.old.status && 
              ['suspended', 'closed'].includes(payload.new.status));
 
-          if (statusChanged) {
-            console.log('Account status changed, checking and signing out...');
+          const verificationChanged = 
+            (payload.new.requires_verification === true && payload.old.requires_verification === false);
+
+          if (statusChanged || verificationChanged) {
+            console.log('Account status or verification requirement changed, checking...');
             await checkAccountStatus();
           }
         }

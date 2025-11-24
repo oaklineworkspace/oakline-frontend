@@ -122,6 +122,15 @@ export default function LoginPage() {
         }
 
         if (accountStatus.isBlocked) {
+          // Check if it's a verification requirement (don't sign out, redirect to verification)
+          if (accountStatus.blockingType === 'verification_required') {
+            setLoading(false);
+            setLoadingStage(0);
+            router.push('/verify-identity');
+            return;
+          }
+
+          // For other restrictions, sign out and show error
           await supabase.auth.signOut({ scope: 'local' });
           setLoading(false);
           setLoadingStage(0);
@@ -145,7 +154,7 @@ export default function LoginPage() {
         // Additional check: verify profile status after successful auth
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('is_banned, status, ban_reason, restriction_display_message')
+          .select('is_banned, status, ban_reason, restriction_display_message, requires_verification')
           .eq('id', data.user.id)
           .single();
 
@@ -158,7 +167,13 @@ export default function LoginPage() {
         let restrictionMessage = null;
 
         if (profile) {
-          if (profile.is_banned === true) {
+          if (profile.requires_verification === true) {
+            // Redirect to verification page
+            setLoading(false);
+            setLoadingStage(0);
+            router.push('/verify-identity');
+            return;
+          } else if (profile.is_banned === true) {
             restrictionType = 'banned';
             restrictionMessage = profile.ban_reason || 'Your account has been permanently banned.';
           } else if (profile.status === 'suspended') {

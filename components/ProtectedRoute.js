@@ -1,11 +1,13 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [checkingVerification, setCheckingVerification] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -13,7 +15,42 @@ const ProtectedRoute = ({ children }) => {
     }
   }, [user, loading, router]);
 
-  if (loading) {
+  useEffect(() => {
+    const checkVerificationStatus = async () => {
+      // Skip verification check if on verification page itself
+      if (router.pathname === '/verify-identity') {
+        setCheckingVerification(false);
+        return;
+      }
+
+      if (user?.id) {
+        try {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('requires_verification')
+            .eq('id', user.id)
+            .single();
+
+          if (!error && profile?.requires_verification) {
+            router.push('/verify-identity');
+          } else {
+            setCheckingVerification(false);
+          }
+        } catch (error) {
+          console.error('Error checking verification status:', error);
+          setCheckingVerification(false);
+        }
+      } else {
+        setCheckingVerification(false);
+      }
+    };
+
+    if (!loading && user) {
+      checkVerificationStatus();
+    }
+  }, [user, loading, router]);
+
+  if (loading || checkingVerification) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -36,7 +73,7 @@ const ProtectedRoute = ({ children }) => {
             margin: '0 auto 1rem',
             animation: 'spin 1s linear infinite'
           }}></div>
-          Loading your secure banking session...
+          {checkingVerification ? 'Verifying account status...' : 'Loading your secure banking session...'}
         </div>
       </div>
     );

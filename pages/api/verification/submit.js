@@ -1,0 +1,164 @@
+import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '../../../lib/supabaseAdmin';
+import formidable from 'formidable';
+import fs from 'fs';
+import path from 'path';
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    // Authenticate user
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
+    // Parse form data
+    const form = formidable({
+      maxFileSize: 50 * 1024 * 1024, // 50MB max
+      keepExtensions: true,
+    });
+
+    const [fields, files] = await new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
+        if (err) reject(err);
+        else resolve([fields, files]);
+      });
+    });
+
+    const file = files.file?.[0] || files.file;
+    const verificationType = fields.type?.[0] || fields.type || 'selfie';
+
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // Check if user requires verification
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('requires_verification')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile.requires_verification) {
+      return res.status(400).json({ error: 'Verification not required for this user' });
+    }
+
+    // Upload file to Supabase Storage
+    const fileExt = path.extname(file.originalFilename || file.newFilename);
+    const fileName = `${user.id}_${Date.now()}${fileExt}`;
+    const bucketName = 'verification-media';
+    const filePath = `${verificationType}/${fileName}`;
+
+    // Read file content
+    const fileContent = fs.readFileSync(file.filepath);
+
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabaseAdmin
+      .storage
+      .from(bucketName)
+      .upload(filePath, fileContent, {
+        contentType: file.mimetype,
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      
+      // If bucket doesn't exist, create it
+      if (uploadError.message?.includes('not found')) {
+        const { error: bucketError } = await supabaseAdmin
+          .storage
+          .createBucket(bucketName, {
+            public: false,
+            fileSizeLimit: 52428800 // 50MB
+          });
+
+        if (bucketError && !bucketError.message?.includes('already exists')) {
+          throw new Error('Failed to create storage bucket');
+        }
+
+        // Try upload again
+        const { error: retryError } = await supabaseAdmin
+          .storage
+          .from(bucketName)
+          .upload(filePath, fileContent, {
+            contentType: file.mimetype,
+            upsert: false
+          });
+
+        if (retryError) {
+          throw retryError;
+        }
+      } else {
+        throw uploadError;
+      }
+    }
+
+    // Clean up temp file
+    fs.unlinkSync(file.filepath);
+
+    // Update or create verification record
+    const { data: existingVerification } = await supabaseAdmin
+      .from('selfie_verifications')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('status', 'pending')
+      .single();
+
+    const updateData = {
+      status: 'submitted',
+      submitted_at: new Date().toISOString(),
+      ...(verificationType === 'selfie' ? { image_path: filePath } : { video_path: filePath })
+    };
+
+    if (existingVerification) {
+      // Update existing record
+      const { error: updateError } = await supabaseAdmin
+        .from('selfie_verifications')
+        .update(updateData)
+        .eq('id', existingVerification.id);
+
+      if (updateError) throw updateError;
+    } else {
+      // Create new record
+      const { error: insertError } = await supabaseAdmin
+        .from('selfie_verifications')
+        .insert({
+          user_id: user.id,
+          verification_type: verificationType,
+          reason: 'User submitted verification',
+          ...updateData
+        });
+
+      if (insertError) throw insertError;
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Verification submitted successfully',
+      filePath
+    });
+  } catch (error) {
+    console.error('Verification submission error:', error);
+    return res.status(500).json({
+      error: error.message || 'Failed to submit verification'
+    });
+  }
+}
