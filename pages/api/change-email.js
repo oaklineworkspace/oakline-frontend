@@ -80,28 +80,20 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Please verify your identity with either a verification code or SSN' });
     }
 
-    // Create a Supabase client with the user's token
-    const userSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      { 
-        global: { 
-          headers: { 
-            Authorization: authHeader 
-          } 
-        } 
-      }
+    // Update email using admin API (server-side approach)
+    console.log('Updating email for user:', currentUser.id, 'to:', newEmail);
+    
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+      currentUser.id,
+      { email: newEmail }
     );
-
-    // Update email using user's token
-    const { error: updateError } = await userSupabase.auth.updateUser({
-      email: newEmail
-    });
 
     if (updateError) {
       console.error('Auth update error:', updateError);
       return res.status(400).json({ error: updateError.message || 'Failed to change email' });
     }
+    
+    console.log('✅ Email updated successfully in auth');
 
     // Email update successful - NOW clear the verification code
     if (isCodeVerified) {
