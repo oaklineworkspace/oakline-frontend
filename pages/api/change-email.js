@@ -80,50 +80,100 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Please verify your identity with either a verification code or SSN' });
     }
 
-    // Update email using admin API (server-side approach)
-    console.log('Updating email for user:', currentUser.id, 'to:', newEmail);
-    
-    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      currentUser.id,
-      { email: newEmail }
-    );
-
-    if (updateError) {
-      console.error('Auth update error:', updateError);
-      return res.status(400).json({ error: updateError.message || 'Failed to change email' });
-    }
-    
-    console.log('✅ Email updated successfully in auth');
-
-    // Email update successful - NOW clear the verification code
+    // Clear the verification code after identity is verified
     if (isCodeVerified) {
       await clearVerificationCode(currentUser.id);
     }
 
-    // Update email in profiles table if it exists
-    try {
-      await supabaseAdmin
-        .from('profiles')
-        .update({ email: newEmail })
-        .eq('id', currentUser.id);
-    } catch (profileError) {
-      console.log('Note: profiles table update skipped');
-    }
+    console.log('✅ Identity verified for user:', currentUser.id, 'for email change to:', newEmail);
 
-    // Update email in applications table
-    try {
-      await supabaseAdmin
-        .from('applications')
-        .update({ email: newEmail })
-        .eq('user_id', currentUser.id);
-    } catch (appError) {
-      console.log('Note: applications table update skipped');
-    }
-
-    // Send confirmation email to old email address
+    // Send verification code to new email address instead
     try {
       const { sendEmail } = await import('../../lib/email');
-      const confirmationHtml = `
+      
+      // Generate verification code for new email
+      const newEmailVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const codeExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+      
+      // Store code
+      await supabaseAdmin
+        .from('email_verification_codes')
+        .upsert({
+          user_id: currentUser.id,
+          new_email: newEmail,
+          code: newEmailVerificationCode,
+          expires_at: codeExpiry.toISOString(),
+          verified: false
+        }, {
+          onConflict: 'user_id,new_email'
+        })
+        .catch(() => {});
+
+      const verificationHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 0;">
+          <div style="background: linear-gradient(135deg, #0052A3 0%, #003D7A 100%); padding: 40px 24px; text-align: center; color: white;">
+            <h1 style="margin: 0; font-size: 24px; font-weight: 600;">Verify Your New Email</h1>
+            <p style="margin: 8px 0 0 0; font-size: 13px; opacity: 0.9;">Confirm this is your email address</p>
+          </div>
+
+          <div style="background: #ffffff; padding: 40px 24px;">
+            <p style="font-size: 14px; color: #666; margin: 0 0 24px 0;">Hello,</p>
+
+            <p style="font-size: 14px; color: #555; margin: 0 0 28px 0; line-height: 1.8;">
+              You requested to change your Oakline Bank account email address. To complete this change, please verify this email by entering the code below.
+            </p>
+
+            <div style="background: #f0f7ff; border: 2px solid #0052A3; padding: 30px; text-align: center; border-radius: 8px; margin: 30px 0;">
+              <p style="font-size: 12px; color: #666; margin: 0 0 12px 0;">Your verification code:</p>
+              <div style="font-size: 36px; font-weight: bold; color: #0052A3; letter-spacing: 8px; margin: 10px 0;">
+                ${newEmailVerificationCode}
+              </div>
+              <p style="font-size: 12px; color: #999; margin: 12px 0 0 0;">This code expires in 15 minutes</p>
+            </div>
+
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 16px; border-radius: 4px; margin: 28px 0;">
+              <p style="color: #856404; font-size: 13px; font-weight: 500; margin: 0;">
+                <strong>🔒 Security Notice:</strong> Never share this code with anyone.
+              </p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const verificationText = `
+        VERIFY YOUR NEW EMAIL - Oakline Bank
+
+        You requested to change your Oakline Bank email. Your verification code is:
+
+        ${newEmailVerificationCode}
+
+        Code expires in 15 minutes.
+
+        Never share this code with anyone.
+      `;
+
+      await sendEmail({
+        to: newEmail,
+        subject: '🔐 Verify Your New Email Address - Oakline Bank',
+        text: verificationText,
+        html: verificationHtml,
+        emailType: 'security',
+        userId: currentUser.id
+      });
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+    }
+
+    // OLD: Send confirmation email to old email address
+    // This is now done after the new email is verified in confirm-email-change.js
+    const confirmationHtml = `
         <!DOCTYPE html>
         <html>
         <head>
