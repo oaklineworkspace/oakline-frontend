@@ -57,7 +57,9 @@ export default function StatusMessageBanner({
   const handleContactSupport = () => {
     const subject = encodeURIComponent(`${config.title} - Support Request`);
     const body = encodeURIComponent(`Hello Support Team,\n\nI am contacting you regarding my ${type} account.\n\n${reason ? `Reason: ${reason}\n\n` : ''}${additionalReason ? `Additional Restriction: ${additionalReason}\n\n` : ''}Please assist me with this matter.\n\nThank you.`);
-    window.location.href = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
+    // Use proper mailto link - no @ in the URL structure
+    const mailtoLink = 'mailto:' + contactEmail + '?subject=' + subject + '&body=' + body;
+    window.location.href = mailtoLink;
   };
 
   return (
@@ -101,7 +103,7 @@ export default function StatusMessageBanner({
               <button
                 onClick={handleContactSupport}
                 style={styles.contactButton}
-                title={`Send email to ${contactEmail}`}
+                aria-label="Email Support Team"
               >
                 📧 Email Support
               </button>

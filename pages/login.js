@@ -211,7 +211,7 @@ export default function LoginPage() {
           let browser = 'Unknown';
           let os = 'Unknown';
           let deviceType = 'Desktop';
-          
+
           // Check for mobile devices FIRST (before desktop OS) since mobile useragents contain both
           if (ua.includes('iPhone')) {
             os = 'iOS';
@@ -272,7 +272,7 @@ export default function LoginPage() {
               browser = 'Firefox';
             }
           }
-          
+
           await fetch('/api/send-login-notification', {
             method: 'POST',
             headers: { 
@@ -513,25 +513,72 @@ export default function LoginPage() {
               )}
 
               {/* Error Message - Professional restriction banner */}
-              {error && typeof error === 'string' && errorType === 'restriction_error' && (
+              {error && typeof error === 'object' && error.type === 'restriction_error' && (
                 <div style={styles.restrictionBanner}>
                   <div style={styles.restrictionHeader}>
                     <span style={styles.restrictionIcon}>⚠️</span>
                     <span style={styles.restrictionTitle}>Account Access Restricted</span>
                   </div>
-                  <p style={styles.restrictionReason}>{error}</p>
+                  <p style={styles.restrictionReason}>{error.reason}</p>
                   <div style={styles.restrictionContact}>
                     <p style={styles.contactPrompt}>For assistance, please contact our security team:</p>
                     <div style={styles.contactDetails}>
                       <div style={styles.contactItem}>
                         <span style={styles.contactIcon}>✉️</span>
-                        <a href="mailto:security@theoaklinebank.com" style={styles.contactLink}>
-                          security@theoaklinebank.com
+                        <a href="mailto:support@theoaklinebank.com" style={styles.contactLink}>
+                          support@theoaklinebank.com
                         </a>
                       </div>
+                      {error.supportEmail && error.supportEmail !== 'support@theoaklinebank.com' && (
+                        <div style={styles.contactItem}>
+                          <span style={styles.contactIcon}>✉️</span>
+                          <a href={`mailto:${error.supportEmail}`} style={styles.contactLink}>
+                            {error.supportEmail}
+                          </a>
+                        </div>
+                      )}
                     </div>
                     <p style={styles.supportHours}>
                       Available Monday - Friday, 9:00 AM - 5:00 PM EST
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Error Message - Banned banner */}
+              {error && typeof error === 'object' && error.type === 'banned' && (
+                <div style={styles.bannedMessage}>
+                  <div style={styles.bannedHeader}>
+                    <span style={styles.bannedIcon}>🚫</span>
+                    <span style={styles.bannedTitle}>Account Permanently Banned</span>
+                  </div>
+                  <p style={styles.bannedText}>{error.reason}</p>
+                  <div style={styles.bannedContactSection}>
+                    <p style={styles.bannedContactTitle}>
+                      If you believe this is an error, please contact our support team:
+                    </p>
+                    <div style={styles.contactMethods}>
+                      <div style={styles.contactMethod}>
+                        <span style={styles.contactIcon}>✉️</span>
+                        <div>
+                          <p style={styles.contactLabel}>Email</p>
+                          <a href="mailto:security@theoaklinebank.com" style={styles.contactValue}>
+                            security@theoaklinebank.com
+                          </a>
+                        </div>
+                      </div>
+                      <div style={styles.contactMethod}>
+                        <span style={styles.contactIcon}>📞</span>
+                        <div>
+                          <p style={styles.contactLabel}>Phone</p>
+                          <a href="tel:(636) 635-6122" style={styles.contactValue}>
+                            (636) 635-6122
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                    <p style={styles.bannedFooter}>
+                      Support is available Monday to Friday, 9:00 AM to 5:00 PM EST. Please have your account details ready.
                     </p>
                   </div>
                 </div>
