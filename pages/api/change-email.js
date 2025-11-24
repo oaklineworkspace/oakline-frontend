@@ -1,18 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '../../lib/supabaseAdmin';
+import { validateVerificationCode, clearVerificationCode } from '../../lib/verificationStorage';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-// Store verification codes in memory (shared with send-email-verification-code)
-// In production, use Redis or Database
-export const verificationCodes = new Map();
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -47,23 +40,14 @@ export default async function handler(req, res) {
     // Verify user identity with either verification code or SSN
     if (verificationCode) {
       // Check verification code
-      const stored = verificationCodes.get(currentUser.id);
+      const codeValidation = validateVerificationCode(currentUser.id, verificationCode);
       
-      if (!stored) {
-        return res.status(400).json({ error: 'No verification code sent. Please request a new one.' });
-      }
-
-      if (Date.now() > stored.expiresAt) {
-        verificationCodes.delete(currentUser.id);
-        return res.status(400).json({ error: 'Verification code expired. Please request a new one.' });
-      }
-
-      if (stored.code !== verificationCode) {
-        return res.status(400).json({ error: 'Invalid verification code' });
+      if (!codeValidation.valid) {
+        return res.status(400).json({ error: codeValidation.error });
       }
 
       // Code is valid, clear it
-      verificationCodes.delete(currentUser.id);
+      clearVerificationCode(currentUser.id);
     } else if (ssn) {
       // Verify SSN
       if (!ssn || ssn.length !== 4) {

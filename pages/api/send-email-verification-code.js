@@ -1,13 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { sendEmail } from '../../lib/email';
+import { storeVerificationCode } from '../../lib/verificationStorage';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
-
-// Store verification codes in memory (in production, use Redis or DB)
-const verificationCodes = new Map();
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -32,11 +30,7 @@ export default async function handler(req, res) {
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     
     // Store code with 10-minute expiration
-    verificationCodes.set(currentUser.id, {
-      code: verificationCode,
-      email: currentUser.email,
-      expiresAt: Date.now() + 10 * 60 * 1000
-    });
+    storeVerificationCode(currentUser.id, verificationCode, currentUser.email);
 
     // Send email with verification code using the sendEmail function
     const emailHtml = `
@@ -145,4 +139,3 @@ export default async function handler(req, res) {
   }
 }
 
-export { verificationCodes };
