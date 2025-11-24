@@ -167,8 +167,8 @@ export default function Security() {
 
   const sendVerificationCode = async () => {
     setEmailLoading(true);
-    setError('');
-    setMessage('');
+    setShowEmailError(false);
+    setEmailErrorMessage('');
     
     try {
       // Get fresh session with slight delay to ensure it's available
@@ -203,12 +203,12 @@ export default function Security() {
 
       setCodeHash(result.codeHash);
       setEmailVerificationStep('code');
-      setMessage('✅ Verification code sent to ' + user?.email);
-      setTimeout(() => setMessage(''), 5000);
+      setShowEmailError(false);
     } catch (error) {
       console.error('Send code error:', error);
-      setError(error.message);
-      setTimeout(() => setError(''), 5000);
+      setEmailErrorMessage(error.message);
+      setShowEmailError(true);
+      setTimeout(() => setShowEmailError(false), 5000);
     } finally {
       setEmailLoading(false);
     }
@@ -216,8 +216,8 @@ export default function Security() {
 
   const handleEmailChange = async () => {
     setEmailLoading(true);
-    setError('');
-    setMessage('');
+    setShowEmailError(false);
+    setEmailErrorMessage('');
 
     try {
       if (!emailData.newEmail || !emailData.confirmEmail) {
