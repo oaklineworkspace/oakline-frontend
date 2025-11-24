@@ -45,6 +45,7 @@ export default function Security() {
   const [emailLoading, setEmailLoading] = useState(false);
   const [codeHash, setCodeHash] = useState(null);
   const [showEmailSuccess, setShowEmailSuccess] = useState(false);
+  const [emailSuccessMessage, setEmailSuccessMessage] = useState('');
 
   const router = useRouter();
 
@@ -267,13 +268,14 @@ export default function Security() {
         throw new Error(result.error || 'Failed to change email');
       }
 
-      // Show success banner as fixed toast notification
+      // Show success modal
+      setEmailSuccessMessage('✅ Email changed successfully! Confirmation sent to your old email.');
       setShowEmailSuccess(true);
-      setMessage('✅ Email changed successfully! Confirmation sent to your old email.');
+      setShowEmailModal(false);
       
-      // Close modal after a brief delay so user sees the success message
+      // Close success modal and refresh user data after 3 seconds
       setTimeout(() => {
-        setShowEmailModal(false);
+        setShowEmailSuccess(false);
         setEmailVerificationStep('choose');
         setEmailData({
           newEmail: '',
@@ -283,14 +285,8 @@ export default function Security() {
           verificationCode: '',
           ssn: ''
         });
-      }, 500);
-
-      // Clear success banner after 5 seconds and refresh user data
-      setTimeout(() => {
-        setShowEmailSuccess(false);
-        setMessage('');
         checkUser();
-      }, 5000);
+      }, 3000);
     } catch (error) {
       console.error('Email change error:', error);
       setError(error.message);
@@ -637,12 +633,19 @@ export default function Security() {
         </div>
       )}
 
-      {/* Email Change Success Banner */}
+      {/* Email Change Success Modal */}
       {showEmailSuccess && (
-        <div style={styles.emailSuccessBanner}>
-          <div style={styles.emailSuccessContent}>
-            <span style={styles.emailSuccessIcon}>✓</span>
-            <div style={styles.emailSuccessText}>{message}</div>
+        <div style={styles.modalOverlay}>
+          <div style={styles.emailSuccessModal}>
+            <div style={styles.emailCheckmarkCircle}>
+              <div style={styles.emailCheckmark}>✓</div>
+            </div>
+            <h2 style={styles.emailModalTitle}>Success!</h2>
+            <p style={styles.emailModalMessage}>{emailSuccessMessage}</p>
+            <p style={styles.emailModalSubtext}>
+              A confirmation email has been sent to your registered email address.
+            </p>
+            <p style={styles.emailAutoRedirectText}>Returning to security settings...</p>
           </div>
         </div>
       )}
@@ -664,10 +667,6 @@ export default function Security() {
                 ✕
               </button>
             </div>
-
-            {message && (
-              <div style={styles.successMessage}>{message}</div>
-            )}
 
             {error && (
               <div style={styles.errorMessage}>{error}</div>
@@ -966,14 +965,14 @@ export default function Security() {
             transform: translateY(0);
           }
         }
-        @keyframes slideDown {
+        @keyframes scaleIn {
           from {
+            transform: scale(0.8);
             opacity: 0;
-            transform: translateX(-50%) translateY(-30px);
           }
           to {
+            transform: scale(1);
             opacity: 1;
-            transform: translateX(-50%) translateY(0);
           }
         }
         .toggleOn::before {
@@ -1452,41 +1451,58 @@ const styles = {
     boxShadow: '0 4px 12px rgba(30, 64, 175, 0.4)',
     minWidth: '160px'
   },
-  emailSuccessBanner: {
-    position: 'fixed',
-    top: '20px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    zIndex: 10000,
-    animation: 'slideDown 0.4s ease-out',
-    maxWidth: '90%',
-    width: 'auto'
+  emailSuccessModal: {
+    backgroundColor: 'white',
+    borderRadius: '20px',
+    padding: '40px 30px',
+    maxWidth: '500px',
+    width: '100%',
+    boxShadow: '0 25px 80px rgba(0,0,0,0.4)',
+    textAlign: 'center',
+    animation: 'slideIn 0.4s ease-out'
   },
-  emailSuccessContent: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '15px',
-    backgroundColor: '#10b981',
-    color: 'white',
-    padding: '16px 24px',
-    borderRadius: '12px',
-    boxShadow: '0 10px 30px rgba(16, 185, 129, 0.3)',
-    fontSize: '15px',
-    fontWeight: '600'
-  },
-  emailSuccessIcon: {
+  emailCheckmarkCircle: {
+    width: '100px',
+    height: '100px',
+    borderRadius: '50%',
+    backgroundColor: '#dcfce7',
+    border: '5px solid #16a34a',
+    margin: '0 auto 25px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '32px',
-    height: '32px',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: '50%',
-    fontSize: '18px',
-    flexShrink: 0
+    animation: 'scaleIn 0.5s ease-out'
   },
-  emailSuccessText: {
-    display: 'flex',
-    alignItems: 'center'
+  emailCheckmark: {
+    fontSize: '60px',
+    color: '#16a34a',
+    fontWeight: 'bold',
+    animation: 'scaleIn 0.6s ease-out 0.2s both'
+  },
+  emailModalTitle: {
+    fontSize: '32px',
+    fontWeight: 'bold',
+    color: '#16a34a',
+    margin: '0 0 20px 0',
+    textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  },
+  emailModalMessage: {
+    fontSize: '18px',
+    color: '#1e293b',
+    margin: '0 0 15px 0',
+    fontWeight: '500',
+    lineHeight: '1.5'
+  },
+  emailModalSubtext: {
+    fontSize: '14px',
+    color: '#64748b',
+    margin: '0 0 20px 0',
+    lineHeight: '1.5'
+  },
+  emailAutoRedirectText: {
+    fontSize: '13px',
+    color: '#94a3b8',
+    margin: 0,
+    fontStyle: 'italic'
   }
 };
