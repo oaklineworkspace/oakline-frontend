@@ -46,6 +46,8 @@ export default function Security() {
   const [codeHash, setCodeHash] = useState(null);
   const [showEmailSuccess, setShowEmailSuccess] = useState(false);
   const [emailSuccessMessage, setEmailSuccessMessage] = useState('');
+  const [showEmailError, setShowEmailError] = useState(false);
+  const [emailErrorMessage, setEmailErrorMessage] = useState('');
 
   const router = useRouter();
 
@@ -289,8 +291,9 @@ export default function Security() {
       }, 3000);
     } catch (error) {
       console.error('Email change error:', error);
-      setError(error.message);
-      setTimeout(() => setError(''), 5000);
+      setEmailErrorMessage(error.message);
+      setShowEmailError(true);
+      setTimeout(() => setShowEmailError(false), 5000);
     } finally {
       setEmailLoading(false);
     }
@@ -650,6 +653,25 @@ export default function Security() {
         </div>
       )}
 
+      {/* Email Change Error Modal */}
+      {showEmailError && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.emailErrorModal}>
+            <div style={styles.emailErrorCircle}>
+              <div style={styles.emailErrorIcon}>✕</div>
+            </div>
+            <h2 style={styles.emailErrorModalTitle}>Error!</h2>
+            <p style={styles.emailErrorModalMessage}>{emailErrorMessage}</p>
+            <button 
+              onClick={() => setShowEmailError(false)}
+              style={styles.emailErrorModalButton}
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Email Change Modal */}
       {showEmailModal && (
         <div style={styles.modalOverlay} onClick={() => setShowEmailModal(false)}>
@@ -668,9 +690,6 @@ export default function Security() {
               </button>
             </div>
 
-            {error && (
-              <div style={styles.errorMessage}>{error}</div>
-            )}
 
             {emailVerificationStep === 'choose' && (
               <div style={styles.formGroup}>
@@ -1504,5 +1523,61 @@ const styles = {
     color: '#94a3b8',
     margin: 0,
     fontStyle: 'italic'
+  },
+  emailErrorModal: {
+    backgroundColor: 'white',
+    borderRadius: '20px',
+    padding: '40px 30px',
+    maxWidth: '500px',
+    width: '100%',
+    boxShadow: '0 25px 80px rgba(0,0,0,0.4)',
+    textAlign: 'center',
+    animation: 'slideIn 0.4s ease-out',
+    border: '3px solid #dc2626'
+  },
+  emailErrorCircle: {
+    width: '100px',
+    height: '100px',
+    borderRadius: '50%',
+    backgroundColor: '#fee2e2',
+    border: '5px solid #dc2626',
+    margin: '0 auto 25px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    animation: 'scaleIn 0.5s ease-out',
+    boxShadow: '0 8px 20px rgba(220, 38, 38, 0.3)'
+  },
+  emailErrorIcon: {
+    fontSize: '60px',
+    color: '#dc2626',
+    fontWeight: 'bold',
+    animation: 'scaleIn 0.6s ease-out 0.2s both'
+  },
+  emailErrorModalTitle: {
+    fontSize: '32px',
+    fontWeight: 'bold',
+    color: '#dc2626',
+    margin: '0 0 20px 0',
+    textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  },
+  emailErrorModalMessage: {
+    fontSize: '18px',
+    color: '#1e293b',
+    margin: '0 0 30px 0',
+    fontWeight: '500',
+    lineHeight: '1.5'
+  },
+  emailErrorModalButton: {
+    backgroundColor: '#dc2626',
+    color: 'white',
+    border: 'none',
+    padding: '14px 40px',
+    borderRadius: '10px',
+    fontSize: '16px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(220, 38, 38, 0.4)',
+    transition: 'all 0.3s ease'
   }
 };
