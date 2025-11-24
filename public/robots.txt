@@ -1,1 +1,8 @@
 
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /api/admin/
+
+Sitemap: https://www.theoaklinebank.com/sitemap.xml

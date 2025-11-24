@@ -172,9 +172,9 @@ export default function Privacy() {
             If you have questions about this privacy policy or your personal information, contact us:
           </p>
           <ul style={styles.list}>
-            <li style={styles.listItem}>Email: privacy@oaklinebank.com</li>
-            <li style={styles.listItem}>Phone: 1-800-OAKLINE (625-5463)</li>
-            <li style={styles.listItem}>Mail: Privacy Officer, Oakline Bank, 123 Financial District, NY 10001</li>
+            <li style={styles.listItem}>Email: contact-us [at] theoaklinebank.com</li>
+            <li style={styles.listItem}>Phone: +1 (636) 635-6122</li>
+            <li style={styles.listItem}>Mail: Oakline Bank, 12201 N May Avenue, Oklahoma City, OK 73120</li>
           </ul>
         </div>
       </div>

@@ -152,9 +152,9 @@ export default function Compliance() {
               For compliance-related questions or to report concerns:
             </p>
             <ul style={styles.list}>
-              <li style={styles.listItem}>Email: compliance@oaklinebank.com</li>
+              <li style={styles.listItem}>Email: compliance [at] theoaklinebank.com</li>
               <li style={styles.listItem}>Phone: 1-800-OAKLINE (625-5463)</li>
-              <li style={styles.listItem}>Mail: Compliance Officer, Oakline Bank, 123 Financial District, NY 10001</li>
+              <li style={styles.listItem}>Mail: Compliance Officer, Oakline Bank, 12201 N May Avenue, Oklahoma City, OK 73120</li>
               <li style={styles.listItem}>Anonymous Hotline: 1-800-REPORT (737-6781)</li>
             </ul>
           </div>

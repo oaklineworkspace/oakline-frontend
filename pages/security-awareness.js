@@ -307,6 +307,23 @@ export default function SecurityAwareness() {
             </div>
           </div>
 
+          <div style={{ background: '#fff3cd', padding: '25px', borderRadius: '10px', marginBottom: '30px', border: '2px solid #ffc107' }}>
+            <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', color: '#856404' }}>
+              ⚠️ Report Suspicious Activity
+            </h3>
+            <p style={{ color: '#856404', marginBottom: '15px' }}>
+              Contact our Security Department immediately if you notice unauthorized transactions or suspect fraud:
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ color: '#856404', fontWeight: '600' }}>
+                📧 Email: contact-us [at] theoaklinebank.com
+              </div>
+              <div style={{ color: '#856404', fontWeight: '600' }}>
+                📞 Phone: +1 (636) 635-6122
+              </div>
+            </div>
+          </div>
+
           <div style={{ background: '#f8f9fa', padding: '30px', borderRadius: '10px' }}>
             <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', color: '#1a1a1a' }}>
               Additional Security Resources
