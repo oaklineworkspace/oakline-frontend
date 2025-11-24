@@ -40,14 +40,14 @@ export default async function handler(req, res) {
     // Verify user identity with either verification code or SSN
     if (verificationCode) {
       // Check verification code
-      const codeValidation = validateVerificationCode(currentUser.id, verificationCode);
+      const codeValidation = await validateVerificationCode(currentUser.id, verificationCode);
       
       if (!codeValidation.valid) {
         return res.status(400).json({ error: codeValidation.error });
       }
 
       // Code is valid, clear it
-      clearVerificationCode(currentUser.id);
+      await clearVerificationCode(currentUser.id);
     } else if (ssn) {
       // Verify SSN
       if (!ssn || ssn.length !== 4) {

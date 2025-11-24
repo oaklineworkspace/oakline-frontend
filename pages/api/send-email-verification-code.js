@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     
     // Store code with 10-minute expiration
-    storeVerificationCode(currentUser.id, verificationCode, currentUser.email);
+    await storeVerificationCode(currentUser.id, verificationCode, currentUser.email);
 
     // Send email with verification code using the sendEmail function
     const emailHtml = `
