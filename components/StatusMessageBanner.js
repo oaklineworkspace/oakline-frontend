@@ -57,8 +57,7 @@ export default function StatusMessageBanner({
   const handleContactSupport = () => {
     const subject = encodeURIComponent(`${config.title} - Support Request`);
     const body = encodeURIComponent(`Hello Support Team,\n\nI am contacting you regarding my ${type} account.\n\n${reason ? `Reason: ${reason}\n\n` : ''}${additionalReason ? `Additional Restriction: ${additionalReason}\n\n` : ''}Please assist me with this matter.\n\nThank you.`);
-    // Use proper mailto link - no @ in the URL structure
-    const mailtoLink = 'mailto:' + contactEmail + '?subject=' + subject + '&body=' + body;
+    const mailtoLink = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
     window.location.href = mailtoLink;
   };
 
@@ -229,29 +228,6 @@ const styles = {
     color: '#e5e7eb',
     marginBottom: '0.5rem',
   },
-  emailContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.75rem',
-    flexWrap: 'wrap',
-  },
-  emailText: {
-    fontSize: '1rem',
-    color: '#ffffff',
-    fontWeight: '600',
-  },
-  copyButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    color: '#ffffff',
-    border: '1px solid rgba(255, 255, 255, 0.3)',
-    borderRadius: '6px',
-    padding: '0.375rem 0.75rem',
-    fontSize: '0.875rem',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    fontWeight: '500',
-  },
   actionButtons: {
     display: 'flex',
     gap: '1rem',
@@ -305,15 +281,5 @@ const styles = {
     transition: 'all 0.3s',
     width: '100%',
     textAlign: 'center',
-  },
-  additionalReasonText: {
-    fontSize: '0.9rem',
-    color: '#1e40af',
-    lineHeight: '1.6',
-    margin: 0,
-    padding: '0.75rem',
-    backgroundColor: '#dbeafe',
-    borderRadius: '6px',
-    borderLeft: '3px solid #3b82f6'
   },
 };
