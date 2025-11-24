@@ -40,50 +40,65 @@ export default async function handler(req, res) {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
       </head>
-      <body style="font-family: Arial, sans-serif; line-height: 1.5; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #1a365d 0%, #2c5aa0 100%); padding: 32px 24px; text-align: center; border-radius: 8px 8px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 22px;">🔐 Email Change Verification</h1>
+      <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 0;">
+        <div style="background: linear-gradient(135deg, #0052A3 0%, #003D7A 100%); padding: 40px 24px; text-align: center; color: white;">
+          <div style="font-size: 28px; margin-bottom: 8px;">🔐</div>
+          <h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.5px;">Email Change Verification</h1>
+          <p style="margin: 8px 0 0 0; font-size: 13px; opacity: 0.9;">Secure your account with this verification code</p>
         </div>
 
-        <div style="background: #fff; padding: 32px 24px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px;">
-          <p style="font-size: 15px; margin-bottom: 8px;">Dear Valued Customer,</p>
-
-          <p style="font-size: 14px; color: #555; margin-bottom: 18px;">
-            You requested to change your email address on your Oakline Bank account. Use the verification code below to complete this change.
+        <div style="background: #ffffff; padding: 40px 24px;">
+          <p style="font-size: 14px; color: #666; margin: 0 0 24px 0;">
+            Hello,
           </p>
 
-          <div style="background: linear-gradient(135deg, #003d99 0%, #0066cc 100%); border: 2px solid #003d99; border-radius: 16px; padding: 32px; margin: 32px 0; text-align: center;">
-            <p style="color: #ffffff; font-size: 12px; font-weight: 700; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 2px;">
-              Your Verification Code
-            </p>
-            <div style="background: #000000; border-radius: 12px; padding: 24px; margin: 0 auto; max-width: 300px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);">
-              <p style="color: #00d4ff; font-size: 48px; font-weight: 700; margin: 0; letter-spacing: 12px; font-family: 'Courier New', monospace;">
+          <p style="font-size: 14px; color: #555; margin: 0 0 28px 0; line-height: 1.8;">
+            You've requested to change the email address associated with your Oakline Bank account. To complete this request securely, please use the verification code below.
+          </p>
+
+          <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 32px 24px; text-align: center; margin: 32px 0;">
+            <p style="font-size: 11px; font-weight: 700; color: #6c757d; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 1px;">Verification Code</p>
+            <div style="background: #ffffff; border: 2px solid #0052A3; border-radius: 10px; padding: 20px; display: inline-block;">
+              <p style="color: #0052A3; font-size: 44px; font-weight: 700; margin: 0; letter-spacing: 10px; font-family: 'Courier New', 'Lucida Console', monospace; font-variant-numeric: tabular-nums;">
                 ${verificationCode}
               </p>
             </div>
-            <p style="color: #ffffff; font-size: 13px; margin: 16px 0 0 0; font-weight: 500;">
-              This code will expire in 10 minutes
+            <p style="color: #6c757d; font-size: 12px; margin: 16px 0 0 0; font-weight: 500;">
+              Valid for 10 minutes
             </p>
           </div>
 
-          <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; margin: 16px 0; border-radius: 4px;">
-            <p style="color: #92400e; font-size: 14px; font-weight: 500; margin: 0;">
-              <strong>⚠️ Security Notice:</strong> Never share this code with anyone. Oakline Bank staff will never ask for your verification code.
+          <p style="font-size: 13px; color: #666; margin: 0 0 24px 0; line-height: 1.8;">
+            <strong>How to use this code:</strong>
+          </p>
+          <ol style="font-size: 13px; color: #666; margin: 0 0 28px 0; padding-left: 24px; line-height: 1.8;">
+            <li style="margin-bottom: 8px;">Return to the Oakline Bank app or website</li>
+            <li style="margin-bottom: 8px;">Enter this code in the verification field</li>
+            <li>Confirm your new email address</li>
+          </ol>
+
+          <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 16px; border-radius: 4px; margin: 28px 0;">
+            <p style="color: #856404; font-size: 13px; font-weight: 500; margin: 0;">
+              <strong>🔒 Security Reminder:</strong> Never share this code with anyone. Oakline Bank staff will never request your verification code via email, phone, or chat.
             </p>
           </div>
 
-          <p style="color: #4a5568; font-size: 14px; line-height: 1.6; margin: 20px 0;">
-            If you did not request to change your email, please contact our security team immediately at security@theoaklinebank.com or call +1 (636) 635-6122.
+          <p style="font-size: 13px; color: #666; margin: 28px 0; line-height: 1.8;">
+            Didn't request this change? If you believe this is unauthorized, please contact our security team immediately:
+          </p>
+          <p style="font-size: 13px; color: #0052A3; margin: 0; font-weight: 500;">
+            📧 security@theoaklinebank.com | 📞 +1 (636) 635-6122
           </p>
 
-          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-            <p style="font-size: 12px; color: #666; margin: 3px 0;">Oakline Bank</p>
-            <p style="font-size: 11px; color: #999; margin: 3px 0;">Automated notification. Do not reply.</p>
-            <p style="font-size: 11px; color: #999; margin: 10px 0 0 0;">
-              © ${new Date().getFullYear()} Oakline Bank. All rights reserved.<br>
-              Member FDIC | Equal Housing Lender | Routing: 075915826
-            </p>
-          </div>
+          <hr style="border: none; border-top: 1px solid #e9ecef; margin: 32px 0;">
+
+          <p style="font-size: 11px; color: #999; margin: 0 0 8px 0; text-align: center;">
+            This is an automated security notification. Please do not reply to this email.
+          </p>
+          <p style="font-size: 11px; color: #999; margin: 0; text-align: center;">
+            © ${new Date().getFullYear()} Oakline Bank. All rights reserved.<br>
+            Member FDIC | Equal Housing Lender | Routing Number: 075915826
+          </p>
         </div>
       </body>
       </html>

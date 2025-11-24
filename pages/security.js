@@ -266,18 +266,24 @@ export default function Security() {
         throw new Error(result.error || 'Failed to change email');
       }
 
-      setMessage('✅ Email changed successfully! Check your new email for confirmation.');
-      setShowEmailModal(false);
-      setEmailVerificationStep('choose');
-      setEmailData({
-        newEmail: '',
-        confirmEmail: ''
-      });
-      setVerificationData({
-        verificationCode: '',
-        ssn: ''
-      });
+      // Show success message BEFORE closing modal (like password change)
+      setMessage('✅ Email changed successfully! Confirmation sent to your old email.');
+      
+      // Close modal after a brief delay so user sees the success message
+      setTimeout(() => {
+        setShowEmailModal(false);
+        setEmailVerificationStep('choose');
+        setEmailData({
+          newEmail: '',
+          confirmEmail: ''
+        });
+        setVerificationData({
+          verificationCode: '',
+          ssn: ''
+        });
+      }, 500);
 
+      // Clear message after 5 seconds and refresh user data
       setTimeout(() => {
         setMessage('');
         checkUser();
