@@ -13,6 +13,20 @@ export default function Document() {
         {/* PWA Icons */}
         <link rel="apple-touch-icon" href="/favicon.ico" />
         <link rel="manifest" href="/manifest.json" />
+        
+        {/* Service Worker Registration */}
+        <script dangerouslySetInnerHTML={{__html: `
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+              navigator.serviceWorker.register('/service-worker.js')
+                .then(function(registration) {
+                  console.log('ServiceWorker registered');
+                }, function(err) {
+                  console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+          }
+        `}} />
 
         {/* Banking Theme Colors */}
         <meta name="theme-color" content="#1e3a8a" />
