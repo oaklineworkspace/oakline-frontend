@@ -221,11 +221,11 @@ export default function Security() {
 
     try {
       if (!emailData.newEmail || !emailData.confirmEmail) {
-        throw new Error('⚠️ All fields are required');
+        throw new Error('⚠️ All email fields are required');
       }
 
       if (emailData.newEmail !== emailData.confirmEmail) {
-        throw new Error('⚠️ Emails do not match');
+        throw new Error('⚠️ Email addresses do not match');
       }
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -235,6 +235,17 @@ export default function Security() {
 
       if (emailData.newEmail === user.email) {
         throw new Error('⚠️ New email must be different from current email');
+      }
+
+      // Validate verification method
+      if (emailVerificationStep === 'code') {
+        if (!verificationData.verificationCode || verificationData.verificationCode.length !== 6) {
+          throw new Error('⚠️ Please enter a valid 6-digit verification code');
+        }
+      } else if (emailVerificationStep === 'ssn') {
+        if (!verificationData.ssn || verificationData.ssn.length !== 4) {
+          throw new Error('⚠️ Please enter the last 4 digits of your SSN');
+        }
       }
 
       // Get session token
@@ -291,9 +302,9 @@ export default function Security() {
       }, 3000);
     } catch (error) {
       console.error('Email change error:', error);
-      setEmailErrorMessage(error.message);
+      const errorMsg = error.message || 'Failed to change email. Please try again.';
+      setEmailErrorMessage(errorMsg);
       setShowEmailError(true);
-      setTimeout(() => setShowEmailError(false), 5000);
     } finally {
       setEmailLoading(false);
     }
@@ -1533,7 +1544,9 @@ const styles = {
     boxShadow: '0 25px 80px rgba(0,0,0,0.4)',
     textAlign: 'center',
     animation: 'slideIn 0.4s ease-out',
-    border: '3px solid #dc2626'
+    border: '3px solid #dc2626',
+    position: 'relative',
+    zIndex: 10000
   },
   emailErrorCircle: {
     width: '100px',
@@ -1572,12 +1585,26 @@ const styles = {
     backgroundColor: '#dc2626',
     color: 'white',
     border: 'none',
-    padding: '14px 40px',
+    padding: '12px 32px',
     borderRadius: '10px',
-    fontSize: '16px',
+    fontSize: '15px',
     fontWeight: '600',
     cursor: 'pointer',
     boxShadow: '0 4px 12px rgba(220, 38, 38, 0.4)',
-    transition: 'all 0.3s ease'
+    transition: 'all 0.3s ease',
+    marginTop: '10px'
+  },
+  errorModalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10000,
+    padding: '20px'
   }
 };
