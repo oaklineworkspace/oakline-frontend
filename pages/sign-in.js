@@ -87,11 +87,74 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        // Stage 2: Checking account status
+        // Stage 2: Checking for new device
         setLoadingStage(1);
         await new Promise(resolve => setTimeout(resolve, 500));
 
         const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        // Get device info for new device check
+        const ua = navigator?.userAgent || '';
+        let browser = 'Unknown';
+        let os = 'Unknown';
+        let deviceType = 'Desktop';
+        
+        if (ua.includes('iPhone')) {
+          os = 'iOS';
+          deviceType = 'iPhone';
+          browser = ua.includes('CriOS') ? 'Chrome' : 'Safari';
+        } else if (ua.includes('Android')) {
+          os = 'Android';
+          deviceType = ua.includes('Samsung') ? 'Samsung' : 'Android Device';
+          browser = ua.includes('Chrome') ? 'Chrome' : 'Firefox';
+        } else {
+          if (ua.includes('Windows')) os = 'Windows';
+          else if (ua.includes('Mac')) os = 'macOS';
+          else if (ua.includes('Linux')) os = 'Linux';
+          
+          if (ua.includes('Chrome') && !ua.includes('Edge')) browser = 'Chrome';
+          else if (ua.includes('Safari')) browser = 'Safari';
+          else if (ua.includes('Firefox')) browser = 'Firefox';
+        }
+
+        const deviceInfo = { os, browser, deviceType };
+
+        // Check if this is a new device
+        try {
+          const deviceCheckResponse = await fetch('/api/check-new-device', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${currentSession?.access_token}`
+            },
+            body: JSON.stringify({ deviceInfo })
+          });
+
+          const deviceCheck = await deviceCheckResponse.json();
+
+          if (deviceCheck.isNewDevice) {
+            // New device detected - redirect to device verification page
+            await supabase.auth.signOut({ scope: 'local' });
+            setLoading(false);
+            setLoadingStage(0);
+            
+            // Store device info in session storage for verification page
+            sessionStorage.setItem('pendingDeviceVerification', JSON.stringify({
+              userId: data.user.id,
+              email: formData.email,
+              deviceInfo
+            }));
+            
+            router.push('/verify-device-login');
+            return;
+          }
+        } catch (deviceError) {
+          console.error('Device check error:', deviceError);
+          // Continue with normal login if device check fails
+        }
+
+        // Stage 3: Checking account status
+        setLoadingStage(2);
 
         const statusResponse = await fetch('/api/check-account-status', {
           method: 'POST',
