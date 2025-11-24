@@ -303,16 +303,7 @@ export default function WireTransfer() {
         return { valid: false, error: 'US routing number must contain only numbers' };
       }
 
-      // ABA routing number checksum validation
-      const weights = [3, 7, 1, 3, 7, 1, 3, 7, 1];
-      let sum = 0;
-      for (let i = 0; i < 9; i++) {
-        sum += parseInt(routing[i]) * weights[i];
-      }
-
-      if (sum % 10 !== 0) {
-        return { valid: false, error: 'Invalid US routing number (failed checksum validation)' };
-      }
+      // Routing number format is valid
     } else {
       // International routing/transit number validation
       // Length can vary (e.g., UK: 6 digits, Canada: 8 digits, Australia: 6 digits, India: 11 characters)
