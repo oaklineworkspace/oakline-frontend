@@ -52,16 +52,16 @@ export default async function handler(req, res) {
             You requested to change your email address on your Oakline Bank account. Use the verification code below to complete this change.
           </p>
 
-          <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #0066cc; border-radius: 16px; padding: 32px; margin: 32px 0; text-align: center;">
-            <p style="color: #1a365d; font-size: 14px; font-weight: 600; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 1px;">
+          <div style="background: linear-gradient(135deg, #003d99 0%, #0066cc 100%); border: 2px solid #003d99; border-radius: 16px; padding: 32px; margin: 32px 0; text-align: center;">
+            <p style="color: #ffffff; font-size: 12px; font-weight: 700; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 2px;">
               Your Verification Code
             </p>
-            <div style="background: #ffffff; border-radius: 12px; padding: 20px; margin: 0 auto; max-width: 280px; box-shadow: 0 4px 12px rgba(0, 102, 204, 0.1);">
-              <p style="color: #0066cc; font-size: 42px; font-weight: 700; margin: 0; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+            <div style="background: #000000; border-radius: 12px; padding: 24px; margin: 0 auto; max-width: 300px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);">
+              <p style="color: #00d4ff; font-size: 48px; font-weight: 700; margin: 0; letter-spacing: 12px; font-family: 'Courier New', monospace;">
                 ${verificationCode}
               </p>
             </div>
-            <p style="color: #64748b; font-size: 13px; margin: 16px 0 0 0;">
+            <p style="color: #ffffff; font-size: 13px; margin: 16px 0 0 0; font-weight: 500;">
               This code will expire in 10 minutes
             </p>
           </div>

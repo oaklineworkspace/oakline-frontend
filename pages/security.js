@@ -164,12 +164,24 @@ export default function Security() {
   const sendVerificationCode = async () => {
     setEmailLoading(true);
     setError('');
+    setMessage('');
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      // Get fresh session with slight delay to ensure it's available
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('❌ Auth session missing! Please try refreshing the page.');
+      }
+      
+      if (!session || !session.access_token) {
         throw new Error('❌ Session expired. Please log in again');
       }
+
+      console.log('Sending verification code with session token...');
 
       const response = await fetch('/api/send-email-verification-code', {
         method: 'POST',
@@ -188,10 +200,11 @@ export default function Security() {
       setCodeHash(result.codeHash);
       setEmailVerificationStep('code');
       setMessage('✅ Verification code sent to ' + user?.email);
-      setTimeout(() => setMessage(''), 3000);
+      setTimeout(() => setMessage(''), 5000);
     } catch (error) {
       console.error('Send code error:', error);
       setError(error.message);
+      setTimeout(() => setError(''), 5000);
     } finally {
       setEmailLoading(false);
     }
