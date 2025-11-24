@@ -62,20 +62,25 @@ export default async function handler(req, res) {
     const verificationCode = generateVerificationCode();
     const codeExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    // Store verification code
-    const { error: codeError } = await supabaseAdmin
-      .from('device_verification_codes')
-      .insert({
-        user_id: user.id,
-        device_fingerprint: fingerprint,
-        verification_code: verificationCode,
-        expires_at: codeExpiry.toISOString(),
-        device_info: JSON.stringify(deviceInfo)
-      });
+    // Store verification code using direct insert
+    try {
+      const { error: codeError } = await supabaseAdmin
+        .from('device_verification_codes')
+        .insert({
+          user_id: user.id,
+          device_fingerprint: fingerprint,
+          verification_code: verificationCode,
+          expires_at: codeExpiry.toISOString(),
+          device_info: deviceInfo
+        });
 
-    if (codeError) {
-      console.error('Failed to store verification code:', codeError);
-      return res.status(500).json({ error: 'Failed to generate code' });
+      if (codeError) {
+        console.error('Failed to store verification code:', codeError);
+        return res.status(500).json({ error: 'Failed to generate code', details: codeError });
+      }
+    } catch (insertError) {
+      console.error('Failed to store verification code:', insertError);
+      return res.status(500).json({ error: 'Failed to generate code', details: insertError.message });
     }
 
     // Get user profile and bank details for email
