@@ -44,6 +44,7 @@ export default function Security() {
   });
   const [emailLoading, setEmailLoading] = useState(false);
   const [codeHash, setCodeHash] = useState(null);
+  const [showEmailSuccess, setShowEmailSuccess] = useState(false);
 
   const router = useRouter();
 
@@ -266,7 +267,8 @@ export default function Security() {
         throw new Error(result.error || 'Failed to change email');
       }
 
-      // Show success message BEFORE closing modal (like password change)
+      // Show success banner as fixed toast notification
+      setShowEmailSuccess(true);
       setMessage('✅ Email changed successfully! Confirmation sent to your old email.');
       
       // Close modal after a brief delay so user sees the success message
@@ -283,8 +285,9 @@ export default function Security() {
         });
       }, 500);
 
-      // Clear message after 5 seconds and refresh user data
+      // Clear success banner after 5 seconds and refresh user data
       setTimeout(() => {
+        setShowEmailSuccess(false);
         setMessage('');
         checkUser();
       }, 5000);
@@ -634,6 +637,16 @@ export default function Security() {
         </div>
       )}
 
+      {/* Email Change Success Banner */}
+      {showEmailSuccess && (
+        <div style={styles.emailSuccessBanner}>
+          <div style={styles.emailSuccessContent}>
+            <span style={styles.emailSuccessIcon}>✓</span>
+            <div style={styles.emailSuccessText}>{message}</div>
+          </div>
+        </div>
+      )}
+
       {/* Email Change Modal */}
       {showEmailModal && (
         <div style={styles.modalOverlay} onClick={() => setShowEmailModal(false)}>
@@ -951,6 +964,16 @@ export default function Security() {
           to {
             opacity: 1;
             transform: translateY(0);
+          }
+        }
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
           }
         }
         .toggleOn::before {
@@ -1428,5 +1451,42 @@ const styles = {
     transition: 'all 0.3s ease',
     boxShadow: '0 4px 12px rgba(30, 64, 175, 0.4)',
     minWidth: '160px'
+  },
+  emailSuccessBanner: {
+    position: 'fixed',
+    top: '20px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    zIndex: 10000,
+    animation: 'slideDown 0.4s ease-out',
+    maxWidth: '90%',
+    width: 'auto'
+  },
+  emailSuccessContent: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '15px',
+    backgroundColor: '#10b981',
+    color: 'white',
+    padding: '16px 24px',
+    borderRadius: '12px',
+    boxShadow: '0 10px 30px rgba(16, 185, 129, 0.3)',
+    fontSize: '15px',
+    fontWeight: '600'
+  },
+  emailSuccessIcon: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '32px',
+    height: '32px',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: '50%',
+    fontSize: '18px',
+    flexShrink: 0
+  },
+  emailSuccessText: {
+    display: 'flex',
+    alignItems: 'center'
   }
 };
