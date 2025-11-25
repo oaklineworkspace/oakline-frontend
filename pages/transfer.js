@@ -312,7 +312,6 @@ export default function Transfer() {
         router.push('/sign-in');
         return;
       }
-      setUser(session.user);
 
       const { data: userAccounts } = await supabase
         .from('accounts')
