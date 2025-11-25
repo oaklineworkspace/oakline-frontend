@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
 import Head from 'next/head';
 import { useAuth } from '../contexts/AuthContext';
+import { getWireTransferStyles } from '../lib/wireTransferStyles';
 
 const useMediaQuery = (query) => {
   const [matches, setMatches] = useState(false);
@@ -557,26 +558,24 @@ export default function InternalTransfer() {
     }
   };
 
+  const wireStyles = getWireTransferStyles(isMobile);
   const styles = {
-    container: {
-      minHeight: '100vh',
-      backgroundColor: '#f8fafc',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-    },
+    container: wireStyles.container,
     header: {
-      backgroundColor: '#ffffff',
-      color: '#1e293b',
-      padding: isMobile ? '1rem 1.5rem' : '1.5rem 3rem',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-      borderBottom: '1px solid #e2e8f0'
-    },
-    headerContent: {
       maxWidth: '1400px',
       margin: '0 auto',
+      padding: isMobile ? '1rem' : '1.5rem 2rem',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
       flexWrap: 'wrap',
+      gap: '1rem'
+    },
+    headerContent: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      width: '100%',
       gap: '1rem'
     },
     logoContainer: {
@@ -584,63 +583,26 @@ export default function InternalTransfer() {
       alignItems: 'center',
       gap: '0.75rem',
       textDecoration: 'none',
-      color: '#1e293b'
+      color: 'white'
     },
     logo: {
-      height: isMobile ? '40px' : '50px',
+      height: isMobile ? '35px' : '45px',
       width: 'auto'
     },
     logoText: {
-      fontSize: isMobile ? '1.25rem' : '1.75rem',
+      fontSize: isMobile ? '1.2rem' : '1.6rem',
       fontWeight: '700',
-      background: 'linear-gradient(135deg, #1e40af 0%, #059669 100%)',
-      WebkitBackgroundClip: 'text',
-      WebkitTextFillColor: 'transparent'
+      color: 'white'
     },
-    backButton: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '0.5rem',
-      padding: isMobile ? '0.625rem 1rem' : '0.75rem 1.5rem',
-      backgroundColor: '#1e40af',
-      color: 'white',
-      textDecoration: 'none',
-      borderRadius: '10px',
-      fontSize: isMobile ? '0.875rem' : '0.95rem',
-      fontWeight: '600',
-      border: 'none',
-      transition: 'all 0.3s ease',
-      boxShadow: '0 2px 8px rgba(30, 64, 175, 0.3)'
-    },
-    main: {
-      maxWidth: '1000px',
-      margin: '0 auto',
-      padding: isMobile ? '1.5rem 1rem' : '3rem 2rem'
-    },
+    backButton: wireStyles.backButton,
+    main: wireStyles.main,
     welcomeSection: {
-      marginBottom: isMobile ? '2rem' : '3rem',
+      marginBottom: '2rem',
       textAlign: 'center'
     },
-    welcomeTitle: {
-      fontSize: isMobile ? '1.75rem' : '2.5rem',
-      fontWeight: '800',
-      color: '#1e293b',
-      marginBottom: '0.75rem',
-      letterSpacing: '-0.02em'
-    },
-    welcomeSubtitle: {
-      fontSize: isMobile ? '1rem' : '1.15rem',
-      color: '#64748b',
-      fontWeight: '400'
-    },
-    contentSection: {
-      backgroundColor: 'rgba(255, 255, 255, 0.98)',
-      borderRadius: '16px',
-      padding: isMobile ? '1.5rem' : '2rem',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-      marginBottom: '2rem',
-      border: '2px solid #059669'
-    },
+    welcomeTitle: wireStyles.pageTitle,
+    welcomeSubtitle: wireStyles.pageSubtitle,
+    contentSection: wireStyles.card,
     sectionTitle: {
       fontSize: isMobile ? '1.25rem' : '1.5rem',
       fontWeight: '700',

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
 import Head from 'next/head';
 import { useAuth } from '../contexts/AuthContext';
+import { getWireTransferStyles } from '../lib/wireTransferStyles';
 
 const useMediaQuery = (query) => {
   const [matches, setMatches] = useState(false);
@@ -667,28 +668,16 @@ export default function Transfer() {
     }
   };
 
+  const wireStyles = getWireTransferStyles(isMobile);
   const styles = {
-    container: {
-      minHeight: '100vh',
-      backgroundColor: '#0a1f44',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      overflowX: 'hidden'
-    },
+    container: wireStyles.container,
     header: {
-      backgroundColor: '#1a365d',
-      color: 'white',
-      padding: isMobile ? '1rem' : '1.5rem 2rem',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      borderBottom: '3px solid #059669'
-    },
-    headerContent: {
-      maxWidth: '1400px',
-      margin: '0 auto',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      flexWrap: 'wrap',
-      gap: '1rem'
+      maxWidth: '1400px',
+      margin: '0 auto',
+      padding: isMobile ? '1rem' : '1.5rem 2rem'
     },
     logoContainer: {
       display: 'flex',
@@ -697,78 +686,16 @@ export default function Transfer() {
       textDecoration: 'none',
       color: 'white'
     },
-    logo: {
-      height: isMobile ? '35px' : '45px',
-      width: 'auto'
-    },
     logoText: {
       fontSize: isMobile ? '1.2rem' : '1.6rem',
       fontWeight: '700'
     },
-    backButton: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '0.5rem',
-      padding: isMobile ? '0.5rem 1rem' : '0.6rem 1.2rem',
-      backgroundColor: 'rgba(255,255,255,0.2)',
-      color: 'white',
-      textDecoration: 'none',
-      borderRadius: '8px',
-      fontSize: isMobile ? '0.85rem' : '0.95rem',
-      border: '1px solid rgba(255,255,255,0.3)',
-      transition: 'all 0.3s ease'
-    },
-    main: {
-      maxWidth: '1400px',
-      margin: '0 auto',
-      padding: isMobile ? '1rem 0.75rem' : '2.5rem 2rem'
-    },
-    welcomeSection: {
-      marginBottom: '2rem',
-      textAlign: 'center'
-    },
-    welcomeTitle: {
-      fontSize: isMobile ? '1.25rem' : '1.5rem',
-      fontWeight: '700',
-      color: '#ffffff',
-      marginBottom: '0.5rem'
-    },
-    welcomeSubtitle: {
-      fontSize: isMobile ? '0.85rem' : '0.95rem',
-      color: '#cbd5e1'
-    },
-    transferOptions: {
-      display: 'grid',
-      gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-      gap: '1.5rem',
-      marginBottom: '2rem'
-    },
-    transferCard: {
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-      borderRadius: '16px',
-      padding: isMobile ? '1.5rem' : '2rem',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      border: '2px solid #059669',
-      textDecoration: 'none',
-      color: 'inherit'
-    },
-    transferCardIcon: {
-      fontSize: '3rem',
-      marginBottom: '1rem'
-    },
-    transferCardTitle: {
-      fontSize: isMobile ? '1rem' : '1.1rem',
-      fontWeight: '700',
-      color: '#1e293b',
-      marginBottom: '0.5rem'
-    },
-    transferCardDesc: {
-      fontSize: isMobile ? '0.8rem' : '0.85rem',
-      color: '#64748b',
-      lineHeight: '1.6'
-    },
+    backButton: wireStyles.backButton,
+    main: wireStyles.main,
+    pageTitle: wireStyles.pageTitle,
+    pageSubtitle: wireStyles.pageSubtitle,
+    card: wireStyles.card,
+    cardTitle: wireStyles.cardTitle,
     contentSection: {
       backgroundColor: 'rgba(255, 255, 255, 0.98)',
       borderRadius: '16px',
