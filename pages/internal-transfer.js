@@ -26,9 +26,23 @@ function RecentTransfers({ user, isMobile }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      fetchRecentTransfers();
-    }
+    const checkVerification = async () => {
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('requires_verification')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile?.requires_verification) {
+          router.push('/verify-identity');
+          return;
+        }
+        fetchRecentTransfers();
+      }
+    };
+    
+    checkVerification();
   }, [user]);
 
   const fetchRecentTransfers = async () => {

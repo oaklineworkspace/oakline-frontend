@@ -45,6 +45,19 @@ export default function ApplyCard() {
         router.push('/login');
         return;
       }
+      
+      // Check if user requires verification
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('requires_verification')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (profile?.requires_verification) {
+        router.push('/verify-identity');
+        return;
+      }
+      
       setUser(session.user);
       await fetchUserAccounts(session.user);
     } catch (error) {

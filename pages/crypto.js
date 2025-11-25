@@ -31,6 +31,19 @@ export default function Crypto() {
         router.push('/login');
         return;
       }
+      
+      // Check if user requires verification
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('requires_verification')
+        .eq('id', user.id)
+        .single();
+      
+      if (profile?.requires_verification) {
+        router.push('/verify-identity');
+        return;
+      }
+      
       setUser(user);
       await fetchUserAccounts(user.id, user.email);
       await fetchUserPortfolio(user.id);

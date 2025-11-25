@@ -57,15 +57,31 @@ function LoanApplicationContent() {
   const DEPOSIT_PERCENTAGE = 0.10;
 
   useEffect(() => {
+    const checkVerification = async () => {
+      if (user) {
+        // Check if user requires verification
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('requires_verification')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile?.requires_verification) {
+          router.push('/verify-identity');
+          return;
+        }
+        
+        fetchUserAccounts();
+        checkActiveLoan();
+        fetchCreditScore();
+      }
+    };
+    
     fetchBankDetails();
     fetchLoanTypes();
     fetchLoanPurposes();
     fetchAccountTypes();
-    if (user) {
-      fetchUserAccounts();
-      checkActiveLoan();
-      fetchCreditScore();
-    }
+    checkVerification();
   }, [user]);
 
   useEffect(() => {

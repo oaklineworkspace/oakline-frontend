@@ -63,10 +63,28 @@ function LoanDepositCryptoContent() {
   ];
 
   useEffect(() => {
-    if (user && loan_id) {
-      fetchLoanDetails();
-      setupRealtimeSubscription();
-    }
+    const checkVerification = async () => {
+      if (user) {
+        // Check if user requires verification
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('requires_verification')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile?.requires_verification) {
+          router.push('/verify-identity');
+          return;
+        }
+        
+        if (loan_id) {
+          fetchLoanDetails();
+          setupRealtimeSubscription();
+        }
+      }
+    };
+    
+    checkVerification();
 
     return () => {
       supabase.channel(`loan-deposit-${loan_id}`).unsubscribe();

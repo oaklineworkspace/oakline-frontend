@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 
 export default function Withdrawal() {
+  const router = useRouter();
   const [user, setUser] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [cryptoAssets, setCryptoAssets] = useState([]);
@@ -134,6 +136,18 @@ export default function Withdrawal() {
     try {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (currentUser) {
+        // Check if user requires verification
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('requires_verification')
+          .eq('id', currentUser.id)
+          .single();
+        
+        if (profile?.requires_verification) {
+          router.push('/verify-identity');
+          return;
+        }
+        
         setUser(currentUser);
       }
     } catch (error) {

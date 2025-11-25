@@ -86,6 +86,13 @@ export default function OaklinePayPage() {
         .select('*')
         .eq('id', session.user.id)
         .single();
+      
+      // Check if user requires verification
+      if (profile?.requires_verification) {
+        router.push('/verify-identity');
+        return;
+      }
+      
       setUserProfile(profile);
 
       // Load Oakline Pay profile

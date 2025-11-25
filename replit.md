@@ -41,6 +41,15 @@ The application is built with **Next.js 14.2.3** and React 18.2.0, utilizing SSR
   - **Admin Functions**: SQL functions for triggering verifications (`require_user_verification`), approving (`approve_verification`), and rejecting (`reject_verification`) with audit trail.
   - **Security**: RLS policies for user/admin access, encrypted media storage in Supabase bucket, secure file uploads with size limits (50MB), and comprehensive audit logging.
   - **Backend Admin Panel Guide**: Complete documentation in `SELFIE_VERIFICATION_BACKEND_PROMPTS.md` with 8 detailed prompts for implementing admin dashboard, review interface, bulk actions, analytics, automated triggers, and email notifications.
+- **Transaction Blocking for Verification** (Nov 2025): Users requiring verification are automatically blocked from accessing ANY transaction pages. When a user needing verification attempts to access transaction operations, they are redirected to `/verify-identity` with automatic verification checks in place. Blocked transaction pages include:
+  - **Internal Transfers**: `pages/transfer.js`, `pages/internal-transfer.js` - Blocks all money transfers between accounts
+  - **External Payments**: `pages/oakline-pay.js` - Blocks Zelle payments and payment requests
+  - **Withdrawals**: `pages/withdrawal.js` - Blocks fund withdrawals via crypto, bank, or card
+  - **Crypto Trading**: `pages/crypto.js` - Blocks cryptocurrency buy/sell operations
+  - **Card Applications**: `pages/apply-card.js` - Blocks new card application requests
+  - **Loan Applications**: `pages/loan/apply.js` - Blocks loan application submissions
+  - **Crypto Loan Deposits**: `pages/loan/deposit-crypto.js` - Blocks cryptocurrency deposits for loan payments
+  - **Implementation**: All pages check `profiles.requires_verification` flag early in component lifecycle and redirect to verification page before any transaction UI or data loads. This prevents users from accidentally starting transactions they cannot complete.
 
 ## External Dependencies
 
