@@ -233,13 +233,14 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
             return;
           }
           
+          // Create blob immediately
           const blob = new Blob(chunksRef.current, { type: mimeType });
           console.log('Blob created:', {
             size: blob.size,
             type: blob.type,
             mimeType: mimeType,
             chunks: chunksRef.current.length,
-            recordingTime: recordingTime
+            recordingTime: recordingTimeRef.current
           });
           
           if (blob.size === 0) {
@@ -251,10 +252,22 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
           const url = URL.createObjectURL(blob);
           console.log('Blob URL created:', url);
           
-          // Store recorded time from ref (not stale state)
-          const actualRecordedTime = recordingTimeRef.current || recordingTime;
-          setRecordedVideo({ blob, url, mimeType, recordedDuration: actualRecordedTime });
-          setVideoDuration(actualRecordedTime); // Use actual recorded time, not blob duration
+          // Use recorded time from ref (timer-based duration, which is accurate)
+          const actualRecordedTime = recordingTimeRef.current;
+          console.log('Actual recorded time:', actualRecordedTime);
+          
+          // CRITICAL: Set duration BEFORE showing preview to avoid 0:00 display
+          setVideoDuration(actualRecordedTime);
+          setIsVideoReady(false); // Reset - will be true once metadata loads
+          
+          setRecordedVideo({ 
+            blob, 
+            url, 
+            mimeType, 
+            recordedDuration: actualRecordedTime,
+            isValid: true // Mark as valid video
+          });
+          
           setStage('preview');
           stopCamera();
           
@@ -471,16 +484,19 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
   const handlePreviewVideoLoaded = () => {
     try {
       if (previewVideoRef.current) {
-        const duration = previewVideoRef.current.duration;
-        console.log('Video loaded, metadata duration:', duration);
+        const metadataDuration = previewVideoRef.current.duration;
+        console.log('Video loaded, metadata duration:', metadataDuration);
         
-        // Use recorded duration if available, fallback to video metadata
-        if (recordedVideo?.recordedDuration) {
+        // Prefer recorded duration (from timer), use metadata as fallback
+        if (recordedVideo?.recordedDuration && recordedVideo.recordedDuration > 0) {
           console.log('Using recorded duration:', recordedVideo.recordedDuration);
           setVideoDuration(recordedVideo.recordedDuration);
-        } else if (!isNaN(duration) && duration > 0) {
-          console.log('Using metadata duration:', duration);
-          setVideoDuration(duration);
+        } else if (!isNaN(metadataDuration) && metadataDuration > 0) {
+          console.log('Using metadata duration:', metadataDuration);
+          setVideoDuration(metadataDuration);
+        } else {
+          // If neither has duration, still show controls (video might be valid but missing metadata)
+          console.log('No duration found, but allowing playback');
         }
         
         // Mark video as ready to show controls
@@ -488,6 +504,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       }
     } catch (err) {
       console.error('Error getting video duration:', err);
+      setIsVideoReady(true); // Show controls anyway
     }
   };
 
@@ -557,7 +574,14 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
                 onLoadedMetadata={handlePreviewVideoLoaded}
                 onError={handlePreviewVideoError}
                 onCanPlay={handlePreviewVideoLoaded}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', backgroundColor: '#000' }}
+                onDurationChange={handlePreviewVideoLoaded}
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'cover', 
+                  display: 'block', 
+                  backgroundColor: '#000'
+                }}
               />
               {videoDuration > 0 && (
                 <div className={styles.videoDurationBadge}>
