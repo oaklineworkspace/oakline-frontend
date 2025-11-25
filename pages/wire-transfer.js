@@ -1021,17 +1021,9 @@ export default function WireTransfer() {
                         </select>
                       </div>
 
-                      <div style={{
-                        backgroundColor: '#eff6ff',
-                        border: '2px solid #3b82f6',
-                        borderRadius: '12px',
-                        padding: '1rem',
-                        marginBottom: '1.25rem'
-                      }}>
-                        <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#1e40af', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                          👤 Recipient Name Information
-                        </div>
-                        <div style={{ fontSize: '0.875rem', color: '#1e40af', lineHeight: '1.6' }}>
+                      <div style={styles.infoBox}>
+                        <div style={styles.infoBoxTitle}>👤 Recipient Name Information</div>
+                        <div style={styles.infoBoxText}>
                           Please enter the recipient's full legal name exactly as it appears on their bank account. This ensures the transfer is processed correctly.
                         </div>
                       </div>
@@ -1074,20 +1066,12 @@ export default function WireTransfer() {
                       </div>
 
                       {(wireForm.recipient_first_name || wireForm.recipient_last_name) && (
-                        <div style={{
-                          backgroundColor: '#f0fdf4',
-                          border: '1px solid #86efac',
-                          borderRadius: '10px',
-                          padding: '0.875rem',
-                          marginBottom: '1.25rem'
-                        }}>
-                          <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#059669', marginBottom: '0.375rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Recipient Full Name Preview
-                          </div>
-                          <div style={{ fontSize: '1.125rem', fontWeight: '700', color: '#047857', letterSpacing: '-0.01em' }}>
+                        <div style={styles.successBox}>
+                          <div style={styles.successBoxTitle}>Recipient Full Name Preview</div>
+                          <div style={styles.successBoxValue}>
                             {wireForm.recipient_first_name} {wireForm.recipient_middle_name && `${wireForm.recipient_middle_name} `}{wireForm.recipient_last_name}
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '0.375rem' }}>
+                          <div style={styles.successBoxNote}>
                             ✓ Please verify this name matches the recipient's bank account
                           </div>
                         </div>
