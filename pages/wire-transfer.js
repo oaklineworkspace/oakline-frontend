@@ -1481,18 +1481,30 @@ export default function WireTransfer() {
 
                       {wireForm.from_account_id && (
                         <div style={styles.balanceInfo}>
-                          <div style={styles.balanceLabel}>Available Balance</div>
+                          <div style={styles.balanceLabel}>💰 Available Balance</div>
                           <div style={styles.balanceValue}>
                             {formatCurrency(accounts.find(a => a.id === wireForm.from_account_id)?.balance || 0)}
                           </div>
                           {wireForm.amount && (
-                            <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#64748b' }}>
-                              Transfer Amount: {formatCurrency(wireForm.amount)}<br/>
-                              Fees: {formatCurrency(wireForm.fee + (wireForm.urgent_transfer ? wireForm.urgent_fee : 0))}<br/>
-                              Total Debit: {formatCurrency(wireForm.total_amount)}<br/>
-                              Remaining Balance: {formatCurrency(
-                                parseFloat(accounts.find(a => a.id === wireForm.from_account_id)?.balance || 0) - wireForm.total_amount
-                              )}
+                            <div style={{ 
+                              backgroundColor: '#f0fdf4', 
+                              borderLeft: '4px solid #059669',
+                              padding: '1rem', 
+                              borderRadius: '8px',
+                              fontSize: '0.875rem', 
+                              color: '#047857',
+                              lineHeight: '1.8'
+                            }}>
+                              <div style={{ marginBottom: '0.5rem' }}>Transfer Amount: <span style={{ fontWeight: '700', color: '#059669' }}>{formatCurrency(wireForm.amount)}</span></div>
+                              <div style={{ marginBottom: '0.5rem' }}>Processing Fee: <span style={{ fontWeight: '700', color: '#059669' }}>{formatCurrency(wireForm.fee + (wireForm.urgent_transfer ? wireForm.urgent_fee : 0))}</span></div>
+                              <div style={{ borderTop: '1px solid #d1fae5', paddingTop: '0.5rem', marginTop: '0.5rem', fontWeight: '700' }}>
+                                Total Debit: <span style={{ color: '#dc2626' }}>{formatCurrency(wireForm.total_amount)}</span>
+                              </div>
+                              <div style={{ marginTop: '0.5rem', fontSize: '0.8125rem', color: '#065f46' }}>
+                                Remaining Balance: {formatCurrency(
+                                  parseFloat(accounts.find(a => a.id === wireForm.from_account_id)?.balance || 0) - wireForm.total_amount
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>
