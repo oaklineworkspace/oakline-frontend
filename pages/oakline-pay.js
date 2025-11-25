@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
@@ -32,13 +32,14 @@ export default function OaklinePayPage() {
   const [contacts, setContacts] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [paymentRequests, setPaymentRequests] = useState([]);
-  const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('success');
   const [showQRModal, setShowQRModal] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
-  const [showSplitModal, setShowSplitModal] = useState(false);
+  const [showSetupModal, setShowSetupModal] = useState(false);
+  const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [pendingTransaction, setPendingTransaction] = useState(null);
   const router = useRouter();
@@ -63,26 +64,17 @@ export default function OaklinePayPage() {
     memo: ''
   });
 
-  const [splitForm, setSplitForm] = useState({
-    from_account: '',
-    recipients: [{ contact: '', amount: '' }],
-    total_amount: '',
-    memo: ''
+  const [setupForm, setSetupForm] = useState({
+    oakline_tag: '',
+    display_name: '',
+    bio: ''
   });
 
   const [contactForm, setContactForm] = useState({
     name: '',
     email: '',
     phone: '',
-    oakline_tag: '',
-    nickname: ''
-  });
-
-  const [showSetupModal, setShowSetupModal] = useState(false);
-  const [setupForm, setSetupForm] = useState({
-    oakline_tag: '',
-    display_name: '',
-    bio: ''
+    oakline_tag: ''
   });
 
   useEffect(() => {
@@ -105,7 +97,6 @@ export default function OaklinePayPage() {
         .eq('id', session.user.id)
         .single();
       
-      // Check if user requires verification
       if (profile?.requires_verification) {
         router.push('/verify-identity');
         return;
@@ -119,6 +110,7 @@ export default function OaklinePayPage() {
         .select('*')
         .eq('user_id', session.user.id)
         .single();
+      
       setOaklineProfile(oaklinePay);
 
       // Load accounts
@@ -131,14 +123,6 @@ export default function OaklinePayPage() {
       if (userAccounts?.length > 0) {
         setSendForm(prev => ({ ...prev, from_account: userAccounts[0].id }));
       }
-
-      // Load settings
-      const { data: paySettings } = await supabase
-        .from('oakline_pay_settings')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .single();
-      setSettings(paySettings);
 
       // Load contacts
       const { data: payContacts } = await supabase
@@ -173,14 +157,68 @@ export default function OaklinePayPage() {
     }
   };
 
-  const handleSendMoney = async (e) => {
+  const showMsg = (msg, type = 'success') => {
+    setMessage(msg);
+    setMessageType(type);
+    setTimeout(() => setMessage(''), 5000);
+  };
+
+  const handleSetupProfile = async (e) => {
     e.preventDefault();
-    setMessage('');
+    setLoading(true);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setMessage('Please sign in to continue');
+        showMsg('Authentication required', 'error');
+        return;
+      }
+
+      // Check if tag already exists
+      if (oaklineProfile?.oakline_tag) {
+        showMsg('Tag already set up. Contact support to change it.', 'error');
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch('/api/oakline-pay-setup-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify(setupForm)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showMsg(data.error || 'Failed to set up profile', 'error');
+        setLoading(false);
+        return;
+      }
+
+      showMsg('✅ Oakline tag created successfully!', 'success');
+      setShowSetupModal(false);
+      setSetupForm({ oakline_tag: '', display_name: '', bio: '' });
+      await checkUserAndLoadData();
+    } catch (error) {
+      console.error('Error:', error);
+      showMsg('An error occurred. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendMoney = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        showMsg('Please sign in to continue', 'error');
+        setLoading(false);
         return;
       }
 
@@ -203,22 +241,25 @@ export default function OaklinePayPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setMessage(data.error || 'Transfer failed');
+        showMsg(data.error || 'Transfer failed', 'error');
+        setLoading(false);
         return;
       }
 
       setPendingTransaction(data);
       setShowVerifyModal(true);
-      setMessage('Verification code sent to your email');
+      showMsg('Verification code sent to your email', 'success');
     } catch (error) {
       console.error('Error sending money:', error);
-      setMessage('An error occurred. Please try again.');
+      showMsg('An error occurred. Please try again.', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleVerifyTransfer = async (e) => {
     e.preventDefault();
-    setMessage('');
+    setLoading(true);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -239,25 +280,123 @@ export default function OaklinePayPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setMessage(data.error || 'Verification failed');
+        showMsg(data.error || 'Verification failed', 'error');
+        setLoading(false);
         return;
       }
 
-      setMessage(`✅ Success! $${data.amount.toFixed(2)} sent. New balance: $${data.new_balance.toFixed(2)}`);
+      showMsg(`✅ Success! $${data.amount.toFixed(2)} sent`, 'success');
       setShowVerifyModal(false);
       setPendingTransaction(null);
       setVerifyForm({ code: '' });
       setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
-      checkUserAndLoadData();
+      await checkUserAndLoadData();
     } catch (error) {
       console.error('Error verifying:', error);
-      setMessage('Verification failed. Please try again.');
+      showMsg('Verification failed. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRequestMoney = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('oakline_pay_requests')
+        .insert({
+          requester_id: user.id,
+          requester_account_id: requestForm.from_account,
+          recipient_contact: requestForm.recipient_contact,
+          recipient_type: requestForm.recipient_type,
+          amount: requestForm.amount,
+          memo: requestForm.memo || null
+        });
+
+      if (error) throw error;
+
+      showMsg('✅ Payment request sent!', 'success');
+      setShowRequestModal(false);
+      setRequestForm({ from_account: '', recipient_contact: '', recipient_type: 'oakline_tag', amount: '', memo: '' });
+      await checkUserAndLoadData();
+    } catch (error) {
+      console.error('Error:', error);
+      showMsg('Failed to send payment request', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddContact = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('oakline_pay_contacts')
+        .insert({
+          user_id: user.id,
+          contact_name: contactForm.name,
+          contact_email: contactForm.email || null,
+          contact_phone: contactForm.phone || null,
+          contact_oakline_tag: contactForm.oakline_tag || null
+        });
+
+      if (error) throw error;
+
+      showMsg('✅ Contact added successfully', 'success');
+      setShowAddContactModal(false);
+      setContactForm({ name: '', email: '', phone: '', oakline_tag: '' });
+      await checkUserAndLoadData();
+    } catch (error) {
+      console.error('Error:', error);
+      showMsg('Failed to add contact', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteContact = async (contactId) => {
+    if (!confirm('Remove this contact?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('oakline_pay_contacts')
+        .delete()
+        .eq('id', contactId);
+
+      if (error) throw error;
+
+      showMsg('✅ Contact removed', 'success');
+      await checkUserAndLoadData();
+    } catch (error) {
+      console.error('Error:', error);
+      showMsg('Failed to remove contact', 'error');
+    }
+  };
+
+  const handleToggleFavorite = async (contactId, currentStatus) => {
+    try {
+      const { error } = await supabase
+        .from('oakline_pay_contacts')
+        .update({ is_favorite: !currentStatus })
+        .eq('id', contactId);
+
+      if (error) throw error;
+
+      showMsg(currentStatus ? '✅ Removed from favorites' : '✅ Added to favorites', 'success');
+      await checkUserAndLoadData();
+    } catch (error) {
+      console.error('Error:', error);
+      showMsg('Failed to update', 'error');
     }
   };
 
   const generateQRCode = async () => {
     if (!oaklineProfile?.oakline_tag) {
-      setMessage('Please set up your Oakline tag first');
+      showMsg('Please set up your Oakline tag first', 'error');
       return;
     }
 
@@ -281,11 +420,11 @@ export default function OaklinePayPage() {
       setShowQRModal(true);
     } catch (error) {
       console.error('QR generation error:', error);
-      setMessage('Failed to generate QR code');
+      showMsg('Failed to generate QR code', 'error');
     }
   };
 
-  if (loading) {
+  if (loading && !user) {
     return (
       <div style={styles.loadingContainer}>
         <div style={styles.spinner}></div>
@@ -328,9 +467,14 @@ export default function OaklinePayPage() {
           <div style={styles.welcomeSection}>
             <h1 style={styles.welcomeTitle}>💸 Oakline Pay</h1>
             <p style={styles.welcomeSubtitle}>Send money instantly to other Oakline Bank customers</p>
-            {oaklineProfile && (
+            {oaklineProfile?.oakline_tag && (
               <div style={styles.tagBadge}>
-                Your Oakline Tag: <strong>@{oaklineProfile.oakline_tag}</strong>
+                ✓ Your Oakline Tag: <strong>@{oaklineProfile.oakline_tag}</strong>
+              </div>
+            )}
+            {!oaklineProfile?.oakline_tag && (
+              <div style={styles.warningBadge}>
+                ⚠️ Set up your Oakline tag to get started
               </div>
             )}
           </div>
@@ -339,9 +483,9 @@ export default function OaklinePayPage() {
           {message && (
             <div style={{
               ...styles.messageAlert,
-              backgroundColor: message.toLowerCase().includes('success') || message.toLowerCase().includes('✅') ? 'rgba(5, 150, 105, 0.1)' : 'rgba(220, 38, 38, 0.1)',
-              borderColor: message.toLowerCase().includes('success') || message.toLowerCase().includes('✅') ? '#059669' : '#dc2626',
-              color: message.toLowerCase().includes('success') || message.toLowerCase().includes('✅') ? '#047857' : '#991b1b'
+              backgroundColor: messageType === 'success' ? 'rgba(5, 150, 105, 0.1)' : 'rgba(220, 38, 38, 0.1)',
+              borderColor: messageType === 'success' ? '#059669' : '#dc2626',
+              color: messageType === 'success' ? '#047857' : '#991b1b'
             }}>
               {message}
             </div>
@@ -382,7 +526,6 @@ export default function OaklinePayPage() {
                     </button>
                   ))}
                 </div>
-                {/* Settings Dropdown Menu for Mobile */}
                 <div style={styles.settingsMenuContainer}>
                   <button
                     style={{
@@ -417,7 +560,7 @@ export default function OaklinePayPage() {
             {/* Send Money Tab */}
             {activeTab === 'send' && (
               <div>
-                <h2 style={styles.sectionTitle}>Send Money</h2>
+                <h2 style={styles.sectionTitle}>💸 Send Money</h2>
                 <form onSubmit={handleSendMoney} style={styles.form}>
                   <div style={styles.formGrid}>
                     <div style={styles.formGroup}>
@@ -428,9 +571,10 @@ export default function OaklinePayPage() {
                         onChange={(e) => setSendForm({ ...sendForm, from_account: e.target.value })}
                         required
                       >
+                        <option value="">Select account</option>
                         {accounts.map(acc => (
                           <option key={acc.id} value={acc.id}>
-                            {acc.account_type} - ${parseFloat(acc.balance || 0).toFixed(2)}
+                            {acc.account_type?.replace('_', ' ')?.toUpperCase()} - ${parseFloat(acc.balance || 0).toFixed(2)}
                           </option>
                         ))}
                       </select>
@@ -445,7 +589,7 @@ export default function OaklinePayPage() {
                       >
                         <option value="oakline_tag">Oakline Tag</option>
                         <option value="email">Email</option>
-                        <option value="phone">Phone Number</option>
+                        <option value="phone">Phone</option>
                       </select>
                     </div>
                   </div>
@@ -498,14 +642,17 @@ export default function OaklinePayPage() {
                     </div>
                   </div>
 
-                  <button type="submit" style={styles.primaryButton}>
-                    💸 Send Money
+                  <button type="submit" style={styles.primaryButton} disabled={loading}>
+                    {loading ? 'Processing...' : '💸 Send Money'}
                   </button>
                 </form>
 
                 <div style={styles.actionButtons}>
-                  <button onClick={generateQRCode} style={styles.secondaryButton}>
+                  <button onClick={generateQRCode} style={styles.secondaryButton} disabled={loading || !oaklineProfile?.oakline_tag}>
                     📱 Show QR Code
+                  </button>
+                  <button onClick={() => setShowRequestModal(true)} style={styles.secondaryButton} disabled={loading}>
+                    📋 Request Money
                   </button>
                 </div>
               </div>
@@ -514,13 +661,43 @@ export default function OaklinePayPage() {
             {/* Requests Tab */}
             {activeTab === 'requests' && (
               <div>
-                <h2 style={styles.sectionTitle}>Payment Requests</h2>
-                <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
-                  {paymentRequests.filter(r => r.recipient_id === user?.id && r.status === 'pending').length} pending requests
-                </p>
-                <div style={styles.emptyState}>
-                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
-                  <p>No pending payment requests</p>
+                <h2 style={styles.sectionTitle}>📋 Payment Requests</h2>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                  {paymentRequests.filter(r => r.recipient_id === user?.id && r.status === 'pending').length === 0 ? (
+                    <div style={styles.emptyState}>
+                      <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
+                      <p style={{ color: '#64748b' }}>No pending payment requests</p>
+                    </div>
+                  ) : (
+                    paymentRequests.filter(r => r.recipient_id === user?.id && r.status === 'pending').map(request => (
+                      <div key={request.id} style={styles.requestCard}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
+                          <div>
+                            <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#059669' }}>
+                              ${parseFloat(request.amount).toFixed(2)}
+                            </div>
+                            <div style={{ fontSize: '0.9rem', color: '#64748b' }}>Requested by</div>
+                          </div>
+                          <span style={{ backgroundColor: '#fbbf24', color: '#92400e', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600' }}>
+                            Pending
+                          </span>
+                        </div>
+                        {request.memo && (
+                          <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1rem', fontStyle: 'italic' }}>
+                            "{request.memo}"
+                          </p>
+                        )}
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                          <button style={{ ...styles.secondaryButton, flex: 1 }} onClick={() => showMsg('Accept request flow to be implemented')}>
+                            ✓ Accept
+                          </button>
+                          <button style={{ ...styles.secondaryButton, flex: 1, backgroundColor: '#ef4444' }} onClick={() => showMsg('Decline recorded')}>
+                            ✗ Decline
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}
@@ -528,13 +705,58 @@ export default function OaklinePayPage() {
             {/* Contacts Tab */}
             {activeTab === 'contacts' && (
               <div>
-                <h2 style={styles.sectionTitle}>Saved Contacts</h2>
-                <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
-                  {contacts.length} contact{contacts.length !== 1 ? 's' : ''}
-                </p>
-                <div style={styles.emptyState}>
-                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>👥</div>
-                  <p>No saved contacts yet</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                  <h2 style={styles.sectionTitle}>👥 Saved Contacts</h2>
+                  <button onClick={() => setShowAddContactModal(true)} style={styles.primaryButton}>
+                    + Add Contact
+                  </button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                  {contacts.length === 0 ? (
+                    <div style={styles.emptyState}>
+                      <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>👥</div>
+                      <p style={{ color: '#64748b' }}>No saved contacts yet</p>
+                    </div>
+                  ) : (
+                    contacts.map(contact => (
+                      <div key={contact.id} style={styles.contactCard}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
+                          <div>
+                            <h3 style={{ margin: 0, color: '#1a365d', fontWeight: '700', fontSize: '1.1rem' }}>
+                              {contact.contact_name}
+                            </h3>
+                            {contact.contact_oakline_tag && (
+                              <p style={{ margin: '0.25rem 0', color: '#059669', fontSize: '0.85rem', fontWeight: '600' }}>
+                                @{contact.contact_oakline_tag}
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleToggleFavorite(contact.id, contact.is_favorite)}
+                            style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}
+                          >
+                            {contact.is_favorite ? '⭐' : '☆'}
+                          </button>
+                        </div>
+                        {contact.contact_email && (
+                          <p style={{ margin: '0.5rem 0', color: '#64748b', fontSize: '0.85rem' }}>
+                            📧 {contact.contact_email}
+                          </p>
+                        )}
+                        {contact.contact_phone && (
+                          <p style={{ margin: '0.5rem 0', color: '#64748b', fontSize: '0.85rem' }}>
+                            📱 {contact.contact_phone}
+                          </p>
+                        )}
+                        <button
+                          onClick={() => handleDeleteContact(contact.id)}
+                          style={{ marginTop: '1rem', width: '100%', padding: '0.6rem', backgroundColor: '#fee2e2', color: '#991b1b', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' }}
+                        >
+                          Remove Contact
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}
@@ -542,13 +764,37 @@ export default function OaklinePayPage() {
             {/* History Tab */}
             {activeTab === 'history' && (
               <div>
-                <h2 style={styles.sectionTitle}>Transaction History</h2>
-                <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
-                  {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
-                </p>
-                <div style={styles.emptyState}>
-                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
-                  <p>No transactions yet</p>
+                <h2 style={styles.sectionTitle}>📊 Transaction History</h2>
+                <div style={{ display: 'grid', gap: '1rem' }}>
+                  {transactions.length === 0 ? (
+                    <div style={styles.emptyState}>
+                      <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
+                      <p style={{ color: '#64748b' }}>No transactions yet</p>
+                    </div>
+                  ) : (
+                    transactions.map(txn => (
+                      <div key={txn.id} style={styles.transactionCard}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <h3 style={{ margin: 0, color: '#1a365d', fontWeight: '600' }}>
+                              {txn.sender_id === user?.id ? '📤 Sent' : '📥 Received'}
+                            </h3>
+                            <p style={{ margin: '0.5rem 0 0', color: '#64748b', fontSize: '0.85rem' }}>
+                              {new Date(txn.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '1.3rem', fontWeight: '700', color: txn.sender_id === user?.id ? '#ef4444' : '#059669' }}>
+                              {txn.sender_id === user?.id ? '-' : '+'} ${parseFloat(txn.amount).toFixed(2)}
+                            </div>
+                            <span style={{ backgroundColor: txn.status === 'completed' ? '#d1fae5' : '#fef3c7', color: txn.status === 'completed' ? '#047857' : '#92400e', padding: '0.25rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '600' }}>
+                              {txn.status?.toUpperCase() || 'PENDING'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             )}
@@ -558,18 +804,55 @@ export default function OaklinePayPage() {
               <div>
                 <h2 style={styles.sectionTitle}>⚙️ Settings</h2>
                 <div style={styles.settingsCard}>
-                  <div style={styles.settingItem}>
-                    <h3 style={{ color: '#1a365d', fontWeight: '600', marginBottom: '0.5rem' }}>Oakline Tag</h3>
-                    <p style={{ color: '#64748b' }}>
-                      {oaklineProfile?.oakline_tag ? `@${oaklineProfile.oakline_tag}` : 'Not set up yet'}
-                    </p>
-                  </div>
-                  <div style={styles.settingItem}>
-                    <h3 style={{ color: '#1a365d', fontWeight: '600', marginBottom: '0.5rem' }}>Display Name</h3>
-                    <p style={{ color: '#64748b' }}>
-                      {oaklineProfile?.display_name || 'Not set'}
-                    </p>
-                  </div>
+                  {!oaklineProfile?.oakline_tag ? (
+                    <div>
+                      <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏷️</div>
+                        <h3 style={{ color: '#1a365d', marginBottom: '0.5rem' }}>Set Up Your Oakline Tag</h3>
+                        <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
+                          Create a unique identifier to receive money instantly
+                        </p>
+                        <button
+                          onClick={() => setShowSetupModal(true)}
+                          style={styles.primaryButton}
+                        >
+                          🏷️ Create Oakline Tag
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gap: '1.5rem' }}>
+                      <div style={styles.settingItem}>
+                        <h3 style={{ color: '#1a365d', fontWeight: '600', marginBottom: '0.5rem' }}>
+                          Oakline Tag
+                        </h3>
+                        <p style={{ color: '#059669', fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>
+                          @{oaklineProfile.oakline_tag}
+                        </p>
+                      </div>
+                      <div style={styles.settingItem}>
+                        <h3 style={{ color: '#1a365d', fontWeight: '600', marginBottom: '0.5rem' }}>
+                          Display Name
+                        </h3>
+                        <p style={{ color: '#64748b', margin: 0 }}>
+                          {oaklineProfile.display_name || 'Not set'}
+                        </p>
+                      </div>
+                      <div style={styles.settingItem}>
+                        <h3 style={{ color: '#1a365d', fontWeight: '600', marginBottom: '0.5rem' }}>
+                          Bio
+                        </h3>
+                        <p style={{ color: '#64748b', margin: 0 }}>
+                          {oaklineProfile.bio || 'No bio set'}
+                        </p>
+                      </div>
+                      <div style={{ backgroundColor: '#eff6ff', border: '2px solid #bfdbfe', borderRadius: '12px', padding: '1rem' }}>
+                        <p style={{ color: '#1e40af', margin: 0, fontSize: '0.9rem' }}>
+                          <strong>💡 Tip:</strong> Share your Oakline tag with friends to receive money instantly. Generate your QR code in the Send tab!
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -577,12 +860,212 @@ export default function OaklinePayPage() {
         </main>
       </div>
 
+      {/* Setup Oakline Tag Modal */}
+      {showSetupModal && (
+        <div style={styles.modalOverlay} onClick={() => setShowSetupModal(false)}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h2 style={styles.modalTitle}>🏷️ Create Your Oakline Tag</h2>
+            <p style={styles.modalSubtitle}>Choose a unique identifier to receive money instantly</p>
+            <form onSubmit={handleSetupProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div>
+                <label style={styles.label}>Oakline Tag (e.g., johndoe) *</label>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span style={{ fontSize: '1rem', fontWeight: '700', color: '#059669', marginRight: '0.5rem' }}>@</span>
+                  <input
+                    type="text"
+                    style={{ ...styles.input, flex: 1 }}
+                    value={setupForm.oakline_tag}
+                    onChange={(e) => setSetupForm({ ...setupForm, oakline_tag: e.target.value.toLowerCase() })}
+                    placeholder="your_unique_tag"
+                    pattern="[a-z0-9_]+"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={styles.label}>Display Name *</label>
+                <input
+                  type="text"
+                  style={styles.input}
+                  value={setupForm.display_name}
+                  onChange={(e) => setSetupForm({ ...setupForm, display_name: e.target.value })}
+                  placeholder="John Doe"
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={styles.label}>Bio (Optional)</label>
+                <textarea
+                  style={{ ...styles.input, resize: 'vertical', minHeight: '80px' }}
+                  value={setupForm.bio}
+                  onChange={(e) => setSetupForm({ ...setupForm, bio: e.target.value })}
+                  placeholder="Tell people about yourself..."
+                  maxLength={150}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button type="submit" style={{ ...styles.primaryButton, flex: 1 }} disabled={loading}>
+                  {loading ? 'Creating...' : '✓ Create Tag'}
+                </button>
+                <button type="button" style={{ ...styles.secondaryButton, flex: 1 }} onClick={() => setShowSetupModal(false)} disabled={loading}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Request Money Modal */}
+      {showRequestModal && (
+        <div style={styles.modalOverlay} onClick={() => setShowRequestModal(false)}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h2 style={styles.modalTitle}>📋 Request Money</h2>
+            <form onSubmit={handleRequestMoney} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div>
+                <label style={styles.label}>From Account *</label>
+                <select style={styles.select} value={requestForm.from_account} onChange={(e) => setRequestForm({ ...requestForm, from_account: e.target.value })} required>
+                  <option value="">Select account</option>
+                  {accounts.map(acc => (
+                    <option key={acc.id} value={acc.id}>
+                      {acc.account_type?.replace('_', ' ')?.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={styles.label}>Recipient Type</label>
+                <select style={styles.select} value={requestForm.recipient_type} onChange={(e) => setRequestForm({ ...requestForm, recipient_type: e.target.value })}>
+                  <option value="oakline_tag">Oakline Tag</option>
+                  <option value="email">Email</option>
+                  <option value="phone">Phone</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={styles.label}>
+                  {requestForm.recipient_type === 'oakline_tag' && 'Oakline Tag *'}
+                  {requestForm.recipient_type === 'email' && 'Email Address *'}
+                  {requestForm.recipient_type === 'phone' && 'Phone Number *'}
+                </label>
+                <input type="text" style={styles.input} value={requestForm.recipient_contact} onChange={(e) => setRequestForm({ ...requestForm, recipient_contact: e.target.value })} required />
+              </div>
+
+              <div>
+                <label style={styles.label}>Amount ($) *</label>
+                <input type="number" step="0.01" min="0.01" style={styles.input} value={requestForm.amount} onChange={(e) => setRequestForm({ ...requestForm, amount: e.target.value })} placeholder="0.00" required />
+              </div>
+
+              <div>
+                <label style={styles.label}>Memo (Optional)</label>
+                <input type="text" style={styles.input} value={requestForm.memo} onChange={(e) => setRequestForm({ ...requestForm, memo: e.target.value })} placeholder="What's this for?" maxLength={100} />
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button type="submit" style={{ ...styles.primaryButton, flex: 1 }} disabled={loading}>
+                  {loading ? 'Sending...' : '✓ Send Request'}
+                </button>
+                <button type="button" style={{ ...styles.secondaryButton, flex: 1 }} onClick={() => setShowRequestModal(false)} disabled={loading}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Contact Modal */}
+      {showAddContactModal && (
+        <div style={styles.modalOverlay} onClick={() => setShowAddContactModal(false)}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h2 style={styles.modalTitle}>👥 Add Contact</h2>
+            <form onSubmit={handleAddContact} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div>
+                <label style={styles.label}>Contact Name *</label>
+                <input type="text" style={styles.input} value={contactForm.name} onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })} placeholder="John Doe" required />
+              </div>
+
+              <div>
+                <label style={styles.label}>Oakline Tag (Optional)</label>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span style={{ fontSize: '1rem', fontWeight: '700', color: '#059669', marginRight: '0.5rem' }}>@</span>
+                  <input type="text" style={{ ...styles.input, flex: 1 }} value={contactForm.oakline_tag} onChange={(e) => setContactForm({ ...contactForm, oakline_tag: e.target.value })} placeholder="johndoe" />
+                </div>
+              </div>
+
+              <div>
+                <label style={styles.label}>Email (Optional)</label>
+                <input type="email" style={styles.input} value={contactForm.email} onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })} placeholder="john@example.com" />
+              </div>
+
+              <div>
+                <label style={styles.label}>Phone (Optional)</label>
+                <input type="tel" style={styles.input} value={contactForm.phone} onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })} placeholder="+1234567890" />
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button type="submit" style={{ ...styles.primaryButton, flex: 1 }} disabled={loading}>
+                  {loading ? 'Adding...' : '✓ Add Contact'}
+                </button>
+                <button type="button" style={{ ...styles.secondaryButton, flex: 1 }} onClick={() => setShowAddContactModal(false)} disabled={loading}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Verification Modal */}
+      {showVerifyModal && pendingTransaction && (
+        <div style={styles.modalOverlay} onClick={() => setShowVerifyModal(false)}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h2 style={styles.modalTitle}>🔐 Verify Transfer</h2>
+            <p style={styles.modalSubtitle}>Enter the code sent to your email</p>
+            <form onSubmit={handleVerifyTransfer} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div style={{ backgroundColor: '#f0fdf4', padding: '1rem', borderRadius: '12px', border: '2px solid #d1fae5', marginBottom: '1rem' }}>
+                <p style={{ color: '#1a365d', fontWeight: '700', margin: '0 0 0.5rem', fontSize: '0.9rem' }}>Transfer Details</p>
+                <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>
+                  Amount: <strong style={{ color: '#059669' }}>${parseFloat(pendingTransaction.amount).toFixed(2)}</strong>
+                </p>
+              </div>
+
+              <div>
+                <label style={styles.label}>Verification Code *</label>
+                <input
+                  type="text"
+                  style={{ ...styles.input, fontSize: '1.5rem', letterSpacing: '0.5rem', textAlign: 'center', fontFamily: 'monospace' }}
+                  value={verifyForm.code}
+                  onChange={(e) => setVerifyForm({ code: e.target.value.toUpperCase() })}
+                  placeholder="000000"
+                  maxLength="6"
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button type="submit" style={{ ...styles.primaryButton, flex: 1 }} disabled={loading}>
+                  {loading ? 'Verifying...' : '✓ Confirm'}
+                </button>
+                <button type="button" style={{ ...styles.secondaryButton, flex: 1 }} onClick={() => setShowVerifyModal(false)} disabled={loading}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* QR Code Modal */}
       {showQRModal && (
         <div style={styles.modalOverlay} onClick={() => setShowQRModal(false)}>
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h2 style={styles.modalTitle}>Share Your QR Code</h2>
-            <p style={styles.modalText}>People can scan this to send you money</p>
+            <h2 style={styles.modalTitle}>📱 Share Your QR Code</h2>
+            <p style={styles.modalSubtitle}>People can scan this to send you money</p>
             {qrCodeDataUrl && (
               <img src={qrCodeDataUrl} alt="QR Code" style={styles.qrImage} />
             )}
@@ -678,6 +1161,17 @@ const styles = {
     fontSize: 'clamp(0.8rem, 2vw, 0.95rem)',
     fontWeight: '500',
     border: '1px solid #6ee7b7'
+  },
+  warningBadge: {
+    display: 'inline-block',
+    marginTop: '1rem',
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    color: '#dc2626',
+    padding: '0.75rem 1.5rem',
+    borderRadius: '12px',
+    fontSize: 'clamp(0.8rem, 2vw, 0.95rem)',
+    fontWeight: '500',
+    border: '1px solid #fca5a5'
   },
   messageAlert: {
     padding: '1.25rem 1.5rem',
@@ -873,6 +1367,24 @@ const styles = {
     marginTop: '1.5rem',
     flexWrap: 'wrap'
   },
+  requestCard: {
+    backgroundColor: '#fffbeb',
+    borderRadius: '12px',
+    padding: '1.5rem',
+    border: '2px solid #fbbf24'
+  },
+  contactCard: {
+    backgroundColor: 'rgba(5, 150, 105, 0.05)',
+    borderRadius: '12px',
+    padding: '1.5rem',
+    border: '2px solid #d1fae5'
+  },
+  transactionCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: '12px',
+    padding: '1rem',
+    border: '2px solid #e2e8f0'
+  },
   settingsCard: {
     backgroundColor: '#f8fafc',
     borderRadius: '12px',
@@ -908,6 +1420,8 @@ const styles = {
     padding: '2rem',
     maxWidth: '500px',
     width: '100%',
+    maxHeight: '90vh',
+    overflowY: 'auto',
     boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
     textAlign: 'center'
   },
@@ -915,9 +1429,9 @@ const styles = {
     fontSize: '1.5rem',
     fontWeight: '700',
     color: '#1a365d',
-    marginBottom: '1rem'
+    marginBottom: '0.5rem'
   },
-  modalText: {
+  modalSubtitle: {
     color: '#64748b',
     marginBottom: '1.5rem',
     fontSize: '0.95rem'
@@ -925,7 +1439,8 @@ const styles = {
   qrImage: {
     maxWidth: '100%',
     height: 'auto',
-    marginBottom: '1.5rem'
+    marginBottom: '1.5rem',
+    borderRadius: '12px'
   },
   loadingContainer: {
     display: 'flex',
