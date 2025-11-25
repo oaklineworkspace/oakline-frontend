@@ -1639,28 +1639,56 @@ export default function WireTransfer() {
                           </span>
                         </div>
 
-                        <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Transfer Amount</span>
-                          <span style={styles.reviewValue}>{formatCurrency(wireForm.amount)}</span>
-                        </div>
-
-                        <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Processing Fee</span>
-                          <span style={styles.reviewValue}>{formatCurrency(wireForm.fee)}</span>
-                        </div>
-
-                        {wireForm.urgent_transfer && (
-                          <div style={styles.reviewRow}>
-                            <span style={styles.reviewLabel}>Expedited Fee</span>
-                            <span style={styles.reviewValue}>{formatCurrency(wireForm.urgent_fee)}</span>
+                        <div style={{
+                          backgroundColor: '#f9fafb',
+                          borderRadius: '10px',
+                          padding: '1.5rem',
+                          marginTop: '1rem',
+                          marginBottom: '1rem',
+                          borderLeft: '4px solid #1e40af'
+                        }}>
+                          <div style={{ marginBottom: '1.25rem' }}>
+                            <div style={styles.reviewLabel}>Transfer Amount</div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e40af', marginTop: '0.5rem' }}>
+                              {formatCurrency(wireForm.amount)}
+                            </div>
                           </div>
-                        )}
 
-                        <div style={{...styles.reviewRow, borderTop: '2px solid #059669', paddingTop: '1rem', marginTop: '0.5rem'}}>
-                          <span style={{...styles.reviewLabel, fontWeight: '700', color: '#1a365d'}}>Total Amount</span>
-                          <span style={{...styles.reviewValue, fontWeight: '700', color: '#059669', fontSize: '1.1rem'}}>
-                            {formatCurrency(wireForm.total_amount)}
-                          </span>
+                          <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '1.25rem', marginBottom: '1.25rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                              <span style={styles.reviewLabel}>Processing Fee</span>
+                              <span style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#1e40af' }}>
+                                {formatCurrency(wireForm.fee)}
+                              </span>
+                            </div>
+                            {wireForm.urgent_transfer && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                <span style={styles.reviewLabel}>Expedited Fee</span>
+                                <span style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#1e40af' }}>
+                                  {formatCurrency(wireForm.urgent_fee)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div style={{
+                            backgroundColor: '#f0fdf4',
+                            border: '2px solid #059669',
+                            borderRadius: '10px',
+                            padding: '1.25rem',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                          }}>
+                            <div>
+                              <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#059669', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                Total Amount Due
+                              </div>
+                            </div>
+                            <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#059669', letterSpacing: '-0.01em' }}>
+                              {formatCurrency(wireForm.total_amount)}
+                            </div>
+                          </div>
                         </div>
 
                         {wireForm.description && (
@@ -1862,7 +1890,7 @@ export default function WireTransfer() {
                               ✅ Code Sent Successfully
                             </div>
                             <div style={{ fontSize: '0.9375rem', color: '#047857' }}>
-                              Check your email for the 6-digit verification code. Enter it below to continue.
+                              Check your email for the 6-digit verification code. Enter it above to continue.
                             </div>
                           </div>
                         </div>
@@ -2119,28 +2147,56 @@ export default function WireTransfer() {
                           </div>
                         )}
 
-                        <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Transfer Amount</span>
-                          <span style={styles.reviewValue}>{formatCurrency(wireForm.amount)}</span>
-                        </div>
-
-                        <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Processing Fee</span>
-                          <span style={styles.reviewValue}>{formatCurrency(wireForm.fee)}</span>
-                        </div>
-
-                        {wireForm.urgent_transfer && (
-                          <div style={styles.reviewRow}>
-                            <span style={styles.reviewLabel}>Expedited Fee</span>
-                            <span style={styles.reviewValue}>{formatCurrency(wireForm.urgent_fee)}</span>
+                        <div style={{
+                          backgroundColor: '#f9fafb',
+                          borderRadius: '10px',
+                          padding: '1.5rem',
+                          marginTop: '1rem',
+                          marginBottom: '1rem',
+                          borderLeft: '4px solid #1e40af'
+                        }}>
+                          <div style={{ marginBottom: '1.25rem' }}>
+                            <div style={styles.reviewLabel}>Transfer Amount</div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e40af', marginTop: '0.5rem' }}>
+                              {formatCurrency(wireForm.amount)}
+                            </div>
                           </div>
-                        )}
 
-                        <div style={{...styles.reviewRow, borderTop: '2px solid #059669', paddingTop: '1rem', marginTop: '0.5rem', backgroundColor: '#fef3c7'}}>
-                          <span style={{...styles.reviewLabel, fontWeight: '700', fontSize: '1rem', color: '#1a365d'}}>Total Debit</span>
-                          <span style={{...styles.reviewValue, fontWeight: '700', fontSize: '1.25rem', color: '#dc2626'}}>
-                            {formatCurrency(wireForm.total_amount)}
-                          </span>
+                          <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '1.25rem', marginBottom: '1.25rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                              <span style={styles.reviewLabel}>Processing Fee</span>
+                              <span style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#1e40af' }}>
+                                {formatCurrency(wireForm.fee)}
+                              </span>
+                            </div>
+                            {wireForm.urgent_transfer && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                <span style={styles.reviewLabel}>Expedited Fee</span>
+                                <span style={{ fontSize: '0.9375rem', fontWeight: '700', color: '#1e40af' }}>
+                                  {formatCurrency(wireForm.urgent_fee)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div style={{
+                            backgroundColor: '#f0fdf4',
+                            border: '2px solid #059669',
+                            borderRadius: '10px',
+                            padding: '1.25rem',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                          }}>
+                            <div>
+                              <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#059669', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                Total Debit
+                              </div>
+                            </div>
+                            <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#059669', letterSpacing: '-0.01em' }}>
+                              {formatCurrency(wireForm.total_amount)}
+                            </div>
+                          </div>
                         </div>
 
                         {wireForm.urgent_transfer && (
