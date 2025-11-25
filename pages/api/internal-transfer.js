@@ -1,5 +1,6 @@
 
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
+import { sendTransferSentEmail, sendTransferReceivedEmail } from '../../lib/email';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -209,6 +210,54 @@ export default async function handler(req, res) {
 
     if (notificationError) {
       console.error('Notification error:', notificationError);
+    }
+
+    // Send email notifications to both sender and recipient
+    try {
+      // Get recipient's email from auth
+      const { data: { users: recipientUsers = [] } } = await supabaseAdmin.auth.admin.listUsers();
+      const recipientAuthUser = recipientUsers.find(u => u.id === toAccount.user_id);
+      const recipientEmail = recipientAuthUser?.email || toAccount.user_id;
+
+      // Get sender's email
+      const senderEmail = user.email;
+
+      // Send email to sender
+      try {
+        await sendTransferSentEmail({
+          to: senderEmail,
+          userName: senderName,
+          recipientName: recipientName,
+          amount: transferAmount,
+          reference: referenceNumber,
+          accountNumber: toAccount.account_number,
+          userId: user.id
+        });
+        console.log('✅ Transfer sent email sent to:', senderEmail);
+      } catch (emailError) {
+        console.error('❌ Failed to send transfer sent email:', emailError.message);
+      }
+
+      // Send email to recipient
+      if (recipientAuthUser?.email) {
+        try {
+          await sendTransferReceivedEmail({
+            to: recipientEmail,
+            userName: recipientName,
+            senderName: senderName,
+            amount: transferAmount,
+            reference: referenceNumber,
+            accountNumber: fromAccount.account_number,
+            userId: toAccount.user_id
+          });
+          console.log('✅ Transfer received email sent to:', recipientEmail);
+        } catch (emailError) {
+          console.error('❌ Failed to send transfer received email:', emailError.message);
+        }
+      }
+    } catch (emailError) {
+      console.error('Error sending transfer emails:', emailError);
+      // Don't fail the transfer if email fails - emails are secondary
     }
 
     const { error: auditError } = await supabaseAdmin.from('audit_logs').insert([
