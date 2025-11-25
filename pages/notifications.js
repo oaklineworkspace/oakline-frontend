@@ -821,23 +821,18 @@ export default function Notifications() {
 const styles = {
   container: {
     minHeight: '100vh',
-    backgroundColor: '#f8fafc',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    background: 'linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)',
+    padding: '2rem 1rem',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif'
   },
   main: {
-    padding: '0',
-    maxWidth: '100%',
+    maxWidth: '1200px',
     margin: '0 auto'
   },
   pageHeader: {
-    background: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)',
-    padding: '2rem 1.5rem',
-    borderBottom: '4px solid #1e3a8a',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+    marginBottom: '2rem'
   },
   headerContent: {
-    maxWidth: '1200px',
-    margin: '0 auto',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -847,15 +842,16 @@ const styles = {
   headerLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: '1rem',
+    gap: '1.5rem',
     flex: 1
   },
   iconWrapper: {
     position: 'relative',
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: '16px',
     padding: '1rem',
-    backdropFilter: 'blur(10px)'
+    backdropFilter: 'blur(10px)',
+    border: '1px solid rgba(255,255,255,0.2)'
   },
   headerIcon: {
     fontSize: '2.5rem',
@@ -879,49 +875,55 @@ const styles = {
     color: 'white'
   },
   pageTitle: {
-    fontSize: 'clamp(1.5rem, 5vw, 2rem)',
-    fontWeight: '700',
-    margin: '0 0 0.25rem 0',
-    color: 'white'
+    fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+    fontWeight: '800',
+    margin: '0 0 0.5rem 0',
+    color: 'white',
+    textShadow: '0 2px 10px rgba(0,0,0,0.3)'
   },
   pageSubtitle: {
-    fontSize: 'clamp(0.85rem, 3vw, 1rem)',
+    fontSize: 'clamp(0.95rem, 2vw, 1.125rem)',
     margin: 0,
     opacity: 0.95,
-    fontWeight: '400'
+    fontWeight: '400',
+    color: 'rgba(255,255,255,0.9)'
   },
   markAllButton: {
     background: 'white',
-    color: '#1e40af',
+    color: '#059669',
     border: 'none',
     padding: '0.75rem 1.5rem',
-    borderRadius: '8px',
+    borderRadius: '12px',
     cursor: 'pointer',
     fontSize: '0.95rem',
     fontWeight: '600',
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    transition: 'all 0.2s',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+    transition: 'all 0.3s',
+    boxShadow: '0 4px 15px rgba(5, 150, 105, 0.3)',
+    fontWeight: '700'
   },
   buttonIcon: {
     fontSize: '1.1rem'
   },
   bankInfoBanner: {
-    backgroundColor: '#f1f5f9',
-    padding: '1rem 1.5rem',
-    borderBottom: '1px solid #e2e8f0',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    backdrop: 'blur(10px)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    padding: '1.5rem',
+    borderRadius: '16px',
     display: 'flex',
     justifyContent: 'center',
     flexWrap: 'wrap',
-    gap: '2rem'
+    gap: '2rem',
+    marginBottom: '2rem'
   },
   bankInfoItem: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    color: '#475569'
+    color: 'rgba(255,255,255,0.9)'
   },
   bankInfoIcon: {
     fontSize: '1.2rem'
@@ -931,9 +933,7 @@ const styles = {
     fontWeight: '500'
   },
   filterSection: {
-    padding: '1.5rem 1.5rem 0.5rem',
-    maxWidth: '1200px',
-    margin: '0 auto'
+    paddingBottom: '1.5rem'
   },
   filterScroll: {
     display: 'flex',
@@ -944,7 +944,7 @@ const styles = {
   filterButton: {
     padding: '0.75rem 1.25rem',
     background: 'white',
-    border: '2px solid #e2e8f0',
+    border: '2px solid transparent',
     borderRadius: '12px',
     cursor: 'pointer',
     fontSize: '0.9rem',
@@ -954,51 +954,51 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    transition: 'all 0.2s',
-    color: '#475569'
+    transition: 'all 0.3s',
+    color: '#475569',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
   },
   filterIcon: {
     fontSize: '1.1rem'
   },
   activeFilter: {
-    backgroundColor: '#1e40af',
+    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
     color: 'white',
-    borderColor: '#1e40af',
-    boxShadow: '0 2px 8px rgba(30, 64, 175, 0.3)'
+    borderColor: 'transparent',
+    boxShadow: '0 4px 15px rgba(5, 150, 105, 0.3)'
   },
   notificationsList: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '1rem',
-    padding: '1.5rem',
-    maxWidth: '1200px',
-    margin: '0 auto'
+    gap: '1rem'
   },
   notificationItem: {
     backgroundColor: 'white',
-    padding: '1.25rem',
-    borderRadius: '12px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
-    border: '1px solid #e2e8f0',
+    padding: '1.5rem',
+    borderRadius: '16px',
+    boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+    border: '1px solid rgba(0,0,0,0.05)',
     display: 'flex',
-    gap: '1rem',
-    transition: 'all 0.2s'
+    gap: '1.5rem',
+    transition: 'all 0.3s',
+    cursor: 'pointer'
   },
   unreadNotification: {
-    borderLeft: '4px solid #dc2626',
-    backgroundColor: '#fffbeb',
-    boxShadow: '0 2px 8px rgba(220, 38, 38, 0.1)'
+    borderLeft: '4px solid #059669',
+    backgroundColor: 'white',
+    boxShadow: '0 10px 40px rgba(5, 150, 105, 0.15)'
   },
   notificationIcon: {
     fontSize: '1.75rem',
     flexShrink: 0,
-    width: '48px',
-    height: '48px',
+    width: '56px',
+    height: '56px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: '12px'
+    backgroundColor: '#f0f9ff',
+    borderRadius: '14px',
+    border: '2px solid #e0f2fe'
   },
   notificationContent: {
     flex: 1,
@@ -1008,14 +1008,14 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: '0.5rem',
+    marginBottom: '0.75rem',
     gap: '0.75rem'
   },
   notificationTitle: {
     margin: 0,
     color: '#1e293b',
-    fontSize: '1.05rem',
-    fontWeight: '600',
+    fontSize: '1.1rem',
+    fontWeight: '700',
     lineHeight: '1.4',
     flex: 1
   },
@@ -1028,12 +1028,13 @@ const styles = {
     backgroundColor: '#059669',
     color: 'white',
     border: 'none',
-    padding: '0.4rem 0.75rem',
-    borderRadius: '6px',
+    padding: '0.5rem 0.75rem',
+    borderRadius: '8px',
     cursor: 'pointer',
-    fontSize: '0.9rem',
+    fontSize: '0.85rem',
     fontWeight: '600',
-    transition: 'all 0.2s'
+    transition: 'all 0.3s',
+    boxShadow: '0 2px 8px rgba(5, 150, 105, 0.2)'
   },
   deleteButton: {
     background: '#ef4444',
@@ -1042,14 +1043,15 @@ const styles = {
     cursor: 'pointer',
     fontSize: '1.4rem',
     padding: '0.2rem 0.6rem',
-    borderRadius: '6px',
+    borderRadius: '8px',
     lineHeight: 1,
-    transition: 'all 0.2s'
+    transition: 'all 0.3s',
+    boxShadow: '0 2px 8px rgba(239, 68, 68, 0.2)'
   },
   notificationMessage: {
     margin: '0 0 0.75rem 0',
-    color: '#374151',
-    lineHeight: '1.5',
+    color: '#4b5563',
+    lineHeight: '1.6',
     fontSize: '0.95rem'
   },
   notificationMeta: {
@@ -1057,7 +1059,7 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: '0.5rem'
+    gap: '0.75rem'
   },
   timestamp: {
     color: '#64748b',
@@ -1065,19 +1067,22 @@ const styles = {
     fontWeight: '500'
   },
   notificationType: {
-    backgroundColor: '#f1f5f9',
-    color: '#475569',
-    padding: '0.3rem 0.75rem',
-    borderRadius: '6px',
+    backgroundColor: '#f0f9ff',
+    color: '#0369a1',
+    padding: '0.35rem 0.75rem',
+    borderRadius: '8px',
     fontSize: '0.75rem',
     fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: '0.5px'
+    letterSpacing: '0.5px',
+    border: '1px solid #e0f2fe'
   },
   emptyState: {
     textAlign: 'center',
     padding: '4rem 1.5rem',
-    color: '#64748b'
+    backgroundColor: 'white',
+    borderRadius: '16px',
+    boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
   },
   emptyIcon: {
     fontSize: '4rem',
@@ -1086,19 +1091,21 @@ const styles = {
   },
   emptyTitle: {
     fontSize: '1.5rem',
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1e293b',
     margin: '0 0 0.5rem 0'
   },
   emptyMessage: {
     margin: '0 0 0.5rem 0',
-    fontSize: '1.05rem'
+    fontSize: '1.05rem',
+    color: '#64748b'
   },
   emptyHint: {
     margin: 0,
     fontSize: '0.9rem',
     fontStyle: 'italic',
-    opacity: 0.8
+    opacity: 0.8,
+    color: '#64748b'
   },
   loadingContainer: {
     display: 'flex',
@@ -1106,19 +1113,19 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
-    backgroundColor: '#f8fafc'
+    background: 'linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)'
   },
   spinner: {
     width: '48px',
     height: '48px',
-    border: '4px solid #e2e8f0',
-    borderTop: '4px solid #1e40af',
+    border: '4px solid rgba(255,255,255,0.2)',
+    borderTop: '4px solid #059669',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite'
   },
   loadingText: {
     marginTop: '1.5rem',
-    color: '#64748b',
+    color: 'white',
     fontSize: '1.05rem',
     fontWeight: '500'
   },
@@ -1127,13 +1134,13 @@ const styles = {
     padding: '3rem 1.5rem',
     backgroundColor: 'white',
     borderRadius: '16px',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+    boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
     margin: '3rem auto',
     maxWidth: '500px'
   },
   loginTitle: {
     fontSize: '2rem',
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#1e293b',
     margin: '0 0 1rem 0'
   },
@@ -1145,12 +1152,13 @@ const styles = {
   loginButton: {
     display: 'inline-block',
     padding: '1rem 2rem',
-    backgroundColor: '#1e40af',
+    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
     color: 'white',
     textDecoration: 'none',
-    borderRadius: '10px',
-    fontWeight: '600',
+    borderRadius: '12px',
+    fontWeight: '700',
     fontSize: '1.05rem',
-    transition: 'all 0.2s'
+    transition: 'all 0.3s',
+    boxShadow: '0 4px 15px rgba(5, 150, 105, 0.3)'
   }
 };
