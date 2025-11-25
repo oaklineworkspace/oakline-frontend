@@ -212,14 +212,20 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         }
       }
 
+      console.log('Creating MediaRecorder with MIME type:', mimeType);
       const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
+      let chunkCount = 0;
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        console.log('ondataavailable triggered. Event data size:', event.data.size);
+        if (event.data && event.data.size > 0) {
           chunksRef.current.push(event.data);
-          console.log('Data chunk received:', event.data.size, 'bytes');
+          chunkCount++;
+          console.log('✓ Data chunk #' + chunkCount + ' received:', event.data.size, 'bytes. Total chunks:', chunksRef.current.length);
+        } else {
+          console.log('⚠ ondataavailable called but no data or size is 0');
         }
       };
 
@@ -233,7 +239,10 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
             return;
           }
           
-          // Create blob immediately
+          console.log('Chunk details:', chunksRef.current.map((c, i) => ({ index: i, size: c.size })));
+          
+          // Create blob with correct MIME type
+          // The mimeType must include codec info for proper container headers
           const blob = new Blob(chunksRef.current, { type: mimeType });
           console.log('Blob created:', {
             size: blob.size,
@@ -244,13 +253,18 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
           });
           
           if (blob.size === 0) {
+            console.error('Blob is empty! Chunks:', chunksRef.current);
             setError('Recording failed - empty file. Please try again.');
             setIsRecording(false);
             return;
           }
           
+          if (blob.size < 1000) {
+            console.warn('Blob is suspiciously small:', blob.size, 'bytes. May indicate incomplete recording.');
+          }
+          
           const url = URL.createObjectURL(blob);
-          console.log('Blob URL created:', url);
+          console.log('Blob URL created:', url, 'size:', blob.size);
           
           // Use recorded time from ref (timer-based duration, which is accurate)
           const actualRecordedTime = recordingTimeRef.current;
@@ -295,9 +309,10 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         }
       };
 
-      // Start recording with 500ms timeslice for better frame capture
-      // This ensures video frames are properly collected
-      mediaRecorder.start(500);
+      // Start recording - use no timeslice initially, rely on manual requestData() calls
+      console.log('Starting MediaRecorder with stream:', stream.getTracks().length, 'tracks');
+      mediaRecorder.start();
+      console.log('MediaRecorder started. State:', mediaRecorder.state);
       setIsRecording(true);
       setRecordingTime(0);
       recordingTimeRef.current = 0; // Reset ref
@@ -321,8 +336,19 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       }, 1000);
 
       // Recording timer - show elapsed time, max 30 seconds
+      // ALSO: Request data every 500ms to ensure frames are collected
       recordingIntervalRef.current = setInterval(() => {
         recordingTimeRef.current += 1; // Update ref for accurate time
+        
+        // CRITICAL: Manually request data collection every 500ms to ensure frames are captured
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          try {
+            mediaRecorderRef.current.requestData();
+            console.log('requestData() called. Elapsed:', recordingTimeRef.current, 'seconds');
+          } catch (err) {
+            console.error('Error calling requestData():', err);
+          }
+        }
         
         if (recordingTimeRef.current >= MAX_RECORDING_DURATION) {
           // Clear intervals BEFORE stopping
@@ -340,6 +366,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
           
           // Stop recording
           if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+            console.log('Max recording duration reached. Stopping...');
             mediaRecorderRef.current.stop();
             setIsRecording(false);
           }
@@ -390,20 +417,37 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       setRecordingTime(actualDuration);
       
       // CRITICAL: Request all pending data to be flushed before stopping
-      // This ensures all video frames are captured in the blob
+      // Multiple flush attempts ensure all video frames are captured
       try {
-        console.log('Requesting data flush before stop...');
-        mediaRecorderRef.current.requestData();
+        console.log('Starting data flush sequence...');
         
-        // Give browser enough time to encode and flush all video frames
-        // 200ms is needed for proper video encoding
+        // First flush
+        mediaRecorderRef.current.requestData();
+        console.log('First requestData() sent');
+        
+        // Multiple sequential flushes with increasing delays to ensure complete encoding
         setTimeout(() => {
           if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-            console.log('Stopping MediaRecorder with flushed data...');
+            console.log('Second requestData() sent');
+            mediaRecorderRef.current.requestData();
+          }
+        }, 100);
+        
+        setTimeout(() => {
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+            console.log('Third requestData() sent');
+            mediaRecorderRef.current.requestData();
+          }
+        }, 150);
+        
+        // Final stop with buffer time for all frames to be encoded
+        setTimeout(() => {
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+            console.log('Stopping MediaRecorder with fully flushed data...');
             mediaRecorderRef.current.stop();
             setIsRecording(false);
           }
-        }, 200);
+        }, 300);
       } catch (err) {
         console.error('Error during stop:', err);
         if (mediaRecorderRef.current) {
