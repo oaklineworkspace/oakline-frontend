@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
 import Head from 'next/head';
-import { useAuth } from '../context/AuthContext'; // Assuming useAuth is in AuthContext
+import { useAuth } from '../contexts/AuthContext';
 
 const useMediaQuery = (query) => {
   const [matches, setMatches] = useState(false);
