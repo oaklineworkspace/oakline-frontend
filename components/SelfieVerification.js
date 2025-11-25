@@ -78,7 +78,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       setCountdown(prev => {
         if (prev === 1) {
           clearInterval(countdownInterval);
-          beginRecording();
+          beginRecording(stream);
           return null;
         }
         return prev - 1;
@@ -86,16 +86,28 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
     }, 1000);
   };
 
-  const beginRecording = () => {
+  const beginRecording = (mediaStream) => {
     try {
+      if (!mediaStream) {
+        throw new Error('Stream not available');
+      }
+      
       chunksRef.current = [];
       const options = { mimeType: 'video/webm;codecs=vp9' };
       
       if (!MediaRecorder.isTypeSupported(options.mimeType)) {
         options.mimeType = 'video/webm';
       }
+      
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options.mimeType = 'video/webm;codecs=vp8';
+      }
+      
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options.mimeType = 'video/webm';
+      }
 
-      const mediaRecorder = new MediaRecorder(stream, options);
+      const mediaRecorder = new MediaRecorder(mediaStream, options);
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {

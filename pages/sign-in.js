@@ -421,12 +421,12 @@ export default function LoginPage() {
                 <div 
                   style={{
                     ...styles.progressBarFill,
-                    width: `${((loadingStage + 1) / 4) * 100}%`
+                    width: `${Math.min(((loadingStage + 1) / 4) * 100, 100)}%`
                   }}
                 ></div>
               </div>
               <div style={styles.progressPercentage}>
-                {Math.round(((loadingStage + 1) / 4) * 100)}%
+                {Math.min(Math.round(((loadingStage + 1) / 4) * 100), 100)}%
               </div>
             </div>
 
