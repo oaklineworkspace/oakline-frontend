@@ -1585,53 +1585,52 @@ export default function WireTransfer() {
                         <div style={styles.reviewTitle}>Transfer Summary</div>
 
                         <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Transfer Type</span>
+                          <span style={styles.reviewLabel}>Transfer Type: </span>
                           <span style={styles.reviewValue}>
                             {wireForm.transfer_type === 'domestic' ? '🇺🇸 Domestic' : '🌍 International'}
                           </span>
                         </div>
 
                         <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>From Account</span>
+                          <span style={styles.reviewLabel}>From Account: </span>
                           <span style={styles.reviewValue}>
-                            {accounts.find(a => a.id === wireForm.from_account_id)?.account_type?.toUpperCase()} -
-                            {accounts.find(a => a.id === wireForm.from_account_id)?.account_number}
+                            {accounts.find(a => a.id === wireForm.from_account_id)?.account_type?.toUpperCase()} - {accounts.find(a => a.id === wireForm.from_account_id)?.account_number}
                           </span>
                         </div>
 
                         <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Recipient Name</span>
+                          <span style={styles.reviewLabel}>Recipient Name: </span>
                           <span style={styles.reviewValue}>
                             {wireForm.recipient_first_name} {wireForm.recipient_middle_name} {wireForm.recipient_last_name}
                           </span>
                         </div>
 
                         <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Recipient Bank</span>
+                          <span style={styles.reviewLabel}>Recipient Bank: </span>
                           <span style={styles.reviewValue}>{wireForm.recipient_bank}</span>
                         </div>
 
                         <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Account Number</span>
+                          <span style={styles.reviewLabel}>Account Number: </span>
                           <span style={styles.reviewValue}>{wireForm.recipient_account}</span>
                         </div>
 
                         {wireForm.transfer_type === 'international' && (
                           <div style={styles.reviewRow}>
-                            <span style={styles.reviewLabel}>SWIFT Code</span>
+                            <span style={styles.reviewLabel}>SWIFT Code: </span>
                             <span style={styles.reviewValue}>{wireForm.swift_code}</span>
                           </div>
                         )}
 
                         {wireForm.transfer_type === 'domestic' && (
                           <div style={styles.reviewRow}>
-                            <span style={styles.reviewLabel}>Routing Number</span>
+                            <span style={styles.reviewLabel}>Routing Number: </span>
                             <span style={styles.reviewValue}>{wireForm.routing_number}</span>
                           </div>
                         )}
 
                         <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Bank Address</span>
+                          <span style={styles.reviewLabel}>Bank Address: </span>
                           <span style={styles.reviewValue}>
                             {wireForm.recipient_bank_address}, {wireForm.recipient_bank_city},
                             {wireForm.recipient_bank_county ? `${wireForm.recipient_bank_county}, ` : ''}
@@ -1768,13 +1767,13 @@ export default function WireTransfer() {
 
                         {wireForm.description && (
                           <div style={styles.reviewRow}>
-                            <span style={styles.reviewLabel}>Description</span>
+                            <span style={styles.reviewLabel}>Description: </span>
                             <span style={styles.reviewValue}>{wireForm.description}</span>
                           </div>
                         )}
 
                         <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Processing Time</span>
+                          <span style={styles.reviewLabel}>Processing Time: </span>
                           <span style={styles.reviewValue}>
                             {wireForm.urgent_transfer
                               ? (wireForm.transfer_type === 'domestic' ? 'Within 2 hours' : '24-48 hours')
@@ -2180,44 +2179,44 @@ export default function WireTransfer() {
 
                       <div style={styles.reviewSection}>
                         <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Transfer Type</span>
+                          <span style={styles.reviewLabel}>Transfer Type: </span>
                           <span style={styles.reviewValue}>
                             {wireForm.transfer_type === 'domestic' ? '🇺🇸 Domestic Wire' : '🌍 International Wire'}
                           </span>
                         </div>
 
                         <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>From Account</span>
+                          <span style={styles.reviewLabel}>From Account: </span>
                           <span style={styles.reviewValue}>
                             {accounts.find(a => a.id === wireForm.from_account_id)?.account_type?.toUpperCase()} •••{accounts.find(a => a.id === wireForm.from_account_id)?.account_number?.slice(-4)}
                           </span>
                         </div>
 
                         <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Recipient Name</span>
+                          <span style={styles.reviewLabel}>Recipient Name: </span>
                           <span style={styles.reviewValue}>
                             {wireForm.recipient_first_name} {wireForm.recipient_middle_name && `${wireForm.recipient_middle_name} `}{wireForm.recipient_last_name}
                           </span>
                         </div>
 
                         <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Recipient Bank</span>
+                          <span style={styles.reviewLabel}>Recipient Bank: </span>
                           <span style={styles.reviewValue}>{wireForm.recipient_bank}</span>
                         </div>
 
                         <div style={styles.reviewRow}>
-                          <span style={styles.reviewLabel}>Account Number</span>
+                          <span style={styles.reviewLabel}>Account Number: </span>
                           <span style={styles.reviewValue}>•••••{wireForm.recipient_account.slice(-4)}</span>
                         </div>
 
                         {wireForm.transfer_type === 'international' ? (
                           <div style={styles.reviewRow}>
-                            <span style={styles.reviewLabel}>SWIFT Code</span>
+                            <span style={styles.reviewLabel}>SWIFT Code: </span>
                             <span style={styles.reviewValue}>{wireForm.swift_code}</span>
                           </div>
                         ) : (
                           <div style={styles.reviewRow}>
-                            <span style={styles.reviewLabel}>Routing Number</span>
+                            <span style={styles.reviewLabel}>Routing Number: </span>
                             <span style={styles.reviewValue}>{wireForm.routing_number}</span>
                           </div>
                         )}
@@ -2351,7 +2350,7 @@ export default function WireTransfer() {
 
                         {wireForm.urgent_transfer && (
                           <div style={styles.reviewRow}>
-                            <span style={styles.reviewLabel}>Processing Speed</span>
+                            <span style={styles.reviewLabel}>Processing Speed: </span>
                             <span style={{...styles.reviewValue, color: '#059669', fontWeight: '600'}}>
                               ⚡ {wireForm.transfer_type === 'domestic' ? 'Within 2 hours' : '24-48 hours'}
                             </span>
