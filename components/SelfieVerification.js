@@ -387,9 +387,25 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       // Update state with accurate duration before stopping recorder
       setRecordingTime(actualDuration);
       
-      // Stop the recorder (triggers onstop handler)
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
+      // CRITICAL: Request all pending data to be flushed before stopping
+      // This ensures all video frames are captured in the blob
+      try {
+        console.log('Requesting data flush before stop...');
+        mediaRecorderRef.current.requestData();
+        
+        // Small delay to ensure data is captured
+        setTimeout(() => {
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+            console.log('Stopping MediaRecorder with flushed data...');
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+          }
+        }, 50);
+      } catch (err) {
+        console.error('Error during stop:', err);
+        mediaRecorderRef.current.stop();
+        setIsRecording(false);
+      }
     }
   };
 
