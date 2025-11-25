@@ -92,9 +92,9 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
 
   const speak = (text) => {
     try {
-      // Only speak if voice is active
+      // CRITICAL: Check voice status FIRST - if disabled, don't do anything
       if (!voiceActiveRef.current) {
-        console.log('Voice disabled, skipping:', text);
+        console.log('🔇 Voice disabled, skipping:', text);
         return;
       }
       
@@ -103,28 +103,29 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         return;
       }
 
-      // Aggressive voice cancellation
-      window.speechSynthesis.cancel();
-      // Wait a tiny bit to ensure previous utterance is cancelled
-      setTimeout(() => {
-        if (!voiceActiveRef.current) return; // Check again after timeout
-        
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1;
-        utterance.pitch = 1;
-        utterance.volume = 1;
-        utterance.onend = () => {
-          console.log('Utterance ended:', text);
-        };
-        utterance.onerror = (e) => {
-          console.log('Utterance error:', e);
-        };
-        
-        if (voiceActiveRef.current) {
-          window.speechSynthesis.speak(utterance);
-          synthRef.current = utterance;
-        }
-      }, 10);
+      // Check ONE MORE TIME before speaking
+      if (!voiceActiveRef.current) {
+        console.log('🔇 Voice disabled (double-check), skipping:', text);
+        return;
+      }
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      utterance.onend = () => {
+        console.log('✓ Utterance ended:', text);
+      };
+      utterance.onerror = (e) => {
+        console.log('⚠ Utterance error:', e);
+      };
+      
+      // Final check before speaking
+      if (voiceActiveRef.current) {
+        console.log('🔊 Speaking:', text);
+        window.speechSynthesis.speak(utterance);
+        synthRef.current = utterance;
+      }
     } catch (err) {
       console.error('Speech error:', err);
     }
@@ -351,7 +352,11 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         }
         
         if (recordingTimeRef.current >= MAX_RECORDING_DURATION) {
-          // Clear intervals BEFORE stopping
+          // STEP 1: Disable voice immediately
+          voiceActiveRef.current = false;
+          setVoiceActive(false);
+          
+          // STEP 2: Clear all intervals BEFORE stopping
           if (stepIntervalRef.current) {
             clearInterval(stepIntervalRef.current);
             stepIntervalRef.current = null;
@@ -361,17 +366,18 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
             recordingIntervalRef.current = null;
           }
           
-          // Stop voice
+          // STEP 3: Aggressively stop voice
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.cancel();
           window.speechSynthesis.cancel();
           
-          // Stop recording
+          // STEP 4: Stop recording
           if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-            console.log('Max recording duration reached. Stopping...');
+            console.log('🛑 Max recording duration reached. Stopping...');
             mediaRecorderRef.current.stop();
             setIsRecording(false);
           }
           
-          speak('Recording time reached maximum');
           return;
         }
         
@@ -387,19 +393,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      // CRITICAL: Disable voice FIRST - use ref to prevent stale closures
-      voiceActiveRef.current = false;
-      setVoiceActive(false);
-      
-      // Aggressive voice cancellation - multiple calls to ensure it stops
-      window.speechSynthesis.cancel();
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.pause();
-        window.speechSynthesis.resume();
-        window.speechSynthesis.cancel();
-      }
-      
-      // Clear all intervals FIRST to stop voice loop
+      // STEP 1: Clear all intervals IMMEDIATELY to stop any scheduled voice calls
       if (recordingIntervalRef.current) {
         clearInterval(recordingIntervalRef.current);
         recordingIntervalRef.current = null;
@@ -407,6 +401,24 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       if (stepIntervalRef.current) {
         clearInterval(stepIntervalRef.current);
         stepIntervalRef.current = null;
+      }
+      
+      // STEP 2: Disable voice ref IMMEDIATELY - prevent any new speak() calls
+      voiceActiveRef.current = false;
+      setVoiceActive(false);
+      
+      // STEP 3: AGGRESSIVELY cancel ALL speech synthesis
+      // Multiple cancel calls to ensure queue is completely flushed
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.cancel();
+      
+      // Extra safety: pause and resume to clear any stuck utterances
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.pause();
+        setTimeout(() => {
+          window.speechSynthesis.cancel();
+        }, 10);
       }
       
       // Use ref value for accurate duration (not stale state)
