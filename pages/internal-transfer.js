@@ -264,7 +264,6 @@ export default function InternalTransfer() {
         router.push('/sign-in');
         return;
       }
-      setUser(session.user);
 
       const { data: userAccounts } = await supabase
         .from('accounts')
@@ -485,6 +484,44 @@ export default function InternalTransfer() {
         memo: memo || 'Internal Transfer'
       };
 
+      // Send credit alert email to recipient
+      if (recipientInfo.userId) {
+        try {
+          await fetch('/api/send-transfer-notification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              recipientUserId: recipientInfo.userId,
+              amount: transferAmount,
+              senderName: user?.email?.split('@')[0] || 'Account Holder',
+              accountNumber: recipientInfo.accountNumber,
+              referenceNumber: referenceNumber,
+              notificationType: 'credit'
+            })
+          });
+        } catch (error) {
+          console.error('Error sending recipient notification:', error);
+        }
+      }
+
+      // Send debit alert email to sender
+      try {
+        await fetch('/api/send-transfer-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recipientUserId: user.id,
+            amount: transferAmount,
+            recipientName: recipientInfo.ownerName,
+            accountNumber: recipientInfo.accountNumber,
+            referenceNumber: referenceNumber,
+            notificationType: 'debit'
+          })
+        });
+      } catch (error) {
+        console.error('Error sending sender notification:', error);
+      }
+
       setReceiptData(receipt);
       setShowReceipt(true);
 
@@ -597,20 +634,20 @@ export default function InternalTransfer() {
       fontWeight: '400'
     },
     contentSection: {
-      backgroundColor: 'white',
-      borderRadius: '20px',
-      padding: isMobile ? '1.5rem' : '2.5rem',
-      boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
+      backgroundColor: 'rgba(255, 255, 255, 0.98)',
+      borderRadius: '16px',
+      padding: isMobile ? '1.5rem' : '2rem',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
       marginBottom: '2rem',
-      border: '1px solid #e2e8f0'
+      border: '2px solid #059669'
     },
     sectionTitle: {
       fontSize: isMobile ? '1.25rem' : '1.5rem',
       fontWeight: '700',
-      color: '#1e293b',
+      color: '#1a365d',
       marginBottom: isMobile ? '1.5rem' : '2rem',
       paddingBottom: '1rem',
-      borderBottom: '3px solid #1e40af',
+      borderBottom: '2px solid #059669',
       display: 'flex',
       alignItems: 'center',
       gap: '0.75rem'
