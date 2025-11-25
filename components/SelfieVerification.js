@@ -14,6 +14,8 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
   const [isUploading, setIsUploading] = useState(false);
   const [facingMode, setFacingMode] = useState('user');
   const [videoDuration, setVideoDuration] = useState(0);
+  const [isVideoReady, setIsVideoReady] = useState(false);
+  const [voiceActive, setVoiceActive] = useState(true); // Track if voice should be active
   
   const videoRef = useRef(null);
   const previewVideoRef = useRef(null);
@@ -25,6 +27,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
   const streamRef = useRef(null);
   const synthRef = useRef(null);
   const recordingTimeRef = useRef(0); // Track actual time to avoid closure issues
+  const voiceActiveRef = useRef(true); // Control voice from ref to prevent stale state
 
   // Voice instruction steps - fits within 30 seconds
   const voiceSteps = [
@@ -89,20 +92,39 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
 
   const speak = (text) => {
     try {
+      // Only speak if voice is active
+      if (!voiceActiveRef.current) {
+        console.log('Voice disabled, skipping:', text);
+        return;
+      }
+      
       if (!('speechSynthesis' in window)) {
         console.warn('Speech synthesis not supported');
         return;
       }
 
+      // Aggressive voice cancellation
       window.speechSynthesis.cancel();
-      
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1;
-      utterance.pitch = 1;
-      utterance.volume = 1;
-      
-      window.speechSynthesis.speak(utterance);
-      synthRef.current = utterance;
+      // Wait a tiny bit to ensure previous utterance is cancelled
+      setTimeout(() => {
+        if (!voiceActiveRef.current) return; // Check again after timeout
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+        utterance.onend = () => {
+          console.log('Utterance ended:', text);
+        };
+        utterance.onerror = (e) => {
+          console.log('Utterance error:', e);
+        };
+        
+        if (voiceActiveRef.current) {
+          window.speechSynthesis.speak(utterance);
+          synthRef.current = utterance;
+        }
+      }, 10);
     } catch (err) {
       console.error('Speech error:', err);
     }
@@ -323,8 +345,17 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      // CRITICAL: Stop all voices immediately
+      // CRITICAL: Disable voice FIRST - use ref to prevent stale closures
+      voiceActiveRef.current = false;
+      setVoiceActive(false);
+      
+      // Aggressive voice cancellation - multiple calls to ensure it stops
       window.speechSynthesis.cancel();
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.pause();
+        window.speechSynthesis.resume();
+        window.speechSynthesis.cancel();
+      }
       
       // Clear all intervals FIRST to stop voice loop
       if (recordingIntervalRef.current) {
@@ -356,6 +387,10 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
     setUploadProgress(0);
     setRecordingTime(0);
     setVideoDuration(0);
+    setIsVideoReady(false);
+    recordingTimeRef.current = 0;
+    voiceActiveRef.current = true; // Re-enable voice
+    setVoiceActive(true);
     setStage('capture');
     startCamera();
   };
@@ -447,6 +482,9 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
           console.log('Using metadata duration:', duration);
           setVideoDuration(duration);
         }
+        
+        // Mark video as ready to show controls
+        setIsVideoReady(true);
       }
     } catch (err) {
       console.error('Error getting video duration:', err);
@@ -511,12 +549,14 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
               <video
                 ref={previewVideoRef}
                 src={recordedVideo.url}
-                controls
+                controls={isVideoReady}
                 controlsList="nodownload"
                 className={styles.preview}
                 autoPlay={false}
+                preload="metadata"
                 onLoadedMetadata={handlePreviewVideoLoaded}
                 onError={handlePreviewVideoError}
+                onCanPlay={handlePreviewVideoLoaded}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', backgroundColor: '#000' }}
               />
               {videoDuration > 0 && (
