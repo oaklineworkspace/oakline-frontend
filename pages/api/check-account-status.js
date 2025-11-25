@@ -101,12 +101,13 @@ export default async function handler(req, res) {
       profile?.requires_verification === true;
 
     // Determine the blocking type for UI
+    // Priority: verification_required is checked FIRST so users can verify identity before other restrictions are applied
     let blockingType = null;
-    if (profile?.is_banned) blockingType = 'banned';
+    if (profile?.requires_verification) blockingType = 'verification_required';
+    else if (profile?.is_banned) blockingType = 'banned';
     else if (securitySettings?.account_locked) blockingType = 'locked';
     else if (profile?.status === 'suspended') blockingType = 'suspended';
     else if (profile?.status === 'closed') blockingType = 'closed';
-    else if (profile?.requires_verification) blockingType = 'verification_required';
 
     // Get the actual reason from the profile table
     const reason = profile?.ban_reason || null;
