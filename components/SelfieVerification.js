@@ -13,7 +13,6 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [facingMode, setFacingMode] = useState('user');
-  const [currentStep, setCurrentStep] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
   
   const videoRef = useRef(null);
@@ -26,14 +25,16 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
   const streamRef = useRef(null);
   const synthRef = useRef(null);
 
-  // Voice instruction steps - only voice, no visual overlays
+  // Voice instruction steps - fits within 30 seconds
   const voiceSteps = [
-    { text: 'Look at the camera', duration: 2 },
-    { text: 'Turn your head to the left', duration: 3 },
-    { text: 'Turn your head to the right', duration: 3 },
-    { text: 'Smile at the camera', duration: 2 },
-    { text: 'Keep looking at the camera', duration: 5 }
+    { text: 'Look at the camera', duration: 3 },
+    { text: 'Turn your head to the left slowly', duration: 5 },
+    { text: 'Turn your head to the right slowly', duration: 5 },
+    { text: 'Smile at the camera', duration: 3 },
+    { text: 'Keep looking at the camera', duration: 14 }
   ];
+
+  const MAX_RECORDING_DURATION = 30; // Changed from 15 to 30
 
   useEffect(() => {
     startCamera();
@@ -152,7 +153,6 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
 
     speak('Starting verification in 3 seconds');
     setCountdown(3);
-    setCurrentStep(0);
     
     const countdownInterval = setInterval(() => {
       setCountdown(prev => {
@@ -196,11 +196,14 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
+          console.log('Data chunk received:', event.data.size, 'bytes');
         }
       };
 
       mediaRecorder.onstop = () => {
         try {
+          console.log('Recording stopped, total chunks:', chunksRef.current.length);
+          
           if (chunksRef.current.length === 0) {
             setError('Recording failed - no data captured. Please try again.');
             setIsRecording(false);
@@ -208,6 +211,12 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
           }
           
           const blob = new Blob(chunksRef.current, { type: mimeType });
+          console.log('Blob created:', {
+            size: blob.size,
+            type: blob.type,
+            mimeType: mimeType,
+            chunks: chunksRef.current.length
+          });
           
           if (blob.size === 0) {
             setError('Recording failed - empty file. Please try again.');
@@ -216,15 +225,19 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
           }
           
           const url = URL.createObjectURL(blob);
+          console.log('Blob URL created:', url);
+          
           setRecordedVideo({ blob, url, mimeType });
           setStage('preview');
           stopCamera();
+          
           if (recordingIntervalRef.current) {
             clearInterval(recordingIntervalRef.current);
           }
           if (stepIntervalRef.current) {
             clearInterval(stepIntervalRef.current);
           }
+          
           speak('Recording complete. You can review your video now');
         } catch (err) {
           console.error('Error processing recording:', err);
@@ -259,21 +272,21 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
           if (stepStartTime >= voiceSteps[stepIndex].duration) {
             stepIndex++;
             stepStartTime = 0;
-            setCurrentStep(stepIndex);
             speak(voiceSteps[stepIndex].text);
           }
         }
       }, 1000);
 
-      // Recording timer - show elapsed time
+      // Recording timer - show elapsed time, max 30 seconds
       recordingIntervalRef.current = setInterval(() => {
         setRecordingTime(prev => {
-          if (prev >= 15) {
+          if (prev >= MAX_RECORDING_DURATION) {
             stopRecording();
             if (stepIntervalRef.current) {
               clearInterval(stepIntervalRef.current);
             }
-            return 15;
+            speak('Recording time reached maximum');
+            return MAX_RECORDING_DURATION;
           }
           return prev + 1;
         });
@@ -307,7 +320,6 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
     setRecordingTime(0);
     setVideoDuration(0);
     setStage('capture');
-    setCurrentStep(0);
     startCamera();
   };
 
@@ -388,11 +400,17 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
     try {
       if (previewVideoRef.current) {
         const duration = previewVideoRef.current.duration;
+        console.log('Video loaded, duration:', duration);
         setVideoDuration(isNaN(duration) ? 0 : duration);
       }
     } catch (err) {
       console.error('Error getting video duration:', err);
     }
+  };
+
+  const handlePreviewVideoError = (e) => {
+    console.error('Video playback error:', e);
+    setError('Unable to play recorded video. Please try retaking.');
   };
 
   return (
@@ -404,8 +422,8 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         
         <p className={styles.instructions}>
           {stage === 'capture' && verificationType === 'selfie' && 'Take a clear photo of your face with good lighting'}
-          {stage === 'capture' && verificationType === 'video' && 'Position your face in the center. Follow the voice instructions.'}
-          {stage === 'preview' && 'Review your capture before submitting'}
+          {stage === 'capture' && verificationType === 'video' && `Position your face in the center. Record up to ${MAX_RECORDING_DURATION} seconds. Follow the voice instructions.`}
+          {stage === 'preview' && 'Review your recording. You can retake or submit.'}
           {stage === 'uploading' && 'Uploading your verification...'}
         </p>
 
@@ -421,7 +439,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
               {/* Minimal timer at bottom - doesn't block face */}
               {isRecording && (
                 <div className={styles.timerOverlay}>
-                  <div className={styles.timerDisplay}>{recordingTime}s / 15s</div>
+                  <div className={styles.timerDisplay}>{recordingTime}s / {MAX_RECORDING_DURATION}s</div>
                 </div>
               )}
 
@@ -451,9 +469,10 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
                 controls
                 controlsList="nodownload"
                 className={styles.preview}
-                autoPlay
+                autoPlay={false}
                 onLoadedMetadata={handlePreviewVideoLoaded}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                onError={handlePreviewVideoError}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', backgroundColor: '#000' }}
               />
               {videoDuration > 0 && (
                 <div className={styles.videoDurationBadge}>
@@ -517,7 +536,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
                       onClick={stopRecording}
                       className={styles.stopButton}
                     >
-                      ⏹️ Stop Recording
+                      ⏹️ Stop Recording ({recordingTime}s)
                     </button>
                   )}
                 </>
