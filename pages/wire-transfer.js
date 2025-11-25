@@ -1301,53 +1301,13 @@ export default function WireTransfer() {
 
                       <div style={styles.formGroup}>
                         <label style={styles.label}>City (Optional)</label>
-                        {showManualCity ? (
-                          <input
-                            type="text"
-                            style={styles.input}
-                            value={wireForm.recipient_bank_city}
-                            onChange={(e) => handleInputChange('recipient_bank_city', e.target.value)}
-                            placeholder="Enter City (Optional)"
-                          />
-                        ) : (
-                          <select
-                            style={styles.select}
-                            value={wireForm.recipient_bank_city}
-                            onChange={(e) => handleInputChange('recipient_bank_city', e.target.value)}
-                            disabled={loadingCities || !wireForm.recipient_bank_state}
-                          >
-                            <option value="">
-                              {loadingCities ? 'Loading cities...' : wireForm.recipient_bank_state ? 'Select City (Optional)' : 'Select state first'}
-                            </option>
-                            {locationData.cities.map(city => (
-                              <option key={city.id} value={city.name}>
-                                {city.name}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                        {locationData.cities.length > 0 && !showManualState && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setShowManualCity(!showManualCity);
-                              handleInputChange('recipient_bank_city', '');
-                            }}
-                            style={{
-                              marginTop: '0.5rem',
-                              padding: '0.5rem 1rem',
-                              backgroundColor: '#f3f4f6',
-                              border: '1px solid #d1d5db',
-                              borderRadius: '6px',
-                              fontSize: '0.875rem',
-                              cursor: 'pointer',
-                              color: '#374151',
-                              fontWeight: '500'
-                            }}
-                          >
-                            {showManualCity ? '📋 Select from list' : '✏️ Enter manually'}
-                          </button>
-                        )}
+                        <input
+                          type="text"
+                          style={styles.input}
+                          value={wireForm.recipient_bank_city}
+                          onChange={(e) => handleInputChange('recipient_bank_city', e.target.value)}
+                          placeholder="Enter City (Optional)"
+                        />
                       </div>
 
                       <div style={styles.formGroup}>
