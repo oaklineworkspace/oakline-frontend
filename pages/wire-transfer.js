@@ -836,112 +836,37 @@ export default function WireTransfer() {
           )}
 
           <div style={styles.stepIndicator}>
-            <div style={styles.step}>
-              <div style={{
-                ...styles.stepCircle,
-                backgroundColor: currentStep >= 1 ? '#059669' : 'rgba(255,255,255,0.2)',
-                color: currentStep >= 1 ? 'white' : 'rgba(255,255,255,0.6)',
-                borderColor: currentStep === 1 ? '#FFC857' : 'transparent',
-                transform: currentStep === 1 ? 'scale(1.05)' : 'scale(1)'
-              }}>
-                {currentStep > 1 ? '✓' : '1'}
+            {[
+              { num: 1, label: 'Transfer Details' },
+              { num: 2, label: 'Review & Confirm' },
+              { num: 3, label: 'Email Code' },
+              { num: 4, label: 'Verify PIN' },
+              { num: 5, label: 'Submit' }
+            ].map((stepItem, idx) => (
+              <div key={stepItem.num}>
+                <div style={styles.step}>
+                  <div style={{
+                    ...styles.stepCircle,
+                    backgroundColor: currentStep >= stepItem.num ? '#10b981' : 'rgba(255,255,255,0.15)',
+                    color: currentStep >= stepItem.num ? 'white' : 'rgba(255,255,255,0.5)',
+                    borderColor: currentStep === stepItem.num ? '#fbbf24' : 'transparent',
+                    transform: currentStep === stepItem.num ? 'scale(1.08)' : 'scale(1)',
+                    boxShadow: currentStep === stepItem.num ? '0 0 12px rgba(251, 191, 36, 0.4)' : '0 2px 8px rgba(0,0,0,0.15)'
+                  }}>
+                    {currentStep > stepItem.num ? '✓' : stepItem.num}
+                  </div>
+                  <span style={{
+                    ...styles.stepLabel,
+                    opacity: currentStep >= stepItem.num ? 1 : 0.6,
+                    fontWeight: currentStep === stepItem.num ? '700' : '500',
+                    color: currentStep === stepItem.num ? '#fbbf24' : 'rgba(255,255,255,0.85)'
+                  }}>
+                    {stepItem.label}
+                  </span>
+                </div>
+                {idx < 4 && <div style={styles.stepDivider}></div>}
               </div>
-              <span style={{
-                ...styles.stepLabel,
-                opacity: currentStep >= 1 ? 1 : 0.6,
-                fontWeight: currentStep === 1 ? '700' : '600'
-              }}>
-                Transfer Details
-              </span>
-            </div>
-            <div style={{
-              ...styles.stepDivider,
-              backgroundColor: currentStep >= 2 ? '#059669' : 'rgba(255,255,255,0.3)'
-            }}></div>
-            <div style={styles.step}>
-              <div style={{
-                ...styles.stepCircle,
-                backgroundColor: currentStep >= 2 ? '#059669' : 'rgba(255,255,255,0.2)',
-                color: currentStep >= 2 ? 'white' : 'rgba(255,255,255,0.6)',
-                borderColor: currentStep === 2 ? '#FFC857' : 'transparent',
-                transform: currentStep === 2 ? 'scale(1.05)' : 'scale(1)'
-              }}>
-                {currentStep > 2 ? '✓' : '2'}
-              </div>
-              <span style={{
-                ...styles.stepLabel,
-                opacity: currentStep >= 2 ? 1 : 0.6,
-                fontWeight: currentStep === 2 ? '700' : '600'
-              }}>
-                Review & Confirm
-              </span>
-            </div>
-            <div style={{
-              ...styles.stepDivider,
-              backgroundColor: currentStep >= 3 ? '#059669' : 'rgba(255,255,255,0.3)'
-            }}></div>
-            <div style={styles.step}>
-              <div style={{
-                ...styles.stepCircle,
-                backgroundColor: currentStep >= 3 ? '#059669' : 'rgba(255,255,255,0.2)',
-                color: currentStep >= 3 ? 'white' : 'rgba(255,255,255,0.6)',
-                borderColor: currentStep === 3 ? '#FFC857' : 'transparent',
-                transform: currentStep === 3 ? 'scale(1.05)' : 'scale(1)'
-              }}>
-                {currentStep > 3 ? '✓' : '3'}
-              </div>
-              <span style={{
-                ...styles.stepLabel,
-                opacity: currentStep >= 3 ? 1 : 0.6,
-                fontWeight: currentStep === 3 ? '700' : '600'
-              }}>
-                Email Code
-              </span>
-            </div>
-            <div style={{
-              ...styles.stepDivider,
-              backgroundColor: currentStep >= 4 ? '#059669' : 'rgba(255,255,255,0.3)'
-            }}></div>
-            <div style={styles.step}>
-              <div style={{
-                ...styles.stepCircle,
-                backgroundColor: currentStep >= 4 ? '#059669' : 'rgba(255,255,255,0.2)',
-                color: currentStep >= 4 ? 'white' : 'rgba(255,255,255,0.6)',
-                borderColor: currentStep === 4 ? '#FFC857' : 'transparent',
-                transform: currentStep === 4 ? 'scale(1.05)' : 'scale(1)'
-              }}>
-                {currentStep > 4 ? '✓' : '4'}
-              </div>
-              <span style={{
-                ...styles.stepLabel,
-                opacity: currentStep >= 4 ? 1 : 0.6,
-                fontWeight: currentStep === 4 ? '700' : '600'
-              }}>
-                Verify PIN
-              </span>
-            </div>
-            <div style={{
-              ...styles.stepDivider,
-              backgroundColor: currentStep >= 5 ? '#059669' : 'rgba(255,255,255,0.3)'
-            }}></div>
-            <div style={styles.step}>
-              <div style={{
-                ...styles.stepCircle,
-                backgroundColor: currentStep >= 5 ? '#059669' : 'rgba(255,255,255,0.2)',
-                color: currentStep >= 5 ? 'white' : 'rgba(255,255,255,0.6)',
-                borderColor: currentStep === 5 ? '#FFC857' : 'transparent',
-                transform: currentStep === 5 ? 'scale(1.05)' : 'scale(1)'
-              }}>
-                {currentStep > 5 ? '✓' : '5'}
-              </div>
-              <span style={{
-                ...styles.stepLabel,
-                opacity: currentStep >= 5 ? 1 : 0.6,
-                fontWeight: currentStep === 5 ? '700' : '600'
-              }}>
-                Submit
-              </span>
-            </div>
+            ))}
           </div>
 
           {message && (
