@@ -13,11 +13,14 @@ import LanguageSelector from '../components/LanguageSelector';
 import LocalizedImage from '../components/LocalizedImage';
 import TranslatedText from '../components/TranslatedText'; // Import TranslatedText
 
-// Lazy load heavy components
+// Lazy load heavy components - load after initial render completes
 const Testimonials = lazy(() => import('../components/Testimonials'));
 const TestimonialsSection = lazy(() => import('../components/TestimonialsSection'));
 const LoanApprovalSection = lazy(() => import('../components/LoanApprovalSection'));
 const CTA = lazy(() => import('../components/CTA'));
+
+// Fallback component for lazy loaded sections
+const LazyLoadingFallback = () => null;
 
 export default function Home() {
   const { currentLanguage, t: translateFn } = useLanguage();
@@ -646,7 +649,9 @@ export default function Home() {
                     src={image.src}
                     alt={image.title}
                     style={styles.heroImage}
-                    fallbackSrc="/images/hero-fallback.png" // Provide a fallback image path
+                    fallbackSrc="/images/hero-fallback.png"
+                    priority={index === 0}
+                    loading={index === 0 ? 'eager' : 'lazy'}
                   />
                   <div style={styles.heroOverlay}></div>
                 </div>
