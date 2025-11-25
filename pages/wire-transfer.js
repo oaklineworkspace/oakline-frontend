@@ -85,6 +85,29 @@ export default function WireTransfer() {
   }, []);
 
   useEffect(() => {
+    if (user) {
+      checkVerificationStatus();
+      fetchAccounts();
+    }
+  }, [user]);
+
+  const checkVerificationStatus = async () => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('requires_verification')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.requires_verification) {
+        router.push('/verify-identity');
+      }
+    } catch (error) {
+      console.error('Error checking verification status:', error);
+    }
+  };
+
+  useEffect(() => {
     // Automatically set country based on transfer type
     const country = wireForm.transfer_type === 'domestic' ? 'United States' : '';
     if (country !== wireForm.recipient_bank_country) {
@@ -394,7 +417,7 @@ export default function WireTransfer() {
       return false;
     }
 
-    
+
 
     // Validate account number based on transfer type
     const accountValidation = validateAccountNumber(wireForm.recipient_account, wireForm.transfer_type);
@@ -1700,7 +1723,7 @@ export default function WireTransfer() {
                         )}
                       </div>
 
-                      
+
 
                       <div style={styles.formGroup}>
                         <label style={styles.label}>Recipient Account Number *</label>
@@ -1708,8 +1731,8 @@ export default function WireTransfer() {
                           type="text"
                           style={{
                             ...styles.input,
-                            borderImage: validationErrors.recipient_account 
-                              ? 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%) 1' 
+                            borderImage: validationErrors.recipient_account
+                              ? 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%) 1'
                               : 'none'
                           }}
                           value={wireForm.recipient_account}
@@ -1794,8 +1817,8 @@ export default function WireTransfer() {
                           type="text"
                           style={{
                             ...styles.input,
-                            borderImage: validationErrors.routing_number 
-                              ? 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%) 1' 
+                            borderImage: validationErrors.routing_number
+                              ? 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%) 1'
                               : 'none'
                           }}
                           value={wireForm.routing_number}
@@ -2602,7 +2625,7 @@ export default function WireTransfer() {
                           }}
                           disabled={loading || !verificationCode || verificationCode.length !== 6}
                         >
-                          {loading ? '🔄 Processing...' : `✓ Submit Transfer`}
+                          {loading ? 'Processing...' : `✓ Submit Transfer`}
                         </button>
                       </div>
                     </>

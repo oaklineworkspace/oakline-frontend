@@ -148,6 +148,39 @@ export default function OaklinePayPage() {
     }
   };
 
+  useEffect(() => {
+    if (user) {
+      checkVerificationStatus();
+      fetchPaySettings();
+      fetchAccounts();
+      fetchTransactions();
+      fetchPendingPayments();
+    }
+  }, [user]);
+
+  const checkVerificationStatus = async () => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('requires_verification')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.requires_verification) {
+        router.push('/verify-identity');
+      }
+    } catch (error) {
+      console.error('Error checking verification status:', error);
+    }
+  };
+
+  // Placeholder functions for other data fetching, assuming they exist elsewhere or are implicitly handled
+  const fetchPaySettings = async () => { /* ... implementation ... */ };
+  const fetchAccounts = async () => { /* ... implementation ... */ };
+  const fetchTransactions = async () => { /* ... implementation ... */ };
+  const fetchPendingPayments = async () => { /* ... implementation ... */ };
+
+
   const handleSendMoney = async (e) => {
     e.preventDefault();
     setMessage('');
@@ -625,7 +658,7 @@ export default function OaklinePayPage() {
         {activeTab === 'requests' && (
           <div style={styles.tabContent}>
             <h3 style={styles.sectionTitle}>Payment Requests</h3>
-            
+
             <div style={{ marginBottom: '2rem' }}>
               <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#1A3E6F', marginBottom: '1rem' }}>
                 Received Requests ({paymentRequests.filter(r => r.recipient_id === user?.id && r.status === 'pending').length})

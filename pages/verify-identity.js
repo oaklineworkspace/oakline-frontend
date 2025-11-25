@@ -10,7 +10,7 @@ export default function VerifyIdentity() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [verificationData, setVerificationData] = useState(null);
-  const [verificationType, setVerificationType] = useState('selfie');
+  const [verificationType, setVerificationType] = useState('video');
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {

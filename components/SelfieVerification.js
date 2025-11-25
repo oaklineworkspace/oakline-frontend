@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import styles from '../styles/SelfieVerification.module.css';
 
-export default function SelfieVerification({ onVerificationComplete, verificationType = 'selfie' }) {
+export default function SelfieVerification({ onVerificationComplete, verificationType = 'video' }) {
   const [isRecording, setIsRecording] = useState(false);
   const [recordedVideo, setRecordedVideo] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
@@ -114,12 +114,12 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       mediaRecorder.start();
       setIsRecording(true);
 
-      // Auto-stop after 10 seconds
+      // Auto-stop after 15 seconds for comprehensive liveness verification
       setTimeout(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
           stopRecording();
         }
-      }, 10000);
+      }, 15000);
     } catch (err) {
       console.error('Error starting recording:', err);
       setError('Unable to start recording. Please try again.');
@@ -191,13 +191,13 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
     <div className={styles.container}>
       <div className={styles.verificationBox}>
         <h2 className={styles.title}>
-          {verificationType === 'selfie' ? 'Take a Selfie' : 'Record Video Verification'}
+          {verificationType === 'selfie' ? 'Take a Selfie' : 'Video Liveness Verification'}
         </h2>
         
         <p className={styles.instructions}>
           {verificationType === 'selfie' 
             ? 'Please take a clear photo of your face. Make sure your face is well-lit and clearly visible.'
-            : 'Please record a short video (max 10 seconds). Look directly at the camera and slowly turn your head left and right.'}
+            : 'Please record a video for liveness verification (max 15 seconds). Follow these steps: 1) Look directly at the camera, 2) Slowly turn your head to the left, 3) Turn your head to the right, 4) Smile naturally. Ensure good lighting and that your entire face is visible.'}
         </p>
 
         {error && (

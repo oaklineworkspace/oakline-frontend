@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
 import Head from 'next/head';
+import { useAuth } from '../context/AuthContext'; // Assuming useAuth is defined in AuthContext
 
 const useMediaQuery = (query) => {
   const [matches, setMatches] = useState(false);
@@ -202,7 +203,8 @@ function RecentTransfers({ user, isMobile }) {
 }
 
 export default function Transfer() {
-  const [user, setUser] = useState(null);
+  const router = useRouter();
+  const { user } = useAuth();
   const [accounts, setAccounts] = useState([]);
   const [fromAccount, setFromAccount] = useState('');
   const [toAccount, setToAccount] = useState('');
@@ -217,7 +219,8 @@ export default function Transfer() {
   const [loadingTransfers, setLoadingTransfers] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [bankDetails, setBankDetails] = useState(null);
-  const router = useRouter();
+  const [verificationRequired, setVerificationRequired] = useState(false);
+
 
   useEffect(() => {
     checkUserAndFetchData();
@@ -238,9 +241,46 @@ export default function Transfer() {
 
   useEffect(() => {
     if (user) {
+      checkVerificationStatus();
+      fetchAccounts();
       fetchRecentTransfers();
     }
   }, [user]);
+
+  const checkVerificationStatus = async () => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('requires_verification, verification_reason')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.requires_verification) {
+        router.push('/verify-identity');
+      }
+    } catch (error) {
+      console.error('Error checking verification status:', error);
+    }
+  };
+
+  const fetchAccounts = async () => {
+    try {
+      const { data: userAccounts } = await supabase
+        .from('accounts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: true });
+
+      if (userAccounts && userAccounts.length > 0) {
+        setAccounts(userAccounts);
+        setFromAccount(userAccounts[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching accounts:', error);
+    }
+  };
+
 
   useEffect(() => {
     const checkMobile = () => {

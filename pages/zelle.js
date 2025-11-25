@@ -90,6 +90,23 @@ export default function ZellePage() {
     }
   };
 
+  const checkVerificationStatus = async () => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('requires_verification')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.requires_verification) {
+        router.push('/verify-identity');
+      }
+    } catch (error) {
+      console.error('Error checking verification status:', error);
+    }
+  };
+
+
   const generateQRCode = async () => {
     try {
       const zelleData = JSON.stringify({

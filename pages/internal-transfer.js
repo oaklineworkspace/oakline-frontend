@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
 import Head from 'next/head';
+import { useAuth } from '../context/AuthContext'; // Assuming useAuth is in AuthContext
 
 const useMediaQuery = (query) => {
   const [matches, setMatches] = useState(false);
@@ -202,7 +203,8 @@ function RecentTransfers({ user, isMobile }) {
 }
 
 export default function InternalTransfer() {
-  const [user, setUser] = useState(null);
+  const router = useRouter();
+  const { user } = useAuth();
   const [accounts, setAccounts] = useState([]);
   const [fromAccount, setFromAccount] = useState('');
   const [recipientAccountNumber, setRecipientAccountNumber] = useState('');
@@ -216,12 +218,30 @@ export default function InternalTransfer() {
   const [pageLoading, setPageLoading] = useState(true);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
-  const router = useRouter();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   useEffect(() => {
-    checkUserAndFetchData();
-  }, []);
+    if (user) {
+      checkVerificationStatus();
+      checkUserAndFetchData();
+    }
+  }, [user]);
+
+  const checkVerificationStatus = async () => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('requires_verification')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.requires_verification) {
+        router.push('/verify-identity');
+      }
+    } catch (error) {
+      console.error('Error checking verification status:', error);
+    }
+  };
 
   const checkUserAndFetchData = async () => {
     try {
@@ -430,7 +450,7 @@ export default function InternalTransfer() {
         referenceNumber,
         date: new Date().toLocaleString('en-US', {
           year: 'numeric',
-          month: 'long',
+          month: 'short',
           day: 'numeric',
           hour: '2-digit',
           minute: '2-digit',
