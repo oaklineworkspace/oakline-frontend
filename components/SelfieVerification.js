@@ -215,7 +215,8 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
             size: blob.size,
             type: blob.type,
             mimeType: mimeType,
-            chunks: chunksRef.current.length
+            chunks: chunksRef.current.length,
+            recordingTime: recordingTime
           });
           
           if (blob.size === 0) {
@@ -227,7 +228,9 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
           const url = URL.createObjectURL(blob);
           console.log('Blob URL created:', url);
           
-          setRecordedVideo({ blob, url, mimeType });
+          // Store recorded time instead of relying on blob metadata
+          setRecordedVideo({ blob, url, mimeType, recordedDuration: recordingTime });
+          setVideoDuration(recordingTime); // Use actual recorded time, not blob duration
           setStage('preview');
           stopCamera();
           
@@ -301,14 +304,23 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      // CRITICAL: Stop all voices immediately
+      window.speechSynthesis.cancel();
+      
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      
+      // Clear all intervals to prevent voice from continuing
       if (recordingIntervalRef.current) {
         clearInterval(recordingIntervalRef.current);
+        recordingIntervalRef.current = null;
       }
       if (stepIntervalRef.current) {
         clearInterval(stepIntervalRef.current);
+        stepIntervalRef.current = null;
       }
+      
+      console.log('Recording stopped. Duration:', recordingTime, 'seconds');
     }
   };
 
@@ -400,8 +412,16 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
     try {
       if (previewVideoRef.current) {
         const duration = previewVideoRef.current.duration;
-        console.log('Video loaded, duration:', duration);
-        setVideoDuration(isNaN(duration) ? 0 : duration);
+        console.log('Video loaded, metadata duration:', duration);
+        
+        // Use recorded duration if available, fallback to video metadata
+        if (recordedVideo?.recordedDuration) {
+          console.log('Using recorded duration:', recordedVideo.recordedDuration);
+          setVideoDuration(recordedVideo.recordedDuration);
+        } else if (!isNaN(duration) && duration > 0) {
+          console.log('Using metadata duration:', duration);
+          setVideoDuration(duration);
+        }
       }
     } catch (err) {
       console.error('Error getting video duration:', err);
