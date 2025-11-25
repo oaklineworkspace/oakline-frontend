@@ -550,14 +550,20 @@ export default function Transfer() {
 
   const wireStyles = getWireTransferStyles(isMobile);
   const styles = {
-    container: wireStyles.container,
+    container: {
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)',
+      padding: '2rem 1rem',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif'
+    },
     header: {
+      maxWidth: '1200px',
+      margin: '0 auto 2rem',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      maxWidth: '1400px',
-      margin: '0 auto',
-      padding: isMobile ? '1rem' : '1.5rem 2rem'
+      flexWrap: 'wrap',
+      gap: '1rem'
     },
     logoContainer: {
       display: 'flex',
@@ -570,10 +576,38 @@ export default function Transfer() {
       fontSize: isMobile ? '1.2rem' : '1.6rem',
       fontWeight: '700'
     },
-    backButton: wireStyles.backButton,
-    main: wireStyles.main,
-    pageTitle: wireStyles.pageTitle,
-    pageSubtitle: wireStyles.pageSubtitle,
+    backButton: {
+      color: 'white',
+      textDecoration: 'none',
+      padding: '0.75rem 1.5rem',
+      backgroundColor: 'rgba(255,255,255,0.1)',
+      borderRadius: '12px',
+      fontWeight: '600',
+      transition: 'all 0.3s',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(255,255,255,0.2)',
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '0.5rem'
+    },
+    main: {
+      maxWidth: '1200px',
+      margin: '0 auto'
+    },
+    pageTitle: {
+      fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+      fontWeight: '800',
+      color: 'white',
+      textAlign: 'center',
+      marginBottom: '0.5rem',
+      textShadow: '0 2px 10px rgba(0,0,0,0.3)'
+    },
+    pageSubtitle: {
+      fontSize: 'clamp(0.95rem, 2vw, 1.125rem)',
+      color: 'rgba(255,255,255,0.9)',
+      textAlign: 'center',
+      marginBottom: '2rem'
+    },
     card: wireStyles.card,
     cardTitle: wireStyles.cardTitle,
     contentSection: {
