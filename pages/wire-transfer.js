@@ -874,7 +874,12 @@ export default function WireTransfer() {
           </div>
 
           {message && (
-            <div style={messageType === 'error' ? styles.errorBanner : styles.successBanner}>
+            <div style={{
+              ...styles.message,
+              backgroundColor: messageType === 'error' ? '#fee2e2' : '#d1fae5',
+              color: messageType === 'error' ? '#dc2626' : '#059669',
+              borderColor: messageType === 'error' ? '#fca5a5' : '#6ee7b7'
+            }}>
               {message}
             </div>
           )}
@@ -1514,15 +1519,25 @@ export default function WireTransfer() {
                         onClick={handleNextStep}
                         style={{
                           width: '100%',
-                          ...styles.primaryButton
+                          padding: '1rem 1.5rem',
+                          backgroundColor: '#1e40af',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '12px',
+                          fontSize: '1rem',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)',
+                          letterSpacing: '-0.01em'
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundImage = 'linear-gradient(135deg, #047857 0%, #059669 100%)';
-                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(5, 150, 105, 0.4)';
+                          e.currentTarget.style.backgroundColor = '#1e3a8a';
+                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(30, 64, 175, 0.4)';
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundImage = 'linear-gradient(135deg, #059669 0%, #10b981 100%)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(5, 150, 105, 0.3)';
+                          e.currentTarget.style.backgroundColor = '#1e40af';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(30, 64, 175, 0.3)';
                         }}
                       >
                         Continue to Review →
@@ -1711,14 +1726,22 @@ export default function WireTransfer() {
                         <button
                           type="button"
                           onClick={handlePreviousStep}
-                          style={styles.secondaryButton}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: '#64748b',
+                            color: 'white'
+                          }}
                         >
                           ← Back
                         </button>
                         <button
                           type="button"
                           onClick={handleNextStep}
-                          style={styles.primaryButton}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: '#059669',
+                            color: 'white'
+                          }}
                         >
                           Proceed to Verification →
                         </button>
@@ -1890,7 +1913,11 @@ export default function WireTransfer() {
                         <button
                           type="button"
                           onClick={handlePreviousStep}
-                          style={styles.secondaryButton}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: '#64748b',
+                            color: 'white'
+                          }}
                         >
                           ← Back
                         </button>
@@ -1899,11 +1926,9 @@ export default function WireTransfer() {
                           onClick={handleNextStep}
                           disabled={!verificationCode || verificationCode.length !== 6}
                           style={{
-                            ...styles.primaryButton,
-                            backgroundImage: (!verificationCode || verificationCode.length !== 6) 
-                              ? 'none' 
-                              : 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-                            backgroundColor: (!verificationCode || verificationCode.length !== 6) ? '#cbd5e1' : 'transparent',
+                            ...styles.button,
+                            backgroundColor: (!verificationCode || verificationCode.length !== 6) ? '#cbd5e1' : '#059669',
+                            color: 'white',
                             cursor: (!verificationCode || verificationCode.length !== 6) ? 'not-allowed' : 'pointer',
                             opacity: (!verificationCode || verificationCode.length !== 6) ? 0.7 : 1
                           }}
@@ -2016,7 +2041,11 @@ export default function WireTransfer() {
                         <button
                           type="button"
                           onClick={handlePreviousStep}
-                          style={styles.secondaryButton}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: '#64748b',
+                            color: 'white'
+                          }}
                         >
                           ← Back
                         </button>
@@ -2025,11 +2054,9 @@ export default function WireTransfer() {
                           onClick={handleNextStep}
                           disabled={!transactionPin || transactionPin.length < 4 || verifyingPin}
                           style={{
-                            ...styles.primaryButton,
-                            backgroundImage: (!transactionPin || transactionPin.length < 4 || verifyingPin) 
-                              ? 'none' 
-                              : 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-                            backgroundColor: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? '#cbd5e1' : 'transparent',
+                            ...styles.button,
+                            backgroundColor: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? '#cbd5e1' : '#059669',
+                            color: 'white',
                             cursor: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? 'not-allowed' : 'pointer',
                             opacity: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? 0.7 : 1
                           }}
@@ -2186,16 +2213,20 @@ export default function WireTransfer() {
                         <button
                           type="button"
                           onClick={handlePreviousStep}
-                          style={styles.secondaryButton}
+                          style={{
+                            ...styles.button,
+                            backgroundColor: '#64748b',
+                            color: 'white'
+                          }}
                         >
                           ← Back
                         </button>
                         <button
                           type="submit"
                           style={{
-                            ...styles.primaryButton,
-                            backgroundImage: loading ? 'none' : 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-                            backgroundColor: loading ? '#cbd5e1' : 'transparent',
+                            ...styles.button,
+                            backgroundColor: loading ? '#cbd5e1' : '#1e40af',
+                            color: 'white',
                             cursor: loading ? 'not-allowed' : 'pointer',
                             opacity: loading ? 0.7 : 1
                           }}
