@@ -14,10 +14,11 @@ export default function VerifyIdentity() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    // Skip verification check if on verify-identity page to prevent redirect loops
+    if (user && router.pathname === '/verify-identity') {
       fetchVerificationStatus();
     }
-  }, [user]);
+  }, [user, router.pathname]);
 
   const fetchVerificationStatus = async () => {
     try {

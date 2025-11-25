@@ -14,8 +14,10 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
   const [isUploading, setIsUploading] = useState(false);
   const [facingMode, setFacingMode] = useState('user');
   const [currentStep, setCurrentStep] = useState(0);
+  const [videoDuration, setVideoDuration] = useState(0);
   
   const videoRef = useRef(null);
+  const previewVideoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
   const canvasRef = useRef(null);
@@ -166,28 +168,40 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       };
 
       mediaRecorder.onstop = () => {
-        if (chunksRef.current.length === 0) {
-          setError('Recording failed - no data captured. Please try again.');
+        try {
+          if (chunksRef.current.length === 0) {
+            setError('Recording failed - no data captured. Please try again.');
+            setIsRecording(false);
+            return;
+          }
+          
+          const blob = new Blob(chunksRef.current, { type: mimeType });
+          
+          if (blob.size === 0) {
+            setError('Recording failed - empty file. Please try again.');
+            setIsRecording(false);
+            return;
+          }
+          
+          console.log('Video recorded:', {
+            size: blob.size,
+            type: blob.type,
+            chunks: chunksRef.current.length,
+            mimeType
+          });
+          
+          const url = URL.createObjectURL(blob);
+          setRecordedVideo({ blob, url, mimeType });
+          setStage('preview');
+          stopCamera();
+          if (recordingIntervalRef.current) {
+            clearInterval(recordingIntervalRef.current);
+          }
+        } catch (err) {
+          console.error('Error processing recording:', err);
+          setError('Failed to process recording. Please try again.');
           setIsRecording(false);
-          return;
         }
-        
-        const blob = new Blob(chunksRef.current, { type: mimeType });
-        
-        if (blob.size === 0) {
-          setError('Recording failed - empty file. Please try again.');
-          setIsRecording(false);
-          return;
-        }
-        
-        const url = URL.createObjectURL(blob);
-        setRecordedVideo({ blob, url, mimeType });
-        setStage('preview');
-        stopCamera();
-        if (recordingIntervalRef.current) {
-          clearInterval(recordingIntervalRef.current);
-        }
-        setRecordingTime(0);
       };
 
       mediaRecorder.onerror = (event) => {
@@ -248,6 +262,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
     setError('');
     setUploadProgress(0);
     setRecordingTime(0);
+    setVideoDuration(0);
     setStage('capture');
     setCurrentStep(0);
     startCamera();
@@ -325,6 +340,18 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
     }
   };
 
+  const handlePreviewVideoLoaded = () => {
+    try {
+      if (previewVideoRef.current) {
+        const duration = previewVideoRef.current.duration;
+        console.log('Video loaded, duration:', duration);
+        setVideoDuration(duration || 0);
+      }
+    } catch (err) {
+      console.error('Error getting video duration:', err);
+    }
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.verificationBox}>
@@ -394,14 +421,23 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
           )}
 
           {stage === 'preview' && recordedVideo && (
-            <video
-              src={recordedVideo.url}
-              controls
-              controlsList="nodownload"
-              className={styles.preview}
-              autoPlay
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
+            <div className={styles.videoPreviewWrapper}>
+              <video
+                ref={previewVideoRef}
+                src={recordedVideo.url}
+                controls
+                controlsList="nodownload"
+                className={styles.preview}
+                autoPlay
+                onLoadedMetadata={handlePreviewVideoLoaded}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+              {videoDuration > 0 && (
+                <div className={styles.videoDurationBadge}>
+                  ⏱️ {videoDuration.toFixed(1)}s recorded
+                </div>
+              )}
+            </div>
           )}
 
           {stage === 'uploading' && (
