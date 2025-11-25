@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const [verificationRequired, setVerificationRequired] = useState(false);
+  const [verificationReason, setVerificationReason] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -99,11 +100,13 @@ export const AuthProvider = ({ children }) => {
           if (accountStatus?.isBlocked) {
             // Check if it's a verification requirement (show banner, don't sign out or redirect)
             if (accountStatus.blockingType === 'verification_required') {
-              console.log('Verification required, showing notification...');
+              console.log('Verification required, showing notification...', accountStatus.verification_reason);
               setVerificationRequired(true);
+              setVerificationReason(accountStatus.verification_reason || null);
             } else {
               // For other blocks (banned, suspended, closed), sign out
               setVerificationRequired(false);
+              setVerificationReason(null);
               console.log('Account is blocked, signing out...', accountStatus.blockingType);
               
               await supabase.auth.signOut();
@@ -119,6 +122,7 @@ export const AuthProvider = ({ children }) => {
             }
           } else {
             setVerificationRequired(false);
+            setVerificationReason(null);
           }
         }
       } catch (error) {
@@ -276,6 +280,7 @@ export const AuthProvider = ({ children }) => {
     signOut,
     resetPassword,
     verificationRequired,
+    verificationReason,
   };
 
   return (

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
-export default function VerificationNotificationBanner({ onDismiss }) {
+export default function VerificationNotificationBanner({ onDismiss, verificationReason }) {
   const [visible, setVisible] = useState(true);
 
   const handleDismiss = () => {
@@ -15,11 +15,18 @@ export default function VerificationNotificationBanner({ onDismiss }) {
     <div style={styles.bannerContainer}>
       <div style={styles.banner}>
         <div style={styles.iconSection}>
-          <div style={styles.icon}>📹</div>
+          <div style={styles.icon}>🔐</div>
         </div>
 
         <div style={styles.contentSection}>
           <h3 style={styles.title}>Identity Verification Required</h3>
+          
+          {verificationReason && (
+            <p style={styles.reason}>
+              <strong>Reason:</strong> {verificationReason}
+            </p>
+          )}
+          
           <p style={styles.message}>
             For your security, we need you to complete a video or selfie verification. 
             This helps us protect your account and comply with banking regulations.
@@ -84,8 +91,19 @@ const styles = {
     color: '#664d03',
     fontFamily: 'system-ui, -apple-system, sans-serif',
   },
+  reason: {
+    margin: '8px 0',
+    padding: '8px 12px',
+    fontSize: '13px',
+    color: '#664d03',
+    backgroundColor: 'rgba(255, 193, 7, 0.3)',
+    borderLeft: '3px solid #ff9800',
+    borderRadius: '4px',
+    lineHeight: '1.4',
+    fontFamily: 'system-ui, -apple-system, sans-serif',
+  },
   message: {
-    margin: '0',
+    margin: '8px 0 0 0',
     fontSize: '14px',
     color: '#856404',
     lineHeight: '1.5',

@@ -185,24 +185,32 @@ export default function LoginPage() {
         }
 
         if (accountStatus.isBlocked) {
-          await supabase.auth.signOut({ scope: 'local' });
-          setLoading(false);
-          setLoadingStage(0);
+          // Special handling for verification requirement - let user log in and show banner
+          if (accountStatus.blockingType === 'verification_required') {
+            // User can log in with verification required - they'll see the banner on dashboard
+            // Continue to normal dashboard redirect below
+            console.log('Verification required - allowing login with notification banner');
+          } else {
+            // For other blocks (banned, suspended, closed, locked), sign out and show restriction
+            await supabase.auth.signOut({ scope: 'local' });
+            setLoading(false);
+            setLoadingStage(0);
 
-          // Use restriction_display_message for customer-facing message
-          const displayMessage = accountStatus.restriction_display_message || 
-                                accountStatus.reason || 
-                                accountStatus.ban_reason || 
-                                accountStatus.locked_reason || 
-                                'Your account access has been restricted.';
+            // Use restriction_display_message for customer-facing message
+            const displayMessage = accountStatus.restriction_display_message || 
+                                  accountStatus.reason || 
+                                  accountStatus.ban_reason || 
+                                  accountStatus.locked_reason || 
+                                  'Your account access has been restricted.';
 
-          setError({
-            type: accountStatus.blockingType,
-            reason: displayMessage,
-            supportEmail: supportEmail
-          });
-          setErrorType('restriction_error');
-          return;
+            setError({
+              type: accountStatus.blockingType,
+              reason: displayMessage,
+              supportEmail: supportEmail
+            });
+            setErrorType('restriction_error');
+            return;
+          }
         }
 
         // Additional check: verify profile status after successful auth

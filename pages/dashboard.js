@@ -11,7 +11,7 @@ import FundingNotice from '../components/FundingNotice';
 import VerificationNotificationBanner from '../components/VerificationNotificationBanner';
 
 function DashboardContent() {
-  const { user, signOut, verificationRequired } = useAuth();
+  const { user, signOut, verificationRequired, verificationReason } = useAuth();
   const [userProfile, setUserProfile] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -1102,7 +1102,7 @@ function DashboardContent() {
 
       {/* Funding Notices for Pending Funding Accounts */}
       <FundingNotice accounts={accounts} />
-      {verificationRequired && <VerificationNotificationBanner />}
+      {verificationRequired && <VerificationNotificationBanner verificationReason={verificationReason} />}
 
       {/* Account Details Section - Moved below balance */}
       <section style={styles.accountsSection}>
