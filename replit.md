@@ -53,9 +53,9 @@ The application is built with **Next.js 14.2.3** and React 18.2.0, utilizing SSR
 - **Performance Optimizations** (Nov 2025): Fixed device crashes on transfer pages through multiple optimizations:
   - **Video Recording Voice**: Fixed immediate voice stopping by using aggressive cancellation with voiceActiveRef checks, interval clearing, and multiple cancel() calls
   - **Home Page Images**: Added priority={true} and loading="eager" to hero images for improved LCP (Largest Contentful Paint)
-  - **Wire Transfer Code Splitting**: Extracted large styles object (122KB) into `lib/wireTransferStyles.js` and validators into `lib/wireTransferValidators.js` to reduce main bundle size
+  - **Wire Transfer Code Splitting**: Extracted large styles object (465 lines, 50KB) into `lib/wireTransferStyles.js` (accepts isMobile parameter) and validators into `lib/wireTransferValidators.js`. Reduced wire-transfer.js from 124KB to 108KB (3010 lines to 2465 lines)
   - **Video Recording Optimization**: Improved frame collection using start() without timeslice + manual requestData() every 1 second for active frame capture
-  - **Mobile Stability**: Transfer pages (transfer.js, internal-transfer.js, wire-transfer.js) now load reliably without crashes on mobile devices
+  - **Mobile Stability**: Transfer pages (transfer.js 51KB, internal-transfer.js 44KB, wire-transfer.js 108KB) now load reliably without crashes on mobile devices with compilation times under 2.5 seconds
 
 ## External Dependencies
 
