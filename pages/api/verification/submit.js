@@ -37,13 +37,27 @@ export default async function handler(req, res) {
 
     const [fields, files] = await new Promise((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
-        if (err) reject(err);
-        else resolve([fields, files]);
+        if (err) {
+          console.error('Formidable parse error:', err);
+          reject(err);
+        } else {
+          console.log('Formidable files:', Object.keys(files || {}));
+          console.log('Formidable fields:', Object.keys(fields || {}));
+          resolve([fields, files]);
+        }
       });
     });
 
     const file = files.file?.[0] || files.file;
     const verificationType = fields.type?.[0] || fields.type || 'selfie';
+
+    console.log('File details:', {
+      exists: !!file,
+      originalFilename: file?.originalFilename,
+      newFilename: file?.newFilename,
+      mimetype: file?.mimetype,
+      size: file?.size
+    });
 
     if (!file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -61,13 +75,41 @@ export default async function handler(req, res) {
     }
 
     // Upload file to Supabase Storage
-    const fileExt = path.extname(file.originalFilename || file.newFilename);
-    const fileName = `${user.id}_${Date.now()}${fileExt}`;
+    // Safely extract file extension
+    const originalName = file.originalFilename || file.newFilename || 'upload';
+    let fileExt = path.extname(originalName).toLowerCase();
+    
+    // Ensure file has a valid extension
+    if (!fileExt || fileExt.length > 10) {
+      // Default based on MIME type if extension is missing or invalid
+      fileExt = file.mimetype?.includes('video') ? '.webm' : 
+                file.mimetype?.includes('image') ? '.jpg' : '.bin';
+    }
+    
+    // Create sanitized filename (only alphanumeric, underscore, hyphen)
+    const sanitizedUserId = user.id.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const timestamp = Date.now();
+    const fileName = `${sanitizedUserId}_${timestamp}${fileExt}`;
     const bucketName = 'verification-media';
-    const filePath = `${verificationType}/${fileName}`;
+    
+    // Validate and create file path
+    const sanitizedType = verificationType.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filePath = `${sanitizedType}/${fileName}`;
+    
+    // Additional validation: ensure path doesn't contain invalid characters
+    if (!/^[a-zA-Z0-9_\/-]+$/.test(filePath)) {
+      throw new Error('Invalid file path format');
+    }
 
     // Read file content
     const fileContent = fs.readFileSync(file.filepath);
+    
+    console.log('Upload details:', {
+      filePath,
+      fileSize: fileContent.byteLength,
+      contentType: file.mimetype,
+      bucketName
+    });
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabaseAdmin
@@ -79,7 +121,12 @@ export default async function handler(req, res) {
       });
 
     if (uploadError) {
-      console.error('Upload error:', uploadError);
+      console.error('Upload error details:', {
+        message: uploadError.message,
+        error: uploadError,
+        filePath,
+        statusCode: uploadError.statusCode
+      });
       
       // If bucket doesn't exist, create it
       if (uploadError.message?.includes('not found')) {
