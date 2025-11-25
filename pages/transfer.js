@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabaseClient';
 import Link from 'next/link';
 import Head from 'next/head';
 import { useAuth } from '../contexts/AuthContext';
-import { getWireTransferStyles } from '../lib/wireTransferStyles';
 
 const useMediaQuery = (query) => {
   const [matches, setMatches] = useState(false);
@@ -34,7 +33,7 @@ function RecentTransfers({ user, isMobile }) {
           .select('requires_verification')
           .eq('id', user.id)
           .single();
-        
+
         if (profile?.requires_verification) {
           router.push('/verify-identity');
           return;
@@ -42,7 +41,7 @@ function RecentTransfers({ user, isMobile }) {
         fetchRecentTransfers();
       }
     };
-    
+
     checkVerification();
   }, [user]);
 
@@ -79,7 +78,7 @@ function RecentTransfers({ user, isMobile }) {
       borderRadius: '16px',
       padding: isMobile ? '1rem' : '2rem',
       boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-      border: '1px solid #e2e8f0',
+      border: '1px solid #059669',
       marginBottom: '2rem'
     },
     title: {
@@ -88,7 +87,7 @@ function RecentTransfers({ user, isMobile }) {
       color: '#1a365d',
       marginBottom: isMobile ? '1.5rem' : '2rem',
       paddingBottom: '1rem',
-      borderBottom: '2px solid #e2e8f0',
+      borderBottom: '2px solid #059669',
       display: 'flex',
       alignItems: 'center',
       gap: '0.75rem'
@@ -98,9 +97,8 @@ function RecentTransfers({ user, isMobile }) {
       borderRadius: '12px',
       backgroundColor: '#f8fafc',
       marginBottom: '1rem',
-      border: '1px solid #e2e8f0',
-      transition: 'all 0.3s',
-      cursor: 'pointer'
+      border: '2px solid #e2e8f0',
+      transition: 'all 0.3s'
     },
     transferHeader: {
       display: 'flex',
@@ -111,12 +109,12 @@ function RecentTransfers({ user, isMobile }) {
       gap: '0.5rem'
     },
     transferType: {
-      fontSize: isMobile ? '0.95rem' : '1rem',
-      fontWeight: '600',
+      fontSize: isMobile ? '1rem' : '1.1rem',
+      fontWeight: '700',
       color: '#1e293b'
     },
     transferAmount: {
-      fontSize: isMobile ? '1rem' : '1.1rem',
+      fontSize: isMobile ? '1.1rem' : '1.25rem',
       fontWeight: '700'
     },
     transferDetails: {
@@ -133,13 +131,20 @@ function RecentTransfers({ user, isMobile }) {
       textAlign: 'center',
       padding: '3rem 1rem',
       color: '#94a3b8'
+    },
+    emptyIcon: {
+      fontSize: '3rem',
+      marginBottom: '1rem'
     }
   };
 
   if (loading) {
     return (
       <div style={transferStyles.section}>
-        <h2 style={transferStyles.title}>Recent Transfers</h2>
+        <h2 style={transferStyles.title}>
+          <span style={{ fontSize: '1.5rem' }}>📋</span>
+          Recent Transfers
+        </h2>
         <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
           Loading transfers...
         </div>
@@ -149,9 +154,13 @@ function RecentTransfers({ user, isMobile }) {
 
   return (
     <div style={transferStyles.section}>
-      <h2 style={transferStyles.title}>Recent Transfers</h2>
+      <h2 style={transferStyles.title}>
+        <span style={{ fontSize: '1.5rem' }}>📋</span>
+        Recent Transfers
+      </h2>
       {transfers.length === 0 ? (
         <div style={transferStyles.emptyState}>
+          <div style={transferStyles.emptyIcon}>💸</div>
           <p style={{ fontSize: isMobile ? '1rem' : '1.1rem', margin: 0 }}>No recent transfers</p>
         </div>
       ) : (
@@ -163,17 +172,15 @@ function RecentTransfers({ user, isMobile }) {
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = '#1e40af';
                 e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = '#e2e8f0';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
               }}
             >
               <div style={transferStyles.transferHeader}>
                 <div style={transferStyles.transferType}>
-                  {transfer.type === 'debit' ? 'Sent' : 'Received'}
+                  {transfer.type === 'debit' ? '📤 Sent' : '📥 Received'}
                 </div>
                 <div
                   style={{
@@ -188,7 +195,7 @@ function RecentTransfers({ user, isMobile }) {
                 {transfer.description}
               </div>
               {transfer.reference && (
-                <div style={{ ...transferStyles.transferDetails, marginTop: '0.25rem', fontSize: '0.8rem', fontFamily: 'monospace' }}>
+                <div style={{ ...transferStyles.transferDetails, marginTop: '0.25rem' }}>
                   Ref: {transfer.reference}
                 </div>
               )}
@@ -222,8 +229,12 @@ export default function Transfer() {
   const [pageLoading, setPageLoading] = useState(true);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
+  const [recentTransfers, setRecentTransfers] = useState([]);
+  const [loadingTransfers, setLoadingTransfers] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [bankDetails, setBankDetails] = useState(null);
+  const [verificationRequired, setVerificationRequired] = useState(false);
+
 
   useEffect(() => {
     checkUserAndFetchData();
@@ -246,6 +257,7 @@ export default function Transfer() {
     if (user) {
       checkVerificationStatus();
       fetchAccounts();
+      fetchRecentTransfers();
     }
   }, [user]);
 
@@ -267,21 +279,28 @@ export default function Transfer() {
 
   const fetchAccounts = async () => {
     try {
-      const { data: userAccounts } = await supabase
+      const { data: userAccounts, error: accountError } = await supabase
         .from('accounts')
         .select('*')
         .eq('user_id', user.id)
         .eq('status', 'active')
         .order('created_at', { ascending: true });
 
+      if (accountError) {
+        console.error('Error fetching accounts:', accountError);
+        return;
+      }
+
       if (userAccounts && userAccounts.length > 0) {
         setAccounts(userAccounts);
         setFromAccount(userAccounts[0].id);
+        setMessage(''); // Clear any previous error messages when accounts load successfully
       }
     } catch (error) {
       console.error('Error fetching accounts:', error);
     }
   };
+
 
   useEffect(() => {
     const checkMobile = () => {
@@ -299,6 +318,7 @@ export default function Transfer() {
         router.push('/sign-in');
         return;
       }
+      setUser(session.user);
 
       const { data: userAccounts } = await supabase
         .from('accounts')
@@ -319,11 +339,81 @@ export default function Transfer() {
     }
   };
 
+  const fetchRecentTransfers = async () => {
+    setLoadingTransfers(true);
+    try {
+      const { data: userAccounts, error: accountsError } = await supabase
+        .from('accounts')
+        .select('id')
+        .eq('user_id', user.id);
+
+      if (accountsError) {
+        console.error('Error fetching accounts for transfers:', accountsError);
+        return;
+      }
+
+      if (userAccounts && userAccounts.length > 0) {
+        const accountIds = userAccounts.map(acc => acc.id);
+
+        const { data: transfers, error: transfersError } = await supabase
+          .from('transactions')
+          .select('*')
+          .in('account_id', accountIds)
+          .in('type', ['debit', 'credit'])
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (transfersError) {
+          console.error('Error fetching transfers:', transfersError);
+        } else {
+          console.log('Fetched recent transfers:', transfers);
+          setRecentTransfers(transfers || []);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching recent transfers:', error);
+    } finally {
+      setLoadingTransfers(false);
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
     }).format(amount || 0);
+  };
+
+  const formatCompactCurrency = (amount) => {
+    const value = amount || 0;
+    if (Math.abs(value) >= 1000000000) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        notation: 'compact',
+        compactDisplay: 'short',
+        maximumFractionDigits: 2
+      }).format(value);
+    } else if (Math.abs(value) >= 1000000) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        notation: 'compact',
+        compactDisplay: 'short',
+        maximumFractionDigits: 1
+      }).format(value);
+    }
+    return formatCurrency(value);
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   const generateReferenceNumber = () => {
@@ -534,7 +624,7 @@ export default function Transfer() {
 
       // Wait a bit for the database to be updated, then fetch transfers
       setTimeout(async () => {
-        await fetchAccounts();
+        await fetchRecentTransfers();
       }, 500);
 
     } catch (error) {
@@ -548,17 +638,59 @@ export default function Transfer() {
     window.print();
   };
 
-  const wireStyles = getWireTransferStyles(isMobile);
+  const viewTransferReceipt = (transfer) => {
+    const fromAccountData = accounts.find(acc => acc.id === transfer.account_id);
+    const isDebit = transfer.type === 'debit';
+
+    const receipt = {
+      referenceNumber: transfer.reference || 'N/A',
+      date: formatDate(transfer.created_at),
+      senderName: user?.email?.split('@')[0] || 'Account Holder', // Fallback sender name
+      fromAccount: {
+        type: fromAccountData?.account_type || 'N/A',
+        number: fromAccountData?.account_number || 'N/A',
+        balance: transfer.balance_after || 0
+      },
+      toAccount: {
+        type: 'Account', // This might need to be determined based on context if it's an external transfer
+        number: 'N/A'
+      },
+      amount: transfer.amount,
+      memo: transfer.description || 'Transfer',
+      status: transfer.status || 'completed'
+    };
+
+    setReceiptData(receipt);
+    setShowReceipt(true);
+  };
+
+  const getAccountTypeIcon = (type) => {
+    switch (type?.toLowerCase()) {
+      case 'checking': return '🏦';
+      case 'savings': return '💰';
+      case 'investment': return '📈';
+      case 'business': return '🏢';
+      default: return '💳';
+    }
+  };
+
   const styles = {
     container: {
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)',
-      padding: '2rem 1rem',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif'
+      backgroundColor: '#0a1f44',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      overflowX: 'hidden'
     },
     header: {
-      maxWidth: '1200px',
-      margin: '0 auto 2rem',
+      backgroundColor: '#1a365d',
+      color: 'white',
+      padding: isMobile ? '1rem' : '1.5rem 2rem',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      borderBottom: '3px solid #059669'
+    },
+    headerContent: {
+      maxWidth: '1400px',
+      margin: '0 auto',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -572,50 +704,84 @@ export default function Transfer() {
       textDecoration: 'none',
       color: 'white'
     },
+    logo: {
+      height: isMobile ? '35px' : '45px',
+      width: 'auto'
+    },
     logoText: {
       fontSize: isMobile ? '1.2rem' : '1.6rem',
       fontWeight: '700'
     },
     backButton: {
-      color: 'white',
-      textDecoration: 'none',
-      padding: '0.75rem 1.5rem',
-      backgroundColor: 'rgba(255,255,255,0.1)',
-      borderRadius: '12px',
-      fontWeight: '600',
-      transition: 'all 0.3s',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(255,255,255,0.2)',
       display: 'inline-flex',
       alignItems: 'center',
-      gap: '0.5rem'
+      gap: '0.5rem',
+      padding: isMobile ? '0.5rem 1rem' : '0.6rem 1.2rem',
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      color: 'white',
+      textDecoration: 'none',
+      borderRadius: '8px',
+      fontSize: isMobile ? '0.85rem' : '0.95rem',
+      border: '1px solid rgba(255,255,255,0.3)',
+      transition: 'all 0.3s ease'
     },
     main: {
-      maxWidth: '1200px',
-      margin: '0 auto'
+      maxWidth: '1400px',
+      margin: '0 auto',
+      padding: isMobile ? '1rem 0.75rem' : '2.5rem 2rem'
     },
-    pageTitle: {
-      fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-      fontWeight: '800',
-      color: 'white',
-      textAlign: 'center',
-      marginBottom: '0.5rem',
-      textShadow: '0 2px 10px rgba(0,0,0,0.3)'
+    welcomeSection: {
+      marginBottom: '2rem',
+      textAlign: 'center'
     },
-    pageSubtitle: {
-      fontSize: 'clamp(0.95rem, 2vw, 1.125rem)',
-      color: 'rgba(255,255,255,0.9)',
-      textAlign: 'center',
+    welcomeTitle: {
+      fontSize: isMobile ? '1.25rem' : '1.5rem',
+      fontWeight: '700',
+      color: '#ffffff',
+      marginBottom: '0.5rem'
+    },
+    welcomeSubtitle: {
+      fontSize: isMobile ? '0.85rem' : '0.95rem',
+      color: '#cbd5e1'
+    },
+    transferOptions: {
+      display: 'grid',
+      gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+      gap: '1.5rem',
       marginBottom: '2rem'
     },
-    card: wireStyles.card,
-    cardTitle: wireStyles.cardTitle,
+    transferCard: {
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderRadius: '16px',
+      padding: isMobile ? '1.5rem' : '2rem',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease',
+      border: '2px solid #059669',
+      textDecoration: 'none',
+      color: 'inherit'
+    },
+    transferCardIcon: {
+      fontSize: '3rem',
+      marginBottom: '1rem'
+    },
+    transferCardTitle: {
+      fontSize: isMobile ? '1rem' : '1.1rem',
+      fontWeight: '700',
+      color: '#1e293b',
+      marginBottom: '0.5rem'
+    },
+    transferCardDesc: {
+      fontSize: isMobile ? '0.8rem' : '0.85rem',
+      color: '#64748b',
+      lineHeight: '1.6'
+    },
     contentSection: {
       backgroundColor: 'rgba(255, 255, 255, 0.98)',
       borderRadius: '16px',
       padding: isMobile ? '1rem' : '2rem',
       boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-      border: '1px solid #e2e8f0',
+      border: '1px solid #059669',
       marginBottom: '2rem'
     },
     sectionTitle: {
@@ -624,7 +790,7 @@ export default function Transfer() {
       color: '#1a365d',
       marginBottom: '1.5rem',
       paddingBottom: '1rem',
-      borderBottom: '2px solid #e2e8f0'
+      borderBottom: '2px solid #059669'
     },
     formGrid: {
       display: 'grid',
@@ -663,23 +829,28 @@ export default function Transfer() {
       transition: 'border-color 0.3s'
     },
     accountInfo: {
-      backgroundColor: '#f8fafc',
-      padding: '1rem',
-      borderRadius: '12px',
+      background: 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)',
+      padding: '1.5rem',
+      borderRadius: '14px',
       marginBottom: '1.5rem',
-      border: '1px solid #e2e8f0'
+      border: '2px solid #d1fae5',
+      boxShadow: '0 4px 12px rgba(5, 150, 105, 0.1)'
     },
     accountInfoLabel: {
-      fontSize: '0.75rem',
-      color: '#64748b',
-      marginBottom: '0.5rem'
+      fontSize: '0.8rem',
+      color: '#065f46',
+      marginBottom: '0.75rem',
+      fontWeight: '600',
+      textTransform: 'uppercase',
+      letterSpacing: '0.5px'
     },
     accountInfoValue: {
-      fontSize: '0.95rem',
-      fontWeight: '700',
-      color: '#1e293b',
+      fontSize: 'clamp(1.25rem, 3vw, 1.75rem)',
+      fontWeight: '800',
+      color: '#059669',
       wordBreak: 'break-word',
-      overflowWrap: 'break-word'
+      overflowWrap: 'break-word',
+      fontFamily: '"Segoe UI", Roboto, sans-serif'
     },
     submitButton: {
       width: '100%',
@@ -695,12 +866,18 @@ export default function Transfer() {
       boxShadow: '0 6px 20px rgba(30, 64, 175, 0.4)'
     },
     errorMessage: {
-      backgroundColor: '#fee2e2',
-      color: '#dc2626',
-      padding: '1rem',
+      background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+      color: '#991b1b',
+      padding: '1.25rem 1.5rem',
       borderRadius: '12px',
       marginBottom: '1.5rem',
-      border: '2px solid #fca5a5'
+      border: '2px solid #fecaca',
+      boxShadow: '0 4px 12px rgba(220, 38, 38, 0.1)',
+      fontWeight: '600',
+      fontSize: '0.95rem',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem'
     },
     receiptModal: {
       position: 'fixed',
@@ -725,11 +902,11 @@ export default function Transfer() {
       maxHeight: '90vh',
       overflowY: 'auto',
       boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-      border: '1px solid #e2e8f0'
+      border: '2px solid #059669'
     },
     receiptHeader: {
       textAlign: 'center',
-      borderBottom: '2px solid #e2e8f0',
+      borderBottom: '3px solid #059669',
       paddingBottom: '1.5rem',
       marginBottom: '2rem',
       background: 'linear-gradient(135deg, #1a365d 0%, #059669 100%)',
@@ -746,7 +923,7 @@ export default function Transfer() {
       padding: '1.25rem',
       borderRadius: '12px',
       marginBottom: '1rem',
-      border: '1px solid #e2e8f0'
+      border: '2px solid #e2e8f0'
     },
     receiptButtons: {
       display: 'flex',
@@ -839,6 +1016,10 @@ export default function Transfer() {
       maxWidth: '500px',
       margin: '0 auto'
     },
+    emptyIcon: {
+      fontSize: '4rem',
+      marginBottom: '1rem'
+    },
     emptyTitle: {
       fontSize: '1.5rem',
       color: '#1e293b',
@@ -859,88 +1040,124 @@ export default function Transfer() {
       fontWeight: '600',
       fontSize: '1rem'
     },
-    transferOptions: {
-      display: 'grid',
-      gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-      gap: '1.5rem',
-      marginBottom: '2rem'
+    recentTransfersSection: {
+      backgroundColor: 'rgba(255, 255, 255, 0.98)',
+      borderRadius: '16px',
+      padding: isMobile ? '1rem' : '2rem',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+      border: '1px solid #059669',
+      marginTop: '2rem'
     },
-    transferCard: {
-      backgroundColor: 'white',
+    transfersList: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0.75rem'
+    },
+    transferItem: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '1rem',
+      backgroundColor: '#f8fafc',
       borderRadius: '12px',
-      padding: '1.5rem',
       border: '2px solid #e2e8f0',
-      textDecoration: 'none',
-      transition: 'all 0.3s',
-      cursor: 'pointer',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+      transition: 'all 0.2s',
+      cursor: 'pointer'
     },
-    transferCardTitle: {
-      fontSize: '1.1rem',
-      fontWeight: '700',
-      color: '#1e293b',
-      marginBottom: '0.5rem'
+    transferLeft: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem',
+      flex: 1
     },
-    transferCardDesc: {
+    transferIcon: {
+      fontSize: '1.5rem'
+    },
+    transferInfo: {
+      flex: 1
+    },
+    transferDescription: {
       fontSize: '0.9rem',
-      color: '#64748b',
-      lineHeight: '1.5'
+      fontWeight: '600',
+      color: '#1e293b',
+      marginBottom: '0.25rem'
     },
-    welcomeSection: {
-      marginBottom: '2rem'
-    },
-    welcomeTitle: {
-      fontSize: isMobile ? '1.5rem' : '2rem',
-      fontWeight: '700',
-      color: '#1a365d',
-      marginBottom: '0.5rem'
-    },
-    welcomeSubtitle: {
-      fontSize: isMobile ? '0.95rem' : '1.1rem',
+    transferDate: {
+      fontSize: '0.75rem',
       color: '#64748b'
+    },
+    transferRef: {
+      fontSize: '0.7rem',
+      color: '#94a3b8',
+      fontFamily: 'monospace',
+      marginTop: '0.25rem'
+    },
+    transferRight: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-end',
+      gap: '0.25rem'
+    },
+    transferAmount: {
+      fontSize: '1rem',
+      fontWeight: '700'
+    },
+    transferStatus: {
+      fontSize: '0.7rem',
+      padding: '0.25rem 0.5rem',
+      backgroundColor: '#d1fae5',
+      color: '#065f46',
+      borderRadius: '8px',
+      textTransform: 'capitalize',
+      fontWeight: '600'
     },
     quickAmounts: {
       display: 'flex',
-      gap: '0.75rem',
-      marginTop: '1rem',
+      gap: '0.5rem',
+      marginTop: '0.75rem',
       flexWrap: 'wrap',
-      alignItems: 'center',
-      padding: '1rem',
-      backgroundColor: '#f0f9ff',
-      borderRadius: '12px',
-      border: '1px solid #bfdbfe'
+      alignItems: 'center'
     },
     quickAmountsLabel: {
-      fontSize: '0.875rem',
-      color: '#1e40af',
-      fontWeight: '600',
-      width: '100%'
+      fontSize: '0.85rem',
+      color: '#64748b',
+      fontWeight: '500'
     },
     quickAmountButton: {
-      padding: '0.6rem 1rem',
-      backgroundColor: 'white',
+      padding: '0.4rem 0.8rem',
+      backgroundColor: '#eff6ff',
       color: '#1e40af',
-      border: '2px solid #1e40af',
-      borderRadius: '8px',
+      border: '1px solid #bfdbfe',
+      borderRadius: '6px',
       cursor: 'pointer',
-      fontSize: '0.875rem',
+      fontSize: '0.8rem',
       fontWeight: '600',
-      transition: 'all 0.2s',
-      boxShadow: '0 2px 4px rgba(30, 64, 175, 0.1)'
+      transition: 'all 0.2s'
     },
     balanceAfter: {
-      marginTop: '1rem',
-      padding: '1rem',
-      backgroundColor: '#f0fdf4',
-      border: '1px solid #bbf7d0',
-      borderRadius: '12px',
-      fontSize: '0.95rem',
-      color: '#047857',
+      marginTop: '1.25rem',
+      padding: '0.875rem 1rem',
+      backgroundColor: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
+      borderLeft: '4px solid #059669',
+      borderRadius: '8px',
+      fontSize: '0.9rem',
+      color: '#065f46',
       fontWeight: '600',
       display: 'flex',
       alignItems: 'center',
-      gap: '0.75rem',
-      boxShadow: '0 2px 8px rgba(5, 150, 105, 0.1)'
+      gap: '0.5rem',
+      border: '1px solid #d1fae5'
+    },
+    viewReceiptButton: {
+      fontSize: '0.7rem',
+      padding: '0.25rem 0.5rem',
+      backgroundColor: '#1e40af',
+      color: 'white',
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      fontWeight: '600',
+      marginTop: '0.25rem'
     }
   };
 
@@ -970,6 +1187,7 @@ export default function Transfer() {
           </div>
         </div>
         <div style={styles.emptyState}>
+          <div style={styles.emptyIcon}>🏦</div>
           <h1 style={styles.emptyTitle}>No Accounts Found</h1>
           <p style={styles.emptyDesc}>You need at least one active account to make transfers.</p>
           <Link href="/apply" style={styles.emptyButton}>Open an Account</Link>
@@ -1000,6 +1218,7 @@ export default function Transfer() {
 
           <div style={styles.transferOptions}>
             <Link href="/internal-transfer" style={styles.transferCard}>
+              <div style={styles.transferCardIcon}>👤</div>
               <h2 style={styles.transferCardTitle}>Send to Oakline User</h2>
               <p style={styles.transferCardDesc}>
                 Transfer money to another Oakline Bank customer using their account number
@@ -1007,6 +1226,7 @@ export default function Transfer() {
             </Link>
 
             <Link href="/wire-transfer" style={styles.transferCard}>
+              <div style={styles.transferCardIcon}>🌐</div>
               <h2 style={styles.transferCardTitle}>Wire Transfer</h2>
               <p style={styles.transferCardDesc}>
                 Send money domestically or internationally to external banks
@@ -1015,6 +1235,7 @@ export default function Transfer() {
           </div>
 
           <div style={styles.emptyState}>
+            <div style={styles.emptyIcon}>🏦</div>
             <h2 style={styles.emptyTitle}>Need Multiple Accounts?</h2>
             <p style={styles.emptyDesc}>
               You need at least two active accounts to transfer between your own accounts.
@@ -1069,20 +1290,20 @@ export default function Transfer() {
                     </div>
                   </div>
                   <div style={{ textAlign: 'center', marginTop: '1rem', padding: '0.75rem', backgroundColor: 'rgba(5, 150, 105, 0.3)', borderRadius: '8px' }}>
-                    <span style={{ fontSize: '1.1rem', fontWeight: '700' }}>Transfer Successful</span>
+                    <span style={{ fontSize: '1.1rem', fontWeight: '700' }}>✓ Transfer {receiptData.status || 'Successful'}</span>
                   </div>
                 </div>
 
                 <div style={styles.receiptBody}>
                   <div style={{ backgroundColor: '#f8fafc', padding: '1.25rem', borderRadius: '12px', marginBottom: '1rem' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #e2e8f0' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '2px dashed #e2e8f0' }}>
                       <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500' }}>Authorized by</p>
                       <p style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1e40af', margin: 0 }}>{receiptData.senderName}</p>
                     </div>
 
                     <div style={styles.receiptSection}>
                       <h3 style={{ fontSize: '0.9rem', color: '#1e40af', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '700' }}>
-                        From Account
+                        📤 From Account
                       </h3>
                       <div style={{ display: 'flex', justifyContent: 'space-between', margin: '0.5rem 0', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
                         <span style={{ color: '#64748b', fontSize: '0.9rem' }}>Account Type:</span>
@@ -1098,11 +1319,11 @@ export default function Transfer() {
                       </div>
                     </div>
 
-                    <div style={{ textAlign: 'center', margin: '1.5rem 0', fontSize: '1.2rem', color: '#cbd5e1', fontWeight: '300' }}>↓</div>
+                    <div style={{ textAlign: 'center', margin: '1.5rem 0', fontSize: '2rem', color: '#059669' }}>⬇</div>
 
                     <div style={styles.receiptSection}>
                       <h3 style={{ fontSize: '0.9rem', color: '#059669', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: '700' }}>
-                        To Account
+                        📥 To Account
                       </h3>
                       <div style={{ display: 'flex', justifyContent: 'space-between', margin: '0.5rem 0', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
                         <span style={{ color: '#64748b', fontSize: '0.9rem' }}>Account Type:</span>
@@ -1119,21 +1340,22 @@ export default function Transfer() {
                     </div>
                   </div>
 
-                  <div style={{ background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', padding: '2rem', borderRadius: '12px', textAlign: 'center', border: '1px solid #6ee7b7', boxShadow: '0 4px 12px rgba(5, 150, 105, 0.2)' }}>
+                  <div style={{ background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', padding: '2rem', borderRadius: '12px', textAlign: 'center', border: '2px solid #059669', boxShadow: '0 4px 12px rgba(5, 150, 105, 0.2)' }}>
                     <h3 style={{ fontSize: '1rem', color: '#047857', margin: '0 0 0.75rem 0', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }}>Transfer Amount</h3>
-                    <p style={{ fontSize: '2.5rem', fontWeight: '800', color: '#047857', margin: 0 }}>{formatCurrency(receiptData.amount)}</p>
+                    <p style={{ fontSize: '2.5rem', fontWeight: '800', color: '#047857', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>{formatCurrency(receiptData.amount)}</p>
                   </div>
 
                   {receiptData.memo && receiptData.memo !== 'Internal Transfer' && (
-                    <div style={{ backgroundColor: '#fef3c7', border: '1px solid #fcd34d', borderRadius: '8px', padding: '1rem', marginTop: '1rem' }}>
+                    <div style={{ backgroundColor: '#fef3c7', border: '2px solid #fbbf24', borderRadius: '8px', padding: '1rem', marginTop: '1rem' }}>
                       <p style={{ margin: 0, fontSize: '0.9rem', color: '#92400e', fontWeight: '600' }}>
+                        <span style={{ fontSize: '1.1rem', marginRight: '0.5rem' }}>📝</span>
                         Memo: {receiptData.memo}
                       </p>
                     </div>
                   )}
                 </div>
 
-                <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
+                <div style={{ borderTop: '2px solid #e2e8f0', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
                   <div style={{ backgroundColor: '#eff6ff', padding: '1rem', borderRadius: '8px', border: '1px solid #bfdbfe', marginBottom: '1rem' }}>
                     <p style={{ fontSize: '0.85rem', color: '#1e40af', margin: 0, textAlign: 'center', fontWeight: '500' }}>
                       This is an official receipt from {bankDetails?.name || 'Oakline Bank'}. For support, contact us at {bankDetails?.email_contact || 'contact-us@theoaklinebank.com'}
@@ -1148,7 +1370,7 @@ export default function Transfer() {
                 </div>
 
                 <div style={styles.receiptButtons}>
-                  <button onClick={printReceipt} style={styles.printButton}>Print Receipt</button>
+                  <button onClick={printReceipt} style={styles.printButton}>🖨️ Print Receipt</button>
                   <button onClick={() => setShowReceipt(false)} style={styles.closeButton}>Done</button>
                 </div>
               </div>
@@ -1170,6 +1392,7 @@ export default function Transfer() {
 
           <div style={styles.transferOptions}>
             <Link href="/internal-transfer" style={styles.transferCard}>
+              <div style={styles.transferCardIcon}>👤</div>
               <h2 style={styles.transferCardTitle}>Send to Oakline User</h2>
               <p style={styles.transferCardDesc}>
                 Transfer money to another Oakline Bank customer using their account number
@@ -1177,6 +1400,7 @@ export default function Transfer() {
             </Link>
 
             <Link href="/wire-transfer" style={styles.transferCard}>
+              <div style={styles.transferCardIcon}>🌐</div>
               <h2 style={styles.transferCardTitle}>Wire Transfer</h2>
               <p style={styles.transferCardDesc}>
                 Send money domestically or internationally to external banks
@@ -1203,7 +1427,7 @@ export default function Transfer() {
                   >
                     {accounts.map(account => (
                       <option key={account.id} value={account.id}>
-                        {account.account_type?.replace('_', ' ')?.toUpperCase()} - ****{account.account_number?.slice(-4)} - {formatCurrency(account.balance || 0)}
+                        {getAccountTypeIcon(account.account_type)} {account.account_type?.replace('_', ' ')?.toUpperCase()} - ****{account.account_number?.slice(-4)} - {formatCurrency(account.balance || 0)}
                       </option>
                     ))}
                   </select>
@@ -1222,7 +1446,7 @@ export default function Transfer() {
                       .filter(acc => acc.id !== fromAccount)
                       .map(account => (
                         <option key={account.id} value={account.id}>
-                          {account.account_type?.replace('_', ' ')?.toUpperCase()} - ****{account.account_number?.slice(-4)} - {formatCurrency(account.balance || 0)}
+                          {getAccountTypeIcon(account.account_type)} {account.account_type?.replace('_', ' ')?.toUpperCase()} - ****{account.account_number?.slice(-4)} - {formatCurrency(account.balance || 0)}
                         </option>
                       ))}
                   </select>
@@ -1257,7 +1481,7 @@ export default function Transfer() {
                   </div>
                   {fromAccount && (
                     <div style={styles.balanceAfter}>
-                      <span>Balance after: <strong>{formatCurrency(parseFloat(accounts.find(a => a.id === fromAccount)?.balance || 0) - parseFloat(amount || 0))}</strong></span>
+                      Balance after: {formatCurrency(parseFloat(accounts.find(a => a.id === fromAccount)?.balance || 0) - parseFloat(amount || 0))}
                     </div>
                   )}
                 </div>
@@ -1293,7 +1517,7 @@ export default function Transfer() {
                 }}
                 disabled={loading}
               >
-                {loading ? 'Processing...' : `Transfer ${formatCurrency(parseFloat(amount) || 0)}`}
+                {loading ? 'Processing...' : `💸 Transfer ${formatCurrency(parseFloat(amount) || 0)}`}
               </button>
             </form>
           </div>
