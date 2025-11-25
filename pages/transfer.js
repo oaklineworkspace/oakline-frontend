@@ -1095,32 +1095,46 @@ export default function Transfer() {
     },
     quickAmounts: {
       display: 'flex',
-      gap: '0.5rem',
-      marginTop: '0.75rem',
+      gap: '0.75rem',
+      marginTop: '1rem',
       flexWrap: 'wrap',
-      alignItems: 'center'
+      alignItems: 'center',
+      padding: '1rem',
+      backgroundColor: '#f0fdf4',
+      borderRadius: '12px',
+      border: '2px solid #d1fae5'
     },
     quickAmountsLabel: {
-      fontSize: '0.85rem',
-      color: '#64748b',
-      fontWeight: '500'
+      fontSize: '0.875rem',
+      color: '#047857',
+      fontWeight: '600',
+      width: '100%'
     },
     quickAmountButton: {
-      padding: '0.4rem 0.8rem',
-      backgroundColor: '#eff6ff',
-      color: '#1e40af',
-      border: '1px solid #bfdbfe',
-      borderRadius: '6px',
+      padding: '0.6rem 1rem',
+      backgroundColor: '#f0fdf4',
+      color: '#059669',
+      border: '2px solid #059669',
+      borderRadius: '8px',
       cursor: 'pointer',
-      fontSize: '0.8rem',
-      fontWeight: '600',
-      transition: 'all 0.2s'
+      fontSize: '0.875rem',
+      fontWeight: '700',
+      transition: 'all 0.2s',
+      boxShadow: '0 2px 4px rgba(5, 150, 105, 0.1)'
     },
     balanceAfter: {
-      marginTop: '0.75rem',
-      fontSize: '0.9rem',
-      color: '#64748b',
-      fontWeight: '500'
+      marginTop: '1rem',
+      padding: '1rem',
+      backgroundColor: '#f0fdf4',
+      border: '2px solid #059669',
+      borderRadius: '12px',
+      fontSize: '0.95rem',
+      color: '#047857',
+      fontWeight: '600',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem',
+      boxShadow: '0 2px 8px rgba(5, 150, 105, 0.15)'
     },
     viewReceiptButton: {
       fontSize: '0.7rem',
@@ -1455,7 +1469,8 @@ export default function Transfer() {
                   </div>
                   {fromAccount && (
                     <div style={styles.balanceAfter}>
-                      Balance after: {formatCurrency(parseFloat(accounts.find(a => a.id === fromAccount)?.balance || 0) - parseFloat(amount || 0))}
+                      <span>💰</span>
+                      <span>Balance after: <strong>{formatCurrency(parseFloat(accounts.find(a => a.id === fromAccount)?.balance || 0) - parseFloat(amount || 0))}</strong></span>
                     </div>
                   )}
                 </div>
