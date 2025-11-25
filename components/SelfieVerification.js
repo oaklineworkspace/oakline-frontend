@@ -8,50 +8,79 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
   const [stream, setStream] = useState(null);
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState(null);
+  const [recordingTime, setRecordingTime] = useState(0);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [facingMode, setFacingMode] = useState('user');
   
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
   const canvasRef = useRef(null);
+  const recordingIntervalRef = useRef(null);
+  const streamRef = useRef(null);
 
   useEffect(() => {
     startCamera();
     return () => {
       stopCamera();
     };
-  }, []);
+  }, [facingMode]);
 
   const startCamera = async () => {
     try {
+      // Stop existing stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: 1280, height: 720 },
+        video: { 
+          facingMode: facingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
         audio: verificationType === 'video'
       });
+      
+      streamRef.current = mediaStream;
       setStream(mediaStream);
+      
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
       setError('');
     } catch (err) {
       console.error('Error accessing camera:', err);
-      setError('Unable to access camera. Please grant camera permissions.');
+      setError('Unable to access camera. Please grant camera permissions and ensure you have a working camera.');
     }
   };
 
   const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
       setStream(null);
     }
   };
 
+  const toggleCamera = async () => {
+    setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
+  };
+
   const capturePhoto = () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current) {
+      setError('Unable to capture photo. Please try again.');
+      return;
+    }
 
     const canvas = canvasRef.current;
     const video = videoRef.current;
+    
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      setError('Video not ready. Please wait a moment and try again.');
+      return;
+    }
     
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -72,22 +101,18 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       return;
     }
 
-    // Verify stream has active tracks
     const videoTracks = stream.getVideoTracks();
-    const audioTracks = stream.getAudioTracks();
-    
-    if (videoTracks.length === 0) {
-      setError('Video track not available. Please grant camera permissions.');
+    if (videoTracks.length === 0 || !videoTracks[0].enabled) {
+      setError('Video track not available. Please check camera permissions.');
       return;
     }
 
-    // Countdown before recording
+    // Start countdown
     setCountdown(3);
     const countdownInterval = setInterval(() => {
       setCountdown(prev => {
         if (prev === 1) {
           clearInterval(countdownInterval);
-          // Pass the current stream directly
           beginRecording();
           return null;
         }
@@ -102,80 +127,92 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         throw new Error('Stream not available');
       }
 
-      const videoTracks = stream.getVideoTracks();
-      if (videoTracks.length === 0) {
-        throw new Error('No video tracks available');
-      }
-
-      // Verify video track is enabled
-      if (!videoTracks[0].enabled) {
-        throw new Error('Video track is disabled');
-      }
-      
       chunksRef.current = [];
       
-      // Try different codec options in order of preference
-      let options = { mimeType: 'video/webm' };
-      const codecOptions = [
-        'video/webm;codecs=vp9',
+      // Determine best supported MIME type
+      let mimeType = 'video/webm';
+      const mimeTypes = [
         'video/webm;codecs=vp8',
+        'video/webm;codecs=vp9', 
         'video/webm',
         'video/mp4'
       ];
 
-      for (const codec of codecOptions) {
-        if (MediaRecorder.isTypeSupported(codec)) {
-          options.mimeType = codec;
+      for (const type of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(type)) {
+          mimeType = type;
           break;
         }
       }
 
-      // Create a new MediaStream with just the video and audio tracks we want
-      const recordingStream = new MediaStream();
-      recordingStream.addTrack(videoTracks[0]);
-      
-      // Only add audio if verification type is video
-      if (verificationType === 'video') {
-        const audioTracks = stream.getAudioTracks();
-        if (audioTracks.length > 0 && audioTracks[0].enabled) {
-          recordingStream.addTrack(audioTracks[0]);
-        }
-      }
+      console.log('Using MIME type:', mimeType);
 
-      const mediaRecorder = new MediaRecorder(recordingStream, options);
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
+        console.log('Data available:', event.data.size);
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
         }
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: options.mimeType || 'video/webm' });
+        console.log('Recording stopped. Total chunks:', chunksRef.current.length);
+        if (chunksRef.current.length === 0) {
+          setError('Recording failed - no data captured. Please try again.');
+          setIsRecording(false);
+          return;
+        }
+        
+        const blob = new Blob(chunksRef.current, { type: mimeType });
+        console.log('Blob created:', blob.size, 'bytes');
+        
+        if (blob.size === 0) {
+          setError('Recording failed - empty file. Please try again.');
+          setIsRecording(false);
+          return;
+        }
+        
         const url = URL.createObjectURL(blob);
-        setRecordedVideo({ blob, url });
+        setRecordedVideo({ blob, url, mimeType });
         stopCamera();
+        if (recordingIntervalRef.current) {
+          clearInterval(recordingIntervalRef.current);
+        }
+        setRecordingTime(0);
       };
 
       mediaRecorder.onerror = (event) => {
         console.error('MediaRecorder error:', event.error);
         setError(`Recording error: ${event.error}`);
         setIsRecording(false);
+        if (recordingIntervalRef.current) {
+          clearInterval(recordingIntervalRef.current);
+        }
       };
 
-      mediaRecorder.start();
+      // Start recording
+      mediaRecorder.start(100); // Collect data every 100ms
       setIsRecording(true);
+      setRecordingTime(0);
+      setError('');
 
-      // Auto-stop after 15 seconds for comprehensive liveness verification
-      setTimeout(() => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-          stopRecording();
-        }
-      }, 15000);
+      // Timer for recording duration
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingTime(prev => {
+          if (prev >= 15) {
+            stopRecording();
+            return 15;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+
     } catch (err) {
       console.error('Error starting recording:', err);
-      setError(`Unable to start recording: ${err.message}`);
+      setError(`Failed to start recording: ${err.message}`);
       setIsRecording(false);
     }
   };
@@ -184,6 +221,9 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+      }
     }
   };
 
@@ -192,6 +232,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
     setRecordedVideo(null);
     setError('');
     setUploadProgress(0);
+    setRecordingTime(0);
     startCamera();
   };
 
@@ -206,7 +247,8 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         formData.append('file', capturedImage.blob, 'selfie.jpg');
         formData.append('type', 'selfie');
       } else if (verificationType === 'video' && recordedVideo) {
-        formData.append('file', recordedVideo.blob, 'verification.webm');
+        const filename = `verification_${Date.now()}.webm`;
+        formData.append('file', recordedVideo.blob, filename);
         formData.append('type', 'video');
       } else {
         setError('No verification media captured');
@@ -214,10 +256,19 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         return;
       }
 
+      const { supabase } = await import('../lib/supabaseClient');
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        setError('Session expired. Please sign in again.');
+        setIsUploading(false);
+        return;
+      }
+
       const response = await fetch('/api/verification/submit', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${(await import('../lib/supabaseClient')).supabase.auth.session()?.access_token}`
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: formData
       });
@@ -251,7 +302,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         <p className={styles.instructions}>
           {verificationType === 'selfie' 
             ? 'Please take a clear photo of your face. Make sure your face is well-lit and clearly visible.'
-            : 'Please record a video for liveness verification (max 15 seconds). Follow these steps: 1) Look directly at the camera, 2) Slowly turn your head to the left, 3) Turn your head to the right, 4) Smile naturally. Ensure good lighting and that your entire face is visible.'}
+            : 'Record a video (max 15 seconds) of yourself. Look at the camera and perform the following: 1) Look directly at camera, 2) Turn head left, 3) Turn head right, 4) Smile naturally.'}
         </p>
 
         {error && (
@@ -266,22 +317,31 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
           )}
 
           {!capturedImage && !recordedVideo ? (
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className={styles.video}
-            />
+            <>
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className={styles.video}
+              />
+              {isRecording && (
+                <div className={styles.recordingTimer}>
+                  🔴 Recording: {recordingTime}s
+                </div>
+              )}
+            </>
           ) : capturedImage ? (
             <img src={capturedImage.url} alt="Captured selfie" className={styles.preview} />
-          ) : (
+          ) : recordedVideo ? (
             <video
               src={recordedVideo.url}
               controls
+              controlsList="nodownload"
               className={styles.preview}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
-          )}
+          ) : null}
 
           <canvas ref={canvasRef} style={{ display: 'none' }} />
         </div>
@@ -290,29 +350,49 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
           {!capturedImage && !recordedVideo ? (
             <>
               {verificationType === 'selfie' ? (
-                <button
-                  onClick={capturePhoto}
-                  disabled={!stream || countdown !== null}
-                  className={styles.captureButton}
-                >
-                  📸 Capture Photo
-                </button>
+                <>
+                  <button
+                    onClick={capturePhoto}
+                    disabled={!stream || countdown !== null}
+                    className={styles.captureButton}
+                  >
+                    📸 Capture Photo
+                  </button>
+                  <button
+                    onClick={toggleCamera}
+                    disabled={!stream || countdown !== null}
+                    className={styles.flipButton}
+                    title="Switch camera"
+                  >
+                    🔄 Flip Camera
+                  </button>
+                </>
               ) : (
                 <>
                   {!isRecording ? (
-                    <button
-                      onClick={startRecording}
-                      disabled={!stream || countdown !== null}
-                      className={styles.recordButton}
-                    >
-                      {countdown !== null ? `Starting in ${countdown}...` : '🔴 Start Recording'}
-                    </button>
+                    <>
+                      <button
+                        onClick={startRecording}
+                        disabled={!stream || countdown !== null}
+                        className={styles.recordButton}
+                      >
+                        {countdown !== null ? `Starting in ${countdown}...` : '🔴 Start Recording'}
+                      </button>
+                      <button
+                        onClick={toggleCamera}
+                        disabled={!stream || countdown !== null}
+                        className={styles.flipButton}
+                        title="Switch camera"
+                      >
+                        🔄 Flip Camera
+                      </button>
+                    </>
                   ) : (
                     <button
                       onClick={stopRecording}
                       className={styles.stopButton}
                     >
-                      ⏹️ Stop Recording
+                      ⏹️ Stop Recording ({recordingTime}s)
                     </button>
                   )}
                 </>
