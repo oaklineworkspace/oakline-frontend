@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import styles from '../styles/SelfieVerification.module.css';
 
 export default function SelfieVerification({ onVerificationComplete, verificationType = 'video' }) {
+  const [stage, setStage] = useState('capture'); // capture, preview, uploading
   const [isRecording, setIsRecording] = useState(false);
   const [recordedVideo, setRecordedVideo] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
@@ -12,6 +13,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [facingMode, setFacingMode] = useState('user');
+  const [currentStep, setCurrentStep] = useState(0);
   
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -19,6 +21,14 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
   const canvasRef = useRef(null);
   const recordingIntervalRef = useRef(null);
   const streamRef = useRef(null);
+
+  const steps = [
+    { instruction: 'Look at the camera', emoji: '👁️' },
+    { instruction: 'Turn your head LEFT slowly', emoji: '⬅️' },
+    { instruction: 'Turn your head RIGHT slowly', emoji: '➡️' },
+    { instruction: 'Smile naturally at the camera', emoji: '😊' },
+    { instruction: 'Great! Keep looking at camera', emoji: '✓' }
+  ];
 
   useEffect(() => {
     startCamera();
@@ -29,7 +39,6 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
 
   const startCamera = async () => {
     try {
-      // Stop existing stream
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
@@ -52,7 +61,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       setError('');
     } catch (err) {
       console.error('Error accessing camera:', err);
-      setError('Unable to access camera. Please grant camera permissions and ensure you have a working camera.');
+      setError('Unable to access camera. Please check camera permissions and try again.');
     }
   };
 
@@ -64,7 +73,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
     }
   };
 
-  const toggleCamera = async () => {
+  const toggleCamera = () => {
     setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
   };
 
@@ -91,6 +100,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
     canvas.toBlob((blob) => {
       const url = URL.createObjectURL(blob);
       setCapturedImage({ blob, url });
+      setStage('preview');
       stopCamera();
     }, 'image/jpeg', 0.95);
   };
@@ -107,8 +117,9 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       return;
     }
 
-    // Start countdown
     setCountdown(3);
+    setCurrentStep(0);
+    
     const countdownInterval = setInterval(() => {
       setCountdown(prev => {
         if (prev === 1) {
@@ -129,7 +140,6 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
 
       chunksRef.current = [];
       
-      // Determine best supported MIME type
       let mimeType = 'video/webm';
       const mimeTypes = [
         'video/webm;codecs=vp8',
@@ -145,21 +155,17 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         }
       }
 
-      console.log('Using MIME type:', mimeType);
-
       const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
-        console.log('Data available:', event.data.size);
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
         }
       };
 
       mediaRecorder.onstop = () => {
-        console.log('Recording stopped. Total chunks:', chunksRef.current.length);
         if (chunksRef.current.length === 0) {
           setError('Recording failed - no data captured. Please try again.');
           setIsRecording(false);
@@ -167,7 +173,6 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         }
         
         const blob = new Blob(chunksRef.current, { type: mimeType });
-        console.log('Blob created:', blob.size, 'bytes');
         
         if (blob.size === 0) {
           setError('Recording failed - empty file. Please try again.');
@@ -177,6 +182,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         
         const url = URL.createObjectURL(blob);
         setRecordedVideo({ blob, url, mimeType });
+        setStage('preview');
         stopCamera();
         if (recordingIntervalRef.current) {
           clearInterval(recordingIntervalRef.current);
@@ -193,17 +199,26 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         }
       };
 
-      // Start recording
-      mediaRecorder.start(100); // Collect data every 100ms
+      mediaRecorder.start(100);
       setIsRecording(true);
       setRecordingTime(0);
       setError('');
 
-      // Timer for recording duration
+      // Step progression every 3 seconds
+      let stepIndex = 0;
+      const stepInterval = setInterval(() => {
+        if (stepIndex < steps.length - 1) {
+          stepIndex++;
+          setCurrentStep(stepIndex);
+        }
+      }, 3000);
+
+      // Recording timer
       recordingIntervalRef.current = setInterval(() => {
         setRecordingTime(prev => {
           if (prev >= 15) {
             stopRecording();
+            clearInterval(stepInterval);
             return 15;
           }
           return prev + 1;
@@ -233,10 +248,13 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
     setError('');
     setUploadProgress(0);
     setRecordingTime(0);
+    setStage('capture');
+    setCurrentStep(0);
     startCamera();
   };
 
   const submitVerification = async () => {
+    setStage('uploading');
     setIsUploading(true);
     setError('');
 
@@ -253,6 +271,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       } else {
         setError('No verification media captured');
         setIsUploading(false);
+        setStage('preview');
         return;
       }
 
@@ -262,8 +281,20 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       if (!session) {
         setError('Session expired. Please sign in again.');
         setIsUploading(false);
+        setStage('preview');
         return;
       }
+
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + Math.random() * 30;
+        });
+      }, 300);
 
       const response = await fetch('/api/verification/submit', {
         method: 'POST',
@@ -272,6 +303,8 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         },
         body: formData
       });
+
+      clearInterval(progressInterval);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -287,8 +320,8 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
     } catch (err) {
       console.error('Error submitting verification:', err);
       setError(err.message || 'Failed to submit verification. Please try again.');
-    } finally {
       setIsUploading(false);
+      setStage('preview');
     }
   };
 
@@ -296,13 +329,14 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
     <div className={styles.container}>
       <div className={styles.verificationBox}>
         <h2 className={styles.title}>
-          {verificationType === 'selfie' ? 'Take a Selfie' : 'Video Liveness Verification'}
+          {verificationType === 'selfie' ? '📸 Take a Selfie' : '🎥 Identity Verification'}
         </h2>
         
         <p className={styles.instructions}>
-          {verificationType === 'selfie' 
-            ? 'Please take a clear photo of your face. Make sure your face is well-lit and clearly visible.'
-            : 'Record a video (max 15 seconds) of yourself. Look at the camera and perform the following: 1) Look directly at camera, 2) Turn head left, 3) Turn head right, 4) Smile naturally.'}
+          {stage === 'capture' && verificationType === 'selfie' && 'Take a clear photo of your face with good lighting'}
+          {stage === 'capture' && verificationType === 'video' && 'Follow the on-screen instructions. We need 15 seconds of video to verify your identity.'}
+          {stage === 'preview' && 'Review your capture before submitting'}
+          {stage === 'uploading' && 'Uploading your verification...'}
         </p>
 
         {error && (
@@ -312,12 +346,39 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         )}
 
         <div className={styles.videoContainer}>
-          {countdown !== null && (
-            <div className={styles.countdown}>{countdown}</div>
-          )}
-
-          {!capturedImage && !recordedVideo ? (
+          {stage === 'capture' && (
             <>
+              {/* Recording Instructions Overlay */}
+              {isRecording && verificationType === 'video' && (
+                <div className={styles.instructionsOverlay}>
+                  <div className={styles.stepIndicators}>
+                    {steps.map((step, idx) => (
+                      <div
+                        key={idx}
+                        className={`${styles.stepIndicator} ${
+                          idx === currentStep ? styles.activeStep : ''
+                        } ${idx < currentStep ? styles.completedStep : ''}`}
+                      >
+                        <span className={styles.stepNumber}>{idx + 1}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className={styles.currentInstruction}>
+                    <div className={styles.instructionEmoji}>{steps[currentStep]?.emoji}</div>
+                    <div className={styles.instructionText}>{steps[currentStep]?.instruction}</div>
+                  </div>
+
+                  <div className={styles.recordingTimer}>
+                    🔴 {recordingTime}s / 15s
+                  </div>
+                </div>
+              )}
+
+              {countdown !== null && (
+                <div className={styles.countdown}>{countdown}</div>
+              )}
+
               <video
                 ref={videoRef}
                 autoPlay
@@ -325,44 +386,50 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
                 muted
                 className={styles.video}
               />
-              {isRecording && (
-                <div className={styles.recordingTimer}>
-                  🔴 Recording: {recordingTime}s
-                </div>
-              )}
             </>
-          ) : capturedImage ? (
+          )}
+
+          {stage === 'preview' && capturedImage && (
             <img src={capturedImage.url} alt="Captured selfie" className={styles.preview} />
-          ) : recordedVideo ? (
+          )}
+
+          {stage === 'preview' && recordedVideo && (
             <video
               src={recordedVideo.url}
               controls
               controlsList="nodownload"
               className={styles.preview}
+              autoPlay
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
-          ) : null}
+          )}
+
+          {stage === 'uploading' && (
+            <div className={styles.uploadingContainer}>
+              <div className={styles.uploadingSpinner}></div>
+              <p className={styles.uploadingText}>Verifying your identity...</p>
+            </div>
+          )}
 
           <canvas ref={canvasRef} style={{ display: 'none' }} />
         </div>
 
         <div className={styles.controls}>
-          {!capturedImage && !recordedVideo ? (
+          {stage === 'capture' && (
             <>
               {verificationType === 'selfie' ? (
                 <>
                   <button
                     onClick={capturePhoto}
                     disabled={!stream || countdown !== null}
-                    className={styles.captureButton}
+                    className={styles.primaryButton}
                   >
                     📸 Capture Photo
                   </button>
                   <button
                     onClick={toggleCamera}
-                    disabled={!stream || countdown !== null}
-                    className={styles.flipButton}
-                    title="Switch camera"
+                    disabled={!stream}
+                    className={styles.secondaryButton}
                   >
                     🔄 Flip Camera
                   </button>
@@ -374,15 +441,14 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
                       <button
                         onClick={startRecording}
                         disabled={!stream || countdown !== null}
-                        className={styles.recordButton}
+                        className={styles.primaryButton}
                       >
                         {countdown !== null ? `Starting in ${countdown}...` : '🔴 Start Recording'}
                       </button>
                       <button
                         onClick={toggleCamera}
                         disabled={!stream || countdown !== null}
-                        className={styles.flipButton}
-                        title="Switch camera"
+                        className={styles.secondaryButton}
                       >
                         🔄 Flip Camera
                       </button>
@@ -392,13 +458,15 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
                       onClick={stopRecording}
                       className={styles.stopButton}
                     >
-                      ⏹️ Stop Recording ({recordingTime}s)
+                      ⏹️ Stop ({recordingTime}s)
                     </button>
                   )}
                 </>
               )}
             </>
-          ) : (
+          )}
+
+          {stage === 'preview' && (
             <div className={styles.actionButtons}>
               <button
                 onClick={retake}
@@ -412,17 +480,17 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
                 disabled={isUploading}
                 className={styles.submitButton}
               >
-                {isUploading ? `Uploading... ${uploadProgress}%` : '✓ Submit Verification'}
+                {isUploading ? `Uploading... ${Math.round(uploadProgress)}%` : '✓ Submit'}
               </button>
             </div>
           )}
-        </div>
 
-        {isUploading && (
-          <div className={styles.progressBar}>
-            <div className={styles.progress} style={{ width: `${uploadProgress}%` }} />
-          </div>
-        )}
+          {stage === 'uploading' && (
+            <div className={styles.progressBar}>
+              <div className={styles.progress} style={{ width: `${uploadProgress}%` }} />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
