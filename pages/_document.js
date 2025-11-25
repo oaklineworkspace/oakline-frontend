@@ -39,7 +39,6 @@ export default function Document() {
 
         {/* Banking Security Headers */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
-        <meta httpEquiv="X-Frame-Options" content="DENY" />
         <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
 
         {/* Banking SEO */}
