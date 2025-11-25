@@ -1513,6 +1513,13 @@ export default function WireTransfer() {
 
                   {currentStep === 2 && (
                     <>
+                      <div style={styles.infoBox}>
+                        <div style={styles.infoBoxTitle}>👁️ Review Your Transfer Details</div>
+                        <div style={styles.infoBoxText}>
+                          Please carefully review all the information below. Wire transfers are typically irreversible once processed.
+                        </div>
+                      </div>
+
                       <div style={styles.reviewSection}>
                         <div style={styles.reviewTitle}>Transfer Summary</div>
 
@@ -1655,6 +1662,13 @@ export default function WireTransfer() {
 
                   {currentStep === 3 && (
                     <>
+                      <div style={styles.infoBox}>
+                        <div style={styles.infoBoxTitle}>🔐 Email Verification Required</div>
+                        <div style={styles.infoBoxText}>
+                          For security purposes, we need to verify your email address. A 6-digit code has been sent to your registered email.
+                        </div>
+                      </div>
+
                       {sendingCode ? (
                         <div style={{
                           backgroundColor: '#f0f9ff',
@@ -1801,6 +1815,13 @@ export default function WireTransfer() {
 
                   {currentStep === 4 && (
                     <>
+                      <div style={styles.infoBox}>
+                        <div style={styles.infoBoxTitle}>🔐 Transaction PIN Verification</div>
+                        <div style={styles.infoBoxText}>
+                          Your transaction PIN provides an additional layer of security. Enter your PIN to authorize this wire transfer.
+                        </div>
+                      </div>
+
                       <div style={{
                         backgroundColor: '#f0fdf4',
                         border: '2px solid #059669',
@@ -1885,9 +1906,14 @@ export default function WireTransfer() {
 
                   {currentStep === 5 && (
                     <>
-                      <div style={styles.reviewSection}>
-                        <div style={styles.reviewTitle}>✅ Final Confirmation</div>
+                      <div style={styles.infoBox}>
+                        <div style={styles.infoBoxTitle}>✅ Final Confirmation</div>
+                        <div style={styles.infoBoxText}>
+                          Review the transfer details one final time. Click "Submit Transfer" to complete your wire transfer.
+                        </div>
+                      </div>
 
+                      <div style={styles.reviewSection}>
                         <div style={styles.reviewRow}>
                           <span style={styles.reviewLabel}>Transfer Type</span>
                           <span style={styles.reviewValue}>
