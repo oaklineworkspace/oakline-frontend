@@ -72,13 +72,23 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       return;
     }
 
+    // Verify stream has active tracks
+    const videoTracks = stream.getVideoTracks();
+    const audioTracks = stream.getAudioTracks();
+    
+    if (videoTracks.length === 0) {
+      setError('Video track not available. Please grant camera permissions.');
+      return;
+    }
+
     // Countdown before recording
     setCountdown(3);
     const countdownInterval = setInterval(() => {
       setCountdown(prev => {
         if (prev === 1) {
           clearInterval(countdownInterval);
-          beginRecording(stream);
+          // Pass the current stream directly
+          beginRecording();
           return null;
         }
         return prev - 1;
@@ -86,28 +96,53 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
     }, 1000);
   };
 
-  const beginRecording = (mediaStream) => {
+  const beginRecording = () => {
     try {
-      if (!mediaStream) {
+      if (!stream) {
         throw new Error('Stream not available');
+      }
+
+      const videoTracks = stream.getVideoTracks();
+      if (videoTracks.length === 0) {
+        throw new Error('No video tracks available');
+      }
+
+      // Verify video track is enabled
+      if (!videoTracks[0].enabled) {
+        throw new Error('Video track is disabled');
       }
       
       chunksRef.current = [];
-      const options = { mimeType: 'video/webm;codecs=vp9' };
       
-      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-        options.mimeType = 'video/webm';
-      }
-      
-      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-        options.mimeType = 'video/webm;codecs=vp8';
-      }
-      
-      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-        options.mimeType = 'video/webm';
+      // Try different codec options in order of preference
+      let options = { mimeType: 'video/webm' };
+      const codecOptions = [
+        'video/webm;codecs=vp9',
+        'video/webm;codecs=vp8',
+        'video/webm',
+        'video/mp4'
+      ];
+
+      for (const codec of codecOptions) {
+        if (MediaRecorder.isTypeSupported(codec)) {
+          options.mimeType = codec;
+          break;
+        }
       }
 
-      const mediaRecorder = new MediaRecorder(mediaStream, options);
+      // Create a new MediaStream with just the video and audio tracks we want
+      const recordingStream = new MediaStream();
+      recordingStream.addTrack(videoTracks[0]);
+      
+      // Only add audio if verification type is video
+      if (verificationType === 'video') {
+        const audioTracks = stream.getAudioTracks();
+        if (audioTracks.length > 0 && audioTracks[0].enabled) {
+          recordingStream.addTrack(audioTracks[0]);
+        }
+      }
+
+      const mediaRecorder = new MediaRecorder(recordingStream, options);
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
@@ -117,10 +152,16 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        const blob = new Blob(chunksRef.current, { type: options.mimeType || 'video/webm' });
         const url = URL.createObjectURL(blob);
         setRecordedVideo({ blob, url });
         stopCamera();
+      };
+
+      mediaRecorder.onerror = (event) => {
+        console.error('MediaRecorder error:', event.error);
+        setError(`Recording error: ${event.error}`);
+        setIsRecording(false);
       };
 
       mediaRecorder.start();
@@ -134,7 +175,8 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       }, 15000);
     } catch (err) {
       console.error('Error starting recording:', err);
-      setError('Unable to start recording. Please try again.');
+      setError(`Unable to start recording: ${err.message}`);
+      setIsRecording(false);
     }
   };
 
