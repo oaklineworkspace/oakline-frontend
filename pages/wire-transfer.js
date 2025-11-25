@@ -62,6 +62,8 @@ export default function WireTransfer() {
   const [loadingStates, setLoadingStates] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
   const [loadingBanks, setLoadingBanks] = useState(false);
+  const [codeSentSuccess, setCodeSentSuccess] = useState(false);
+  const [pinVerifiedSuccess, setPinVerifiedSuccess] = useState(false);
 
   const [wireForm, setWireForm] = useState({
     from_account_id: '',
@@ -417,6 +419,8 @@ export default function WireTransfer() {
 
   const handlePreviousStep = () => {
     setMessage('');
+    setCodeSentSuccess(false);
+    setPinVerifiedSuccess(false);
     setCurrentStep(prev => Math.max(1, prev - 1));
   };
 
@@ -446,8 +450,8 @@ export default function WireTransfer() {
         throw new Error('Failed to send verification code');
       }
 
-      setMessage('Verification code sent to your email');
-      setMessageType('success');
+      setCodeSentSuccess(true);
+      setMessage('');
     } catch (error) {
       console.error('Error sending code:', error);
       setMessage('Failed to send verification code. Please try again.');
@@ -488,9 +492,9 @@ export default function WireTransfer() {
         throw new Error(data.error || 'Invalid PIN');
       }
 
-      setMessage('PIN verified successfully');
-      setMessageType('success');
-      setCurrentStep(5);
+      setPinVerifiedSuccess(true);
+      setMessage('');
+      setTimeout(() => setCurrentStep(5), 800);
     } catch (error) {
       console.error('Error verifying PIN:', error);
       setMessage(error.message || 'Invalid PIN. Please try again.');
@@ -1514,8 +1518,26 @@ export default function WireTransfer() {
                         type="button"
                         onClick={handleNextStep}
                         style={{
-                          ...styles.submitButton,
-                          backgroundColor: '#059669'
+                          width: '100%',
+                          padding: '1rem 1.5rem',
+                          backgroundColor: '#1e40af',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '12px',
+                          fontSize: '1rem',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)',
+                          letterSpacing: '-0.01em'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#1e3a8a';
+                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(30, 64, 175, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#1e40af';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(30, 64, 175, 0.3)';
                         }}
                       >
                         Continue to Review →
@@ -1525,10 +1547,37 @@ export default function WireTransfer() {
 
                   {currentStep === 2 && (
                     <>
-                      <div style={styles.infoBox}>
-                        <div style={styles.infoBoxTitle}>👁️ Review Your Transfer Details</div>
-                        <div style={styles.infoBoxText}>
-                          Please carefully review all the information below. Wire transfers are typically irreversible once processed.
+                      <div style={{
+                        backgroundColor: '#f0fdf4',
+                        border: '2px solid #059669',
+                        borderRadius: '12px',
+                        padding: '1.5rem',
+                        marginBottom: '1.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem'
+                      }}>
+                        <div style={{
+                          width: '48px',
+                          height: '48px',
+                          backgroundColor: '#059669',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="white" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '1rem', fontWeight: '700', color: '#059669', marginBottom: '0.25rem' }}>
+                            📋 REVIEW & CONFIRM
+                          </div>
+                          <div style={{ fontSize: '0.9375rem', color: '#047857', lineHeight: '1.5' }}>
+                            Review all transfer details carefully. Wire transfers are typically irreversible once processed.
+                          </div>
                         </div>
                       </div>
 
@@ -1782,6 +1831,43 @@ export default function WireTransfer() {
                         </button>
                       </div>
 
+                      {codeSentSuccess && (
+                        <div style={{
+                          backgroundColor: '#f0fdf4',
+                          border: '2px solid #059669',
+                          borderRadius: '12px',
+                          padding: '1.5rem',
+                          marginBottom: '1.5rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '1rem'
+                        }}>
+                          <div style={{
+                            width: '40px',
+                            height: '40px',
+                            backgroundColor: '#059669',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                          }}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="white" />
+                            </svg>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '1rem', fontWeight: '700', color: '#059669', marginBottom: '0.25rem' }}>
+                              ✅ Code Sent Successfully
+                            </div>
+                            <div style={{ fontSize: '0.9375rem', color: '#047857' }}>
+                              Check your email for the 6-digit verification code. Enter it below to continue.
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <div style={{
                         backgroundColor: '#fef3c7',
                         border: '2px solid #f59e0b',
@@ -1886,6 +1972,43 @@ export default function WireTransfer() {
                         </p>
                       </div>
 
+                      {pinVerifiedSuccess && (
+                        <div style={{
+                          backgroundColor: '#f0fdf4',
+                          border: '2px solid #059669',
+                          borderRadius: '12px',
+                          padding: '1.5rem',
+                          marginBottom: '1.5rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '1rem'
+                        }}>
+                          <div style={{
+                            width: '40px',
+                            height: '40px',
+                            backgroundColor: '#059669',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            animation: 'bounce 0.8s ease-in-out'
+                          }}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="white" />
+                            </svg>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '1rem', fontWeight: '700', color: '#059669', marginBottom: '0.25rem' }}>
+                              ✅ PIN Verified Successfully
+                            </div>
+                            <div style={{ fontSize: '0.9375rem', color: '#047857' }}>
+                              Your PIN has been verified. Proceeding to final confirmation...
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <div style={styles.buttonGroup}>
                         <button
                           type="button"
@@ -1918,10 +2041,37 @@ export default function WireTransfer() {
 
                   {currentStep === 5 && (
                     <>
-                      <div style={styles.infoBox}>
-                        <div style={styles.infoBoxTitle}>✅ Final Confirmation</div>
-                        <div style={styles.infoBoxText}>
-                          Review the transfer details one final time. Click "Submit Transfer" to complete your wire transfer.
+                      <div style={{
+                        backgroundColor: '#f0fdf4',
+                        border: '2px solid #059669',
+                        borderRadius: '12px',
+                        padding: '1.5rem',
+                        marginBottom: '1.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem'
+                      }}>
+                        <div style={{
+                          width: '48px',
+                          height: '48px',
+                          backgroundColor: '#059669',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="white" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '1rem', fontWeight: '700', color: '#059669', marginBottom: '0.25rem' }}>
+                            ✅ FINAL CONFIRMATION
+                          </div>
+                          <div style={{ fontSize: '0.9375rem', color: '#047857', lineHeight: '1.5' }}>
+                            Review transfer details one final time. Click "Submit Transfer" to complete your wire transfer.
+                          </div>
                         </div>
                       </div>
 
