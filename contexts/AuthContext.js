@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
+  const [verificationRequired, setVerificationRequired] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -96,14 +97,13 @@ export const AuthProvider = ({ children }) => {
           const accountStatus = await response.json();
           
           if (accountStatus?.isBlocked) {
-            // Check if it's a verification requirement (don't sign out, redirect to verification)
+            // Check if it's a verification requirement (show banner, don't sign out or redirect)
             if (accountStatus.blockingType === 'verification_required') {
-              console.log('Verification required, redirecting...');
-              if (router.pathname !== '/verify-identity') {
-                router.push('/verify-identity');
-              }
+              console.log('Verification required, showing notification...');
+              setVerificationRequired(true);
             } else {
               // For other blocks (banned, suspended, closed), sign out
+              setVerificationRequired(false);
               console.log('Account is blocked, signing out...', accountStatus.blockingType);
               
               await supabase.auth.signOut();
@@ -117,6 +117,8 @@ export const AuthProvider = ({ children }) => {
               const currentPage = router.pathname.includes('/login') ? '/login' : '/sign-in';
               router.push(`${currentPage}?${params.toString()}`);
             }
+          } else {
+            setVerificationRequired(false);
           }
         }
       } catch (error) {
@@ -273,6 +275,7 @@ export const AuthProvider = ({ children }) => {
     signUp,
     signOut,
     resetPassword,
+    verificationRequired,
   };
 
   return (

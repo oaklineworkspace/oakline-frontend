@@ -8,9 +8,10 @@ import { useAuth } from '../contexts/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { getCreditScoreTier, getCreditScoreMessage } from '../lib/creditScoreUtils';
 import FundingNotice from '../components/FundingNotice';
+import VerificationNotificationBanner from '../components/VerificationNotificationBanner';
 
 function DashboardContent() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, verificationRequired } = useAuth();
   const [userProfile, setUserProfile] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
@@ -1101,6 +1102,7 @@ function DashboardContent() {
 
       {/* Funding Notices for Pending Funding Accounts */}
       <FundingNotice accounts={accounts} />
+      {verificationRequired && <VerificationNotificationBanner />}
 
       {/* Account Details Section - Moved below balance */}
       <section style={styles.accountsSection}>
