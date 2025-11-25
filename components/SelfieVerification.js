@@ -24,6 +24,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
   const stepIntervalRef = useRef(null);
   const streamRef = useRef(null);
   const synthRef = useRef(null);
+  const recordingTimeRef = useRef(0); // Track actual time to avoid closure issues
 
   // Voice instruction steps - fits within 30 seconds
   const voiceSteps = [
@@ -228,9 +229,10 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
           const url = URL.createObjectURL(blob);
           console.log('Blob URL created:', url);
           
-          // Store recorded time instead of relying on blob metadata
-          setRecordedVideo({ blob, url, mimeType, recordedDuration: recordingTime });
-          setVideoDuration(recordingTime); // Use actual recorded time, not blob duration
+          // Store recorded time from ref (not stale state)
+          const actualRecordedTime = recordingTimeRef.current || recordingTime;
+          setRecordedVideo({ blob, url, mimeType, recordedDuration: actualRecordedTime });
+          setVideoDuration(actualRecordedTime); // Use actual recorded time, not blob duration
           setStage('preview');
           stopCamera();
           
@@ -261,6 +263,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       mediaRecorder.start(100);
       setIsRecording(true);
       setRecordingTime(0);
+      recordingTimeRef.current = 0; // Reset ref
       setError('');
 
       // Voice guidance with timing
@@ -282,17 +285,33 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
 
       // Recording timer - show elapsed time, max 30 seconds
       recordingIntervalRef.current = setInterval(() => {
-        setRecordingTime(prev => {
-          if (prev >= MAX_RECORDING_DURATION) {
-            stopRecording();
-            if (stepIntervalRef.current) {
-              clearInterval(stepIntervalRef.current);
-            }
-            speak('Recording time reached maximum');
-            return MAX_RECORDING_DURATION;
+        recordingTimeRef.current += 1; // Update ref for accurate time
+        
+        if (recordingTimeRef.current >= MAX_RECORDING_DURATION) {
+          // Clear intervals BEFORE stopping
+          if (stepIntervalRef.current) {
+            clearInterval(stepIntervalRef.current);
+            stepIntervalRef.current = null;
           }
-          return prev + 1;
-        });
+          if (recordingIntervalRef.current) {
+            clearInterval(recordingIntervalRef.current);
+            recordingIntervalRef.current = null;
+          }
+          
+          // Stop voice
+          window.speechSynthesis.cancel();
+          
+          // Stop recording
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+          }
+          
+          speak('Recording time reached maximum');
+          return;
+        }
+        
+        setRecordingTime(recordingTimeRef.current); // Update UI
       }, 1000);
 
     } catch (err) {
@@ -307,10 +326,7 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       // CRITICAL: Stop all voices immediately
       window.speechSynthesis.cancel();
       
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      
-      // Clear all intervals to prevent voice from continuing
+      // Clear all intervals FIRST to stop voice loop
       if (recordingIntervalRef.current) {
         clearInterval(recordingIntervalRef.current);
         recordingIntervalRef.current = null;
@@ -320,7 +336,16 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         stepIntervalRef.current = null;
       }
       
-      console.log('Recording stopped. Duration:', recordingTime, 'seconds');
+      // Use ref value for accurate duration (not stale state)
+      const actualDuration = recordingTimeRef.current;
+      console.log('Recording stopped. Actual Duration:', actualDuration, 'seconds');
+      
+      // Update state with accurate duration before stopping recorder
+      setRecordingTime(actualDuration);
+      
+      // Stop the recorder (triggers onstop handler)
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
     }
   };
 
