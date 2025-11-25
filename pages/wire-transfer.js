@@ -94,7 +94,6 @@ export default function WireTransfer() {
   useEffect(() => {
     if (user) {
       checkVerificationStatus();
-      fetchAccounts();
     }
   }, [user]);
 
