@@ -50,6 +50,12 @@ The application is built with **Next.js 14.2.3** and React 18.2.0, utilizing SSR
   - **Loan Applications**: `pages/loan/apply.js` - Blocks loan application submissions
   - **Crypto Loan Deposits**: `pages/loan/deposit-crypto.js` - Blocks cryptocurrency deposits for loan payments
   - **Implementation**: All pages check `profiles.requires_verification` flag early in component lifecycle and redirect to verification page before any transaction UI or data loads. This prevents users from accidentally starting transactions they cannot complete.
+- **Performance Optimizations** (Nov 2025): Fixed device crashes on transfer pages through multiple optimizations:
+  - **Video Recording Voice**: Fixed immediate voice stopping by using aggressive cancellation with voiceActiveRef checks, interval clearing, and multiple cancel() calls
+  - **Home Page Images**: Added priority={true} and loading="eager" to hero images for improved LCP (Largest Contentful Paint)
+  - **Wire Transfer Code Splitting**: Extracted large styles object (122KB) into `lib/wireTransferStyles.js` and validators into `lib/wireTransferValidators.js` to reduce main bundle size
+  - **Video Recording Optimization**: Improved frame collection using start() without timeslice + manual requestData() every 1 second for active frame capture
+  - **Mobile Stability**: Transfer pages (transfer.js, internal-transfer.js, wire-transfer.js) now load reliably without crashes on mobile devices
 
 ## External Dependencies
 
