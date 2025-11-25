@@ -34,6 +34,53 @@ export default function Home() {
   const [showBankingDropdown, setShowBankingDropdown] = useState(false);
   const [translations, setTranslations] = useState({});
 
+  // Define data arrays BEFORE useEffect so they're available
+  const bankingImages = [
+    {
+      src: '/images/Mobile_banking_user_experience_576bb7a3.png',
+      title: 'Mobile Banking Excellence',
+      subtitle: 'Complete banking control right in your pocket with our award-winning app',
+      icon: '📱',
+      gradient: 'linear-gradient(135deg, rgba(30, 64, 175, 0.15) 0%, rgba(30, 64, 175, 0.25) 100%)'
+    },
+    {
+      src: '/images/Bank_hall_business_discussion_72f98bbe.png',
+      title: 'Expert Financial Consultation',
+      subtitle: 'Professional advice from certified banking specialists in our modern branches',
+      icon: '💼',
+      gradient: 'linear-gradient(135deg, rgba(30, 64, 175, 0.15) 0%, rgba(30, 64, 175, 0.25) 100%)'
+    },
+    {
+      src: '/images/Modern_bank_lobby_interior_d535acc7.png',
+      title: 'Modern Banking Facilities',
+      subtitle: 'Experience premium banking in our state-of-the-art branch locations',
+      icon: '🏦',
+      gradient: 'linear-gradient(135deg, rgba(30, 64, 175, 0.15) 0%, rgba(30, 64, 175, 0.25) 100%)'
+    }
+  ];
+
+  const bankingFeatures = [
+    { name: 'Professional Banking Team', icon: '👥', desc: 'Work with experienced professionals', color: '#3b82f6' },
+    { name: 'Award-Winning Mobile App', icon: '📱', desc: 'Banking at your fingertips', color: '#10b981' },
+    { name: 'Premium Debit Cards', icon: '💳', desc: 'Advanced security features', color: '#f59e0b' },
+    { name: 'Secure Card Technology', icon: '🔒', desc: 'Multi-layer security', color: '#8b5cf6' },
+    { name: 'Digital Banking Excellence', icon: '💻', desc: 'Seamless online banking', color: '#64748b' },
+    { name: 'Expert Financial Advice', icon: '💼', desc: 'Personalized guidance', color: '#1d4ed8' },
+    { name: 'Instant Loan Approvals', icon: '🚀', desc: 'Quick access to funds', color: '#059669' },
+    { name: 'Superior User Experience', icon: '⭐', desc: 'Intuitive interface', color: '#f59e0b' }
+  ];
+
+  const accountTypes = [
+    { name: 'Premium Checking', icon: '💎', rate: '0.25% APY', featured: true },
+    { name: 'High-Yield Savings', icon: '⭐', rate: '5.00% APY', featured: true },
+    { name: 'Business Checking', icon: '🏢', rate: '0.15% APY', featured: true },
+    { name: 'Investment Account', icon: '📈', rate: 'Variable', featured: true },
+    { name: 'Money Market', icon: '💰', rate: '4.75% APY', featured: true },
+    { name: 'Certificate of Deposit', icon: '🔒', rate: '5.25% APY', featured: true }
+  ];
+
+  const visibleAccountTypes = user ? accountTypes : accountTypes.filter(account => account.featured);
+
   // Optimized translation function with caching
   const t = useCallback(async (text) => {
     if (!text) return '';
@@ -269,174 +316,6 @@ export default function Home() {
   const exploreFeatures = activeFeatures.filter(f => f.section === 'explore');
   const servicesFeatures = activeFeatures.filter(f => f.section === 'services');
   const resourcesFeatures = activeFeatures.filter(f => f.section === 'resources');
-
-  const bankingImages = [
-    {
-      src: '/images/Mobile_banking_user_experience_576bb7a3.png',
-      title: 'Mobile Banking Excellence',
-      subtitle: 'Complete banking control right in your pocket with our award-winning app',
-      icon: '📱',
-      gradient: 'linear-gradient(135deg, rgba(30, 64, 175, 0.15) 0%, rgba(30, 64, 175, 0.25) 100%)'
-    },
-    {
-      src: '/images/Bank_hall_business_discussion_72f98bbe.png',
-      title: 'Expert Financial Consultation',
-      subtitle: 'Professional advice from certified banking specialists in our modern branches',
-      icon: '💼',
-      gradient: 'linear-gradient(135deg, rgba(30, 64, 175, 0.15) 0%, rgba(30, 64, 175, 0.25) 100%)'
-    },
-    {
-      src: '/images/Modern_bank_lobby_interior_d535acc7.png',
-      title: 'Modern Banking Facilities',
-      subtitle: 'Experience premium banking in our state-of-the-art branch locations',
-      icon: '🏦',
-      gradient: 'linear-gradient(135deg, rgba(30, 64, 175, 0.15) 0%, rgba(30, 64, 175, 0.25) 100%)'
-    }
-  ];
-
-  const bankingFeatures = [
-    {
-      image: '/images/Professional_banking_team_36e79456.png',
-      title: 'Professional Banking Team',
-      description: 'Work with our experienced banking professionals who provide personalized financial guidance and support.',
-      features: ['Dedicated Relationship Managers', 'Expert Financial Advice', 'Personalized Service', '24/7 Professional Support'],
-      icon: '👥',
-      color: '#3b82f6'
-    },
-    {
-      image: '/images/Mobile_banking_user_d80a1b31.png',
-      title: 'Award-Winning Mobile App',
-      description: 'Experience banking reimagined with our state-of-the-art mobile application used by thousands of satisfied customers.',
-      features: ['Mobile Check Deposit', 'Instant Transfers', 'Bill Pay & Scheduling', 'Real-time Notifications'],
-      icon: '📱',
-      color: '#10b981'
-    },
-    {
-      image: '/images/realistic-debit-card-1.svg',
-      title: 'Premium Debit Cards',
-      description: 'Access your money instantly with our premium debit cards featuring advanced security and contactless technology.',
-      features: ['Contactless Payments', 'Real-time Fraud Protection', 'Global Acceptance', 'Mobile Card Controls'],
-      icon: '💳',
-      color: '#f59e0b'
-    },
-    {
-      image: '/images/premium-debit-card.svg',
-      title: 'Secure Card Technology',
-      description: 'Bank with confidence using our advanced chip technology and multi-layer security features.',
-      features: ['EMV Chip Technology', '24/7 Fraud Monitoring', 'Instant Lock/Unlock', 'Zero Liability Protection'],
-      icon: '🔒',
-      color: '#8b5cf6'
-    },
-    {
-      image: '/images/Mobile_banking_user_experience_576bb7a3.png',
-      title: 'Digital Banking Excellence',
-      description: 'Experience seamless online banking with our comprehensive digital platform designed for modern life.',
-      features: ['Easy Account Management', 'Seamless Fund Transfers', 'Personalized Dashboard', '24/7 Online Access'],
-      icon: '💻',
-      color: '#64748b'
-    },
-    {
-      image: '/images/Banking_executive_team_meeting_c758f3ec.png',
-      title: 'Expert Financial Advice',
-      description: 'Receive personalized guidance from certified financial experts to help you achieve your financial goals.',
-      features: ['Personalized Financial Planning', 'Investment Strategy Sessions', 'Retirement Planning', 'Debt Management Advice'],
-      icon: '💼',
-      color: '#1d4ed8'
-    },
-    {
-      image: '/images/Loan_approval_celebration_a079ff82.png',
-      title: 'Instant Loan Approvals',
-      description: 'Get quick access to funds with our streamlined and efficient loan application and approval process.',
-      features: ['Fast Online Applications', 'Competitive Interest Rates', 'Flexible Repayment Options', 'Pre-qualification Tools'],
-      icon: '🚀',
-      color: '#059669'
-    },
-    {
-      image: '/images/Bank_consultation_meeting_3eeb5e91.png',
-      title: 'Superior User Experience',
-      description: 'Navigate your finances with ease through our intuitive and award-winning banking platform.',
-      features: ['Intuitive Interface', 'Quick Navigation', 'Smart Features', 'User-Friendly Design'],
-      icon: '⭐',
-      color: '#f59e0b'
-    },
-    {
-      image: '/images/Small_business_loan_approval_6e0d9c2c.png',
-      title: 'Business Banking Solutions',
-      description: 'Comprehensive banking solutions designed specifically for small businesses and entrepreneurs.',
-      features: ['Business Checking Accounts', 'Merchant Services', 'Small Business Loans', 'Payroll Solutions'],
-      icon: '🏢',
-      color: '#dc2626'
-    },
-    {
-      image: '/images/Global_currency_exchange_b687ec53.png',
-      title: 'Global Currency Exchange',
-      description: 'Manage your international finances with competitive exchange rates and global transaction capabilities.',
-      features: ['Multi-Currency Accounts', 'Preferential Exchange Rates', 'International Wire Transfers', 'Global ATM Network Access'],
-      icon: '🌍',
-      color: '#06b6d4'
-    },
-    {
-      image: '/images/Student_banking_services_ee1b5d89.png',
-      title: 'Student Banking Solutions',
-      description: 'Specialized accounts and resources designed to help students manage their finances effectively.',
-      features: ['No-Fee Student Checking', 'Financial Literacy Workshops', 'Overdraft Protection Options', 'Student Credit Building'],
-      icon: '🎓',
-      color: '#8b5cf6'
-    },
-    {
-      image: '/images/Senior_citizen_banking_benefits_b7e0c6b1.png',
-      title: 'Senior Banking Privileges',
-      description: 'Exclusive benefits and dedicated services for our valued senior customers.',
-      features: ['Specialized Senior Checking', 'Discounted Fees', 'Estate Planning Assistance', 'Priority Customer Service'],
-      icon: '👴',
-      color: '#374151'
-    },
-    {
-      image: '/images/Digital_investment_dashboard_36d35f19.png',
-      title: 'Health Savings Accounts (HSA)',
-      description: 'Tax-advantaged savings accounts to help you manage healthcare expenses.',
-      features: ['Triple Tax Advantage', 'Investment Options', 'Tax-Free Withdrawals for Medical Costs', 'Portable Accounts'],
-      icon: '🏥',
-      color: '#10b981'
-    },
-    {
-      image: '/images/Emergency_fund_savings_goal_8b3a0f9c.png',
-      title: 'Emergency Savings Tools',
-      description: 'Build a robust emergency fund with easy-to-use tools and high-yield savings options.',
-      features: ['Goal-Based Savings', 'Automatic Transfers', 'High-Yield Emergency Fund', 'Accessible Funds'],
-      icon: '🚨',
-      color: '#d97706'
-    }
-  ];
-
-  const accountTypes = [
-    { name: 'Premium Checking', icon: '💎', rate: '0.25% APY', desc: 'Luxury banking with exclusive perks and premium benefits', featured: true, benefits: 'Free checks, premium debit card, concierge service' },
-    { name: 'High-Yield Savings', icon: '⭐', rate: '5.00% APY', desc: 'Maximum earning potential with competitive rates', featured: true, benefits: 'No minimum balance, compound interest, mobile banking' },
-    { name: 'Business Checking', icon: '🏢', rate: '0.15% APY', desc: 'Professional banking solutions for growing businesses', featured: true, benefits: 'Free business banking, merchant services, payroll integration' },
-    { name: 'Investment Account', icon: '📈', rate: 'Variable', desc: 'Trade stocks, bonds, ETFs, and mutual funds', featured: true, benefits: 'Commission-free trades, research tools, advisory services' },
-    { name: 'Money Market', icon: '💰', rate: '4.75% APY', desc: 'Premium savings with higher yields and flexibility', featured: true, benefits: 'Tiered interest rates, check writing, debit card access' },
-    { name: 'Certificate of Deposit', icon: '🔒', rate: '5.25% APY', desc: 'Secure fixed-rate investments with guaranteed returns', featured: true, benefits: 'FDIC insured, fixed rates, flexible terms' },
-    { name: 'Student Account', icon: '🎓', rate: '2.50% APY', desc: 'No-fee banking designed for students', featured: false, benefits: 'No monthly fees, overdraft protection, financial education' },
-    { name: 'Retirement IRA', icon: '🏖️', rate: '4.80% APY', desc: 'Plan for your golden years with tax advantages', featured: false, benefits: 'Traditional & Roth options, tax benefits, retirement planning' },
-    { name: 'Joint Account', icon: '👫', rate: '0.50% APY', desc: 'Shared banking solutions for couples and families', featured: false, benefits: 'Dual access, shared goals, family financial planning' },
-    { name: 'Trust Account', icon: '🛡️', rate: '3.50% APY', desc: 'Manage assets for beneficiaries with professional oversight', featured: false, benefits: 'Estate planning, fiduciary services, beneficiary management' },
-    { name: 'Teen Account', icon: '👦', rate: '2.00% APY', desc: 'Financial education and independence for teens', featured: false, benefits: 'Parental controls, spending alerts, financial literacy tools' },
-    { name: 'Senior Account', icon: '👴', rate: '4.00% APY', desc: 'Special benefits and services for seniors 65+', featured: false, benefits: 'Senior discounts, health savings options, estate planning' },
-    { name: 'Health Savings', icon: '🏥', rate: '3.75% APY', desc: 'Tax-advantaged savings for medical expenses', featured: false, benefits: 'Triple tax advantage, investment options, no expiration' },
-    { name: 'International Account', icon: '🌍', rate: '3.25% APY', desc: 'Global banking solutions for international needs', featured: false, benefits: 'Multi-currency support, international transfers, global ATM access' },
-    { name: 'Cryptocurrency Account', icon: '₿', rate: 'Variable', desc: 'Secure digital asset management and trading', featured: user ? true : false, benefits: 'Multiple cryptocurrencies, secure storage, trading platform' },
-    { name: 'Green Investment', icon: '🌱', rate: '6.00% APY', desc: 'Sustainable investing for environmental impact', featured: user ? true : false, benefits: 'ESG investments, impact reporting, sustainable returns' },
-    { name: 'Real Estate Investment', icon: '🏠', rate: '7.50% APY', desc: 'Property investment trusts and real estate funds', featured: user ? true : false, benefits: 'REIT investments, property exposure, professional management' },
-    { name: 'Education Savings', icon: '📚', rate: '4.25% APY', desc: 'Tax-free education savings for future learning', featured: false, benefits: '529 plan benefits, tax-free growth, educational flexibility' },
-    { name: 'Emergency Fund', icon: '🚨', rate: '4.10% APY', desc: 'Quick access emergency savings with high yields', featured: false, benefits: 'Instant access, high yield, automatic savings tools' },
-    { name: 'Small Business', icon: '🏪', rate: '3.80% APY', desc: 'Comprehensive banking solutions for small businesses', featured: false, benefits: 'Business loans, merchant services, accounting integration' },
-    { name: 'Corporate Banking', icon: '🏭', rate: '4.20% APY', desc: 'Enterprise banking solutions for large organizations', featured: false, benefits: 'Treasury management, commercial lending, cash management' },
-    { name: 'Private Banking', icon: '💎', rate: '5.50% APY', desc: 'Exclusive high-net-worth banking services', featured: user ? true : false, benefits: 'Private banker, exclusive rates, luxury services' },
-    { name: 'Wealth Management', icon: '👑', rate: '6.75% APY', desc: 'Comprehensive wealth solutions for affluent clients', featured: user ? true : false, benefits: 'Investment advisory, estate planning, tax optimization' }
-  ];
-
-  // Show different account types based on authentication
-  const visibleAccountTypes = user ? accountTypes : accountTypes.filter(account => account.featured);
 
   if (isLoading) {
     return (
