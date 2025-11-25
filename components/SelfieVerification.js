@@ -295,7 +295,9 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         }
       };
 
-      mediaRecorder.start(100);
+      // Start recording with 500ms timeslice for better frame capture
+      // This ensures video frames are properly collected
+      mediaRecorder.start(500);
       setIsRecording(true);
       setRecordingTime(0);
       recordingTimeRef.current = 0; // Reset ref
@@ -393,18 +395,21 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
         console.log('Requesting data flush before stop...');
         mediaRecorderRef.current.requestData();
         
-        // Small delay to ensure data is captured
+        // Give browser enough time to encode and flush all video frames
+        // 200ms is needed for proper video encoding
         setTimeout(() => {
           if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
             console.log('Stopping MediaRecorder with flushed data...');
             mediaRecorderRef.current.stop();
             setIsRecording(false);
           }
-        }, 50);
+        }, 200);
       } catch (err) {
         console.error('Error during stop:', err);
-        mediaRecorderRef.current.stop();
-        setIsRecording(false);
+        if (mediaRecorderRef.current) {
+          mediaRecorderRef.current.stop();
+          setIsRecording(false);
+        }
       }
     }
   };
