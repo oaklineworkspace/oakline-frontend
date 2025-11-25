@@ -1792,12 +1792,41 @@ export default function WireTransfer() {
 
                   {currentStep === 3 && (
                     <>
-                      <div style={styles.infoBox}>
-                        <div style={styles.infoBoxTitle}>🔐 Email Verification Required</div>
-                        <div style={styles.infoBoxText}>
-                          For security purposes, we need to verify your email address. A 6-digit code has been sent to your registered email.
+                      {codeSentSuccess ? (
+                        <div style={{
+                          backgroundColor: '#f0fdf4',
+                          border: '2px solid #059669',
+                          borderRadius: '12px',
+                          padding: '1.5rem',
+                          marginBottom: '1.5rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '1rem'
+                        }}>
+                          <div style={{
+                            width: '40px',
+                            height: '40px',
+                            backgroundColor: '#059669',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="white" />
+                            </svg>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '1rem', fontWeight: '700', color: '#059669', marginBottom: '0.25rem' }}>
+                              ✅ Code Sent Successfully
+                            </div>
+                            <div style={{ fontSize: '0.9375rem', color: '#047857' }}>
+                              A 6-digit code has been sent to <strong>{user?.email}</strong>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      ) : null}
 
                       {sendingCode ? (
                         <div style={{
@@ -1817,34 +1846,14 @@ export default function WireTransfer() {
                             animation: 'spin 1s linear infinite',
                             margin: '0 auto 1rem auto'
                           }}></div>
-                          <p style={{ fontSize: '1.125rem', color: '#1e40af', margin: '0 0 0.5rem 0', fontWeight: '700' }}>
-                            Sending Verification Code...
-                          </p>
-                          <p style={{ fontSize: '0.9375rem', color: '#1e40af', margin: 0 }}>
-                            Please wait while we send a secure code to <strong>{user?.email}</strong>
+                          <p style={{ fontSize: '1.125rem', color: '#1e40af', margin: 0, fontWeight: '700' }}>
+                            Sending verification code...
                           </p>
                         </div>
-                      ) : (
-                        <div style={{
-                          backgroundColor: '#f0fdf4',
-                          border: '2px solid #059669',
-                          borderRadius: '12px',
-                          padding: '1.5rem',
-                          marginBottom: '1.5rem',
-                          textAlign: 'center'
-                        }}>
-                          <p style={{ fontSize: '1rem', color: '#047857', margin: '0 0 0.5rem 0', fontWeight: '700' }}>
-                            🔐 Security Verification Required
-                          </p>
-                          <p style={{ fontSize: '0.9375rem', color: '#047857', margin: 0, lineHeight: '1.6' }}>
-                            A 6-digit verification code has been sent to your email address:<br/>
-                            <strong style={{ fontSize: '1rem' }}>{user?.email}</strong>
-                          </p>
-                        </div>
-                      )}
+                      ) : null}
 
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>Enter Verification Code *</label>
+                        <label style={styles.label}>Enter 6-Digit Code *</label>
                         <input
                           type="text"
                           style={{
@@ -1894,60 +1903,10 @@ export default function WireTransfer() {
                                 borderRadius: '50%',
                                 animation: 'spin 0.8s linear infinite'
                               }}></div>
-                              Sending Code...
+                              Sending...
                             </>
-                          ) : sentCode ? '🔄 Resend Verification Code' : '📧 Send Verification Code'}
+                          ) : sentCode ? '🔄 Resend Code' : '📧 Send Code'}
                         </button>
-                      </div>
-
-                      {codeSentSuccess && (
-                        <div style={{
-                          backgroundColor: '#f0fdf4',
-                          border: '2px solid #059669',
-                          borderRadius: '12px',
-                          padding: '1.5rem',
-                          marginBottom: '1.5rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '1rem'
-                        }}>
-                          <div style={{
-                            width: '40px',
-                            height: '40px',
-                            backgroundColor: '#059669',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                            animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
-                          }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="white" />
-                            </svg>
-                          </div>
-                          <div>
-                            <div style={{ fontSize: '1rem', fontWeight: '700', color: '#059669', marginBottom: '0.25rem' }}>
-                              ✅ Code Sent Successfully
-                            </div>
-                            <div style={{ fontSize: '0.9375rem', color: '#047857' }}>
-                              Check your email for the 6-digit verification code. Enter it above to continue.
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      <div style={{
-                        backgroundColor: '#fef3c7',
-                        border: '2px solid #f59e0b',
-                        borderRadius: '10px',
-                        padding: '1rem',
-                        marginTop: '1.5rem',
-                        marginBottom: '1.5rem'
-                      }}>
-                        <p style={{ fontSize: '0.875rem', color: '#92400e', margin: 0 }}>
-                          <strong>🔐 Important:</strong> Enter the 6-digit code from your email to proceed to the final confirmation step.
-                        </p>
                       </div>
 
                       <div style={styles.buttonGroup}>
@@ -1983,30 +1942,14 @@ export default function WireTransfer() {
                   {currentStep === 4 && (
                     <>
                       <div style={styles.infoBox}>
-                        <div style={styles.infoBoxTitle}>🔐 Transaction PIN Verification</div>
+                        <div style={styles.infoBoxTitle}>🔐 Transaction PIN Required</div>
                         <div style={styles.infoBoxText}>
-                          Your transaction PIN provides an additional layer of security. Enter your PIN to authorize this wire transfer.
+                          Enter your 4-6 digit transaction PIN to authorize this wire transfer. Never share your PIN with anyone.
                         </div>
                       </div>
 
-                      <div style={{
-                        backgroundColor: '#f0fdf4',
-                        border: '2px solid #059669',
-                        borderRadius: '12px',
-                        padding: '1.5rem',
-                        marginBottom: '1.5rem',
-                        textAlign: 'center'
-                      }}>
-                        <p style={{ fontSize: '1rem', color: '#047857', margin: '0 0 0.5rem 0', fontWeight: '700' }}>
-                          🔐 Transaction PIN Required
-                        </p>
-                        <p style={{ fontSize: '0.9375rem', color: '#047857', margin: 0, lineHeight: '1.6' }}>
-                          For your security, please enter your transaction PIN to authorize this wire transfer.
-                        </p>
-                      </div>
-
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>Enter Your Transaction PIN *</label>
+                        <label style={styles.label}>Enter Transaction PIN *</label>
                         <input
                           type="password"
                           maxLength={6}
@@ -2024,20 +1967,7 @@ export default function WireTransfer() {
                           required
                         />
                         <p style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '0.5rem' }}>
-                          Don't have a transaction PIN? <a href="/security" style={{ color: '#059669', textDecoration: 'underline' }}>Set it up in Security settings</a>
-                        </p>
-                      </div>
-
-                      <div style={{
-                        backgroundColor: '#fef3c7',
-                        border: '2px solid #f59e0b',
-                        borderRadius: '10px',
-                        padding: '1rem',
-                        marginTop: '1.5rem',
-                        marginBottom: '1.5rem'
-                      }}>
-                        <p style={{ fontSize: '0.875rem', color: '#92400e', margin: 0 }}>
-                          <strong>🔐 Important:</strong> Your transaction PIN adds an extra layer of security. Never share your PIN with anyone.
+                          Don't have a PIN? <a href="/security" style={{ color: '#059669', textDecoration: 'underline' }}>Set one up in Security settings</a>
                         </p>
                       </div>
 
