@@ -373,7 +373,9 @@ export default function Notifications() {
       </Head>
 
       <div style={styles.container}>
-        <Header />
+        <div style={styles.topNav}>
+          <a href="/dashboard" style={styles.backButton}>← Back to Dashboard</a>
+        </div>
 
         <main style={styles.main}>
           {/* Professional Header Section */}
@@ -387,9 +389,9 @@ export default function Notifications() {
                   )}
                 </div>
                 <div style={styles.headerText}>
-                  <h1 style={styles.pageTitle}>Notifications Center</h1>
+                  <h1 style={styles.pageTitle}>Your Notifications</h1>
                   <p style={styles.pageSubtitle}>
-                    Welcome back, {userName} • {bankDetails?.name || 'Oakline Bank'}
+                    Hi {userName}! Stay informed about your banking activity
                   </p>
                 </div>
               </div>
@@ -824,6 +826,27 @@ const styles = {
     background: 'linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%)',
     padding: '2rem 1rem',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif'
+  },
+  topNav: {
+    maxWidth: '1200px',
+    margin: '0 auto 2rem',
+    display: 'flex',
+    justifyContent: 'flex-end'
+  },
+  backButton: {
+    color: 'white',
+    textDecoration: 'none',
+    padding: '0.75rem 1.5rem',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: '12px',
+    fontWeight: '600',
+    transition: 'all 0.3s',
+    backdropFilter: 'blur(10px)',
+    border: '1px solid rgba(255,255,255,0.2)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    fontSize: '0.95rem'
   },
   main: {
     maxWidth: '1200px',
