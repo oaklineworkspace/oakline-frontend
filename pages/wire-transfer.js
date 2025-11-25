@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { supabase } from '../lib/supabaseClient';
 import Head from 'next/head';
 import { getWireTransferStyles } from '../lib/wireTransferStyles';
@@ -764,7 +765,13 @@ export default function WireTransfer() {
         )}
 
         <header style={styles.header}>
-          <a href="/dashboard" style={styles.logo}>🏛️ Oakline Bank</a>
+          <Link href="/" style={styles.logoContainer}>
+            <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.logo} />
+            <div style={styles.brandInfo}>
+              <h1 style={styles.brandName}>Oakline Bank</h1>
+              <span style={styles.brandTagline}>Your Financial Partner</span>
+            </div>
+          </Link>
           <a href="/dashboard" style={styles.backButton}>← Back to Dashboard</a>
         </header>
 
