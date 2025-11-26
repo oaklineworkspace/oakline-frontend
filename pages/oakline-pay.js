@@ -37,10 +37,13 @@ export default function OaklinePayPage() {
   const [messageType, setMessageType] = useState('success');
   const [setupMessage, setSetupMessage] = useState('');
   const [setupMessageType, setSetupMessageType] = useState('success');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [showQRModal, setShowQRModal] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showSetupModal, setShowSetupModal] = useState(false);
+  const [showEditTagModal, setShowEditTagModal] = useState(false);
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [pendingTransaction, setPendingTransaction] = useState(null);
@@ -231,14 +234,14 @@ export default function OaklinePayPage() {
         return;
       }
 
-      setSetupMessage('Your Oakline tag has been created successfully');
-      setSetupMessageType('success');
+      setSuccessMessage('Your Oakline tag has been created successfully!');
+      setShowSuccessModal(true);
+      setShowSetupModal(false);
+      setSetupForm({ oakline_tag: '', display_name: '', bio: '' });
       setTimeout(() => {
-        setShowSetupModal(false);
-        setSetupForm({ oakline_tag: '', display_name: '', bio: '' });
-        setSetupMessage('');
+        setShowSuccessModal(false);
         checkUserAndLoadData();
-      }, 2000);
+      }, 3000);
     } catch (error) {
       console.error('Error:', error);
       setSetupMessage('An error occurred. Please try again.');
@@ -873,12 +876,25 @@ export default function OaklinePayPage() {
                   ) : (
                     <div style={{ display: 'grid', gap: '1.5rem' }}>
                       <div style={styles.settingItem}>
-                        <h3 style={{ color: '#1a365d', fontWeight: '600', marginBottom: '0.5rem' }}>
-                          Oakline Tag
-                        </h3>
-                        <p style={{ color: '#059669', fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>
-                          @{oaklineProfile.oakline_tag}
-                        </p>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <h3 style={{ color: '#1a365d', fontWeight: '600', marginBottom: '0.5rem' }}>
+                              Oakline Tag
+                            </h3>
+                            <p style={{ color: '#059669', fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>
+                              @{oaklineProfile.oakline_tag}
+                            </p>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              setSetupForm({ oakline_tag: oaklineProfile.oakline_tag, display_name: oaklineProfile.display_name, bio: oaklineProfile.bio });
+                              setShowEditTagModal(true);
+                            }}
+                            style={{ ...styles.secondaryButton, whiteSpace: 'nowrap', padding: '0.6rem 1rem', fontSize: '0.85rem' }}
+                          >
+                            ✎ Edit
+                          </button>
+                        </div>
                       </div>
                       <div style={styles.settingItem}>
                         <h3 style={{ color: '#1a365d', fontWeight: '600', marginBottom: '0.5rem' }}>
