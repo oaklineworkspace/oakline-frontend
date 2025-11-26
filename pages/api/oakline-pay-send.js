@@ -126,21 +126,23 @@ export default async function handler(req, res) {
       if (recipient_type === 'oakline_tag') {
         // Normalize tag: remove @ if present, convert to lowercase
         const normalizedTag = recipient_contact.toLowerCase().replace(/^@/, '');
+        const tagWithAt = `@${normalizedTag}`;
         
-        const { data: oaklineProfile } = await supabaseAdmin
+        // Try both formats for backwards compatibility (some may be stored with @, some without)
+        let { data: oaklineProfile } = await supabaseAdmin
           .from('oakline_pay_profiles')
           .select('user_id, display_name, oakline_tag, is_active')
-          .eq('oakline_tag', normalizedTag)
           .eq('is_active', true)
-          .single();
+          .in('oakline_tag', [normalizedTag, tagWithAt]);
 
-        if (oaklineProfile) {
+        // Use the first match found
+        if (oaklineProfile && oaklineProfile.length > 0) {
           // Use oakline_pay_profiles data directly as the recipient profile
           recipientProfile = {
-            id: oaklineProfile.user_id,
-            full_name: oaklineProfile.display_name || 'Oakline User',
-            first_name: oaklineProfile.display_name?.split(' ')[0] || 'Oakline User',
-            oakline_tag: oaklineProfile.oakline_tag
+            id: oaklineProfile[0].user_id,
+            full_name: oaklineProfile[0].display_name || 'Oakline User',
+            first_name: oaklineProfile[0].display_name?.split(' ')[0] || 'Oakline User',
+            oakline_tag: oaklineProfile[0].oakline_tag
           };
           isOaklineUser = true;
         }
