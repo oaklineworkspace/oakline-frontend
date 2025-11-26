@@ -2,8 +2,8 @@
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 import { sendEmail } from '../../lib/email';
 
-function generateVerificationCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+function generateTransactionPIN() {
+  return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
 function generateReference() {
@@ -162,8 +162,8 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'You cannot send money to yourself' });
       }
 
-      // Generate verification code
-      const code = generateVerificationCode();
+      // Generate transaction PIN
+      const pin = generateTransactionPIN();
       const referenceNumber = generateReference();
 
       // Get sender's profile for email
@@ -202,8 +202,8 @@ export default async function handler(req, res) {
             memo: memo || null,
             status: 'pending',
             reference_number: referenceNumber,
-            verification_code: code,
-            verification_expires_at: new Date(Date.now() + 10 * 60 * 1000),
+            verification_code: pin,
+            verification_expires_at: new Date(Date.now() + 15 * 60 * 1000),
             sender_balance_before: parseFloat(senderAccount.balance)
           })
           .select()
@@ -214,47 +214,15 @@ export default async function handler(req, res) {
           return res.status(500).json({ error: 'Failed to create transaction' });
         }
 
-        // Send verification email
-        try {
-          await sendEmail({
-            to: senderProfile.email,
-            subject: 'Oakline Pay Verification Code',
-            emailType: 'verify',
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <div style="background: linear-gradient(135deg, #1A3E6F 0%, #2C5F8D 100%); padding: 30px; text-align: center;">
-                  <h1 style="color: white; margin: 0;">Oakline Pay</h1>
-                </div>
-                <div style="padding: 30px; background-color: #f8f9fa;">
-                  <h2 style="color: #1A3E6F;">Verification Code</h2>
-                  <p>You are sending <strong>$${transferAmount.toFixed(2)}</strong> to:</p>
-                  <p><strong>${recipientProfile.full_name || recipientProfile.first_name || 'Recipient'}</strong></p>
-                  ${recipientProfile.oakline_tag ? `<p>Oakline Tag: <strong>${recipientProfile.oakline_tag}</strong></p>` : ''}
-                  ${memo ? `<p>Memo: ${memo}</p>` : ''}
-                  <div style="background-color: white; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center;">
-                    <p style="margin: 0; font-size: 14px; color: #666;">Your verification code is:</p>
-                    <h1 style="color: #1A3E6F; font-size: 48px; margin: 10px 0; letter-spacing: 8px;">${code}</h1>
-                    <p style="margin: 0; font-size: 14px; color: #666;">This code expires in 10 minutes</p>
-                  </div>
-                  <p style="color: #666; font-size: 14px;">Reference: ${referenceNumber}</p>
-                </div>
-              </div>
-            `
-          });
-        } catch (emailError) {
-          console.error('Email error:', emailError);
-        }
-
         return res.status(200).json({
           success: true,
-          message: 'Verification code sent to your email',
+          message: 'Transaction PIN created. Enter your PIN to confirm.',
           transaction_id: transaction.id,
           recipient_name: recipientProfile.full_name || recipientProfile.first_name,
           recipient_tag: recipientProfile.oakline_tag || null,
           reference_number: referenceNumber,
           is_oakline_user: true,
-          amount: transferAmount,
-          sender_email: senderProfile.email
+          amount: transferAmount
         });
 
       } else {

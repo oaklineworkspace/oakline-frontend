@@ -1203,18 +1203,18 @@ export default function OaklinePayPage() {
             {/* Header */}
             <div style={{ textAlign: 'center', paddingBottom: '1.5rem', borderBottom: '2px solid #f0f4f8' }}>
               <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔐</div>
-              <h2 style={{ margin: 0, color: '#0f2027', fontSize: '1.6rem', fontWeight: '700', marginBottom: '0.5rem' }}>Verify Your Transfer</h2>
-              <p style={{ margin: 0, color: '#64748b', fontSize: '0.95rem' }}>A verification code has been sent</p>
+              <h2 style={{ margin: 0, color: '#0f2027', fontSize: '1.6rem', fontWeight: '700', marginBottom: '0.5rem' }}>Confirm Transfer</h2>
+              <p style={{ margin: 0, color: '#64748b', fontSize: '0.95rem' }}>Enter your 4-digit transaction PIN</p>
             </div>
 
             <form onSubmit={handleVerifyTransfer} style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              {/* Email Info */}
+              {/* Security Info */}
               <div style={{ backgroundColor: '#ecfdf5', padding: '1rem 1.25rem', borderRadius: '10px', borderLeft: '4px solid #10b981' }}>
                 <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', fontWeight: '700', color: '#065f46', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Code Sent To:
+                  Transfer Protection:
                 </p>
-                <p style={{ margin: 0, color: '#047857', fontWeight: '600', fontSize: '1rem' }}>
-                  {pendingTransaction.sender_email || 'your email'}
+                <p style={{ margin: 0, color: '#047857', fontWeight: '600', fontSize: '0.95rem' }}>
+                  ✓ Only you can confirm this transfer with your PIN
                 </p>
               </div>
 
@@ -1229,16 +1229,16 @@ export default function OaklinePayPage() {
                 </div>
               </div>
 
-              {/* Verification Code Input */}
+              {/* Transaction PIN Input */}
               <div>
-                <label style={{ ...styles.label, marginBottom: '0.75rem' }}>Enter Verification Code *</label>
+                <label style={{ ...styles.label, marginBottom: '0.75rem' }}>Enter Your Transaction PIN *</label>
                 <input
                   type="text"
                   style={{
                     width: '100%',
                     padding: '1rem',
-                    fontSize: '1.8rem',
-                    letterSpacing: '0.8rem',
+                    fontSize: '2rem',
+                    letterSpacing: '1.2rem',
                     textAlign: 'center',
                     fontFamily: 'monospace',
                     border: '2px solid #e2e8f0',
@@ -1248,13 +1248,13 @@ export default function OaklinePayPage() {
                     transition: 'border-color 0.3s'
                   }}
                   value={verifyForm.code}
-                  onChange={(e) => setVerifyForm({ code: e.target.value.toUpperCase() })}
-                  placeholder="000000"
-                  maxLength="6"
+                  onChange={(e) => setVerifyForm({ code: e.target.value.replace(/[^0-9]/g, '') })}
+                  placeholder="0000"
+                  maxLength="4"
                   required
                   autoFocus
                 />
-                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>Code expires in 10 minutes</p>
+                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>PIN expires in 15 minutes</p>
               </div>
 
               {/* Buttons */}
@@ -1267,9 +1267,9 @@ export default function OaklinePayPage() {
                     padding: '0.9rem',
                     opacity: loading ? 0.6 : 1
                   }} 
-                  disabled={loading || verifyForm.code.length !== 6}
+                  disabled={loading || verifyForm.code.length !== 4}
                 >
-                  {loading ? 'Verifying...' : '✓ Confirm'}
+                  {loading ? 'Processing...' : '✓ Confirm Transfer'}
                 </button>
                 <button 
                   type="button" 
@@ -1287,7 +1287,7 @@ export default function OaklinePayPage() {
 
               {/* Help Text */}
               <div style={{ backgroundColor: '#eff6ff', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.8rem', color: '#1e40af', textAlign: 'center' }}>
-                <p style={{ margin: 0 }}>💡 Check your email (including spam folder) for the 6-digit code</p>
+                <p style={{ margin: 0 }}>💡 Your PIN is 4 digits. Enter it carefully to confirm this transfer.</p>
               </div>
             </form>
           </div>
