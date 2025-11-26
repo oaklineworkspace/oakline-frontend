@@ -378,17 +378,17 @@ export default async function handler(req, res) {
       }
 
       // Verify PIN against user's stored transaction PIN (not the transaction code)
-      const { data: senderProfile } = await supabaseAdmin
+      const { data: pinProfile } = await supabaseAdmin
         .from('profiles')
         .select('transaction_pin')
         .eq('id', user.id)
         .single();
 
-      if (!senderProfile?.transaction_pin) {
+      if (!pinProfile?.transaction_pin) {
         return res.status(400).json({ error: 'Transaction PIN not configured. Please set one in Security Settings.' });
       }
 
-      const isPinValid = await bcrypt.compare(verification_code, senderProfile.transaction_pin);
+      const isPinValid = await bcrypt.compare(verification_code, pinProfile.transaction_pin);
       
       if (!isPinValid) {
         return res.status(400).json({ error: 'Invalid PIN. Please try again.' });
