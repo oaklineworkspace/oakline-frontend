@@ -173,7 +173,7 @@ export default function OaklinePayPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setSetupMessage('Authentication required');
+        setSetupMessage('Please sign in to continue');
         setSetupMessageType('error');
         setLoading(false);
         return;
@@ -181,31 +181,30 @@ export default function OaklinePayPage() {
 
       // Check if tag already exists
       if (oaklineProfile?.oakline_tag) {
-        setSetupMessage('Your Oakline tag is already set up. Contact support to modify it.');
+        setSetupMessage('You already have an Oakline tag set up');
         setSetupMessageType('error');
         setLoading(false);
         return;
       }
 
-      // Validate tag format - more permissive
+      // Basic validation - minimal checks
       const tag = setupForm.oakline_tag.toLowerCase().trim();
-      if (!tag || tag.length < 3 || tag.length > 20) {
-        setSetupMessage('Your Oakline tag must be between 3 and 20 characters');
+      if (!tag || tag.length < 3) {
+        setSetupMessage('Tag must be at least 3 characters');
         setSetupMessageType('error');
         setLoading(false);
         return;
       }
 
-      // Allow letters, numbers, underscores, and hyphens
-      if (!/^[a-z0-9_-]+$/.test(tag)) {
-        setSetupMessage('Your Oakline tag can only contain letters, numbers, hyphens, and underscores');
+      if (tag.length > 20) {
+        setSetupMessage('Tag must be 20 characters or less');
         setSetupMessageType('error');
         setLoading(false);
         return;
       }
 
       if (!setupForm.display_name || setupForm.display_name.trim().length === 0) {
-        setSetupMessage('Please enter your display name');
+        setSetupMessage('Display name is required');
         setSetupMessageType('error');
         setLoading(false);
         return;
@@ -226,13 +225,13 @@ export default function OaklinePayPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setSetupMessage(data.error || 'Failed to set up your Oakline tag. Please try again.');
+        setSetupMessage(data.error || 'Failed to create your tag');
         setSetupMessageType('error');
         setLoading(false);
         return;
       }
 
-      setSetupMessage('✅ Your Oakline tag has been created successfully!');
+      setSetupMessage('Your Oakline tag has been created successfully');
       setSetupMessageType('success');
       setTimeout(() => {
         setShowSetupModal(false);
@@ -242,7 +241,7 @@ export default function OaklinePayPage() {
       }, 2000);
     } catch (error) {
       console.error('Error:', error);
-      setSetupMessage('An error occurred while creating your tag. Please try again.');
+      setSetupMessage('An error occurred. Please try again.');
       setSetupMessageType('error');
     } finally {
       setLoading(false);
@@ -926,18 +925,18 @@ export default function OaklinePayPage() {
             {setupMessage && (
               <div style={{
                 marginTop: '1.5rem',
-                padding: '1rem',
+                padding: '1rem 1.25rem',
                 borderRadius: '10px',
-                backgroundColor: setupMessageType === 'success' ? '#f0fdf4' : '#fef2f2',
-                border: `2px solid ${setupMessageType === 'success' ? '#10b981' : '#ef4444'}`,
-                color: setupMessageType === 'success' ? '#047857' : '#991b1b',
-                fontWeight: '600',
+                backgroundColor: setupMessageType === 'success' ? '#ecfdf5' : '#f8f4f1',
+                borderLeft: `4px solid ${setupMessageType === 'success' ? '#10b981' : '#f97316'}`,
+                color: setupMessageType === 'success' ? '#065f46' : '#7c2d12',
+                fontWeight: '500',
                 fontSize: '0.9rem',
                 display: 'flex',
-                gap: '0.75rem',
-                alignItems: 'flex-start'
+                gap: '1rem',
+                alignItems: 'center'
               }}>
-                <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>{setupMessageType === 'success' ? '✓' : '⚠️'}</span>
+                <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>{setupMessageType === 'success' ? '✓' : 'ℹ'}</span>
                 <span>{setupMessage}</span>
               </div>
             )}
