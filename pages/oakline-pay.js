@@ -912,13 +912,13 @@ export default function OaklinePayPage() {
                           }}
                           value={verifyForm.code}
                           onChange={(e) => setVerifyForm({ code: e.target.value.replace(/[^0-9]/g, '') })}
-                          placeholder="0000"
-                          maxLength="4"
+                          placeholder="Enter PIN"
+                          maxLength="6"
                           required
                           autoFocus
                           disabled={loading}
                         />
-                        <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>PIN expires in 15 minutes</p>
+                        <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>Your PIN from Security Settings (4-6 digits)</p>
                       </div>
 
                       <div style={{ display: 'flex', gap: '1rem' }}>
@@ -927,9 +927,9 @@ export default function OaklinePayPage() {
                           style={{
                             ...styles.primaryButton,
                             flex: 1,
-                            opacity: loading || verifyForm.code.length !== 4 ? 0.6 : 1
+                            opacity: loading || verifyForm.code.length < 4 ? 0.6 : 1
                           }} 
-                          disabled={loading || verifyForm.code.length !== 4}
+                          disabled={loading || verifyForm.code.length < 4}
                         >
                           {loading ? '⚙️ Processing...' : '✓ Confirm'}
                         </button>
@@ -951,7 +951,7 @@ export default function OaklinePayPage() {
                       </div>
 
                       <div style={{ backgroundColor: '#eff6ff', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.8rem', color: '#1e40af', textAlign: 'center' }}>
-                        <p style={{ margin: 0 }}>💡 Enter carefully. Confirm to complete the transfer.</p>
+                        <p style={{ margin: 0 }}>💡 Enter your Transaction PIN from Security Settings (4-6 digits)</p>
                       </div>
                     </form>
                   </div>

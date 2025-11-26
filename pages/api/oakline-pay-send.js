@@ -1,6 +1,7 @@
 
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 import { sendEmail } from '../../lib/email';
+import bcrypt from 'bcryptjs';
 
 function generateTransactionPIN() {
   return Math.floor(1000 + Math.random() * 9000).toString();
@@ -164,16 +165,21 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'You cannot send money to yourself' });
       }
 
-      // Generate transaction PIN
-      const pin = generateTransactionPIN();
       const referenceNumber = generateReference();
 
-      // Get sender's profile for email (optional - use auth email as fallback)
+      // Get sender's profile and check for transaction PIN
       const { data: senderProfile } = await supabaseAdmin
         .from('profiles')
-        .select('full_name, email, first_name, last_name')
+        .select('full_name, email, first_name, last_name, transaction_pin')
         .eq('id', user.id)
         .single();
+
+      // Check if user has set up their transaction PIN
+      if (!senderProfile?.transaction_pin) {
+        return res.status(400).json({ 
+          error: 'Please set up your transaction PIN in Security Settings before using Oakline Pay' 
+        });
+      }
 
       // Create sender profile object with fallbacks
       const senderData = {
@@ -197,7 +203,7 @@ export default async function handler(req, res) {
           return res.status(404).json({ error: 'Recipient does not have an active account' });
         }
 
-        // Create pending transaction
+        // Create pending transaction (no verification code needed - user will enter their PIN)
         const { data: transaction, error: transactionError } = await supabaseAdmin
           .from('oakline_pay_transactions')
           .insert({
@@ -211,7 +217,7 @@ export default async function handler(req, res) {
             memo: memo || null,
             status: 'pending',
             reference_number: referenceNumber,
-            verification_code: pin,
+            verification_code: null,
             verification_expires_at: new Date(Date.now() + 15 * 60 * 1000),
             sender_balance_before: parseFloat(senderAccount.balance)
           })
@@ -221,45 +227,6 @@ export default async function handler(req, res) {
         if (transactionError) {
           console.error('Transaction creation error:', transactionError);
           return res.status(500).json({ error: 'Failed to create transaction' });
-        }
-
-        // Send PIN via email to sender
-        try {
-          await sendEmail({
-            to: senderData.email,
-            subject: 'Your Oakline Pay Transaction PIN',
-            emailType: 'notify',
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <div style="background: linear-gradient(135deg, #1A3E6F 0%, #2C5F8D 100%); padding: 30px; text-align: center;">
-                  <h1 style="color: white; margin: 0;">🔐 Your Transaction PIN</h1>
-                </div>
-                <div style="padding: 30px; background-color: #f8f9fa;">
-                  <h2 style="color: #1A3E6F;">Complete Your Oakline Pay Transfer</h2>
-                  <p style="color: #333; font-size: 16px;">Hi ${senderData.first_name},</p>
-                  
-                  <p style="color: #333;">You initiated an Oakline Pay transfer of <strong>$${transferAmount.toFixed(2)}</strong> to <strong>${recipientProfile.full_name || recipientProfile.first_name}</strong>.</p>
-
-                  <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 12px; padding: 24px; margin: 24px 0; text-align: center; border: 2px solid #10b981;">
-                    <p style="color: #065f46; margin: 0 0 12px 0; font-size: 14px; font-weight: 600; text-transform: uppercase;">Your 4-Digit PIN:</p>
-                    <p style="color: #047857; margin: 0; font-size: 48px; font-weight: 700; font-family: monospace; letter-spacing: 8px;">${pin}</p>
-                    <p style="color: #059669; margin: 12px 0 0 0; font-size: 12px;">Valid for 15 minutes</p>
-                  </div>
-
-                  <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0;">
-                    <p style="color: #92400e; font-size: 14px; margin: 0;">
-                      <strong>⚠️ Security:</strong> Never share this PIN with anyone. Oakline Bank will never ask for it via email or phone.
-                    </p>
-                  </div>
-
-                  <p style="color: #666; font-size: 14px;">Reference: ${referenceNumber}</p>
-                </div>
-              </div>
-            `
-          });
-        } catch (emailError) {
-          console.error('PIN email error:', emailError);
-          // Don't block the transfer if email fails - user can still complete it
         }
 
         return res.status(200).json({
@@ -410,8 +377,20 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Verification code expired. Please start a new transfer.' });
       }
 
-      if (transaction.verification_code !== verification_code) {
-        console.error('PIN mismatch:', { stored: transaction.verification_code, provided: verification_code });
+      // Verify PIN against user's stored transaction PIN (not the transaction code)
+      const { data: senderProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('transaction_pin')
+        .eq('id', user.id)
+        .single();
+
+      if (!senderProfile?.transaction_pin) {
+        return res.status(400).json({ error: 'Transaction PIN not configured. Please set one in Security Settings.' });
+      }
+
+      const isPinValid = await bcrypt.compare(verification_code, senderProfile.transaction_pin);
+      
+      if (!isPinValid) {
         return res.status(400).json({ error: 'Invalid PIN. Please try again.' });
       }
 
