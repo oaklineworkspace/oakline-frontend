@@ -61,6 +61,8 @@ export default function OaklinePayPage() {
     code: ''
   });
 
+  const [verifyStep, setVerifyStep] = useState('confirm'); // 'confirm' or 'pin'
+
   const [requestForm, setRequestForm] = useState({
     from_account: '',
     recipient_contact: '',
@@ -289,8 +291,13 @@ export default function OaklinePayPage() {
 
       setPendingTransaction({
         ...data,
-        amount: data.amount || sendForm.amount
+        amount: data.amount || sendForm.amount,
+        sender_name: userProfile?.full_name || userProfile?.first_name || 'You',
+        recipient_name: data.recipient_name,
+        recipient_contact: sendForm.recipient_contact,
+        recipient_type: sendForm.recipient_type
       });
+      setVerifyStep('confirm');
       setShowVerifyModal(true);
     } catch (error) {
       console.error('Error sending money:', error);
@@ -330,6 +337,7 @@ export default function OaklinePayPage() {
 
       showMsg(`✅ Success! $${data.amount.toFixed(2)} sent`, 'success');
       setShowVerifyModal(false);
+      setVerifyStep('confirm');
       setPendingTransaction(null);
       setVerifyForm({ code: '' });
       setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
@@ -1198,101 +1206,210 @@ export default function OaklinePayPage() {
 
       {/* Verification Modal */}
       {showVerifyModal && pendingTransaction && (
-        <div style={styles.modalOverlay} onClick={() => setShowVerifyModal(false)}>
+        <div style={styles.modalOverlay} onClick={() => !loading && setShowVerifyModal(false)}>
           <div style={{ ...styles.modal, maxWidth: '480px' }} onClick={(e) => e.stopPropagation()}>
-            {/* Header */}
-            <div style={{ textAlign: 'center', paddingBottom: '1.5rem', borderBottom: '2px solid #f0f4f8' }}>
-              <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔐</div>
-              <h2 style={{ margin: 0, color: '#0f2027', fontSize: '1.6rem', fontWeight: '700', marginBottom: '0.5rem' }}>Confirm Transfer</h2>
-              <p style={{ margin: 0, color: '#64748b', fontSize: '0.95rem' }}>Enter your 4-digit transaction PIN</p>
-            </div>
-
-            <form onSubmit={handleVerifyTransfer} style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              {/* Security Info */}
-              <div style={{ backgroundColor: '#ecfdf5', padding: '1rem 1.25rem', borderRadius: '10px', borderLeft: '4px solid #10b981' }}>
-                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', fontWeight: '700', color: '#065f46', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Transfer Protection:
-                </p>
-                <p style={{ margin: 0, color: '#047857', fontWeight: '600', fontSize: '0.95rem' }}>
-                  ✓ Only you can confirm this transfer with your PIN
-                </p>
-              </div>
-
-              {/* Transfer Details */}
-              <div style={{ backgroundColor: '#f0fdf4', padding: '1.25rem', borderRadius: '10px', border: '2px solid #d1fae5' }}>
-                <h3 style={{ color: '#1a365d', fontWeight: '700', margin: '0 0 0.75rem 0', fontSize: '0.95rem' }}>Transfer Amount</h3>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.9rem' }}>Sending:</span>
-                  <span style={{ color: '#059669', fontWeight: '700', fontSize: '1.4rem' }}>
-                    ${parseFloat(pendingTransaction.amount).toFixed(2)}
-                  </span>
+            {/* STEP 1: CONFIRMATION SCREEN */}
+            {verifyStep === 'confirm' && (
+              <>
+                {/* Header */}
+                <div style={{ textAlign: 'center', paddingBottom: '1.5rem', borderBottom: '2px solid #f0f4f8' }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>💳</div>
+                  <h2 style={{ margin: 0, color: '#0f2027', fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>Review Transfer</h2>
+                  <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>Confirm you're sending to the right person</p>
                 </div>
-              </div>
 
-              {/* Transaction PIN Input */}
-              <div>
-                <label style={{ ...styles.label, marginBottom: '0.75rem' }}>Enter Your Transaction PIN *</label>
-                <input
-                  type="text"
-                  style={{
-                    width: '100%',
-                    padding: '1rem',
-                    fontSize: '2rem',
-                    letterSpacing: '1.2rem',
+                <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  {/* From Section */}
+                  <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '2px solid #e2e8f0' }}>
+                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>From</p>
+                    <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#0f2027' }}>
+                      {pendingTransaction.sender_name}
+                    </p>
+                  </div>
+
+                  {/* Arrow */}
+                  <div style={{ textAlign: 'center', fontSize: '1.5rem', color: '#059669' }}>↓</div>
+
+                  {/* To Section */}
+                  <div style={{ backgroundColor: '#ecfdf5', padding: '1rem', borderRadius: '10px', border: '2px solid #d1fae5' }}>
+                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#065f46', textTransform: 'uppercase', letterSpacing: '0.5px' }}>To</p>
+                    <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#047857' }}>
+                      {pendingTransaction.recipient_name || 'Recipient'}
+                    </p>
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#059669', fontFamily: 'monospace' }}>
+                      {pendingTransaction.recipient_type === 'oakline_tag' ? `@${pendingTransaction.recipient_contact}` : pendingTransaction.recipient_contact}
+                    </p>
+                  </div>
+
+                  {/* Amount */}
+                  <div style={{ backgroundColor: '#fff7ed', padding: '1.25rem', borderRadius: '10px', border: '2px solid #fed7aa', textAlign: 'center' }}>
+                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Amount</p>
+                    <p style={{ margin: 0, fontSize: '2rem', fontWeight: '700', color: '#d97706' }}>
+                      ${parseFloat(pendingTransaction.amount).toFixed(2)}
+                    </p>
+                  </div>
+
+                  {/* Memo if exists */}
+                  {sendForm.memo && (
+                    <div style={{ backgroundColor: '#f3e8ff', padding: '1rem', borderRadius: '10px', border: '2px solid #e9d5ff' }}>
+                      <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#6b21a8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Memo</p>
+                      <p style={{ margin: 0, fontSize: '0.95rem', color: '#7c3aed', fontStyle: 'italic' }}>
+                        "{sendForm.memo}"
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Buttons */}
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                    <button 
+                      onClick={() => setVerifyStep('pin')}
+                      style={{
+                        ...styles.primaryButton,
+                        flex: 1,
+                        padding: '0.9rem',
+                        fontSize: '0.95rem'
+                      }}
+                    >
+                      ✓ Looks Good
+                    </button>
+                    <button 
+                      type="button" 
+                      style={{
+                        ...styles.secondaryButton,
+                        flex: 1,
+                        padding: '0.9rem'
+                      }} 
+                      onClick={() => setShowVerifyModal(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* STEP 2: PIN INPUT SCREEN */}
+            {verifyStep === 'pin' && (
+              <>
+                {/* Loading Banner */}
+                {loading && (
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    backgroundColor: '#10b981',
+                    color: 'white',
+                    padding: '0.75rem',
+                    borderRadius: '16px 16px 0 0',
                     textAlign: 'center',
-                    fontFamily: 'monospace',
-                    border: '2px solid #e2e8f0',
-                    borderRadius: '10px',
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                    transition: 'border-color 0.3s'
-                  }}
-                  value={verifyForm.code}
-                  onChange={(e) => setVerifyForm({ code: e.target.value.replace(/[^0-9]/g, '') })}
-                  placeholder="0000"
-                  maxLength="4"
-                  required
-                  autoFocus
-                />
-                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>PIN expires in 15 minutes</p>
-              </div>
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite', transformOrigin: 'center' }}>⚙️</span>
+                    Processing your transfer...
+                  </div>
+                )}
 
-              {/* Buttons */}
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                <button 
-                  type="submit" 
-                  style={{
-                    ...styles.primaryButton,
-                    flex: 1,
-                    padding: '0.9rem',
-                    opacity: loading ? 0.6 : 1
-                  }} 
-                  disabled={loading || verifyForm.code.length !== 4}
-                >
-                  {loading ? 'Processing...' : '✓ Confirm Transfer'}
-                </button>
-                <button 
-                  type="button" 
-                  style={{
-                    ...styles.secondaryButton,
-                    flex: 1,
-                    padding: '0.9rem'
-                  }} 
-                  onClick={() => setShowVerifyModal(false)} 
-                  disabled={loading}
-                >
-                  Cancel
-                </button>
-              </div>
+                {/* Header */}
+                <div style={{ textAlign: 'center', paddingBottom: '1.5rem', borderBottom: '2px solid #f0f4f8', marginTop: loading ? '2.5rem' : 0 }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔐</div>
+                  <h2 style={{ margin: 0, color: '#0f2027', fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>Confirm with PIN</h2>
+                  <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>Enter your 4-digit transaction PIN</p>
+                </div>
 
-              {/* Help Text */}
-              <div style={{ backgroundColor: '#eff6ff', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.8rem', color: '#1e40af', textAlign: 'center' }}>
-                <p style={{ margin: 0 }}>💡 Your PIN is 4 digits. Enter it carefully to confirm this transfer.</p>
-              </div>
-            </form>
+                <form onSubmit={handleVerifyTransfer} style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  {/* Security Info */}
+                  <div style={{ backgroundColor: '#ecfdf5', padding: '1rem 1.25rem', borderRadius: '10px', borderLeft: '4px solid #10b981' }}>
+                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#065f46', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Transfer Protection:
+                    </p>
+                    <p style={{ margin: 0, color: '#047857', fontWeight: '600', fontSize: '0.9rem' }}>
+                      ✓ Only you can complete this with your PIN
+                    </p>
+                  </div>
+
+                  {/* Transaction PIN Input */}
+                  <div>
+                    <label style={{ ...styles.label, marginBottom: '0.75rem' }}>Enter Your Transaction PIN *</label>
+                    <input
+                      type="text"
+                      style={{
+                        width: '100%',
+                        padding: '1rem',
+                        fontSize: '2rem',
+                        letterSpacing: '1.2rem',
+                        textAlign: 'center',
+                        fontFamily: 'monospace',
+                        border: '2px solid #e2e8f0',
+                        borderRadius: '10px',
+                        boxSizing: 'border-box',
+                        outline: 'none',
+                        transition: 'border-color 0.3s'
+                      }}
+                      value={verifyForm.code}
+                      onChange={(e) => setVerifyForm({ code: e.target.value.replace(/[^0-9]/g, '') })}
+                      placeholder="0000"
+                      maxLength="4"
+                      required
+                      autoFocus
+                      disabled={loading}
+                    />
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>PIN expires in 15 minutes</p>
+                  </div>
+
+                  {/* Buttons */}
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button 
+                      type="submit" 
+                      style={{
+                        ...styles.primaryButton,
+                        flex: 1,
+                        padding: '0.9rem',
+                        opacity: loading || verifyForm.code.length !== 4 ? 0.6 : 1
+                      }} 
+                      disabled={loading || verifyForm.code.length !== 4}
+                    >
+                      {loading ? '⚙️ Processing...' : '✓ Confirm'}
+                    </button>
+                    <button 
+                      type="button" 
+                      style={{
+                        ...styles.secondaryButton,
+                        flex: 1,
+                        padding: '0.9rem'
+                      }} 
+                      onClick={() => {
+                        setVerifyStep('confirm');
+                        setVerifyForm({ code: '' });
+                      }}
+                      disabled={loading}
+                    >
+                      ← Back
+                    </button>
+                  </div>
+
+                  {/* Help Text */}
+                  <div style={{ backgroundColor: '#eff6ff', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.8rem', color: '#1e40af', textAlign: 'center' }}>
+                    <p style={{ margin: 0 }}>💡 Enter carefully. You'll see this after confirming.</p>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
 
       {/* QR Code Modal */}
       {showQRModal && (
