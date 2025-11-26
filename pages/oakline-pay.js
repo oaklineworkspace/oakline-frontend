@@ -287,9 +287,11 @@ export default function OaklinePayPage() {
         return;
       }
 
-      setPendingTransaction(data);
+      setPendingTransaction({
+        ...data,
+        amount: data.amount || sendForm.amount
+      });
       setShowVerifyModal(true);
-      showMsg('Verification code sent to your email', 'success');
     } catch (error) {
       console.error('Error sending money:', error);
       showMsg('An error occurred. Please try again.', 'error');
@@ -1197,37 +1199,95 @@ export default function OaklinePayPage() {
       {/* Verification Modal */}
       {showVerifyModal && pendingTransaction && (
         <div style={styles.modalOverlay} onClick={() => setShowVerifyModal(false)}>
-          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h2 style={styles.modalTitle}>🔐 Verify Transfer</h2>
-            <p style={styles.modalSubtitle}>Enter the code sent to your email</p>
-            <form onSubmit={handleVerifyTransfer} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div style={{ backgroundColor: '#f0fdf4', padding: '1rem', borderRadius: '12px', border: '2px solid #d1fae5', marginBottom: '1rem' }}>
-                <p style={{ color: '#1a365d', fontWeight: '700', margin: '0 0 0.5rem', fontSize: '0.9rem' }}>Transfer Details</p>
-                <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>
-                  Amount: <strong style={{ color: '#059669' }}>${parseFloat(pendingTransaction.amount).toFixed(2)}</strong>
+          <div style={{ ...styles.modal, maxWidth: '480px' }} onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div style={{ textAlign: 'center', paddingBottom: '1.5rem', borderBottom: '2px solid #f0f4f8' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔐</div>
+              <h2 style={{ margin: 0, color: '#0f2027', fontSize: '1.6rem', fontWeight: '700', marginBottom: '0.5rem' }}>Verify Your Transfer</h2>
+              <p style={{ margin: 0, color: '#64748b', fontSize: '0.95rem' }}>A verification code has been sent</p>
+            </div>
+
+            <form onSubmit={handleVerifyTransfer} style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {/* Email Info */}
+              <div style={{ backgroundColor: '#ecfdf5', padding: '1rem 1.25rem', borderRadius: '10px', borderLeft: '4px solid #10b981' }}>
+                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', fontWeight: '700', color: '#065f46', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Code Sent To:
+                </p>
+                <p style={{ margin: 0, color: '#047857', fontWeight: '600', fontSize: '1rem' }}>
+                  {pendingTransaction.sender_email || 'your email'}
                 </p>
               </div>
 
+              {/* Transfer Details */}
+              <div style={{ backgroundColor: '#f0fdf4', padding: '1.25rem', borderRadius: '10px', border: '2px solid #d1fae5' }}>
+                <h3 style={{ color: '#1a365d', fontWeight: '700', margin: '0 0 0.75rem 0', fontSize: '0.95rem' }}>Transfer Amount</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <span style={{ color: '#64748b', fontSize: '0.9rem' }}>Sending:</span>
+                  <span style={{ color: '#059669', fontWeight: '700', fontSize: '1.4rem' }}>
+                    ${parseFloat(pendingTransaction.amount).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Verification Code Input */}
               <div>
-                <label style={styles.label}>Verification Code *</label>
+                <label style={{ ...styles.label, marginBottom: '0.75rem' }}>Enter Verification Code *</label>
                 <input
                   type="text"
-                  style={{ ...styles.input, fontSize: '1.5rem', letterSpacing: '0.5rem', textAlign: 'center', fontFamily: 'monospace' }}
+                  style={{
+                    width: '100%',
+                    padding: '1rem',
+                    fontSize: '1.8rem',
+                    letterSpacing: '0.8rem',
+                    textAlign: 'center',
+                    fontFamily: 'monospace',
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '10px',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                    transition: 'border-color 0.3s'
+                  }}
                   value={verifyForm.code}
                   onChange={(e) => setVerifyForm({ code: e.target.value.toUpperCase() })}
                   placeholder="000000"
                   maxLength="6"
                   required
+                  autoFocus
                 />
+                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>Code expires in 10 minutes</p>
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <button type="submit" style={{ ...styles.primaryButton, flex: 1 }} disabled={loading}>
+              {/* Buttons */}
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                <button 
+                  type="submit" 
+                  style={{
+                    ...styles.primaryButton,
+                    flex: 1,
+                    padding: '0.9rem',
+                    opacity: loading ? 0.6 : 1
+                  }} 
+                  disabled={loading || verifyForm.code.length !== 6}
+                >
                   {loading ? 'Verifying...' : '✓ Confirm'}
                 </button>
-                <button type="button" style={{ ...styles.secondaryButton, flex: 1 }} onClick={() => setShowVerifyModal(false)} disabled={loading}>
+                <button 
+                  type="button" 
+                  style={{
+                    ...styles.secondaryButton,
+                    flex: 1,
+                    padding: '0.9rem'
+                  }} 
+                  onClick={() => setShowVerifyModal(false)} 
+                  disabled={loading}
+                >
                   Cancel
                 </button>
+              </div>
+
+              {/* Help Text */}
+              <div style={{ backgroundColor: '#eff6ff', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.8rem', color: '#1e40af', textAlign: 'center' }}>
+                <p style={{ margin: 0 }}>💡 Check your email (including spam folder) for the 6-digit code</p>
               </div>
             </form>
           </div>

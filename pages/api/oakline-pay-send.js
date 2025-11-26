@@ -252,7 +252,9 @@ export default async function handler(req, res) {
           recipient_name: recipientProfile.full_name || recipientProfile.first_name,
           recipient_tag: recipientProfile.oakline_tag || null,
           reference_number: referenceNumber,
-          is_oakline_user: true
+          is_oakline_user: true,
+          amount: transferAmount,
+          sender_email: senderProfile.email
         });
 
       } else {
