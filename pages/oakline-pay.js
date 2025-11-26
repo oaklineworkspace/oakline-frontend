@@ -295,7 +295,8 @@ export default function OaklinePayPage() {
         sender_name: userProfile?.full_name || userProfile?.first_name || 'You',
         recipient_name: data.recipient_name,
         recipient_contact: sendForm.recipient_contact,
-        recipient_type: sendForm.recipient_type
+        recipient_type: sendForm.recipient_type,
+        is_oakline_user: data.is_oakline_user
       });
       setVerifyStep('confirm');
       setShowVerifyModal(true);
@@ -308,12 +309,25 @@ export default function OaklinePayPage() {
   };
 
   const handleVerifyTransfer = async (e) => {
-    e.preventDefault();
+    if (e.preventDefault) e.preventDefault();
     setLoading(true);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
+      // For non-Oakline users, no PIN verification needed
+      if (!pendingTransaction.is_oakline_user) {
+        showMsg(`✅ Payment sent! ${pendingTransaction.recipient_contact} will be notified to claim their money.`, 'success');
+        setShowVerifyModal(false);
+        setVerifyStep('confirm');
+        setPendingTransaction(null);
+        setVerifyForm({ code: '' });
+        setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
+        await checkUserAndLoadData();
+        return;
+      }
+
+      // For Oakline users, verify PIN
       const response = await fetch('/api/oakline-pay-send', {
         method: 'POST',
         headers: {
@@ -335,7 +349,7 @@ export default function OaklinePayPage() {
         return;
       }
 
-      showMsg(`✅ Success! $${data.amount.toFixed(2)} sent`, 'success');
+      showMsg(`✅ Success! $${data.amount.toFixed(2)} sent instantly`, 'success');
       setShowVerifyModal(false);
       setVerifyStep('confirm');
       setPendingTransaction(null);
@@ -344,7 +358,7 @@ export default function OaklinePayPage() {
       await checkUserAndLoadData();
     } catch (error) {
       console.error('Error verifying:', error);
-      showMsg('Verification failed. Please try again.', 'error');
+      showMsg('Transaction failed. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -1233,12 +1247,24 @@ export default function OaklinePayPage() {
                   {/* To Section */}
                   <div style={{ backgroundColor: '#ecfdf5', padding: '1rem', borderRadius: '10px', border: '2px solid #d1fae5' }}>
                     <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#065f46', textTransform: 'uppercase', letterSpacing: '0.5px' }}>To</p>
-                    <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#047857' }}>
-                      {pendingTransaction.recipient_name || 'Recipient'}
-                    </p>
-                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#059669', fontFamily: 'monospace' }}>
-                      {pendingTransaction.recipient_type === 'oakline_tag' ? `@${pendingTransaction.recipient_contact}` : pendingTransaction.recipient_contact}
-                    </p>
+                    {pendingTransaction.is_oakline_user ? (
+                      <>
+                        <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#047857' }}>
+                          {pendingTransaction.recipient_name || 'Recipient'}
+                        </p>
+                        <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#059669', fontFamily: 'monospace' }}>
+                          {pendingTransaction.recipient_type === 'oakline_tag' ? `@${pendingTransaction.recipient_contact}` : pendingTransaction.recipient_contact}
+                        </p>
+                        <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: '#10b981', fontWeight: '600' }}>✓ Oakline Member</p>
+                      </>
+                    ) : (
+                      <>
+                        <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#047857' }}>
+                          {pendingTransaction.recipient_contact}
+                        </p>
+                        <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: '#f59e0b', fontWeight: '600' }}>ℹ Not yet a member</p>
+                      </>
+                    )}
                   </div>
 
                   {/* Amount */}
@@ -1259,18 +1285,36 @@ export default function OaklinePayPage() {
                     </div>
                   )}
 
+                  {/* Pending Status Badge for Non-Oakline Users */}
+                  {!pendingTransaction.is_oakline_user && (
+                    <div style={{ backgroundColor: '#fef08a', padding: '1rem', borderRadius: '10px', border: '2px solid #fcd34d', textAlign: 'center' }}>
+                      <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>⏳ Pending Transfer</p>
+                      <p style={{ margin: 0, fontSize: '0.9rem', color: '#b45309' }}>
+                        Recipient will be notified to create an account and claim within <strong>14 days</strong>
+                      </p>
+                    </div>
+                  )}
+
                   {/* Buttons */}
                   <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                     <button 
-                      onClick={() => setVerifyStep('pin')}
+                      onClick={() => {
+                        if (pendingTransaction.is_oakline_user) {
+                          setVerifyStep('pin');
+                        } else {
+                          // For non-Oakline users, complete directly
+                          handleVerifyTransfer({ preventDefault: () => {} });
+                        }
+                      }}
                       style={{
                         ...styles.primaryButton,
                         flex: 1,
                         padding: '0.9rem',
                         fontSize: '0.95rem'
                       }}
+                      disabled={loading}
                     >
-                      ✓ Looks Good
+                      {pendingTransaction.is_oakline_user ? '✓ Looks Good' : '✓ Send Payment'}
                     </button>
                     <button 
                       type="button" 
@@ -1280,6 +1324,7 @@ export default function OaklinePayPage() {
                         padding: '0.9rem'
                       }} 
                       onClick={() => setShowVerifyModal(false)}
+                      disabled={loading}
                     >
                       Cancel
                     </button>
