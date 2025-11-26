@@ -132,17 +132,14 @@ export default async function handler(req, res) {
           .single();
 
         if (oaklineProfile) {
-          const { data: user_data } = await supabaseAdmin
-            .from('profiles')
-            .select('id, full_name, email, first_name, last_name')
-            .eq('id', oaklineProfile.user_id)
-            .single();
-          
-          if (user_data) {
-            recipientProfile = user_data;
-            recipientProfile.oakline_tag = oaklineProfile.oakline_tag;
-            isOaklineUser = true;
-          }
+          // Use oakline_pay_profiles data directly as the recipient profile
+          recipientProfile = {
+            id: oaklineProfile.user_id,
+            full_name: oaklineProfile.display_name || 'Oakline User',
+            first_name: oaklineProfile.display_name?.split(' ')[0] || 'Oakline User',
+            oakline_tag: oaklineProfile.oakline_tag
+          };
+          isOaklineUser = true;
         }
       } else if (recipient_type === 'email') {
         const { data: user_data } = await supabaseAdmin
