@@ -181,29 +181,31 @@ export default function OaklinePayPage() {
 
       // Check if tag already exists
       if (oaklineProfile?.oakline_tag) {
-        setSetupMessage('Tag already set up. Contact support to change it.');
+        setSetupMessage('Your Oakline tag is already set up. Contact support to modify it.');
         setSetupMessageType('error');
         setLoading(false);
         return;
       }
 
-      // Validate tag format
-      if (!setupForm.oakline_tag || setupForm.oakline_tag.length < 3 || setupForm.oakline_tag.length > 20) {
-        setSetupMessage('Invalid tag format. Use @username with 3-20 characters (letters, numbers, underscores only)');
+      // Validate tag format - more permissive
+      const tag = setupForm.oakline_tag.toLowerCase().trim();
+      if (!tag || tag.length < 3 || tag.length > 20) {
+        setSetupMessage('Your Oakline tag must be between 3 and 20 characters');
         setSetupMessageType('error');
         setLoading(false);
         return;
       }
 
-      if (!/^[a-z0-9_]+$/.test(setupForm.oakline_tag)) {
-        setSetupMessage('Invalid tag format. Use @username with 3-20 characters (letters, numbers, underscores only)');
+      // Allow letters, numbers, underscores, and hyphens
+      if (!/^[a-z0-9_-]+$/.test(tag)) {
+        setSetupMessage('Your Oakline tag can only contain letters, numbers, hyphens, and underscores');
         setSetupMessageType('error');
         setLoading(false);
         return;
       }
 
       if (!setupForm.display_name || setupForm.display_name.trim().length === 0) {
-        setSetupMessage('Display name is required');
+        setSetupMessage('Please enter your display name');
         setSetupMessageType('error');
         setLoading(false);
         return;
@@ -215,29 +217,32 @@ export default function OaklinePayPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
         },
-        body: JSON.stringify(setupForm)
+        body: JSON.stringify({
+          ...setupForm,
+          oakline_tag: tag
+        })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setSetupMessage(data.error || 'Failed to set up profile');
+        setSetupMessage(data.error || 'Failed to set up your Oakline tag. Please try again.');
         setSetupMessageType('error');
         setLoading(false);
         return;
       }
 
-      setSetupMessage('✅ Oakline tag created successfully!');
+      setSetupMessage('✅ Your Oakline tag has been created successfully!');
       setSetupMessageType('success');
       setTimeout(() => {
         setShowSetupModal(false);
         setSetupForm({ oakline_tag: '', display_name: '', bio: '' });
         setSetupMessage('');
         checkUserAndLoadData();
-      }, 1500);
+      }, 2000);
     } catch (error) {
       console.error('Error:', error);
-      setSetupMessage('An error occurred. Please try again.');
+      setSetupMessage('An error occurred while creating your tag. Please try again.');
       setSetupMessageType('error');
     } finally {
       setLoading(false);
@@ -910,61 +915,95 @@ export default function OaklinePayPage() {
       {showSetupModal && (
         <div style={styles.modalOverlay} onClick={() => setShowSetupModal(false)}>
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h2 style={styles.modalTitle}>🏷️ Create Your Oakline Tag</h2>
-            <p style={styles.modalSubtitle}>Choose a unique identifier to receive money instantly</p>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>🏷️</div>
+              <h2 style={{ ...styles.modalTitle, margin: 0, marginBottom: '0.5rem' }}>Create Your Oakline Tag</h2>
+              <p style={{ ...styles.modalSubtitle, margin: 0 }}>Your unique identifier to receive money instantly</p>
+            </div>
+
             {setupMessage && (
               <div style={{
                 ...styles.inlineAlert,
-                ...(setupMessageType === 'success' ? styles.alertSuccess : styles.alertError)
+                ...(setupMessageType === 'success' ? styles.alertSuccess : styles.alertError),
+                marginBottom: '1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
               }}>
-                {setupMessage}
+                <span>{setupMessageType === 'success' ? '✓' : '⚠️'}</span>
+                <span>{setupMessage}</span>
               </div>
             )}
+
             <form onSubmit={handleSetupProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
-                <label style={styles.label}>Oakline Tag (e.g., johndoe) *</label>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <span style={{ fontSize: '1rem', fontWeight: '700', color: '#059669', marginRight: '0.5rem' }}>@</span>
+                <label style={{ ...styles.label, display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <span>Oakline Tag *</span>
+                  <span style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: '500' }}>3-20 characters</span>
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.95rem', fontWeight: '700', color: '#059669' }}>@</span>
                   <input
                     type="text"
-                    style={{ ...styles.input, flex: 1 }}
+                    style={{
+                      ...styles.input,
+                      flex: 1,
+                      border: setupMessage && setupMessageType === 'error' ? '2px solid #ef4444' : '2px solid #e2e8f0'
+                    }}
                     value={setupForm.oakline_tag}
                     onChange={(e) => setSetupForm({ ...setupForm, oakline_tag: e.target.value.toLowerCase() })}
-                    placeholder="your_unique_tag"
-                    pattern="[a-z0-9_]+"
+                    placeholder="john_doe"
                     required
                   />
+                </div>
+                <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#64748b' }}>
+                  <p style={{ margin: '0.25rem 0' }}>✓ Examples: <strong>john_doe</strong>, <strong>jane-smith</strong>, <strong>user123</strong></p>
+                  <p style={{ margin: '0.25rem 0' }}>✗ No spaces, special characters (except - and _), or numbers only</p>
                 </div>
               </div>
 
               <div>
-                <label style={styles.label}>Display Name *</label>
+                <label style={{ ...styles.label, marginBottom: '0.75rem' }}>Display Name *</label>
                 <input
                   type="text"
-                  style={styles.input}
+                  style={{
+                    ...styles.input,
+                    border: setupMessage && setupMessageType === 'error' && !setupForm.display_name ? '2px solid #ef4444' : '2px solid #e2e8f0'
+                  }}
                   value={setupForm.display_name}
                   onChange={(e) => setSetupForm({ ...setupForm, display_name: e.target.value })}
-                  placeholder="John Doe"
+                  placeholder="e.g., John Doe"
                   required
                 />
+                <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#64748b', margin: '0.5rem 0 0' }}>
+                  How people will see your name when you receive money
+                </p>
               </div>
 
               <div>
-                <label style={styles.label}>Bio (Optional)</label>
+                <label style={{ ...styles.label, marginBottom: '0.75rem' }}>Bio (Optional)</label>
                 <textarea
-                  style={{ ...styles.input, resize: 'vertical', minHeight: '80px' }}
+                  style={{
+                    ...styles.input,
+                    resize: 'vertical',
+                    minHeight: '70px',
+                    fontFamily: 'inherit'
+                  }}
                   value={setupForm.bio}
                   onChange={(e) => setSetupForm({ ...setupForm, bio: e.target.value })}
-                  placeholder="Tell people about yourself..."
+                  placeholder="e.g., Software Engineer | San Francisco"
                   maxLength={150}
                 />
+                <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#64748b', margin: '0.5rem 0 0' }}>
+                  {setupForm.bio.length}/150 characters
+                </p>
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <button type="submit" style={{ ...styles.primaryButton, flex: 1 }} disabled={loading}>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                <button type="submit" style={{ ...styles.primaryButton, flex: 1 }} disabled={loading || !setupForm.oakline_tag || !setupForm.display_name}>
                   {loading ? 'Creating...' : '✓ Create Tag'}
                 </button>
-                <button type="button" style={{ ...styles.secondaryButton, flex: 1 }} onClick={() => setShowSetupModal(false)} disabled={loading}>
+                <button type="button" style={{ ...styles.secondaryButton, flex: 1 }} onClick={() => { setShowSetupModal(false); setSetupMessage(''); }} disabled={loading}>
                   Cancel
                 </button>
               </div>
