@@ -19,22 +19,24 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { oakline_tag, display_name, bio } = req.body;
+    let { oakline_tag, display_name, bio } = req.body;
 
     if (!oakline_tag) {
       return res.status(400).json({ error: 'Oakline tag is required' });
     }
 
-    // Validate tag format - allow letters, numbers, hyphens, underscores (3-20 chars)
-    const tagRegex = /^[a-zA-Z0-9_-]{3,20}$/;
-    if (!tagRegex.test(oakline_tag)) {
+    // Clean and normalize the tag
+    oakline_tag = oakline_tag.toLowerCase().trim();
+
+    // Basic validation - just check length
+    if (oakline_tag.length < 3 || oakline_tag.length > 20) {
       return res.status(400).json({ 
-        error: 'Oakline tag must be 3-20 characters (letters, numbers, hyphens, and underscores)' 
+        error: 'Oakline tag must be between 3 and 20 characters' 
       });
     }
 
     // Check if tag already exists
-    const { data: existingTag } = await supabaseAdmin
+    const { data: existingTag, error: tagCheckError } = await supabaseAdmin
       .from('oakline_pay_profiles')
       .select('oakline_tag')
       .eq('oakline_tag', oakline_tag)
