@@ -173,6 +173,10 @@ export default async function handler(req, res) {
         .eq('id', user.id)
         .single();
 
+      if (!senderProfile) {
+        return res.status(400).json({ error: 'Your profile is not fully set up. Please complete your account setup first.' });
+      }
+
       if (isOaklineUser) {
         // OAKLINE USER - Instant Transfer Flow
         const { data: recipientAccount } = await supabaseAdmin

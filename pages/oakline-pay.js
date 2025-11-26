@@ -1302,7 +1302,8 @@ export default function OaklinePayPage() {
                         if (pendingTransaction.is_oakline_user) {
                           setVerifyStep('pin');
                         } else {
-                          // For non-Oakline users, complete directly
+                          // For non-Oakline users, complete directly with loading
+                          setLoading(true);
                           handleVerifyTransfer({ preventDefault: () => {} });
                         }
                       }}
@@ -1310,11 +1311,23 @@ export default function OaklinePayPage() {
                         ...styles.primaryButton,
                         flex: 1,
                         padding: '0.9rem',
-                        fontSize: '0.95rem'
+                        fontSize: '0.95rem',
+                        opacity: loading ? 0.6 : 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem'
                       }}
                       disabled={loading}
                     >
-                      {pendingTransaction.is_oakline_user ? '✓ Looks Good' : '✓ Send Payment'}
+                      {loading && !pendingTransaction.is_oakline_user ? (
+                        <>
+                          <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⚙️</span>
+                          Sending...
+                        </>
+                      ) : (
+                        pendingTransaction.is_oakline_user ? '✓ Looks Good' : '✓ Send Payment'
+                      )}
                     </button>
                     <button 
                       type="button" 
