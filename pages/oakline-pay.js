@@ -446,6 +446,18 @@ export default function OaklinePayPage() {
       <Head>
         <title>Oakline Pay - Instant Transfers</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <style>{`
+          @keyframes slideDown {
+            from {
+              opacity: 0;
+              transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(-50%) translateY(0);
+            }
+          }
+        `}</style>
       </Head>
 
       <div style={styles.container}>
@@ -1180,7 +1192,15 @@ const styles = {
     border: '2px solid',
     fontWeight: '600',
     fontSize: '0.95rem',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+    position: 'fixed',
+    top: '1rem',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    zIndex: 1001,
+    maxWidth: '90vw',
+    width: '100%',
+    animation: 'slideDown 0.3s ease-out'
   },
   tabsContainer: {
     marginBottom: '2rem'
