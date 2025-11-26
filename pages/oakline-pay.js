@@ -47,6 +47,9 @@ export default function OaklinePayPage() {
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [pendingTransaction, setPendingTransaction] = useState(null);
+  const [transferStep, setTransferStep] = useState(null); // null, 'review', or 'pin'
+  const [transferStatus, setTransferStatus] = useState('');
+  const [transferStatusType, setTransferStatusType] = useState('success');
   const router = useRouter();
 
   const [sendForm, setSendForm] = useState({
@@ -60,8 +63,6 @@ export default function OaklinePayPage() {
   const [verifyForm, setVerifyForm] = useState({
     code: ''
   });
-
-  const [verifyStep, setVerifyStep] = useState('confirm'); // 'confirm' or 'pin'
 
   const [requestForm, setRequestForm] = useState({
     from_account: '',
@@ -298,8 +299,9 @@ export default function OaklinePayPage() {
         recipient_type: sendForm.recipient_type,
         is_oakline_user: data.is_oakline_user
       });
-      setVerifyStep('confirm');
-      setShowVerifyModal(true);
+      setTransferStep('review');
+      setTransferStatus('');
+      setActiveTab('send');
     } catch (error) {
       console.error('Error sending money:', error);
       showMsg('An error occurred. Please try again.', 'error');
@@ -317,13 +319,15 @@ export default function OaklinePayPage() {
 
       // For non-Oakline users, no PIN verification needed
       if (!pendingTransaction.is_oakline_user) {
-        showMsg(`✅ Payment sent! ${pendingTransaction.recipient_contact} will be notified to claim their money.`, 'success');
-        setShowVerifyModal(false);
-        setVerifyStep('confirm');
-        setPendingTransaction(null);
-        setVerifyForm({ code: '' });
-        setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
-        await checkUserAndLoadData();
+        setTransferStatus(`✅ Payment sent! ${pendingTransaction.recipient_contact} will be notified to claim their money.`);
+        setTransferStatusType('success');
+        setTimeout(() => {
+          setTransferStep(null);
+          setPendingTransaction(null);
+          setVerifyForm({ code: '' });
+          setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
+          checkUserAndLoadData();
+        }, 2000);
         return;
       }
 
@@ -344,21 +348,25 @@ export default function OaklinePayPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        showMsg(data.error || 'Verification failed', 'error');
+        setTransferStatus(data.error || 'Verification failed');
+        setTransferStatusType('error');
         setLoading(false);
         return;
       }
 
-      showMsg(`✅ Success! $${data.amount.toFixed(2)} sent instantly`, 'success');
-      setShowVerifyModal(false);
-      setVerifyStep('confirm');
-      setPendingTransaction(null);
-      setVerifyForm({ code: '' });
-      setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
-      await checkUserAndLoadData();
+      setTransferStatus(`✅ Success! $${data.amount.toFixed(2)} sent instantly`);
+      setTransferStatusType('success');
+      setTimeout(() => {
+        setTransferStep(null);
+        setPendingTransaction(null);
+        setVerifyForm({ code: '' });
+        setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
+        checkUserAndLoadData();
+      }, 2000);
     } catch (error) {
       console.error('Error verifying:', error);
-      showMsg('Transaction failed. Please try again.', 'error');
+      setTransferStatus('Transaction failed. Please try again.');
+      setTransferStatusType('error');
     } finally {
       setLoading(false);
     }
@@ -637,8 +645,11 @@ export default function OaklinePayPage() {
             {/* Send Money Tab */}
             {activeTab === 'send' && (
               <div>
-                <h2 style={styles.sectionTitle}>💸 Send Money</h2>
-                <form onSubmit={handleSendMoney} style={styles.form}>
+                {/* Step-based transfer flow */}
+                {transferStep === null && (
+                  <>
+                    <h2 style={styles.sectionTitle}>💸 Send Money</h2>
+                    <form onSubmit={handleSendMoney} style={styles.form}>
                   <div style={styles.formGrid}>
                     <div style={styles.formGroup}>
                       <label style={styles.label}>From Account *</label>
@@ -722,16 +733,228 @@ export default function OaklinePayPage() {
                   <button type="submit" style={styles.primaryButton} disabled={loading}>
                     {loading ? 'Processing...' : '💸 Send Money'}
                   </button>
-                </form>
+                    </form>
 
-                <div style={styles.actionButtons}>
-                  <button onClick={generateQRCode} style={styles.secondaryButton} disabled={loading || !oaklineProfile?.oakline_tag}>
-                    📱 Show QR Code
-                  </button>
-                  <button onClick={() => setShowRequestModal(true)} style={styles.secondaryButton} disabled={loading}>
-                    📋 Request Money
-                  </button>
-                </div>
+                    <div style={styles.actionButtons}>
+                      <button onClick={generateQRCode} style={styles.secondaryButton} disabled={loading || !oaklineProfile?.oakline_tag}>
+                        📱 Show QR Code
+                      </button>
+                      <button onClick={() => setShowRequestModal(true)} style={styles.secondaryButton} disabled={loading}>
+                        📋 Request Money
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {/* STEP 1: REVIEW TRANSFER */}
+                {transferStep === 'review' && pendingTransaction && (
+                  <div>
+                    <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+                      <div style={{ display: 'inline-block', padding: '1rem 1.5rem', backgroundColor: 'rgba(5, 150, 105, 0.1)', borderLeft: '4px solid #059669', borderRadius: '8px' }}>
+                        <p style={{ margin: 0, color: '#047857', fontSize: '0.9rem', fontWeight: '600' }}>Step 1 of {pendingTransaction.is_oakline_user ? '2' : '1'}: Review Transfer</p>
+                      </div>
+                    </div>
+
+                    {transferStatus && (
+                      <div style={{
+                        ...styles.messageAlert,
+                        backgroundColor: transferStatusType === 'success' ? 'rgba(5, 150, 105, 0.1)' : 'rgba(220, 38, 38, 0.1)',
+                        borderColor: transferStatusType === 'success' ? '#059669' : '#dc2626',
+                        color: transferStatusType === 'success' ? '#047857' : '#991b1b',
+                        marginBottom: '1.5rem'
+                      }}>
+                        {transferStatus}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2rem' }}>
+                      <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '2px solid #e2e8f0' }}>
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>From</p>
+                        <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#0f2027' }}>
+                          {pendingTransaction.sender_name}
+                        </p>
+                      </div>
+
+                      <div style={{ textAlign: 'center', fontSize: '1.5rem', color: '#059669' }}>↓</div>
+
+                      <div style={{ backgroundColor: '#ecfdf5', padding: '1rem', borderRadius: '10px', border: '2px solid #d1fae5' }}>
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#065f46', textTransform: 'uppercase' }}>To</p>
+                        {pendingTransaction.is_oakline_user ? (
+                          <>
+                            <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#047857' }}>
+                              {pendingTransaction.recipient_name || 'Recipient'}
+                            </p>
+                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#059669', fontFamily: 'monospace' }}>
+                              {pendingTransaction.recipient_type === 'oakline_tag' ? `@${pendingTransaction.recipient_contact}` : pendingTransaction.recipient_contact}
+                            </p>
+                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: '#10b981', fontWeight: '600' }}>✓ Oakline Member</p>
+                          </>
+                        ) : (
+                          <>
+                            <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#047857' }}>
+                              {pendingTransaction.recipient_contact}
+                            </p>
+                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: '#f59e0b', fontWeight: '600' }}>ℹ Not yet a member</p>
+                          </>
+                        )}
+                      </div>
+
+                      <div style={{ backgroundColor: '#fff7ed', padding: '1.25rem', borderRadius: '10px', border: '2px solid #fed7aa', textAlign: 'center' }}>
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#92400e', textTransform: 'uppercase' }}>Amount</p>
+                        <p style={{ margin: 0, fontSize: '2rem', fontWeight: '700', color: '#d97706' }}>
+                          ${parseFloat(pendingTransaction.amount).toFixed(2)}
+                        </p>
+                      </div>
+
+                      {sendForm.memo && (
+                        <div style={{ backgroundColor: '#f3e8ff', padding: '1rem', borderRadius: '10px', border: '2px solid #e9d5ff' }}>
+                          <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#6b21a8', textTransform: 'uppercase' }}>Memo</p>
+                          <p style={{ margin: 0, fontSize: '0.95rem', color: '#7c3aed', fontStyle: 'italic' }}>
+                            "{sendForm.memo}"
+                          </p>
+                        </div>
+                      )}
+
+                      {!pendingTransaction.is_oakline_user && (
+                        <div style={{ backgroundColor: '#fef08a', padding: '1rem', borderRadius: '10px', border: '2px solid #fcd34d', textAlign: 'center' }}>
+                          <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#92400e', textTransform: 'uppercase' }}>⏳ Pending Transfer</p>
+                          <p style={{ margin: 0, fontSize: '0.9rem', color: '#b45309' }}>
+                            Recipient will be notified to create an account and claim within <strong>14 days</strong>
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                      <button 
+                        onClick={() => {
+                          if (pendingTransaction.is_oakline_user) {
+                            setTransferStep('pin');
+                          } else {
+                            handleVerifyTransfer({ preventDefault: () => {} });
+                          }
+                        }}
+                        style={{
+                          ...styles.primaryButton,
+                          flex: 1,
+                          opacity: loading ? 0.6 : 1
+                        }}
+                        disabled={loading}
+                      >
+                        {loading ? 'Sending...' : pendingTransaction.is_oakline_user ? '✓ Looks Good' : '✓ Send Payment'}
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setTransferStep(null);
+                          setPendingTransaction(null);
+                          setTransferStatus('');
+                        }}
+                        style={{
+                          ...styles.secondaryButton,
+                          flex: 1
+                        }}
+                        disabled={loading}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 2: PIN VERIFICATION */}
+                {transferStep === 'pin' && pendingTransaction && (
+                  <div>
+                    <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+                      <div style={{ display: 'inline-block', padding: '1rem 1.5rem', backgroundColor: 'rgba(5, 150, 105, 0.1)', borderLeft: '4px solid #059669', borderRadius: '8px' }}>
+                        <p style={{ margin: 0, color: '#047857', fontSize: '0.9rem', fontWeight: '600' }}>Step 2 of 2: Confirm with PIN</p>
+                      </div>
+                    </div>
+
+                    {transferStatus && (
+                      <div style={{
+                        ...styles.messageAlert,
+                        backgroundColor: transferStatusType === 'success' ? 'rgba(5, 150, 105, 0.1)' : 'rgba(220, 38, 38, 0.1)',
+                        borderColor: transferStatusType === 'success' ? '#059669' : '#dc2626',
+                        color: transferStatusType === 'success' ? '#047857' : '#991b1b',
+                        marginBottom: '1.5rem'
+                      }}>
+                        {transferStatus}
+                      </div>
+                    )}
+
+                    <form onSubmit={handleVerifyTransfer} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                      <div style={{ backgroundColor: '#ecfdf5', padding: '1rem 1.25rem', borderRadius: '10px', borderLeft: '4px solid #10b981' }}>
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#065f46', textTransform: 'uppercase' }}>
+                          Transfer Protection:
+                        </p>
+                        <p style={{ margin: 0, color: '#047857', fontWeight: '600', fontSize: '0.9rem' }}>
+                          ✓ Only you can complete this with your PIN
+                        </p>
+                      </div>
+
+                      <div>
+                        <label style={{ ...styles.label, marginBottom: '0.75rem' }}>Enter Your Transaction PIN *</label>
+                        <input
+                          type="text"
+                          style={{
+                            width: '100%',
+                            padding: '1rem',
+                            fontSize: '2rem',
+                            letterSpacing: '1.2rem',
+                            textAlign: 'center',
+                            fontFamily: 'monospace',
+                            border: '2px solid #e2e8f0',
+                            borderRadius: '10px',
+                            boxSizing: 'border-box',
+                            outline: 'none',
+                            transition: 'border-color 0.3s'
+                          }}
+                          value={verifyForm.code}
+                          onChange={(e) => setVerifyForm({ code: e.target.value.replace(/[^0-9]/g, '') })}
+                          placeholder="0000"
+                          maxLength="4"
+                          required
+                          autoFocus
+                          disabled={loading}
+                        />
+                        <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>PIN expires in 15 minutes</p>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '1rem' }}>
+                        <button 
+                          type="submit" 
+                          style={{
+                            ...styles.primaryButton,
+                            flex: 1,
+                            opacity: loading || verifyForm.code.length !== 4 ? 0.6 : 1
+                          }} 
+                          disabled={loading || verifyForm.code.length !== 4}
+                        >
+                          {loading ? '⚙️ Processing...' : '✓ Confirm'}
+                        </button>
+                        <button 
+                          type="button" 
+                          style={{
+                            ...styles.secondaryButton,
+                            flex: 1
+                          }} 
+                          onClick={() => {
+                            setTransferStep('review');
+                            setVerifyForm({ code: '' });
+                            setTransferStatus('');
+                          }}
+                          disabled={loading}
+                        >
+                          ← Back
+                        </button>
+                      </div>
+
+                      <div style={{ backgroundColor: '#eff6ff', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.8rem', color: '#1e40af', textAlign: 'center' }}>
+                        <p style={{ margin: 0 }}>💡 Enter carefully. Confirm to complete the transfer.</p>
+                      </div>
+                    </form>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1303,249 +1526,6 @@ export default function OaklinePayPage() {
         </div>
       )}
 
-      {/* Verification Modal */}
-      {showVerifyModal && pendingTransaction && (
-        <div style={styles.modalOverlay} onClick={() => !loading && setShowVerifyModal(false)}>
-          <div style={{ ...styles.modal, maxWidth: '480px' }} onClick={(e) => e.stopPropagation()}>
-            {/* STEP 1: CONFIRMATION SCREEN */}
-            {verifyStep === 'confirm' && (
-              <>
-                {/* Header */}
-                <div style={{ textAlign: 'center', paddingBottom: '1.5rem', borderBottom: '2px solid #f0f4f8' }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>💳</div>
-                  <h2 style={{ margin: 0, color: '#0f2027', fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>Review Transfer</h2>
-                  <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>Confirm you're sending to the right person</p>
-                </div>
-
-                <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  {/* From Section */}
-                  <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '2px solid #e2e8f0' }}>
-                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>From</p>
-                    <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#0f2027' }}>
-                      {pendingTransaction.sender_name}
-                    </p>
-                  </div>
-
-                  {/* Arrow */}
-                  <div style={{ textAlign: 'center', fontSize: '1.5rem', color: '#059669' }}>↓</div>
-
-                  {/* To Section */}
-                  <div style={{ backgroundColor: '#ecfdf5', padding: '1rem', borderRadius: '10px', border: '2px solid #d1fae5' }}>
-                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#065f46', textTransform: 'uppercase', letterSpacing: '0.5px' }}>To</p>
-                    {pendingTransaction.is_oakline_user ? (
-                      <>
-                        <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#047857' }}>
-                          {pendingTransaction.recipient_name || 'Recipient'}
-                        </p>
-                        <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#059669', fontFamily: 'monospace' }}>
-                          {pendingTransaction.recipient_type === 'oakline_tag' ? `@${pendingTransaction.recipient_contact}` : pendingTransaction.recipient_contact}
-                        </p>
-                        <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: '#10b981', fontWeight: '600' }}>✓ Oakline Member</p>
-                      </>
-                    ) : (
-                      <>
-                        <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#047857' }}>
-                          {pendingTransaction.recipient_contact}
-                        </p>
-                        <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: '#f59e0b', fontWeight: '600' }}>ℹ Not yet a member</p>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Amount */}
-                  <div style={{ backgroundColor: '#fff7ed', padding: '1.25rem', borderRadius: '10px', border: '2px solid #fed7aa', textAlign: 'center' }}>
-                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Amount</p>
-                    <p style={{ margin: 0, fontSize: '2rem', fontWeight: '700', color: '#d97706' }}>
-                      ${parseFloat(pendingTransaction.amount).toFixed(2)}
-                    </p>
-                  </div>
-
-                  {/* Memo if exists */}
-                  {sendForm.memo && (
-                    <div style={{ backgroundColor: '#f3e8ff', padding: '1rem', borderRadius: '10px', border: '2px solid #e9d5ff' }}>
-                      <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#6b21a8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Memo</p>
-                      <p style={{ margin: 0, fontSize: '0.95rem', color: '#7c3aed', fontStyle: 'italic' }}>
-                        "{sendForm.memo}"
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Pending Status Badge for Non-Oakline Users */}
-                  {!pendingTransaction.is_oakline_user && (
-                    <div style={{ backgroundColor: '#fef08a', padding: '1rem', borderRadius: '10px', border: '2px solid #fcd34d', textAlign: 'center' }}>
-                      <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>⏳ Pending Transfer</p>
-                      <p style={{ margin: 0, fontSize: '0.9rem', color: '#b45309' }}>
-                        Recipient will be notified to create an account and claim within <strong>14 days</strong>
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Buttons */}
-                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                    <button 
-                      onClick={() => {
-                        if (pendingTransaction.is_oakline_user) {
-                          setVerifyStep('pin');
-                        } else {
-                          // For non-Oakline users, complete directly with loading
-                          setLoading(true);
-                          handleVerifyTransfer({ preventDefault: () => {} });
-                        }
-                      }}
-                      style={{
-                        ...styles.primaryButton,
-                        flex: 1,
-                        padding: '0.9rem',
-                        fontSize: '0.95rem',
-                        opacity: loading ? 0.6 : 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.5rem'
-                      }}
-                      disabled={loading}
-                    >
-                      {loading && !pendingTransaction.is_oakline_user ? (
-                        <>
-                          <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⚙️</span>
-                          Sending...
-                        </>
-                      ) : (
-                        pendingTransaction.is_oakline_user ? '✓ Looks Good' : '✓ Send Payment'
-                      )}
-                    </button>
-                    <button 
-                      type="button" 
-                      style={{
-                        ...styles.secondaryButton,
-                        flex: 1,
-                        padding: '0.9rem'
-                      }} 
-                      onClick={() => setShowVerifyModal(false)}
-                      disabled={loading}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* STEP 2: PIN INPUT SCREEN */}
-            {verifyStep === 'pin' && (
-              <>
-                {/* Loading Banner */}
-                {loading && (
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    backgroundColor: '#10b981',
-                    color: 'white',
-                    padding: '0.75rem',
-                    borderRadius: '16px 16px 0 0',
-                    textAlign: 'center',
-                    fontSize: '0.9rem',
-                    fontWeight: '600',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem'
-                  }}>
-                    <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite', transformOrigin: 'center' }}>⚙️</span>
-                    Processing your transfer...
-                  </div>
-                )}
-
-                {/* Header */}
-                <div style={{ textAlign: 'center', paddingBottom: '1.5rem', borderBottom: '2px solid #f0f4f8', marginTop: loading ? '2.5rem' : 0 }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔐</div>
-                  <h2 style={{ margin: 0, color: '#0f2027', fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>Confirm with PIN</h2>
-                  <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>Enter your 4-digit transaction PIN</p>
-                </div>
-
-                <form onSubmit={handleVerifyTransfer} style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  {/* Security Info */}
-                  <div style={{ backgroundColor: '#ecfdf5', padding: '1rem 1.25rem', borderRadius: '10px', borderLeft: '4px solid #10b981' }}>
-                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#065f46', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      Transfer Protection:
-                    </p>
-                    <p style={{ margin: 0, color: '#047857', fontWeight: '600', fontSize: '0.9rem' }}>
-                      ✓ Only you can complete this with your PIN
-                    </p>
-                  </div>
-
-                  {/* Transaction PIN Input */}
-                  <div>
-                    <label style={{ ...styles.label, marginBottom: '0.75rem' }}>Enter Your Transaction PIN *</label>
-                    <input
-                      type="text"
-                      style={{
-                        width: '100%',
-                        padding: '1rem',
-                        fontSize: '2rem',
-                        letterSpacing: '1.2rem',
-                        textAlign: 'center',
-                        fontFamily: 'monospace',
-                        border: '2px solid #e2e8f0',
-                        borderRadius: '10px',
-                        boxSizing: 'border-box',
-                        outline: 'none',
-                        transition: 'border-color 0.3s'
-                      }}
-                      value={verifyForm.code}
-                      onChange={(e) => setVerifyForm({ code: e.target.value.replace(/[^0-9]/g, '') })}
-                      placeholder="0000"
-                      maxLength="4"
-                      required
-                      autoFocus
-                      disabled={loading}
-                    />
-                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>PIN expires in 15 minutes</p>
-                  </div>
-
-                  {/* Buttons */}
-                  <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button 
-                      type="submit" 
-                      style={{
-                        ...styles.primaryButton,
-                        flex: 1,
-                        padding: '0.9rem',
-                        opacity: loading || verifyForm.code.length !== 4 ? 0.6 : 1
-                      }} 
-                      disabled={loading || verifyForm.code.length !== 4}
-                    >
-                      {loading ? '⚙️ Processing...' : '✓ Confirm'}
-                    </button>
-                    <button 
-                      type="button" 
-                      style={{
-                        ...styles.secondaryButton,
-                        flex: 1,
-                        padding: '0.9rem'
-                      }} 
-                      onClick={() => {
-                        setVerifyStep('confirm');
-                        setVerifyForm({ code: '' });
-                      }}
-                      disabled={loading}
-                    >
-                      ← Back
-                    </button>
-                  </div>
-
-                  {/* Help Text */}
-                  <div style={{ backgroundColor: '#eff6ff', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.8rem', color: '#1e40af', textAlign: 'center' }}>
-                    <p style={{ margin: 0 }}>💡 Enter carefully. You'll see this after confirming.</p>
-                  </div>
-                </form>
-              </>
-            )}
-          </div>
-        </div>
-      )}
 
       <style>{`
         @keyframes spin {
