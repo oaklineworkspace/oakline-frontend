@@ -35,6 +35,8 @@ export default function OaklinePayPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('success');
+  const [setupMessage, setSetupMessage] = useState('');
+  const [setupMessageType, setSetupMessageType] = useState('success');
   const [showQRModal, setShowQRModal] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -166,17 +168,43 @@ export default function OaklinePayPage() {
   const handleSetupProfile = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setSetupMessage('');
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        showMsg('Authentication required', 'error');
+        setSetupMessage('Authentication required');
+        setSetupMessageType('error');
+        setLoading(false);
         return;
       }
 
       // Check if tag already exists
       if (oaklineProfile?.oakline_tag) {
-        showMsg('Tag already set up. Contact support to change it.', 'error');
+        setSetupMessage('Tag already set up. Contact support to change it.');
+        setSetupMessageType('error');
+        setLoading(false);
+        return;
+      }
+
+      // Validate tag format
+      if (!setupForm.oakline_tag || setupForm.oakline_tag.length < 3 || setupForm.oakline_tag.length > 20) {
+        setSetupMessage('Invalid tag format. Use @username with 3-20 characters (letters, numbers, underscores only)');
+        setSetupMessageType('error');
+        setLoading(false);
+        return;
+      }
+
+      if (!/^[a-z0-9_]+$/.test(setupForm.oakline_tag)) {
+        setSetupMessage('Invalid tag format. Use @username with 3-20 characters (letters, numbers, underscores only)');
+        setSetupMessageType('error');
+        setLoading(false);
+        return;
+      }
+
+      if (!setupForm.display_name || setupForm.display_name.trim().length === 0) {
+        setSetupMessage('Display name is required');
+        setSetupMessageType('error');
         setLoading(false);
         return;
       }
@@ -193,18 +221,24 @@ export default function OaklinePayPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        showMsg(data.error || 'Failed to set up profile', 'error');
+        setSetupMessage(data.error || 'Failed to set up profile');
+        setSetupMessageType('error');
         setLoading(false);
         return;
       }
 
-      showMsg('✅ Oakline tag created successfully!', 'success');
-      setShowSetupModal(false);
-      setSetupForm({ oakline_tag: '', display_name: '', bio: '' });
-      await checkUserAndLoadData();
+      setSetupMessage('✅ Oakline tag created successfully!');
+      setSetupMessageType('success');
+      setTimeout(() => {
+        setShowSetupModal(false);
+        setSetupForm({ oakline_tag: '', display_name: '', bio: '' });
+        setSetupMessage('');
+        checkUserAndLoadData();
+      }, 1500);
     } catch (error) {
       console.error('Error:', error);
-      showMsg('An error occurred. Please try again.', 'error');
+      setSetupMessage('An error occurred. Please try again.');
+      setSetupMessageType('error');
     } finally {
       setLoading(false);
     }
@@ -878,6 +912,14 @@ export default function OaklinePayPage() {
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
             <h2 style={styles.modalTitle}>🏷️ Create Your Oakline Tag</h2>
             <p style={styles.modalSubtitle}>Choose a unique identifier to receive money instantly</p>
+            {setupMessage && (
+              <div style={{
+                ...styles.inlineAlert,
+                ...(setupMessageType === 'success' ? styles.alertSuccess : styles.alertError)
+              }}>
+                {setupMessage}
+              </div>
+            )}
             <form onSubmit={handleSetupProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
                 <label style={styles.label}>Oakline Tag (e.g., johndoe) *</label>
@@ -1192,15 +1234,26 @@ const styles = {
     border: '2px solid',
     fontWeight: '600',
     fontSize: '0.95rem',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-    position: 'fixed',
-    top: '1rem',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    zIndex: 1001,
-    maxWidth: '90vw',
-    width: '100%',
-    animation: 'slideDown 0.3s ease-out'
+    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+  },
+  inlineAlert: {
+    padding: '1rem 1.25rem',
+    borderRadius: '12px',
+    marginBottom: '1.5rem',
+    border: '2px solid',
+    fontWeight: '600',
+    fontSize: '0.9rem',
+    textAlign: 'center'
+  },
+  alertSuccess: {
+    backgroundColor: 'rgba(5, 150, 105, 0.15)',
+    borderColor: '#10b981',
+    color: '#047857'
+  },
+  alertError: {
+    backgroundColor: 'rgba(220, 38, 38, 0.15)',
+    borderColor: '#ef4444',
+    color: '#991b1b'
   },
   tabsContainer: {
     marginBottom: '2rem'
