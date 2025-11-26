@@ -25,8 +25,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Oakline tag is required' });
     }
 
-    // Clean and normalize the tag
-    oakline_tag = oakline_tag.toLowerCase().trim();
+    // Clean and normalize the tag (remove @ if present, lowercase, trim)
+    oakline_tag = oakline_tag.toLowerCase().trim().replace(/^@/, '');
 
     // Basic validation - just check length
     if (oakline_tag.length < 3 || oakline_tag.length > 20) {

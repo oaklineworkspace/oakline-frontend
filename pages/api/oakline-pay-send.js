@@ -124,10 +124,13 @@ export default async function handler(req, res) {
       let isOaklineUser = false;
 
       if (recipient_type === 'oakline_tag') {
+        // Normalize tag: remove @ if present, convert to lowercase
+        const normalizedTag = recipient_contact.toLowerCase().replace(/^@/, '');
+        
         const { data: oaklineProfile } = await supabaseAdmin
           .from('oakline_pay_profiles')
           .select('user_id, display_name, oakline_tag, is_active')
-          .eq('oakline_tag', recipient_contact.startsWith('@') ? recipient_contact : `@${recipient_contact}`)
+          .eq('oakline_tag', normalizedTag)
           .eq('is_active', true)
           .single();
 
