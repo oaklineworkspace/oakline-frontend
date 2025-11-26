@@ -6,7 +6,7 @@
 CREATE TABLE public.oakline_pay_profiles (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL UNIQUE,
-  oakline_tag text NOT NULL UNIQUE CHECK (oakline_tag ~ '^@[a-zA-Z0-9_]{3,20}$'),
+  oakline_tag text NOT NULL UNIQUE,
   display_name text,
   avatar_url text,
   bio text,
