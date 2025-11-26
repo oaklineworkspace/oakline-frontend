@@ -25,11 +25,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Oakline tag is required' });
     }
 
-    // Validate tag format
-    const tagRegex = /^@[a-zA-Z0-9_]{3,20}$/;
+    // Validate tag format - allow letters, numbers, hyphens, underscores (3-20 chars)
+    const tagRegex = /^[a-zA-Z0-9_-]{3,20}$/;
     if (!tagRegex.test(oakline_tag)) {
       return res.status(400).json({ 
-        error: 'Invalid tag format. Use @username with 3-20 characters (letters, numbers, underscores only)' 
+        error: 'Oakline tag must be 3-20 characters (letters, numbers, hyphens, and underscores)' 
       });
     }
 
