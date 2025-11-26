@@ -914,96 +914,162 @@ export default function OaklinePayPage() {
       {/* Setup Oakline Tag Modal */}
       {showSetupModal && (
         <div style={styles.modalOverlay} onClick={() => setShowSetupModal(false)}>
-          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>🏷️</div>
-              <h2 style={{ ...styles.modalTitle, margin: 0, marginBottom: '0.5rem' }}>Create Your Oakline Tag</h2>
-              <p style={{ ...styles.modalSubtitle, margin: 0 }}>Your unique identifier to receive money instantly</p>
+          <div style={{ ...styles.modal, maxWidth: '450px' }} onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div style={{ textAlign: 'center', paddingBottom: '1.5rem', borderBottom: '2px solid #f0f4f8' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🏷️</div>
+              <h2 style={{ margin: 0, color: '#0f2027', fontSize: '1.6rem', fontWeight: '700', marginBottom: '0.5rem' }}>Create Your Oakline Tag</h2>
+              <p style={{ margin: 0, color: '#64748b', fontSize: '0.95rem' }}>Your unique handle to receive money instantly</p>
             </div>
 
+            {/* Message Alert */}
             {setupMessage && (
               <div style={{
-                ...styles.inlineAlert,
-                ...(setupMessageType === 'success' ? styles.alertSuccess : styles.alertError),
-                marginBottom: '1.5rem',
+                marginTop: '1.5rem',
+                padding: '1rem',
+                borderRadius: '10px',
+                backgroundColor: setupMessageType === 'success' ? '#f0fdf4' : '#fef2f2',
+                border: `2px solid ${setupMessageType === 'success' ? '#10b981' : '#ef4444'}`,
+                color: setupMessageType === 'success' ? '#047857' : '#991b1b',
+                fontWeight: '600',
+                fontSize: '0.9rem',
                 display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem'
+                gap: '0.75rem',
+                alignItems: 'flex-start'
               }}>
-                <span>{setupMessageType === 'success' ? '✓' : '⚠️'}</span>
+                <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>{setupMessageType === 'success' ? '✓' : '⚠️'}</span>
                 <span>{setupMessage}</span>
               </div>
             )}
 
-            <form onSubmit={handleSetupProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div>
-                <label style={{ ...styles.label, display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                  <span>Oakline Tag *</span>
+            {/* Form */}
+            <form onSubmit={handleSetupProfile} style={{ marginTop: '1.5rem' }}>
+              {/* Tag Input */}
+              <div style={{ marginBottom: '1.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <label style={{ color: '#1a365d', fontWeight: '700', fontSize: '0.95rem' }}>Oakline Tag *</label>
                   <span style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: '500' }}>3-20 characters</span>
-                </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '0.95rem', fontWeight: '700', color: '#059669' }}>@</span>
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#059669', fontWeight: '700', fontSize: '1rem' }}>@</span>
                   <input
                     type="text"
                     style={{
-                      ...styles.input,
-                      flex: 1,
-                      border: setupMessage && setupMessageType === 'error' ? '2px solid #ef4444' : '2px solid #e2e8f0'
+                      width: '100%',
+                      paddingLeft: '2.5rem',
+                      paddingRight: '1rem',
+                      paddingTop: '0.75rem',
+                      paddingBottom: '0.75rem',
+                      border: '2px solid #e2e8f0',
+                      borderRadius: '10px',
+                      fontSize: '0.95rem',
+                      boxSizing: 'border-box',
+                      transition: 'border-color 0.3s',
+                      outline: 'none'
                     }}
                     value={setupForm.oakline_tag}
                     onChange={(e) => setSetupForm({ ...setupForm, oakline_tag: e.target.value.toLowerCase() })}
                     placeholder="john_doe"
-                    required
+                    maxLength="20"
                   />
                 </div>
-                <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#64748b' }}>
-                  <p style={{ margin: '0.25rem 0' }}>✓ Examples: <strong>john_doe</strong>, <strong>jane-smith</strong>, <strong>user123</strong></p>
-                  <p style={{ margin: '0.25rem 0' }}>✗ No spaces, special characters (except - and _), or numbers only</p>
+                <div style={{ marginTop: '0.75rem', backgroundColor: '#f8fafc', padding: '0.75rem', borderRadius: '8px', fontSize: '0.8rem', color: '#475569', lineHeight: '1.4' }}>
+                  <p style={{ margin: '0 0 0.5rem', fontWeight: '600' }}>✓ Valid examples:</p>
+                  <p style={{ margin: '0 0 0.5rem', color: '#059669' }}><strong>john_doe</strong> • <strong>jane-smith</strong> • <strong>user123</strong></p>
+                  <p style={{ margin: 0, fontWeight: '600' }}>✗ Not allowed: Spaces, special characters (except - and _)</p>
                 </div>
               </div>
 
-              <div>
-                <label style={{ ...styles.label, marginBottom: '0.75rem' }}>Display Name *</label>
+              {/* Display Name */}
+              <div style={{ marginBottom: '1.75rem' }}>
+                <label style={{ display: 'block', color: '#1a365d', fontWeight: '700', fontSize: '0.95rem', marginBottom: '0.75rem' }}>Display Name *</label>
                 <input
                   type="text"
                   style={{
-                    ...styles.input,
-                    border: setupMessage && setupMessageType === 'error' && !setupForm.display_name ? '2px solid #ef4444' : '2px solid #e2e8f0'
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '10px',
+                    fontSize: '0.95rem',
+                    boxSizing: 'border-box',
+                    transition: 'border-color 0.3s',
+                    outline: 'none'
                   }}
                   value={setupForm.display_name}
                   onChange={(e) => setSetupForm({ ...setupForm, display_name: e.target.value })}
-                  placeholder="e.g., John Doe"
-                  required
+                  placeholder="John Doe"
+                  maxLength="50"
                 />
-                <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#64748b', margin: '0.5rem 0 0' }}>
-                  How people will see your name when you receive money
+                <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                  This is how people will see your name
                 </p>
               </div>
 
-              <div>
-                <label style={{ ...styles.label, marginBottom: '0.75rem' }}>Bio (Optional)</label>
+              {/* Bio */}
+              <div style={{ marginBottom: '1.75rem' }}>
+                <label style={{ display: 'block', color: '#1a365d', fontWeight: '700', fontSize: '0.95rem', marginBottom: '0.75rem' }}>Bio (Optional)</label>
                 <textarea
                   style={{
-                    ...styles.input,
-                    resize: 'vertical',
-                    minHeight: '70px',
-                    fontFamily: 'inherit'
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '10px',
+                    fontSize: '0.95rem',
+                    boxSizing: 'border-box',
+                    fontFamily: 'inherit',
+                    resize: 'none',
+                    minHeight: '60px',
+                    outline: 'none'
                   }}
                   value={setupForm.bio}
                   onChange={(e) => setSetupForm({ ...setupForm, bio: e.target.value })}
-                  placeholder="e.g., Software Engineer | San Francisco"
-                  maxLength={150}
+                  placeholder="Software Engineer • San Francisco"
+                  maxLength="150"
                 />
-                <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#64748b', margin: '0.5rem 0 0' }}>
+                <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: '#64748b' }}>
                   {setupForm.bio.length}/150 characters
                 </p>
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button type="submit" style={{ ...styles.primaryButton, flex: 1 }} disabled={loading || !setupForm.oakline_tag || !setupForm.display_name}>
+              {/* Buttons */}
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button 
+                  type="submit" 
+                  style={{
+                    flex: 1,
+                    padding: '0.9rem',
+                    backgroundColor: '#059669',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '0.95rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s',
+                    boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)',
+                    opacity: (loading || !setupForm.oakline_tag || !setupForm.display_name) ? 0.5 : 1
+                  }} 
+                  disabled={loading || !setupForm.oakline_tag || !setupForm.display_name}
+                >
                   {loading ? 'Creating...' : '✓ Create Tag'}
                 </button>
-                <button type="button" style={{ ...styles.secondaryButton, flex: 1 }} onClick={() => { setShowSetupModal(false); setSetupMessage(''); }} disabled={loading}>
+                <button 
+                  type="button" 
+                  style={{
+                    flex: 1,
+                    padding: '0.9rem',
+                    backgroundColor: '#e0e7ff',
+                    color: '#1e40af',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '0.95rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s'
+                  }} 
+                  onClick={() => { setShowSetupModal(false); setSetupMessage(''); }} 
+                  disabled={loading}
+                >
                   Cancel
                 </button>
               </div>
