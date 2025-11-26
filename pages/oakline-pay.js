@@ -1218,6 +1218,91 @@ export default function OaklinePayPage() {
         </div>
       )}
 
+      {/* Success Modal - Oakline Tag Created */}
+      {showSuccessModal && (
+        <div style={styles.modalOverlay} onClick={() => setShowSuccessModal(false)}>
+          <div style={{ ...styles.modal, textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem', animation: 'bounce 1s' }}>🎉</div>
+            <h2 style={{ ...styles.modalTitle, marginBottom: '0.5rem' }}>Success!</h2>
+            <p style={{ ...styles.modalSubtitle, marginBottom: '2rem', color: '#047857', fontWeight: '600' }}>
+              {successMessage}
+            </p>
+            <div style={{ backgroundColor: '#ecfdf5', padding: '1rem', borderRadius: '10px', marginBottom: '1.5rem' }}>
+              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', fontWeight: '700', color: '#065f46', textTransform: 'uppercase' }}>Next Steps:</p>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: '#047857' }}>Share your Oakline tag with friends to receive instant payments!</p>
+            </div>
+            <button 
+              onClick={() => setShowSuccessModal(false)}
+              style={{ ...styles.primaryButton, width: '100%' }}
+            >
+              ✓ Got It!
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Tag Modal */}
+      {showEditTagModal && (
+        <div style={styles.modalOverlay} onClick={() => setShowEditTagModal(false)}>
+          <div style={{ ...styles.modal, maxWidth: '450px' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ textAlign: 'center', paddingBottom: '1.5rem', borderBottom: '2px solid #f0f4f8' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>✏️</div>
+              <h2 style={{ margin: 0, color: '#0f2027', fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>Edit Your Profile</h2>
+              <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>Update your tag, name, or bio</p>
+            </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              setLoading(true);
+              try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const response = await fetch('/api/oakline-pay-setup-profile', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                  },
+                  body: JSON.stringify(setupForm)
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                  showMsg(data.error || 'Failed to update profile', 'error');
+                  return;
+                }
+                showMsg('✅ Profile updated successfully!', 'success');
+                setShowEditTagModal(false);
+                await checkUserAndLoadData();
+              } catch (error) {
+                showMsg('Failed to update profile', 'error');
+              } finally {
+                setLoading(false);
+              }
+            }} style={{ marginTop: '1.5rem' }}>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={styles.label}>Oakline Tag</label>
+                <input type="text" style={styles.input} value={setupForm.oakline_tag} onChange={(e) => setSetupForm({ ...setupForm, oakline_tag: e.target.value })} placeholder="your_tag" />
+              </div>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={styles.label}>Display Name</label>
+                <input type="text" style={styles.input} value={setupForm.display_name} onChange={(e) => setSetupForm({ ...setupForm, display_name: e.target.value })} placeholder="Your Name" />
+              </div>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={styles.label}>Bio</label>
+                <textarea style={{ ...styles.input, minHeight: '80px', resize: 'vertical' }} value={setupForm.bio} onChange={(e) => setSetupForm({ ...setupForm, bio: e.target.value })} placeholder="Tell friends about yourself..." maxLength={150} />
+              </div>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button type="submit" style={{ ...styles.primaryButton, flex: 1 }} disabled={loading}>
+                  {loading ? 'Saving...' : '✓ Save Changes'}
+                </button>
+                <button type="button" style={{ ...styles.secondaryButton, flex: 1 }} onClick={() => setShowEditTagModal(false)} disabled={loading}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Verification Modal */}
       {showVerifyModal && pendingTransaction && (
         <div style={styles.modalOverlay} onClick={() => !loading && setShowVerifyModal(false)}>
@@ -1466,6 +1551,10 @@ export default function OaklinePayPage() {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        @keyframes bounce {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.2); }
         }
       `}</style>
 
