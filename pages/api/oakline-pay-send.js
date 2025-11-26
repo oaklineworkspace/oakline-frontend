@@ -166,16 +166,19 @@ export default async function handler(req, res) {
       const pin = generateTransactionPIN();
       const referenceNumber = generateReference();
 
-      // Get sender's profile for email
+      // Get sender's profile for email (optional - use auth email as fallback)
       const { data: senderProfile } = await supabaseAdmin
         .from('profiles')
         .select('full_name, email, first_name, last_name')
         .eq('id', user.id)
         .single();
 
-      if (!senderProfile) {
-        return res.status(400).json({ error: 'Your profile is not fully set up. Please complete your account setup first.' });
-      }
+      // Create sender profile object with fallbacks
+      const senderData = {
+        email: senderProfile?.email || user.email,
+        first_name: senderProfile?.first_name || user.email?.split('@')[0] || 'User',
+        full_name: senderProfile?.full_name || 'Oakline User'
+      };
 
       if (isOaklineUser) {
         // OAKLINE USER - Instant Transfer Flow
@@ -280,7 +283,7 @@ export default async function handler(req, res) {
         try {
           await sendEmail({
             to: recipient_contact,
-            subject: `${senderProfile.first_name || senderProfile.full_name || 'Someone'} sent you $${transferAmount.toFixed(2)} via Oakline Pay`,
+            subject: `${senderData.first_name} sent you $${transferAmount.toFixed(2)} via Oakline Pay`,
             emailType: 'notify',
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -289,7 +292,7 @@ export default async function handler(req, res) {
                 </div>
                 <div style="padding: 30px; background-color: #f8f9fa;">
                   <h2 style="color: #1A3E6F;">Oakline Pay Transfer</h2>
-                  <p><strong>${senderProfile.first_name || senderProfile.full_name || 'Someone'}</strong> sent you <strong>$${transferAmount.toFixed(2)}</strong></p>
+                  <p><strong>${senderData.first_name}</strong> sent you <strong>$${transferAmount.toFixed(2)}</strong></p>
                   ${memo ? `<p style="font-style: italic; color: #666;">Message: "${memo}"</p>` : ''}
                   
                   <div style="background-color: #d1fae5; border-radius: 12px; padding: 20px; margin: 24px 0;">
