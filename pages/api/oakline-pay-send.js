@@ -345,6 +345,10 @@ export default async function handler(req, res) {
 
       const { transaction_id } = req.body;
 
+      if (!transaction_id) {
+        return res.status(400).json({ error: 'Transaction ID is required' });
+      }
+
       const { data: transaction, error: txError } = await supabaseAdmin
         .from('oakline_pay_transactions')
         .select('*')
@@ -354,6 +358,7 @@ export default async function handler(req, res) {
         .single();
 
       if (txError || !transaction) {
+        console.error('Transaction lookup error:', txError);
         return res.status(404).json({ error: 'Transaction not found or already processed' });
       }
 
@@ -367,7 +372,8 @@ export default async function handler(req, res) {
       }
 
       if (transaction.verification_code !== verification_code) {
-        return res.status(400).json({ error: 'Invalid verification code' });
+        console.error('PIN mismatch:', { stored: transaction.verification_code, provided: verification_code });
+        return res.status(400).json({ error: 'Invalid PIN. Please try again.' });
       }
 
       // Re-check sender balance

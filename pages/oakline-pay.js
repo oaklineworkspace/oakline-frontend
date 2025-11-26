@@ -293,11 +293,12 @@ export default function OaklinePayPage() {
       setPendingTransaction({
         ...data,
         amount: data.amount || sendForm.amount,
-        sender_name: userProfile?.full_name || userProfile?.first_name || 'You',
+        sender_name: oaklineProfile?.display_name || userProfile?.full_name || userProfile?.first_name || 'You',
         recipient_name: data.recipient_name,
         recipient_contact: sendForm.recipient_contact,
         recipient_type: sendForm.recipient_type,
-        is_oakline_user: data.is_oakline_user
+        is_oakline_user: data.is_oakline_user,
+        transaction_id: data.transaction_id
       });
       setTransferStep('review');
       setTransferStatus('');
