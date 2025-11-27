@@ -56,19 +56,17 @@ export default async function handler(req, res) {
 
     const referenceNumber = generateReference();
 
-    // Create payment request
+    // Create payment request - only include fields that exist in the table
     const { data: paymentRequest, error: requestError } = await supabaseAdmin
       .from('oakline_pay_requests')
       .insert({
         requester_id: user.id,
         requester_account_id: requester_account_id,
         recipient_contact: recipient_contact,
-        recipient_type: recipient_type,
         amount: requestAmount,
         memo: memo || null,
         status: 'pending',
-        reference_number: referenceNumber,
-        created_at: new Date().toISOString()
+        reference_number: referenceNumber
       })
       .select()
       .single();
