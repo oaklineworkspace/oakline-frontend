@@ -338,16 +338,15 @@ export default function OaklinePayPage() {
       }
 
       // For Oakline users, verify PIN
-      const response = await fetch('/api/oakline-pay-send', {
+      const response = await fetch('/api/verify-transaction-pin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
-          transaction_id: pendingTransaction.transaction_id,
-          verification_code: verifyForm.code,
-          step: 'verify'
+          pin: verifyForm.code,
+          type: 'oakline_pay'
         })
       });
 
@@ -641,37 +640,6 @@ export default function OaklinePayPage() {
                   <>
                     <h2 style={styles.sectionTitle}>💸 Send Money</h2>
                     
-                    {loading && (
-                      <div style={{
-                        backgroundColor: 'rgba(5, 150, 105, 0.15)',
-                        border: '2px solid #059669',
-                        borderRadius: '12px',
-                        padding: '1.5rem',
-                        marginBottom: '1.5rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '1rem'
-                      }}>
-                        <div style={{
-                          width: '48px',
-                          height: '48px',
-                          backgroundColor: '#059669',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          animation: 'spin 1s linear infinite'
-                        }}>
-                          <div style={{
-                            fontSize: '1.5rem'
-                          }}>⏳</div>
-                        </div>
-                        <div style={{ color: '#047857', fontSize: '1rem', fontWeight: '600' }}>
-                          Processing your transfer...
-                        </div>
-                      </div>
-                    )}
                     
                     {!loading && sendForm.from_account && accounts.find(acc => acc.id === sendForm.from_account) && 
                      parseFloat(accounts.find(acc => acc.id === sendForm.from_account)?.balance || 0) < parseFloat(sendForm.amount || 0) && sendForm.amount && (
@@ -785,6 +753,38 @@ export default function OaklinePayPage() {
                     </div>
                   </div>
 
+                  {loading && (
+                    <div style={{
+                      backgroundColor: 'rgba(5, 150, 105, 0.15)',
+                      border: '2px solid #059669',
+                      borderRadius: '12px',
+                      padding: '1.5rem',
+                      marginBottom: '1.5rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '1rem'
+                    }}>
+                      <div style={{
+                        width: '48px',
+                        height: '48px',
+                        backgroundColor: '#059669',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        animation: 'spin 1s linear infinite'
+                      }}>
+                        <div style={{
+                          fontSize: '1.5rem'
+                        }}>⏳</div>
+                      </div>
+                      <div style={{ color: '#047857', fontSize: '1rem', fontWeight: '600' }}>
+                        Processing your transfer...
+                      </div>
+                    </div>
+                  )}
+                  
                   <button type="submit" style={{
                     ...styles.primaryButton,
                     opacity: loading ? 0.6 : 1,
@@ -974,23 +974,61 @@ export default function OaklinePayPage() {
 
                     {transferStatus && transferStatusType === 'error' && (
                       <div style={{
-                        ...styles.messageAlert,
-                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                        borderLeft: '4px solid #dc2626',
-                        borderRadius: '10px',
-                        padding: '1rem',
-                        color: '#991b1b',
-                        marginBottom: '1.5rem'
+                        backgroundColor: 'rgba(220, 38, 38, 0.15)',
+                        border: '2px solid #dc2626',
+                        borderRadius: '12px',
+                        padding: '1.5rem',
+                        marginBottom: '1.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem'
                       }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <span style={{ fontSize: '1.5rem' }}>❌</span>
-                          <div>
-                            <p style={{ margin: 0, fontWeight: '600' }}>Verification Failed</p>
-                            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.9rem' }}>{transferStatus}</p>
-                          </div>
+                        <div style={{
+                          width: '48px',
+                          height: '48px',
+                          backgroundColor: '#dc2626',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          fontSize: '1.5rem'
+                        }}>
+                          ⚠️
+                        </div>
+                        <div style={{ color: '#991b1b', fontSize: '1rem', fontWeight: '600' }}>
+                          {transferStatus}
                         </div>
                       </div>
                     )}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2rem' }}>
+                      <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '2px solid #e2e8f0' }}>
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>From</p>
+                        <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#0f2027' }}>
+                          {pendingTransaction.sender_name}
+                        </p>
+                      </div>
+
+                      <div style={{ textAlign: 'center', fontSize: '1.5rem', color: '#059669' }}>↓</div>
+
+                      <div style={{ backgroundColor: '#ecfdf5', padding: '1rem', borderRadius: '10px', border: '2px solid #d1fae5' }}>
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#065f46', textTransform: 'uppercase' }}>To</p>
+                        <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#047857' }}>
+                          {pendingTransaction.recipient_name || 'Recipient'}
+                        </p>
+                        <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#059669', fontFamily: 'monospace' }}>
+                          {pendingTransaction.recipient_type === 'oakline_tag' ? `@${pendingTransaction.recipient_contact}` : pendingTransaction.recipient_contact}
+                        </p>
+                      </div>
+
+                      <div style={{ backgroundColor: '#fff7ed', padding: '1.25rem', borderRadius: '10px', border: '2px solid #fed7aa', textAlign: 'center' }}>
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#92400e', textTransform: 'uppercase' }}>Amount</p>
+                        <p style={{ margin: 0, fontSize: '2rem', fontWeight: '700', color: '#d97706' }}>
+                          ${parseFloat(pendingTransaction.amount).toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
 
                     <form onSubmit={handleVerifyTransfer} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                       <div style={{ backgroundColor: '#ecfdf5', padding: '1rem 1.25rem', borderRadius: '10px', borderLeft: '4px solid #10b981' }}>
