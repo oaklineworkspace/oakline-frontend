@@ -146,10 +146,15 @@ export default function OaklinePayPage() {
         .order('contact_name');
       setContacts(payContacts || []);
 
-      // Load transactions with all fields
+      // Load transactions with all fields and enrich with profile data
       const { data: payTxns, error: txnError } = await supabase
         .from('oakline_pay_transactions')
-        .select('*')
+        .select(`
+          id, sender_id, sender_name, sender_tag, recipient_id, recipient_name, recipient_tag,
+          amount, status, created_at, memo, reference_number,
+          sender:sender_id(oakline_tag, display_name),
+          recipient:recipient_id(oakline_tag, display_name)
+        `)
         .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -157,7 +162,38 @@ export default function OaklinePayPage() {
       if (txnError) {
         console.error('Error loading transactions:', txnError);
       }
-      setTransactions(payTxns || []);
+      
+      // Enrich transaction data with profile info if names/tags are NULL
+      const enrichedTxns = (payTxns || []).map(txn => {
+        let enrichedSenderTag = txn.sender_tag;
+        let enrichedSenderName = txn.sender_name;
+        let enrichedRecipientTag = txn.recipient_tag;
+        let enrichedRecipientName = txn.recipient_name;
+        
+        // Use profile data if transaction fields are NULL
+        if (!enrichedSenderTag && txn.sender?.oakline_tag) {
+          enrichedSenderTag = txn.sender.oakline_tag;
+        }
+        if (!enrichedSenderName && txn.sender?.display_name) {
+          enrichedSenderName = txn.sender.display_name;
+        }
+        if (!enrichedRecipientTag && txn.recipient?.oakline_tag) {
+          enrichedRecipientTag = txn.recipient.oakline_tag;
+        }
+        if (!enrichedRecipientName && txn.recipient?.display_name) {
+          enrichedRecipientName = txn.recipient.display_name;
+        }
+        
+        return {
+          ...txn,
+          sender_tag: enrichedSenderTag,
+          sender_name: enrichedSenderName,
+          recipient_tag: enrichedRecipientTag,
+          recipient_name: enrichedRecipientName
+        };
+      });
+      
+      setTransactions(enrichedTxns);
 
       // Load payment requests
       const { data: requests } = await supabase
@@ -1995,16 +2031,28 @@ export default function OaklinePayPage() {
             </button>
 
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>💳</div>
-              <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: '700', color: '#1a365d' }}>Transaction Receipt</h2>
-              <p style={{ margin: '0.5rem 0 0', fontSize: '0.9rem', color: '#64748b' }}>Oakline Pay Transfer</p>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💳</div>
+              <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: '700', color: '#1a365d', marginBottom: '0.25rem' }}>Transaction Receipt</h2>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>Oakline Pay • {selectedOaklineTransaction.sender_id === user?.id ? 'Money Sent' : 'Money Received'}</p>
             </div>
 
-            {/* Amount Highlight */}
-            <div style={{ backgroundColor: selectedOaklineTransaction.sender_id === user?.id ? '#fee2e2' : '#dcfce7', padding: '1.5rem', borderRadius: '14px', marginBottom: '2rem', textAlign: 'center', border: `2px solid ${selectedOaklineTransaction.sender_id === user?.id ? '#fca5a5' : '#86efac'}` }}>
-              <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500' }}>Transaction Amount</div>
-              <div style={{ fontSize: '2.2rem', fontWeight: '700', color: selectedOaklineTransaction.sender_id === user?.id ? '#dc2626' : '#16a34a' }}>
-                {selectedOaklineTransaction.sender_id === user?.id ? '-' : '+'} ${parseFloat(selectedOaklineTransaction.amount).toFixed(2)}
+            {/* Professional Header with Amount and Details */}
+            <div style={{ backgroundColor: selectedOaklineTransaction.sender_id === user?.id ? '#fee2e2' : '#dcfce7', padding: '2rem', borderRadius: '16px', marginBottom: '2rem', textAlign: 'center', border: `2px solid ${selectedOaklineTransaction.sender_id === user?.id ? '#fca5a5' : '#86efac'}` }}>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{ fontSize: '2.5rem' }}>
+                  {selectedOaklineTransaction.sender_id === user?.id ? '📤' : '📥'}
+                </div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '500', marginBottom: '0.25rem' }}>
+                    {selectedOaklineTransaction.sender_id === user?.id ? 'You Sent' : 'You Received'}
+                  </div>
+                  <div style={{ fontSize: '2.2rem', fontWeight: '700', color: selectedOaklineTransaction.sender_id === user?.id ? '#dc2626' : '#16a34a' }}>
+                    {selectedOaklineTransaction.sender_id === user?.id ? '-' : '+'} ${parseFloat(selectedOaklineTransaction.amount).toFixed(2)}
+                  </div>
+                </div>
+              </div>
+              <div style={{ fontSize: '0.9rem', color: '#64748b', paddingTop: '1rem', borderTop: `1px solid ${selectedOaklineTransaction.sender_id === user?.id ? '#fca5a5' : '#86efac'}` }}>
+                {selectedOaklineTransaction.status === 'completed' ? '✓ Transaction Completed' : `Status: ${selectedOaklineTransaction.status?.toUpperCase()}`}
               </div>
             </div>
 
@@ -2021,21 +2069,21 @@ export default function OaklinePayPage() {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #e2e8f0', alignItems: 'flex-start' }}>
                 <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
-                  {selectedOaklineTransaction.sender_id === user?.id ? 'Recipient' : 'Sender'}
+                  {selectedOaklineTransaction.sender_id === user?.id ? 'Sent To' : 'Received From'}
                 </span>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600' }}>
+                  <div style={{ fontSize: '1rem', color: '#1e293b', fontWeight: '700' }}>
                     {selectedOaklineTransaction.sender_id === user?.id 
                       ? (selectedOaklineTransaction.recipient_tag ? `@${selectedOaklineTransaction.recipient_tag}` : selectedOaklineTransaction.recipient_name || 'Oakline User')
                       : (selectedOaklineTransaction.sender_tag ? `@${selectedOaklineTransaction.sender_tag}` : selectedOaklineTransaction.sender_name || 'Oakline User')}
                   </div>
                   {selectedOaklineTransaction.sender_id === user?.id && selectedOaklineTransaction.recipient_name && selectedOaklineTransaction.recipient_tag && (
-                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.25rem' }}>
+                    <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem', fontWeight: '500' }}>
                       {selectedOaklineTransaction.recipient_name}
                     </div>
                   )}
                   {selectedOaklineTransaction.sender_id !== user?.id && selectedOaklineTransaction.sender_name && selectedOaklineTransaction.sender_tag && (
-                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.25rem' }}>
+                    <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem', fontWeight: '500' }}>
                       {selectedOaklineTransaction.sender_name}
                     </div>
                   )}
