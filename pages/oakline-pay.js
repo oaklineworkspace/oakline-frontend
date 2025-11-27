@@ -628,7 +628,7 @@ export default function OaklinePayPage() {
           {/* Tab Content */}
           <div style={styles.contentSection}>
             {/* Send Money Tab */}
-            {activeTab === 'send' && (
+            {activeTab === 'send' && transferStep !== 'pin' && (
               <div>
                 {/* Step-based transfer flow */}
                 {transferStep === null && (
@@ -943,46 +943,6 @@ export default function OaklinePayPage() {
                   </div>
                 )}
 
-                {/* STEP 2: PIN VERIFICATION */}
-                {transferStep === 'pin' && pendingTransaction && (
-                  <div>
-                    <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-                      <div style={{ display: 'inline-block', padding: '1rem 1.5rem', backgroundColor: 'rgba(5, 150, 105, 0.1)', borderLeft: '4px solid #059669', borderRadius: '8px' }}>
-                        <p style={{ margin: 0, color: '#047857', fontSize: '0.9rem', fontWeight: '600' }}>🔐 Step 2 of 2: Confirm with PIN</p>
-                      </div>
-                    </div>
-
-                    {verifyingPin && (
-                      <div style={{
-                        backgroundColor: 'rgba(5, 150, 105, 0.15)',
-                        border: '2px solid #059669',
-                        borderRadius: '12px',
-                        padding: '1.5rem',
-                        marginBottom: '1.5rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '1rem'
-                      }}>
-                        <div style={{
-                          width: '48px',
-                          height: '48px',
-                          backgroundColor: '#059669',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          animation: 'spin 1s linear infinite'
-                        }}>
-                          <div style={{
-                            fontSize: '1.5rem'
-                          }}>⏳</div>
-                        </div>
-                        <div style={{ color: '#047857', fontSize: '1rem', fontWeight: '600' }}>
-                          Verifying your PIN and completing transfer...
-                        </div>
-                      </div>
-                    )}
 
                     {transferStatus && transferStatusType === 'error' && (
                       <div style={{
@@ -1462,6 +1422,70 @@ export default function OaklinePayPage() {
           </div>
         </main>
       </div>
+
+      {/* PIN VERIFICATION FULL PAGE */}
+      {activeTab === 'send' && transferStep === 'pin' && pendingTransaction && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: '#f0f4f8',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999,
+          padding: '1rem'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: 'clamp(1.5rem, 5vw, 3rem)',
+            maxWidth: '550px',
+            width: '100%',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+              <div style={{ display: 'inline-block', padding: '1rem 1.5rem', backgroundColor: 'rgba(5, 150, 105, 0.1)', borderLeft: '4px solid #059669', borderRadius: '8px' }}>
+                <p style={{ margin: 0, color: '#047857', fontSize: '0.9rem', fontWeight: '600' }}>🔐 Step 2 of 2: Confirm with PIN</p>
+              </div>
+            </div>
+
+            {verifyingPin && (
+              <div style={{
+                backgroundColor: 'rgba(5, 150, 105, 0.15)',
+                border: '2px solid #059669',
+                borderRadius: '12px',
+                padding: '1.5rem',
+                marginBottom: '1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                justifyContent: 'center'
+              }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  backgroundColor: '#059669',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  animation: 'spin 1s linear infinite'
+                }}>
+                  <div style={{
+                    fontSize: '1.5rem'
+                  }}>⏳</div>
+                </div>
+                <div style={{ color: '#047857', fontSize: '1rem', fontWeight: '600' }}>
+                  Verifying your PIN and completing transfer...
+                </div>
+              </div>
+            )}
 
       {/* Setup Oakline Tag Modal */}
       {/* Receipt Modal */}
