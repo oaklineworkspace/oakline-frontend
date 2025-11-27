@@ -359,7 +359,9 @@ export default function OaklinePayPage() {
         return;
       }
 
-      // Show receipt with success
+      // Show receipt with success - wait for user to close
+      setTransferStatus('✅ Transfer Complete!');
+      setTransferStatusType('success');
       setReceiptData({
         ...data,
         ...pendingTransaction,
@@ -369,15 +371,7 @@ export default function OaklinePayPage() {
         completed_at: new Date().toISOString()
       });
       setShowReceiptModal(true);
-      
-      setTimeout(() => {
-        setTransferStep(null);
-        setPendingTransaction(null);
-        setVerifyForm({ code: '' });
-        setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
-        setShowReceiptModal(false);
-        checkUserAndLoadData();
-      }, 3000);
+      checkUserAndLoadData();
     } catch (error) {
       console.error('Error verifying:', error);
       setTransferStatus('Transaction failed. Please try again.');
@@ -865,7 +859,7 @@ export default function OaklinePayPage() {
                             <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#059669', fontFamily: 'monospace' }}>
                               {pendingTransaction.recipient_type === 'oakline_tag' ? `@${pendingTransaction.recipient_contact}` : pendingTransaction.recipient_contact}
                             </p>
-                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: '#10b981', fontWeight: '600' }}>✓ Oakline Member</p>
+                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: '#10b981', fontWeight: '600' }}>✓ Oakline User</p>
                           </>
                         ) : (
                           <>
