@@ -567,8 +567,24 @@ export default function OaklinePayPage() {
         <main style={styles.main}>
           {/* Welcome Section */}
           <div style={styles.welcomeSection}>
-            <h1 style={styles.welcomeTitle}>💸 Oakline Pay</h1>
-            <p style={styles.welcomeSubtitle}>Send money instantly to other Oakline Bank customers</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', gap: '1rem', flexWrap: 'wrap' }}>
+              <div>
+                <h1 style={styles.welcomeTitle}>💸 Oakline Pay</h1>
+                <p style={styles.welcomeSubtitle}>Send money instantly to other Oakline Bank customers</p>
+              </div>
+              <button
+                onClick={() => setActiveTab('settings')}
+                style={{
+                  ...styles.secondaryButton,
+                  whiteSpace: 'nowrap',
+                  padding: '0.7rem 1.2rem',
+                  fontSize: '0.95rem',
+                  alignSelf: 'flex-start'
+                }}
+              >
+                ⚙️ Settings
+              </button>
+            </div>
             {oaklineProfile?.oakline_tag && (
               <div style={styles.tagBadge}>
                 ✓ Your Oakline Tag: <strong>@{oaklineProfile.oakline_tag}</strong>
@@ -593,11 +609,11 @@ export default function OaklinePayPage() {
             </div>
           )}
 
-          {/* Tab Navigation - Responsive */}
+          {/* Tab Navigation - Only show Send, Requests, Contacts (no Settings) */}
           <div style={styles.tabsContainer}>
             {!isMobile ? (
               <div style={styles.tabsGrid}>
-                {tabs.map(tab => (
+                {tabs.filter(tab => tab.id !== 'settings').map(tab => (
                   <button
                     key={tab.id}
                     style={{
@@ -614,7 +630,7 @@ export default function OaklinePayPage() {
             ) : (
               <div style={styles.mobileTabsWrapper}>
                 <div style={styles.mobileTabsScroll}>
-                  {tabs.slice(0, 4).map(tab => (
+                  {tabs.filter(tab => tab.id !== 'settings').slice(0, 4).map(tab => (
                     <button
                       key={tab.id}
                       style={{
@@ -627,31 +643,6 @@ export default function OaklinePayPage() {
                       {tab.count > 0 && <span style={styles.tabBadge}>{tab.count}</span>}
                     </button>
                   ))}
-                </div>
-                <div style={styles.settingsMenuContainer}>
-                  <button
-                    style={{
-                      ...styles.mobileTab,
-                      ...(activeTab === 'settings' ? styles.mobileTabActive : {}),
-                      minWidth: '60px'
-                    }}
-                    onClick={() => setShowTabMenu(!showTabMenu)}
-                  >
-                    ⚙️
-                  </button>
-                  {showTabMenu && (
-                    <div style={styles.settingsDropdown}>
-                      <button
-                        style={styles.settingsOption}
-                        onClick={() => {
-                          setActiveTab('settings');
-                          setShowTabMenu(false);
-                        }}
-                      >
-                        ⚙️ Settings
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -755,9 +746,6 @@ export default function OaklinePayPage() {
                     <div style={styles.actionButtons}>
                       <button onClick={generateQRCode} style={styles.secondaryButton} disabled={loading || !oaklineProfile?.oakline_tag}>
                         📱 Show QR Code
-                      </button>
-                      <button onClick={() => setShowRequestModal(true)} style={styles.secondaryButton} disabled={loading}>
-                        📋 Request Money
                       </button>
                     </div>
                   </>
@@ -1102,6 +1090,115 @@ export default function OaklinePayPage() {
                       </div>
                     ))
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Requests Tab */}
+            {activeTab === 'requests' && (
+              <div>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+                  {/* Request Form */}
+                  <div>
+                    <h2 style={styles.sectionTitle}>📋 New Request</h2>
+                    <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                      <p style={{ margin: '0 0 1.5rem 0', color: '#64748b', fontSize: '0.95rem' }}>Ask someone to send you funds</p>
+                      <form onSubmit={handleRequestMoney} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div>
+                          <label style={{ ...styles.label, fontWeight: '600', color: '#1e293b', marginBottom: '0.5rem', display: 'block' }}>Select Account *</label>
+                          <select style={{ ...styles.input, padding: '0.875rem', backgroundColor: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '0.95rem' }} value={requestForm.from_account} onChange={(e) => setRequestForm({ ...requestForm, from_account: e.target.value })} required>
+                            <option value="">Choose account</option>
+                            {accounts.map(acc => (
+                              <option key={acc.id} value={acc.id}>
+                                {acc.account_type?.replace('_', ' ')?.toUpperCase()}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label style={{ ...styles.label, fontWeight: '600', color: '#1e293b', marginBottom: '0.5rem', display: 'block' }}>Request From *</label>
+                          <select style={{ ...styles.input, padding: '0.875rem', backgroundColor: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '0.95rem' }} value={requestForm.recipient_type} onChange={(e) => setRequestForm({ ...requestForm, recipient_type: e.target.value })}>
+                            <option value="oakline_tag">Oakline Tag (@username)</option>
+                            <option value="email">Email Address</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label style={{ ...styles.label, fontWeight: '600', color: '#1e293b', marginBottom: '0.5rem', display: 'block' }}>
+                            {requestForm.recipient_type === 'oakline_tag' ? 'Oakline Tag *' : 'Email Address *'}
+                          </label>
+                          <div style={{ position: 'relative', display: requestForm.recipient_type === 'oakline_tag' ? 'flex' : 'block' }}>
+                            {requestForm.recipient_type === 'oakline_tag' && (
+                              <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', fontSize: '1.1rem', color: '#059669', fontWeight: '700' }}>@</span>
+                            )}
+                            <input 
+                              type="text" 
+                              style={{ ...styles.input, padding: requestForm.recipient_type === 'oakline_tag' ? '0.875rem 0.875rem 0.875rem 2.5rem' : '0.875rem', backgroundColor: '#f8fafc', border: '2px solid #e2e8f0' }} 
+                              value={requestForm.recipient_contact} 
+                              onChange={(e) => setRequestForm({ ...requestForm, recipient_contact: e.target.value })} 
+                              placeholder={requestForm.recipient_type === 'oakline_tag' ? 'username' : 'example@email.com'}
+                              required 
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label style={{ ...styles.label, fontWeight: '600', color: '#1e293b', marginBottom: '0.5rem', display: 'block' }}>Amount ($) *</label>
+                          <input type="number" step="0.01" min="0.01" style={{ ...styles.input, padding: '0.875rem', backgroundColor: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '0.95rem' }} value={requestForm.amount} onChange={(e) => setRequestForm({ ...requestForm, amount: e.target.value })} placeholder="0.00" required />
+                        </div>
+
+                        <div>
+                          <label style={{ ...styles.label, fontWeight: '600', color: '#1e293b', marginBottom: '0.5rem', display: 'block' }}>Memo (Optional)</label>
+                          <input type="text" style={{ ...styles.input, padding: '0.875rem', backgroundColor: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '0.95rem' }} value={requestForm.memo} onChange={(e) => setRequestForm({ ...requestForm, memo: e.target.value })} placeholder="What's this for?" maxLength={100} />
+                        </div>
+
+                        <button type="submit" style={{ ...styles.primaryButton, padding: '0.9rem' }} disabled={loading}>
+                          {loading ? 'Sending...' : '✓ Send Request'}
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+
+                  {/* Request History */}
+                  <div>
+                    <h2 style={styles.sectionTitle}>📊 Request History</h2>
+                    <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', maxHeight: '500px', overflowY: 'auto' }}>
+                      {paymentRequests.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#64748b' }}>
+                          <p style={{ fontSize: '0.95rem' }}>No requests yet</p>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'grid', gap: '1rem' }}>
+                          {paymentRequests.map(req => (
+                            <div key={req.id} style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '10px', borderLeft: '4px solid #059669' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
+                                <div>
+                                  <p style={{ margin: 0, fontWeight: '600', color: '#1a365d' }}>
+                                    {req.requester_id ? '📤 Sent to' : '📥 Received from'} {req.recipient_contact}
+                                  </p>
+                                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                                    {new Date(req.created_at).toLocaleDateString()}
+                                  </p>
+                                </div>
+                                <span style={{ backgroundColor: req.status === 'accepted' ? '#d1fae5' : req.status === 'rejected' ? '#fee2e2' : '#fef3c7', color: req.status === 'accepted' ? '#047857' : req.status === 'rejected' ? '#991b1b' : '#92400e', padding: '0.25rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                                  {(req.status || 'pending').toUpperCase()}
+                                </span>
+                              </div>
+                              <p style={{ margin: '0.5rem 0 0 0', fontSize: '1.1rem', fontWeight: '700', color: '#059669' }}>
+                                ${parseFloat(req.amount).toFixed(2)}
+                              </p>
+                              {req.memo && (
+                                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#64748b', fontStyle: 'italic' }}>
+                                  "{req.memo}"
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
