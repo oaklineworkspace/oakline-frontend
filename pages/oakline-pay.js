@@ -1995,31 +1995,50 @@ export default function OaklinePayPage() {
               ×
             </button>
 
-            <div style={{ textAlign: 'center', marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '2px solid #e2e8f0' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                <img src="https://theoaklinebank.com/logo.png" alt="Oakline Bank" style={{ height: '24px', width: 'auto' }} onError={(e) => e.target.style.display = 'none'} />
-                <div style={{ fontSize: '1.5rem' }}>💳</div>
-              </div>
-              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: '#1a365d', marginBottom: '0.15rem' }}>Transaction Receipt</h2>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Oakline Pay • {selectedOaklineTransaction.sender_id === user?.id ? 'Money Sent' : 'Money Received'}</p>
+            <div style={{
+              borderBottom: '2px solid #e2e8f0',
+              paddingBottom: '1rem',
+              marginBottom: '1.5rem',
+              textAlign: 'center'
+            }}>
+              <h2 style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                color: '#1e293b',
+                marginBottom: '0.5rem',
+                margin: 0
+              }}>
+                Transaction Receipt
+              </h2>
+              <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>
+                Oakline Pay • {selectedOaklineTransaction.sender_id === user?.id ? 'Money Sent' : 'Money Received'}
+              </p>
             </div>
 
-            {/* Professional Header with Amount and Details - Responsive */}
-            <div style={{ backgroundColor: selectedOaklineTransaction.sender_id === user?.id ? '#fee2e2' : '#dcfce7', padding: '1rem', borderRadius: '16px', marginBottom: '1.25rem', textAlign: 'center', border: `2px solid ${selectedOaklineTransaction.sender_id === user?.id ? '#fca5a5' : '#86efac'}` }}>
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                <div style={{ fontSize: '1.5rem' }}>
-                  {selectedOaklineTransaction.sender_id === user?.id ? '📤' : '📥'}
-                </div>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500', marginBottom: '0.1rem' }}>
-                    {selectedOaklineTransaction.sender_id === user?.id ? 'You Sent' : 'You Received'}
-                  </div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: '700', color: selectedOaklineTransaction.sender_id === user?.id ? '#dc2626' : '#16a34a', lineHeight: '1' }}>
-                    {selectedOaklineTransaction.sender_id === user?.id ? '-' : '+'} ${parseFloat(selectedOaklineTransaction.amount).toFixed(2)}
-                  </div>
-                </div>
+            {/* Amount Display - Matching Dashboard Style */}
+            <div style={{
+              backgroundColor: selectedOaklineTransaction.sender_id === user?.id ? '#fee2e2' : '#dcfce7',
+              padding: '1.5rem',
+              borderRadius: '12px',
+              marginBottom: '1.5rem',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                fontSize: '0.9rem',
+                color: '#64748b',
+                marginBottom: '0.5rem'
+              }}>
+                Amount
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', paddingTop: '0.5rem', borderTop: `1px solid ${selectedOaklineTransaction.sender_id === user?.id ? '#fca5a5' : '#86efac'}` }}>
+              <div style={{
+                fontSize: '2rem',
+                fontWeight: '700',
+                color: selectedOaklineTransaction.sender_id === user?.id ? '#dc2626' : '#059669',
+                marginBottom: '0.5rem'
+              }}>
+                {selectedOaklineTransaction.sender_id === user?.id ? '-' : '+'} ${parseFloat(selectedOaklineTransaction.amount).toFixed(2)}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
                 {selectedOaklineTransaction.status === 'completed' ? '✓ Transaction Completed' : `Status: ${selectedOaklineTransaction.status?.toUpperCase()}`}
               </div>
             </div>
