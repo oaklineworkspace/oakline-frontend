@@ -146,13 +146,17 @@ export default function OaklinePayPage() {
         .order('contact_name');
       setContacts(payContacts || []);
 
-      // Load transactions with all name and tag fields
-      const { data: payTxns } = await supabase
+      // Load transactions with all fields
+      const { data: payTxns, error: txnError } = await supabase
         .from('oakline_pay_transactions')
-        .select('id, sender_id, sender_name, sender_tag, recipient_id, recipient_name, recipient_tag, amount, status, created_at, memo, reference_number')
+        .select('*')
         .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
         .order('created_at', { ascending: false })
         .limit(50);
+      
+      if (txnError) {
+        console.error('Error loading transactions:', txnError);
+      }
       setTransactions(payTxns || []);
 
       // Load payment requests

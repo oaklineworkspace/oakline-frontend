@@ -2097,7 +2097,7 @@ function DashboardContent() {
             </span>
           </div>
 
-          {(selectedTransaction.sender_display || selectedTransaction.recipient_display) && (
+          {((selectedTransaction.type || selectedTransaction.transaction_type) === 'oakline_pay_send' || (selectedTransaction.type || selectedTransaction.transaction_type) === 'oakline_pay_receive') && (
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -2108,7 +2108,9 @@ function DashboardContent() {
                 {(selectedTransaction.type || selectedTransaction.transaction_type) === 'oakline_pay_send' ? 'Sent to' : 'Received from'}
               </span>
               <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-word' }}>
-                {(selectedTransaction.type || selectedTransaction.transaction_type) === 'oakline_pay_send' ? selectedTransaction.recipient_display : selectedTransaction.sender_display}
+                {(selectedTransaction.type || selectedTransaction.transaction_type) === 'oakline_pay_send' 
+                  ? (selectedTransaction.recipient_tag || selectedTransaction.recipient_name || selectedTransaction.recipient_display || 'User')
+                  : (selectedTransaction.sender_tag || selectedTransaction.sender_name || selectedTransaction.sender_display || 'User')}
               </span>
             </div>
           )}
