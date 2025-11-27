@@ -275,7 +275,7 @@ export default async function handler(req, res) {
 
         // Create pending payment record (NO balance deduction yet)
         const { data: pendingPayment, error: pendingError } = await supabaseAdmin
-          .from('pending_payments')
+          .from('oakline_pay_pending_claims')
           .insert({
             sender_id: user.id,
             sender_name: senderData.full_name,
@@ -326,7 +326,7 @@ export default async function handler(req, res) {
 
       // Get the pending payment
       const { data: pendingPayment, error: paymentError } = await supabaseAdmin
-        .from('pending_payments')
+        .from('oakline_pay_pending_claims')
         .select('*')
         .eq('id', payment_id)
         .eq('sender_id', user.id)
