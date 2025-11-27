@@ -101,19 +101,42 @@ export default async function handler(req, res) {
             const userId = profile.user_id;
             console.log('✅ Found Oakline tag profile:', profile.oakline_tag, '- User ID:', userId);
 
-            // Fetch the user's profile
-            const { data: userProfile, error: profileError } = await supabaseAdmin
-              .from('profiles')
-              .select('id, full_name, first_name, email')
-              .eq('id', userId)
-              .single();
+            // Fetch the user's profile - try different column names
+            let userProfile = null;
+            let profileError = null;
+            
+            // Try with common column names
+            const columnSets = [
+              'id, full_name, email, first_name, last_name',
+              'id, name, email',
+              'id, email'
+            ];
 
-            if (profileError) {
-              console.error('❌ Error fetching profile for user:', userId, profileError);
-            } else if (userProfile) {
+            for (const cols of columnSets) {
+              const { data, error } = await supabaseAdmin
+                .from('profiles')
+                .select(cols)
+                .eq('id', userId)
+                .single();
+              
+              if (!error && data) {
+                userProfile = data;
+                profileError = null;
+                break;
+              }
+              profileError = error;
+            }
+
+            if (userProfile) {
               recipientProfile = userProfile;
               isOaklineUser = true;
-              console.log('✅ Found Oakline user:', userProfile?.full_name || userProfile?.first_name);
+              const displayName = userProfile?.full_name || userProfile?.name || userProfile?.first_name || 'User';
+              console.log('✅ Found Oakline user:', displayName);
+            } else {
+              console.warn('⚠️ Could not fetch profile for user:', userId, 'But tag is valid');
+              // Still mark as Oakline user even if profile fetch fails
+              recipientProfile = { id: userId };
+              isOaklineUser = true;
             }
           } else {
             console.warn('⚠️ No Oakline profile found for tag:', normalizedTag);
