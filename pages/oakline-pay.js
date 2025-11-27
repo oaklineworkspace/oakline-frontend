@@ -527,7 +527,6 @@ export default function OaklinePayPage() {
     { id: 'send', label: '📤 Send', count: 0 },
     { id: 'requests', label: '📋 Requests', count: paymentRequests.filter(r => r.recipient_id === user?.id && r.status === 'pending').length },
     { id: 'contacts', label: '👥 Contacts', count: contacts.length },
-    { id: 'history', label: '📊 History', count: 0 },
     { id: 'settings', label: '⚙️ Settings', count: 0 }
   ];
 
@@ -2071,26 +2070,26 @@ const styles = {
   },
   mobileTabsScroll: {
     display: 'flex',
-    gap: '0.75rem',
+    gap: '0.5rem',
     overflowX: 'auto',
     flex: 1,
     paddingBottom: '0.5rem',
     scrollBehavior: 'smooth'
   },
   mobileTab: {
-    padding: '0.75rem 1rem',
+    padding: '0.5rem 0.65rem',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     color: '#cbd5e1',
     border: '2px solid rgba(255, 255, 255, 0.2)',
     borderRadius: '10px',
     cursor: 'pointer',
-    fontSize: '0.85rem',
+    fontSize: '0.7rem',
     fontWeight: '600',
     transition: 'all 0.3s',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '0.5rem',
+    gap: '0.35rem',
     whiteSpace: 'nowrap',
     minWidth: 'max-content'
   },
