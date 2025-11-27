@@ -129,12 +129,16 @@ export default async function handler(req, res) {
         const normalizedTag = recipient_contact.toLowerCase().replace(/^@/, '');
         const tagWithAt = `@${normalizedTag}`;
         
+        console.log('🔍 Looking for oakline tag:', { normalizedTag, tagWithAt, recipient_contact });
+        
         // Try both formats for backwards compatibility (some may be stored with @, some without)
-        let { data: oaklineProfile } = await supabaseAdmin
+        let { data: oaklineProfile, error: tagError } = await supabaseAdmin
           .from('oakline_pay_profiles')
           .select('user_id, display_name, oakline_tag, is_active')
           .eq('is_active', true)
-          .in('oakline_tag', [normalizedTag, tagWithAt]);
+          .or(`oakline_tag.ilike.${normalizedTag},oakline_tag.ilike.${tagWithAt}`);
+
+        console.log('✓ Tag lookup result:', { found: oaklineProfile?.length > 0, profiles: oaklineProfile, error: tagError });
 
         // Use the first match found
         if (oaklineProfile && oaklineProfile.length > 0) {
@@ -146,6 +150,9 @@ export default async function handler(req, res) {
             oakline_tag: oaklineProfile[0].oakline_tag
           };
           isOaklineUser = true;
+          console.log('✅ Found Oakline user:', recipientProfile);
+        } else {
+          console.warn('⚠️ No Oakline tag found for:', normalizedTag);
         }
       } else if (recipient_type === 'email') {
         const { data: user_data } = await supabaseAdmin
