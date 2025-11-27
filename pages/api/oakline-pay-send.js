@@ -285,7 +285,7 @@ export default async function handler(req, res) {
             amount: transferAmount,
             memo: memo || null,
             claim_token: claimToken,
-            status: 'pending_review',
+            status: 'pending',
             expires_at: claimExpiresAt
           })
           .select()
@@ -329,15 +329,15 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: 'Payment not found' });
       }
 
-      if (pendingPayment.status !== 'pending_review') {
+      if (pendingPayment.status !== 'pending') {
         return res.status(400).json({ error: 'Payment already processed' });
       }
 
-      // Get sender's current account
+      // Get sender's current account using the sender_id from pending payment
       const { data: currentAccount } = await supabaseAdmin
         .from('accounts')
         .select('balance')
-        .eq('id', sender_account_id)
+        .eq('id', pendingPayment.sender_account_id)
         .single();
 
       const transferAmount = parseFloat(pendingPayment.amount);
@@ -350,14 +350,14 @@ export default async function handler(req, res) {
       await supabaseAdmin
         .from('accounts')
         .update({ balance: senderNewBalance, updated_at: new Date().toISOString() })
-        .eq('id', sender_account_id);
+        .eq('id', pendingPayment.sender_account_id);
 
       // Create debit transaction for sender
       await supabaseAdmin
         .from('transactions')
         .insert({
-          user_id: user.id,
-          account_id: sender_account_id,
+          user_id: pendingPayment.sender_id,
+          account_id: pendingPayment.sender_account_id,
           type: 'oakline_pay_send',
           amount: transferAmount,
           description: `Oakline Pay sent to ${pendingPayment.recipient_email}`,
