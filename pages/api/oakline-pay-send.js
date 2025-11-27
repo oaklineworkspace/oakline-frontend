@@ -452,9 +452,11 @@ export default async function handler(req, res) {
 
       const transactionRef = transaction.reference_number;
 
-      // Fetch sender and recipient profiles for transaction descriptions
+      // Fetch sender and recipient profiles + oakline_pay_profiles for transaction descriptions
       let senderProf = null;
+      let senderOaklineProf = null;
       let recipientProf = null;
+      let recipientOaklineProf = null;
       
       try {
         const senderResult = await supabaseAdmin
@@ -463,6 +465,14 @@ export default async function handler(req, res) {
           .eq('id', transaction.sender_id)
           .maybeSingle();
         senderProf = senderResult.data;
+        
+        const senderOakResult = await supabaseAdmin
+          .from('oakline_pay_profiles')
+          .select('oakline_tag, display_name')
+          .eq('user_id', transaction.sender_id)
+          .eq('is_active', true)
+          .maybeSingle();
+        senderOaklineProf = senderOakResult.data;
       } catch (err) {
         console.error('Error fetching sender profile:', err);
       }
@@ -474,16 +484,28 @@ export default async function handler(req, res) {
           .eq('id', transaction.recipient_id)
           .maybeSingle();
         recipientProf = recipientResult.data;
+        
+        const recipientOakResult = await supabaseAdmin
+          .from('oakline_pay_profiles')
+          .select('oakline_tag, display_name')
+          .eq('user_id', transaction.recipient_id)
+          .eq('is_active', true)
+          .maybeSingle();
+        recipientOaklineProf = recipientOakResult.data;
       } catch (err) {
         console.error('Error fetching recipient profile:', err);
       }
 
-      // Build names with fallbacks
-      const senderName = senderProf?.full_name || 
+      // Build names with priority: oakline_tag > display_name > full_name > first_name
+      const senderName = senderOaklineProf?.oakline_tag || 
+        senderOaklineProf?.display_name || 
+        senderProf?.full_name || 
         `${senderProf?.first_name || ''} ${senderProf?.last_name || ''}`.trim() || 
         senderProf?.email?.split('@')[0] || 'User';
       
-      const recipientName = recipientProf?.full_name || 
+      const recipientName = recipientOaklineProf?.oakline_tag || 
+        recipientOaklineProf?.display_name || 
+        recipientProf?.full_name || 
         `${recipientProf?.first_name || ''} ${recipientProf?.last_name || ''}`.trim() || 
         recipientProf?.email?.split('@')[0] || 'User';
 
