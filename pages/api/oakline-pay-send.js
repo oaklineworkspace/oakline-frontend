@@ -455,12 +455,16 @@ export default async function handler(req, res) {
           balance_after: recipientNewBalance
         });
 
-      // Update transaction status
+      // Update transaction status with sender and recipient info
       await supabaseAdmin
         .from('oakline_pay_transactions')
         .update({
           status: 'completed',
           is_verified: true,
+          sender_name: senderProfile?.full_name || senderProfile?.first_name || 'User',
+          sender_tag: null,
+          recipient_name: recipientProfile?.full_name || recipientProfile?.first_name || 'User',
+          recipient_tag: null,
           sender_balance_after: senderNewBalance,
           recipient_balance_before: parseFloat(recipientAccount.balance),
           recipient_balance_after: recipientNewBalance,
