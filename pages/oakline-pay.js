@@ -640,6 +640,70 @@ export default function OaklinePayPage() {
                 {transferStep === null && (
                   <>
                     <h2 style={styles.sectionTitle}>💸 Send Money</h2>
+                    
+                    {loading && (
+                      <div style={{
+                        backgroundColor: 'rgba(5, 150, 105, 0.15)',
+                        border: '2px solid #059669',
+                        borderRadius: '12px',
+                        padding: '1.5rem',
+                        marginBottom: '1.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem'
+                      }}>
+                        <div style={{
+                          width: '48px',
+                          height: '48px',
+                          backgroundColor: '#059669',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          animation: 'spin 1s linear infinite'
+                        }}>
+                          <div style={{
+                            fontSize: '1.5rem'
+                          }}>⏳</div>
+                        </div>
+                        <div style={{ color: '#047857', fontSize: '1rem', fontWeight: '600' }}>
+                          Processing your transfer...
+                        </div>
+                      </div>
+                    )}
+                    
+                    {!loading && sendForm.from_account && accounts.find(acc => acc.id === sendForm.from_account) && 
+                     parseFloat(accounts.find(acc => acc.id === sendForm.from_account)?.balance || 0) < parseFloat(sendForm.amount || 0) && sendForm.amount && (
+                      <div style={{
+                        backgroundColor: 'rgba(220, 38, 38, 0.15)',
+                        border: '2px solid #dc2626',
+                        borderRadius: '12px',
+                        padding: '1.5rem',
+                        marginBottom: '1.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem'
+                      }}>
+                        <div style={{
+                          width: '48px',
+                          height: '48px',
+                          backgroundColor: '#dc2626',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          fontSize: '1.5rem'
+                        }}>
+                          ⚠️
+                        </div>
+                        <div style={{ color: '#991b1b', fontSize: '1rem', fontWeight: '600' }}>
+                          Insufficient funds in selected account
+                        </div>
+                      </div>
+                    )}
+                    
                     <form onSubmit={handleSendMoney} style={styles.form}>
                   <div style={styles.formGrid}>
                     <div style={styles.formGroup}>
@@ -721,8 +785,13 @@ export default function OaklinePayPage() {
                     </div>
                   </div>
 
-                  <button type="submit" style={styles.primaryButton} disabled={loading}>
-                    {loading ? 'Processing...' : '💸 Send Money'}
+                  <button type="submit" style={{
+                    ...styles.primaryButton,
+                    opacity: loading ? 0.6 : 1,
+                    cursor: loading ? 'not-allowed' : 'pointer'
+                  }} disabled={loading || (sendForm.from_account && accounts.find(acc => acc.id === sendForm.from_account) && 
+                    parseFloat(accounts.find(acc => acc.id === sendForm.from_account)?.balance || 0) < parseFloat(sendForm.amount || 0) && sendForm.amount)}>
+                    💸 Send Money
                   </button>
                     </form>
 
