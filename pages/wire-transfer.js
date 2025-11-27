@@ -2017,7 +2017,7 @@ export default function WireTransfer() {
                           disabled={!transactionPin || transactionPin.length < 4 || verifyingPin}
                           style={{
                             ...styles.button,
-                            backgroundColor: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? '#64748b' : '#059669',
+                            backgroundColor: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? '#1e40af' : '#059669',
                             color: 'white',
                             cursor: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? 'not-allowed' : 'pointer',
                             opacity: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? 0.6 : 1
