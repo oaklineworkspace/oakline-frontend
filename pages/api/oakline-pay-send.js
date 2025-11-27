@@ -382,7 +382,7 @@ export default async function handler(req, res) {
 
       // Update pending payment status
       await supabaseAdmin
-        .from('pending_payments')
+        .from('oakline_pay_pending_claims')
         .update({ status: 'sent' })
         .eq('id', payment_id);
 

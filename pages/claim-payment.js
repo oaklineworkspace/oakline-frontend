@@ -34,7 +34,7 @@ export default function ClaimPaymentPage() {
   const loadPaymentDetails = async () => {
     try {
       const { data: paymentData, error } = await supabase
-        .from('pending_payments')
+        .from('oakline_pay_pending_claims')
         .select('*')
         .eq('claim_token', token)
         .eq('status', 'pending')
@@ -74,7 +74,7 @@ export default function ClaimPaymentPage() {
 
       // Update pending payment as claimed
       const { error } = await supabase
-        .from('pending_payments')
+        .from('oakline_pay_pending_claims')
         .update({
           status: 'claimed',
           claimed_by_user_id: session.user.id,
