@@ -150,36 +150,9 @@ export default async function handler(req, res) {
         .update({ balance: receiverNewBalance, updated_at: new Date().toISOString() })
         .eq('id', transaction.recipient_account_id);
 
-      // Create credit transaction for receiver
-      await supabaseAdmin
-        .from('transactions')
-        .insert({
-          user_id: transaction.recipient_id,
-          account_id: transaction.recipient_account_id,
-          type: 'oakline_pay_receive',
-          amount: transferAmount,
-          description: `Oakline Pay from ${transaction.sender_contact || 'Oakline User'}${transaction.memo ? ` - ${transaction.memo}` : ''}`,
-          reference: transaction.reference_number,
-          status: 'completed',
-          balance_before: parseFloat(receiverAccount.balance),
-          balance_after: receiverNewBalance
-        });
-
-      // Update transaction status - CRITICAL: Must complete before returning
-      const { error: statusError } = await supabaseAdmin
-        .from('oakline_pay_transactions')
-        .update({ status: 'completed', updated_at: new Date().toISOString() })
-        .eq('id', transaction_id);
-
-      if (statusError) {
-        console.error('❌ CRITICAL: Failed to update transaction status to completed:', statusError);
-      } else {
-        console.log('✅ Transaction status updated to COMPLETED for transaction:', transaction_id);
-      }
-
       // Get sender and receiver from auth users and profiles
-      const { data: senderAuthData, error: senderAuthError } = await supabaseAdmin.auth.admin.getUserById(transaction.sender_id);
-      const { data: receiverAuthData, error: receiverAuthError } = await supabaseAdmin.auth.admin.getUserById(transaction.recipient_id);
+      const { data: senderAuthData } = await supabaseAdmin.auth.admin.getUserById(transaction.sender_id);
+      const { data: receiverAuthData } = await supabaseAdmin.auth.admin.getUserById(transaction.recipient_id);
 
       const senderEmail = senderAuthData?.user?.email;
       const receiverEmail = receiverAuthData?.user?.email;
@@ -199,16 +172,67 @@ export default async function handler(req, res) {
       const senderName = senderProfile ? `${senderProfile.first_name || ''} ${senderProfile.last_name || ''}`.trim() : 'Sender';
       const receiverName = receiverProfile ? `${receiverProfile.first_name || ''} ${receiverProfile.last_name || ''}`.trim() : 'Recipient';
 
+      // Create debit transaction for sender
+      await supabaseAdmin
+        .from('transactions')
+        .insert({
+          user_id: transaction.sender_id,
+          account_id: transaction.sender_account_id,
+          type: 'oakline_pay_send',
+          amount: -transferAmount,
+          description: `Oakline Pay to ${receiverName}${transaction.memo ? ` - ${transaction.memo}` : ''}`,
+          reference: transaction.reference_number,
+          status: 'completed',
+          balance_before: senderAccount.balance,
+          balance_after: senderNewBalance
+        });
+
+      // Create credit transaction for receiver
+      await supabaseAdmin
+        .from('transactions')
+        .insert({
+          user_id: transaction.recipient_id,
+          account_id: transaction.recipient_account_id,
+          type: 'oakline_pay_receive',
+          amount: transferAmount,
+          description: `Oakline Pay from ${senderName}${transaction.memo ? ` - ${transaction.memo}` : ''}`,
+          reference: transaction.reference_number,
+          status: 'completed',
+          balance_before: parseFloat(receiverAccount.balance),
+          balance_after: receiverNewBalance
+        });
+
+      // Update transaction status - CRITICAL: Must complete before returning
+      const { error: statusError } = await supabaseAdmin
+        .from('oakline_pay_transactions')
+        .update({ status: 'completed', updated_at: new Date().toISOString() })
+        .eq('id', transaction_id);
+
+      if (statusError) {
+        console.error('❌ CRITICAL: Failed to update transaction status to completed:', statusError);
+      } else {
+        console.log('✅ Transaction status updated to COMPLETED for transaction:', transaction_id);
+      }
+
       console.log('📧 Sender email:', senderEmail, 'Receiver email:', receiverEmail);
 
-      // Send notification emails
+      // Get bank details for email from addresses
+      const { data: bankDetails } = await supabaseAdmin
+        .from('bank_details')
+        .select('email_transfers, email_alerts')
+        .limit(1)
+        .single();
+
+      const fromEmail = bankDetails?.email_transfers || 'transfers@theoaklinebank.com';
+
+      // Send debit alert to sender
       if (senderEmail) {
         try {
-          console.log('📧 Sending sender notification to:', senderEmail);
+          console.log('📧 Sending sender debit alert to:', senderEmail);
           await sendEmail({
             to: senderEmail,
             subject: `💸 Oakline Pay Sent - $${transferAmount.toFixed(2)} | Oakline Bank`,
-            emailType: 'notify',
+            emailType: 'alert',
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #1A3E6F 0%, #2C5F8D 100%); padding: 30px; text-align: center;">
@@ -217,8 +241,8 @@ export default async function handler(req, res) {
                 <div style="padding: 30px; background-color: #f8f9fa;">
                   <p>Your Oakline Pay transfer has been completed instantly.</p>
                   <div style="background-color: #fff5e6; border-radius: 12px; padding: 20px; margin: 24px 0;">
-                    <p style="margin: 0 0 10px 0;"><strong>Amount:</strong> $${transferAmount.toFixed(2)}</p>
-                    <p style="margin: 0 0 10px 0;"><strong>To:</strong> ${receiverName || 'Oakline User'}</p>
+                    <p style="margin: 0 0 10px 0;"><strong>Amount:</strong> -$${transferAmount.toFixed(2)}</p>
+                    <p style="margin: 0 0 10px 0;"><strong>To:</strong> ${receiverName}</p>
                     <p style="margin: 0;"><strong>Reference:</strong> ${transaction.reference_number}</p>
                   </div>
                   <p style="color: #666; font-size: 14px;">The recipient has received the funds instantly in their account.</p>
@@ -226,31 +250,32 @@ export default async function handler(req, res) {
               </div>
             `
           });
-          console.log('✅ Sender notification email sent successfully');
+          console.log('✅ Sender debit alert sent successfully');
         } catch (emailError) {
-          console.error('❌ Failed to send sender notification email:', emailError.message);
+          console.error('❌ Failed to send sender debit alert:', emailError.message);
         }
       } else {
         console.warn('⚠️ Sender email not available');
       }
 
+      // Send credit alert to receiver
       if (receiverEmail) {
         try {
-          console.log('📧 Sending receiver notification to:', receiverEmail);
+          console.log('📧 Sending receiver credit alert to:', receiverEmail);
           await sendEmail({
             to: receiverEmail,
             subject: `💰 Money Received - $${transferAmount.toFixed(2)} | Oakline Bank`,
-            emailType: 'notify',
+            emailType: 'alert',
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #1A3E6F 0%, #2C5F8D 100%); padding: 30px; text-align: center;">
                   <h1 style="color: white; margin: 0;">💰 Money Received!</h1>
                 </div>
                 <div style="padding: 30px; background-color: #f8f9fa;">
-                  <p><strong>${senderProfile?.first_name || 'Someone'}</strong> sent you money via Oakline Pay.</p>
+                  <p><strong>${senderName}</strong> sent you money via Oakline Pay.</p>
                   <div style="background-color: #e6f7f0; border-radius: 12px; padding: 20px; margin: 24px 0;">
-                    <p style="margin: 0 0 10px 0;"><strong>Amount:</strong> $${transferAmount.toFixed(2)}</p>
-                    <p style="margin: 0 0 10px 0;"><strong>From:</strong> ${senderName || 'Oakline User'}</p>
+                    <p style="margin: 0 0 10px 0;"><strong>Amount:</strong> +$${transferAmount.toFixed(2)}</p>
+                    <p style="margin: 0 0 10px 0;"><strong>From:</strong> ${senderName}</p>
                     <p style="margin: 0;"><strong>Reference:</strong> ${transaction.reference_number}</p>
                   </div>
                   <p style="color: #059669; font-size: 14px; font-weight: 600;">✓ Funds are now available in your account.</p>
@@ -258,9 +283,9 @@ export default async function handler(req, res) {
               </div>
             `
           });
-          console.log('✅ Receiver notification email sent successfully');
+          console.log('✅ Receiver credit alert sent successfully');
         } catch (emailError) {
-          console.error('❌ Failed to send receiver notification email:', emailError.message);
+          console.error('❌ Failed to send receiver credit alert:', emailError.message);
         }
       } else {
         console.warn('⚠️ Receiver email not available');
