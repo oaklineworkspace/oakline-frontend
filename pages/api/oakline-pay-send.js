@@ -169,9 +169,27 @@ export default async function handler(req, res) {
         }
       }
 
+      // Handle tag not found case
+      if (recipient_type === 'oakline_tag' && !recipientProfile) {
+        console.log('❌ Tag not found, returning not found response');
+        return res.status(200).json({
+          success: true,
+          is_oakline_user: false,
+          tag_not_found: true,
+          message: 'Tag not found',
+          recipient_contact: recipient_contact
+        });
+      }
+
       // Prevent self-transfer
       if (recipientProfile && recipientProfile.id === user.id) {
         return res.status(400).json({ error: 'You cannot send money to yourself' });
+      }
+
+      // For email recipients who don't exist in the system
+      if (recipient_type === 'email' && !recipientProfile) {
+        console.log('⚠️ Email not found in system, creating pending payment for new recipient');
+        // Will create pending payment below
       }
 
       const referenceNumber = generateReference();
