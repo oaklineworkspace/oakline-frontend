@@ -181,6 +181,16 @@ function DashboardContent() {
           .limit(20)
       );
 
+      // Also fetch Oakline Pay transactions to show in dashboard
+      queryPromises.push(
+        supabase
+          .from('oakline_pay_transactions')
+          .select('*')
+          .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
+          .order('created_at', { ascending: false })
+          .limit(20)
+      );
+
       // Execute all parallel queries
       const results = await Promise.all(queryPromises);
       let resultIndex = 0;
@@ -200,6 +210,13 @@ function DashboardContent() {
       const accountOpeningResult = results[resultIndex++];
       if (!accountOpeningResult.error && accountOpeningResult.data) {
         accountOpeningDeposits = accountOpeningResult.data || [];
+      }
+
+      // Get Oakline Pay transactions
+      const oaklinePayResult = results[resultIndex++];
+      let oaklinePayTransactions = [];
+      if (!oaklinePayResult.error && oaklinePayResult.data) {
+        oaklinePayTransactions = oaklinePayResult.data || [];
       }
 
       // Fetch wallet addresses in parallel for both crypto types
@@ -431,9 +448,42 @@ function DashboardContent() {
         return tx;
       });
 
-      // Sort all transactions (already limited to 10 from last 30 days in query)
+      // Format and merge Oakline Pay transactions
+      if (oaklinePayTransactions && oaklinePayTransactions.length > 0) {
+        const formattedOaklinePayTransactions = oaklinePayTransactions.map(tx => {
+          const isSender = tx.sender_id === userId;
+          const otherUserId = isSender ? tx.recipient_id : tx.sender_id;
+          const isInstant = tx.status === 'completed' && tx.claim_token === null;
+          
+          return {
+            id: tx.id,
+            type: isSender ? 'oakline_pay_send' : 'oakline_pay_receive',
+            transaction_type: isSender ? 'oakline_pay_send' : 'oakline_pay_receive',
+            description: isSender 
+              ? `Oakline Pay to ${tx.recipient_tag || tx.recipient_name || 'User'}`
+              : `Oakline Pay from ${tx.sender_tag || tx.sender_name || 'User'}`,
+            amount: isSender ? -parseFloat(tx.amount) : parseFloat(tx.amount),
+            status: tx.status,
+            created_at: tx.created_at,
+            updated_at: tx.updated_at,
+            completed_at: tx.completed_at,
+            recipient_tag: tx.recipient_tag,
+            sender_tag: tx.sender_tag,
+            recipient_name: tx.recipient_name,
+            sender_name: tx.sender_name,
+            is_instant: isInstant,
+            reference_id: tx.reference_id,
+            memo: tx.memo
+          };
+        });
+
+        transactionsData = [...transactionsData, ...formattedOaklinePayTransactions];
+      }
+
+      // Sort all transactions by most recent
       transactionsData = transactionsData
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, 15); // Get top 15 recent transactions (mix of types)
 
       setTransactions(transactionsData);
 
