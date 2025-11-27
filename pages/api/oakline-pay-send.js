@@ -388,11 +388,16 @@ export default async function handler(req, res) {
       }
 
       // Re-check sender balance
-      const { data: senderAccount } = await supabaseAdmin
+      const { data: senderAccount, error: senderError } = await supabaseAdmin
         .from('accounts')
         .select('*')
         .eq('id', transaction.sender_account_id)
         .single();
+
+      if (senderError || !senderAccount) {
+        console.error('Sender account error:', senderError);
+        return res.status(400).json({ error: 'Could not verify account balance' });
+      }
 
       if (parseFloat(senderAccount.balance) < parseFloat(transaction.amount)) {
         await supabaseAdmin
@@ -403,11 +408,16 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Insufficient funds' });
       }
 
-      const { data: recipientAccount } = await supabaseAdmin
+      const { data: recipientAccount, error: recipientError } = await supabaseAdmin
         .from('accounts')
         .select('*')
         .eq('id', transaction.recipient_account_id)
         .single();
+
+      if (recipientError || !recipientAccount) {
+        console.error('Recipient account error:', recipientError);
+        return res.status(400).json({ error: 'Recipient account not found' });
+      }
 
       const amount = parseFloat(transaction.amount);
       const senderNewBalance = parseFloat(senderAccount.balance) - amount;

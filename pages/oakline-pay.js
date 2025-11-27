@@ -748,13 +748,31 @@ export default function OaklinePayPage() {
 
                     {transferStatus && (
                       <div style={{
-                        ...styles.messageAlert,
-                        backgroundColor: transferStatusType === 'success' ? 'rgba(5, 150, 105, 0.1)' : 'rgba(220, 38, 38, 0.1)',
-                        borderColor: transferStatusType === 'success' ? '#059669' : '#dc2626',
-                        color: transferStatusType === 'success' ? '#047857' : '#991b1b',
-                        marginBottom: '1.5rem'
+                        backgroundColor: transferStatusType === 'success' ? 'rgba(5, 150, 105, 0.15)' : 'rgba(220, 38, 38, 0.15)',
+                        border: transferStatusType === 'success' ? '2px solid #059669' : '2px solid #dc2626',
+                        borderRadius: '12px',
+                        padding: '1.5rem',
+                        marginBottom: '1.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem'
                       }}>
-                        {transferStatus}
+                        <div style={{
+                          width: '48px',
+                          height: '48px',
+                          backgroundColor: transferStatusType === 'success' ? '#059669' : '#dc2626',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          fontSize: '1.5rem'
+                        }}>
+                          {transferStatusType === 'success' ? '✓' : '⚠️'}
+                        </div>
+                        <div style={{ color: transferStatusType === 'success' ? '#047857' : '#991b1b', fontSize: '1rem', fontWeight: '600' }}>
+                          {transferStatus}
+                        </div>
                       </div>
                     )}
 
