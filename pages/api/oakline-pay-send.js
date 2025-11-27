@@ -394,10 +394,11 @@ export default async function handler(req, res) {
       try {
         const { data: senderProfile } = await supabaseAdmin
           .from('profiles')
-          .select('full_name')
+          .select('full_name, email')
           .eq('id', user.id)
           .single();
 
+        // Send email to RECIPIENT
         await sendEmail({
           to: pendingPayment.recipient_email,
           subject: `You've received $${transferAmount.toFixed(2)} from Oakline Bank!`,
@@ -438,6 +439,44 @@ export default async function handler(req, res) {
                 </p>
 
                 ${pendingPayment.memo ? `<p style="color: #666; font-size: 14px; margin-top: 1rem;"><strong>Note from sender:</strong> "${pendingPayment.memo}"</p>` : ''}
+              </div>
+            </div>
+          `
+        });
+
+        // Send email to SENDER notification
+        await sendEmail({
+          to: senderProfile?.email || user.email,
+          subject: `Payment Sent: $${transferAmount.toFixed(2)} is waiting to be claimed`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px 8px 0 0; text-align: center;">
+                <h1 style="margin: 0; font-size: 28px;">✅ Payment Sent!</h1>
+              </div>
+              <div style="background: #f8f9fa; padding: 2rem; border-radius: 0 0 8px 8px;">
+                <p style="color: #333; font-size: 16px;">
+                  Your Oakline Pay transfer of <strong style="color: #16a34a; font-size: 20px;">$${transferAmount.toFixed(2)}</strong> has been sent to <strong>${pendingPayment.recipient_email}</strong>
+                </p>
+                
+                <div style="background: white; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid #667eea;">
+                  <p style="margin: 0; color: #666; font-size: 14px; margin-bottom: 1rem;"><strong>Status: ⏳ Waiting for Recipient to Claim</strong></p>
+                  <p style="color: #666; font-size: 13px; margin: 0.5rem 0 0 0;">
+                    The recipient has 14 days to claim this payment via their Oakline Bank account or debit card.
+                  </p>
+                </div>
+
+                <div style="background: #eff6ff; padding: 1rem; border-radius: 8px; margin: 1.5rem 0;">
+                  <p style="color: #333; font-size: 13px; margin: 0;"><strong>Payment Details:</strong></p>
+                  <p style="color: #666; font-size: 12px; margin: 0.5rem 0 0 0;">
+                    Amount: $${transferAmount.toFixed(2)}<br/>
+                    Recipient: ${pendingPayment.recipient_email}<br/>
+                    Expires: ${new Date(claimExpiresAt).toLocaleDateString()}
+                  </p>
+                </div>
+
+                <p style="color: #999; font-size: 12px; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd;">
+                  You'll receive another notification once the recipient claims their payment.
+                </p>
               </div>
             </div>
           `

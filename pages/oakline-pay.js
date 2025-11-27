@@ -340,6 +340,8 @@ export default function OaklinePayPage() {
 
       // For non-Oakline users, confirm the payment (this deducts the balance)
       if (!pendingTransaction.is_oakline_user) {
+        setTransferStatus('Processing payment...');
+        setTransferStatusType('info');
         try {
           const confirmResponse = await fetch('/api/oakline-pay-send', {
             method: 'POST',
@@ -363,15 +365,17 @@ export default function OaklinePayPage() {
             return;
           }
 
-          setTransferStatus(`✅ Payment sent! ${pendingTransaction.recipient_contact} will be notified to claim their money.`);
+          setTransferStatus(`✅ Payment sent! Confirmation email sent to both you and ${pendingTransaction.recipient_contact}`);
           setTransferStatusType('success');
+          
+          // Show receipt for 3 seconds then redirect
           setTimeout(() => {
             setTransferStep(null);
             setPendingTransaction(null);
             setVerifyForm({ code: '' });
             setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
             checkUserAndLoadData();
-          }, 2000);
+          }, 3500);
         } catch (error) {
           console.error('Error confirming payment:', error);
           setTransferStatus('An error occurred. Please try again.');
