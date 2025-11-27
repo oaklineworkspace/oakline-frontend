@@ -819,6 +819,29 @@ export default function OaklinePayPage() {
                     <div style={{ display: 'flex', gap: '1rem' }}>
                       <button 
                         onClick={() => {
+                          setTransferStep(null);
+                          setPendingTransaction(null);
+                          setTransferStatus('');
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '0.875rem 1.5rem',
+                          backgroundColor: '#1e40af',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '12px',
+                          fontSize: '1rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          opacity: loading ? 0.6 : 1
+                        }}
+                        disabled={loading}
+                      >
+                        ← Cancel
+                      </button>
+                      <button 
+                        onClick={() => {
                           if (pendingTransaction.is_oakline_user) {
                             setTransferStep('pin');
                           } else {
@@ -833,20 +856,6 @@ export default function OaklinePayPage() {
                         disabled={loading}
                       >
                         {loading ? 'Sending...' : pendingTransaction.is_oakline_user ? '✓ Looks Good' : '✓ Send Payment'}
-                      </button>
-                      <button 
-                        onClick={() => {
-                          setTransferStep(null);
-                          setPendingTransaction(null);
-                          setTransferStatus('');
-                        }}
-                        style={{
-                          ...styles.secondaryButton,
-                          flex: 1
-                        }}
-                        disabled={loading}
-                      >
-                        Cancel
                       </button>
                     </div>
                   </div>
