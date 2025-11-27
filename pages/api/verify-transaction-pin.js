@@ -232,7 +232,7 @@ export default async function handler(req, res) {
           await sendEmail({
             to: senderEmail,
             subject: `💸 Oakline Pay Sent - $${transferAmount.toFixed(2)} | Oakline Bank`,
-            emailType: 'alert',
+            emailType: 'transfers',
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #1A3E6F 0%, #2C5F8D 100%); padding: 30px; text-align: center;">
@@ -265,7 +265,7 @@ export default async function handler(req, res) {
           await sendEmail({
             to: receiverEmail,
             subject: `💰 Money Received - $${transferAmount.toFixed(2)} | Oakline Bank`,
-            emailType: 'alert',
+            emailType: 'transfers',
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #1A3E6F 0%, #2C5F8D 100%); padding: 30px; text-align: center;">

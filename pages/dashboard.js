@@ -2068,17 +2068,7 @@ function DashboardContent() {
               Description
             </span>
             <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-word' }}>
-              {(() => {
-                const txType = (selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase();
-                if (txType.includes('oakline_pay')) {
-                  const isSender = txType === 'oakline_pay_send';
-                  const tag = isSender ? selectedTransaction.recipient_tag : selectedTransaction.sender_tag;
-                  const name = isSender ? selectedTransaction.recipient_name : selectedTransaction.sender_name;
-                  const displayName = tag || name || 'User';
-                  return `Oakline Pay ${isSender ? 'to' : 'from'} ${displayName}`;
-                }
-                return selectedTransaction.description || 'N/A';
-              })()}
+              {selectedTransaction.description || 'N/A'}
             </span>
           </div>
 
