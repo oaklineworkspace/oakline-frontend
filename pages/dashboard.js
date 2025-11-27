@@ -181,11 +181,15 @@ function DashboardContent() {
           .limit(20)
       );
 
-      // Also fetch Oakline Pay transactions to show in dashboard
+      // Also fetch Oakline Pay transactions to show in dashboard with account details
       queryPromises.push(
         supabase
           .from('oakline_pay_transactions')
-          .select('*')
+          .select(`
+            *,
+            sender_account:sender_account_id(id, account_number, account_type),
+            recipient_account:recipient_account_id(id, account_number, account_type)
+          `)
           .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
           .order('created_at', { ascending: false })
           .limit(20)
@@ -454,6 +458,7 @@ function DashboardContent() {
           const isSender = tx.sender_id === userId;
           const otherUserId = isSender ? tx.recipient_id : tx.sender_id;
           const isInstant = tx.status === 'completed' && tx.claim_token === null;
+          const account = isSender ? tx.sender_account : tx.recipient_account;
           
           return {
             id: tx.id,
@@ -473,7 +478,13 @@ function DashboardContent() {
             sender_name: tx.sender_name,
             is_instant: isInstant,
             reference_id: tx.reference_id,
-            memo: tx.memo
+            memo: tx.memo,
+            accounts: account ? { 
+              account_number: account.account_number,
+              account_type: account.account_type
+            } : null,
+            sender_account_id: tx.sender_account_id,
+            recipient_account_id: tx.recipient_account_id
           };
         });
 
@@ -2128,21 +2139,19 @@ function DashboardContent() {
             </span>
           </div>
 
-          {!((selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('oakline_pay')) && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              padding: '0.75rem 0',
-              borderBottom: '1px solid #f1f5f9'
-            }}>
-              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
-                Account Number
-              </span>
-              <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right' }}>
-                {selectedTransaction.accounts?.account_number || 'N/A'}
-              </span>
-            </div>
-          )}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            padding: '0.75rem 0',
+            borderBottom: '1px solid #f1f5f9'
+          }}>
+            <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+              Account Number
+            </span>
+            <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right' }}>
+              {selectedTransaction.accounts?.account_number || 'N/A'}
+            </span>
+          </div>
 
           {(selectedTransaction.type === 'account_opening_deposit' || selectedTransaction.transaction_type === 'crypto_deposit') && selectedTransaction.depositDetails && (
             <>
