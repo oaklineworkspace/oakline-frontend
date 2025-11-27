@@ -484,7 +484,11 @@ function DashboardContent() {
               account_type: account.account_type
             } : null,
             sender_account_id: tx.sender_account_id,
-            recipient_account_id: tx.recipient_account_id
+            recipient_account_id: tx.recipient_account_id,
+            sender_id: tx.sender_id,
+            recipient_id: tx.recipient_id,
+            sender_display: tx.sender_tag || tx.sender_name || 'User',
+            recipient_display: tx.recipient_tag || tx.recipient_name || 'User'
           };
         });
 
@@ -2093,10 +2097,10 @@ function DashboardContent() {
               borderBottom: '1px solid #f1f5f9'
             }}>
               <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
-                {selectedTransaction.sender_id === user?.id ? 'Sent to' : 'Received from'}
+                {(selectedTransaction.type || selectedTransaction.transaction_type) === 'oakline_pay_send' ? 'Sent to' : 'Received from'}
               </span>
               <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-word' }}>
-                {selectedTransaction.sender_id === user?.id ? selectedTransaction.recipient_display : selectedTransaction.sender_display}
+                {(selectedTransaction.type || selectedTransaction.transaction_type) === 'oakline_pay_send' ? selectedTransaction.recipient_display : selectedTransaction.sender_display}
               </span>
             </div>
           )}
