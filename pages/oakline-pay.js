@@ -65,6 +65,8 @@ export default function OaklinePayPage() {
     memo: ''
   });
 
+  const [tagNotFoundError, setTagNotFoundError] = useState(false);
+
   const [verifyForm, setVerifyForm] = useState({
     code: ''
   });
@@ -267,6 +269,7 @@ export default function OaklinePayPage() {
   const handleSendMoney = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setTagNotFoundError(false);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -296,6 +299,13 @@ export default function OaklinePayPage() {
 
       if (!response.ok) {
         showMsg(data.error || 'Transfer failed', 'error');
+        setLoading(false);
+        return;
+      }
+
+      // Check if tag search failed
+      if (sendForm.recipient_type === 'oakline_tag' && !data.is_oakline_user) {
+        setTagNotFoundError(true);
         setLoading(false);
         return;
       }
@@ -708,13 +718,73 @@ export default function OaklinePayPage() {
                       <select
                         style={styles.select}
                         value={sendForm.recipient_type}
-                        onChange={(e) => setSendForm({ ...sendForm, recipient_type: e.target.value, recipient_contact: '' })}
+                        onChange={(e) => {
+                          setSendForm({ ...sendForm, recipient_type: e.target.value, recipient_contact: '' });
+                          setTagNotFoundError(false);
+                        }}
                       >
                         <option value="oakline_tag">Oakline Tag</option>
                         <option value="email">Email</option>
                         <option value="phone">Phone</option>
                       </select>
                     </div>
+
+                    {tagNotFoundError && (
+                      <div style={{
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        border: '2px solid #ef4444',
+                        borderRadius: '12px',
+                        padding: '1.5rem',
+                        marginBottom: '1.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem'
+                      }}>
+                        <div style={{
+                          width: '48px',
+                          height: '48px',
+                          backgroundColor: '#ef4444',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          fontSize: '1.5rem'
+                        }}>
+                          ❌
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ color: '#991b1b', fontSize: '1rem', fontWeight: '600', marginBottom: '0.5rem' }}>
+                            Tag "{sendForm.recipient_contact}" not found
+                          </div>
+                          <div style={{ color: '#991b1b', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                            The Oakline tag you entered doesn't exist. Would you like to send via email instead?
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSendForm({ ...sendForm, recipient_type: 'email', recipient_contact: '' });
+                              setTagNotFoundError(false);
+                            }}
+                            style={{
+                              backgroundColor: '#ef4444',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '8px',
+                              padding: '0.625rem 1.25rem',
+                              fontSize: '0.9rem',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = '#dc2626'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = '#ef4444'}
+                          >
+                            ✉️ Send via Email Instead
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div style={styles.formGroup}>
