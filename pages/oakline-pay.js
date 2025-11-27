@@ -338,17 +338,46 @@ export default function OaklinePayPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
-      // For non-Oakline users, no PIN verification needed
+      // For non-Oakline users, confirm the payment (this deducts the balance)
       if (!pendingTransaction.is_oakline_user) {
-        setTransferStatus(`✅ Payment sent! ${pendingTransaction.recipient_contact} will be notified to claim their money.`);
-        setTransferStatusType('success');
-        setTimeout(() => {
-          setTransferStep(null);
-          setPendingTransaction(null);
-          setVerifyForm({ code: '' });
-          setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
-          checkUserAndLoadData();
-        }, 2000);
+        try {
+          const confirmResponse = await fetch('/api/oakline-pay-send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+              step: 'confirm',
+              payment_id: pendingTransaction.payment_id
+            })
+          });
+
+          const confirmData = await confirmResponse.json();
+
+          if (!confirmResponse.ok) {
+            setTransferStatus(confirmData.error || 'Payment failed');
+            setTransferStatusType('error');
+            setVerifyingPin(false);
+            return;
+          }
+
+          setTransferStatus(`✅ Payment sent! ${pendingTransaction.recipient_contact} will be notified to claim their money.`);
+          setTransferStatusType('success');
+          setTimeout(() => {
+            setTransferStep(null);
+            setPendingTransaction(null);
+            setVerifyForm({ code: '' });
+            setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
+            checkUserAndLoadData();
+          }, 2000);
+        } catch (error) {
+          console.error('Error confirming payment:', error);
+          setTransferStatus('An error occurred. Please try again.');
+          setTransferStatusType('error');
+        } finally {
+          setVerifyingPin(false);
+        }
         return;
       }
 

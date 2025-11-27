@@ -255,7 +255,7 @@ export default async function handler(req, res) {
         const claimToken = generateClaimToken();
         const claimExpiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000); // 14 days
 
-        // Create pending payment record
+        // Create pending payment record (NO balance deduction yet)
         const { data: pendingPayment, error: pendingError } = await supabaseAdmin
           .from('pending_payments')
           .insert({
@@ -267,7 +267,7 @@ export default async function handler(req, res) {
             amount: transferAmount,
             memo: memo || null,
             claim_token: claimToken,
-            status: 'pending',
+            status: 'pending_review',
             expires_at: claimExpiresAt
           })
           .select()
@@ -278,85 +278,141 @@ export default async function handler(req, res) {
           return res.status(500).json({ error: 'Failed to create pending payment' });
         }
 
-        // Deduct amount immediately from sender's account
-        const senderNewBalance = parseFloat(senderAccount.balance) - transferAmount;
-        await supabaseAdmin
-          .from('accounts')
-          .update({ balance: senderNewBalance, updated_at: new Date().toISOString() })
-          .eq('id', sender_account_id);
-
-        // Create debit transaction for sender
-        await supabaseAdmin
-          .from('transactions')
-          .insert({
-            user_id: user.id,
-            account_id: sender_account_id,
-            type: 'oakline_pay_send',
-            amount: transferAmount,
-            description: `Oakline Pay sent to ${recipient_contact}`,
-            status: 'completed',
-            balance_before: parseFloat(senderAccount.balance),
-            balance_after: senderNewBalance,
-            reference: referenceNumber,
-            created_at: new Date().toISOString()
-          });
-
-        // Send email to recipient with claim link
-        const claimUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://theoaklinebank.com'}/claim-payment?token=${claimToken}`;
-        
-        try {
-          await sendEmail({
-            to: recipient_contact,
-            subject: `You've received $${transferAmount.toFixed(2)} from Oakline Bank!`,
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px 8px 0 0; text-align: center;">
-                  <h1 style="margin: 0; font-size: 28px;">💰 Money Received!</h1>
-                </div>
-                <div style="background: #f8f9fa; padding: 2rem; border-radius: 0 0 8px 8px;">
-                  <p style="color: #333; font-size: 16px;">
-                    <strong>${senderData.full_name}</strong> has sent you <strong style="color: #16a34a; font-size: 20px;">$${transferAmount.toFixed(2)}</strong>
-                  </p>
-                  
-                  <div style="background: white; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid #667eea;">
-                    <p style="margin: 0; color: #666; font-size: 14px;">You have <strong>14 days</strong> to claim this payment by either:</p>
-                    <ul style="color: #333; margin: 1rem 0; padding-left: 1.5rem;">
-                      <li>Creating an Oakline Bank account (instant credit)</li>
-                      <li>Entering your debit card details (deposit to your card)</li>
-                    </ul>
-                  </div>
-
-                  <div style="text-align: center; margin: 2rem 0;">
-                    <a href="${claimUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
-                      Claim Your Money
-                    </a>
-                  </div>
-
-                  <p style="color: #999; font-size: 12px; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd;">
-                    This link expires in 14 days. After that, the money will be returned to the sender.
-                  </p>
-
-                  ${memo ? `<p style="color: #666; font-size: 14px; margin-top: 1rem;"><strong>Note:</strong> "${memo}"</p>` : ''}
-                </div>
-              </div>
-            `
-          });
-        } catch (emailError) {
-          console.error('Error sending notification email:', emailError);
-          // Don't fail the transaction if email fails
-        }
-
         return res.status(200).json({
           success: true,
-          message: `Payment pending. ${recipient_contact} will be notified to claim their money.`,
+          message: `Ready to send. Click 'Send Payment' to confirm.`,
           payment_id: pendingPayment.id,
           claim_token: claimToken,
           recipient_contact: recipient_contact,
           amount: transferAmount,
           is_oakline_user: false,
-          expires_at: claimExpiresAt
+          expires_at: claimExpiresAt,
+          reference_number: referenceNumber
         });
       }
+
+    } else if (step === 'confirm') {
+      // STEP 2: CONFIRM & DEDUCT FOR NON-OAKLINE USERS
+      const { payment_id } = req.body;
+
+      if (!payment_id) {
+        return res.status(400).json({ error: 'Payment ID required' });
+      }
+
+      // Get the pending payment
+      const { data: pendingPayment, error: paymentError } = await supabaseAdmin
+        .from('pending_payments')
+        .select('*')
+        .eq('id', payment_id)
+        .eq('sender_id', user.id)
+        .single();
+
+      if (paymentError || !pendingPayment) {
+        return res.status(404).json({ error: 'Payment not found' });
+      }
+
+      if (pendingPayment.status !== 'pending_review') {
+        return res.status(400).json({ error: 'Payment already processed' });
+      }
+
+      // Get sender's current account
+      const { data: currentAccount } = await supabaseAdmin
+        .from('accounts')
+        .select('balance')
+        .eq('id', sender_account_id)
+        .single();
+
+      const transferAmount = parseFloat(pendingPayment.amount);
+      if (parseFloat(currentAccount.balance) < transferAmount) {
+        return res.status(400).json({ error: 'Insufficient funds' });
+      }
+
+      // NOW deduct the amount
+      const senderNewBalance = parseFloat(currentAccount.balance) - transferAmount;
+      await supabaseAdmin
+        .from('accounts')
+        .update({ balance: senderNewBalance, updated_at: new Date().toISOString() })
+        .eq('id', sender_account_id);
+
+      // Create debit transaction for sender
+      await supabaseAdmin
+        .from('transactions')
+        .insert({
+          user_id: user.id,
+          account_id: sender_account_id,
+          type: 'oakline_pay_send',
+          amount: transferAmount,
+          description: `Oakline Pay sent to ${pendingPayment.recipient_email}`,
+          status: 'completed',
+          balance_before: parseFloat(currentAccount.balance),
+          balance_after: senderNewBalance,
+          reference: generateReference(),
+          created_at: new Date().toISOString()
+        });
+
+      // Update pending payment status
+      await supabaseAdmin
+        .from('pending_payments')
+        .update({ status: 'sent' })
+        .eq('id', payment_id);
+
+      // Send email to recipient with claim link
+      const claimUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://theoaklinebank.com'}/claim-payment?token=${pendingPayment.claim_token}`;
+      
+      try {
+        const { data: senderProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+
+        await sendEmail({
+          to: pendingPayment.recipient_email,
+          subject: `You've received $${transferAmount.toFixed(2)} from Oakline Bank!`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px 8px 0 0; text-align: center;">
+                <h1 style="margin: 0; font-size: 28px;">💰 Money Received!</h1>
+              </div>
+              <div style="background: #f8f9fa; padding: 2rem; border-radius: 0 0 8px 8px;">
+                <p style="color: #333; font-size: 16px;">
+                  <strong>${senderProfile?.full_name || 'Someone'}</strong> has sent you <strong style="color: #16a34a; font-size: 20px;">$${transferAmount.toFixed(2)}</strong>
+                </p>
+                
+                <div style="background: white; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid #667eea;">
+                  <p style="margin: 0; color: #666; font-size: 14px;">You have <strong>14 days</strong> to claim this payment by either:</p>
+                  <ul style="color: #333; margin: 1rem 0; padding-left: 1.5rem;">
+                    <li>Creating an Oakline Bank account (instant credit)</li>
+                    <li>Entering your debit card details (deposit to your card)</li>
+                  </ul>
+                </div>
+
+                <div style="text-align: center; margin: 2rem 0;">
+                  <a href="${claimUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+                    Claim Your Money
+                  </a>
+                </div>
+
+                <p style="color: #999; font-size: 12px; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd;">
+                  This link expires in 14 days. After that, the money will be returned to the sender.
+                </p>
+
+                ${pendingPayment.memo ? `<p style="color: #666; font-size: 14px; margin-top: 1rem;"><strong>Note:</strong> "${pendingPayment.memo}"</p>` : ''}
+              </div>
+            </div>
+          `
+        });
+      } catch (emailError) {
+        console.error('Error sending notification email:', emailError);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: '✅ Payment sent!',
+        payment_id: payment_id,
+        recipient_email: pendingPayment.recipient_email,
+        amount: transferAmount
+      });
 
     } else {
       return res.status(400).json({ error: 'Invalid request step' });
