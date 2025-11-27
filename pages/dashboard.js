@@ -463,9 +463,9 @@ function DashboardContent() {
           const isInstant = tx.status === 'completed' && tx.claim_token === null;
           const account = isSender ? tx.sender_account : tx.recipient_account;
           
-          // Get display names prioritizing: tag > display_name > name > 'User'
-          const senderDisplay = tx.sender_tag || tx.sender_name || 'User';
-          const recipientDisplay = tx.recipient_tag || tx.recipient_name || 'User';
+          // Use recipient_contact field which contains the Oakline tag or email
+          const recipientDisplay = tx.recipient_contact || 'User';
+          const senderDisplay = 'Sender';
           
           return {
             id: tx.id,
@@ -479,12 +479,10 @@ function DashboardContent() {
             created_at: tx.created_at,
             updated_at: tx.updated_at,
             completed_at: tx.completed_at,
-            recipient_tag: tx.recipient_tag,
-            sender_tag: tx.sender_tag,
-            recipient_name: tx.recipient_name,
-            sender_name: tx.sender_name,
+            recipient_contact: tx.recipient_contact,
+            recipient_type: tx.recipient_type,
             is_instant: isInstant,
-            reference_id: tx.reference_id,
+            reference_number: tx.reference_number,
             memo: tx.memo,
             accounts: account ? { 
               account_number: account.account_number,
@@ -2109,8 +2107,8 @@ function DashboardContent() {
               </span>
               <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-word' }}>
                 {(selectedTransaction.type || selectedTransaction.transaction_type) === 'oakline_pay_send' 
-                  ? (selectedTransaction.recipient_tag || selectedTransaction.recipient_name || selectedTransaction.recipient_display || 'User')
-                  : (selectedTransaction.sender_tag || selectedTransaction.sender_name || selectedTransaction.sender_display || 'User')}
+                  ? (selectedTransaction.recipient_contact ? `@${selectedTransaction.recipient_contact}` : selectedTransaction.recipient_display || 'User')
+                  : (selectedTransaction.sender_display || 'User')}
               </span>
             </div>
           )}

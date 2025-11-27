@@ -2001,22 +2001,22 @@ export default function OaklinePayPage() {
               <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>Oakline Pay • {selectedOaklineTransaction.sender_id === user?.id ? 'Money Sent' : 'Money Received'}</p>
             </div>
 
-            {/* Professional Header with Amount and Details */}
-            <div style={{ backgroundColor: selectedOaklineTransaction.sender_id === user?.id ? '#fee2e2' : '#dcfce7', padding: '2rem', borderRadius: '16px', marginBottom: '2rem', textAlign: 'center', border: `2px solid ${selectedOaklineTransaction.sender_id === user?.id ? '#fca5a5' : '#86efac'}` }}>
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                <div style={{ fontSize: '2.5rem' }}>
+            {/* Professional Header with Amount and Details - Responsive */}
+            <div style={{ backgroundColor: selectedOaklineTransaction.sender_id === user?.id ? '#fee2e2' : '#dcfce7', padding: '1.25rem', borderRadius: '16px', marginBottom: '1.5rem', textAlign: 'center', border: `2px solid ${selectedOaklineTransaction.sender_id === user?.id ? '#fca5a5' : '#86efac'}`, '@media (max-width: 480px)': { padding: '1rem' } }}>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                <div style={{ fontSize: '2rem' }}>
                   {selectedOaklineTransaction.sender_id === user?.id ? '📤' : '📥'}
                 </div>
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '500', marginBottom: '0.25rem' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500', marginBottom: '0.15rem' }}>
                     {selectedOaklineTransaction.sender_id === user?.id ? 'You Sent' : 'You Received'}
                   </div>
-                  <div style={{ fontSize: '2.2rem', fontWeight: '700', color: selectedOaklineTransaction.sender_id === user?.id ? '#dc2626' : '#16a34a' }}>
+                  <div style={{ fontSize: '1.75rem', fontWeight: '700', color: selectedOaklineTransaction.sender_id === user?.id ? '#dc2626' : '#16a34a', lineHeight: '1' }}>
                     {selectedOaklineTransaction.sender_id === user?.id ? '-' : '+'} ${parseFloat(selectedOaklineTransaction.amount).toFixed(2)}
                   </div>
                 </div>
               </div>
-              <div style={{ fontSize: '0.9rem', color: '#64748b', paddingTop: '1rem', borderTop: `1px solid ${selectedOaklineTransaction.sender_id === user?.id ? '#fca5a5' : '#86efac'}` }}>
+              <div style={{ fontSize: '0.8rem', color: '#64748b', paddingTop: '0.75rem', borderTop: `1px solid ${selectedOaklineTransaction.sender_id === user?.id ? '#fca5a5' : '#86efac'}` }}>
                 {selectedOaklineTransaction.status === 'completed' ? '✓ Transaction Completed' : `Status: ${selectedOaklineTransaction.status?.toUpperCase()}`}
               </div>
             </div>
