@@ -2040,7 +2040,7 @@ export default function OaklinePayPage() {
                   <div style={{ fontSize: '1rem', color: '#1e293b', fontWeight: '700' }}>
                     {selectedOaklineTransaction.sender_id === user?.id 
                       ? (selectedOaklineTransaction.recipient_contact ? `@${selectedOaklineTransaction.recipient_contact}` : 'Oakline User')
-                      : 'Sender'}
+                      : (selectedOaklineTransaction.sender_contact ? `@${selectedOaklineTransaction.sender_contact}` : 'Sender')}
                   </div>
                 </div>
               </div>

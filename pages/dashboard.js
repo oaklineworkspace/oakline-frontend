@@ -463,9 +463,9 @@ function DashboardContent() {
           const isInstant = tx.status === 'completed' && tx.claim_token === null;
           const account = isSender ? tx.sender_account : tx.recipient_account;
           
-          // Use recipient_contact field which contains the Oakline tag or email
+          // Use contact fields which contain the Oakline tag or email
           const recipientDisplay = tx.recipient_contact || 'User';
-          const senderDisplay = 'Sender';
+          const senderDisplay = tx.sender_contact || 'Sender';
           
           return {
             id: tx.id,
@@ -481,6 +481,7 @@ function DashboardContent() {
             completed_at: tx.completed_at,
             recipient_contact: tx.recipient_contact,
             recipient_type: tx.recipient_type,
+            sender_contact: tx.sender_contact,
             is_instant: isInstant,
             reference_number: tx.reference_number,
             memo: tx.memo,

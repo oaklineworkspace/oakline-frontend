@@ -224,6 +224,7 @@ export default async function handler(req, res) {
           .insert({
             sender_id: user.id,
             sender_account_id: sender_account_id,
+            sender_contact: senderOaklineProfile?.oakline_tag || senderProfile?.email,
             recipient_id: recipientProfile.id,
             recipient_account_id: recipientAccount.id,
             recipient_contact: recipient_contact,
