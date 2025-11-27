@@ -45,13 +45,14 @@ function DashboardContent() {
 
   useEffect(() => {
     checkUser();
-    autoClaimPendingPayments();
-  }, [user]); // Depend on user to ensure checkUser runs when user is available
+  }, [user]);
 
   // Load dashboard data when user is available
   useEffect(() => {
     if (user?.id) {
       loadUserData(user.id);
+      // Auto-claim pending payments after dashboard loads
+      autoClaimPendingPayments();
     }
   }, [user?.id]);
 
@@ -80,155 +81,174 @@ function DashboardContent() {
   const loadUserData = async (userId) => {
     setLoading(true);
     try {
-      // Fetch user profile from profiles table for real user data
-      const { data: profileData, error: profileError } = await supabase
+      // Fetch accounts in parallel with profile - don't wait for profile fallback
+      const profilePromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (!profileError && profileData) {
-        setUserProfile(profileData);
-      } else {
-        // Fallback to applications table if profiles table doesn't have the data
-        const { data: profiles } = await supabase
-          .from('applications')
-          .select('*')
-          .eq('email', user.email)
-          .order('created_at', { ascending: false });
+      const accountsPromise = supabase
+        .from('accounts')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: true });
 
-        if (profiles && profiles.length > 0) {
-          const approvedProfile = profiles.find(p => p.application_status === 'approved' || p.application_status === 'completed');
-          setUserProfile(approvedProfile || profiles[0]);
-        }
+      // Run all initial queries in parallel
+      const [profileResult, accountsResult] = await Promise.all([profilePromise, accountsPromise]);
+
+      // Handle profile
+      if (!profileResult.error && profileResult.data) {
+        setUserProfile(profileResult.data);
       }
 
-      // Fetch accounts - use single query method to avoid duplicates
+      // Handle accounts
       let accountsData = [];
-
-      try {
-        // Primary method: fetch by user_id
-        const { data: accountsByUserId, error: accountsError } = await supabase
-          .from('accounts')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: true });
-
-        if (!accountsError && accountsByUserId && accountsByUserId.length > 0) {
-          accountsData = accountsByUserId;
-        } else {
-          // Fallback: try by email if user_id doesn't work
-          const { data: accountsByEmail } = await supabase
-            .from('accounts')
-            .select('*')
-            .eq('email', user.email)
-            .order('created_at', { ascending: true });
-
-          accountsData = accountsByEmail || [];
-        }
-
-        // Remove duplicates by account_number (in case there are any)
-        const uniqueAccounts = accountsData.filter((account, index, self) =>
+      if (!accountsResult.error && accountsResult.data && accountsResult.data.length > 0) {
+        const uniqueAccounts = accountsResult.data.filter((account, index, self) =>
           index === self.findIndex((a) => a.account_number === account.account_number)
         );
-
         accountsData = uniqueAccounts;
-      } catch (accountError) {
-        console.error('Error fetching accounts:', accountError);
-        accountsData = [];
       }
-
       setAccounts(accountsData || []);
 
-      // Fetch transactions - get by account_id for more accurate results
+      // Now fetch dependent data in parallel: transactions, crypto, account opening deposits
       let transactionsData = [];
+      let cryptoTxData = [];
+      let accountOpeningDeposits = [];
+
+      const queryPromises = [];
 
       if (accountsData && accountsData.length > 0) {
         const accountIds = accountsData.map(acc => acc.id);
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const { data: txData, error: txError } = await supabase
-          .from('transactions')
+        queryPromises.push(
+          supabase
+            .from('transactions')
+            .select(`
+              *,
+              accounts:account_id (
+                account_number,
+                account_type
+              )
+            `)
+            .in('account_id', accountIds)
+            .gte('created_at', thirtyDaysAgo.toISOString())
+            .order('created_at', { ascending: false })
+            .limit(10)
+        );
+      }
+
+      queryPromises.push(
+        supabase
+          .from('crypto_deposits')
           .select(`
             *,
             accounts:account_id (
               account_number,
               account_type
+            ),
+            crypto_assets:crypto_asset_id (
+              crypto_type,
+              network_type,
+              symbol
             )
           `)
-          .in('account_id', accountIds)
-          .gte('created_at', thirtyDaysAgo.toISOString())
+          .eq('user_id', userId)
           .order('created_at', { ascending: false })
-          .limit(10);
+          .limit(20)
+      );
 
-        if (!txError && txData) {
-          transactionsData = txData || [];
+      queryPromises.push(
+        supabase
+          .from('account_opening_crypto_deposits')
+          .select(`
+            *,
+            accounts:account_id (
+              account_number,
+              account_type
+            ),
+            crypto_assets:crypto_asset_id (
+              crypto_type,
+              network_type,
+              symbol
+            )
+          `)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(20)
+      );
+
+      // Execute all parallel queries
+      const results = await Promise.all(queryPromises);
+      let resultIndex = 0;
+
+      if (accountsData && accountsData.length > 0) {
+        const txResult = results[resultIndex++];
+        if (!txResult.error && txResult.data) {
+          transactionsData = txResult.data || [];
         }
       }
 
-      // Fetch crypto deposits with account details
-      const { data: cryptoTxData, error: cryptoError } = await supabase
-        .from('crypto_deposits')
-        .select(`
-          *,
-          accounts:account_id (
-            account_number,
-            account_type
-          ),
-          crypto_assets:crypto_asset_id (
-            crypto_type,
-            network_type,
-            symbol
-          )
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (cryptoError) {
-        console.error('Error fetching crypto deposits:', cryptoError);
+      const cryptoResult = results[resultIndex++];
+      if (!cryptoResult.error && cryptoResult.data) {
+        cryptoTxData = cryptoResult.data || [];
       }
 
-      // Fetch wallet addresses separately if needed
-      let walletAddresses = {};
-      if (cryptoTxData && cryptoTxData.length > 0) {
-        const walletIds = cryptoTxData
-          .map(d => d.assigned_wallet_id)
-          .filter(id => id);
+      const accountOpeningResult = results[resultIndex++];
+      if (!accountOpeningResult.error && accountOpeningResult.data) {
+        accountOpeningDeposits = accountOpeningResult.data || [];
+      }
 
-        if (walletIds.length > 0) {
-          const { data: wallets } = await supabase
+      // Fetch wallet addresses in parallel for both crypto types
+      let walletAddresses = {};
+      let accountOpeningWalletAddresses = {};
+
+      const walletPromises = [];
+      const cryptoWalletIds = cryptoTxData
+        .map(d => d.assigned_wallet_id)
+        .filter(id => id);
+      const accountOpeningWalletIds = accountOpeningDeposits
+        .map(d => d.assigned_wallet_id)
+        .filter(id => id);
+
+      if (cryptoWalletIds.length > 0) {
+        walletPromises.push(
+          supabase
             .from('admin_assigned_wallets')
             .select('id, wallet_address, memo')
-            .in('id', walletIds);
-
-          if (wallets) {
-            wallets.forEach(w => {
-              walletAddresses[w.id] = w;
-            });
-          }
-        }
+            .in('id', cryptoWalletIds)
+        );
+      } else {
+        walletPromises.push(Promise.resolve({ data: null }));
       }
 
-      // Fetch account opening crypto deposits
-      const { data: accountOpeningDeposits } = await supabase
-        .from('account_opening_crypto_deposits')
-        .select(`
-          *,
-          accounts:account_id (
-            account_number,
-            account_type
-          ),
-          crypto_assets:crypto_asset_id (
-            crypto_type,
-            network_type,
-            symbol
-          )
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(20);
+      if (accountOpeningWalletIds.length > 0) {
+        walletPromises.push(
+          supabase
+            .from('admin_assigned_wallets')
+            .select('id, wallet_address, memo')
+            .in('id', accountOpeningWalletIds)
+        );
+      } else {
+        walletPromises.push(Promise.resolve({ data: null }));
+      }
+
+      const walletResults = await Promise.all(walletPromises);
+
+      if (walletResults[0].data) {
+        walletResults[0].data.forEach(w => {
+          walletAddresses[w.id] = w;
+        });
+      }
+
+      if (walletResults[1].data) {
+        walletResults[1].data.forEach(w => {
+          accountOpeningWalletAddresses[w.id] = w;
+        });
+      }
 
       // Merge and format crypto deposits as transactions
       if (cryptoTxData && cryptoTxData.length > 0) {
