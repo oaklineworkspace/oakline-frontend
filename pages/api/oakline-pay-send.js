@@ -300,6 +300,7 @@ export default async function handler(req, res) {
           success: true,
           message: `Ready to send. Click 'Send Payment' to confirm.`,
           payment_id: pendingPayment.id,
+          sender_account_id: sender_account_id,
           claim_token: claimToken,
           recipient_contact: recipient_contact,
           amount: transferAmount,
@@ -311,11 +312,17 @@ export default async function handler(req, res) {
 
     } else if (step === 'confirm') {
       // STEP 2: CONFIRM & DEDUCT FOR NON-OAKLINE USERS
-      const { payment_id } = req.body;
+      const { payment_id, sender_account_id: confirmSenderAccountId } = req.body;
 
       if (!payment_id) {
         return res.status(400).json({ error: 'Payment ID required' });
       }
+
+      if (!confirmSenderAccountId) {
+        return res.status(400).json({ error: 'Account ID required' });
+      }
+
+      const sender_account_id = confirmSenderAccountId;
 
       // Get the pending payment
       const { data: pendingPayment, error: paymentError } = await supabaseAdmin

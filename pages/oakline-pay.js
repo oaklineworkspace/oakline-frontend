@@ -349,7 +349,8 @@ export default function OaklinePayPage() {
             },
             body: JSON.stringify({
               step: 'confirm',
-              payment_id: pendingTransaction.payment_id
+              payment_id: pendingTransaction.payment_id,
+              sender_account_id: pendingTransaction.sender_account_id
             })
           });
 
