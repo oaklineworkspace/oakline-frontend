@@ -2046,15 +2046,16 @@ const styles = {
     color: '#991b1b'
   },
   tabsContainer: {
-    marginBottom: '2rem'
+    marginBottom: '2rem',
+    display: 'flex',
+    justifyContent: 'center',
+    width: '100%'
   },
   tabsGrid: {
     display: 'flex',
     justifyContent: 'center',
     gap: '1rem',
-    flexWrap: 'wrap',
-    paddingLeft: '1rem',
-    paddingRight: '1rem'
+    flexWrap: 'wrap'
   },
   tab: {
     padding: '0.75rem 1rem',
