@@ -194,7 +194,6 @@ function DashboardContent() {
           .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
           .order('created_at', { ascending: false })
           .limit(20)
-          .catch(err => ({ data: [], error: err }))
       );
 
       // Execute all parallel queries
@@ -221,8 +220,10 @@ function DashboardContent() {
       // Get Oakline Pay transactions
       const oaklinePayResult = results[resultIndex++];
       let oaklinePayTransactions = [];
-      if (!oaklinePayResult.error && oaklinePayResult.data) {
+      if (oaklinePayResult && !oaklinePayResult.error && oaklinePayResult.data) {
         oaklinePayTransactions = oaklinePayResult.data || [];
+      } else if (oaklinePayResult?.error) {
+        console.warn('Oakline Pay transactions fetch warning:', oaklinePayResult.error);
       }
 
       // Fetch wallet addresses in parallel for both crypto types
