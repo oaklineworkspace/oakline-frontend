@@ -2017,13 +2017,13 @@ export default function WireTransfer() {
                           disabled={!transactionPin || transactionPin.length < 4 || verifyingPin}
                           style={{
                             ...styles.button,
-                            backgroundColor: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? '#cbd5e1' : '#059669',
+                            backgroundColor: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? '#64748b' : '#059669',
                             color: 'white',
                             cursor: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? 'not-allowed' : 'pointer',
-                            opacity: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? 0.7 : 1
+                            opacity: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? 0.6 : 1
                           }}
                         >
-                          {verifyingPin ? '🔄 Verifying...' : 'Verify PIN & Continue →'}
+                          {verifyingPin ? '🔄 Verifying...' : '✓ Verify PIN & Continue'}
                         </button>
                       </div>
                     </>
