@@ -669,28 +669,17 @@ function DashboardContent() {
   };
 
   const handleTransactionClick = async (transaction) => {
-    // Fetch full oakline pay transaction data
+    // Handle oakline pay transactions - use data already in transaction object
     if ((transaction.type || transaction.transaction_type) === 'oakline_pay_send' || (transaction.type || transaction.transaction_type) === 'oakline_pay_receive') {
-      try {
-        const { data: oaklineTransaction, error } = await supabase
-          .from('oakline_pay_transactions')
-          .select('*')
-          .eq('id', transaction.reference || transaction.id)
-          .maybeSingle();
-
-        if (oaklineTransaction && !error) {
-          setSelectedTransaction({
-            ...transaction,
-            ...oaklineTransaction,
-            sender_display: oaklineTransaction.sender_tag || oaklineTransaction.sender_name || 'User',
-            recipient_display: oaklineTransaction.recipient_tag || oaklineTransaction.recipient_name || 'User'
-          });
-          setShowReceiptModal(true);
-          return;
-        }
-      } catch (err) {
-        console.error('Error fetching oakline transaction:', err);
-      }
+      setSelectedTransaction({
+        ...transaction,
+        sender_display: transaction.sender_tag || transaction.sender_name || 'User',
+        recipient_display: transaction.recipient_tag || transaction.recipient_name || 'User',
+        sender_id: transaction.sender_id,
+        recipient_id: transaction.recipient_id
+      });
+      setShowReceiptModal(true);
+      return;
     }
     
     // Fetch additional details for crypto deposits
