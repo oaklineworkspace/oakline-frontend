@@ -2006,7 +2006,7 @@ export default function WireTransfer() {
                           style={{
                             flex: 1,
                             padding: '0.875rem 1.5rem',
-                            backgroundColor: '#64748b',
+                            backgroundColor: '#1e40af',
                             color: 'white',
                             border: 'none',
                             borderRadius: '12px',
@@ -2015,8 +2015,6 @@ export default function WireTransfer() {
                             cursor: 'pointer',
                             transition: 'all 0.3s ease'
                           }}
-                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#475569'}
-                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#64748b'}
                         >
                           ← Back
                         </button>
@@ -2027,7 +2025,7 @@ export default function WireTransfer() {
                           style={{
                             flex: 1,
                             padding: '0.875rem 1.5rem',
-                            backgroundColor: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? '#1e40af' : '#059669',
+                            backgroundColor: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? '#cbd5e1' : '#059669',
                             color: 'white',
                             border: 'none',
                             borderRadius: '12px',
@@ -2037,8 +2035,6 @@ export default function WireTransfer() {
                             opacity: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? 0.6 : 1,
                             transition: 'all 0.3s ease'
                           }}
-                          onMouseEnter={(e) => !e.currentTarget.disabled && (e.currentTarget.style.backgroundColor = '#047857')}
-                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = e.currentTarget.disabled ? '#1e40af' : '#059669')}
                         >
                           {verifyingPin ? '🔄 Verifying...' : '✓ Verify PIN & Continue'}
                         </button>

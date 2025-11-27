@@ -939,6 +939,22 @@ export default function OaklinePayPage() {
 
                       <div style={{ display: 'flex', gap: '1rem' }}>
                         <button 
+                          type="button" 
+                          style={{
+                            ...styles.secondaryButton,
+                            flex: 1,
+                            backgroundColor: '#1e40af'
+                          }} 
+                          onClick={() => {
+                            setTransferStep('review');
+                            setVerifyForm({ code: '' });
+                            setTransferStatus('');
+                          }}
+                          disabled={verifyingPin}
+                        >
+                          ← Back
+                        </button>
+                        <button 
                           type="submit" 
                           style={{
                             ...styles.primaryButton,
@@ -950,21 +966,6 @@ export default function OaklinePayPage() {
                           disabled={verifyingPin || verifyForm.code.length < 4}
                         >
                           {verifyingPin ? '⏳ Verifying...' : '✓ Confirm Transfer'}
-                        </button>
-                        <button 
-                          type="button" 
-                          style={{
-                            ...styles.secondaryButton,
-                            flex: 1
-                          }} 
-                          onClick={() => {
-                            setTransferStep('review');
-                            setVerifyForm({ code: '' });
-                            setTransferStatus('');
-                          }}
-                          disabled={verifyingPin}
-                        >
-                          ← Back
                         </button>
                       </div>
 
