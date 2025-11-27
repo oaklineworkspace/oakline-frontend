@@ -1332,15 +1332,88 @@ export default function OaklinePayPage() {
                   flexShrink: 0,
                   animation: 'spin 1s linear infinite'
                 }}>
-                  <div style={{
-                    fontSize: '1.5rem'
-                  }}>⏳</div>
+                  <div style={{ fontSize: '1.5rem' }}>⏳</div>
                 </div>
                 <div style={{ color: '#047857', fontSize: '1rem', fontWeight: '600' }}>
-                  Verifying your PIN and completing transfer...
+                  Verifying PIN and completing transfer...
                 </div>
               </div>
             )}
+
+            {transferStatus && transferStatusType === 'error' && (
+              <div style={{
+                backgroundColor: 'rgba(220, 38, 38, 0.15)',
+                border: '2px solid #dc2626',
+                borderRadius: '12px',
+                padding: '1.5rem',
+                marginBottom: '1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem'
+              }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  backgroundColor: '#dc2626',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  fontSize: '1.5rem'
+                }}>
+                  ⚠️
+                </div>
+                <div style={{ color: '#991b1b', fontSize: '1rem', fontWeight: '600' }}>
+                  {transferStatus}
+                </div>
+              </div>
+            )}
+
+            {!verifyingPin && (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2rem' }}>
+                  <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '2px solid #e2e8f0' }}>
+                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>From</p>
+                    <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '600', color: '#0f2027' }}>{pendingTransaction.sender_name}</p>
+                  </div>
+                  <div style={{ textAlign: 'center', fontSize: '1.5rem', color: '#059669' }}>↓</div>
+                  <div style={{ backgroundColor: '#ecfdf5', padding: '1rem', borderRadius: '10px', border: '2px solid #d1fae5' }}>
+                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#065f46', textTransform: 'uppercase' }}>To</p>
+                    <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#047857' }}>{pendingTransaction.recipient_name || 'Recipient'}</p>
+                  </div>
+                  <div style={{ backgroundColor: '#fff7ed', padding: '1.25rem', borderRadius: '10px', border: '2px solid #fed7aa', textAlign: 'center' }}>
+                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#92400e', textTransform: 'uppercase' }}>Amount</p>
+                    <p style={{ margin: 0, fontSize: '2rem', fontWeight: '700', color: '#d97706' }}>${parseFloat(pendingTransaction.amount).toFixed(2)}</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleVerifyTransfer} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <div style={{ backgroundColor: '#ecfdf5', padding: '1rem 1.25rem', borderRadius: '10px', borderLeft: '4px solid #10b981' }}>
+                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#065f46', textTransform: 'uppercase' }}>Transfer Protection:</p>
+                    <p style={{ margin: 0, color: '#047857', fontWeight: '600', fontSize: '0.9rem' }}>✓ Only you can complete this with your PIN</p>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', color: '#1a365d', fontWeight: '700', marginBottom: '0.75rem' }}>Enter Your Transaction PIN *</label>
+                    <input type="password" style={{ width: '100%', padding: '1.25rem', fontSize: '1.5rem', letterSpacing: '0.5rem', textAlign: 'center', fontFamily: 'monospace', border: '2px solid #e2e8f0', borderRadius: '10px', boxSizing: 'border-box', outline: 'none', transition: 'all 0.3s', backgroundColor: verifyingPin ? '#f8fafc' : '#ffffff' }} value={verifyForm.code} onChange={(e) => setVerifyForm({ code: e.target.value.replace(/[^0-9]/g, '') })} placeholder="••••" maxLength="6" required autoFocus disabled={verifyingPin} />
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>Your PIN from Security Settings (4-6 digits)</p>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button type="button" style={{ flex: 1, padding: '0.875rem 1.5rem', backgroundColor: '#1e40af', color: 'white', border: 'none', borderRadius: '12px', fontSize: '1rem', fontWeight: '600', cursor: 'pointer' }} onClick={() => { setTransferStep('review'); setVerifyForm({ code: '' }); setTransferStatus(''); }} disabled={verifyingPin}>← Back</button>
+                    <button type="submit" style={{ flex: 1, padding: '0.875rem 1.5rem', backgroundColor: verifyingPin || verifyForm.code.length < 4 ? '#cbd5e1' : '#059669', color: 'white', border: 'none', borderRadius: '12px', fontSize: '1rem', fontWeight: '600', cursor: verifyingPin ? 'not-allowed' : 'pointer', opacity: verifyingPin || verifyForm.code.length < 4 ? 0.6 : 1 }} disabled={verifyingPin || verifyForm.code.length < 4}>{verifyingPin ? '🔄 Authorizing...' : '✓ Authorize Transfer'}</button>
+                  </div>
+
+                  <div style={{ backgroundColor: '#eff6ff', padding: '1rem', borderRadius: '8px', fontSize: '0.85rem', color: '#1e40af', textAlign: 'center', borderLeft: '3px solid #0284c7' }}>
+                    <p style={{ margin: 0 }}>🔒 Your PIN is encrypted and never shared with us</p>
+                  </div>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Setup Oakline Tag Modal */}
       {/* Receipt Modal */}
