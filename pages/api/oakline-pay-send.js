@@ -374,8 +374,10 @@ export default async function handler(req, res) {
         .update({ status: 'sent' })
         .eq('id', payment_id);
 
-      // Send email to recipient with claim link
-      const claimUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://theoaklinebank.com'}/claim-payment?token=${pendingPayment.claim_token}`;
+      // Send email to recipient with two claim options
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://theoaklinebank.com';
+      const createAccountUrl = `${appUrl}/sign-up?redirect=/claim-payment?token=${pendingPayment.claim_token}`;
+      const debitCardUrl = `${appUrl}/claim-payment?token=${pendingPayment.claim_token}&method=debit_card`;
       
       try {
         const { data: senderProfile } = await supabaseAdmin
@@ -398,24 +400,32 @@ export default async function handler(req, res) {
                 </p>
                 
                 <div style="background: white; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid #667eea;">
-                  <p style="margin: 0; color: #666; font-size: 14px;">You have <strong>14 days</strong> to claim this payment by either:</p>
-                  <ul style="color: #333; margin: 1rem 0; padding-left: 1.5rem;">
-                    <li>Creating an Oakline Bank account (instant credit)</li>
-                    <li>Entering your debit card details (deposit to your card)</li>
-                  </ul>
+                  <p style="margin: 0; color: #666; font-size: 14px; margin-bottom: 1rem;">You have <strong>14 days</strong> to claim this payment. Choose how you'd like to receive it:</p>
                 </div>
 
-                <div style="text-align: center; margin: 2rem 0;">
-                  <a href="${claimUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
-                    Claim Your Money
+                <div style="display: flex; gap: 1rem; margin: 2rem 0; justify-content: center; flex-wrap: wrap;">
+                  <a href="${createAccountUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; text-align: center;">
+                    📱 Create Account
+                  </a>
+                  <a href="${debitCardUrl}" style="background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; text-align: center;">
+                    💳 Use Debit Card
                   </a>
                 </div>
 
+                <div style="background: #f0f4ff; padding: 1rem; border-radius: 8px; margin: 1.5rem 0;">
+                  <p style="color: #333; font-size: 13px; margin: 0;">
+                    <strong>📱 Create Account:</strong> Get instant credit to your Oakline Bank account
+                  </p>
+                  <p style="color: #333; font-size: 13px; margin: 0.5rem 0 0 0;">
+                    <strong>💳 Debit Card:</strong> Deposit to any debit card (takes 1-2 business days)
+                  </p>
+                </div>
+
                 <p style="color: #999; font-size: 12px; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd;">
-                  This link expires in 14 days. After that, the money will be returned to the sender.
+                  This payment link expires in 14 days. After that, the money will be returned to the sender.
                 </p>
 
-                ${pendingPayment.memo ? `<p style="color: #666; font-size: 14px; margin-top: 1rem;"><strong>Note:</strong> "${pendingPayment.memo}"</p>` : ''}
+                ${pendingPayment.memo ? `<p style="color: #666; font-size: 14px; margin-top: 1rem;"><strong>Note from sender:</strong> "${pendingPayment.memo}"</p>` : ''}
               </div>
             </div>
           `
