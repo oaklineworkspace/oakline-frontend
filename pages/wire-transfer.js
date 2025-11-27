@@ -1318,17 +1318,6 @@ export default function WireTransfer() {
                       </div>
 
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>County (Optional)</label>
-                        <input
-                          type="text"
-                          style={styles.input}
-                          value={wireForm.recipient_bank_county || ''}
-                          onChange={(e) => handleInputChange('recipient_bank_county', e.target.value)}
-                          placeholder="Enter County (Optional)"
-                        />
-                      </div>
-
-                      <div style={styles.formGroup}>
                         <label style={styles.label}>ZIP/Postal Code (Optional)</label>
                         <input
                           type="text"
