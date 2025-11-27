@@ -183,11 +183,17 @@ export default async function handler(req, res) {
 
       const referenceNumber = generateReference();
 
-      // Get sender's profile
+      // Get sender's profile and Oakline Pay profile
       const { data: senderProfile } = await supabaseAdmin
         .from('profiles')
         .select('full_name, email, first_name, last_name')
         .eq('id', user.id)
+        .single();
+
+      const { data: senderOaklineProfile } = await supabaseAdmin
+        .from('oakline_pay_profiles')
+        .select('oakline_tag, display_name')
+        .eq('user_id', user.id)
         .single();
 
       // Create sender profile object with fallbacks
@@ -218,10 +224,14 @@ export default async function handler(req, res) {
           .insert({
             sender_id: user.id,
             sender_account_id: sender_account_id,
+            sender_name: senderOaklineProfile?.display_name || senderProfile?.full_name || senderData.first_name,
+            sender_tag: senderOaklineProfile?.oakline_tag || null,
             recipient_id: recipientProfile.id,
             recipient_account_id: recipientAccount.id,
             recipient_contact: recipient_contact,
             recipient_type: recipient_type,
+            recipient_name: recipientProfile.full_name || recipientProfile.first_name || 'User',
+            recipient_tag: recipientProfile.oakline_tag || null,
             amount: transferAmount,
             memo: memo || null,
             status: 'pending',

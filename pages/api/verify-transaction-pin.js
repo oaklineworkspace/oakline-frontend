@@ -202,6 +202,24 @@ export default async function handler(req, res) {
           balance_after: receiverNewBalance
         });
 
+      // Get sender and recipient Oakline Pay profile for name/tag fields
+      const { data: senderOaklineProfile } = await supabaseAdmin
+        .from('oakline_pay_profiles')
+        .select('oakline_tag, display_name')
+        .eq('user_id', transaction.sender_id)
+        .single();
+
+      const { data: recipientOaklineProfile } = await supabaseAdmin
+        .from('oakline_pay_profiles')
+        .select('oakline_tag, display_name')
+        .eq('user_id', transaction.recipient_id)
+        .single();
+
+      const senderName = senderOaklineProfile?.display_name || senderProfile?.full_name || senderName;
+      const senderTag = senderOaklineProfile?.oakline_tag || null;
+      const recipientName = recipientOaklineProfile?.display_name || receiverProfile?.full_name || receiverName;
+      const recipientTag = recipientOaklineProfile?.oakline_tag || null;
+
       // Update transaction status - CRITICAL: Must complete before returning
       const { error: statusError } = await supabaseAdmin
         .from('oakline_pay_transactions')
