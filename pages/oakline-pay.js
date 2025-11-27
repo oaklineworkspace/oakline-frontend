@@ -346,7 +346,8 @@ export default function OaklinePayPage() {
         },
         body: JSON.stringify({
           pin: verifyForm.code,
-          type: 'oakline_pay'
+          type: 'oakline_pay',
+          transaction_id: pendingTransaction.transaction_id
         })
       });
 
@@ -954,15 +955,32 @@ export default function OaklinePayPage() {
                     {verifyingPin && (
                       <div style={{
                         backgroundColor: 'rgba(5, 150, 105, 0.15)',
-                        borderLeft: '4px solid #059669',
-                        borderRadius: '10px',
+                        border: '2px solid #059669',
+                        borderRadius: '12px',
                         padding: '1.5rem',
                         marginBottom: '1.5rem',
-                        textAlign: 'center'
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem'
                       }}>
-                        <div style={{ fontSize: '2rem', marginBottom: '1rem', animation: 'spin 2s linear infinite' }}>⏳</div>
-                        <p style={{ margin: 0, color: '#047857', fontWeight: '600', fontSize: '1rem' }}>Verifying your PIN...</p>
-                        <p style={{ margin: '0.5rem 0 0 0', color: '#10b981', fontSize: '0.9rem' }}>Please wait while we process your transaction</p>
+                        <div style={{
+                          width: '48px',
+                          height: '48px',
+                          backgroundColor: '#059669',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          animation: 'spin 1s linear infinite'
+                        }}>
+                          <div style={{
+                            fontSize: '1.5rem'
+                          }}>⏳</div>
+                        </div>
+                        <div style={{ color: '#047857', fontSize: '1rem', fontWeight: '600' }}>
+                          Verifying your PIN and completing transfer...
+                        </div>
                       </div>
                     )}
 
