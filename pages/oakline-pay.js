@@ -53,6 +53,8 @@ export default function OaklinePayPage() {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
   const [verifyingPin, setVerifyingPin] = useState(false);
+  const [selectedOaklineTransaction, setSelectedOaklineTransaction] = useState(null);
+  const [showOaklineReceiptModal, setShowOaklineReceiptModal] = useState(false);
   const router = useRouter();
 
   const [sendForm, setSendForm] = useState({
@@ -491,6 +493,7 @@ export default function OaklinePayPage() {
       const qrData = JSON.stringify({
         type: 'oakline_pay',
         tag: oaklineProfile.oakline_tag,
+        email: userProfile?.email || user?.email || '',
         name: oaklineProfile.display_name || userProfile?.full_name || 'User'
       });
 
@@ -1115,14 +1118,23 @@ export default function OaklinePayPage() {
                     </div>
                   ) : (
                     transactions.map(txn => (
-                      <div key={txn.id} style={styles.transactionCard}>
+                      <div 
+                        key={txn.id} 
+                        style={{ ...styles.transactionCard, cursor: 'pointer', transition: 'all 0.3s ease' }}
+                        onClick={() => {
+                          setSelectedOaklineTransaction(txn);
+                          setShowOaklineReceiptModal(true);
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 16px rgba(26, 56, 93, 0.15)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                      >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
                             <h3 style={{ margin: 0, color: '#1a365d', fontWeight: '600' }}>
-                              {txn.sender_id === user?.id ? '📤 Sent' : '📥 Received'}
+                              {txn.sender_id === user?.id ? '📤 Sent to' : '📥 Received from'} {txn.sender_id === user?.id ? (txn.recipient_name || txn.recipient_tag || 'User') : (txn.sender_name || txn.sender_tag || 'User')}
                             </h3>
                             <p style={{ margin: '0.5rem 0 0', color: '#64748b', fontSize: '0.85rem' }}>
-                              {new Date(txn.created_at).toLocaleDateString()}
+                              {new Date(txn.created_at).toLocaleDateString()} • {new Date(txn.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                             </p>
                           </div>
                           <div style={{ textAlign: 'right' }}>
@@ -1465,11 +1477,15 @@ export default function OaklinePayPage() {
       {showRequestModal && (
         <div style={styles.modalOverlay} onClick={() => setShowRequestModal(false)}>
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h2 style={styles.modalTitle}>📋 Request Money</h2>
+            <div style={{ textAlign: 'center', paddingBottom: '1.5rem', borderBottom: '2px solid #f0f4f8', marginBottom: '1.5rem' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📋</div>
+              <h2 style={{ margin: 0, color: '#0f2027', fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>Request Money</h2>
+              <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>Ask someone to send you funds</p>
+            </div>
             <form onSubmit={handleRequestMoney} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
-                <label style={styles.label}>From Account *</label>
-                <select style={styles.select} value={requestForm.from_account} onChange={(e) => setRequestForm({ ...requestForm, from_account: e.target.value })} required>
+                <label style={{ ...styles.label, fontWeight: '600', color: '#1e293b', marginBottom: '0.5rem', display: 'block' }}>From Account *</label>
+                <select style={{ ...styles.input, padding: '0.875rem', backgroundColor: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '0.95rem' }} value={requestForm.from_account} onChange={(e) => setRequestForm({ ...requestForm, from_account: e.target.value })} required>
                   <option value="">Select account</option>
                   {accounts.map(acc => (
                     <option key={acc.id} value={acc.id}>
@@ -1480,38 +1496,48 @@ export default function OaklinePayPage() {
               </div>
 
               <div>
-                <label style={styles.label}>Recipient Type</label>
-                <select style={styles.select} value={requestForm.recipient_type} onChange={(e) => setRequestForm({ ...requestForm, recipient_type: e.target.value })}>
-                  <option value="oakline_tag">Oakline Tag</option>
-                  <option value="email">Email</option>
-                  <option value="phone">Phone</option>
+                <label style={{ ...styles.label, fontWeight: '600', color: '#1e293b', marginBottom: '0.5rem', display: 'block' }}>Request From *</label>
+                <select style={{ ...styles.input, padding: '0.875rem', backgroundColor: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '0.95rem' }} value={requestForm.recipient_type} onChange={(e) => setRequestForm({ ...requestForm, recipient_type: e.target.value })}>
+                  <option value="oakline_tag">Oakline Tag (@username)</option>
+                  <option value="email">Email Address</option>
                 </select>
               </div>
 
               <div>
-                <label style={styles.label}>
+                <label style={{ ...styles.label, fontWeight: '600', color: '#1e293b', marginBottom: '0.5rem', display: 'block' }}>
                   {requestForm.recipient_type === 'oakline_tag' && 'Oakline Tag *'}
                   {requestForm.recipient_type === 'email' && 'Email Address *'}
-                  {requestForm.recipient_type === 'phone' && 'Phone Number *'}
                 </label>
-                <input type="text" style={styles.input} value={requestForm.recipient_contact} onChange={(e) => setRequestForm({ ...requestForm, recipient_contact: e.target.value })} required />
+                <div style={{ position: 'relative', display: requestForm.recipient_type === 'oakline_tag' ? 'flex' : 'block' }}>
+                  {requestForm.recipient_type === 'oakline_tag' && (
+                    <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', fontSize: '1.1rem', color: '#059669', fontWeight: '700' }}>@</span>
+                  )}
+                  <input 
+                    type="text" 
+                    style={{ ...styles.input, padding: requestForm.recipient_type === 'oakline_tag' ? '0.875rem 0.875rem 0.875rem 2.5rem' : '0.875rem', backgroundColor: '#f8fafc', border: '2px solid #e2e8f0' }} 
+                    value={requestForm.recipient_contact} 
+                    onChange={(e) => setRequestForm({ ...requestForm, recipient_contact: e.target.value })} 
+                    placeholder={requestForm.recipient_type === 'oakline_tag' ? 'username' : 'example@email.com'}
+                    required 
+                  />
+                </div>
               </div>
 
               <div>
-                <label style={styles.label}>Amount ($) *</label>
-                <input type="number" step="0.01" min="0.01" style={styles.input} value={requestForm.amount} onChange={(e) => setRequestForm({ ...requestForm, amount: e.target.value })} placeholder="0.00" required />
+                <label style={{ ...styles.label, fontWeight: '600', color: '#1e293b', marginBottom: '0.5rem', display: 'block' }}>Amount ($) *</label>
+                <input type="number" step="0.01" min="0.01" style={{ ...styles.input, padding: '0.875rem', backgroundColor: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '0.95rem' }} value={requestForm.amount} onChange={(e) => setRequestForm({ ...requestForm, amount: e.target.value })} placeholder="0.00" required />
               </div>
 
               <div>
-                <label style={styles.label}>Memo (Optional)</label>
-                <input type="text" style={styles.input} value={requestForm.memo} onChange={(e) => setRequestForm({ ...requestForm, memo: e.target.value })} placeholder="What's this for?" maxLength={100} />
+                <label style={{ ...styles.label, fontWeight: '600', color: '#1e293b', marginBottom: '0.5rem', display: 'block' }}>Memo (Optional)</label>
+                <input type="text" style={{ ...styles.input, padding: '0.875rem', backgroundColor: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '0.95rem' }} value={requestForm.memo} onChange={(e) => setRequestForm({ ...requestForm, memo: e.target.value })} placeholder="What's this for?" maxLength={100} />
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <button type="submit" style={{ ...styles.primaryButton, flex: 1 }} disabled={loading}>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                <button type="submit" style={{ ...styles.primaryButton, flex: 1, padding: '0.9rem' }} disabled={loading}>
                   {loading ? 'Sending...' : '✓ Send Request'}
                 </button>
-                <button type="button" style={{ ...styles.secondaryButton, flex: 1 }} onClick={() => setShowRequestModal(false)} disabled={loading}>
+                <button type="button" style={{ ...styles.secondaryButton, flex: 1, padding: '0.9rem' }} onClick={() => setShowRequestModal(false)} disabled={loading}>
                   Cancel
                 </button>
               </div>
@@ -1668,7 +1694,122 @@ export default function OaklinePayPage() {
             {qrCodeDataUrl && (
               <img src={qrCodeDataUrl} alt="QR Code" style={styles.qrImage} />
             )}
+            <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '1rem', marginBottom: '1rem', textAlign: 'center' }}>
+              <p style={{ margin: 0, color: '#1e40af', fontSize: '0.9rem', fontWeight: '600' }}>
+                🏷️ @{oaklineProfile?.oakline_tag}
+              </p>
+              <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.85rem' }}>
+                {userProfile?.email}
+              </p>
+            </div>
             <button onClick={() => setShowQRModal(false)} style={styles.primaryButton}>
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Oakline Pay Receipt Modal */}
+      {showOaklineReceiptModal && selectedOaklineTransaction && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }} onClick={() => setShowOaklineReceiptModal(false)}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '2rem',
+            maxWidth: '500px',
+            width: '100%',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+            animation: 'slideUp 0.3s ease-out'
+          }} onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setShowOaklineReceiptModal(false)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                color: '#64748b'
+              }}
+            >
+              ×
+            </button>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>💸</div>
+              <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '700', color: '#1e293b' }}>Transaction Receipt</h2>
+            </div>
+
+            <div style={{ backgroundColor: '#f0f9ff', padding: '1.5rem', borderRadius: '12px', marginBottom: '1.5rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '0.5rem' }}>Amount</div>
+              <div style={{ fontSize: '2rem', fontWeight: '700', color: selectedOaklineTransaction.sender_id === user?.id ? '#ef4444' : '#059669' }}>
+                {selectedOaklineTransaction.sender_id === user?.id ? '-' : '+'} ${parseFloat(selectedOaklineTransaction.amount).toFixed(2)}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #f1f5f9' }}>
+              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>Type</span>
+              <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600' }}>OAKLINE PAY {selectedOaklineTransaction.sender_id === user?.id ? 'SEND' : 'RECEIVE'}</span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #f1f5f9' }}>
+              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>Description</span>
+              <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-word' }}>
+                {selectedOaklineTransaction.sender_id === user?.id ? 'To' : 'From'} {selectedOaklineTransaction.sender_id === user?.id ? (selectedOaklineTransaction.recipient_name || selectedOaklineTransaction.recipient_tag || 'User') : (selectedOaklineTransaction.sender_name || selectedOaklineTransaction.sender_tag || 'User')}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #f1f5f9' }}>
+              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>Status</span>
+              <span style={{ fontSize: '0.9rem', fontWeight: '600', backgroundColor: selectedOaklineTransaction.status === 'completed' ? '#d1fae5' : '#fef3c7', color: selectedOaklineTransaction.status === 'completed' ? '#047857' : '#92400e', padding: '0.25rem 0.75rem', borderRadius: '12px' }}>
+                {(selectedOaklineTransaction.status || 'PENDING').toUpperCase()}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #f1f5f9' }}>
+              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>Date & Time</span>
+              <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600' }}>
+                {new Date(selectedOaklineTransaction.created_at).toLocaleDateString()} {new Date(selectedOaklineTransaction.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #f1f5f9' }}>
+              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>Reference Number</span>
+              <span style={{ fontSize: '0.8rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace' }}>
+                {selectedOaklineTransaction.reference_number?.slice(0, 12).toUpperCase() || selectedOaklineTransaction.id?.slice(0, 8).toUpperCase() || 'N/A'}
+              </span>
+            </div>
+
+            {selectedOaklineTransaction.memo && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>Memo</span>
+                <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right', maxWidth: '60%' }}>
+                  {selectedOaklineTransaction.memo}
+                </span>
+              </div>
+            )}
+
+            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '2px solid #e2e8f0', textAlign: 'center' }}>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Thank you for using Oakline Pay</p>
+            </div>
+
+            <button 
+              onClick={() => setShowOaklineReceiptModal(false)}
+              style={{ ...styles.primaryButton, width: '100%', marginTop: '1rem' }}
+            >
               Done
             </button>
           </div>
