@@ -2,6 +2,7 @@
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 import { sendEmail } from '../../lib/email';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 function generateTransactionPIN() {
   return Math.floor(1000 + Math.random() * 9000).toString();
@@ -9,6 +10,10 @@ function generateTransactionPIN() {
 
 function generateReference() {
   return `OKP${Date.now()}${Math.floor(Math.random() * 1000)}`;
+}
+
+function generateClaimToken() {
+  return crypto.randomBytes(32).toString('hex');
 }
 
 export default async function handler(req, res) {
@@ -53,111 +58,33 @@ export default async function handler(req, res) {
         .single();
 
       if (accountError || !senderAccount) {
-        return res.status(404).json({ error: 'Account not found or inactive' });
+        return res.status(404).json({ error: 'Account not found' });
       }
 
       if (parseFloat(senderAccount.balance) < transferAmount) {
-        return res.status(400).json({ error: 'Insufficient funds' });
+        return res.status(400).json({ error: 'Insufficient balance' });
       }
 
-      // Get sender's Oakline Pay settings and check limits
-      const { data: settings } = await supabaseAdmin
-        .from('oakline_pay_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      const perTransactionLimit = settings?.per_transaction_limit || 2500;
-      const dailyLimit = settings?.daily_limit || 5000;
-      const monthlyLimit = settings?.monthly_limit || 25000;
-
-      if (transferAmount > perTransactionLimit) {
-        return res.status(400).json({ error: `Amount exceeds per-transaction limit of $${perTransactionLimit}` });
-      }
-
-      // Check daily limit
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      
-      const { data: todaysTransactions } = await supabaseAdmin
-        .from('oakline_pay_transactions')
-        .select('amount')
-        .eq('sender_id', user.id)
-        .in('status', ['completed', 'processing'])
-        .gte('created_at', todayStart.toISOString());
-
-      const totalSpentToday = (todaysTransactions || []).reduce(
-        (sum, tx) => sum + parseFloat(tx.amount || 0), 
-        0
-      );
-
-      if (totalSpentToday + transferAmount > dailyLimit) {
-        return res.status(400).json({ 
-          error: `Transaction would exceed daily limit of $${dailyLimit}. You've already sent $${totalSpentToday.toFixed(2)} today.` 
-        });
-      }
-
-      // Check monthly limit
-      const monthStart = new Date();
-      monthStart.setDate(1);
-      monthStart.setHours(0, 0, 0, 0);
-      
-      const { data: monthTransactions } = await supabaseAdmin
-        .from('oakline_pay_transactions')
-        .select('amount')
-        .eq('sender_id', user.id)
-        .in('status', ['completed', 'processing'])
-        .gte('created_at', monthStart.toISOString());
-
-      const totalSpentThisMonth = (monthTransactions || []).reduce(
-        (sum, tx) => sum + parseFloat(tx.amount || 0), 
-        0
-      );
-
-      if (totalSpentThisMonth + transferAmount > monthlyLimit) {
-        return res.status(400).json({ 
-          error: `Transaction would exceed monthly limit of $${monthlyLimit}. You've already sent $${totalSpentThisMonth.toFixed(2)} this month.` 
-        });
-      }
-
-      // Find recipient based on type
       let recipientProfile = null;
       let isOaklineUser = false;
 
+      // Check if recipient is an Oakline user
       if (recipient_type === 'oakline_tag') {
-        // Normalize tag: remove @ if present, convert to lowercase
-        const normalizedTag = recipient_contact.toLowerCase().replace(/^@/, '');
-        const tagWithAt = `@${normalizedTag}`;
-        
-        console.log('🔍 Looking for oakline tag:', { normalizedTag, tagWithAt, recipient_contact });
-        
-        // Try both formats for backwards compatibility (some may be stored with @, some without)
-        let { data: oaklineProfile, error: tagError } = await supabaseAdmin
+        const normalizedTag = recipient_contact.startsWith('@') ? recipient_contact.slice(1) : recipient_contact;
+        const { data: oaklinePay } = await supabaseAdmin
           .from('oakline_pay_profiles')
-          .select('user_id, display_name, oakline_tag, is_active')
-          .eq('is_active', true)
-          .or(`oakline_tag.ilike.${normalizedTag},oakline_tag.ilike.${tagWithAt}`);
+          .select('user_id, oakline_tag, display_name, full_name')
+          .eq('oakline_tag', normalizedTag)
+          .single();
 
-        console.log('✓ Tag lookup result:', { found: oaklineProfile?.length > 0, profiles: oaklineProfile, error: tagError });
-
-        // Use the first match found
-        if (oaklineProfile && oaklineProfile.length > 0) {
-          const userId = oaklineProfile[0].user_id;
-          const displayName = oaklineProfile[0].display_name;
-          
-          // Fetch actual profile data for fallback names
-          const { data: actualProfile } = await supabaseAdmin
+        if (oaklinePay) {
+          const { data: profile } = await supabaseAdmin
             .from('profiles')
-            .select('first_name, last_name, full_name')
-            .eq('id', userId)
+            .select('id, full_name, first_name, email, oakline_tag')
+            .eq('id', oaklinePay.user_id)
             .single();
-          
-          recipientProfile = {
-            id: userId,
-            full_name: displayName || actualProfile?.full_name || `${actualProfile?.first_name || ''} ${actualProfile?.last_name || ''}`.trim() || 'Oakline User',
-            first_name: displayName?.split(' ')[0] || actualProfile?.first_name || 'Oakline User',
-            oakline_tag: oaklineProfile[0].oakline_tag
-          };
+
+          recipientProfile = profile;
           isOaklineUser = true;
           console.log('✅ Found Oakline user:', recipientProfile);
         } else {
@@ -259,10 +186,34 @@ export default async function handler(req, res) {
 
       } else {
         // NON-OAKLINE USER - Pending Payment Flow
-        // Deduct amount immediately and create pending payment
-        const senderNewBalance = parseFloat(senderAccount.balance) - transferAmount;
+        const claimToken = generateClaimToken();
+        const claimExpiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000); // 14 days
 
-        // Update sender's account
+        // Create pending payment record
+        const { data: pendingPayment, error: pendingError } = await supabaseAdmin
+          .from('pending_payments')
+          .insert({
+            sender_id: user.id,
+            sender_name: senderData.full_name,
+            sender_contact: senderOaklineProfile?.oakline_tag || senderProfile?.email,
+            recipient_email: recipient_contact,
+            recipient_name: null, // Will be filled when they claim
+            amount: transferAmount,
+            memo: memo || null,
+            claim_token: claimToken,
+            status: 'pending',
+            expires_at: claimExpiresAt
+          })
+          .select()
+          .single();
+
+        if (pendingError) {
+          console.error('Pending payment creation error:', pendingError);
+          return res.status(500).json({ error: 'Failed to create pending payment' });
+        }
+
+        // Deduct amount immediately from sender's account
+        const senderNewBalance = parseFloat(senderAccount.balance) - transferAmount;
         await supabaseAdmin
           .from('accounts')
           .update({ balance: senderNewBalance, updated_at: new Date().toISOString() })
@@ -275,366 +226,78 @@ export default async function handler(req, res) {
             user_id: user.id,
             account_id: sender_account_id,
             type: 'oakline_pay_send',
-            amount: -transferAmount,
-            description: `Oakline Pay to ${recipient_contact}${memo ? ` - ${memo}` : ''}`,
-            reference: referenceNumber,
+            amount: transferAmount,
+            description: `Oakline Pay sent to ${recipient_contact}`,
             status: 'completed',
             balance_before: parseFloat(senderAccount.balance),
-            balance_after: senderNewBalance
+            balance_after: senderNewBalance,
+            reference: referenceNumber,
+            created_at: new Date().toISOString()
           });
 
-        // Create pending payment record
-        const { data: pendingPayment, error: pendingError } = await supabaseAdmin
-          .from('oakline_pay_pending_payments')
-          .insert({
-            sender_id: user.id,
-            sender_account_id: sender_account_id,
-            recipient_email: recipient_contact,
-            amount: transferAmount,
-            memo: memo || null,
-            reference_number: referenceNumber,
-            status: 'pending',
-            expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) // 14 days
-          })
-          .select()
-          .single();
-
-        if (pendingError) {
-          console.error('Pending payment creation error:', pendingError);
-          return res.status(500).json({ error: 'Failed to create pending payment' });
-        }
-
-        // Send invitation email to non-Oakline recipient
+        // Send email to recipient with claim link
+        const claimUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://theoaklinebank.com'}/claim-payment?token=${claimToken}`;
+        
         try {
           await sendEmail({
             to: recipient_contact,
-            subject: `${senderData.first_name} sent you $${transferAmount.toFixed(2)} via Oakline Pay`,
-            emailType: 'notify',
+            subject: `You've received $${transferAmount.toFixed(2)} from Oakline Bank!`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <div style="background: linear-gradient(135deg, #1A3E6F 0%, #2C5F8D 100%); padding: 30px; text-align: center;">
-                  <h1 style="color: white; margin: 0;">💰 You've Got Money!</h1>
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px 8px 0 0; text-align: center;">
+                  <h1 style="margin: 0; font-size: 28px;">💰 Money Received!</h1>
                 </div>
-                <div style="padding: 30px; background-color: #f8f9fa;">
-                  <h2 style="color: #1A3E6F;">Oakline Pay Transfer</h2>
-                  <p><strong>${senderData.first_name}</strong> sent you <strong>$${transferAmount.toFixed(2)}</strong></p>
-                  ${memo ? `<p style="font-style: italic; color: #666;">Message: "${memo}"</p>` : ''}
+                <div style="background: #f8f9fa; padding: 2rem; border-radius: 0 0 8px 8px;">
+                  <p style="color: #333; font-size: 16px;">
+                    <strong>${senderData.full_name}</strong> has sent you <strong style="color: #16a34a; font-size: 20px;">$${transferAmount.toFixed(2)}</strong>
+                  </p>
                   
-                  <div style="background-color: #d1fae5; border-radius: 12px; padding: 20px; margin: 24px 0;">
-                    <h3 style="color: #065f46; margin: 0 0 12px 0;">🎉 Claim Your Money</h3>
-                    <p style="color: #047857; margin: 0;">Create an Oakline Bank account within <strong>14 days</strong> to claim this payment.</p>
+                  <div style="background: white; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid #667eea;">
+                    <p style="margin: 0; color: #666; font-size: 14px;">You have <strong>14 days</strong> to claim this payment by either:</p>
+                    <ul style="color: #333; margin: 1rem 0; padding-left: 1.5rem;">
+                      <li>Creating an Oakline Bank account (instant credit)</li>
+                      <li>Entering your debit card details (deposit to your card)</li>
+                    </ul>
                   </div>
 
-                  <div style="text-align: center; margin: 32px 0;">
-                    <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://theoaklinebank.com'}/apply"
-                       style="display: inline-block; background: linear-gradient(135deg, #0066cc 0%, #2c5aa0 100%);
-                              color: #ffffff; padding: 16px 32px; border-radius: 12px; text-decoration: none;
-                              font-weight: 600; font-size: 16px;">
-                      Create Oakline Account
+                  <div style="text-align: center; margin: 2rem 0;">
+                    <a href="${claimUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">
+                      Claim Your Money
                     </a>
                   </div>
 
-                  <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0;">
-                    <p style="color: #92400e; font-size: 14px; margin: 0;">
-                      ⏳ <strong>Important:</strong> This payment expires in 14 days. Sign up with this email address (${recipient_contact}) to automatically claim your money.
-                    </p>
-                  </div>
+                  <p style="color: #999; font-size: 12px; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd;">
+                    This link expires in 14 days. After that, the money will be returned to the sender.
+                  </p>
 
-                  <p style="color: #666; font-size: 14px;">Reference: ${referenceNumber}</p>
+                  ${memo ? `<p style="color: #666; font-size: 14px; margin-top: 1rem;"><strong>Note:</strong> "${memo}"</p>` : ''}
                 </div>
               </div>
             `
           });
         } catch (emailError) {
-          console.error('Invitation email error:', emailError);
+          console.error('Error sending notification email:', emailError);
+          // Don't fail the transaction if email fails
         }
 
         return res.status(200).json({
           success: true,
-          message: `Payment sent! Recipient will be notified to create an Oakline account to claim $${transferAmount.toFixed(2)}`,
-          reference_number: referenceNumber,
+          message: `Payment pending. ${recipient_contact} will be notified to claim their money.`,
+          payment_id: pendingPayment.id,
+          claim_token: claimToken,
+          recipient_contact: recipient_contact,
+          amount: transferAmount,
           is_oakline_user: false,
-          pending_payment_id: pendingPayment.id,
-          expires_at: pendingPayment.expires_at
+          expires_at: claimExpiresAt
         });
       }
+
+    } else {
+      return res.status(400).json({ error: 'Invalid request step' });
     }
-
-    // STEP 2: VERIFY AND COMPLETE TRANSFER (Only for Oakline users)
-    if (step === 'verify') {
-      if (!verification_code) {
-        return res.status(400).json({ error: 'Verification code required' });
-      }
-
-      const { transaction_id } = req.body;
-
-      if (!transaction_id) {
-        return res.status(400).json({ error: 'Transaction ID is required' });
-      }
-
-      const { data: transaction, error: txError } = await supabaseAdmin
-        .from('oakline_pay_transactions')
-        .select('*')
-        .eq('id', transaction_id)
-        .eq('sender_id', user.id)
-        .eq('status', 'pending')
-        .single();
-
-      if (txError || !transaction) {
-        console.error('Transaction lookup error:', txError);
-        return res.status(404).json({ error: 'Transaction not found or already processed' });
-      }
-
-      if (new Date() > new Date(transaction.verification_expires_at)) {
-        await supabaseAdmin
-          .from('oakline_pay_transactions')
-          .update({ status: 'expired' })
-          .eq('id', transaction_id);
-        
-        return res.status(400).json({ error: 'Verification code expired. Please start a new transfer.' });
-      }
-
-      // Verify PIN against user's stored transaction PIN (not the transaction code)
-      const { data: pinProfile } = await supabaseAdmin
-        .from('profiles')
-        .select('transaction_pin')
-        .eq('id', user.id)
-        .single();
-
-      if (!pinProfile?.transaction_pin) {
-        return res.status(400).json({ error: 'Transaction PIN not configured. Please set one in Security Settings.' });
-      }
-
-      const isPinValid = await bcrypt.compare(verification_code, pinProfile.transaction_pin);
-      
-      if (!isPinValid) {
-        return res.status(400).json({ error: 'Invalid PIN. Please try again.' });
-      }
-
-      // Re-check sender balance
-      const { data: senderAccount, error: senderError } = await supabaseAdmin
-        .from('accounts')
-        .select('*')
-        .eq('id', transaction.sender_account_id)
-        .single();
-
-      if (senderError || !senderAccount) {
-        console.error('Sender account error:', senderError);
-        return res.status(400).json({ error: 'Could not verify account balance' });
-      }
-
-      if (parseFloat(senderAccount.balance) < parseFloat(transaction.amount)) {
-        await supabaseAdmin
-          .from('oakline_pay_transactions')
-          .update({ status: 'failed', failure_reason: 'Insufficient funds' })
-          .eq('id', transaction_id);
-        
-        return res.status(400).json({ error: 'Insufficient funds' });
-      }
-
-      const { data: recipientAccount, error: recipientError } = await supabaseAdmin
-        .from('accounts')
-        .select('*')
-        .eq('id', transaction.recipient_account_id)
-        .single();
-
-      if (recipientError || !recipientAccount) {
-        console.error('Recipient account error:', recipientError);
-        return res.status(400).json({ error: 'Recipient account not found' });
-      }
-
-      const amount = parseFloat(transaction.amount);
-      const senderNewBalance = parseFloat(senderAccount.balance) - amount;
-      const recipientNewBalance = parseFloat(recipientAccount.balance) + amount;
-
-      // Update balances
-      await supabaseAdmin
-        .from('accounts')
-        .update({ balance: senderNewBalance, updated_at: new Date().toISOString() })
-        .eq('id', transaction.sender_account_id);
-
-      await supabaseAdmin
-        .from('accounts')
-        .update({ balance: recipientNewBalance, updated_at: new Date().toISOString() })
-        .eq('id', transaction.recipient_account_id);
-
-      const transactionRef = transaction.reference_number;
-
-      // Fetch sender and recipient profiles + oakline_pay_profiles for transaction descriptions
-      let senderProf = null;
-      let senderOaklineProf = null;
-      let recipientProf = null;
-      let recipientOaklineProf = null;
-      
-      try {
-        const senderResult = await supabaseAdmin
-          .from('profiles')
-          .select('first_name, last_name, full_name, email')
-          .eq('id', transaction.sender_id)
-          .maybeSingle();
-        senderProf = senderResult.data;
-        
-        const senderOakResult = await supabaseAdmin
-          .from('oakline_pay_profiles')
-          .select('oakline_tag, display_name')
-          .eq('user_id', transaction.sender_id)
-          .eq('is_active', true)
-          .maybeSingle();
-        senderOaklineProf = senderOakResult.data;
-      } catch (err) {
-        console.error('Error fetching sender profile:', err);
-      }
-
-      try {
-        const recipientResult = await supabaseAdmin
-          .from('profiles')
-          .select('first_name, last_name, full_name, email')
-          .eq('id', transaction.recipient_id)
-          .maybeSingle();
-        recipientProf = recipientResult.data;
-        
-        const recipientOakResult = await supabaseAdmin
-          .from('oakline_pay_profiles')
-          .select('oakline_tag, display_name')
-          .eq('user_id', transaction.recipient_id)
-          .eq('is_active', true)
-          .maybeSingle();
-        recipientOaklineProf = recipientOakResult.data;
-      } catch (err) {
-        console.error('Error fetching recipient profile:', err);
-      }
-
-      // Build names with priority: oakline_tag > display_name > full_name > first_name
-      const senderName = senderOaklineProf?.oakline_tag || 
-        senderOaklineProf?.display_name || 
-        senderProf?.full_name || 
-        `${senderProf?.first_name || ''} ${senderProf?.last_name || ''}`.trim() || 
-        senderProf?.email?.split('@')[0] || 'User';
-      
-      const recipientName = recipientOaklineProf?.oakline_tag || 
-        recipientOaklineProf?.display_name || 
-        recipientProf?.full_name || 
-        `${recipientProf?.first_name || ''} ${recipientProf?.last_name || ''}`.trim() || 
-        recipientProf?.email?.split('@')[0] || 'User';
-
-      // Create transaction records
-      await supabaseAdmin
-        .from('transactions')
-        .insert({
-          user_id: transaction.sender_id,
-          account_id: transaction.sender_account_id,
-          type: 'oakline_pay_send',
-          amount: -amount,
-          description: `Oakline Pay to ${recipientName}${transaction.memo ? ` - ${transaction.memo}` : ''}`,
-          reference: transactionRef,
-          status: 'completed',
-          balance_before: parseFloat(senderAccount.balance),
-          balance_after: senderNewBalance
-        });
-
-      await supabaseAdmin
-        .from('transactions')
-        .insert({
-          user_id: transaction.recipient_id,
-          account_id: transaction.recipient_account_id,
-          type: 'oakline_pay_receive',
-          amount: amount,
-          description: `Oakline Pay from ${senderName}${transaction.memo ? ` - ${transaction.memo}` : ''}`,
-          reference: transactionRef,
-          status: 'completed',
-          balance_before: parseFloat(recipientAccount.balance),
-          balance_after: recipientNewBalance
-        });
-
-      // Update transaction status with sender and recipient info
-      await supabaseAdmin
-        .from('oakline_pay_transactions')
-        .update({
-          status: 'completed',
-          is_verified: true,
-          sender_name: senderProfile?.full_name || senderProfile?.first_name || 'User',
-          sender_tag: null,
-          recipient_name: recipientProfile?.full_name || recipientProfile?.first_name || 'User',
-          recipient_tag: null,
-          sender_balance_after: senderNewBalance,
-          recipient_balance_before: parseFloat(recipientAccount.balance),
-          recipient_balance_after: recipientNewBalance,
-          processed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', transaction_id);
-
-      // Send confirmation emails
-      const { data: senderProfile } = await supabaseAdmin
-        .from('profiles')
-        .select('full_name, email, first_name, last_name')
-        .eq('id', transaction.sender_id)
-        .single();
-
-      const { data: recipientProfile } = await supabaseAdmin
-        .from('profiles')
-        .select('full_name, email, first_name, last_name')
-        .eq('id', transaction.recipient_id)
-        .single();
-
-      try {
-        await sendEmail({
-          to: senderProfile.email,
-          subject: 'Oakline Pay Transfer Completed',
-          emailType: 'notify',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <div style="background: linear-gradient(135deg, #1A3E6F 0%, #2C5F8D 100%); padding: 30px; text-align: center;">
-                <h1 style="color: white; margin: 0;">✓ Transfer Completed</h1>
-              </div>
-              <div style="padding: 30px; background-color: #f8f9fa;">
-                <h2 style="color: #1A3E6F;">Money Sent Successfully</h2>
-                <p>You sent <strong>$${amount.toFixed(2)}</strong> to <strong>${recipientProfile.full_name || recipientProfile.first_name}</strong></p>
-                ${transaction.memo ? `<p>Memo: ${transaction.memo}</p>` : ''}
-                <p>New balance: <strong>$${senderNewBalance.toFixed(2)}</strong></p>
-                <p style="color: #666; font-size: 14px;">Reference: ${transactionRef}</p>
-              </div>
-            </div>
-          `
-        });
-
-        await sendEmail({
-          to: recipientProfile.email,
-          subject: 'You Received Money via Oakline Pay',
-          emailType: 'notify',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <div style="background: linear-gradient(135deg, #1A3E6F 0%, #2C5F8D 100%); padding: 30px; text-align: center;">
-                <h1 style="color: white; margin: 0;">💰 Money Received</h1>
-              </div>
-              <div style="padding: 30px; background-color: #f8f9fa;">
-                <h2 style="color: #1A3E6F;">Oakline Pay Transfer</h2>
-                <p>You received <strong>$${amount.toFixed(2)}</strong> from <strong>${senderProfile.full_name || senderProfile.first_name}</strong></p>
-                ${transaction.memo ? `<p>Memo: ${transaction.memo}</p>` : ''}
-                <p>New balance: <strong>$${recipientNewBalance.toFixed(2)}</strong></p>
-                <p style="color: #666; font-size: 14px;">Reference: ${transactionRef}</p>
-              </div>
-            </div>
-          `
-        });
-      } catch (emailError) {
-        console.error('Notification email error:', emailError);
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: 'Transfer completed successfully',
-        transaction_id: transaction.id,
-        reference_number: transactionRef,
-        amount: amount,
-        new_balance: senderNewBalance
-      });
-    }
-
-    return res.status(400).json({ error: 'Invalid step parameter' });
 
   } catch (error) {
-    console.error('Oakline Pay API error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('Error in oakline-pay-send:', error);
+    return res.status(500).json({ error: 'An error occurred. Please try again.' });
   }
 }
