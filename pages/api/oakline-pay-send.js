@@ -375,9 +375,9 @@ export default async function handler(req, res) {
         .eq('id', payment_id);
 
       // Send email to recipient with two claim options
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://theoaklinebank.com';
-      const createAccountUrl = `${appUrl}/sign-up?redirect=/claim-payment?token=${pendingPayment.claim_token}`;
-      const debitCardUrl = `${appUrl}/claim-payment?token=${pendingPayment.claim_token}&method=debit_card`;
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://theoaklinebank.com';
+      const createAccountUrl = `${siteUrl}/apply?token=${pendingPayment.claim_token}`;
+      const debitCardUrl = `${siteUrl}/claim-debit-card?token=${pendingPayment.claim_token}`;
       
       try {
         const { data: senderProfile } = await supabaseAdmin
