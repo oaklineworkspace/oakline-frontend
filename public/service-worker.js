@@ -14,6 +14,9 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(urlsToCache))
+      .catch(() => {
+        // Ignore cache errors during install
+      })
   );
 });
 
@@ -21,7 +24,32 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
-      .then((response) => response || fetch(event.request))
+      .then((response) => {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request)
+          .catch(() => {
+            // Return a generic offline response if fetch fails
+            return new Response('Offline - Service unavailable', {
+              status: 503,
+              statusText: 'Service Unavailable',
+              headers: new Headers({
+                'Content-Type': 'text/plain'
+              })
+            });
+          });
+      })
+      .catch(() => {
+        // Fallback error handler
+        return new Response('Error', {
+          status: 500,
+          statusText: 'Internal Server Error',
+          headers: new Headers({
+            'Content-Type': 'text/plain'
+          })
+        });
+      })
   );
 });
 
