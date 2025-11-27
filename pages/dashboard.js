@@ -304,8 +304,7 @@ function DashboardContent() {
         transactionsData = [...transactionsData, ...formattedCryptoDeposits];
       }
 
-      // Fetch wallet addresses for account opening deposits if needed
-      let accountOpeningWalletAddresses = {};
+      // Populate wallet addresses for account opening deposits if needed
       if (accountOpeningDeposits && accountOpeningDeposits.length > 0) {
         const walletIds = accountOpeningDeposits
           .map(d => d.assigned_wallet_id)
