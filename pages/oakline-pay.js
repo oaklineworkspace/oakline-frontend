@@ -957,15 +957,21 @@ export default function OaklinePayPage() {
                         <button 
                           type="submit" 
                           style={{
-                            ...styles.primaryButton,
                             flex: 1,
+                            padding: '0.875rem 1.5rem',
+                            backgroundColor: verifyingPin || verifyForm.code.length < 4 ? '#cbd5e1' : '#059669',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '12px',
+                            fontSize: '1rem',
+                            fontWeight: '600',
+                            cursor: verifyingPin || verifyForm.code.length < 4 ? 'not-allowed' : 'pointer',
                             opacity: verifyingPin || verifyForm.code.length < 4 ? 0.6 : 1,
-                            background: verifyingPin ? 'linear-gradient(135deg, #a5f3fc 0%, #67e8f9 100%)' : styles.primaryButton.background,
-                            cursor: verifyingPin || verifyForm.code.length < 4 ? 'not-allowed' : 'pointer'
+                            transition: 'all 0.3s ease'
                           }} 
                           disabled={verifyingPin || verifyForm.code.length < 4}
                         >
-                          {verifyingPin ? '⏳ Verifying...' : '✓ Confirm Transfer'}
+                          {verifyingPin ? '🔄 Authorizing...' : '✓ Authorize Transfer'}
                         </button>
                       </div>
 
