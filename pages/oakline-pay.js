@@ -50,6 +50,9 @@ export default function OaklinePayPage() {
   const [transferStep, setTransferStep] = useState(null); // null, 'review', or 'pin'
   const [transferStatus, setTransferStatus] = useState('');
   const [transferStatusType, setTransferStatusType] = useState('success');
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receiptData, setReceiptData] = useState(null);
+  const [verifyingPin, setVerifyingPin] = useState(false);
   const router = useRouter();
 
   const [sendForm, setSendForm] = useState({
@@ -313,7 +316,7 @@ export default function OaklinePayPage() {
 
   const handleVerifyTransfer = async (e) => {
     if (e.preventDefault) e.preventDefault();
-    setLoading(true);
+    setVerifyingPin(true);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -351,25 +354,35 @@ export default function OaklinePayPage() {
       if (!response.ok) {
         setTransferStatus(data.error || 'Verification failed');
         setTransferStatusType('error');
-        setLoading(false);
+        setVerifyingPin(false);
         return;
       }
 
-      setTransferStatus(`✅ Success! $${data.amount.toFixed(2)} sent instantly`);
-      setTransferStatusType('success');
+      // Show receipt with success
+      setReceiptData({
+        ...data,
+        ...pendingTransaction,
+        recipient_name: pendingTransaction.recipient_name,
+        sender_name: pendingTransaction.sender_name,
+        reference_number: data.reference_number,
+        completed_at: new Date().toISOString()
+      });
+      setShowReceiptModal(true);
+      
       setTimeout(() => {
         setTransferStep(null);
         setPendingTransaction(null);
         setVerifyForm({ code: '' });
         setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
+        setShowReceiptModal(false);
         checkUserAndLoadData();
-      }, 2000);
+      }, 3000);
     } catch (error) {
       console.error('Error verifying:', error);
       setTransferStatus('Transaction failed. Please try again.');
       setTransferStatusType('error');
     } finally {
-      setLoading(false);
+      setVerifyingPin(false);
     }
   };
 
@@ -867,19 +880,42 @@ export default function OaklinePayPage() {
                   <div>
                     <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
                       <div style={{ display: 'inline-block', padding: '1rem 1.5rem', backgroundColor: 'rgba(5, 150, 105, 0.1)', borderLeft: '4px solid #059669', borderRadius: '8px' }}>
-                        <p style={{ margin: 0, color: '#047857', fontSize: '0.9rem', fontWeight: '600' }}>Step 2 of 2: Confirm with PIN</p>
+                        <p style={{ margin: 0, color: '#047857', fontSize: '0.9rem', fontWeight: '600' }}>🔐 Step 2 of 2: Confirm with PIN</p>
                       </div>
                     </div>
 
-                    {transferStatus && (
+                    {verifyingPin && (
+                      <div style={{
+                        backgroundColor: 'rgba(5, 150, 105, 0.15)',
+                        borderLeft: '4px solid #059669',
+                        borderRadius: '10px',
+                        padding: '1.5rem',
+                        marginBottom: '1.5rem',
+                        textAlign: 'center'
+                      }}>
+                        <div style={{ fontSize: '2rem', marginBottom: '1rem', animation: 'spin 2s linear infinite' }}>⏳</div>
+                        <p style={{ margin: 0, color: '#047857', fontWeight: '600', fontSize: '1rem' }}>Verifying your PIN...</p>
+                        <p style={{ margin: '0.5rem 0 0 0', color: '#10b981', fontSize: '0.9rem' }}>Please wait while we process your transaction</p>
+                      </div>
+                    )}
+
+                    {transferStatus && transferStatusType === 'error' && (
                       <div style={{
                         ...styles.messageAlert,
-                        backgroundColor: transferStatusType === 'success' ? 'rgba(5, 150, 105, 0.1)' : 'rgba(220, 38, 38, 0.1)',
-                        borderColor: transferStatusType === 'success' ? '#059669' : '#dc2626',
-                        color: transferStatusType === 'success' ? '#047857' : '#991b1b',
+                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                        borderLeft: '4px solid #dc2626',
+                        borderRadius: '10px',
+                        padding: '1rem',
+                        color: '#991b1b',
                         marginBottom: '1.5rem'
                       }}>
-                        {transferStatus}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <span style={{ fontSize: '1.5rem' }}>❌</span>
+                          <div>
+                            <p style={{ margin: 0, fontWeight: '600' }}>Verification Failed</p>
+                            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.9rem' }}>{transferStatus}</p>
+                          </div>
+                        </div>
                       </div>
                     )}
 
@@ -896,27 +932,30 @@ export default function OaklinePayPage() {
                       <div>
                         <label style={{ ...styles.label, marginBottom: '0.75rem' }}>Enter Your Transaction PIN *</label>
                         <input
-                          type="text"
+                          type="password"
                           style={{
                             width: '100%',
-                            padding: '1rem',
-                            fontSize: '2rem',
-                            letterSpacing: '1.2rem',
+                            padding: '1.25rem',
+                            fontSize: '1.5rem',
+                            letterSpacing: '0.5rem',
                             textAlign: 'center',
                             fontFamily: 'monospace',
                             border: '2px solid #e2e8f0',
                             borderRadius: '10px',
                             boxSizing: 'border-box',
                             outline: 'none',
-                            transition: 'border-color 0.3s'
+                            transition: 'all 0.3s',
+                            backgroundColor: verifyingPin ? '#f8fafc' : '#ffffff'
                           }}
+                          onFocus={(e) => e.target.style.borderColor = '#059669'}
+                          onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
                           value={verifyForm.code}
                           onChange={(e) => setVerifyForm({ code: e.target.value.replace(/[^0-9]/g, '') })}
-                          placeholder="Enter PIN"
+                          placeholder="••••"
                           maxLength="6"
                           required
                           autoFocus
-                          disabled={loading}
+                          disabled={verifyingPin}
                         />
                         <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>Your PIN from Security Settings (4-6 digits)</p>
                       </div>
@@ -927,11 +966,13 @@ export default function OaklinePayPage() {
                           style={{
                             ...styles.primaryButton,
                             flex: 1,
-                            opacity: loading || verifyForm.code.length < 4 ? 0.6 : 1
+                            opacity: verifyingPin || verifyForm.code.length < 4 ? 0.6 : 1,
+                            background: verifyingPin ? 'linear-gradient(135deg, #a5f3fc 0%, #67e8f9 100%)' : styles.primaryButton.background,
+                            cursor: verifyingPin || verifyForm.code.length < 4 ? 'not-allowed' : 'pointer'
                           }} 
-                          disabled={loading || verifyForm.code.length < 4}
+                          disabled={verifyingPin || verifyForm.code.length < 4}
                         >
-                          {loading ? '⚙️ Processing...' : '✓ Confirm'}
+                          {verifyingPin ? '⏳ Verifying...' : '✓ Confirm Transfer'}
                         </button>
                         <button 
                           type="button" 
@@ -944,14 +985,14 @@ export default function OaklinePayPage() {
                             setVerifyForm({ code: '' });
                             setTransferStatus('');
                           }}
-                          disabled={loading}
+                          disabled={verifyingPin}
                         >
                           ← Back
                         </button>
                       </div>
 
-                      <div style={{ backgroundColor: '#eff6ff', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.8rem', color: '#1e40af', textAlign: 'center' }}>
-                        <p style={{ margin: 0 }}>💡 Enter your Transaction PIN from Security Settings (4-6 digits)</p>
+                      <div style={{ backgroundColor: '#eff6ff', padding: '1rem', borderRadius: '8px', fontSize: '0.85rem', color: '#1e40af', textAlign: 'center', borderLeft: '3px solid #0284c7' }}>
+                        <p style={{ margin: 0 }}>🔒 Your PIN is encrypted and never shared with us</p>
                       </div>
                     </form>
                   </div>
@@ -1175,6 +1216,85 @@ export default function OaklinePayPage() {
       </div>
 
       {/* Setup Oakline Tag Modal */}
+      {/* Receipt Modal */}
+      {showReceiptModal && receiptData && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '2rem',
+            maxWidth: '500px',
+            width: '100%',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+            animation: 'slideUp 0.3s ease-out'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem', animation: 'bounce 0.6s' }}>✅</div>
+              <h2 style={{ margin: '0 0 0.5rem 0', color: '#059669', fontSize: '1.75rem' }}>Transfer Complete!</h2>
+              <p style={{ margin: 0, color: '#64748b' }}>Your money has been sent instantly</p>
+            </div>
+
+            <div style={{ backgroundColor: '#f0fdf4', padding: '1.5rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #dcfce7' }}>
+                <span style={{ color: '#64748b' }}>Amount</span>
+                <span style={{ fontWeight: '700', color: '#059669', fontSize: '1.25rem' }}>+${receiptData.amount.toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #dcfce7' }}>
+                <span style={{ color: '#64748b' }}>To</span>
+                <span style={{ fontWeight: '600', color: '#047857' }}>{receiptData.recipient_name}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #dcfce7' }}>
+                <span style={{ color: '#64748b' }}>Reference</span>
+                <span style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: '#047857' }}>{receiptData.reference_number}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b' }}>Status</span>
+                <span style={{ backgroundColor: '#dcfce7', color: '#065f46', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600' }}>Completed</span>
+              </div>
+            </div>
+
+            {receiptData.memo && (
+              <div style={{ backgroundColor: '#f3e8ff', padding: '1rem', borderRadius: '10px', marginBottom: '1.5rem', borderLeft: '3px solid #a855f7' }}>
+                <p style={{ margin: '0 0 0.5rem 0', color: '#6b21a8', fontSize: '0.85rem', fontWeight: '600' }}>Memo</p>
+                <p style={{ margin: 0, color: '#7c3aed', fontStyle: 'italic' }}>{receiptData.memo}</p>
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowReceiptModal(false)}
+              style={{
+                width: '100%',
+                padding: '1rem',
+                backgroundColor: '#059669',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#047857'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#059669'}
+            >
+              ✓ Done
+            </button>
+          </div>
+        </div>
+      )}
+
       {showSetupModal && (
         <div style={styles.modalOverlay} onClick={() => setShowSetupModal(false)}>
           <div style={{ ...styles.modal, maxWidth: '450px' }} onClick={(e) => e.stopPropagation()}>
