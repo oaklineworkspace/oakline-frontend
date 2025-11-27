@@ -753,7 +753,7 @@ export default function OaklinePayPage() {
                     </div>
                   </div>
 
-                  {loading && (
+                  {transferStatus === 'processing' && (
                     <div style={{
                       backgroundColor: 'rgba(5, 150, 105, 0.15)',
                       border: '2px solid #059669',
@@ -1995,68 +1995,71 @@ export default function OaklinePayPage() {
               ×
             </button>
 
-            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💳</div>
-              <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: '700', color: '#1a365d', marginBottom: '0.25rem' }}>Transaction Receipt</h2>
-              <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>Oakline Pay • {selectedOaklineTransaction.sender_id === user?.id ? 'Money Sent' : 'Money Received'}</p>
+            <div style={{ textAlign: 'center', marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '2px solid #e2e8f0' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <img src="https://theoaklinebank.com/logo.png" alt="Oakline Bank" style={{ height: '24px', width: 'auto' }} onError={(e) => e.target.style.display = 'none'} />
+                <div style={{ fontSize: '1.5rem' }}>💳</div>
+              </div>
+              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: '#1a365d', marginBottom: '0.15rem' }}>Transaction Receipt</h2>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Oakline Pay • {selectedOaklineTransaction.sender_id === user?.id ? 'Money Sent' : 'Money Received'}</p>
             </div>
 
             {/* Professional Header with Amount and Details - Responsive */}
-            <div style={{ backgroundColor: selectedOaklineTransaction.sender_id === user?.id ? '#fee2e2' : '#dcfce7', padding: '1.25rem', borderRadius: '16px', marginBottom: '1.5rem', textAlign: 'center', border: `2px solid ${selectedOaklineTransaction.sender_id === user?.id ? '#fca5a5' : '#86efac'}`, '@media (max-width: 480px)': { padding: '1rem' } }}>
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-                <div style={{ fontSize: '2rem' }}>
+            <div style={{ backgroundColor: selectedOaklineTransaction.sender_id === user?.id ? '#fee2e2' : '#dcfce7', padding: '1rem', borderRadius: '16px', marginBottom: '1.25rem', textAlign: 'center', border: `2px solid ${selectedOaklineTransaction.sender_id === user?.id ? '#fca5a5' : '#86efac'}` }}>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                <div style={{ fontSize: '1.5rem' }}>
                   {selectedOaklineTransaction.sender_id === user?.id ? '📤' : '📥'}
                 </div>
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500', marginBottom: '0.15rem' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500', marginBottom: '0.1rem' }}>
                     {selectedOaklineTransaction.sender_id === user?.id ? 'You Sent' : 'You Received'}
                   </div>
-                  <div style={{ fontSize: '1.75rem', fontWeight: '700', color: selectedOaklineTransaction.sender_id === user?.id ? '#dc2626' : '#16a34a', lineHeight: '1' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: '700', color: selectedOaklineTransaction.sender_id === user?.id ? '#dc2626' : '#16a34a', lineHeight: '1' }}>
                     {selectedOaklineTransaction.sender_id === user?.id ? '-' : '+'} ${parseFloat(selectedOaklineTransaction.amount).toFixed(2)}
                   </div>
                 </div>
               </div>
-              <div style={{ fontSize: '0.8rem', color: '#64748b', paddingTop: '0.75rem', borderTop: `1px solid ${selectedOaklineTransaction.sender_id === user?.id ? '#fca5a5' : '#86efac'}` }}>
+              <div style={{ fontSize: '0.75rem', color: '#64748b', paddingTop: '0.5rem', borderTop: `1px solid ${selectedOaklineTransaction.sender_id === user?.id ? '#fca5a5' : '#86efac'}` }}>
                 {selectedOaklineTransaction.status === 'completed' ? '✓ Transaction Completed' : `Status: ${selectedOaklineTransaction.status?.toUpperCase()}`}
               </div>
             </div>
 
             {/* Payment Details Section */}
-            <div style={{ backgroundColor: '#f8fafc', padding: '1.5rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
-              <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.95rem', fontWeight: '700', color: '#1a365d', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Payment Details</h3>
+            <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '12px', marginBottom: '1rem' }}>
+              <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '0.85rem', fontWeight: '700', color: '#1a365d', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Payment Details</h3>
               
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>Type</span>
-                <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '500' }}>Type</span>
+                <span style={{ fontSize: '0.85rem', color: '#1e293b', fontWeight: '600' }}>
                   {selectedOaklineTransaction.sender_id === user?.id ? '📤 Sent' : '📥 Received'}
                 </span>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #e2e8f0', alignItems: 'flex-start' }}>
-                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0', alignItems: 'flex-start' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '500' }}>
                   {selectedOaklineTransaction.sender_id === user?.id ? 'Sent To' : 'Received From'}
                 </span>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '1rem', color: '#1e293b', fontWeight: '700' }}>
+                  <div style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '700' }}>
                     {selectedOaklineTransaction.sender_id === user?.id 
                       ? (selectedOaklineTransaction.recipient_contact ? `@${selectedOaklineTransaction.recipient_contact}` : 'User')
                       : (selectedOaklineTransaction.sender_contact ? `@${selectedOaklineTransaction.sender_contact}` : 'Sender')}
                   </div>
                   {selectedOaklineTransaction.sender_id === user?.id && selectedOaklineTransaction.recipient_name && (
-                    <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem', fontWeight: '500' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.1rem', fontWeight: '500' }}>
                       {selectedOaklineTransaction.recipient_name}
                     </div>
                   )}
                   {selectedOaklineTransaction.sender_id !== user?.id && selectedOaklineTransaction.sender_name && (
-                    <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem', fontWeight: '500' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.1rem', fontWeight: '500' }}>
                       {selectedOaklineTransaction.sender_name}
                     </div>
                   )}
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>Status</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '500' }}>Status</span>
                 <span style={{ 
                   fontSize: '0.85rem', 
                   fontWeight: '600', 
@@ -2082,26 +2085,26 @@ export default function OaklinePayPage() {
             </div>
 
             {/* Transaction Details Section */}
-            <div style={{ backgroundColor: '#f8fafc', padding: '1.5rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
-              <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.95rem', fontWeight: '700', color: '#1a365d', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Transaction Details</h3>
+            <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '12px', marginBottom: '1rem' }}>
+              <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '0.85rem', fontWeight: '700', color: '#1a365d', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Transaction Details</h3>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>Reference #</span>
-                <span style={{ fontSize: '0.85rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', letterSpacing: '1px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '500' }}>Reference #</span>
+                <span style={{ fontSize: '0.75rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', letterSpacing: '0.5px' }}>
                   {selectedOaklineTransaction.reference_number?.toUpperCase() || selectedOaklineTransaction.id?.slice(0, 12).toUpperCase() || 'N/A'}
                 </span>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>Date</span>
-                <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '500' }}>Date</span>
+                <span style={{ fontSize: '0.85rem', color: '#1e293b', fontWeight: '600' }}>
                   {new Date(selectedOaklineTransaction.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                 </span>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0' }}>
-                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>Time</span>
-                <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '500' }}>Time</span>
+                <span style={{ fontSize: '0.85rem', color: '#1e293b', fontWeight: '600' }}>
                   {new Date(selectedOaklineTransaction.created_at).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', second: '2-digit', hour12: true})}
                 </span>
               </div>
