@@ -167,19 +167,12 @@ export default async function handler(req, res) {
 
       const referenceNumber = generateReference();
 
-      // Get sender's profile and check for transaction PIN
+      // Get sender's profile
       const { data: senderProfile } = await supabaseAdmin
         .from('profiles')
-        .select('full_name, email, first_name, last_name, transaction_pin')
+        .select('full_name, email, first_name, last_name')
         .eq('id', user.id)
         .single();
-
-      // Check if user has set up their transaction PIN
-      if (!senderProfile?.transaction_pin) {
-        return res.status(400).json({ 
-          error: 'Please set up your transaction PIN in Security Settings before using Oakline Pay' 
-        });
-      }
 
       // Create sender profile object with fallbacks
       const senderData = {
