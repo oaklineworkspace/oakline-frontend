@@ -117,20 +117,52 @@ export default async function handler(req, res) {
         console.log('🔍 Looking for email user:', emailLower);
         
         try {
-          const { data: user_data, error: emailError } = await supabaseAdmin
-            .from('profiles')
-            .select('id, full_name, email, first_name, last_name')
+          // Step 1: Find the user in applications table by email
+          const { data: appData, error: appError } = await supabaseAdmin
+            .from('applications')
+            .select('user_id, email, first_name, last_name')
             .ilike('email', emailLower)
             .limit(1);
           
-          if (emailError) {
-            console.warn('⚠️ Email query error:', emailLower, 'Error:', emailError.message);
+          if (appError) {
+            console.warn('⚠️ Application query error:', emailLower, 'Error:', appError.message);
           }
 
-          if (user_data && user_data.length > 0) {
-            recipientProfile = user_data[0];
-            isOaklineUser = true;
-            console.log('✅ Found email user:', recipientProfile?.full_name || recipientProfile?.first_name);
+          if (appData && appData.length > 0) {
+            const userIdFromApp = appData[0].user_id;
+            console.log('✅ Found email in applications table. User ID:', userIdFromApp);
+
+            // Step 2: Check if this user_id exists in oakline_pay_profiles
+            const { data: oaklineData, error: oaklineError } = await supabaseAdmin
+              .from('oakline_pay_profiles')
+              .select('user_id, oakline_tag, display_name')
+              .eq('user_id', userIdFromApp)
+              .limit(1);
+
+            if (oaklineError) {
+              console.warn('⚠️ Oakline profile check error for user:', userIdFromApp, 'Error:', oaklineError.message);
+            }
+
+            // Step 3: Determine if Oakline user
+            if (oaklineData && oaklineData.length > 0) {
+              // User exists in oakline_pay_profiles = Oakline user
+              recipientProfile = {
+                id: userIdFromApp,
+                full_name: oaklineData[0].display_name || appData[0].first_name || appData[0].email
+              };
+              isOaklineUser = true;
+              console.log('✅ Oakline user found via email:', recipientProfile.full_name);
+            } else {
+              // User exists in applications but NOT in oakline_pay_profiles = Not yet a member
+              recipientProfile = {
+                id: userIdFromApp,
+                full_name: appData[0].first_name || appData[0].email
+              };
+              isOaklineUser = false;
+              console.log('ℹ️ User exists but NOT an Oakline member yet:', recipientProfile.full_name);
+            }
+          } else {
+            console.warn('⚠️ No user found with email:', emailLower);
           }
         } catch (emailQueryError) {
           console.error('❌ Error querying email:', emailQueryError);
