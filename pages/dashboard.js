@@ -193,6 +193,7 @@ function DashboardContent() {
           .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
           .order('created_at', { ascending: false })
           .limit(20)
+          .catch(err => ({ data: [], error: err }))
       );
 
       // Execute all parallel queries
@@ -460,13 +461,17 @@ function DashboardContent() {
           const isInstant = tx.status === 'completed' && tx.claim_token === null;
           const account = isSender ? tx.sender_account : tx.recipient_account;
           
+          // Get display names prioritizing: tag > display_name > name > 'User'
+          const senderDisplay = tx.sender_tag || tx.sender_name || 'User';
+          const recipientDisplay = tx.recipient_tag || tx.recipient_name || 'User';
+          
           return {
             id: tx.id,
             type: isSender ? 'oakline_pay_send' : 'oakline_pay_receive',
             transaction_type: isSender ? 'oakline_pay_send' : 'oakline_pay_receive',
             description: isSender 
-              ? `Oakline Pay to ${tx.recipient_tag || tx.recipient_name || 'User'}`
-              : `Oakline Pay from ${tx.sender_tag || tx.sender_name || 'User'}`,
+              ? `Oakline Pay to ${recipientDisplay}`
+              : `Oakline Pay from ${senderDisplay}`,
             amount: isSender ? -parseFloat(tx.amount) : parseFloat(tx.amount),
             status: tx.status,
             created_at: tx.created_at,
@@ -487,8 +492,9 @@ function DashboardContent() {
             recipient_account_id: tx.recipient_account_id,
             sender_id: tx.sender_id,
             recipient_id: tx.recipient_id,
-            sender_display: tx.sender_tag || tx.sender_name || 'User',
-            recipient_display: tx.recipient_tag || tx.recipient_name || 'User'
+            sender_display: senderDisplay,
+            recipient_display: recipientDisplay,
+            transaction_data: tx // Store full transaction data for modal
           };
         });
 
