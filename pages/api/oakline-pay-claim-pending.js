@@ -34,7 +34,7 @@ export default async function handler(req, res) {
 
     // Find all pending payments for this email
     const { data: pendingPayments, error: pendingError } = await supabaseAdmin
-      .from('oakline_pay_pending_payments')
+      .from('oakline_pay_pending_claims')
       .select('*')
       .eq('recipient_email', profile.email)
       .eq('status', 'pending')
@@ -103,7 +103,7 @@ export default async function handler(req, res) {
 
         // Mark pending payment as completed
         await supabaseAdmin
-          .from('oakline_pay_pending_payments')
+          .from('oakline_pay_pending_claims')
           .update({
             status: 'completed',
             completed_at: new Date().toISOString(),
