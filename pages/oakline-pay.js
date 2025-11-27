@@ -146,15 +146,10 @@ export default function OaklinePayPage() {
         .order('contact_name');
       setContacts(payContacts || []);
 
-      // Load transactions with all fields and enrich with profile data
+      // Load transactions - use only existing columns
       const { data: payTxns, error: txnError } = await supabase
         .from('oakline_pay_transactions')
-        .select(`
-          id, sender_id, sender_name, sender_tag, recipient_id, recipient_name, recipient_tag,
-          amount, status, created_at, memo, reference_number,
-          sender:sender_id(oakline_tag, display_name),
-          recipient:recipient_id(oakline_tag, display_name)
-        `)
+        .select('*')
         .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -163,37 +158,7 @@ export default function OaklinePayPage() {
         console.error('Error loading transactions:', txnError);
       }
       
-      // Enrich transaction data with profile info if names/tags are NULL
-      const enrichedTxns = (payTxns || []).map(txn => {
-        let enrichedSenderTag = txn.sender_tag;
-        let enrichedSenderName = txn.sender_name;
-        let enrichedRecipientTag = txn.recipient_tag;
-        let enrichedRecipientName = txn.recipient_name;
-        
-        // Use profile data if transaction fields are NULL
-        if (!enrichedSenderTag && txn.sender?.oakline_tag) {
-          enrichedSenderTag = txn.sender.oakline_tag;
-        }
-        if (!enrichedSenderName && txn.sender?.display_name) {
-          enrichedSenderName = txn.sender.display_name;
-        }
-        if (!enrichedRecipientTag && txn.recipient?.oakline_tag) {
-          enrichedRecipientTag = txn.recipient.oakline_tag;
-        }
-        if (!enrichedRecipientName && txn.recipient?.display_name) {
-          enrichedRecipientName = txn.recipient.display_name;
-        }
-        
-        return {
-          ...txn,
-          sender_tag: enrichedSenderTag,
-          sender_name: enrichedSenderName,
-          recipient_tag: enrichedRecipientTag,
-          recipient_name: enrichedRecipientName
-        };
-      });
-      
-      setTransactions(enrichedTxns);
+      setTransactions(payTxns || []);
 
       // Load payment requests
       const { data: requests } = await supabase
@@ -2074,19 +2039,9 @@ export default function OaklinePayPage() {
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '1rem', color: '#1e293b', fontWeight: '700' }}>
                     {selectedOaklineTransaction.sender_id === user?.id 
-                      ? (selectedOaklineTransaction.recipient_tag ? `@${selectedOaklineTransaction.recipient_tag}` : selectedOaklineTransaction.recipient_name || 'Oakline User')
-                      : (selectedOaklineTransaction.sender_tag ? `@${selectedOaklineTransaction.sender_tag}` : selectedOaklineTransaction.sender_name || 'Oakline User')}
+                      ? (selectedOaklineTransaction.recipient_contact ? `@${selectedOaklineTransaction.recipient_contact}` : 'Oakline User')
+                      : 'Sender'}
                   </div>
-                  {selectedOaklineTransaction.sender_id === user?.id && selectedOaklineTransaction.recipient_name && selectedOaklineTransaction.recipient_tag && (
-                    <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem', fontWeight: '500' }}>
-                      {selectedOaklineTransaction.recipient_name}
-                    </div>
-                  )}
-                  {selectedOaklineTransaction.sender_id !== user?.id && selectedOaklineTransaction.sender_name && selectedOaklineTransaction.sender_tag && (
-                    <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem', fontWeight: '500' }}>
-                      {selectedOaklineTransaction.sender_name}
-                    </div>
-                  )}
                 </div>
               </div>
 
