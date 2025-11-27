@@ -2049,9 +2049,12 @@ const styles = {
     marginBottom: '2rem'
   },
   tabsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
-    gap: '1rem'
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '1rem',
+    flexWrap: 'wrap',
+    paddingLeft: '1rem',
+    paddingRight: '1rem'
   },
   tab: {
     padding: '0.75rem 1rem',
