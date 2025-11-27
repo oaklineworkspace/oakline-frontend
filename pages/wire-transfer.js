@@ -1999,15 +1999,24 @@ export default function WireTransfer() {
                         </div>
                       )}
 
-                      <div style={styles.buttonGroup}>
+                      <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
                         <button
                           type="button"
                           onClick={handlePreviousStep}
                           style={{
-                            ...styles.button,
+                            flex: 1,
+                            padding: '0.875rem 1.5rem',
                             backgroundColor: '#64748b',
-                            color: 'white'
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '12px',
+                            fontSize: '1rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
                           }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#475569'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#64748b'}
                         >
                           ← Back
                         </button>
@@ -2016,12 +2025,20 @@ export default function WireTransfer() {
                           onClick={handleNextStep}
                           disabled={!transactionPin || transactionPin.length < 4 || verifyingPin}
                           style={{
-                            ...styles.button,
+                            flex: 1,
+                            padding: '0.875rem 1.5rem',
                             backgroundColor: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? '#1e40af' : '#059669',
                             color: 'white',
+                            border: 'none',
+                            borderRadius: '12px',
+                            fontSize: '1rem',
+                            fontWeight: '600',
                             cursor: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? 'not-allowed' : 'pointer',
-                            opacity: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? 0.6 : 1
+                            opacity: (!transactionPin || transactionPin.length < 4 || verifyingPin) ? 0.6 : 1,
+                            transition: 'all 0.3s ease'
                           }}
+                          onMouseEnter={(e) => !e.currentTarget.disabled && (e.currentTarget.style.backgroundColor = '#047857')}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = e.currentTarget.disabled ? '#1e40af' : '#059669')}
                         >
                           {verifyingPin ? '🔄 Verifying...' : '✓ Verify PIN & Continue'}
                         </button>
