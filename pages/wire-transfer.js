@@ -1683,14 +1683,15 @@ export default function WireTransfer() {
 
                           {/* Total Amount */}
                           <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
+                            display: 'grid',
+                            gridTemplateColumns: '1fr auto',
+                            gap: '1.5rem',
                             backgroundColor: '#f0fdf4',
                             border: '2px solid #059669',
                             borderRadius: '10px',
                             padding: '1.5rem',
-                            marginTop: '1rem'
+                            marginTop: '1rem',
+                            alignItems: 'center'
                           }}>
                             <div>
                               <div style={{
@@ -1711,10 +1712,11 @@ export default function WireTransfer() {
                               </div>
                             </div>
                             <div style={{
-                              fontSize: '2rem',
+                              fontSize: '1.75rem',
                               fontWeight: '700',
                               color: '#059669',
-                              textAlign: 'right'
+                              textAlign: 'right',
+                              whiteSpace: 'nowrap'
                             }}>
                               {formatCurrency(wireForm.total_amount)}
                             </div>
