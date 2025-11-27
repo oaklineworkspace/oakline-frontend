@@ -36,6 +36,7 @@ function DashboardContent() {
   const [balanceCardExpanded, setBalanceCardExpanded] = useState(true);
   const [cardsExpanded, setCardsExpanded] = useState(true);
   const [message, setMessage] = useState(''); // State for messages
+  const [error, setError] = useState(null); // State for errors
 
   const checkUser = () => { // Renamed from useEffect's callback for clarity
     if (!user) {
