@@ -453,20 +453,39 @@ export default async function handler(req, res) {
       const transactionRef = transaction.reference_number;
 
       // Fetch sender and recipient profiles for transaction descriptions
-      const { data: senderProf } = await supabaseAdmin
-        .from('profiles')
-        .select('first_name, last_name, full_name')
-        .eq('id', transaction.sender_id)
-        .single();
+      let senderProf = null;
+      let recipientProf = null;
+      
+      try {
+        const senderResult = await supabaseAdmin
+          .from('profiles')
+          .select('first_name, last_name, full_name, email')
+          .eq('id', transaction.sender_id)
+          .maybeSingle();
+        senderProf = senderResult.data;
+      } catch (err) {
+        console.error('Error fetching sender profile:', err);
+      }
 
-      const { data: recipientProf } = await supabaseAdmin
-        .from('profiles')
-        .select('first_name, last_name, full_name')
-        .eq('id', transaction.recipient_id)
-        .single();
+      try {
+        const recipientResult = await supabaseAdmin
+          .from('profiles')
+          .select('first_name, last_name, full_name, email')
+          .eq('id', transaction.recipient_id)
+          .maybeSingle();
+        recipientProf = recipientResult.data;
+      } catch (err) {
+        console.error('Error fetching recipient profile:', err);
+      }
 
-      const senderName = senderProf?.full_name || `${senderProf?.first_name || ''} ${senderProf?.last_name || ''}`.trim() || 'User';
-      const recipientName = recipientProf?.full_name || `${recipientProf?.first_name || ''} ${recipientProf?.last_name || ''}`.trim() || 'User';
+      // Build names with fallbacks
+      const senderName = senderProf?.full_name || 
+        `${senderProf?.first_name || ''} ${senderProf?.last_name || ''}`.trim() || 
+        senderProf?.email?.split('@')[0] || 'User';
+      
+      const recipientName = recipientProf?.full_name || 
+        `${recipientProf?.first_name || ''} ${recipientProf?.last_name || ''}`.trim() || 
+        recipientProf?.email?.split('@')[0] || 'User';
 
       // Create transaction records
       await supabaseAdmin
