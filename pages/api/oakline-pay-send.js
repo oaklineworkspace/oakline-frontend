@@ -224,21 +224,16 @@ export default async function handler(req, res) {
           .insert({
             sender_id: user.id,
             sender_account_id: sender_account_id,
-            sender_name: senderOaklineProfile?.display_name || senderProfile?.full_name || senderData.first_name,
-            sender_tag: senderOaklineProfile?.oakline_tag || null,
             recipient_id: recipientProfile.id,
             recipient_account_id: recipientAccount.id,
             recipient_contact: recipient_contact,
             recipient_type: recipient_type,
-            recipient_name: recipientProfile.full_name || recipientProfile.first_name || 'User',
-            recipient_tag: recipientProfile.oakline_tag || null,
             amount: transferAmount,
             memo: memo || null,
             status: 'pending',
             reference_number: referenceNumber,
             verification_code: null,
-            verification_expires_at: new Date(Date.now() + 15 * 60 * 1000),
-            sender_balance_before: parseFloat(senderAccount.balance)
+            verification_expires_at: new Date(Date.now() + 15 * 60 * 1000)
           })
           .select()
           .single();
@@ -278,7 +273,7 @@ export default async function handler(req, res) {
             account_id: sender_account_id,
             type: 'oakline_pay_send',
             amount: -transferAmount,
-            description: `Oakline Pay to ${recipient_contact}${memo ? ` - ${memo}` : ''} (Pending)`,
+            description: `Oakline Pay to ${recipient_contact}${memo ? ` - ${memo}` : ''}`,
             reference: referenceNumber,
             status: 'completed',
             balance_before: parseFloat(senderAccount.balance),
