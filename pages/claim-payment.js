@@ -135,7 +135,7 @@ export default function ClaimPaymentPage() {
 
       // Update pending payment as claimed with debit card
       const { error } = await supabase
-        .from('pending_payments')
+        .from('oakline_pay_pending_claims')
         .update({
           status: 'claimed',
           claim_method: 'debit_card',
