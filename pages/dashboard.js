@@ -669,6 +669,30 @@ function DashboardContent() {
   };
 
   const handleTransactionClick = async (transaction) => {
+    // Fetch full oakline pay transaction data
+    if ((transaction.type || transaction.transaction_type) === 'oakline_pay_send' || (transaction.type || transaction.transaction_type) === 'oakline_pay_receive') {
+      try {
+        const { data: oaklineTransaction, error } = await supabase
+          .from('oakline_pay_transactions')
+          .select('*')
+          .eq('id', transaction.reference || transaction.id)
+          .maybeSingle();
+
+        if (oaklineTransaction && !error) {
+          setSelectedTransaction({
+            ...transaction,
+            ...oaklineTransaction,
+            sender_display: oaklineTransaction.sender_tag || oaklineTransaction.sender_name || 'User',
+            recipient_display: oaklineTransaction.recipient_tag || oaklineTransaction.recipient_name || 'User'
+          });
+          setShowReceiptModal(true);
+          return;
+        }
+      } catch (err) {
+        console.error('Error fetching oakline transaction:', err);
+      }
+    }
+    
     // Fetch additional details for crypto deposits
     if (transaction.type === 'account_opening_deposit' || transaction.transaction_type === 'crypto_deposit') {
       try {
@@ -2071,6 +2095,22 @@ function DashboardContent() {
               {selectedTransaction.description || 'N/A'}
             </span>
           </div>
+
+          {(selectedTransaction.sender_display || selectedTransaction.recipient_display) && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '0.75rem 0',
+              borderBottom: '1px solid #f1f5f9'
+            }}>
+              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                {selectedTransaction.sender_id === user?.id ? 'Sent to' : 'Received from'}
+              </span>
+              <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-word' }}>
+                {selectedTransaction.sender_id === user?.id ? selectedTransaction.recipient_display : selectedTransaction.sender_display}
+              </span>
+            </div>
+          )}
 
           <div style={{
             display: 'flex',

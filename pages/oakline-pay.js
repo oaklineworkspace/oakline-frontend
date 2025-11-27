@@ -2004,7 +2004,16 @@ export default function OaklinePayPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #f1f5f9' }}>
               <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>Description</span>
               <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-word' }}>
-                {selectedOaklineTransaction.sender_id === user?.id ? 'To' : 'From'} {selectedOaklineTransaction.sender_id === user?.id ? (selectedOaklineTransaction.recipient_name || (selectedOaklineTransaction.recipient_tag && `@${selectedOaklineTransaction.recipient_tag}`) || 'User') : (selectedOaklineTransaction.sender_name || (selectedOaklineTransaction.sender_tag && `@${selectedOaklineTransaction.sender_tag}`) || 'User')}
+                {selectedOaklineTransaction.memo || `Oakline Pay ${selectedOaklineTransaction.sender_id === user?.id ? 'sent' : 'received'}`}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #f1f5f9' }}>
+              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>{selectedOaklineTransaction.sender_id === user?.id ? 'Sent to' : 'Received from'}</span>
+              <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-word' }}>
+                {selectedOaklineTransaction.sender_id === user?.id 
+                  ? (selectedOaklineTransaction.recipient_tag ? `@${selectedOaklineTransaction.recipient_tag}` : selectedOaklineTransaction.recipient_name || 'User')
+                  : (selectedOaklineTransaction.sender_tag ? `@${selectedOaklineTransaction.sender_tag}` : selectedOaklineTransaction.sender_name || 'User')}
               </span>
             </div>
 
