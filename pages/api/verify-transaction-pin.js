@@ -168,7 +168,7 @@ export default async function handler(req, res) {
       // Update transaction status - CRITICAL: Must complete before returning
       const { error: statusError } = await supabaseAdmin
         .from('oakline_pay_transactions')
-        .update({ status: 'completed', completed_at: new Date().toISOString() })
+        .update({ status: 'completed', updated_at: new Date().toISOString() })
         .eq('id', transaction_id);
 
       if (statusError) {
@@ -177,32 +177,36 @@ export default async function handler(req, res) {
         console.log('✅ Transaction status updated to COMPLETED for transaction:', transaction_id);
       }
 
-      // Get sender and receiver profiles for email
-      const { data: senderProfile, error: senderProfileError } = await supabaseAdmin
+      // Get sender and receiver from auth users and profiles
+      const { data: senderAuthData, error: senderAuthError } = await supabaseAdmin.auth.admin.getUserById(transaction.sender_id);
+      const { data: receiverAuthData, error: receiverAuthError } = await supabaseAdmin.auth.admin.getUserById(transaction.recipient_id);
+
+      const senderEmail = senderAuthData?.user?.email;
+      const receiverEmail = receiverAuthData?.user?.email;
+
+      const { data: senderProfile } = await supabaseAdmin
         .from('profiles')
-        .select('full_name, email, first_name')
+        .select('first_name, last_name')
         .eq('id', transaction.sender_id)
         .single();
 
-      const { data: receiverProfile, error: receiverProfileError } = await supabaseAdmin
+      const { data: receiverProfile } = await supabaseAdmin
         .from('profiles')
-        .select('full_name, email, first_name')
+        .select('first_name, last_name')
         .eq('id', transaction.recipient_id)
         .single();
 
-      if (senderProfileError) {
-        console.error('❌ Failed to fetch sender profile:', senderProfileError);
-      }
-      if (receiverProfileError) {
-        console.error('❌ Failed to fetch receiver profile:', receiverProfileError);
-      }
+      const senderName = senderProfile ? `${senderProfile.first_name || ''} ${senderProfile.last_name || ''}`.trim() : 'Sender';
+      const receiverName = receiverProfile ? `${receiverProfile.first_name || ''} ${receiverProfile.last_name || ''}`.trim() : 'Recipient';
+
+      console.log('📧 Sender email:', senderEmail, 'Receiver email:', receiverEmail);
 
       // Send notification emails
-      if (senderProfile?.email) {
+      if (senderEmail) {
         try {
-          console.log('📧 Sending sender notification to:', senderProfile.email);
-          const senderEmailResult = await sendEmail({
-            to: senderProfile.email,
+          console.log('📧 Sending sender notification to:', senderEmail);
+          await sendEmail({
+            to: senderEmail,
             subject: `💸 Oakline Pay Sent - $${transferAmount.toFixed(2)} | Oakline Bank`,
             emailType: 'notify',
             html: `
@@ -214,7 +218,7 @@ export default async function handler(req, res) {
                   <p>Your Oakline Pay transfer has been completed instantly.</p>
                   <div style="background-color: #fff5e6; border-radius: 12px; padding: 20px; margin: 24px 0;">
                     <p style="margin: 0 0 10px 0;"><strong>Amount:</strong> $${transferAmount.toFixed(2)}</p>
-                    <p style="margin: 0 0 10px 0;"><strong>To:</strong> ${receiverProfile?.full_name || 'Oakline User'}</p>
+                    <p style="margin: 0 0 10px 0;"><strong>To:</strong> ${receiverName || 'Oakline User'}</p>
                     <p style="margin: 0;"><strong>Reference:</strong> ${transaction.reference_number}</p>
                   </div>
                   <p style="color: #666; font-size: 14px;">The recipient has received the funds instantly in their account.</p>
@@ -227,14 +231,14 @@ export default async function handler(req, res) {
           console.error('❌ Failed to send sender notification email:', emailError.message);
         }
       } else {
-        console.warn('⚠️ Sender email not available, skipping sender notification');
+        console.warn('⚠️ Sender email not available');
       }
 
-      if (receiverProfile?.email) {
+      if (receiverEmail) {
         try {
-          console.log('📧 Sending receiver notification to:', receiverProfile.email);
-          const receiverEmailResult = await sendEmail({
-            to: receiverProfile.email,
+          console.log('📧 Sending receiver notification to:', receiverEmail);
+          await sendEmail({
+            to: receiverEmail,
             subject: `💰 Money Received - $${transferAmount.toFixed(2)} | Oakline Bank`,
             emailType: 'notify',
             html: `
@@ -246,7 +250,7 @@ export default async function handler(req, res) {
                   <p><strong>${senderProfile?.first_name || 'Someone'}</strong> sent you money via Oakline Pay.</p>
                   <div style="background-color: #e6f7f0; border-radius: 12px; padding: 20px; margin: 24px 0;">
                     <p style="margin: 0 0 10px 0;"><strong>Amount:</strong> $${transferAmount.toFixed(2)}</p>
-                    <p style="margin: 0 0 10px 0;"><strong>From:</strong> ${senderProfile?.full_name || 'Oakline User'}</p>
+                    <p style="margin: 0 0 10px 0;"><strong>From:</strong> ${senderName || 'Oakline User'}</p>
                     <p style="margin: 0;"><strong>Reference:</strong> ${transaction.reference_number}</p>
                   </div>
                   <p style="color: #059669; font-size: 14px; font-weight: 600;">✓ Funds are now available in your account.</p>
@@ -259,7 +263,7 @@ export default async function handler(req, res) {
           console.error('❌ Failed to send receiver notification email:', emailError.message);
         }
       } else {
-        console.warn('⚠️ Receiver email not available, skipping receiver notification');
+        console.warn('⚠️ Receiver email not available');
       }
 
       return res.status(200).json({

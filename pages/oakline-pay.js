@@ -1472,25 +1472,52 @@ export default function OaklinePayPage() {
               </div>
             )}
 
-            <button
-              onClick={() => setShowReceiptModal(false)}
-              style={{
-                width: '100%',
-                padding: '1rem',
-                backgroundColor: '#059669',
-                color: 'white',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.3s'
-              }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#047857'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#059669'}
-            >
-              ✓ Done
-            </button>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button
+                onClick={() => window.print()}
+                style={{
+                  flex: 1,
+                  padding: '1rem',
+                  backgroundColor: '#1e40af',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#1e3a8a'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#1e40af'}
+              >
+                🖨️ Print
+              </button>
+              <button
+                onClick={() => {
+                  setShowReceiptModal(false);
+                  setTransferStep(null);
+                  setPendingTransaction(null);
+                  setVerifyForm({ code: '' });
+                  setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
+                }}
+                style={{
+                  flex: 1,
+                  padding: '1rem',
+                  backgroundColor: '#059669',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#047857'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#059669'}
+              >
+                ✓ Done
+              </button>
+            </div>
           </div>
         </div>
       )}
