@@ -278,6 +278,7 @@ export default async function handler(req, res) {
           .from('pending_payments')
           .insert({
             sender_id: user.id,
+            sender_account_id: sender_account_id,
             sender_name: senderData.full_name,
             sender_contact: senderOaklineProfile?.oakline_tag || senderProfile?.email,
             recipient_email: recipient_contact,
@@ -333,12 +334,16 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Payment already processed' });
       }
 
-      // Get sender's current account using the sender_id from pending payment
+      // Get sender's current account using the sender_account_id from pending payment
       const { data: currentAccount } = await supabaseAdmin
         .from('accounts')
         .select('balance')
         .eq('id', pendingPayment.sender_account_id)
         .single();
+
+      if (!currentAccount) {
+        return res.status(404).json({ error: 'Account not found' });
+      }
 
       const transferAmount = parseFloat(pendingPayment.amount);
       if (parseFloat(currentAccount.balance) < transferAmount) {
