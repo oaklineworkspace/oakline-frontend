@@ -2057,7 +2057,17 @@ function DashboardContent() {
               Description
             </span>
             <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-word' }}>
-              {selectedTransaction.description || 'N/A'}
+              {(() => {
+                const txType = (selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase();
+                if (txType.includes('oakline_pay')) {
+                  const isSender = txType === 'oakline_pay_send';
+                  const tag = isSender ? selectedTransaction.recipient_tag : selectedTransaction.sender_tag;
+                  const name = isSender ? selectedTransaction.recipient_name : selectedTransaction.sender_name;
+                  const displayName = tag || name || 'User';
+                  return `Oakline Pay ${isSender ? 'to' : 'from'} ${displayName}`;
+                }
+                return selectedTransaction.description || 'N/A';
+              })()}
             </span>
           </div>
 
@@ -2118,19 +2128,21 @@ function DashboardContent() {
             </span>
           </div>
 
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            padding: '0.75rem 0',
-            borderBottom: '1px solid #f1f5f9'
-          }}>
-            <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
-              Account Number
-            </span>
-            <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right' }}>
-              {selectedTransaction.accounts?.account_number || 'N/A'}
-            </span>
-          </div>
+          {!((selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('oakline_pay')) && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '0.75rem 0',
+              borderBottom: '1px solid #f1f5f9'
+            }}>
+              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                Account Number
+              </span>
+              <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right' }}>
+                {selectedTransaction.accounts?.account_number || 'N/A'}
+              </span>
+            </div>
+          )}
 
           {(selectedTransaction.type === 'account_opening_deposit' || selectedTransaction.transaction_type === 'crypto_deposit') && selectedTransaction.depositDetails && (
             <>
