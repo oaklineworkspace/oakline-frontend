@@ -98,46 +98,14 @@ export default async function handler(req, res) {
 
           if (oaklinePay && oaklinePay.length > 0) {
             const profile = oaklinePay[0];
-            const userId = profile.user_id;
-            console.log('✅ Found Oakline tag profile:', profile.oakline_tag, '- User ID:', userId);
-
-            // Fetch the user's profile - try different column names
-            let userProfile = null;
-            let profileError = null;
+            console.log('✅ Found Oakline tag profile:', profile.oakline_tag, '- Display Name:', profile.display_name);
             
-            // Try with common column names
-            const columnSets = [
-              'id, full_name, email, first_name, last_name',
-              'id, name, email',
-              'id, email'
-            ];
-
-            for (const cols of columnSets) {
-              const { data, error } = await supabaseAdmin
-                .from('profiles')
-                .select(cols)
-                .eq('id', userId)
-                .single();
-              
-              if (!error && data) {
-                userProfile = data;
-                profileError = null;
-                break;
-              }
-              profileError = error;
-            }
-
-            if (userProfile) {
-              recipientProfile = userProfile;
-              isOaklineUser = true;
-              const displayName = userProfile?.full_name || userProfile?.name || userProfile?.first_name || 'User';
-              console.log('✅ Found Oakline user:', displayName);
-            } else {
-              console.warn('⚠️ Could not fetch profile for user:', userId, 'But tag is valid');
-              // Still mark as Oakline user even if profile fetch fails
-              recipientProfile = { id: userId };
-              isOaklineUser = true;
-            }
+            // Mark as Oakline user - tag exists in oakline_pay_profiles
+            recipientProfile = {
+              id: profile.user_id,
+              full_name: profile.display_name
+            };
+            isOaklineUser = true;
           } else {
             console.warn('⚠️ No Oakline profile found for tag:', normalizedTag);
           }
