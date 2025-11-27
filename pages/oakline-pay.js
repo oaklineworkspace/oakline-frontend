@@ -567,24 +567,8 @@ export default function OaklinePayPage() {
         <main style={styles.main}>
           {/* Welcome Section */}
           <div style={styles.welcomeSection}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', gap: '1rem', flexWrap: 'wrap' }}>
-              <div>
-                <h1 style={styles.welcomeTitle}>💸 Oakline Pay</h1>
-                <p style={styles.welcomeSubtitle}>Send money instantly to other Oakline Bank customers</p>
-              </div>
-              <button
-                onClick={() => setActiveTab('settings')}
-                style={{
-                  ...styles.secondaryButton,
-                  whiteSpace: 'nowrap',
-                  padding: '0.7rem 1.2rem',
-                  fontSize: '0.95rem',
-                  alignSelf: 'flex-start'
-                }}
-              >
-                ⚙️ Settings
-              </button>
-            </div>
+            <h1 style={styles.welcomeTitle}>💸 Oakline Pay</h1>
+            <p style={styles.welcomeSubtitle}>Send money instantly to other Oakline Bank customers</p>
             {oaklineProfile?.oakline_tag && (
               <div style={styles.tagBadge}>
                 ✓ Your Oakline Tag: <strong>@{oaklineProfile.oakline_tag}</strong>
@@ -609,11 +593,11 @@ export default function OaklinePayPage() {
             </div>
           )}
 
-          {/* Tab Navigation - Only show Send, Requests, Contacts (no Settings) */}
+          {/* Tab Navigation - Show Send, Requests, Contacts, Settings */}
           <div style={styles.tabsContainer}>
             {!isMobile ? (
               <div style={styles.tabsGrid}>
-                {tabs.filter(tab => tab.id !== 'settings').map(tab => (
+                {tabs.map(tab => (
                   <button
                     key={tab.id}
                     style={{
@@ -630,7 +614,7 @@ export default function OaklinePayPage() {
             ) : (
               <div style={styles.mobileTabsWrapper}>
                 <div style={styles.mobileTabsScroll}>
-                  {tabs.filter(tab => tab.id !== 'settings').slice(0, 4).map(tab => (
+                  {tabs.slice(0, 4).map(tab => (
                     <button
                       key={tab.id}
                       style={{
@@ -743,9 +727,12 @@ export default function OaklinePayPage() {
                   </button>
                     </form>
 
-                    <div style={styles.actionButtons}>
+                    <div style={{ ...styles.actionButtons, display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                       <button onClick={generateQRCode} style={styles.secondaryButton} disabled={loading || !oaklineProfile?.oakline_tag}>
                         📱 Show QR Code
+                      </button>
+                      <button onClick={() => setActiveTab('history')} style={styles.secondaryButton} disabled={loading}>
+                        📊 History
                       </button>
                     </div>
                   </>
