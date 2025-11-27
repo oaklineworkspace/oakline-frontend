@@ -146,10 +146,10 @@ export default function OaklinePayPage() {
         .order('contact_name');
       setContacts(payContacts || []);
 
-      // Load transactions
+      // Load transactions with all name and tag fields
       const { data: payTxns } = await supabase
         .from('oakline_pay_transactions')
-        .select('*')
+        .select('id, sender_id, sender_name, sender_tag, recipient_id, recipient_name, recipient_tag, amount, status, created_at, memo, reference_number')
         .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
         .order('created_at', { ascending: false })
         .limit(50);
