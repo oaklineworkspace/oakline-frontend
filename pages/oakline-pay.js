@@ -392,18 +392,30 @@ export default function OaklinePayPage() {
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('oakline_pay_requests')
-        .insert({
-          requester_id: user.id,
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const response = await fetch('/api/oakline-pay-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
           requester_account_id: requestForm.from_account,
           recipient_contact: requestForm.recipient_contact,
           recipient_type: requestForm.recipient_type,
           amount: requestForm.amount,
           memo: requestForm.memo || null
-        });
+        })
+      });
 
-      if (error) throw error;
+      const data = await response.json();
+
+      if (!response.ok) {
+        showMsg(data.error || 'Failed to send payment request', 'error');
+        setLoading(false);
+        return;
+      }
 
       showMsg('✅ Payment request sent!', 'success');
       setShowRequestModal(false);
