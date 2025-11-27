@@ -1771,7 +1771,28 @@ export default function OaklinePayPage() {
       {/* QR Code Modal */}
       {showQRModal && (
         <div style={styles.modalOverlay} onClick={() => setShowQRModal(false)}>
-          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+          <div style={{ ...styles.modal, maxHeight: '90vh', overflowY: 'auto', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setShowQRModal(false)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'none',
+                border: 'none',
+                fontSize: '2rem',
+                cursor: 'pointer',
+                color: '#64748b',
+                padding: 0,
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              ✕
+            </button>
             <h2 style={styles.modalTitle}>📱 Share Your QR Code</h2>
             <p style={styles.modalSubtitle}>People can scan this to send you money</p>
             {qrCodeDataUrl && (
@@ -1851,7 +1872,7 @@ export default function OaklinePayPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #f1f5f9' }}>
               <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>Description</span>
               <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-word' }}>
-                {selectedOaklineTransaction.sender_id === user?.id ? 'To' : 'From'} {selectedOaklineTransaction.sender_id === user?.id ? (selectedOaklineTransaction.recipient_name || selectedOaklineTransaction.recipient_tag || 'User') : (selectedOaklineTransaction.sender_name || selectedOaklineTransaction.sender_tag || 'User')}
+                {selectedOaklineTransaction.sender_id === user?.id ? 'To' : 'From'} {selectedOaklineTransaction.sender_id === user?.id ? (selectedOaklineTransaction.recipient_name || `@${selectedOaklineTransaction.recipient_tag}` || 'User') : (selectedOaklineTransaction.sender_name || `@${selectedOaklineTransaction.sender_tag}` || 'User')}
               </span>
             </div>
 
@@ -2029,7 +2050,7 @@ const styles = {
   },
   tabsGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+    gridTemplateColumns: 'repeat(4, 1fr)',
     gap: '1rem'
   },
   tab: {
