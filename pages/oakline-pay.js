@@ -1974,7 +1974,7 @@ export default function OaklinePayPage() {
             width: '100%',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
             animation: 'slideUp 0.3s ease-out',
-            margin: '2rem auto'
+            margin: '8rem auto 2rem auto'
           }} onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setShowOaklineReceiptModal(false)}
