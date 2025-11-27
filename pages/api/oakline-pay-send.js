@@ -142,11 +142,20 @@ export default async function handler(req, res) {
 
         // Use the first match found
         if (oaklineProfile && oaklineProfile.length > 0) {
-          // Use oakline_pay_profiles data directly as the recipient profile
+          const userId = oaklineProfile[0].user_id;
+          const displayName = oaklineProfile[0].display_name;
+          
+          // Fetch actual profile data for fallback names
+          const { data: actualProfile } = await supabaseAdmin
+            .from('profiles')
+            .select('first_name, last_name, full_name')
+            .eq('id', userId)
+            .single();
+          
           recipientProfile = {
-            id: oaklineProfile[0].user_id,
-            full_name: oaklineProfile[0].display_name || 'Oakline User',
-            first_name: oaklineProfile[0].display_name?.split(' ')[0] || 'Oakline User',
+            id: userId,
+            full_name: displayName || actualProfile?.full_name || `${actualProfile?.first_name || ''} ${actualProfile?.last_name || ''}`.trim() || 'Oakline User',
+            first_name: displayName?.split(' ')[0] || actualProfile?.first_name || 'Oakline User',
             oakline_tag: oaklineProfile[0].oakline_tag
           };
           isOaklineUser = true;
@@ -443,6 +452,22 @@ export default async function handler(req, res) {
 
       const transactionRef = transaction.reference_number;
 
+      // Fetch sender and recipient profiles for transaction descriptions
+      const { data: senderProf } = await supabaseAdmin
+        .from('profiles')
+        .select('first_name, last_name, full_name')
+        .eq('id', transaction.sender_id)
+        .single();
+
+      const { data: recipientProf } = await supabaseAdmin
+        .from('profiles')
+        .select('first_name, last_name, full_name')
+        .eq('id', transaction.recipient_id)
+        .single();
+
+      const senderName = senderProf?.full_name || `${senderProf?.first_name || ''} ${senderProf?.last_name || ''}`.trim() || 'User';
+      const recipientName = recipientProf?.full_name || `${recipientProf?.first_name || ''} ${recipientProf?.last_name || ''}`.trim() || 'User';
+
       // Create transaction records
       await supabaseAdmin
         .from('transactions')
@@ -451,7 +476,7 @@ export default async function handler(req, res) {
           account_id: transaction.sender_account_id,
           type: 'oakline_pay_send',
           amount: -amount,
-          description: `Oakline Pay to ${transaction.recipient_contact}${transaction.memo ? ` - ${transaction.memo}` : ''}`,
+          description: `Oakline Pay to ${recipientName}${transaction.memo ? ` - ${transaction.memo}` : ''}`,
           reference: transactionRef,
           status: 'completed',
           balance_before: parseFloat(senderAccount.balance),
@@ -465,7 +490,7 @@ export default async function handler(req, res) {
           account_id: transaction.recipient_account_id,
           type: 'oakline_pay_receive',
           amount: amount,
-          description: `Oakline Pay from ${user.email}${transaction.memo ? ` - ${transaction.memo}` : ''}`,
+          description: `Oakline Pay from ${senderName}${transaction.memo ? ` - ${transaction.memo}` : ''}`,
           reference: transactionRef,
           status: 'completed',
           balance_before: parseFloat(recipientAccount.balance),
