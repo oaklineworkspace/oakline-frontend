@@ -278,7 +278,6 @@ export default async function handler(req, res) {
           .from('pending_payments')
           .insert({
             sender_id: user.id,
-            sender_account_id: sender_account_id,
             sender_name: senderData.full_name,
             sender_contact: senderOaklineProfile?.oakline_tag || senderProfile?.email,
             recipient_email: recipient_contact,
@@ -334,11 +333,12 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Payment already processed' });
       }
 
-      // Get sender's current account using the sender_account_id from pending payment
+      // Get sender's current account
       const { data: currentAccount } = await supabaseAdmin
         .from('accounts')
-        .select('balance')
-        .eq('id', pendingPayment.sender_account_id)
+        .select('*')
+        .eq('id', sender_account_id)
+        .eq('user_id', user.id)
         .single();
 
       if (!currentAccount) {
@@ -355,14 +355,14 @@ export default async function handler(req, res) {
       await supabaseAdmin
         .from('accounts')
         .update({ balance: senderNewBalance, updated_at: new Date().toISOString() })
-        .eq('id', pendingPayment.sender_account_id);
+        .eq('id', sender_account_id);
 
       // Create debit transaction for sender
       await supabaseAdmin
         .from('transactions')
         .insert({
-          user_id: pendingPayment.sender_id,
-          account_id: pendingPayment.sender_account_id,
+          user_id: user.id,
+          account_id: sender_account_id,
           type: 'oakline_pay_send',
           amount: transferAmount,
           description: `Oakline Pay sent to ${pendingPayment.recipient_email}`,
