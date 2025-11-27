@@ -74,31 +74,32 @@ export default async function handler(req, res) {
         console.log('🔍 Looking for Oakline tag:', normalizedTag);
         
         try {
-          // Try with exact match first
-          let { data: oaklinePay, error: oaklineError } = await supabaseAdmin
+          // Query with exact match (case-sensitive first)
+          let { data: oaklinePay, error: exactError } = await supabaseAdmin
             .from('oakline_pay_profiles')
             .select('user_id, oakline_tag, display_name')
-            .ilike('oakline_tag', normalizedTag)
-            .limit(1);
+            .eq('oakline_tag', normalizedTag);
 
-          // If no results with ilike, try case-insensitive with lower()
+          console.log('Query result:', { oaklinePay, exactError });
+
+          // If no exact match, try case-insensitive
           if (!oaklinePay || oaklinePay.length === 0) {
-            console.log('🔄 Trying alternative query for tag:', normalizedTag);
-            const { data: altResult } = await supabaseAdmin
+            console.log('🔄 Exact match failed, trying case-insensitive for tag:', normalizedTag);
+            const { data: caseInsensitive, error: caseError } = await supabaseAdmin
               .from('oakline_pay_profiles')
               .select('user_id, oakline_tag, display_name')
-              .filter('oakline_tag', 'ilike', `%${normalizedTag}%`)
-              .limit(1);
-            
-            if (altResult && altResult.length > 0) {
-              oaklinePay = altResult;
+              .filter('oakline_tag', 'ilike', normalizedTag);
+
+            console.log('Case-insensitive result:', { caseInsensitive, caseError });
+            if (caseInsensitive && caseInsensitive.length > 0) {
+              oaklinePay = caseInsensitive;
             }
           }
 
           if (oaklinePay && oaklinePay.length > 0) {
             const profile = oaklinePay[0];
             const userId = profile.user_id;
-            console.log('✅ Found Oakline tag profile. User ID:', userId);
+            console.log('✅ Found Oakline tag profile:', profile.oakline_tag, '- User ID:', userId);
 
             // Fetch the user's profile
             const { data: userProfile, error: profileError } = await supabaseAdmin
