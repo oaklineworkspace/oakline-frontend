@@ -73,51 +73,75 @@ export default async function handler(req, res) {
         const normalizedTag = recipient_contact.startsWith('@') ? recipient_contact.slice(1) : recipient_contact;
         console.log('🔍 Looking for Oakline tag:', normalizedTag);
         
-        const { data: oaklinePay, error: oaklineError } = await supabaseAdmin
-          .from('oakline_pay_profiles')
-          .select('user_id, oakline_tag, display_name')
-          .eq('oakline_tag', normalizedTag.toLowerCase())
-          .single();
+        try {
+          // Try with exact match first
+          let { data: oaklinePay, error: oaklineError } = await supabaseAdmin
+            .from('oakline_pay_profiles')
+            .select('user_id, oakline_tag, display_name')
+            .ilike('oakline_tag', normalizedTag)
+            .limit(1);
 
-        if (oaklineError) {
-          console.warn('⚠️ No Oakline tag found for:', normalizedTag, 'Error:', oaklineError.message);
-        }
-
-        if (oaklinePay && oaklinePay.user_id) {
-          const { data: profile, error: profileError } = await supabaseAdmin
-            .from('profiles')
-            .select('id, full_name, first_name, email')
-            .eq('id', oaklinePay.user_id)
-            .single();
-
-          if (profileError) {
-            console.error('❌ Error fetching profile for user:', oaklinePay.user_id, profileError);
-          } else if (profile) {
-            recipientProfile = profile;
-            isOaklineUser = true;
-            console.log('✅ Found Oakline user:', profile?.full_name || profile?.first_name);
+          // If no results with ilike, try case-insensitive with lower()
+          if (!oaklinePay || oaklinePay.length === 0) {
+            console.log('🔄 Trying alternative query for tag:', normalizedTag);
+            const { data: altResult } = await supabaseAdmin
+              .from('oakline_pay_profiles')
+              .select('user_id, oakline_tag, display_name')
+              .filter('oakline_tag', 'ilike', `%${normalizedTag}%`)
+              .limit(1);
+            
+            if (altResult && altResult.length > 0) {
+              oaklinePay = altResult;
+            }
           }
-        } else {
-          console.warn('⚠️ No Oakline profile found for tag:', normalizedTag);
+
+          if (oaklinePay && oaklinePay.length > 0) {
+            const profile = oaklinePay[0];
+            const userId = profile.user_id;
+            console.log('✅ Found Oakline tag profile. User ID:', userId);
+
+            // Fetch the user's profile
+            const { data: userProfile, error: profileError } = await supabaseAdmin
+              .from('profiles')
+              .select('id, full_name, first_name, email')
+              .eq('id', userId)
+              .single();
+
+            if (profileError) {
+              console.error('❌ Error fetching profile for user:', userId, profileError);
+            } else if (userProfile) {
+              recipientProfile = userProfile;
+              isOaklineUser = true;
+              console.log('✅ Found Oakline user:', userProfile?.full_name || userProfile?.first_name);
+            }
+          } else {
+            console.warn('⚠️ No Oakline profile found for tag:', normalizedTag);
+          }
+        } catch (tagError) {
+          console.error('❌ Error querying Oakline tag:', tagError);
         }
       } else if (recipient_type === 'email') {
         const emailLower = recipient_contact.toLowerCase();
         console.log('🔍 Looking for email user:', emailLower);
         
-        const { data: user_data, error: emailError } = await supabaseAdmin
-          .from('profiles')
-          .select('id, full_name, email, first_name, last_name')
-          .eq('email', emailLower)
-          .single();
-        
-        if (emailError) {
-          console.warn('⚠️ No profile found for email:', emailLower, 'Error:', emailError.message);
-        }
+        try {
+          const { data: user_data, error: emailError } = await supabaseAdmin
+            .from('profiles')
+            .select('id, full_name, email, first_name, last_name')
+            .ilike('email', emailLower)
+            .limit(1);
+          
+          if (emailError) {
+            console.warn('⚠️ Email query error:', emailLower, 'Error:', emailError.message);
+          }
 
-        if (user_data) {
-          recipientProfile = user_data;
-          isOaklineUser = true;
-          console.log('✅ Found email user:', user_data?.full_name || user_data?.first_name);
+          if (user_data && user_data.length > 0) {
+            recipientProfile = user_data[0];
+            isOaklineUser = true;
+            console.log('✅ Found email user:', recipientProfile?.full_name || recipientProfile?.first_name);
+          }
+        } catch (emailQueryError) {
+          console.error('❌ Error querying email:', emailQueryError);
         }
       }
 
