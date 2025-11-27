@@ -71,35 +71,53 @@ export default async function handler(req, res) {
       // Check if recipient is an Oakline user
       if (recipient_type === 'oakline_tag') {
         const normalizedTag = recipient_contact.startsWith('@') ? recipient_contact.slice(1) : recipient_contact;
-        const { data: oaklinePay } = await supabaseAdmin
+        console.log('🔍 Looking for Oakline tag:', normalizedTag);
+        
+        const { data: oaklinePay, error: oaklineError } = await supabaseAdmin
           .from('oakline_pay_profiles')
-          .select('user_id, oakline_tag, display_name, full_name')
-          .eq('oakline_tag', normalizedTag)
+          .select('user_id, oakline_tag, display_name')
+          .eq('oakline_tag', normalizedTag.toLowerCase())
           .single();
 
-        if (oaklinePay) {
-          const { data: profile } = await supabaseAdmin
+        if (oaklineError) {
+          console.warn('⚠️ No Oakline tag found for:', normalizedTag, 'Error:', oaklineError.message);
+        }
+
+        if (oaklinePay && oaklinePay.user_id) {
+          const { data: profile, error: profileError } = await supabaseAdmin
             .from('profiles')
-            .select('id, full_name, first_name, email, oakline_tag')
+            .select('id, full_name, first_name, email')
             .eq('id', oaklinePay.user_id)
             .single();
 
-          recipientProfile = profile;
-          isOaklineUser = true;
-          console.log('✅ Found Oakline user:', recipientProfile);
+          if (profileError) {
+            console.error('❌ Error fetching profile for user:', oaklinePay.user_id, profileError);
+          } else if (profile) {
+            recipientProfile = profile;
+            isOaklineUser = true;
+            console.log('✅ Found Oakline user:', profile?.full_name || profile?.first_name);
+          }
         } else {
-          console.warn('⚠️ No Oakline tag found for:', normalizedTag);
+          console.warn('⚠️ No Oakline profile found for tag:', normalizedTag);
         }
       } else if (recipient_type === 'email') {
-        const { data: user_data } = await supabaseAdmin
+        const emailLower = recipient_contact.toLowerCase();
+        console.log('🔍 Looking for email user:', emailLower);
+        
+        const { data: user_data, error: emailError } = await supabaseAdmin
           .from('profiles')
           .select('id, full_name, email, first_name, last_name')
-          .eq('email', recipient_contact)
+          .eq('email', emailLower)
           .single();
         
+        if (emailError) {
+          console.warn('⚠️ No profile found for email:', emailLower, 'Error:', emailError.message);
+        }
+
         if (user_data) {
           recipientProfile = user_data;
           isOaklineUser = true;
+          console.log('✅ Found email user:', user_data?.full_name || user_data?.first_name);
         }
       }
 
