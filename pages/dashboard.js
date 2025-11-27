@@ -481,7 +481,9 @@ function DashboardContent() {
             completed_at: tx.completed_at,
             recipient_contact: tx.recipient_contact,
             recipient_type: tx.recipient_type,
+            recipient_name: tx.recipient_name,
             sender_contact: tx.sender_contact,
+            sender_name: tx.sender_name,
             is_instant: isInstant,
             reference_number: tx.reference_number,
             memo: tx.memo,
@@ -2101,16 +2103,29 @@ function DashboardContent() {
               display: 'flex',
               justifyContent: 'space-between',
               padding: '0.75rem 0',
-              borderBottom: '1px solid #f1f5f9'
+              borderBottom: '1px solid #f1f5f9',
+              alignItems: 'flex-start'
             }}>
               <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
                 {(selectedTransaction.type || selectedTransaction.transaction_type) === 'oakline_pay_send' ? 'Sent to' : 'Received from'}
               </span>
-              <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-word' }}>
-                {(selectedTransaction.type || selectedTransaction.transaction_type) === 'oakline_pay_send' 
-                  ? (selectedTransaction.recipient_contact ? `@${selectedTransaction.recipient_contact}` : selectedTransaction.recipient_display || 'User')
-                  : (selectedTransaction.sender_display || 'User')}
-              </span>
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', maxWidth: '60%', wordBreak: 'break-word' }}>
+                  {(selectedTransaction.type || selectedTransaction.transaction_type) === 'oakline_pay_send' 
+                    ? (selectedTransaction.recipient_contact ? `@${selectedTransaction.recipient_contact}` : selectedTransaction.recipient_display || 'User')
+                    : (selectedTransaction.sender_contact ? `@${selectedTransaction.sender_contact}` : selectedTransaction.sender_display || 'User')}
+                </span>
+                {(selectedTransaction.type || selectedTransaction.transaction_type) === 'oakline_pay_send' && selectedTransaction.recipient_name && (
+                  <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem' }}>
+                    {selectedTransaction.recipient_name}
+                  </div>
+                )}
+                {(selectedTransaction.type || selectedTransaction.transaction_type) === 'oakline_pay_receive' && selectedTransaction.sender_name && (
+                  <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem' }}>
+                    {selectedTransaction.sender_name}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

@@ -2039,9 +2039,19 @@ export default function OaklinePayPage() {
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '1rem', color: '#1e293b', fontWeight: '700' }}>
                     {selectedOaklineTransaction.sender_id === user?.id 
-                      ? (selectedOaklineTransaction.recipient_contact ? `@${selectedOaklineTransaction.recipient_contact}` : 'Oakline User')
+                      ? (selectedOaklineTransaction.recipient_contact ? `@${selectedOaklineTransaction.recipient_contact}` : 'User')
                       : (selectedOaklineTransaction.sender_contact ? `@${selectedOaklineTransaction.sender_contact}` : 'Sender')}
                   </div>
+                  {selectedOaklineTransaction.sender_id === user?.id && selectedOaklineTransaction.recipient_name && (
+                    <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem', fontWeight: '500' }}>
+                      {selectedOaklineTransaction.recipient_name}
+                    </div>
+                  )}
+                  {selectedOaklineTransaction.sender_id !== user?.id && selectedOaklineTransaction.sender_name && (
+                    <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem', fontWeight: '500' }}>
+                      {selectedOaklineTransaction.sender_name}
+                    </div>
+                  )}
                 </div>
               </div>
 
