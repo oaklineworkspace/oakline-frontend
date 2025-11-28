@@ -338,7 +338,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Unable to verify PIN' });
       }
 
-      const isPinValid = await bcryptjs.compare(pin, profile.transaction_pin);
+      const isPinValid = await bcrypt.compare(pin, profile.transaction_pin);
       if (!isPinValid) {
         return res.status(400).json({ error: 'Invalid PIN. Payment not sent.' });
       }
