@@ -501,7 +501,9 @@ export default async function handler(req, res) {
         message: '✅ Payment sent!',
         payment_id: payment_id,
         recipient_email: pendingPayment.recipient_email,
-        amount: transferAmount
+        amount: transferAmount,
+        reference_number: generateReference(),
+        expires_at: pendingPayment.expires_at
       });
 
     } else {

@@ -402,17 +402,26 @@ export default function OaklinePayPage() {
             return;
           }
 
-          setTransferStatus(`✅ Payment sent! Confirmation email sent to both you and ${pendingTransaction.recipient_contact}`);
-          setTransferStatusType('success');
+          // Show professional receipt modal for non-member transfers
+          setReceiptData({
+            amount: confirmData.amount,
+            recipient_name: pendingTransaction.recipient_contact,
+            reference_number: confirmData.reference_number,
+            memo: pendingTransaction.memo,
+            status: 'waiting'
+          });
+          setShowReceiptModal(true);
+          setTransferStatus('');
           
-          // Show receipt for 3 seconds then redirect
+          // Auto-close receipt and reset after 5 seconds
           setTimeout(() => {
+            setShowReceiptModal(false);
             setTransferStep(null);
             setPendingTransaction(null);
             setVerifyForm({ code: '' });
             setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
             checkUserAndLoadData();
-          }, 3500);
+          }, 5000);
         } catch (error) {
           console.error('Error confirming payment:', error);
           setTransferStatus('An error occurred. Please try again.');
