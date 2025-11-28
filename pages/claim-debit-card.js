@@ -234,7 +234,7 @@ export default function ClaimPaymentPage() {
         .eq('claim_token', token)
         .eq('status', 'sent');
 
-      setMessage('✅ Account Created Successfully!\n\nYour Oakline Bank account has been created and ${payment.amount} has been deposited. Check your email to verify your account and start banking!');
+      setMessage(`✅ Account Created Successfully!\n\n$${payment.amount} has been deposited to your new Oakline Bank account. Check your email to verify your account and start banking!`);
       setMessageType('success');
       setTimeout(() => router.push('/'), 4000);
     } catch (error) {
@@ -248,8 +248,11 @@ export default function ClaimPaymentPage() {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '2rem' }}>
-        <p>Loading payment details...</p>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)' }}>
+        <div style={{ textAlign: 'center', color: 'white' }}>
+          <div style={{ width: '50px', height: '50px', border: '4px solid rgba(255,255,255,0.3)', borderTop: '4px solid white', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }}></div>
+          <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>Loading payment details...</p>
+        </div>
       </div>
     );
   }
@@ -264,177 +267,204 @@ export default function ClaimPaymentPage() {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+        @media (max-width: 768px) {
+          .tab-container { flex-direction: column; }
+          .form-row { flex-direction: column !important; }
+          .form-row > div { flex: 1 !important; }
+        }
       `}</style>
       <div style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '1rem'
+        padding: '1.5rem'
       }}>
         <div style={{
           background: 'white',
-          borderRadius: '12px',
-          padding: '2rem',
-          maxWidth: '700px',
+          borderRadius: '16px',
+          padding: '0',
+          maxWidth: '750px',
           width: '100%',
-          boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
           maxHeight: '95vh',
           overflowY: 'auto'
         }}>
+          {/* Header Section */}
+          <div style={{
+            background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)',
+            color: 'white',
+            padding: '3rem 2rem',
+            borderRadius: '16px 16px 0 0',
+            textAlign: 'center'
+          }}>
+            <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', fontWeight: '700' }}>🏦 Oakline Bank</h2>
+            <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.95rem', opacity: 0.95 }}>Secure Payment Claim System</p>
+            <div style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+              ${parseFloat(payment?.amount || 0).toFixed(2)}
+            </div>
+            <p style={{ margin: '0', fontSize: '0.95rem', opacity: 0.9 }}>
+              Payment from <strong>{payment?.sender_name || payment?.sender_contact}</strong>
+            </p>
+          </div>
+
+          {/* Message Section */}
           {message && (
-            <div style={{
-              backgroundColor: messageType === 'error' ? '#fee2e2' : messageType === 'success' ? '#dcfce7' : messageType === 'info' ? '#e0f2fe' : '#eff6ff',
-              border: `2px solid ${messageType === 'error' ? '#fca5a5' : messageType === 'success' ? '#86efac' : messageType === 'info' ? '#7dd3fc' : '#bfdbfe'}`,
-              color: messageType === 'error' ? '#991b1b' : messageType === 'success' ? '#065f46' : messageType === 'info' ? '#0c4a6e' : '#1e40af',
-              padding: '1.5rem',
-              borderRadius: '12px',
-              marginBottom: '1.5rem',
-              fontSize: '0.95rem',
-              lineHeight: '1.6',
-              whiteSpace: 'pre-line'
-            }}>
-              {message}
+            <div style={{ padding: '2rem' }}>
+              <div style={{
+                backgroundColor: messageType === 'error' ? '#fee2e2' : messageType === 'success' ? '#dcfce7' : '#e0f2fe',
+                border: `2px solid ${messageType === 'error' ? '#fca5a5' : messageType === 'success' ? '#86efac' : '#7dd3fc'}`,
+                color: messageType === 'error' ? '#991b1b' : messageType === 'success' ? '#065f46' : '#0c4a6e',
+                padding: '1.5rem',
+                borderRadius: '12px',
+                fontSize: '0.95rem',
+                lineHeight: '1.6',
+                whiteSpace: 'pre-line'
+              }}>
+                {message}
+              </div>
             </div>
           )}
 
           {payment && (
-            <>
-              <div style={{ textAlign: 'center', marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '2px solid #e2e8f0' }}>
-                <h2 style={{ color: '#1e40af', fontSize: '1.3rem', fontWeight: '700', margin: '0 0 0.5rem 0' }}>🏦 Oakline Bank</h2>
-                <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
-                  <p style={{ color: '#0c4a6e', fontSize: '0.9rem', margin: '0', lineHeight: '1.5' }}>
-                    🔒 <strong>Your Private Information is Secure</strong><br/>
-                    All personal details are encrypted with 256-bit SSL and processed securely.
-                  </p>
+            <div style={{ padding: '2rem' }}>
+              {/* Security Banner */}
+              <div style={{
+                backgroundColor: '#f0feff',
+                border: '1px solid #a5f3fc',
+                borderRadius: '12px',
+                padding: '1.25rem',
+                marginBottom: '2rem',
+                display: 'flex',
+                gap: '1rem',
+                alignItems: 'flex-start'
+              }}>
+                <span style={{ fontSize: '1.5rem' }}>🔒</span>
+                <div>
+                  <p style={{ margin: '0 0 0.25rem 0', color: '#0c4a6e', fontWeight: '600', fontSize: '0.95rem' }}>Your Information is Secure</p>
+                  <p style={{ margin: '0', color: '#0c7a99', fontSize: '0.85rem', lineHeight: '1.5' }}>All personal details are encrypted with 256-bit SSL and PCI DSS compliant.</p>
                 </div>
-                <h1 style={{ color: '#1e293b', marginBottom: '0.5rem' }}>Claim Your Payment</h1>
-                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#16a34a' }}>
-                  ${parseFloat(payment.amount).toFixed(2)}
-                </div>
-                <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '0.5rem 0' }}>
-                  from {payment.sender_name || payment.sender_contact}
+              </div>
+
+              {/* Payment Options Intro */}
+              <div style={{ marginBottom: '2rem' }}>
+                <p style={{ margin: '0 0 1rem 0', color: '#333', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                  Choose how you'd like to receive your payment. You have <strong style={{ color: '#0066cc' }}>14 days</strong> to claim this payment.
                 </p>
               </div>
 
               {/* Tabs */}
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', borderBottom: '2px solid #e2e8f0' }}>
-                <button
-                  onClick={() => setActiveTab('debit_card')}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    border: 'none',
-                    borderBottom: activeTab === 'debit_card' ? '3px solid #0066cc' : 'none',
-                    backgroundColor: activeTab === 'debit_card' ? '#f0f7ff' : 'transparent',
-                    color: activeTab === 'debit_card' ? '#0066cc' : '#64748b',
-                    cursor: 'pointer',
-                    fontWeight: activeTab === 'debit_card' ? '600' : '500',
-                    fontSize: '0.9rem'
-                  }}
-                >
-                  💳 Debit Card
-                </button>
-                <button
-                  onClick={() => setActiveTab('ach')}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    border: 'none',
-                    borderBottom: activeTab === 'ach' ? '3px solid #0066cc' : 'none',
-                    backgroundColor: activeTab === 'ach' ? '#f0f7ff' : 'transparent',
-                    color: activeTab === 'ach' ? '#0066cc' : '#64748b',
-                    cursor: 'pointer',
-                    fontWeight: activeTab === 'ach' ? '600' : '500',
-                    fontSize: '0.9rem'
-                  }}
-                >
-                  🏦 ACH Transfer
-                </button>
-                <button
-                  onClick={() => setActiveTab('account')}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    border: 'none',
-                    borderBottom: activeTab === 'account' ? '3px solid #0066cc' : 'none',
-                    backgroundColor: activeTab === 'account' ? '#f0f7ff' : 'transparent',
-                    color: activeTab === 'account' ? '#0066cc' : '#64748b',
-                    cursor: 'pointer',
-                    fontWeight: activeTab === 'account' ? '600' : '500',
-                    fontSize: '0.9rem'
-                  }}
-                >
-                  📱 Create Account
-                </button>
+              <div style={{
+                display: 'flex',
+                gap: '0.75rem',
+                marginBottom: '2rem',
+                borderBottom: '2px solid #e5e7eb',
+                className: 'tab-container'
+              }}>
+                {[
+                  { id: 'debit_card', label: '💳 Debit Card', subtitle: 'Instant (1 hour)' },
+                  { id: 'ach', label: '🏦 ACH Transfer', subtitle: '1-3 days' },
+                  { id: 'account', label: '📱 Create Account', subtitle: 'Instant' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    style={{
+                      padding: '1rem',
+                      border: 'none',
+                      borderBottom: activeTab === tab.id ? '3px solid #0066cc' : 'none',
+                      backgroundColor: activeTab === tab.id ? '#f8fafc' : 'transparent',
+                      color: activeTab === tab.id ? '#0066cc' : '#64748b',
+                      cursor: 'pointer',
+                      fontWeight: activeTab === tab.id ? '600' : '500',
+                      fontSize: '0.9rem',
+                      transition: 'all 0.2s',
+                      flex: 1,
+                      textAlign: 'left'
+                    }}
+                  >
+                    <div>{tab.label}</div>
+                    <div style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '0.25rem' }}>{tab.subtitle}</div>
+                  </button>
+                ))}
               </div>
 
               {/* DEBIT CARD TAB */}
               {activeTab === 'debit_card' && (
-                <div>
-                  <h3 style={{ color: '#1e293b', marginBottom: '1rem' }}>💳 Instant Debit Card Deposit</h3>
-                  <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Visa/Mastercard rails - funds typically available within 1 hour</p>
+                <div style={{ animation: 'fadeIn 0.3s ease-in' }}>
+                  <h3 style={{ color: '#1e293b', fontSize: '1.1rem', marginBottom: '0.5rem', margin: '0 0 0.5rem 0' }}>💳 Instant Debit Card Deposit</h3>
+                  <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Visa/Mastercard - funds typically available within 1 hour</p>
 
-                  <div style={{ marginBottom: '1rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>Cardholder Name *</label>
-                    <input type="text" placeholder="Full name on card" value={debitCardForm.cardholder_name} onChange={(e) => setDebitCardForm({ ...debitCardForm, cardholder_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
-                  </div>
-
-                  <div style={{ marginBottom: '1rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>Card Number *</label>
-                    <input type="text" placeholder="1234 5678 9012 3456" maxLength="19" value={debitCardForm.card_number} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_number: e.target.value.replace(/\D/g, '') })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>Expiry (MM/YY) *</label>
-                      <input type="text" placeholder="MM/YY" maxLength="5" value={debitCardForm.card_expiry} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_expiry: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
+                  <div style={{ marginBottom: '2rem' }}>
+                    <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>Card Information</h4>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Cardholder Name *</label>
+                      <input type="text" placeholder="Full name on card" value={debitCardForm.cardholder_name} onChange={(e) => setDebitCardForm({ ...debitCardForm, cardholder_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>CVV *</label>
-                      <input type="text" placeholder="123" maxLength="4" value={debitCardForm.card_cvv} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_cvv: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
-                    </div>
-                  </div>
 
-                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>SSN *</label>
-                      <input type="text" placeholder="XXX-XX-XXXX" maxLength="11" value={debitCardForm.ssn} onChange={(e) => { let v = e.target.value.replace(/\D/g, ''); if (v.length <= 3) v = v; else if (v.length <= 5) v = v.slice(0, 3) + '-' + v.slice(3); else v = v.slice(0, 3) + '-' + v.slice(3, 5) + '-' + v.slice(5, 9); setDebitCardForm({ ...debitCardForm, ssn: v }); }} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Card Number *</label>
+                      <input type="text" placeholder="1234 5678 9012 3456" maxLength="19" value={debitCardForm.card_number} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_number: e.target.value.replace(/\D/g, '') })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', letterSpacing: '2px' }} />
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>Date of Birth *</label>
-                      <input type="date" value={debitCardForm.date_of_birth} onChange={(e) => setDebitCardForm({ ...debitCardForm, date_of_birth: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
+
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Expiry (MM/YY) *</label>
+                        <input type="text" placeholder="MM/YY" maxLength="5" value={debitCardForm.card_expiry} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_expiry: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>CVV *</label>
+                        <input type="text" placeholder="123" maxLength="4" value={debitCardForm.card_cvv} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_cvv: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                      </div>
                     </div>
                   </div>
 
-                  <h4 style={{ color: '#1e293b', marginBottom: '1rem' }}>Billing Address</h4>
-
-                  <div style={{ marginBottom: '1rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>Street Address *</label>
-                    <input type="text" placeholder="123 Main Street" value={debitCardForm.billing_address} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_address: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                    <div style={{ flex: 2 }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>City *</label>
-                      <input type="text" placeholder="New York" value={debitCardForm.billing_city} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_city: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>State *</label>
-                      <input type="text" placeholder="NY" maxLength="2" value={debitCardForm.billing_state} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_state: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
+                  <div style={{ marginBottom: '2rem' }}>
+                    <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>Verification Details</h4>
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>SSN *</label>
+                        <input type="text" placeholder="XXX-XX-XXXX" maxLength="11" value={debitCardForm.ssn} onChange={(e) => { let v = e.target.value.replace(/\D/g, ''); if (v.length <= 3) v = v; else if (v.length <= 5) v = v.slice(0, 3) + '-' + v.slice(3); else v = v.slice(0, 3) + '-' + v.slice(3, 5) + '-' + v.slice(5, 9); setDebitCardForm({ ...debitCardForm, ssn: v }); }} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Date of Birth *</label>
+                        <input type="date" value={debitCardForm.date_of_birth} onChange={(e) => setDebitCardForm({ ...debitCardForm, date_of_birth: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                      </div>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>ZIP Code *</label>
-                      <input type="text" placeholder="10001" value={debitCardForm.billing_zip} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_zip: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
+                  <div style={{ marginBottom: '2rem' }}>
+                    <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>Billing Address</h4>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Street Address *</label>
+                      <input type="text" placeholder="123 Main Street" value={debitCardForm.billing_address} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_address: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>Country *</label>
-                      <input type="text" placeholder="United States" value={debitCardForm.billing_country} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_country: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
+
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ flex: 2 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>City *</label>
+                        <input type="text" placeholder="New York" value={debitCardForm.billing_city} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_city: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>State *</label>
+                        <input type="text" placeholder="NY" maxLength="2" value={debitCardForm.billing_state} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_state: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                      </div>
+                    </div>
+
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>ZIP Code *</label>
+                        <input type="text" placeholder="10001" value={debitCardForm.billing_zip} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_zip: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Country *</label>
+                        <input type="text" placeholder="United States" value={debitCardForm.billing_country} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_country: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                      </div>
                     </div>
                   </div>
 
-                  <button onClick={handleDebitCardSubmit} disabled={submitting} style={{ width: '100%', padding: '0.75rem', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1 }}>
+                  <button onClick={handleDebitCardSubmit} disabled={submitting} style={{ width: '100%', padding: '1rem', background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, fontSize: '1rem', transition: 'all 0.2s' }}>
                     {submitting ? '⏳ Processing...' : '✓ Claim to Debit Card'}
                   </button>
                 </div>
@@ -442,45 +472,52 @@ export default function ClaimPaymentPage() {
 
               {/* ACH TAB */}
               {activeTab === 'ach' && (
-                <div>
-                  <h3 style={{ color: '#1e293b', marginBottom: '1rem' }}>🏦 ACH Bank Transfer</h3>
+                <div style={{ animation: 'fadeIn 0.3s ease-in' }}>
+                  <h3 style={{ color: '#1e293b', fontSize: '1.1rem', marginBottom: '0.5rem', margin: '0 0 0.5rem 0' }}>🏦 ACH Bank Transfer</h3>
                   <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Direct deposit to your US bank account - typically 1-3 business days</p>
 
-                  <div style={{ marginBottom: '1rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>Account Holder Name *</label>
-                    <input type="text" placeholder="Full name" value={achForm.account_holder_name} onChange={(e) => setAchForm({ ...achForm, account_holder_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
-                  </div>
-
-                  <div style={{ marginBottom: '1rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>Routing Number *</label>
-                    <input type="text" placeholder="000000000" value={achForm.routing_number} onChange={(e) => setAchForm({ ...achForm, routing_number: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
-                  </div>
-
-                  <div style={{ marginBottom: '1rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>Account Number *</label>
-                    <input type="text" placeholder="1234567890" value={achForm.account_number} onChange={(e) => setAchForm({ ...achForm, account_number: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
-                  </div>
-
-                  <div style={{ marginBottom: '1rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>Account Type *</label>
-                    <select value={achForm.account_type} onChange={(e) => setAchForm({ ...achForm, account_type: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }}>
-                      <option value="checking">Checking</option>
-                      <option value="savings">Savings</option>
-                    </select>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>SSN *</label>
-                      <input type="text" placeholder="XXX-XX-XXXX" maxLength="11" value={achForm.ssn} onChange={(e) => { let v = e.target.value.replace(/\D/g, ''); if (v.length <= 3) v = v; else if (v.length <= 5) v = v.slice(0, 3) + '-' + v.slice(3); else v = v.slice(0, 3) + '-' + v.slice(3, 5) + '-' + v.slice(5, 9); setAchForm({ ...achForm, ssn: v }); }} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
+                  <div style={{ marginBottom: '2rem' }}>
+                    <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>Bank Account Details</h4>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Account Holder Name *</label>
+                      <input type="text" placeholder="Full name" value={achForm.account_holder_name} onChange={(e) => setAchForm({ ...achForm, account_holder_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>Date of Birth *</label>
-                      <input type="date" value={achForm.date_of_birth} onChange={(e) => setAchForm({ ...achForm, date_of_birth: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
+
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Routing Number *</label>
+                        <input type="text" placeholder="000000000" value={achForm.routing_number} onChange={(e) => setAchForm({ ...achForm, routing_number: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Account Number *</label>
+                        <input type="text" placeholder="1234567890" value={achForm.account_number} onChange={(e) => setAchForm({ ...achForm, account_number: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Account Type *</label>
+                      <select value={achForm.account_type} onChange={(e) => setAchForm({ ...achForm, account_type: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }}>
+                        <option value="checking">Checking</option>
+                        <option value="savings">Savings</option>
+                      </select>
                     </div>
                   </div>
 
-                  <button onClick={handleAchSubmit} disabled={submitting} style={{ width: '100%', padding: '0.75rem', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1 }}>
+                  <div style={{ marginBottom: '2rem' }}>
+                    <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>Verification Details</h4>
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>SSN *</label>
+                        <input type="text" placeholder="XXX-XX-XXXX" maxLength="11" value={achForm.ssn} onChange={(e) => { let v = e.target.value.replace(/\D/g, ''); if (v.length <= 3) v = v; else if (v.length <= 5) v = v.slice(0, 3) + '-' + v.slice(3); else v = v.slice(0, 3) + '-' + v.slice(3, 5) + '-' + v.slice(5, 9); setAchForm({ ...achForm, ssn: v }); }} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Date of Birth *</label>
+                        <input type="date" value={achForm.date_of_birth} onChange={(e) => setAchForm({ ...achForm, date_of_birth: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <button onClick={handleAchSubmit} disabled={submitting} style={{ width: '100%', padding: '1rem', background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, fontSize: '1rem', transition: 'all 0.2s' }}>
                     {submitting ? '⏳ Processing...' : '✓ Claim via ACH'}
                   </button>
                 </div>
@@ -488,49 +525,64 @@ export default function ClaimPaymentPage() {
 
               {/* ACCOUNT TAB */}
               {activeTab === 'account' && (
-                <div>
-                  <h3 style={{ color: '#1e293b', marginBottom: '1rem' }}>📱 Create Oakline Account</h3>
-                  <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Instant account creation - funds available immediately with full banking features</p>
+                <div style={{ animation: 'fadeIn 0.3s ease-in' }}>
+                  <h3 style={{ color: '#1e293b', fontSize: '1.1rem', marginBottom: '0.5rem', margin: '0 0 0.5rem 0' }}>📱 Create Oakline Account</h3>
+                  <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Open your account instantly - funds available immediately with full banking features</p>
 
-                  <div style={{ marginBottom: '1rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>Full Name *</label>
-                    <input type="text" placeholder="Your full name" value={accountForm.full_name} onChange={(e) => setAccountForm({ ...accountForm, full_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
+                  <div style={{ backgroundColor: '#f0feff', border: '1px solid #a5f3fc', borderRadius: '12px', padding: '1rem', marginBottom: '2rem' }}>
+                    <p style={{ margin: '0', color: '#0c7a99', fontSize: '0.85rem', lineHeight: '1.5' }}>
+                      ⚡ <strong>Instant Setup:</strong> Your account is created immediately and ${parseFloat(payment?.amount || 0).toFixed(2)} will be deposited right away. No waiting!
+                    </p>
                   </div>
 
-                  <div style={{ marginBottom: '1rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>Email Address *</label>
-                    <input type="email" placeholder="your@email.com" value={accountForm.email} onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
+                  <div style={{ marginBottom: '2rem' }}>
+                    <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>Account Information</h4>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Full Name *</label>
+                      <input type="text" placeholder="Your full name" value={accountForm.full_name} onChange={(e) => setAccountForm({ ...accountForm, full_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Email Address *</label>
+                      <input type="email" placeholder="your@email.com" value={accountForm.email} onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                    </div>
                   </div>
 
-                  <div style={{ marginBottom: '1rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>Password *</label>
-                    <input type="password" placeholder="At least 6 characters" value={accountForm.password} onChange={(e) => setAccountForm({ ...accountForm, password: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
+                  <div style={{ marginBottom: '2rem' }}>
+                    <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>Security</h4>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Password *</label>
+                      <input type="password" placeholder="At least 6 characters" value={accountForm.password} onChange={(e) => setAccountForm({ ...accountForm, password: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                    </div>
+
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Confirm Password *</label>
+                      <input type="password" placeholder="Confirm password" value={accountForm.confirm_password} onChange={(e) => setAccountForm({ ...accountForm, confirm_password: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                    </div>
                   </div>
 
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>Confirm Password *</label>
-                    <input type="password" placeholder="Confirm password" value={accountForm.confirm_password} onChange={(e) => setAccountForm({ ...accountForm, confirm_password: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', boxSizing: 'border-box' }} />
+                  <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '2rem', gap: '0.75rem' }}>
+                    <input type="checkbox" checked={accountForm.agree_terms} onChange={(e) => setAccountForm({ ...accountForm, agree_terms: e.target.checked })} style={{ width: '18px', height: '18px', cursor: 'pointer', marginTop: '0.25rem', flexShrink: 0 }} />
+                    <label style={{ color: '#64748b', fontSize: '0.9rem', cursor: 'pointer', lineHeight: '1.5' }}>I agree to Oakline Bank's terms and conditions and privacy policy *</label>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <input type="checkbox" checked={accountForm.agree_terms} onChange={(e) => setAccountForm({ ...accountForm, agree_terms: e.target.checked })} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
-                    <label style={{ marginLeft: '0.5rem', color: '#64748b', fontSize: '0.9rem', cursor: 'pointer' }}>I agree to Oakline Bank terms and conditions *</label>
-                  </div>
-
-                  <button onClick={handleAccountSubmit} disabled={submitting} style={{ width: '100%', padding: '0.75rem', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1 }}>
-                    {submitting ? '⏳ Creating...' : '✓ Create Account & Receive Payment'}
+                  <button onClick={handleAccountSubmit} disabled={submitting} style={{ width: '100%', padding: '1rem', background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, fontSize: '1rem', transition: 'all 0.2s' }}>
+                    {submitting ? '⏳ Creating Account...' : '✓ Create Account & Receive Payment'}
                   </button>
                 </div>
               )}
 
-              <p style={{ color: '#999', fontSize: '0.8rem', marginTop: '1.5rem', textAlign: 'center', lineHeight: '1.5' }}>
-                🔒 All data is encrypted and secured. Your transaction will be processed safely and securely.
-              </p>
-            </>
+              {/* Footer */}
+              <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #e5e7eb' }}>
+                <p style={{ color: '#999', fontSize: '0.8rem', margin: '0', textAlign: 'center', lineHeight: '1.6' }}>
+                  🔐 All data is encrypted, secured, and processed safely. Your transaction will be handled with the highest security standards.
+                </p>
+              </div>
+            </div>
           )}
 
           {!payment && !loading && (
-            <div style={{ textAlign: 'center', color: '#666' }}>
+            <div style={{ padding: '3rem 2rem', textAlign: 'center', color: '#666' }}>
               <p>Unable to load payment details.</p>
             </div>
           )}
