@@ -1144,26 +1144,45 @@ export default function WireTransfer() {
                       </div>
 
                       {wireForm.transfer_type === 'international' && (
-                        <div style={styles.formGroup}>
-                          <label style={styles.label}>
-                            SWIFT/BIC Code *
-                          </label>
-                          <input
-                            type="text"
-                            style={styles.input}
-                            value={wireForm.swift_code}
-                            onChange={(e) => {
-                              handleInputChange('swift_code', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''));
-                              setValidationErrors(prev => ({ ...prev, swift_code: '' }));
-                            }}
-                            placeholder="Example: CHASUS33XXX (Enter bank's SWIFT/BIC code)"
-                            maxLength="11"
-                            required
-                          />
-                          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.375rem' }}>
-                            Enter any format - our team will review and verify during processing
+                        <>
+                          <div style={styles.formGroup}>
+                            <label style={styles.label}>
+                              Recipient Bank Country *
+                            </label>
+                            <input
+                              type="text"
+                              style={styles.input}
+                              value={wireForm.recipient_bank_country}
+                              onChange={(e) => handleInputChange('recipient_bank_country', e.target.value)}
+                              placeholder="Example: United Kingdom, Canada, India"
+                              required
+                            />
+                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.375rem' }}>
+                              Enter the country where the recipient's bank is located
+                            </div>
                           </div>
-                        </div>
+
+                          <div style={styles.formGroup}>
+                            <label style={styles.label}>
+                              SWIFT/BIC Code *
+                            </label>
+                            <input
+                              type="text"
+                              style={styles.input}
+                              value={wireForm.swift_code}
+                              onChange={(e) => {
+                                handleInputChange('swift_code', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''));
+                                setValidationErrors(prev => ({ ...prev, swift_code: '' }));
+                              }}
+                              placeholder="Example: CHASUS33XXX (Enter bank's SWIFT/BIC code)"
+                              maxLength="11"
+                              required
+                            />
+                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.375rem' }}>
+                              Enter any format - our team will review and verify during processing
+                            </div>
+                          </div>
+                        </>
                       )}
 
                       <div style={styles.formGroup}>
