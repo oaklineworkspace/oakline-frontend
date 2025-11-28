@@ -154,6 +154,66 @@ export default function ComingSoon() {
           { number: '03', title: 'Financial Control', desc: 'View all bills and payments in one dashboard' },
           { number: '04', title: 'Complete Peace of Mind', desc: 'Secure, encrypted payments with full audit trail' }
         ]
+      },
+      withdraw: {
+        name: 'Withdrawal Services',
+        description: 'Access your funds with flexible withdrawal options',
+        heading: 'Withdraw Your Funds Your Way',
+        subtitle: 'Multiple convenient options to access your money when you need it',
+        whyExpect: [
+          { icon: '💸', title: 'ATM Withdrawals', desc: 'Access funds at 500,000+ ATMs nationwide' },
+          { icon: '🏦', title: 'Branch Withdrawals', desc: 'Visit any branch for in-person withdrawals' },
+          { icon: '💳', title: 'Debit Card Access', desc: 'Use your card at merchants to get cash back' },
+          { icon: '🌍', title: 'International Access', desc: 'Withdraw funds worldwide at partner locations' },
+          { icon: '📱', title: 'Mobile Withdrawals', desc: 'Digital wallet options for contactless access' },
+          { icon: '⏰', title: '24/7 Availability', desc: 'Access your funds anytime, day or night' }
+        ],
+        reasons: [
+          { number: '01', title: 'Maximum Flexibility', desc: 'Multiple ways to access your funds on your schedule' },
+          { number: '02', title: 'Wide Network', desc: 'Withdraw from locations convenient to you' },
+          { number: '03', title: 'Always Available', desc: 'Your money is accessible 24/7/365' },
+          { number: '04', title: 'No Hassle', desc: 'Quick, simple withdrawals without complications' }
+        ]
+      },
+      'my-loans': {
+        name: 'My Loans Dashboard',
+        description: 'Manage all your loans in one central dashboard',
+        heading: 'Take Control of Your Loans',
+        subtitle: 'View balances, payment schedules, and manage all your loans from one dashboard',
+        whyExpect: [
+          { icon: '📊', title: 'Loan Overview', desc: 'See all your loans at a glance with current balances' },
+          { icon: '📅', title: 'Payment Schedule', desc: 'View upcoming payments and due dates' },
+          { icon: '💰', title: 'Payoff Calculations', desc: 'Plan ahead with payoff date projections' },
+          { icon: '📈', title: 'Interest Tracking', desc: 'Monitor interest paid over time' },
+          { icon: '🔔', title: 'Smart Reminders', desc: 'Get notified before payments are due' },
+          { icon: '💳', title: 'Quick Payments', desc: 'Make loan payments with one click' }
+        ],
+        reasons: [
+          { number: '01', title: 'One Dashboard', desc: 'Manage all your loans in one convenient place' },
+          { number: '02', title: 'Stay Organized', desc: 'Never miss a payment or forget a deadline' },
+          { number: '03', title: 'Financial Clarity', desc: 'Understand your loan details and progress' },
+          { number: '04', title: 'Better Planning', desc: 'Make informed decisions about your debt' }
+        ]
+      },
+      'apply-loan': {
+        name: 'Loan Application',
+        description: 'Apply for personal, auto, home, or business loans',
+        heading: 'Get the Funds You Need',
+        subtitle: 'Quick and easy loan applications with competitive rates and flexible terms',
+        whyExpect: [
+          { icon: '⚡', title: 'Fast Application', desc: 'Complete your application in just 5 minutes' },
+          { icon: '💰', title: 'Competitive Rates', desc: 'Industry-leading rates based on your profile' },
+          { icon: '📋', title: 'Flexible Terms', desc: 'Choose loan terms that work for your budget' },
+          { icon: '✓', title: 'Quick Approval', desc: 'Instant decisions on most applications' },
+          { icon: '🎯', title: 'Multiple Loan Types', desc: 'Personal, auto, home, and business loans' },
+          { icon: '📞', title: 'Expert Support', desc: 'Loan officers ready to help you throughout' }
+        ],
+        reasons: [
+          { number: '01', title: 'Best Rates', desc: 'Competitive pricing that saves you money' },
+          { number: '02', title: 'Flexible Options', desc: 'Loans designed for different needs and goals' },
+          { number: '03', title: 'Quick Process', desc: 'Fast approval and funding to your account' },
+          { number: '04', title: 'Expert Guidance', desc: 'Our team helps you find the right loan' }
+        ]
       }
     };
     return contentMap[query] || contentMap.zelle;

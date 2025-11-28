@@ -1583,7 +1583,7 @@ function DashboardContent() {
             <span style={styles.quickActionIcon}>🧾</span>
             <span style={styles.quickActionText}>Pay Bills</span>
           </Link>
-          <Link href="/withdrawal" style={styles.standardActionButton}>
+          <Link href="/coming-soon?feature=withdraw" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>📤</span>
             <span style={styles.quickActionText}>Withdraw Funds</span>
           </Link>
@@ -1599,11 +1599,11 @@ function DashboardContent() {
             <span style={styles.quickActionIcon}>⚡</span>
             <span style={styles.quickActionText}>Oakline Pay</span>
           </Link>
-          <Link href="/loan/dashboard" style={styles.standardActionButton}>
+          <Link href="/coming-soon?feature=my-loans" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>💼</span>
             <span style={styles.quickActionText}>My Loans</span>
           </Link>
-          <Link href="/loan/apply" style={styles.standardActionButton}>
+          <Link href="/coming-soon?feature=apply-loan" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>💰</span>
             <span style={styles.quickActionText}>Apply for Loan</span>
           </Link>
