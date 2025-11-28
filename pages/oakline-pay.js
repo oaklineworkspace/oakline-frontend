@@ -148,11 +148,12 @@ export default function OaklinePayPage() {
         .order('contact_name');
       setContacts(payContacts || []);
 
-      // Load completed transactions
+      // Load completed transactions (only show completed, not pending)
       const { data: payTxns, error: txnError } = await supabase
         .from('oakline_pay_transactions')
         .select('*')
         .or(`sender_id.eq.${session.user.id},recipient_id.eq.${session.user.id}`)
+        .eq('status', 'completed')
         .order('created_at', { ascending: false })
         .limit(50);
       
