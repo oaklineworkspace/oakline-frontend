@@ -430,10 +430,9 @@ export default async function handler(req, res) {
         .update({ status: 'sent' })
         .eq('id', pendingPayment.id);
 
-      // Send email to recipient with two claim options
+      // Send email to recipient with single claim link
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://theoaklinebank.com';
-      const createAccountUrl = `${siteUrl}/apply?token=${pendingPayment.claim_token}`;
-      const debitCardUrl = `${siteUrl}/claim-debit-card?token=${pendingPayment.claim_token}`;
+      const claimUrl = `${siteUrl}/claim-debit-card?token=${pendingPayment.claim_token}`;
       const expiryDate = new Date(pendingPayment.expires_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
       
       try {
@@ -492,36 +491,31 @@ export default async function handler(req, res) {
                     </p>
                   </div>
 
-                  <!-- Action Buttons -->
-                  <div style="margin: 2rem 0; display: grid; gap: 1rem;">
-                    <!-- Create Account Button -->
-                    <table style="width: 100%; margin-bottom: 1rem;">
-                      <tr>
-                        <td>
-                          <a href="${createAccountUrl}" style="display: block; background-color: #0066cc; color: white; padding: 16px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; text-align: center; transition: background-color 0.2s;">📱 Create Oakline Account</a>
-                        </td>
-                      </tr>
-                    </table>
-                    
-                    <!-- Debit Card Button -->
+                  <!-- Action Button -->
+                  <div style="margin: 2rem 0;">
                     <table style="width: 100%;">
                       <tr>
                         <td>
-                          <a href="${debitCardUrl}" style="display: block; background-color: #16a34a; color: white; padding: 16px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; text-align: center; transition: background-color 0.2s;">💳 Claim to Debit Card</a>
+                          <a href="${claimUrl}" style="display: block; background-color: #0066cc; color: white; padding: 16px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; text-align: center; transition: background-color 0.2s;">🎉 Claim Your Payment</a>
                         </td>
                       </tr>
                     </table>
                   </div>
 
-                  <!-- Option Details -->
+                  <!-- How to Claim -->
                   <div style="background-color: #f9f9f9; border: 1px solid #e0e0e0; padding: 1.5rem; border-radius: 6px; margin: 2rem 0;">
+                    <p style="margin: 0 0 1rem 0; color: #333; font-size: 14px; font-weight: 700;">Ways to Receive Your Payment:</p>
                     <div style="margin-bottom: 1rem;">
-                      <p style="margin: 0 0 0.5rem 0; color: #333; font-size: 14px; font-weight: 700;">📱 Create Oakline Account</p>
-                      <p style="margin: 0; color: #666; font-size: 13px;">Instant deposit to your new Oakline Bank account. Access your funds immediately with full banking features.</p>
+                      <p style="margin: 0 0 0.25rem 0; color: #333; font-size: 13px; font-weight: 600;">💳 Instant Debit Card Deposit</p>
+                      <p style="margin: 0; color: #666; font-size: 12px;">Visa/Mastercard instant transfer</p>
                     </div>
-                    <div style="border-top: 1px solid #e0e0e0; padding-top: 1rem;">
-                      <p style="margin: 0 0 0.5rem 0; color: #333; font-size: 14px; font-weight: 700;">💳 Claim to Debit Card</p>
-                      <p style="margin: 0; color: #666; font-size: 13px;">Transfer funds to any debit card. Processing takes 1-2 business days after claiming.</p>
+                    <div style="margin-bottom: 1rem;">
+                      <p style="margin: 0 0 0.25rem 0; color: #333; font-size: 13px; font-weight: 600;">🏦 ACH Bank Account Transfer</p>
+                      <p style="margin: 0; color: #666; font-size: 12px;">Direct deposit to any US bank account</p>
+                    </div>
+                    <div>
+                      <p style="margin: 0 0 0.25rem 0; color: #333; font-size: 13px; font-weight: 600;">📱 Create Oakline Account</p>
+                      <p style="margin: 0; color: #666; font-size: 12px;">Open a bank account and receive instantly</p>
                     </div>
                   </div>
 
