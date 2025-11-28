@@ -453,11 +453,11 @@ export default async function handler(req, res) {
         // Get bank support email from bank_details table
         const { data: bankDetails } = await supabaseAdmin
           .from('bank_details')
-          .select('support_email, email')
+          .select('email_support, email_info')
           .limit(1)
           .single();
 
-        const supportEmail = bankDetails?.support_email || bankDetails?.email || 'support@theoaklinebank.com';
+        const supportEmail = bankDetails?.email_support || bankDetails?.email_info || 'support@theoaklinebank.com';
         const senderDisplayName = senderOaklineProfile?.display_name || senderOaklineProfile?.oakline_tag || senderProfile?.full_name || 'User';
 
         // Send email to RECIPIENT

