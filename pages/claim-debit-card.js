@@ -34,7 +34,8 @@ export default function ClaimDebitCardPage() {
         .single();
 
       if (error || !paymentData) {
-        setMessage('Payment not found or has already been claimed.', 'error');
+        setMessage('Payment not found or has already been claimed.');
+        setMessageType('error');
         setLoading(false);
         return;
       }

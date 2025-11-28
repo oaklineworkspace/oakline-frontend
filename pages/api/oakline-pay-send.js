@@ -424,11 +424,11 @@ export default async function handler(req, res) {
           created_at: new Date().toISOString()
         });
 
-      // Update pending payment status
+      // Update pending payment status to 'sent'
       await supabaseAdmin
         .from('oakline_pay_pending_claims')
         .update({ status: 'sent' })
-        .eq('id', payment_id);
+        .eq('id', pendingPayment.id);
 
       // Send email to recipient with two claim options
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://theoaklinebank.com';
