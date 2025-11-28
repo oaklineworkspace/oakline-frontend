@@ -278,7 +278,7 @@ export default async function handler(req, res) {
           .from('oakline_pay_pending_claims')
           .insert({
             sender_id: user.id,
-            sender_name: senderData.full_name,
+            sender_name: senderOaklineProfile?.display_name || senderProfile?.full_name || senderData.first_name,
             sender_contact: senderOaklineProfile?.oakline_tag || senderProfile?.email,
             recipient_email: recipient_contact,
             recipient_name: null, // Will be filled when they claim
