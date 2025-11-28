@@ -1579,14 +1579,6 @@ function DashboardContent() {
             <span style={styles.quickActionIcon}>💳</span>
             <span style={styles.quickActionText}>Link Debit Card</span>
           </Link>
-          <Link href="/coming-soon?feature=zelle" style={styles.standardActionButton}>
-            <span style={styles.quickActionIcon}>⚡</span>
-            <span style={styles.quickActionText}>Send with Zelle</span>
-          </Link>
-          <Link href="/coming-soon?feature=oakline-pay" style={styles.standardActionButton}>
-            <span style={styles.quickActionIcon}>⚡</span>
-            <span style={styles.quickActionText}>Oakline Pay</span>
-          </Link>
           <Link href="/deposit-crypto" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>₿</span>
             <span style={styles.quickActionText}>Add Funds via Crypto</span>
