@@ -933,7 +933,7 @@ export default function OaklinePayPage() {
                     </div>
                   </div>
 
-                  {(transferStatus === 'processing' || loading) && (
+                  {transferStatus && (
                     <div style={{
                       backgroundColor: 'rgba(5, 150, 105, 0.15)',
                       border: '2px solid #059669',
@@ -960,7 +960,7 @@ export default function OaklinePayPage() {
                         }}>⏳</div>
                       </div>
                       <div style={{ color: '#047857', fontSize: '1rem', fontWeight: '600' }}>
-                        {loading ? 'Processing your request...' : 'Processing your transfer...'}
+                        Processing your transfer...
                       </div>
                     </div>
                   )}
