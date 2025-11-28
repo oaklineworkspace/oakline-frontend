@@ -502,7 +502,10 @@ export default function ClaimPaymentPage() {
             borderRadius: '16px 16px 0 0',
             textAlign: 'center'
           }}>
-            <h1 style={{ margin: '0 0 0.25rem 0', fontSize: '1.25rem', fontWeight: '800', color: '#ffffff', letterSpacing: '-0.5px' }}>🏦 OAKLINE BANK</h1>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
+              <div style={{ width: '40px', height: '40px', background: 'rgba(255,255,255,0.2)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: '900', color: '#fbbf24' }}>$</div>
+              <h1 style={{ margin: '0', fontSize: '1.25rem', fontWeight: '800', color: '#ffffff', letterSpacing: '-0.5px' }}>OAKLINE BANK</h1>
+            </div>
             <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.85rem', color: 'rgba(255,255,255,0.9)', fontWeight: '500', letterSpacing: '0.5px' }}>PAYMENT CLAIM SYSTEM</p>
             <div style={{ fontSize: '3rem', fontWeight: '900', marginBottom: '0.75rem', color: '#ffffff' }}>
               ${parseFloat(payment?.amount || 0).toFixed(2)}
@@ -718,7 +721,20 @@ export default function ClaimPaymentPage() {
 
                         <div style={{ marginBottom: '1rem' }}>
                           <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Card Number *</label>
-                          <input type="text" placeholder="1234 5678 9012 3456" maxLength="19" value={debitCardForm.card_number} onChange={(e) => setDebitCardForm({ ...debitCardForm, card_number: e.target.value.replace(/\D/g, '') })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', letterSpacing: '2px', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
+                          <input 
+                            type="text" 
+                            placeholder="1234 5678 9012 3456" 
+                            maxLength="19" 
+                            value={debitCardForm.card_number} 
+                            onChange={(e) => {
+                              const digits = e.target.value.replace(/\D/g, '').slice(0, 16);
+                              const formatted = digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+                              setDebitCardForm({ ...debitCardForm, card_number: digits });
+                            }} 
+                            style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', letterSpacing: '2px', transition: 'border-color 0.2s' }} 
+                            onFocus={(e) => e.target.style.borderColor = '#0066cc'} 
+                            onBlur={(e) => e.target.style.borderColor = '#d1d5db'} 
+                          />
                         </div>
 
                         <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
