@@ -270,54 +270,25 @@ export default async function handler(req, res) {
 
       } else {
         // NON-OAKLINE USER - Pending Payment Flow (requires PIN verification)
-        const claimToken = generateClaimToken();
-        const claimExpiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000); // 14 days
-
-        // Create pending payment record with verification pending status
-        const { data: pendingPayment, error: pendingError } = await supabaseAdmin
-          .from('oakline_pay_pending_claims')
-          .insert({
-            sender_id: user.id,
-            sender_name: senderOaklineProfile?.display_name || senderProfile?.full_name || senderData.first_name,
-            sender_contact: senderOaklineProfile?.oakline_tag || senderProfile?.email,
-            recipient_email: recipient_contact,
-            recipient_name: null, // Will be filled when they claim
-            amount: transferAmount,
-            memo: memo || null,
-            claim_token: claimToken,
-            status: 'pending',
-            expires_at: claimExpiresAt
-          })
-          .select()
-          .single();
-
-        if (pendingError) {
-          console.error('Pending payment creation error:', pendingError);
-          return res.status(500).json({ error: 'Failed to create pending payment' });
-        }
-
+        // Don't create pending payment yet - wait for PIN verification in confirm step
+        
         return res.status(200).json({
           success: true,
           message: 'Verify with PIN to send this payment',
-          payment_id: pendingPayment.id,
           sender_account_id: sender_account_id,
-          claim_token: claimToken,
           recipient_contact: recipient_contact,
+          recipient_type: recipient_type,
           amount: transferAmount,
+          memo: memo || null,
           is_oakline_user: false,
           requires_pin: true,
-          expires_at: claimExpiresAt,
           reference_number: referenceNumber
         });
       }
 
     } else if (step === 'confirm') {
       // STEP 2: CONFIRM & DEDUCT FOR NON-OAKLINE USERS (after PIN verification)
-      const { payment_id, sender_account_id: confirmSenderAccountId, pin } = req.body;
-
-      if (!payment_id) {
-        return res.status(400).json({ error: 'Payment ID required' });
-      }
+      const { payment_id, sender_account_id: confirmSenderAccountId, pin, recipient_contact, recipient_type, amount: confirmAmount, memo } = req.body;
 
       if (!confirmSenderAccountId) {
         return res.status(400).json({ error: 'Account ID required' });
@@ -345,20 +316,72 @@ export default async function handler(req, res) {
 
       const sender_account_id = confirmSenderAccountId;
 
-      // Get the pending payment
-      const { data: pendingPayment, error: paymentError } = await supabaseAdmin
-        .from('oakline_pay_pending_claims')
-        .select('*')
-        .eq('id', payment_id)
-        .eq('sender_id', user.id)
-        .single();
+      // Get or create pending payment for non-Oakline users
+      let pendingPayment = null;
+      
+      if (payment_id) {
+        // Existing flow - payment_id provided
+        const { data: existingPayment, error: paymentError } = await supabaseAdmin
+          .from('oakline_pay_pending_claims')
+          .select('*')
+          .eq('id', payment_id)
+          .eq('sender_id', user.id)
+          .single();
 
-      if (paymentError || !pendingPayment) {
-        return res.status(404).json({ error: 'Payment not found' });
-      }
+        if (paymentError || !existingPayment) {
+          return res.status(404).json({ error: 'Payment not found' });
+        }
 
-      if (pendingPayment.status !== 'pending') {
-        return res.status(400).json({ error: 'Payment already processed' });
+        if (existingPayment.status !== 'pending') {
+          return res.status(400).json({ error: 'Payment already processed' });
+        }
+
+        pendingPayment = existingPayment;
+      } else {
+        // New flow - create pending payment after PIN verification
+        if (!recipient_contact || !confirmAmount) {
+          return res.status(400).json({ error: 'Recipient and amount required' });
+        }
+
+        const transferAmount = parseFloat(confirmAmount);
+        const claimToken = generateClaimToken();
+        const claimExpiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000); // 14 days
+
+        const { data: senderProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('full_name, email, first_name')
+          .eq('id', user.id)
+          .single();
+
+        const { data: senderOaklineProfile } = await supabaseAdmin
+          .from('oakline_pay_profiles')
+          .select('oakline_tag, display_name')
+          .eq('user_id', user.id)
+          .single();
+
+        const { data: newPendingPayment, error: pendingError } = await supabaseAdmin
+          .from('oakline_pay_pending_claims')
+          .insert({
+            sender_id: user.id,
+            sender_name: senderOaklineProfile?.display_name || senderProfile?.full_name || senderProfile?.first_name || 'User',
+            sender_contact: senderOaklineProfile?.oakline_tag || senderProfile?.email,
+            recipient_email: recipient_contact,
+            recipient_name: null,
+            amount: transferAmount,
+            memo: memo || null,
+            claim_token: claimToken,
+            status: 'pending',
+            expires_at: claimExpiresAt
+          })
+          .select()
+          .single();
+
+        if (pendingError || !newPendingPayment) {
+          console.error('Failed to create pending payment:', pendingError);
+          return res.status(500).json({ error: 'Failed to create payment' });
+        }
+
+        pendingPayment = newPendingPayment;
       }
 
       // Get sender's current account

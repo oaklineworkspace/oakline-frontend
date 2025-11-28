@@ -391,6 +391,10 @@ export default function OaklinePayPage() {
               step: 'confirm',
               payment_id: pendingTransaction.payment_id,
               sender_account_id: pendingTransaction.sender_account_id,
+              recipient_contact: pendingTransaction.recipient_contact,
+              recipient_type: pendingTransaction.recipient_type,
+              amount: pendingTransaction.amount,
+              memo: pendingTransaction.memo,
               pin: verifyForm.code
             })
           });
