@@ -25,16 +25,38 @@ export default async function handler(req, res) {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('Missing auth header');
       return res.status(401).json({ error: 'Unauthorized - Missing authentication token' });
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    console.log('Verifying token for oakline-pay-send...');
+    
+    let user = null;
+    let authError = null;
+    
+    try {
+      const response = await supabaseAdmin.auth.getUser(token);
+      user = response.data?.user;
+      authError = response.error;
+      
+      if (authError) {
+        console.error('Supabase getUser error:', authError.message);
+      }
+      if (!user) {
+        console.error('No user returned from getUser');
+      }
+    } catch (err) {
+      console.error('Token verification exception:', err.message);
+      authError = err;
+    }
 
     if (authError || !user) {
-      console.error('Auth error:', authError);
+      console.error('Auth failed - returning 401');
       return res.status(401).json({ error: 'Unauthorized - Invalid authentication' });
     }
+    
+    console.log('✅ Auth successful for user:', user.id);
 
     const { sender_account_id, recipient_contact, recipient_type, recipient_name, amount, memo, step, verification_code } = req.body;
 
