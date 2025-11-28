@@ -443,14 +443,31 @@ export default async function handler(req, res) {
           .eq('id', user.id)
           .single();
 
+        // Get sender's Oakline Pay profile for tag/display name
+        const { data: senderOaklineProfile } = await supabaseAdmin
+          .from('oakline_pay_profiles')
+          .select('oakline_tag, display_name')
+          .eq('user_id', user.id)
+          .single();
+
+        // Get bank support email from bank_details table
+        const { data: bankDetails } = await supabaseAdmin
+          .from('bank_details')
+          .select('support_email, email')
+          .limit(1)
+          .single();
+
+        const supportEmail = bankDetails?.support_email || bankDetails?.email || 'support@theoaklinebank.com';
+        const senderDisplayName = senderOaklineProfile?.display_name || senderOaklineProfile?.oakline_tag || senderProfile?.full_name || 'User';
+
         // Send email to RECIPIENT
         try {
           console.log('📧 Sending recipient email to:', pendingPayment.recipient_email);
           await sendEmail({
             to: pendingPayment.recipient_email,
-            subject: `You've received $${transferAmount.toFixed(2)} from Oakline Bank!`,
+            subject: `You've received $${transferAmount.toFixed(2)} from ${senderDisplayName}!`,
             emailType: 'oakline_pay',
-            text: `You've received $${transferAmount.toFixed(2)} from ${senderProfile?.full_name || 'Someone'}. You have 14 days to claim this payment.`,
+            text: `You've received $${transferAmount.toFixed(2)} from ${senderDisplayName}. You have 14 days to claim this payment.`,
             html: `
               <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
                 <!-- Header -->
@@ -464,7 +481,7 @@ export default async function handler(req, res) {
                   <!-- Amount Section -->
                   <div style="background-color: #f0f7ff; border-left: 5px solid #0066cc; padding: 1.5rem; border-radius: 6px; margin-bottom: 2rem;">
                     <p style="margin: 0; color: #333; font-size: 14px;">Payment from</p>
-                    <p style="margin: 0.5rem 0 0 0; color: #0066cc; font-size: 20px; font-weight: 700;">${senderProfile?.full_name || 'A Sender'}</p>
+                    <p style="margin: 0.5rem 0 0 0; color: #0066cc; font-size: 20px; font-weight: 700;">${senderDisplayName}</p>
                     <p style="margin: 1rem 0 0 0; color: #16a34a; font-size: 36px; font-weight: 700;">$${transferAmount.toFixed(2)}</p>
                   </div>
 
@@ -527,7 +544,7 @@ export default async function handler(req, res) {
                   <div style="border-top: 1px solid #e0e0e0; margin-top: 2rem; padding-top: 1.5rem; text-align: center;">
                     <p style="margin: 0; color: #999; font-size: 12px; line-height: 1.6;">
                       Oakline Bank • Secure Payment System<br/>
-                      Questions? Contact our support team at support@theoaklinebank.com
+                      Questions? Contact our support team at <a href="mailto:${supportEmail}" style="color: #0066cc; text-decoration: none;">${supportEmail}</a>
                     </p>
                   </div>
                 </div>
@@ -548,23 +565,24 @@ export default async function handler(req, res) {
             emailType: 'oakline_pay',
             text: `Your payment of $${transferAmount.toFixed(2)} has been sent to ${pendingPayment.recipient_email}. The recipient has 14 days to claim it.`,
             html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px 8px 0 0; text-align: center;">
-                  <h1 style="margin: 0; font-size: 28px;">✅ Payment Sent!</h1>
+              <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                <div style="background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%); color: white; padding: 2.5rem; text-align: center;">
+                  <h1 style="margin: 0; font-size: 32px; font-weight: 700;">✅ Payment Sent!</h1>
+                  <p style="margin: 0.5rem 0 0 0; font-size: 16px; opacity: 0.95;">Your transfer is waiting to be claimed</p>
                 </div>
-                <div style="background: #f8f9fa; padding: 2rem; border-radius: 0 0 8px 8px;">
+                <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 0 0 8px 8px;">
                   <p style="color: #333; font-size: 16px;">
                     Your Oakline Pay transfer of <strong style="color: #16a34a; font-size: 20px;">$${transferAmount.toFixed(2)}</strong> has been sent to <strong>${pendingPayment.recipient_email}</strong>
                   </p>
                   
-                  <div style="background: white; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid #667eea;">
+                  <div style="background: white; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid #0066cc;">
                     <p style="margin: 0; color: #666; font-size: 14px; margin-bottom: 1rem;"><strong>Status: ⏳ Waiting for Recipient to Claim</strong></p>
                     <p style="color: #666; font-size: 13px; margin: 0.5rem 0 0 0;">
                       The recipient has 14 days to claim this payment via their Oakline Bank account or debit card.
                     </p>
                   </div>
 
-                  <div style="background: #eff6ff; padding: 1rem; border-radius: 8px; margin: 1.5rem 0;">
+                  <div style="background: #f0f7ff; padding: 1rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid #0066cc;">
                     <p style="color: #333; font-size: 13px; margin: 0;"><strong>Payment Details:</strong></p>
                     <p style="color: #666; font-size: 12px; margin: 0.5rem 0 0 0;">
                       Amount: $${transferAmount.toFixed(2)}<br/>
@@ -576,6 +594,14 @@ export default async function handler(req, res) {
                   <p style="color: #999; font-size: 12px; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd;">
                     You'll receive another notification once the recipient claims their payment.
                   </p>
+
+                  <!-- Footer -->
+                  <div style="border-top: 1px solid #e0e0e0; margin-top: 2rem; padding-top: 1.5rem; text-align: center;">
+                    <p style="margin: 0; color: #999; font-size: 12px; line-height: 1.6;">
+                      Oakline Bank • Secure Payment System<br/>
+                      Questions? Contact our support team at <a href="mailto:${supportEmail}" style="color: #0066cc; text-decoration: none;">${supportEmail}</a>
+                    </p>
+                  </div>
                 </div>
               </div>
             `
