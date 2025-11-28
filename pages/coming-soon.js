@@ -114,6 +114,46 @@ export default function ComingSoon() {
           { number: '03', title: 'Competitive Returns', desc: 'Access to investment opportunities with strong performance' },
           { number: '04', title: 'Financial Growth', desc: 'Build long-term wealth with proven investment strategies' }
         ]
+      },
+      deposit: {
+        name: 'Mobile Check Deposit',
+        description: 'Deposit checks anywhere, anytime using your mobile device',
+        heading: 'Deposit Checks Instantly from Your Phone',
+        subtitle: 'Snap a photo and deposit checks without visiting a branch',
+        whyExpect: [
+          { icon: '📱', title: 'Mobile Convenience', desc: 'Deposit checks from anywhere, anytime without leaving home' },
+          { icon: '📸', title: 'Easy Photo Upload', desc: 'Simply take clear photos of front and back of check' },
+          { icon: '⚡', title: 'Instant Processing', desc: 'Funds typically available within 1-2 business days' },
+          { icon: '🔒', title: 'Secure Deposits', desc: 'End-to-end encryption protects your check images' },
+          { icon: '📋', title: 'Deposit History', desc: 'Track all your mobile deposits with detailed records' },
+          { icon: '✓', title: 'Real-Time Confirmation', desc: 'Immediate confirmation after successful deposit' }
+        ],
+        reasons: [
+          { number: '01', title: 'Save Time', desc: 'No more lines at the branch - deposit in seconds' },
+          { number: '02', title: 'Always Available', desc: 'Deposit checks at 3 AM, 3 PM, or anytime you need' },
+          { number: '03', title: 'High Limits', desc: 'Deposit multiple checks up to your daily limit' },
+          { number: '04', title: 'Peace of Mind', desc: 'Secure encryption and fraud protection on every deposit' }
+        ]
+      },
+      'bill-pay': {
+        name: 'Bill Pay Services',
+        description: 'Pay all your bills online securely with automatic payment options',
+        heading: 'Manage All Your Bills in One Place',
+        subtitle: 'Schedule, automate, and track all your payments from your Oakline account',
+        whyExpect: [
+          { icon: '🧾', title: 'One-Time Payments', desc: 'Pay any bill whenever you want with just a few clicks' },
+          { icon: '📅', title: 'Automatic Scheduling', desc: 'Set up recurring payments for regular bills' },
+          { icon: '💳', title: 'Multiple Payees', desc: 'Save and manage unlimited payee information' },
+          { icon: '📧', title: 'Bill Reminders', desc: 'Get notifications before bills are due' },
+          { icon: '📊', title: 'Payment History', desc: 'View detailed records of all payments made' },
+          { icon: '🔐', title: 'Bank-Level Security', desc: 'Your payments protected with industry-standard encryption' }
+        ],
+        reasons: [
+          { number: '01', title: 'Never Miss a Due Date', desc: 'Automatic reminders and scheduling keep you on track' },
+          { number: '02', title: 'Save Time', desc: 'Pay multiple bills in minutes, not hours' },
+          { number: '03', title: 'Financial Control', desc: 'View all bills and payments in one dashboard' },
+          { number: '04', title: 'Complete Peace of Mind', desc: 'Secure, encrypted payments with full audit trail' }
+        ]
       }
     };
     return contentMap[query] || contentMap.zelle;

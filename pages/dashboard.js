@@ -1575,11 +1575,11 @@ function DashboardContent() {
             <span style={styles.quickActionIcon}>💸</span>
             <span style={styles.quickActionText}>Transfer Money</span>
           </Link>
-          <Link href="/deposit-real" style={styles.standardActionButton}>
+          <Link href="/coming-soon?feature=deposit" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>📥</span>
             <span style={styles.quickActionText}>Mobile Deposit</span>
           </Link>
-          <Link href="/bill-pay" style={styles.standardActionButton}>
+          <Link href="/coming-soon?feature=bill-pay" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>🧾</span>
             <span style={styles.quickActionText}>Pay Bills</span>
           </Link>
