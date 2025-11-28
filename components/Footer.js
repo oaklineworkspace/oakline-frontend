@@ -171,7 +171,7 @@ export default function Footer() {
               <li><Link href="/mfa-setup" style={styles.footerLink}>Two-Factor Auth</Link></li>
               <li><Link href="/profile" style={styles.footerLink}>Profile Settings</Link></li>
               <li><Link href="/deposit-real" style={styles.footerLink}>Mobile Deposit</Link></li>
-              <li><Link href="/transfer" style={styles.footerLink}>Zelle Payments</Link></li>
+              <li><Link href="/coming-soon?feature=zelle" style={styles.footerLink}>Zelle Payments</Link></li>
             </ul>
           </div>
 

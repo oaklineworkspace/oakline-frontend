@@ -57,7 +57,7 @@ export default function MainMenu({ user }) {
           items: [
             { name: 'Money Transfer', href: '/transfer', icon: '💸' },
             { name: 'Wire Transfers', href: '/transfer', icon: '🌐' },
-            { name: 'Zelle Payments', href: '/transfer', icon: '⚡' },
+            { name: 'Zelle Payments', href: '/coming-soon?feature=zelle', icon: '⚡' },
             { name: 'International Transfer', href: '/transfer', icon: '🌍' }
           ]
         }

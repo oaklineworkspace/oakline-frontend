@@ -93,7 +93,7 @@ export default function StickyFooter() {
     // Digital Banking
     { name: 'Mobile Deposit', href: '/deposit-real', icon: '📱', desc: 'Check deposits', color: '#10B981', category: 'Digital Banking' },
     { name: 'Bill Pay', href: '/bill-pay', icon: '🧾', desc: 'Auto payments', color: '#F59E0B', category: 'Digital Banking' },
-    { name: 'Zelle Transfers', href: '/zelle', icon: '⚡', desc: 'Instant transfers', color: '#8B5CF6', category: 'Digital Banking' },
+    { name: 'Zelle Transfers', href: '/coming-soon?feature=zelle', icon: '⚡', desc: 'Instant transfers', color: '#8B5CF6', category: 'Digital Banking' },
     { name: 'Account Alerts', href: '/notifications', icon: '🔔', desc: 'Real-time updates', color: '#EF4444', category: 'Digital Banking' },
     
     // Specialized Accounts
