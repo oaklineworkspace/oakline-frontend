@@ -101,6 +101,7 @@ export default function OaklinePayPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
+        setLoading(false);
         router.push('/sign-in');
         return;
       }
@@ -114,6 +115,7 @@ export default function OaklinePayPage() {
         .single();
       
       if (profile?.requires_verification) {
+        setLoading(false);
         router.push('/verify-identity');
         return;
       }
