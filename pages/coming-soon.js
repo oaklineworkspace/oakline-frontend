@@ -2,14 +2,17 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { supabase } from '../lib/supabaseClient';
 
 export default function ComingSoon() {
   const router = useRouter();
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [mounted, setMounted] = useState(false);
+  const [bankDetails, setBankDetails] = useState(null);
 
   useEffect(() => {
     setMounted(true);
+    fetchBankDetails();
     // Target date - 90 days from now
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + 90);
@@ -31,30 +34,100 @@ export default function ComingSoon() {
     return () => clearInterval(timer);
   }, []);
 
-  if (!mounted) return null;
-
-  const getFeatureName = () => {
-    const query = router.query.feature || 'zelle';
-    const featureMap = {
-      zelle: { name: 'Zelle® Payments', description: 'Instant money transfers to any U.S. bank account' },
-      'oakline-pay': { name: 'Oakline Pay', description: 'Send and receive money to friends and family with @username tags' },
-      investment: { name: 'Investment Services', description: 'Build wealth with our comprehensive investment tools and professional advisory' },
-      'advanced-trading': { name: 'Advanced Trading', description: 'Professional trading tools and insights' },
-      'crypto-advanced': { name: 'Advanced Crypto', description: 'Professional cryptocurrency trading' },
-      'portfolio-analysis': { name: 'Portfolio Analysis', description: 'Advanced investment analysis tools' },
-    };
-    return featureMap[query] || featureMap.zelle;
+  const fetchBankDetails = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bank_details')
+        .select('*')
+        .limit(1)
+        .single();
+      
+      if (!error && data) {
+        setBankDetails(data);
+      }
+    } catch (err) {
+      console.error('Error fetching bank details:', err);
+    }
   };
 
-  const feature = getFeatureName();
+  if (!mounted) return null;
+
+  const getFeatureContent = () => {
+    const query = router.query.feature || 'zelle';
+    const contentMap = {
+      zelle: {
+        name: 'Zelle® Payments',
+        description: 'Instant money transfers to any U.S. bank account',
+        heading: 'Send Money Instantly with Zelle®',
+        subtitle: 'Experience the fastest way to transfer funds to friends, family, and colleagues',
+        whyExpect: [
+          { icon: '⚡', title: 'Real-Time Transfers', desc: 'Send and receive money instantly, available 24/7' },
+          { icon: '🔒', title: 'Bank-Grade Security', desc: 'Protected with advanced encryption and fraud detection' },
+          { icon: '👥', title: 'Easy Recipient Setup', desc: 'Simply use email or phone number to identify recipients' },
+          { icon: '💰', title: 'No Hidden Fees', desc: 'Transparent pricing with no surprise charges' },
+          { icon: '📱', title: 'Mobile Friendly', desc: 'Complete transfers on any device, anytime' },
+          { icon: '🌟', title: 'Verified Transfers', desc: 'Secure verification for every transaction' }
+        ],
+        reasons: [
+          { number: '01', title: 'Fastest in Market', desc: 'Money reaches in seconds, not days like traditional transfers' },
+          { number: '02', title: 'Trusted Network', desc: 'Part of the nationwide Zelle network with millions of users' },
+          { number: '03', title: 'Fraud Protection', desc: 'Advanced monitoring and dispute resolution available' },
+          { number: '04', title: 'Simple Interface', desc: 'Intuitive design makes transfers effortless for everyone' }
+        ]
+      },
+      'oakline-pay': {
+        name: 'Oakline Pay',
+        description: 'Send and receive money to friends and family with @username tags',
+        heading: 'Revolutionize How You Pay with Oakline Pay',
+        subtitle: 'Send money to anyone using simple @username tags - no complicated account numbers needed',
+        whyExpect: [
+          { icon: '💳', title: 'Username Tags', desc: 'Transfer with just a @username - simple and intuitive' },
+          { icon: '⚡', title: 'Instant for Members', desc: 'Immediate transfers between Oakline accounts' },
+          { icon: '📧', title: 'Email Claim Links', desc: 'Non-members receive secure claim notifications' },
+          { icon: '🎯', title: 'Multiple Redemption Options', desc: 'Debit card, ACH transfer, or create account' },
+          { icon: '🔐', title: 'PIN-Protected', desc: 'Two-factor PIN verification for every transfer' },
+          { icon: '🌍', title: 'Global Ready', desc: 'Works for customers worldwide with local redemption' }
+        ],
+        reasons: [
+          { number: '01', title: 'Social Banking', desc: 'Transfer money as easily as messaging with @usernames' },
+          { number: '02', title: 'Flexible Redemption', desc: 'Recipients choose how they receive their money' },
+          { number: '03', title: 'International Reach', desc: 'Send to friends across the world with ease' },
+          { number: '04', title: 'Instant for Members', desc: 'Oakline users receive funds immediately' }
+        ]
+      },
+      investment: {
+        name: 'Investment Services',
+        description: 'Build wealth with our comprehensive investment tools and professional advisory',
+        heading: 'Grow Your Wealth with Professional Investment Services',
+        subtitle: 'Access expert-guided investment opportunities tailored to your financial goals',
+        whyExpect: [
+          { icon: '📊', title: 'Portfolio Management', desc: 'Professional tools to track and optimize your investments' },
+          { icon: '👨‍💼', title: 'Expert Advisory', desc: 'Personalized guidance from certified financial advisors' },
+          { icon: '📈', title: 'Market Analytics', desc: 'Real-time market data and investment insights' },
+          { icon: '🎓', title: 'Investment Education', desc: 'Learn investment strategies from industry experts' },
+          { icon: '💰', title: 'Diverse Options', desc: 'Stocks, bonds, ETFs, and more in one platform' },
+          { icon: '🛡️', title: 'Risk Management', desc: 'Tools to manage and balance your investment risk' }
+        ],
+        reasons: [
+          { number: '01', title: 'Expert Guidance', desc: 'Access to professional advisors who understand your goals' },
+          { number: '02', title: 'Comprehensive Tools', desc: 'Everything you need to build and manage your portfolio' },
+          { number: '03', title: 'Competitive Returns', desc: 'Access to investment opportunities with strong performance' },
+          { number: '04', title: 'Financial Growth', desc: 'Build long-term wealth with proven investment strategies' }
+        ]
+      }
+    };
+    return contentMap[query] || contentMap.zelle;
+  };
+
+  const content = getFeatureContent();
 
   return (
     <>
       <Head>
-        <title>Coming Soon - {feature.name} | Oakline Bank</title>
-        <meta name="description" content={`${feature.name} is coming to Oakline Bank. Stay tuned for this exciting new feature.`} />
-        <meta property="og:title" content={`Coming Soon - ${feature.name}`} />
-        <meta property="og:description" content={feature.description} />
+        <title>Coming Soon - {content.name} | Oakline Bank</title>
+        <meta name="description" content={`${content.name} is coming to Oakline Bank. Stay tuned for this exciting new feature.`} />
+        <meta property="og:title" content={`Coming Soon - ${content.name}`} />
+        <meta property="og:description" content={content.description} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
@@ -63,8 +136,8 @@ export default function ComingSoon() {
         <div style={styles.hero}>
           <div style={styles.heroContent}>
             <div style={styles.badge}>🚀 Exciting Feature Coming Soon</div>
-            <h1 style={styles.heading}>{feature.name}</h1>
-            <p style={styles.subtitle}>{feature.description}</p>
+            <h1 style={styles.heading}>{content.heading}</h1>
+            <p style={styles.subtitle}>{content.subtitle}</p>
             
             {/* Countdown Timer */}
             <div style={styles.countdownSection}>
@@ -105,36 +178,13 @@ export default function ComingSoon() {
         <div style={styles.featuresSection}>
           <h2 style={styles.sectionTitle}>What to Expect</h2>
           <div style={styles.featuresGrid}>
-            <div style={styles.featureCard}>
-              <div style={styles.featureIcon}>⚡</div>
-              <h3 style={styles.featureTitle}>Lightning Fast</h3>
-              <p style={styles.featureDesc}>Experience instant processing times with our optimized infrastructure.</p>
-            </div>
-            <div style={styles.featureCard}>
-              <div style={styles.featureIcon}>🔒</div>
-              <h3 style={styles.featureTitle}>Bank-Grade Security</h3>
-              <p style={styles.featureDesc}>Your transactions protected with 256-bit SSL encryption and advanced fraud detection.</p>
-            </div>
-            <div style={styles.featureCard}>
-              <div style={styles.featureIcon}>📱</div>
-              <h3 style={styles.featureTitle}>Mobile Optimized</h3>
-              <p style={styles.featureDesc}>Seamless experience across all devices with our responsive design.</p>
-            </div>
-            <div style={styles.featureCard}>
-              <div style={styles.featureIcon}>🌍</div>
-              <h3 style={styles.featureTitle}>Global Ready</h3>
-              <p style={styles.featureDesc}>Multi-language support and international compliance from day one.</p>
-            </div>
-            <div style={styles.featureCard}>
-              <div style={styles.featureIcon}>💰</div>
-              <h3 style={styles.featureTitle}>Competitive Pricing</h3>
-              <p style={styles.featureDesc}>Transparent fees with no hidden charges or surprise costs.</p>
-            </div>
-            <div style={styles.featureCard}>
-              <div style={styles.featureIcon}>👥</div>
-              <h3 style={styles.featureTitle}>Expert Support</h3>
-              <p style={styles.featureDesc}>24/7 customer support to help you every step of the way.</p>
-            </div>
+            {content.whyExpect.map((feature, idx) => (
+              <div key={idx} style={styles.featureCard}>
+                <div style={styles.featureIcon}>{feature.icon}</div>
+                <h3 style={styles.featureTitle}>{feature.title}</h3>
+                <p style={styles.featureDesc}>{feature.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -145,7 +195,7 @@ export default function ComingSoon() {
               <span style={styles.notificationIcon}>📧</span>
               <h3 style={styles.notificationTitle}>Get Notified When We Launch</h3>
             </div>
-            <p style={styles.notificationDesc}>Be among the first to know when {feature.name} becomes available. We'll send you an exclusive notification.</p>
+            <p style={styles.notificationDesc}>Be among the first to know when {content.name} becomes available. We'll send you an exclusive notification.</p>
             <div style={styles.notificationButtons}>
               <button style={styles.notifyButton}>
                 Notify Me
@@ -157,30 +207,17 @@ export default function ComingSoon() {
           </div>
         </div>
 
-        {/* Why Wait Section */}
+        {/* Why Section */}
         <div style={styles.whyWaitSection}>
-          <h2 style={styles.sectionTitle}>Why {feature.name}?</h2>
+          <h2 style={styles.sectionTitle}>Why {content.name}?</h2>
           <div style={styles.reasonsGrid}>
-            <div style={styles.reasonCard}>
-              <div style={styles.reasonNumber}>01</div>
-              <h4 style={styles.reasonTitle}>Seamless Integration</h4>
-              <p style={styles.reasonDesc}>Integrates perfectly with your existing Oakline Bank accounts and services.</p>
-            </div>
-            <div style={styles.reasonCard}>
-              <div style={styles.reasonNumber}>02</div>
-              <h4 style={styles.reasonTitle}>Enhanced Security</h4>
-              <p style={styles.reasonDesc}>Multi-layer protection with PIN verification and transaction monitoring.</p>
-            </div>
-            <div style={styles.reasonCard}>
-              <div style={styles.reasonNumber}>03</div>
-              <h4 style={styles.reasonTitle}>Better Tracking</h4>
-              <p style={styles.reasonDesc}>Real-time notifications and detailed transaction history.</p>
-            </div>
-            <div style={styles.reasonCard}>
-              <div style={styles.reasonNumber}>04</div>
-              <h4 style={styles.reasonTitle}>24/7 Availability</h4>
-              <p style={styles.reasonDesc}>Access whenever you need it, all day, every day.</p>
-            </div>
+            {content.reasons.map((reason, idx) => (
+              <div key={idx} style={styles.reasonCard}>
+                <div style={styles.reasonNumber}>{reason.number}</div>
+                <h4 style={styles.reasonTitle}>{reason.title}</h4>
+                <p style={styles.reasonDesc}>{reason.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -206,9 +243,11 @@ export default function ComingSoon() {
           <p style={styles.footerText}>
             Questions? <Link href="/support" style={styles.footerLink}>Contact our support team</Link>
           </p>
-          <p style={styles.footerText}>
-            Follow us on <a href="https://twitter.com/oaklinebank" target="_blank" rel="noopener noreferrer" style={styles.footerLink}>Twitter</a> for updates
-          </p>
+          {bankDetails?.support_email && (
+            <p style={styles.footerText}>
+              Email: <a href={`mailto:${bankDetails.support_email}`} style={styles.footerLink}>{bankDetails.support_email}</a>
+            </p>
+          )}
         </div>
       </div>
     </>
@@ -314,9 +353,6 @@ const styles = {
     position: 'relative',
     height: '300px',
     display: 'none',
-    '@media (min-width: 768px)': {
-      display: 'block',
-    },
   },
   illuShape1: {
     position: 'absolute',
@@ -373,11 +409,6 @@ const styles = {
     padding: '30px',
     transition: 'all 0.3s ease',
     backdropFilter: 'blur(10px)',
-    ':hover': {
-      transform: 'translateY(-8px)',
-      background: 'rgba(255, 255, 255, 0.12)',
-      borderColor: 'rgba(255, 255, 255, 0.25)',
-    },
   },
   featureIcon: {
     fontSize: '32px',
@@ -445,10 +476,6 @@ const styles = {
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    ':hover': {
-      transform: 'translateY(-2px)',
-      boxShadow: '0 10px 30px rgba(79, 70, 229, 0.3)',
-    },
   },
   browsButton: {
     background: 'rgba(255, 255, 255, 0.15)',
@@ -460,9 +487,6 @@ const styles = {
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    ':hover': {
-      background: 'rgba(255, 255, 255, 0.25)',
-    },
   },
   whyWaitSection: {
     maxWidth: '1200px',
@@ -584,6 +608,9 @@ if (typeof window !== 'undefined') {
     @keyframes float {
       0%, 100% { transform: translateY(0px); }
       50% { transform: translateY(-20px); }
+    }
+    @media (min-width: 768px) {
+      [style*="illustration"] { display: block !important; }
     }
   `;
   document.head.appendChild(style);
