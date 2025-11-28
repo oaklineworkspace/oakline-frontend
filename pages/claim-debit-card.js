@@ -15,7 +15,8 @@ export default function ClaimPaymentPage() {
   const [claimSuccess, setClaimSuccess] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
 
-  const [citizenship, setCitizenship] = useState(null); // null = not selected, 'us' = US, 'international' = International
+  const [citizenship, setCitizenship] = useState(null);
+  const [achCitizenship, setAchCitizenship] = useState(null); // null = not selected, 'us' = US, 'international' = International
 
   const [debitCardForm, setDebitCardForm] = useState({
     first_name: '',
@@ -736,7 +737,7 @@ export default function ClaimPaymentPage() {
                         <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                           <div style={{ flex: 2 }}>
                             <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>City *</label>
-                            <input type="text" placeholder="New York" value={debitCardForm.billing_city} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_city: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                            <input type="text" placeholder={citizenship === 'us' ? 'New York' : 'Toronto, London, Berlin, etc.'} value={debitCardForm.billing_city} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_city: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
                           </div>
                           <div style={{ flex: 1 }}>
                             <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>{citizenship === 'us' ? 'State' : 'State / Province'} *</label>
@@ -776,53 +777,127 @@ export default function ClaimPaymentPage() {
               {/* ACH TAB */}
               {activeTab === 'ach' && (
                 <div style={{ animation: 'fadeIn 0.3s ease-in' }}>
-                  <h3 style={{ color: '#1e293b', fontSize: '1.1rem', marginBottom: '0.5rem', margin: '0 0 0.5rem 0' }}>🏦 ACH Bank Transfer</h3>
-                  <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Direct deposit to your US bank account - typically 1-3 business days</p>
-
-                  <div style={{ marginBottom: '2rem' }}>
-                    <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>Bank Account Details</h4>
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Account Holder Name *</label>
-                      <input type="text" placeholder="Full name" value={achForm.account_holder_name} onChange={(e) => setAchForm({ ...achForm, account_holder_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
-                    </div>
-
-                    <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Routing Number *</label>
-                        <input type="text" placeholder="000000000" value={achForm.routing_number} onChange={(e) => setAchForm({ ...achForm, routing_number: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Account Number *</label>
-                        <input type="text" placeholder="1234567890" value={achForm.account_number} onChange={(e) => setAchForm({ ...achForm, account_number: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                  {achCitizenship === null ? (
+                    <div style={{ textAlign: 'center', padding: '2rem' }}>
+                      <h3 style={{ color: '#1e293b', fontSize: '1.2rem', fontWeight: '700', marginBottom: '2rem', marginTop: 0 }}>Where are you located?</h3>
+                      <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <button onClick={() => setAchCitizenship('us')} style={{ padding: '1rem 2rem', border: '2px solid #0066cc', backgroundColor: 'white', color: '#0066cc', borderRadius: '8px', fontWeight: '600', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.target.backgroundColor = '#f0f4ff'; }} onMouseLeave={(e) => { e.target.backgroundColor = 'white'; }}>
+                          🇺🇸 US Bank Account
+                        </button>
+                        <button onClick={() => setAchCitizenship('intl')} style={{ padding: '1rem 2rem', border: '2px solid #0066cc', backgroundColor: 'white', color: '#0066cc', borderRadius: '8px', fontWeight: '600', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.target.backgroundColor = '#f0f4ff'; }} onMouseLeave={(e) => { e.target.backgroundColor = 'white'; }}>
+                          🌍 International Bank Account
+                        </button>
                       </div>
                     </div>
-
-                    <div style={{ marginBottom: '1.5rem' }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Account Type *</label>
-                      <select value={achForm.account_type} onChange={(e) => setAchForm({ ...achForm, account_type: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }}>
-                        <option value="checking">Checking</option>
-                        <option value="savings">Savings</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: '2rem' }}>
-                    <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>Verification Details</h4>
-                    <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>SSN *</label>
-                        <input type="text" placeholder="XXX-XX-XXXX" maxLength="11" value={achForm.ssn} onChange={(e) => { let v = e.target.value.replace(/\D/g, ''); if (v.length <= 3) v = v; else if (v.length <= 5) v = v.slice(0, 3) + '-' + v.slice(3); else v = v.slice(0, 3) + '-' + v.slice(3, 5) + '-' + v.slice(5, 9); setAchForm({ ...achForm, ssn: v }); }} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                  ) : (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', padding: '0.75rem', backgroundColor: '#f0f4ff', borderRadius: '8px' }}>
+                        <span style={{ fontSize: '1.2rem', cursor: 'pointer' }} onClick={() => setAchCitizenship(null)} title="Change">
+                          {achCitizenship === 'us' ? '🇺🇸 US Bank Account' : '🌍 International Bank Account'}
+                        </span>
+                        <button
+                          onClick={() => setAchCitizenship(null)}
+                          style={{
+                            marginLeft: 'auto',
+                            padding: '0.35rem 0.75rem',
+                            backgroundColor: 'transparent',
+                            border: '1px solid #0066cc',
+                            color: '#0066cc',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem',
+                            fontWeight: '600'
+                          }}
+                        >
+                          Change
+                        </button>
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Date of Birth *</label>
-                        <input type="date" value={achForm.date_of_birth} onChange={(e) => setAchForm({ ...achForm, date_of_birth: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
-                      </div>
-                    </div>
-                  </div>
 
-                  <button onClick={handleAchSubmit} disabled={submitting} style={{ width: '100%', padding: '1rem', background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, fontSize: '1rem', transition: 'all 0.2s' }}>
-                    {submitting ? '⏳ Processing...' : '✓ Claim via ACH'}
-                  </button>
+                      <h3 style={{ color: '#1e293b', fontSize: '1.15rem', fontWeight: '700', marginBottom: '0.75rem', marginTop: 0 }}>🏦 Bank Transfer</h3>
+                      <p style={{ color: '#0066cc', marginBottom: '2rem', fontSize: '0.9rem', fontWeight: '500' }}>{achCitizenship === 'us' ? 'Direct deposit to your US bank account - typically 1-3 business days' : 'International wire transfer - typically 1-5 business days'}</p>
+
+                      <div style={{ marginBottom: '2rem' }}>
+                        <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>Bank Account Details</h4>
+                        <div style={{ marginBottom: '1rem' }}>
+                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Account Holder Name *</label>
+                          <input type="text" placeholder="Full name" value={achForm.account_holder_name} onChange={(e) => setAchForm({ ...achForm, account_holder_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                        </div>
+
+                        {achCitizenship === 'us' ? (
+                          <>
+                            <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                              <div style={{ flex: 1 }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Routing Number *</label>
+                                <input type="text" placeholder="000000000" value={achForm.routing_number} onChange={(e) => setAchForm({ ...achForm, routing_number: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Account Number *</label>
+                                <input type="text" placeholder="1234567890" value={achForm.account_number} onChange={(e) => setAchForm({ ...achForm, account_number: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                              </div>
+                            </div>
+
+                            <div style={{ marginBottom: '1.5rem' }}>
+                              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Account Type *</label>
+                              <select value={achForm.account_type} onChange={(e) => setAchForm({ ...achForm, account_type: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }}>
+                                <option value="checking">Checking</option>
+                                <option value="savings">Savings</option>
+                              </select>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                              <div style={{ flex: 1 }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>IBAN *</label>
+                                <input type="text" placeholder="DE89370400440532013000" value={achForm.iban} onChange={(e) => setAchForm({ ...achForm, iban: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                              </div>
+                            </div>
+
+                            <div style={{ marginBottom: '1rem' }}>
+                              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>SWIFT/BIC Code *</label>
+                              <input type="text" placeholder="DEUTDEFF" value={achForm.swift_code} onChange={(e) => setAchForm({ ...achForm, swift_code: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                            </div>
+
+                            <div style={{ marginBottom: '1.5rem' }}>
+                              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Bank Name *</label>
+                              <input type="text" placeholder="Deutsche Bank" value={achForm.bank_name} onChange={(e) => setAchForm({ ...achForm, bank_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      <div style={{ marginBottom: '2rem' }}>
+                        <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>Verification Details</h4>
+                        {achCitizenship === 'us' ? (
+                          <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                            <div style={{ flex: 1 }}>
+                              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>SSN *</label>
+                              <input type="text" placeholder="XXX-XX-XXXX" maxLength="11" value={achForm.ssn} onChange={(e) => { let v = e.target.value.replace(/\D/g, ''); if (v.length <= 3) v = v; else if (v.length <= 5) v = v.slice(0, 3) + '-' + v.slice(3); else v = v.slice(0, 3) + '-' + v.slice(3, 5) + '-' + v.slice(5, 9); setAchForm({ ...achForm, ssn: v }); }} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Date of Birth *</label>
+                              <input type="date" value={achForm.date_of_birth} onChange={(e) => setAchForm({ ...achForm, date_of_birth: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
+                            <div style={{ flex: 1 }}>
+                              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>ID Number (Passport, License, etc.) *</label>
+                              <input type="text" placeholder="Your national ID number" value={achForm.id_number} onChange={(e) => setAchForm({ ...achForm, id_number: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Date of Birth *</label>
+                              <input type="date" value={achForm.date_of_birth} onChange={(e) => setAchForm({ ...achForm, date_of_birth: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <button onClick={handleAchSubmit} disabled={submitting} style={{ width: '100%', padding: '1rem', background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, fontSize: '1rem', transition: 'all 0.2s' }}>
+                        {submitting ? '⏳ Processing...' : `✓ Claim via ${achCitizenship === 'us' ? 'ACH' : 'Bank Transfer'}`}
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
 
