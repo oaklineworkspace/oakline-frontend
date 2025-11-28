@@ -29,27 +29,10 @@ export default async function handler(req, res) {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    
-    // Verify the JWT token and extract user ID
-    let user;
-    try {
-      const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
-      if (authError || !authUser) {
-        // Fallback: try to decode the token and use it to query the user
-        const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.verifyJWT(token);
-        if (sessionError || !sessionData?.user) {
-          return res.status(401).json({ error: 'Unauthorized - Invalid authentication' });
-        }
-        user = sessionData.user;
-      } else {
-        user = authUser;
-      }
-    } catch (tokenError) {
-      console.error('Token verification error:', tokenError);
-      return res.status(401).json({ error: 'Unauthorized - Invalid authentication' });
-    }
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
-    if (!user?.id) {
+    if (authError || !user) {
+      console.error('Auth error:', authError);
       return res.status(401).json({ error: 'Unauthorized - Invalid authentication' });
     }
 
