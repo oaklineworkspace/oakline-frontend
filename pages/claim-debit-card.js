@@ -36,13 +36,6 @@ export default function ClaimPaymentPage() {
     date_of_birth: ''
   });
 
-  const [accountForm, setAccountForm] = useState({
-    email: '',
-    password: '',
-    confirm_password: '',
-    full_name: '',
-    agree_terms: false
-  });
 
   useEffect(() => {
     if (token) {
@@ -186,64 +179,10 @@ export default function ClaimPaymentPage() {
     }
   };
 
-  const handleAccountSubmit = async () => {
-    if (!accountForm.email || !accountForm.password || !accountForm.confirm_password || !accountForm.full_name || !accountForm.agree_terms) {
-      setMessage('Please fill in all required fields and agree to terms.', 'error');
-      setMessageType('error');
-      return;
-    }
-
-    if (accountForm.password !== accountForm.confirm_password) {
-      setMessage('Passwords do not match.', 'error');
-      setMessageType('error');
-      return;
-    }
-
-    if (accountForm.password.length < 6) {
-      setMessage('Password must be at least 6 characters.', 'error');
-      setMessageType('error');
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: accountForm.email,
-        password: accountForm.password
-      });
-
-      if (error) throw error;
-
-      // Create profile for new user
-      await supabase
-        .from('profiles')
-        .insert({
-          id: data.user.id,
-          full_name: accountForm.full_name,
-          email: accountForm.email
-        });
-
-      // Link payment to new account
-      await supabase
-        .from('oakline_pay_pending_claims')
-        .update({
-          claim_method: 'account',
-          claimed_at: new Date().toISOString(),
-          approval_status: 'approved'
-        })
-        .eq('claim_token', token)
-        .eq('status', 'sent');
-
-      setMessage(`✅ Account Created Successfully!\n\n$${payment.amount} has been deposited to your new Oakline Bank account. Check your email to verify your account and start banking!`);
-      setMessageType('success');
-      setTimeout(() => router.push('/'), 4000);
-    } catch (error) {
-      console.error('Error:', error);
-      setMessage(error.message || 'Failed to create account. Please try again.');
-      setMessageType('error');
-    } finally {
-      setSubmitting(false);
-    }
+  const handleOpenAccountClick = () => {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://theoaklinebank.com';
+    const applyUrl = `${siteUrl}/apply?claim_token=${token}`;
+    window.location.href = applyUrl;
   };
 
   if (loading) {
@@ -527,48 +466,60 @@ export default function ClaimPaymentPage() {
               {activeTab === 'account' && (
                 <div style={{ animation: 'fadeIn 0.3s ease-in' }}>
                   <h3 style={{ color: '#1e293b', fontSize: '1.1rem', marginBottom: '0.5rem', margin: '0 0 0.5rem 0' }}>📱 Create Oakline Account</h3>
-                  <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Open your account instantly - funds available immediately with full banking features</p>
+                  <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Open a full Oakline Bank account with access to all banking features</p>
 
-                  <div style={{ backgroundColor: '#f0feff', border: '1px solid #a5f3fc', borderRadius: '12px', padding: '1rem', marginBottom: '2rem' }}>
-                    <p style={{ margin: '0', color: '#0c7a99', fontSize: '0.85rem', lineHeight: '1.5' }}>
-                      ⚡ <strong>Instant Setup:</strong> Your account is created immediately and ${parseFloat(payment?.amount || 0).toFixed(2)} will be deposited right away. No waiting!
+                  <div style={{ backgroundColor: '#f0feff', border: '1px solid #a5f3fc', borderRadius: '12px', padding: '1.25rem', marginBottom: '2rem' }}>
+                    <p style={{ margin: '0 0 0.75rem 0', color: '#0c7a99', fontSize: '0.9rem', lineHeight: '1.5', fontWeight: '500' }}>
+                      ✨ <strong>Full Banking Features</strong>
+                    </p>
+                    <p style={{ margin: '0', color: '#0c7a99', fontSize: '0.85rem', lineHeight: '1.6' }}>
+                      Create a complete Oakline Bank account with full access to transfers, payments, investments, and more. Your payment of ${parseFloat(payment?.amount || 0).toFixed(2)} will be credited once your account is verified.
                     </p>
                   </div>
 
-                  <div style={{ marginBottom: '2rem' }}>
-                    <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>Account Information</h4>
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Full Name *</label>
-                      <input type="text" placeholder="Your full name" value={accountForm.full_name} onChange={(e) => setAccountForm({ ...accountForm, full_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
-                    </div>
+                  <div style={{ backgroundColor: '#fff3cd', border: '1px solid #ffc107', borderRadius: '12px', padding: '1.25rem', marginBottom: '2rem' }}>
+                    <p style={{ margin: '0 0 0.75rem 0', color: '#856404', fontSize: '0.9rem', fontWeight: '600' }}>
+                      📋 Account Verification Required
+                    </p>
+                    <ul style={{ margin: '0', paddingLeft: '1.5rem', color: '#856404', fontSize: '0.85rem', lineHeight: '1.6' }}>
+                      <li>Quick identity verification (2-5 minutes)</li>
+                      <li>SSN and personal information verification</li>
+                      <li>Account activated immediately after verification</li>
+                    </ul>
+                  </div>
 
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Email Address *</label>
-                      <input type="email" placeholder="your@email.com" value={accountForm.email} onChange={(e) => setAccountForm({ ...accountForm, email: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                  <div style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                    <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>What Happens Next</h4>
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ fontSize: '1.5rem', minWidth: '40px', textAlign: 'center' }}>1️⃣</div>
+                      <div>
+                        <p style={{ margin: '0 0 0.25rem 0', color: '#333', fontWeight: '500', fontSize: '0.9rem' }}>Complete Application</p>
+                        <p style={{ margin: '0', color: '#666', fontSize: '0.85rem' }}>Fill out the account application with your information</p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                      <div style={{ fontSize: '1.5rem', minWidth: '40px', textAlign: 'center' }}>2️⃣</div>
+                      <div>
+                        <p style={{ margin: '0 0 0.25rem 0', color: '#333', fontWeight: '500', fontSize: '0.9rem' }}>Verify Identity</p>
+                        <p style={{ margin: '0', color: '#666', fontSize: '0.85rem' }}>Complete identity verification as part of our security procedures</p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                      <div style={{ fontSize: '1.5rem', minWidth: '40px', textAlign: 'center' }}>3️⃣</div>
+                      <div>
+                        <p style={{ margin: '0 0 0.25rem 0', color: '#333', fontWeight: '500', fontSize: '0.9rem' }}>Receive Your Payment</p>
+                        <p style={{ margin: '0', color: '#666', fontSize: '0.85rem' }}>Once verified, ${parseFloat(payment?.amount || 0).toFixed(2)} is credited to your account</p>
+                      </div>
                     </div>
                   </div>
 
-                  <div style={{ marginBottom: '2rem' }}>
-                    <h4 style={{ color: '#333', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1rem', marginTop: 0 }}>Security</h4>
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Password *</label>
-                      <input type="password" placeholder="At least 6 characters" value={accountForm.password} onChange={(e) => setAccountForm({ ...accountForm, password: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
-                    </div>
-
-                    <div style={{ marginBottom: '1.5rem' }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Confirm Password *</label>
-                      <input type="password" placeholder="Confirm password" value={accountForm.confirm_password} onChange={(e) => setAccountForm({ ...accountForm, confirm_password: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '2rem', gap: '0.75rem' }}>
-                    <input type="checkbox" checked={accountForm.agree_terms} onChange={(e) => setAccountForm({ ...accountForm, agree_terms: e.target.checked })} style={{ width: '18px', height: '18px', cursor: 'pointer', marginTop: '0.25rem', flexShrink: 0 }} />
-                    <label style={{ color: '#64748b', fontSize: '0.9rem', cursor: 'pointer', lineHeight: '1.5' }}>I agree to Oakline Bank's terms and conditions and privacy policy *</label>
-                  </div>
-
-                  <button onClick={handleAccountSubmit} disabled={submitting} style={{ width: '100%', padding: '1rem', background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, fontSize: '1rem', transition: 'all 0.2s' }}>
-                    {submitting ? '⏳ Creating Account...' : '✓ Create Account & Receive Payment'}
+                  <button onClick={handleOpenAccountClick} style={{ width: '100%', padding: '1rem', background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '1rem', transition: 'all 0.2s' }}>
+                    ✓ Open Account Now
                   </button>
+
+                  <p style={{ color: '#999', fontSize: '0.8rem', margin: '1rem 0 0 0', textAlign: 'center', lineHeight: '1.5' }}>
+                    You'll be redirected to our account application. Your payment claim will be linked to your new account.
+                  </p>
                 </div>
               )}
 
