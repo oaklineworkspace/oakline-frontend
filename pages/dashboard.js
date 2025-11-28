@@ -1595,7 +1595,7 @@ function DashboardContent() {
             <span style={styles.quickActionIcon}>⚡</span>
             <span style={styles.quickActionText}>Send with Zelle</span>
           </Link>
-          <Link href="/oakline-pay" style={styles.standardActionButton}>
+          <Link href="/coming-soon?feature=oakline-pay" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>⚡</span>
             <span style={styles.quickActionText}>Oakline Pay</span>
           </Link>
@@ -1611,7 +1611,7 @@ function DashboardContent() {
             <span style={styles.quickActionIcon}>₿</span>
             <span style={styles.quickActionText}>Add Funds via Crypto</span>
           </Link>
-          <Link href="/investment" style={styles.standardActionButton}>
+          <Link href="/coming-soon?feature=investment" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>📈</span>
             <span style={styles.quickActionText}>Invest</span>
           </Link>
