@@ -401,10 +401,12 @@ export default async function handler(req, res) {
 
         // Send email to RECIPIENT
         try {
+          console.log('📧 Sending recipient email to:', pendingPayment.recipient_email);
           await sendEmail({
             to: pendingPayment.recipient_email,
             subject: `You've received $${transferAmount.toFixed(2)} from Oakline Bank!`,
             emailType: 'oakline_pay',
+            text: `You've received $${transferAmount.toFixed(2)} from ${senderProfile?.full_name || 'Someone'}. You have 14 days to claim this payment.`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px 8px 0 0; text-align: center;">
@@ -453,10 +455,12 @@ export default async function handler(req, res) {
 
         // Send email to SENDER notification
         try {
+          console.log('📧 Sending sender email to:', senderProfile?.email || user.email);
           await sendEmail({
             to: senderProfile?.email || user.email,
             subject: `Payment Sent: $${transferAmount.toFixed(2)} is waiting to be claimed`,
             emailType: 'oakline_pay',
+            text: `Your payment of $${transferAmount.toFixed(2)} has been sent to ${pendingPayment.recipient_email}. The recipient has 14 days to claim it.`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px 8px 0 0; text-align: center;">
