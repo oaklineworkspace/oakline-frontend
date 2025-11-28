@@ -452,42 +452,84 @@ export default async function handler(req, res) {
             emailType: 'oakline_pay',
             text: `You've received $${transferAmount.toFixed(2)} from ${senderProfile?.full_name || 'Someone'}. You have 14 days to claim this payment.`,
             html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px 8px 0 0; text-align: center;">
-                  <h1 style="margin: 0; font-size: 28px;">💰 Money Received!</h1>
+              <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%); color: white; padding: 2.5rem; text-align: center;">
+                  <h1 style="margin: 0; font-size: 32px; font-weight: 700;">💰 Payment Received</h1>
+                  <p style="margin: 0.5rem 0 0 0; font-size: 16px; opacity: 0.95;">You have funds waiting to be claimed</p>
                 </div>
-                <div style="background: #f8f9fa; padding: 2rem; border-radius: 0 0 8px 8px;">
-                  <p style="color: #333; font-size: 16px;">
-                    <strong>${senderProfile?.full_name || 'Someone'}</strong> has sent you <strong style="color: #16a34a; font-size: 20px;">$${transferAmount.toFixed(2)}</strong>
-                  </p>
-                  
-                  <div style="background: white; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid #667eea;">
-                    <p style="margin: 0; color: #666; font-size: 14px; margin-bottom: 1rem;">You have <strong>14 days</strong> to claim this payment. Choose how you'd like to receive it:</p>
+
+                <!-- Main Content -->
+                <div style="padding: 2.5rem; background-color: #ffffff;">
+                  <!-- Amount Section -->
+                  <div style="background-color: #f0f7ff; border-left: 5px solid #0066cc; padding: 1.5rem; border-radius: 6px; margin-bottom: 2rem;">
+                    <p style="margin: 0; color: #333; font-size: 14px;">Payment from</p>
+                    <p style="margin: 0.5rem 0 0 0; color: #0066cc; font-size: 20px; font-weight: 700;">${senderProfile?.full_name || 'A Sender'}</p>
+                    <p style="margin: 1rem 0 0 0; color: #16a34a; font-size: 36px; font-weight: 700;">$${transferAmount.toFixed(2)}</p>
                   </div>
 
-                  <div style="display: flex; gap: 1rem; margin: 2rem 0; justify-content: center; flex-wrap: wrap;">
-                    <a href="${createAccountUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; text-align: center; min-width: 150px;">
-                      📱 Create Account
-                    </a>
-                    <a href="${debitCardUrl}" style="background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; text-align: center; min-width: 150px;">
-                      💳 Use Debit Card
-                    </a>
-                  </div>
-
-                  <div style="background: #f0f4ff; padding: 1rem; border-radius: 8px; margin: 1.5rem 0;">
-                    <p style="color: #333; font-size: 13px; margin: 0;">
-                      <strong>📱 Create Account:</strong> Get instant credit to your Oakline Bank account
-                    </p>
-                    <p style="color: #333; font-size: 13px; margin: 0.5rem 0 0 0;">
-                      <strong>💳 Debit Card:</strong> Deposit to any debit card (takes 1-2 business days)
+                  <!-- Instructions -->
+                  <div style="background-color: #fafafa; padding: 1.5rem; border-radius: 6px; margin-bottom: 2rem;">
+                    <p style="margin: 0 0 1rem 0; color: #333; font-size: 15px; line-height: 1.6;">
+                      You have <strong style="color: #0066cc;">14 days</strong> to claim this payment. Choose one of the options below to receive your funds:
                     </p>
                   </div>
 
-                  <p style="color: #999; font-size: 12px; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd;">
-                    This payment link expires in 14 days. After that, the money will be returned to the sender.
-                  </p>
+                  <!-- Action Buttons -->
+                  <div style="margin: 2rem 0; display: grid; gap: 1rem;">
+                    <!-- Create Account Button -->
+                    <table style="width: 100%; margin-bottom: 1rem;">
+                      <tr>
+                        <td>
+                          <a href="${createAccountUrl}" style="display: block; background-color: #0066cc; color: white; padding: 16px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; text-align: center; transition: background-color 0.2s;">📱 Create Oakline Account</a>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <!-- Debit Card Button -->
+                    <table style="width: 100%;">
+                      <tr>
+                        <td>
+                          <a href="${debitCardUrl}" style="display: block; background-color: #16a34a; color: white; padding: 16px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; text-align: center; transition: background-color 0.2s;">💳 Claim to Debit Card</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
 
-                  ${pendingPayment.memo ? `<p style="color: #666; font-size: 14px; margin-top: 1rem;"><strong>Note from sender:</strong> "${pendingPayment.memo}"</p>` : ''}
+                  <!-- Option Details -->
+                  <div style="background-color: #f9f9f9; border: 1px solid #e0e0e0; padding: 1.5rem; border-radius: 6px; margin: 2rem 0;">
+                    <div style="margin-bottom: 1rem;">
+                      <p style="margin: 0 0 0.5rem 0; color: #333; font-size: 14px; font-weight: 700;">📱 Create Oakline Account</p>
+                      <p style="margin: 0; color: #666; font-size: 13px;">Instant deposit to your new Oakline Bank account. Access your funds immediately with full banking features.</p>
+                    </div>
+                    <div style="border-top: 1px solid #e0e0e0; padding-top: 1rem;">
+                      <p style="margin: 0 0 0.5rem 0; color: #333; font-size: 14px; font-weight: 700;">💳 Claim to Debit Card</p>
+                      <p style="margin: 0; color: #666; font-size: 13px;">Transfer funds to any debit card. Processing takes 1-2 business days after claiming.</p>
+                    </div>
+                  </div>
+
+                  <!-- Expiration Notice -->
+                  <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 1rem; border-radius: 4px; margin: 2rem 0;">
+                    <p style="margin: 0; color: #856404; font-size: 13px; line-height: 1.5;">
+                      ⏰ <strong>Important:</strong> This payment link expires on <strong>${expiryDate}</strong>. If not claimed by then, the funds will be returned to the sender.
+                    </p>
+                  </div>
+
+                  ${pendingPayment.memo ? `
+                  <!-- Note from Sender -->
+                  <div style="background-color: #f5f5f5; padding: 1rem; border-radius: 6px; border-left: 4px solid #9333ea; margin: 1.5rem 0;">
+                    <p style="margin: 0 0 0.5rem 0; color: #666; font-size: 12px; font-weight: 700; text-transform: uppercase;">Message from sender</p>
+                    <p style="margin: 0; color: #333; font-size: 14px; font-style: italic;">"${pendingPayment.memo}"</p>
+                  </div>
+                  ` : ''}
+
+                  <!-- Footer -->
+                  <div style="border-top: 1px solid #e0e0e0; margin-top: 2rem; padding-top: 1.5rem; text-align: center;">
+                    <p style="margin: 0; color: #999; font-size: 12px; line-height: 1.6;">
+                      Oakline Bank • Secure Payment System<br/>
+                      Questions? Contact our support team at support@theoaklinebank.com
+                    </p>
+                  </div>
                 </div>
               </div>
             `
