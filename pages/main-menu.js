@@ -224,7 +224,7 @@ export default function MainMenu() {
                     <Link href="/deposit-real" style={styles.dropdownLink}>📱 Mobile Deposit</Link>
                     <Link href="/deposit-crypto" style={styles.dropdownLink}>₿ Deposit Funds via Cryptocurrency</Link>
                     <Link href="/withdrawal" style={styles.dropdownLink}>📤 Withdraw Funds</Link>
-                    <Link href="/zelle" style={styles.dropdownLink}>💰 Zelle</Link>
+                    <Link href="/coming-soon?feature=zelle" style={styles.dropdownLink}>💰 Zelle</Link>
                   </div>
                   <div style={styles.dropdownDivider}></div>
                   <div style={styles.dropdownSection}>
