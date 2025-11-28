@@ -12,6 +12,8 @@ export default function ClaimPaymentPage() {
   const [messageType, setMessageType] = useState('info');
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('debit_card');
+  const [claimSuccess, setClaimSuccess] = useState(false);
+  const [receiptData, setReceiptData] = useState(null);
 
   const [debitCardForm, setDebitCardForm] = useState({
     first_name: '',
@@ -131,9 +133,27 @@ export default function ClaimPaymentPage() {
 
       if (error) throw error;
 
-      setMessage('✅ Claim Submitted Successfully!\n\nYour debit card details have been securely received and verified. Your payment is now under processing and our team is reviewing it. You will be notified via email as soon as the transfer is completed. Thank you for your patience!');
-      setMessageType('success');
-      setTimeout(() => router.push('/'), 4000);
+      // Send notification email to receiver
+      await fetch('/api/send-claim-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          receiver_email: paymentData.receiver_email,
+          receiver_name: paymentData.receiver_name,
+          sender_name: payment.sender_name || payment.sender_contact,
+          amount: payment.amount,
+          claim_method: 'debit_card',
+          claim_token: token
+        })
+      }).catch(err => console.error('Error sending notification:', err));
+
+      setReceiptData({
+        claimMethod: 'debit_card',
+        amount: payment.amount,
+        senderName: payment.sender_name || payment.sender_contact,
+        timestamp: new Date().toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      });
+      setClaimSuccess(true);
     } catch (error) {
       console.error('Error:', error);
       setMessage('Failed to process claim. Please try again.');
@@ -170,9 +190,27 @@ export default function ClaimPaymentPage() {
 
       if (error) throw error;
 
-      setMessage('✅ ACH Claim Submitted Successfully!\n\nYour bank account details have been securely received. Your payment will be deposited within 1-3 business days. You will receive a confirmation email shortly.');
-      setMessageType('success');
-      setTimeout(() => router.push('/'), 4000);
+      // Send notification email to receiver
+      await fetch('/api/send-claim-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          receiver_email: paymentData.receiver_email,
+          receiver_name: paymentData.receiver_name,
+          sender_name: payment.sender_name || payment.sender_contact,
+          amount: payment.amount,
+          claim_method: 'ach',
+          claim_token: token
+        })
+      }).catch(err => console.error('Error sending notification:', err));
+
+      setReceiptData({
+        claimMethod: 'ach',
+        amount: payment.amount,
+        senderName: payment.sender_name || payment.sender_contact,
+        timestamp: new Date().toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      });
+      setClaimSuccess(true);
     } catch (error) {
       console.error('Error:', error);
       setMessage('Failed to process claim. Please try again.');
