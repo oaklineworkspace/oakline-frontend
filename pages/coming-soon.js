@@ -37,6 +37,8 @@ export default function ComingSoon() {
     const query = router.query.feature || 'zelle';
     const featureMap = {
       zelle: { name: 'Zelle® Payments', description: 'Instant money transfers to any U.S. bank account' },
+      'oakline-pay': { name: 'Oakline Pay', description: 'Send and receive money to friends and family with @username tags' },
+      investment: { name: 'Investment Services', description: 'Build wealth with our comprehensive investment tools and professional advisory' },
       'advanced-trading': { name: 'Advanced Trading', description: 'Professional trading tools and insights' },
       'crypto-advanced': { name: 'Advanced Crypto', description: 'Professional cryptocurrency trading' },
       'portfolio-analysis': { name: 'Portfolio Analysis', description: 'Advanced investment analysis tools' },
