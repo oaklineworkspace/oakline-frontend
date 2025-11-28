@@ -148,7 +148,7 @@ export default function OaklinePayPage() {
         .order('contact_name');
       setContacts(payContacts || []);
 
-      // Load transactions - use only existing columns
+      // Load completed transactions
       const { data: payTxns, error: txnError } = await supabase
         .from('oakline_pay_transactions')
         .select('*')
@@ -159,8 +159,38 @@ export default function OaklinePayPage() {
       if (txnError) {
         console.error('Error loading transactions:', txnError);
       }
+
+      // Load pending claims (both sent and received)
+      const { data: pendingClaims, error: claimsError } = await supabase
+        .from('oakline_pay_pending_claims')
+        .select('*')
+        .or(`sender_id.eq.${session.user.id},recipient_email.eq.${session.user?.email}`)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (claimsError) {
+        console.error('Error loading pending claims:', claimsError);
+      }
+
+      // Merge and format pending claims as transaction-like objects
+      const formattedClaims = (pendingClaims || []).map(claim => ({
+        id: claim.id,
+        sender_id: claim.sender_id,
+        sender_name: claim.sender_name,
+        recipient_email: claim.recipient_email,
+        amount: claim.amount,
+        memo: claim.memo,
+        status: claim.status,
+        created_at: claim.created_at,
+        is_pending_claim: true
+      }));
+
+      // Combine transactions and pending claims, sort by date
+      const allTransactions = [...(payTxns || []), ...formattedClaims].sort((a, b) => 
+        new Date(b.created_at) - new Date(a.created_at)
+      );
       
-      setTransactions(payTxns || []);
+      setTransactions(allTransactions);
 
       // Load payment requests
       const { data: requests } = await supabase
@@ -1292,7 +1322,7 @@ export default function OaklinePayPage() {
                     transactions.map(txn => (
                       <div 
                         key={txn.id} 
-                        style={{ ...styles.transactionCard, cursor: 'pointer', transition: 'all 0.3s ease' }}
+                        style={{ ...styles.transactionCard, cursor: 'pointer', transition: 'all 0.3s ease', opacity: txn.status === 'expired' ? 0.6 : 1 }}
                         onClick={() => {
                           setSelectedOaklineTransaction(txn);
                           setShowOaklineReceiptModal(true);
@@ -1303,7 +1333,13 @@ export default function OaklinePayPage() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
                             <h3 style={{ margin: 0, color: '#1a365d', fontWeight: '600' }}>
-                              {txn.sender_id === user?.id ? '📤 Sent to' : '📥 Received from'} {txn.sender_id === user?.id ? (txn.recipient_name || txn.recipient_tag || 'User') : (txn.sender_name || txn.sender_tag || 'User')}
+                              {txn.is_pending_claim ? (
+                                txn.sender_id === user?.id 
+                                  ? `📤 Pending - Sent to ${txn.recipient_email}`
+                                  : `📥 Pending - From ${txn.sender_name || 'User'}`
+                              ) : (
+                                txn.sender_id === user?.id ? '📤 Sent to' : '📥 Received from'
+                              )} {!txn.is_pending_claim && (txn.sender_id === user?.id ? (txn.recipient_name || txn.recipient_tag || 'User') : (txn.sender_name || txn.sender_tag || 'User'))}
                             </h3>
                             <p style={{ margin: '0.5rem 0 0', color: '#64748b', fontSize: '0.85rem' }}>
                               {new Date(txn.created_at).toLocaleDateString()} • {new Date(txn.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
@@ -1313,8 +1349,8 @@ export default function OaklinePayPage() {
                             <div style={{ fontSize: '1.3rem', fontWeight: '700', color: txn.sender_id === user?.id ? '#ef4444' : '#059669' }}>
                               {txn.sender_id === user?.id ? '-' : '+'} ${parseFloat(txn.amount).toFixed(2)}
                             </div>
-                            <span style={{ backgroundColor: txn.status === 'completed' ? '#d1fae5' : '#fef3c7', color: txn.status === 'completed' ? '#047857' : '#92400e', padding: '0.25rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '600' }}>
-                              {txn.status?.toUpperCase() || 'PENDING'}
+                            <span style={{ backgroundColor: txn.status === 'completed' ? '#d1fae5' : txn.status === 'expired' ? '#fee2e2' : '#fef3c7', color: txn.status === 'completed' ? '#047857' : txn.status === 'expired' ? '#991b1b' : '#92400e', padding: '0.25rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '600' }}>
+                              {(txn.status || 'PENDING').toUpperCase()}
                             </span>
                           </div>
                         </div>

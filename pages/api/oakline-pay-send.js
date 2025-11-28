@@ -211,7 +211,7 @@ export default async function handler(req, res) {
       const senderData = {
         email: senderProfile?.email || user.email,
         first_name: senderProfile?.first_name || user.email?.split('@')[0] || 'User',
-        full_name: senderProfile?.full_name || 'Oakline User'
+        full_name: senderProfile?.full_name || senderProfile?.first_name || user.email?.split('@')[0] || 'User'
       };
 
       if (isOaklineUser) {
