@@ -206,8 +206,8 @@ export default function ClaimPaymentPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          receiver_email: paymentData.receiver_email,
-          receiver_name: paymentData.receiver_name,
+          receiver_email: payment.recipient_email,
+          receiver_name: payment.recipient_name || '',
           sender_name: payment.sender_name || payment.sender_contact,
           amount: payment.amount,
           claim_method: 'debit_card',
@@ -294,8 +294,8 @@ export default function ClaimPaymentPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          receiver_email: paymentData.receiver_email,
-          receiver_name: paymentData.receiver_name,
+          receiver_email: payment.recipient_email,
+          receiver_name: payment.recipient_name || '',
           sender_name: payment.sender_name || payment.sender_contact,
           amount: payment.amount,
           claim_method: 'ach',
