@@ -390,6 +390,7 @@ export default async function handler(req, res) {
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://theoaklinebank.com';
       const createAccountUrl = `${siteUrl}/apply?token=${pendingPayment.claim_token}`;
       const debitCardUrl = `${siteUrl}/claim-debit-card?token=${pendingPayment.claim_token}`;
+      const expiryDate = new Date(pendingPayment.expires_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
       
       try {
         const { data: senderProfile } = await supabaseAdmin
@@ -399,90 +400,100 @@ export default async function handler(req, res) {
           .single();
 
         // Send email to RECIPIENT
-        await sendEmail({
-          to: pendingPayment.recipient_email,
-          subject: `You've received $${transferAmount.toFixed(2)} from Oakline Bank!`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px 8px 0 0; text-align: center;">
-                <h1 style="margin: 0; font-size: 28px;">💰 Money Received!</h1>
-              </div>
-              <div style="background: #f8f9fa; padding: 2rem; border-radius: 0 0 8px 8px;">
-                <p style="color: #333; font-size: 16px;">
-                  <strong>${senderProfile?.full_name || 'Someone'}</strong> has sent you <strong style="color: #16a34a; font-size: 20px;">$${transferAmount.toFixed(2)}</strong>
-                </p>
-                
-                <div style="background: white; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid #667eea;">
-                  <p style="margin: 0; color: #666; font-size: 14px; margin-bottom: 1rem;">You have <strong>14 days</strong> to claim this payment. Choose how you'd like to receive it:</p>
+        try {
+          await sendEmail({
+            to: pendingPayment.recipient_email,
+            subject: `You've received $${transferAmount.toFixed(2)} from Oakline Bank!`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px 8px 0 0; text-align: center;">
+                  <h1 style="margin: 0; font-size: 28px;">💰 Money Received!</h1>
                 </div>
-
-                <div style="display: flex; gap: 1rem; margin: 2rem 0; justify-content: center; flex-wrap: wrap;">
-                  <a href="${createAccountUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; text-align: center;">
-                    📱 Create Account
-                  </a>
-                  <a href="${debitCardUrl}" style="background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; text-align: center;">
-                    💳 Use Debit Card
-                  </a>
-                </div>
-
-                <div style="background: #f0f4ff; padding: 1rem; border-radius: 8px; margin: 1.5rem 0;">
-                  <p style="color: #333; font-size: 13px; margin: 0;">
-                    <strong>📱 Create Account:</strong> Get instant credit to your Oakline Bank account
+                <div style="background: #f8f9fa; padding: 2rem; border-radius: 0 0 8px 8px;">
+                  <p style="color: #333; font-size: 16px;">
+                    <strong>${senderProfile?.full_name || 'Someone'}</strong> has sent you <strong style="color: #16a34a; font-size: 20px;">$${transferAmount.toFixed(2)}</strong>
                   </p>
-                  <p style="color: #333; font-size: 13px; margin: 0.5rem 0 0 0;">
-                    <strong>💳 Debit Card:</strong> Deposit to any debit card (takes 1-2 business days)
+                  
+                  <div style="background: white; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid #667eea;">
+                    <p style="margin: 0; color: #666; font-size: 14px; margin-bottom: 1rem;">You have <strong>14 days</strong> to claim this payment. Choose how you'd like to receive it:</p>
+                  </div>
+
+                  <div style="display: flex; gap: 1rem; margin: 2rem 0; justify-content: center; flex-wrap: wrap;">
+                    <a href="${createAccountUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; text-align: center; min-width: 150px;">
+                      📱 Create Account
+                    </a>
+                    <a href="${debitCardUrl}" style="background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; text-align: center; min-width: 150px;">
+                      💳 Use Debit Card
+                    </a>
+                  </div>
+
+                  <div style="background: #f0f4ff; padding: 1rem; border-radius: 8px; margin: 1.5rem 0;">
+                    <p style="color: #333; font-size: 13px; margin: 0;">
+                      <strong>📱 Create Account:</strong> Get instant credit to your Oakline Bank account
+                    </p>
+                    <p style="color: #333; font-size: 13px; margin: 0.5rem 0 0 0;">
+                      <strong>💳 Debit Card:</strong> Deposit to any debit card (takes 1-2 business days)
+                    </p>
+                  </div>
+
+                  <p style="color: #999; font-size: 12px; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd;">
+                    This payment link expires in 14 days. After that, the money will be returned to the sender.
                   </p>
+
+                  ${pendingPayment.memo ? `<p style="color: #666; font-size: 14px; margin-top: 1rem;"><strong>Note from sender:</strong> "${pendingPayment.memo}"</p>` : ''}
                 </div>
-
-                <p style="color: #999; font-size: 12px; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd;">
-                  This payment link expires in 14 days. After that, the money will be returned to the sender.
-                </p>
-
-                ${pendingPayment.memo ? `<p style="color: #666; font-size: 14px; margin-top: 1rem;"><strong>Note from sender:</strong> "${pendingPayment.memo}"</p>` : ''}
               </div>
-            </div>
-          `
-        });
+            `
+          });
+          console.log('✅ Recipient email sent to:', pendingPayment.recipient_email);
+        } catch (recipientEmailError) {
+          console.error('Error sending recipient email:', recipientEmailError);
+        }
 
         // Send email to SENDER notification
-        await sendEmail({
-          to: senderProfile?.email || user.email,
-          subject: `Payment Sent: $${transferAmount.toFixed(2)} is waiting to be claimed`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px 8px 0 0; text-align: center;">
-                <h1 style="margin: 0; font-size: 28px;">✅ Payment Sent!</h1>
-              </div>
-              <div style="background: #f8f9fa; padding: 2rem; border-radius: 0 0 8px 8px;">
-                <p style="color: #333; font-size: 16px;">
-                  Your Oakline Pay transfer of <strong style="color: #16a34a; font-size: 20px;">$${transferAmount.toFixed(2)}</strong> has been sent to <strong>${pendingPayment.recipient_email}</strong>
-                </p>
-                
-                <div style="background: white; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid #667eea;">
-                  <p style="margin: 0; color: #666; font-size: 14px; margin-bottom: 1rem;"><strong>Status: ⏳ Waiting for Recipient to Claim</strong></p>
-                  <p style="color: #666; font-size: 13px; margin: 0.5rem 0 0 0;">
-                    The recipient has 14 days to claim this payment via their Oakline Bank account or debit card.
+        try {
+          await sendEmail({
+            to: senderProfile?.email || user.email,
+            subject: `Payment Sent: $${transferAmount.toFixed(2)} is waiting to be claimed`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px 8px 0 0; text-align: center;">
+                  <h1 style="margin: 0; font-size: 28px;">✅ Payment Sent!</h1>
+                </div>
+                <div style="background: #f8f9fa; padding: 2rem; border-radius: 0 0 8px 8px;">
+                  <p style="color: #333; font-size: 16px;">
+                    Your Oakline Pay transfer of <strong style="color: #16a34a; font-size: 20px;">$${transferAmount.toFixed(2)}</strong> has been sent to <strong>${pendingPayment.recipient_email}</strong>
+                  </p>
+                  
+                  <div style="background: white; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid #667eea;">
+                    <p style="margin: 0; color: #666; font-size: 14px; margin-bottom: 1rem;"><strong>Status: ⏳ Waiting for Recipient to Claim</strong></p>
+                    <p style="color: #666; font-size: 13px; margin: 0.5rem 0 0 0;">
+                      The recipient has 14 days to claim this payment via their Oakline Bank account or debit card.
+                    </p>
+                  </div>
+
+                  <div style="background: #eff6ff; padding: 1rem; border-radius: 8px; margin: 1.5rem 0;">
+                    <p style="color: #333; font-size: 13px; margin: 0;"><strong>Payment Details:</strong></p>
+                    <p style="color: #666; font-size: 12px; margin: 0.5rem 0 0 0;">
+                      Amount: $${transferAmount.toFixed(2)}<br/>
+                      Recipient: ${pendingPayment.recipient_email}<br/>
+                      Expires: ${expiryDate}
+                    </p>
+                  </div>
+
+                  <p style="color: #999; font-size: 12px; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd;">
+                    You'll receive another notification once the recipient claims their payment.
                   </p>
                 </div>
-
-                <div style="background: #eff6ff; padding: 1rem; border-radius: 8px; margin: 1.5rem 0;">
-                  <p style="color: #333; font-size: 13px; margin: 0;"><strong>Payment Details:</strong></p>
-                  <p style="color: #666; font-size: 12px; margin: 0.5rem 0 0 0;">
-                    Amount: $${transferAmount.toFixed(2)}<br/>
-                    Recipient: ${pendingPayment.recipient_email}<br/>
-                    Expires: ${new Date(claimExpiresAt).toLocaleDateString()}
-                  </p>
-                </div>
-
-                <p style="color: #999; font-size: 12px; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd;">
-                  You'll receive another notification once the recipient claims their payment.
-                </p>
               </div>
-            </div>
-          `
-        });
+            `
+          });
+          console.log('✅ Sender notification email sent to:', senderProfile?.email || user.email);
+        } catch (senderEmailError) {
+          console.error('Error sending sender notification email:', senderEmailError);
+        }
       } catch (emailError) {
-        console.error('Error sending notification email:', emailError);
+        console.error('Error in email notification process:', emailError);
       }
 
       return res.status(200).json({
