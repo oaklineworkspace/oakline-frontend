@@ -61,6 +61,7 @@ export default function OaklinePayPage() {
     from_account: '',
     recipient_contact: '',
     recipient_type: 'oakline_tag',
+    recipient_name: '',
     amount: '',
     memo: ''
   });
@@ -888,6 +889,20 @@ export default function OaklinePayPage() {
                       required
                     />
                   </div>
+
+                  {sendForm.recipient_type === 'email' && (
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Recipient Name (Optional)</label>
+                      <input
+                        type="text"
+                        style={styles.input}
+                        value={sendForm.recipient_name}
+                        onChange={(e) => setSendForm({ ...sendForm, recipient_name: e.target.value })}
+                        placeholder="What's their name?"
+                        maxLength={100}
+                      />
+                    </div>
+                  )}
 
                   <div style={styles.formGrid}>
                     <div style={styles.formGroup}>
