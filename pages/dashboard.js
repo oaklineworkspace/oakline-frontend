@@ -1575,18 +1575,6 @@ function DashboardContent() {
             <span style={styles.quickActionIcon}>💸</span>
             <span style={styles.quickActionText}>Transfer Money</span>
           </Link>
-          <Link href="/coming-soon?feature=deposit" style={styles.standardActionButton}>
-            <span style={styles.quickActionIcon}>📥</span>
-            <span style={styles.quickActionText}>Mobile Deposit</span>
-          </Link>
-          <Link href="/coming-soon?feature=bill-pay" style={styles.standardActionButton}>
-            <span style={styles.quickActionIcon}>🧾</span>
-            <span style={styles.quickActionText}>Pay Bills</span>
-          </Link>
-          <Link href="/coming-soon?feature=withdraw" style={styles.standardActionButton}>
-            <span style={styles.quickActionIcon}>📤</span>
-            <span style={styles.quickActionText}>Withdraw Funds</span>
-          </Link>
           <Link href="/link-debit-card" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>💳</span>
             <span style={styles.quickActionText}>Link Debit Card</span>
@@ -1599,21 +1587,9 @@ function DashboardContent() {
             <span style={styles.quickActionIcon}>⚡</span>
             <span style={styles.quickActionText}>Oakline Pay</span>
           </Link>
-          <Link href="/coming-soon?feature=my-loans" style={styles.standardActionButton}>
-            <span style={styles.quickActionIcon}>💼</span>
-            <span style={styles.quickActionText}>My Loans</span>
-          </Link>
-          <Link href="/coming-soon?feature=apply-loan" style={styles.standardActionButton}>
-            <span style={styles.quickActionIcon}>💰</span>
-            <span style={styles.quickActionText}>Apply for Loan</span>
-          </Link>
           <Link href="/deposit-crypto" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>₿</span>
             <span style={styles.quickActionText}>Add Funds via Crypto</span>
-          </Link>
-          <Link href="/coming-soon?feature=investment" style={styles.standardActionButton}>
-            <span style={styles.quickActionIcon}>📈</span>
-            <span style={styles.quickActionText}>Invest</span>
           </Link>
           <Link href="/request-account" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>➕</span>
