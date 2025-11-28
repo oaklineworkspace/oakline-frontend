@@ -2224,7 +2224,7 @@ export default function OaklinePayPage() {
               </div>
               <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
                 {selectedOaklineTransaction.is_pending_claim 
-                  ? `⏳ Waiting to be claimed (14 days)`
+                  ? (selectedOaklineTransaction.status === 'claimed' ? '✅ Payment Claimed' : `⏳ Waiting to be claimed (14 days)`)
                   : selectedOaklineTransaction.status === 'completed' 
                     ? '✓ Transaction Completed' 
                     : `Status: ${selectedOaklineTransaction.status?.toUpperCase()}`}
@@ -2255,8 +2255,8 @@ export default function OaklinePayPage() {
                         : (selectedOaklineTransaction.sender_contact ? `@${selectedOaklineTransaction.sender_contact}` : 'Sender')}
                   </div>
                   {selectedOaklineTransaction.is_pending_claim && selectedOaklineTransaction.sender_id === user?.id && (
-                    <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: '0.1rem', fontWeight: '500' }}>
-                      Not yet claimed
+                    <div style={{ fontSize: '0.75rem', color: selectedOaklineTransaction.status === 'claimed' ? '#059669' : '#f59e0b', marginTop: '0.1rem', fontWeight: '500' }}>
+                      {selectedOaklineTransaction.status === 'claimed' ? '✅ Claimed' : 'Not yet claimed'}
                     </div>
                   )}
                   {selectedOaklineTransaction.sender_id === user?.id && !selectedOaklineTransaction.is_pending_claim && selectedOaklineTransaction.recipient_name && (
@@ -2278,17 +2278,17 @@ export default function OaklinePayPage() {
                   fontSize: '0.85rem', 
                   fontWeight: '600', 
                   backgroundColor: selectedOaklineTransaction.is_pending_claim
-                    ? '#fef3c7'
+                    ? (selectedOaklineTransaction.status === 'claimed' ? '#dcfce7' : '#fef3c7')
                     : selectedOaklineTransaction.status === 'completed' ? '#dcfce7' : selectedOaklineTransaction.status === 'pending' ? '#fef3c7' : '#fee2e2',
                   color: selectedOaklineTransaction.is_pending_claim
-                    ? '#92400e'
+                    ? (selectedOaklineTransaction.status === 'claimed' ? '#15803d' : '#92400e')
                     : selectedOaklineTransaction.status === 'completed' ? '#15803d' : selectedOaklineTransaction.status === 'pending' ? '#92400e' : '#b91c1c',
                   padding: '0.35rem 0.85rem', 
                   borderRadius: '16px',
                   textTransform: 'uppercase',
                   letterSpacing: '0.5px'
                 }}>
-                  {selectedOaklineTransaction.is_pending_claim ? 'WAITING' : (selectedOaklineTransaction.status || 'PENDING').toUpperCase()}
+                  {selectedOaklineTransaction.is_pending_claim ? (selectedOaklineTransaction.status === 'claimed' ? 'CLAIMED' : 'WAITING') : (selectedOaklineTransaction.status || 'PENDING').toUpperCase()}
                 </span>
               </div>
 
