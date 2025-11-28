@@ -35,7 +35,7 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized - Invalid authentication' });
     }
 
-    const { sender_account_id, recipient_contact, recipient_type, amount, memo, step, verification_code } = req.body;
+    const { sender_account_id, recipient_contact, recipient_type, recipient_name, amount, memo, step, verification_code } = req.body;
 
     // STEP 1: INITIATE TRANSFER
     if (step === 'initiate') {

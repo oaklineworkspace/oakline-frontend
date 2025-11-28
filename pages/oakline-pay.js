@@ -328,6 +328,7 @@ export default function OaklinePayPage() {
           sender_account_id: sendForm.from_account,
           recipient_contact: sendForm.recipient_contact,
           recipient_type: sendForm.recipient_type,
+          recipient_name: sendForm.recipient_name || sendForm.recipient_contact,
           amount: sendForm.amount,
           memo: sendForm.memo,
           step: 'initiate'
