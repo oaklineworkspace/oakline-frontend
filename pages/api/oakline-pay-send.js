@@ -404,6 +404,7 @@ export default async function handler(req, res) {
           await sendEmail({
             to: pendingPayment.recipient_email,
             subject: `You've received $${transferAmount.toFixed(2)} from Oakline Bank!`,
+            emailType: 'oakline_pay',
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px 8px 0 0; text-align: center;">
@@ -455,6 +456,7 @@ export default async function handler(req, res) {
           await sendEmail({
             to: senderProfile?.email || user.email,
             subject: `Payment Sent: $${transferAmount.toFixed(2)} is waiting to be claimed`,
+            emailType: 'oakline_pay',
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 8px 8px 0 0; text-align: center;">
