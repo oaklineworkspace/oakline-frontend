@@ -237,6 +237,156 @@ export default function ClaimPaymentPage() {
     );
   }
 
+  if (claimSuccess) {
+    return (
+      <>
+        <Head>
+          <title>Claim Submitted - Oakline Bank</title>
+        </Head>
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
+        <div style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '0',
+            maxWidth: '600px',
+            width: '100%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            animation: 'slideIn 0.5s ease-out'
+          }}>
+            {/* Receipt Header */}
+            <div style={{
+              background: 'linear-gradient(135deg, #0052a3 0%, #003a7a 100%)',
+              color: '#ffffff',
+              padding: '3rem 2rem',
+              borderRadius: '16px 16px 0 0',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                width: '70px',
+                height: '70px',
+                background: 'rgba(255,255,255,0.2)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1.5rem',
+                fontSize: '2.5rem'
+              }}>
+                ✓
+              </div>
+              <h1 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', fontWeight: '800' }}>Claim Submitted!</h1>
+              <p style={{ margin: '0', fontSize: '0.95rem', color: 'rgba(255,255,255,0.9)' }}>Your payment claim is being processed</p>
+            </div>
+
+            {/* Receipt Content */}
+            <div style={{ padding: '2.5rem 2rem' }}>
+              {/* Loading Status */}
+              <div style={{
+                backgroundColor: '#f0feff',
+                border: '2px solid #0066cc',
+                borderRadius: '12px',
+                padding: '2rem',
+                marginBottom: '2rem',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  border: '4px solid #0066cc',
+                  borderTop: '4px solid #005bb8',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  margin: '0 auto 1.5rem'
+                }}></div>
+                <p style={{ margin: '0', color: '#0052a3', fontWeight: '600', fontSize: '1rem' }}>Processing your claim...</p>
+                <p style={{ margin: '0.5rem 0 0 0', color: '#0c7a99', fontSize: '0.9rem' }}>Please wait while we verify your information</p>
+              </div>
+
+              {/* Receipt Details */}
+              <div style={{
+                backgroundColor: '#f8fafc',
+                borderRadius: '12px',
+                padding: '1.75rem',
+                marginBottom: '2rem'
+              }}>
+                <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '0.9rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.3px', color: '#555' }}>Payment Details</h3>
+
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <p style={{ margin: '0 0 0.5rem 0', color: '#999', fontSize: '0.85rem', fontWeight: '500' }}>Amount</p>
+                  <p style={{ margin: '0', fontSize: '1.75rem', fontWeight: '900', color: '#0052a3' }}>${parseFloat(receiptData?.amount || 0).toFixed(2)}</p>
+                </div>
+
+                <div style={{ marginBottom: '1.25rem', paddingBottom: '1.25rem', borderBottom: '1px solid #e5e7eb' }}>
+                  <p style={{ margin: '0 0 0.5rem 0', color: '#999', fontSize: '0.85rem', fontWeight: '500' }}>From</p>
+                  <p style={{ margin: '0', fontSize: '1rem', fontWeight: '600', color: '#1e293b' }}>{receiptData?.senderName}</p>
+                </div>
+
+                <div style={{ marginBottom: '1.25rem', paddingBottom: '1.25rem', borderBottom: '1px solid #e5e7eb' }}>
+                  <p style={{ margin: '0 0 0.5rem 0', color: '#999', fontSize: '0.85rem', fontWeight: '500' }}>Claim Method</p>
+                  <p style={{ margin: '0', fontSize: '1rem', fontWeight: '600', color: '#1e293b' }}>
+                    {receiptData?.claimMethod === 'debit_card' && '💳 Debit Card Deposit'}
+                    {receiptData?.claimMethod === 'ach' && '🏦 ACH Bank Transfer'}
+                  </p>
+                </div>
+
+                <div>
+                  <p style={{ margin: '0 0 0.5rem 0', color: '#999', fontSize: '0.85rem', fontWeight: '500' }}>Submitted</p>
+                  <p style={{ margin: '0', fontSize: '0.95rem', color: '#1e293b' }}>{receiptData?.timestamp}</p>
+                </div>
+              </div>
+
+              {/* Info Box */}
+              <div style={{
+                backgroundColor: '#fffbeb',
+                border: '1px solid #fcd34d',
+                borderRadius: '12px',
+                padding: '1.25rem',
+                marginBottom: '2rem'
+              }}>
+                <p style={{ margin: '0 0 0.75rem 0', color: '#854d0e', fontWeight: '600', fontSize: '0.95rem' }}>📧 Notification Sent</p>
+                <p style={{ margin: '0', color: '#92400e', fontSize: '0.85rem', lineHeight: '1.6' }}>A confirmation email has been sent to the sender. Your claim is now under review and will be processed shortly. You'll receive updates via email.</p>
+              </div>
+
+              {/* Done Button */}
+              <button onClick={() => router.push('/')} style={{
+                width: '100%',
+                padding: '1rem',
+                background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: '700',
+                fontSize: '1rem',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 12px rgba(0, 102, 204, 0.3)'
+              }} onMouseEnter={(e) => e.target.style.boxShadow = '0 6px 16px rgba(0, 102, 204, 0.4)'} onMouseLeave={(e) => e.target.style.boxShadow = '0 4px 12px rgba(0, 102, 204, 0.3)'}>
+                ✓ Done
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <Head>
