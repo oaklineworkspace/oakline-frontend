@@ -811,7 +811,6 @@ export default function OaklinePayPage() {
                       >
                         <option value="oakline_tag">Oakline Tag</option>
                         <option value="email">Email</option>
-                        <option value="phone">Phone</option>
                       </select>
                     </div>
 
@@ -877,7 +876,6 @@ export default function OaklinePayPage() {
                     <label style={styles.label}>
                       {sendForm.recipient_type === 'oakline_tag' && 'Oakline Tag (e.g., @johndoe) *'}
                       {sendForm.recipient_type === 'email' && 'Email Address *'}
-                      {sendForm.recipient_type === 'phone' && 'Phone Number *'}
                     </label>
                     <input
                       type={sendForm.recipient_type === 'email' ? 'email' : 'text'}
@@ -885,9 +883,7 @@ export default function OaklinePayPage() {
                       value={sendForm.recipient_contact}
                       onChange={(e) => setSendForm({ ...sendForm, recipient_contact: e.target.value })}
                       placeholder={
-                        sendForm.recipient_type === 'oakline_tag' ? '@username' :
-                        sendForm.recipient_type === 'email' ? 'email@example.com' :
-                        '+1234567890'
+                        sendForm.recipient_type === 'oakline_tag' ? '@username' : 'email@example.com'
                       }
                       required
                     />
