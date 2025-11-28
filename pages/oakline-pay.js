@@ -160,16 +160,23 @@ export default function OaklinePayPage() {
         console.error('Error loading transactions:', txnError);
       }
 
-      // Load pending claims (both sent and received)
-      const { data: pendingClaims, error: claimsError } = await supabase
-        .from('oakline_pay_pending_claims')
-        .select('*')
-        .or(`sender_id.eq.${session.user.id},recipient_email.eq.${session.user?.email}`)
-        .order('created_at', { ascending: false })
-        .limit(50);
+      // Load pending claims sent by user
+      let pendingClaims = [];
+      try {
+        const { data: sentClaims, error: claimsError } = await supabase
+          .from('oakline_pay_pending_claims')
+          .select('*')
+          .eq('sender_id', session.user.id)
+          .order('created_at', { ascending: false })
+          .limit(50);
 
-      if (claimsError) {
-        console.error('Error loading pending claims:', claimsError);
+        if (claimsError) {
+          console.error('Error loading pending claims:', claimsError);
+        } else {
+          pendingClaims = sentClaims || [];
+        }
+      } catch (claimsException) {
+        console.error('Exception loading pending claims:', claimsException);
       }
 
       // Merge and format pending claims as transaction-like objects
@@ -2191,7 +2198,11 @@ export default function OaklinePayPage() {
                 {selectedOaklineTransaction.sender_id === user?.id ? '-' : '+'} ${parseFloat(selectedOaklineTransaction.amount).toFixed(2)}
               </div>
               <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                {selectedOaklineTransaction.status === 'completed' ? '✓ Transaction Completed' : `Status: ${selectedOaklineTransaction.status?.toUpperCase()}`}
+                {selectedOaklineTransaction.is_pending_claim 
+                  ? `⏳ Waiting to be claimed (14 days)`
+                  : selectedOaklineTransaction.status === 'completed' 
+                    ? '✓ Transaction Completed' 
+                    : `Status: ${selectedOaklineTransaction.status?.toUpperCase()}`}
               </div>
             </div>
 
@@ -2212,11 +2223,18 @@ export default function OaklinePayPage() {
                 </span>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '700' }}>
-                    {selectedOaklineTransaction.sender_id === user?.id 
-                      ? (selectedOaklineTransaction.recipient_contact ? `@${selectedOaklineTransaction.recipient_contact}` : 'User')
-                      : (selectedOaklineTransaction.sender_contact ? `@${selectedOaklineTransaction.sender_contact}` : 'Sender')}
+                    {selectedOaklineTransaction.is_pending_claim && selectedOaklineTransaction.sender_id === user?.id
+                      ? selectedOaklineTransaction.recipient_email
+                      : selectedOaklineTransaction.sender_id === user?.id 
+                        ? (selectedOaklineTransaction.recipient_contact ? `@${selectedOaklineTransaction.recipient_contact}` : 'User')
+                        : (selectedOaklineTransaction.sender_contact ? `@${selectedOaklineTransaction.sender_contact}` : 'Sender')}
                   </div>
-                  {selectedOaklineTransaction.sender_id === user?.id && selectedOaklineTransaction.recipient_name && (
+                  {selectedOaklineTransaction.is_pending_claim && selectedOaklineTransaction.sender_id === user?.id && (
+                    <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: '0.1rem', fontWeight: '500' }}>
+                      Not yet claimed
+                    </div>
+                  )}
+                  {selectedOaklineTransaction.sender_id === user?.id && !selectedOaklineTransaction.is_pending_claim && selectedOaklineTransaction.recipient_name && (
                     <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.1rem', fontWeight: '500' }}>
                       {selectedOaklineTransaction.recipient_name}
                     </div>
@@ -2234,16 +2252,29 @@ export default function OaklinePayPage() {
                 <span style={{ 
                   fontSize: '0.85rem', 
                   fontWeight: '600', 
-                  backgroundColor: selectedOaklineTransaction.status === 'completed' ? '#dcfce7' : selectedOaklineTransaction.status === 'pending' ? '#fef3c7' : '#fee2e2',
-                  color: selectedOaklineTransaction.status === 'completed' ? '#15803d' : selectedOaklineTransaction.status === 'pending' ? '#92400e' : '#b91c1c',
+                  backgroundColor: selectedOaklineTransaction.is_pending_claim
+                    ? '#fef3c7'
+                    : selectedOaklineTransaction.status === 'completed' ? '#dcfce7' : selectedOaklineTransaction.status === 'pending' ? '#fef3c7' : '#fee2e2',
+                  color: selectedOaklineTransaction.is_pending_claim
+                    ? '#92400e'
+                    : selectedOaklineTransaction.status === 'completed' ? '#15803d' : selectedOaklineTransaction.status === 'pending' ? '#92400e' : '#b91c1c',
                   padding: '0.35rem 0.85rem', 
                   borderRadius: '16px',
                   textTransform: 'uppercase',
                   letterSpacing: '0.5px'
                 }}>
-                  {(selectedOaklineTransaction.status || 'PENDING').toUpperCase()}
+                  {selectedOaklineTransaction.is_pending_claim ? 'WAITING' : (selectedOaklineTransaction.status || 'PENDING').toUpperCase()}
                 </span>
               </div>
+
+              {selectedOaklineTransaction.is_pending_claim && selectedOaklineTransaction.sender_id === user?.id && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #e2e8f0', alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>Expires In</span>
+                  <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                    14 days
+                  </span>
+                </div>
+              )}
 
               {selectedOaklineTransaction.memo && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid #e2e8f0', alignItems: 'flex-start' }}>
