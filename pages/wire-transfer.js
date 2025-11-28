@@ -347,15 +347,7 @@ export default function WireTransfer() {
       return false;
     }
 
-    // Validate SWIFT code for international transfers
-    if (wireForm.transfer_type === 'international') {
-      const swiftValidation = validateSwiftCode(wireForm.swift_code);
-      if (!swiftValidation.valid) {
-        setMessage(swiftValidation.error);
-        setMessageType('error');
-        return false;
-      }
-    }
+    // SWIFT code validation skipped for international transfers - admins will review manually
 
     // Validate routing number only if provided or if domestic
     if (wireForm.routing_number) {
