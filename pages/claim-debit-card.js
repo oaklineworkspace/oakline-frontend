@@ -47,6 +47,10 @@ export default function ClaimPaymentPage() {
     routing_number: '',
     account_type: 'checking',
     ssn: '',
+    iban: '',
+    swift_code: '',
+    bank_name: '',
+    id_number: '',
     date_of_birth: ''
   });
 
