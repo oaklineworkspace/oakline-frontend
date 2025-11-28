@@ -376,7 +376,7 @@ export default function OaklinePayPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
-      // For non-Oakline users, confirm the payment (this deducts the balance)
+      // For non-Oakline users, confirm the payment with PIN (this deducts the balance)
       if (!pendingTransaction.is_oakline_user) {
         setTransferStatus('Processing payment...');
         setTransferStatusType('info');
@@ -390,7 +390,8 @@ export default function OaklinePayPage() {
             body: JSON.stringify({
               step: 'confirm',
               payment_id: pendingTransaction.payment_id,
-              sender_account_id: pendingTransaction.sender_account_id
+              sender_account_id: pendingTransaction.sender_account_id,
+              pin: verifyForm.code
             })
           });
 
@@ -1092,11 +1093,7 @@ export default function OaklinePayPage() {
                       </button>
                       <button 
                         onClick={() => {
-                          if (pendingTransaction.is_oakline_user) {
-                            setTransferStep('pin');
-                          } else {
-                            handleVerifyTransfer({ preventDefault: () => {} });
-                          }
+                          setTransferStep('pin');
                         }}
                         style={{
                           ...styles.primaryButton,
@@ -1105,7 +1102,7 @@ export default function OaklinePayPage() {
                         }}
                         disabled={loading}
                       >
-                        {loading ? 'Sending...' : pendingTransaction.is_oakline_user ? '✓ Looks Good' : '✓ Send Payment'}
+                        {loading ? 'Sending...' : '✓ Verify with PIN'}
                       </button>
                     </div>
                   </div>

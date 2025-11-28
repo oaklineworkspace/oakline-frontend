@@ -269,11 +269,11 @@ export default async function handler(req, res) {
         });
 
       } else {
-        // NON-OAKLINE USER - Pending Payment Flow
+        // NON-OAKLINE USER - Pending Payment Flow (requires PIN verification)
         const claimToken = generateClaimToken();
         const claimExpiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000); // 14 days
 
-        // Create pending payment record (NO balance deduction yet)
+        // Create pending payment record with verification pending status
         const { data: pendingPayment, error: pendingError } = await supabaseAdmin
           .from('oakline_pay_pending_claims')
           .insert({
@@ -298,21 +298,22 @@ export default async function handler(req, res) {
 
         return res.status(200).json({
           success: true,
-          message: `Ready to send. Click 'Send Payment' to confirm.`,
+          message: 'Verify with PIN to send this payment',
           payment_id: pendingPayment.id,
           sender_account_id: sender_account_id,
           claim_token: claimToken,
           recipient_contact: recipient_contact,
           amount: transferAmount,
           is_oakline_user: false,
+          requires_pin: true,
           expires_at: claimExpiresAt,
           reference_number: referenceNumber
         });
       }
 
     } else if (step === 'confirm') {
-      // STEP 2: CONFIRM & DEDUCT FOR NON-OAKLINE USERS
-      const { payment_id, sender_account_id: confirmSenderAccountId } = req.body;
+      // STEP 2: CONFIRM & DEDUCT FOR NON-OAKLINE USERS (after PIN verification)
+      const { payment_id, sender_account_id: confirmSenderAccountId, pin } = req.body;
 
       if (!payment_id) {
         return res.status(400).json({ error: 'Payment ID required' });
@@ -320,6 +321,26 @@ export default async function handler(req, res) {
 
       if (!confirmSenderAccountId) {
         return res.status(400).json({ error: 'Account ID required' });
+      }
+
+      if (!pin) {
+        return res.status(400).json({ error: 'PIN required for payment confirmation' });
+      }
+
+      // Verify PIN before processing
+      const { data: profile, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('transaction_pin')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || !profile?.transaction_pin) {
+        return res.status(400).json({ error: 'Unable to verify PIN' });
+      }
+
+      const isPinValid = await bcryptjs.compare(pin, profile.transaction_pin);
+      if (!isPinValid) {
+        return res.status(400).json({ error: 'Invalid PIN. Payment not sent.' });
       }
 
       const sender_account_id = confirmSenderAccountId;
