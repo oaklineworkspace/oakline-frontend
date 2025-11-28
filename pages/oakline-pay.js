@@ -1551,7 +1551,9 @@ export default function OaklinePayPage() {
                   <div style={{ textAlign: 'center', fontSize: '1.5rem', color: '#059669' }}>↓</div>
                   <div style={{ backgroundColor: '#ecfdf5', padding: '1rem', borderRadius: '10px', border: '2px solid #d1fae5' }}>
                     <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#065f46', textTransform: 'uppercase' }}>To</p>
-                    <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#047857' }}>{pendingTransaction.recipient_name || 'Recipient'}</p>
+                    <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700', color: '#047857' }}>
+                      {pendingTransaction.recipient_type === 'oakline_tag' ? `@${pendingTransaction.recipient_contact}` : pendingTransaction.recipient_contact}
+                    </p>
                   </div>
                   <div style={{ backgroundColor: '#fff7ed', padding: '1.25rem', borderRadius: '10px', border: '2px solid #fed7aa', textAlign: 'center' }}>
                     <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', fontWeight: '700', color: '#92400e', textTransform: 'uppercase' }}>Amount</p>
