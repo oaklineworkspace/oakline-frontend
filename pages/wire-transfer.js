@@ -1150,36 +1150,19 @@ export default function WireTransfer() {
                           </label>
                           <input
                             type="text"
-                            style={{
-                              ...styles.input,
-                              borderColor: validationErrors.swift_code ? '#dc2626' : '#e2e8f0'
-                            }}
+                            style={styles.input}
                             value={wireForm.swift_code}
                             onChange={(e) => {
                               handleInputChange('swift_code', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''));
                               setValidationErrors(prev => ({ ...prev, swift_code: '' }));
                             }}
-                            onBlur={() => {
-                              if (wireForm.swift_code) {
-                                const validation = validateSwiftCode(wireForm.swift_code);
-                                if (!validation.valid) {
-                                  setValidationErrors(prev => ({ ...prev, swift_code: validation.error }));
-                                }
-                              }
-                            }}
                             placeholder="Example: CHASUS33XXX (Enter bank's SWIFT/BIC code)"
                             maxLength="11"
                             required
                           />
-                          {validationErrors.swift_code ? (
-                            <div style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.375rem', fontWeight: '600' }}>
-                              ⚠️ {validationErrors.swift_code}
-                            </div>
-                          ) : (
-                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.375rem' }}>
-                              Format: 4 letters (bank) + 2 letters (country) + 2 characters (location) + 3 characters (branch, optional)
-                            </div>
-                          )}
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.375rem' }}>
+                            Enter any format - our team will review and verify during processing
+                          </div>
                         </div>
                       )}
 
@@ -1198,10 +1181,10 @@ export default function WireTransfer() {
                           value={wireForm.routing_number}
                           onChange={(e) => {
                             // For domestic US, only allow digits and limit to 9
-                            // For international, allow alphanumeric up to 11 characters
+                            // For international, allow any characters (no format restrictions)
                             const value = wireForm.transfer_type === 'domestic'
                               ? e.target.value.replace(/\D/g, '').slice(0, 9)
-                              : e.target.value.toUpperCase().replace(/[^A-Z0-9\s-]/g, '').slice(0, 11);
+                              : e.target.value.slice(0, 50);
                             handleInputChange('routing_number', value);
                             setValidationErrors(prev => ({ ...prev, routing_number: '' }));
                           }}
@@ -1220,9 +1203,9 @@ export default function WireTransfer() {
                           placeholder={
                             wireForm.transfer_type === 'domestic'
                               ? '021000021'
-                              : 'UK-123456, CA-12345678 (Optional)'
+                              : 'Enter any format - our team will verify'
                           }
-                          maxLength={wireForm.transfer_type === 'domestic' ? '9' : '11'}
+                          maxLength={wireForm.transfer_type === 'domestic' ? '9' : '50'}
                           required={wireForm.transfer_type === 'domestic'}
                         />
                         {validationErrors.routing_number ? (
@@ -1233,7 +1216,7 @@ export default function WireTransfer() {
                           <div style={{ fontSize: '0.8125rem', color: '#64748b', marginTop: '0.5rem' }}>
                             {wireForm.transfer_type === 'domestic'
                               ? 'Enter 9-digit ABA routing number'
-                              : 'Optional - Format varies by country (UK: 6 digits, CA: 8 digits, AU: 6 digits)'
+                              : 'Optional - Any format accepted, will be verified during processing'
                             }
                           </div>
                         )}
