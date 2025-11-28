@@ -917,7 +917,7 @@ export default function OaklinePayPage() {
                     </div>
                   </div>
 
-                  {transferStatus === 'processing' && (
+                  {(transferStatus === 'processing' || loading) && (
                     <div style={{
                       backgroundColor: 'rgba(5, 150, 105, 0.15)',
                       border: '2px solid #059669',
@@ -944,7 +944,7 @@ export default function OaklinePayPage() {
                         }}>⏳</div>
                       </div>
                       <div style={{ color: '#047857', fontSize: '1rem', fontWeight: '600' }}>
-                        Processing your transfer...
+                        {loading ? 'Processing your request...' : 'Processing your transfer...'}
                       </div>
                     </div>
                   )}
@@ -955,7 +955,7 @@ export default function OaklinePayPage() {
                     cursor: loading ? 'not-allowed' : 'pointer'
                   }} disabled={loading || (sendForm.from_account && accounts.find(acc => acc.id === sendForm.from_account) && 
                     parseFloat(accounts.find(acc => acc.id === sendForm.from_account)?.balance || 0) < parseFloat(sendForm.amount || 0) && sendForm.amount)}>
-                    💸 Send Money
+                    {loading ? '⏳ Processing...' : '💸 Send Money'}
                   </button>
                     </form>
 
