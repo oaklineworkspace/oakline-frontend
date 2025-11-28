@@ -33,6 +33,7 @@ export default function OaklinePayPage() {
   const [transactions, setTransactions] = useState([]);
   const [paymentRequests, setPaymentRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('success');
   const [setupMessage, setSetupMessage] = useState('');
@@ -309,14 +310,14 @@ export default function OaklinePayPage() {
 
   const handleSendMoney = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setIsSubmitting(true);
     setTagNotFoundError(false);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         showMsg('Please sign in to continue', 'error');
-        setLoading(false);
+        setIsSubmitting(false);
         return;
       }
 
@@ -341,14 +342,14 @@ export default function OaklinePayPage() {
 
       if (!response.ok) {
         showMsg(data.error || 'Transfer failed', 'error');
-        setLoading(false);
+        setIsSubmitting(false);
         return;
       }
 
       // Check if tag search failed
       if (sendForm.recipient_type === 'oakline_tag' && !data.is_oakline_user) {
         setTagNotFoundError(true);
-        setLoading(false);
+        setIsSubmitting(false);
         return;
       }
 
@@ -369,7 +370,7 @@ export default function OaklinePayPage() {
       console.error('Error sending money:', error);
       showMsg('An error occurred. Please try again.', 'error');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -969,11 +970,11 @@ export default function OaklinePayPage() {
                   
                   <button type="submit" style={{
                     ...styles.primaryButton,
-                    opacity: loading ? 0.6 : 1,
-                    cursor: loading ? 'not-allowed' : 'pointer'
-                  }} disabled={loading || (sendForm.from_account && accounts.find(acc => acc.id === sendForm.from_account) && 
+                    opacity: isSubmitting ? 0.6 : 1,
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer'
+                  }} disabled={isSubmitting || (sendForm.from_account && accounts.find(acc => acc.id === sendForm.from_account) && 
                     parseFloat(accounts.find(acc => acc.id === sendForm.from_account)?.balance || 0) < parseFloat(sendForm.amount || 0) && sendForm.amount)}>
-                    {loading ? '⏳ Processing...' : '💸 Send Money'}
+                    {isSubmitting ? '⏳ Processing...' : '💸 Send Money'}
                   </button>
                     </form>
 
