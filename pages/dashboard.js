@@ -960,27 +960,7 @@ function DashboardContent() {
                     <Link href="/transfer" style={styles.dropdownLink}>💸 Transfer Money</Link>
                     <Link href="/cards" style={styles.dropdownLink}>💳 My Cards</Link>
                     <Link href="/transactions" style={styles.dropdownLink}>📜 Transaction History</Link>
-                    <Link href="/bill-pay" style={styles.dropdownLink}>🧾 Pay Bills</Link>
-                    <Link href="/deposit-real" style={styles.dropdownLink}>📱 Mobile Deposit</Link>
                     <Link href="/deposit-crypto" style={styles.dropdownLink}>₿ Deposit Funds via Cryptocurrency</Link>
-                    <Link href="/withdrawal" style={styles.dropdownLink}>📤 Withdraw Funds</Link>
-                  </div>
-                  <div style={styles.dropdownDivider}></div>
-                  <div style={styles.dropdownSection}>
-                    <h4 style={styles.dropdownSectionTitle}>Loans & Credit</h4>
-                    <Link href="/loan/dashboard" style={styles.dropdownLink}>💳 My Loan Dashboard</Link>
-                    <Link href="/loan" style={styles.dropdownLink}>📋 All My Loans</Link>
-                    <Link href="/loans" style={styles.dropdownLink}>📊 Loans Overview</Link>
-                    <Link href="/loan/apply" style={styles.dropdownLink}>➕ Apply for New Loan</Link>
-                    <Link href="/credit-report" style={styles.dropdownLink}>📈 Credit Report</Link>
-                    <Link href="/apply-card" style={styles.dropdownLink}>💳 Apply for Card</Link>
-                  </div>
-                  <div style={styles.dropdownDivider}></div>
-                  <div style={styles.dropdownSection}>
-                    <h4 style={styles.dropdownSectionTitle}>📈 Investments</h4>
-                    <Link href="/investment" style={styles.dropdownLink}>📊 Portfolio</Link>
-                    <Link href="/crypto" style={styles.dropdownLink}>₿ Crypto Trading</Link>
-                    <Link href="/market-news" style={styles.dropdownLink}>📰 Market News</Link>
                   </div>
                   <div style={styles.dropdownDivider}></div>
                   <div style={styles.dropdownSection}>
