@@ -258,10 +258,14 @@ export default function CryptoDeposit() {
         }));
       }
 
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
       const { data: userDeposits } = await supabase
         .from('crypto_deposits')
         .select('*')
         .eq('user_id', session.user.id)
+        .gte('created_at', thirtyDaysAgo.toISOString())
         .order('created_at', { ascending: false })
         .limit(10);
       setDeposits(userDeposits || []);
