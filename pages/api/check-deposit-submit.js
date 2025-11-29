@@ -61,6 +61,7 @@ export default async function handler(req, res) {
 
     const { data: deposit, error: depositError } = await supabaseAdmin
       .from('check_deposits')
+      .rls(false)
       .insert([{
         user_id: user.id,
         account_id,
@@ -76,7 +77,7 @@ export default async function handler(req, res) {
 
     if (depositError) {
       console.error('Error creating check deposit:', depositError);
-      return res.status(500).json({ error: 'Failed to submit deposit' });
+      return res.status(500).json({ error: `Failed to submit deposit: ${depositError.message}` });
     }
 
     const { data: profile } = await supabaseAdmin
