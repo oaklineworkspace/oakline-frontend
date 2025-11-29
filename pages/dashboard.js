@@ -1153,12 +1153,6 @@ function DashboardContent() {
                           <div style={styles.dropdownItemDesc}>Add funds to your balance using cryptocurrency</div>
                         </div>
                       </Link>
-                      <Link href="/deposit-real" style={styles.addFundsDropdownItem}>
-                        <div>
-                          <div style={styles.dropdownItemTitle}>📱 Mobile Check Deposit</div>
-                          <div style={styles.dropdownItemDesc}>Add funds to your balance using mobile check</div>
-                        </div>
-                      </Link>
                     </div>
                   )}
                 </div>
