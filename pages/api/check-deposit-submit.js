@@ -61,6 +61,7 @@ export default async function handler(req, res) {
 
     const { data: deposit, error: depositError } = await supabaseAdmin
       .from('check_deposits')
+      .rls(false)
       .insert([{
         user_id: user.id,
         account_id,
