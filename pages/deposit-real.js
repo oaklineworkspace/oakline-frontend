@@ -118,7 +118,7 @@ export default function DepositReal() {
     const filename = `${userId}/${accountId}/${Date.now()}_${file.name}`;
     const filePath = `checks/${filename}`;
 
-    const { error } = await supabase.storage.from('check-images').upload(filePath, file, {
+    const { error } = await supabase.storage.from('documents').upload(filePath, file, {
       cacheControl: '3600',
       upsert: true,
     });

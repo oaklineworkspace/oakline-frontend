@@ -100,7 +100,6 @@ export default async function handler(req, res) {
       action: 'check_deposit_submit',
       table_name: 'check_deposits',
       old_data: {
-        deposit_count: deposits?.length || 0,
         account_balance: parseFloat(account.balance)
       },
       new_data: {
