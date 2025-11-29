@@ -1,5 +1,4 @@
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
-import { sendEmail } from '../../lib/email';
 
 function generateReferenceNumber() {
   return `CHK-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
@@ -47,7 +46,7 @@ export default async function handler(req, res) {
 
     const referenceNumber = generateReferenceNumber();
 
-    // Simply insert the check deposit record with RLS disabled
+    // Insert the check deposit record
     const { data: deposit, error: depositError } = await supabaseAdmin
       .from('check_deposits')
       .insert([{
@@ -76,75 +75,5 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('Unexpected error in check deposit:', error);
     return res.status(500).json({ error: 'An unexpected error occurred. Please try again.' });
-  }
-}
-              <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 32px 24px; text-align: center;">
-                <h1 style="color: #ffffff; font-size: 28px; font-weight: 700; margin: 0;">📸 Check Deposit Received</h1>
-                <p style="color: #ffffff; opacity: 0.9; font-size: 16px; margin: 8px 0 0 0;">Oakline Bank</p>
-              </div>
-              
-              <div style="padding: 40px 32px;">
-                <h2 style="color: #1e40af; font-size: 24px; font-weight: 700; margin: 0 0 16px 0;">
-                  Hello ${customerName},
-                </h2>
-                
-                <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
-                  We have received your check deposit and it is being processed.
-                </p>
-                
-                <div style="background-color: #f0f9ff; border-left: 4px solid #1e40af; padding: 20px; margin: 24px 0;">
-                  <div style="margin-bottom: 12px;">
-                    <strong style="color: #1e40af;">Amount:</strong>
-                    <span style="color: #1e293b; font-size: 18px; font-weight: 700; margin-left: 8px;">$${depositAmount.toFixed(2)}</span>
-                  </div>
-                  <div style="margin-bottom: 12px;">
-                    <strong style="color: #1e40af;">Reference Number:</strong>
-                    <span style="color: #1e293b; margin-left: 8px; font-family: monospace;">${referenceNumber}</span>
-                  </div>
-                  <div>
-                    <strong style="color: #1e40af;">Status:</strong>
-                    <span style="color: #f59e0b; margin-left: 8px;">Pending Review</span>
-                  </div>
-                </div>
-                
-                <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0;">
-                  <p style="color: #92400e; font-size: 14px; font-weight: 500; margin: 0;">
-                    ⏱️ Funds typically available within 1-2 business days after approval
-                  </p>
-                </div>
-                
-                <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 24px 0;">
-                  You'll receive another email once your deposit has been reviewed and approved.
-                </p>
-              </div>
-              
-              <div style="background-color: #f7fafc; padding: 24px; text-align: center; border-top: 1px solid #e2e8f0;">
-                <p style="color: #718096; font-size: 12px; margin: 0;">
-                  © ${new Date().getFullYear()} Oakline Bank. All rights reserved.<br/>
-                  Member FDIC | Equal Housing Lender | Routing: 075915826
-                </p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `
-      });
-    } catch (emailError) {
-      console.error('Error sending email:', emailError);
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: 'Check deposit submitted successfully',
-      reference_number: referenceNumber,
-      deposit_id: deposit.id
-    });
-
-  } catch (error) {
-    console.error('Check deposit error:', error);
-    return res.status(500).json({
-      error: 'Deposit submission failed',
-      message: error.message
-    });
   }
 }
