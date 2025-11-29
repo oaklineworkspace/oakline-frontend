@@ -604,15 +604,6 @@ export default function Profile() {
             <span style={styles.infoValue}>{formatDate(userProfile?.date_of_birth)}</span>
           </div>
           <div style={styles.infoItem}>
-            <span style={styles.infoLabel}>Address</span>
-            <span style={styles.infoValue}>
-              {userProfile?.address ? 
-                `${userProfile.address}${userProfile.city ? ', ' + userProfile.city : ''}${userProfile.state ? ', ' + userProfile.state : ''} ${userProfile.zip_code || ''}`.trim() : 
-                'N/A'
-              }
-            </span>
-          </div>
-          <div style={styles.infoItem}>
             <span style={styles.infoLabel}>Country</span>
             <span style={styles.infoValue}>{userProfile?.country || 'N/A'}</span>
           </div>
