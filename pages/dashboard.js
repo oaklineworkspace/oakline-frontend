@@ -142,6 +142,9 @@ function DashboardContent() {
         );
       }
 
+      const thirtyDaysAgoForCrypto = new Date();
+      thirtyDaysAgoForCrypto.setDate(thirtyDaysAgoForCrypto.getDate() - 30);
+
       queryPromises.push(
         supabase
           .from('crypto_deposits')
@@ -158,8 +161,9 @@ function DashboardContent() {
             )
           `)
           .eq('user_id', userId)
+          .gte('created_at', thirtyDaysAgoForCrypto.toISOString())
           .order('created_at', { ascending: false })
-          .limit(20)
+          .limit(10)
       );
 
       queryPromises.push(
@@ -178,8 +182,9 @@ function DashboardContent() {
             )
           `)
           .eq('user_id', userId)
+          .gte('created_at', thirtyDaysAgoForCrypto.toISOString())
           .order('created_at', { ascending: false })
-          .limit(20)
+          .limit(10)
       );
 
       // Also fetch Oakline Pay transactions to show in dashboard with account details
