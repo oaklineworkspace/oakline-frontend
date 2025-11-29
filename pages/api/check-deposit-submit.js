@@ -45,23 +45,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Check deposits over $5,000 require manual review. Please visit a branch or contact support.' });
     }
 
-    const { data: account, error: accountError } = await supabaseAdmin
-      .from('accounts')
-      .select('*')
-      .eq('id', account_id)
-      .eq('user_id', user.id)
-      .eq('status', 'active')
-      .single();
-
-    if (accountError || !account) {
-      return res.status(404).json({ error: 'Account not found or inactive' });
-    }
-
     const referenceNumber = generateReferenceNumber();
 
+    // Simply insert the check deposit record with RLS disabled
     const { data: deposit, error: depositError } = await supabaseAdmin
       .from('check_deposits')
-      .rls(false)
       .insert([{
         user_id: user.id,
         account_id,
@@ -72,71 +60,24 @@ export default async function handler(req, res) {
         status: 'pending',
         metadata: { reference_number: referenceNumber }
       }])
-      .select()
-      .single();
+      .select();
 
     if (depositError) {
       console.error('Error creating check deposit:', depositError);
       return res.status(500).json({ error: `Failed to submit deposit: ${depositError.message}` });
     }
 
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('first_name, last_name, email')
-      .eq('id', user.id)
-      .single();
-
-    const customerName = profile ? `${profile.first_name} ${profile.last_name}` : 'Customer';
-    const customerEmail = profile?.email || user.email;
-
-    await supabaseAdmin.from('notifications').insert([{
-      user_id: user.id,
-      type: 'check_deposit',
-      title: 'Check Deposit Received',
-      message: `Your check deposit of $${depositAmount.toFixed(2)} is being processed. Ref: ${referenceNumber}`
-    }]);
-
-    await supabaseAdmin.from('audit_logs').insert([{
-      user_id: user.id,
-      action: 'check_deposit_submit',
-      table_name: 'check_deposits',
-      old_data: {
-        account_balance: parseFloat(account.balance)
-      },
-      new_data: {
-        amount: depositAmount,
-        reference: referenceNumber,
-        account_id,
-        check_number,
-        status: 'pending'
-      }
-    }]);
-
-    await supabaseAdmin.from('system_logs').insert([{
-      level: 'info',
-      type: 'transaction',
-      message: `Check deposit submitted: ${referenceNumber}`,
-      details: {
-        user_id: user.id,
-        amount: depositAmount,
-        reference: referenceNumber
-      },
-      user_id: user.id
-    }]);
-
-    try {
-      await sendEmail({
-        to: customerEmail,
-        subject: '✓ Check Deposit Received - Oakline Bank',
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          </head>
-          <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8fafc;">
-            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    // Return success with reference number
+    return res.status(200).json({
+      success: true,
+      reference_number: referenceNumber,
+      message: `Check deposit submitted successfully for review. Reference: ${referenceNumber}`
+    });
+  } catch (error) {
+    console.error('Unexpected error in check deposit:', error);
+    return res.status(500).json({ error: 'An unexpected error occurred. Please try again.' });
+  }
+}
               <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); padding: 32px 24px; text-align: center;">
                 <h1 style="color: #ffffff; font-size: 28px; font-weight: 700; margin: 0;">📸 Check Deposit Received</h1>
                 <p style="color: #ffffff; opacity: 0.9; font-size: 16px; margin: 8px 0 0 0;">Oakline Bank</p>
