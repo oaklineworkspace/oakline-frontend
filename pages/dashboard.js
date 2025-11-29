@@ -525,7 +525,10 @@ function DashboardContent() {
 
       setCards(cardsData || []);
 
-      // Fetch crypto deposits with crypto asset details
+      // Fetch crypto deposits with crypto asset details (last 30 days only)
+      const thirtyDaysAgoForDisplay = new Date();
+      thirtyDaysAgoForDisplay.setDate(thirtyDaysAgoForDisplay.getDate() - 30);
+
       const { data: cryptoDepositsData } = await supabase
         .from('crypto_deposits')
         .select(`
@@ -541,10 +544,11 @@ function DashboardContent() {
           )
         `)
         .eq('user_id', userId)
+        .gte('created_at', thirtyDaysAgoForDisplay.toISOString())
         .order('created_at', { ascending: false })
         .limit(10);
 
-      // Fetch account opening crypto deposits
+      // Fetch account opening crypto deposits (last 30 days only)
       const { data: accountOpeningDepositsData } = await supabase
         .from('account_opening_crypto_deposits')
         .select(`
@@ -560,6 +564,7 @@ function DashboardContent() {
           )
         `)
         .eq('user_id', userId)
+        .gte('created_at', thirtyDaysAgoForDisplay.toISOString())
         .order('created_at', { ascending: false })
         .limit(10);
 
