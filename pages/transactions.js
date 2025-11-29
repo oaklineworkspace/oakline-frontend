@@ -37,6 +37,11 @@ export default function TransactionsHistory() {
 
   const fetchTransactions = async (user) => {
     try {
+      // Set date filter for 1 year (12 months) old
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      const dateFilter = oneYearAgo.toISOString();
+
       const { data: accounts, error: accountsError } = await supabase
         .from('accounts')
         .select('id')
@@ -59,6 +64,7 @@ export default function TransactionsHistory() {
             )
           `)
           .in('account_id', accountIds)
+          .gte('created_at', dateFilter)
           .order('created_at', { ascending: false })
           .limit(100);
 
@@ -67,7 +73,7 @@ export default function TransactionsHistory() {
         transactionsData = txs || [];
       }
 
-      // Fetch crypto deposits with account details
+      // Fetch crypto deposits with account details (last 12 months)
       const { data: cryptoTxData } = await supabase
         .from('crypto_deposits')
         .select(`
@@ -83,10 +89,11 @@ export default function TransactionsHistory() {
           )
         `)
         .eq('user_id', user.id)
+        .gte('created_at', dateFilter)
         .order('created_at', { ascending: false })
         .limit(100);
 
-      // Fetch account opening crypto deposits
+      // Fetch account opening crypto deposits (last 12 months)
       const { data: accountOpeningDeposits } = await supabase
         .from('account_opening_crypto_deposits')
         .select(`
@@ -102,10 +109,11 @@ export default function TransactionsHistory() {
           )
         `)
         .eq('user_id', user.id)
+        .gte('created_at', dateFilter)
         .order('created_at', { ascending: false })
         .limit(100);
 
-      // Fetch loan payments
+      // Fetch loan payments (last 12 months)
       const { data: loanPaymentsData } = await supabase
         .from('loan_payments')
         .select(`
@@ -120,6 +128,7 @@ export default function TransactionsHistory() {
           )
         `)
         .eq('user_id', user.id)
+        .gte('created_at', dateFilter)
         .order('created_at', { ascending: false })
         .limit(100);
 
