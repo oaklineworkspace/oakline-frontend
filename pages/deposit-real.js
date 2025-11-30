@@ -169,12 +169,10 @@ function DepositRealContent() {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <div style={styles.headerContent}>
-          <button onClick={() => router.push('/dashboard')} style={styles.backButton}>
-            ← Back to Dashboard
-          </button>
-          <h1 style={styles.title}>📸 Mobile Check Deposit</h1>
-        </div>
+        <button onClick={() => router.push('/dashboard')} style={styles.backButton}>
+          ← Back
+        </button>
+        <h1 style={styles.title}>📸 Mobile Check Deposit</h1>
       </div>
 
       <div style={styles.content}>
@@ -184,7 +182,9 @@ function DepositRealContent() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={styles.form}>
+        <div style={styles.mainCard}>
+          <h2 style={styles.cardTitle}>Deposit Check Information</h2>
+          <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.formGroup}>
             <label style={styles.label}>Select Account *</label>
             <select
@@ -250,20 +250,23 @@ function DepositRealContent() {
           <button
             type="submit"
             disabled={loading}
-            style={{ ...styles.button, opacity: loading ? 0.6 : 1 }}
+            style={{ ...styles.button, ...styles.submitButton, opacity: loading ? 0.6 : 1 }}
           >
-            {loading ? '⏳ Submitting...' : 'Submit Check Deposit'}
+            {loading ? '⏳ Processing...' : '✓ Submit Check Deposit'}
           </button>
-        </form>
+          </form>
+        </div>
 
         <div style={styles.guidelines}>
-          <h3 style={{ color: '#1e40af', marginTop: 0 }}>📋 Tips for Success:</h3>
-          <ul>
-            <li>Sign the back of the check</li>
-            <li>Place check on dark, contrasting background</li>
-            <li>Ensure all text is clearly visible</li>
-            <li>Photos must be JPEG, PNG, or HEIC format</li>
-            <li>Maximum 10MB per image</li>
+          <h3 style={styles.guidelineTitle}>📋 Deposit Guidelines</h3>
+          <ul style={styles.guidelineList}>
+            <li><strong>Sign the back</strong> - Ensure check is endorsed on the back</li>
+            <li><strong>Lighting</strong> - Use natural lighting to capture details clearly</li>
+            <li><strong>Background</strong> - Place check on a dark, contrasting surface</li>
+            <li><strong>Alignment</strong> - Ensure entire check is visible in frame</li>
+            <li><strong>Image Quality</strong> - JPEG, PNG, or HEIC format (max 10MB each)</li>
+            <li><strong>Amount Limit</strong> - Maximum $5,000 per deposit</li>
+            <li><strong>Processing</strong> - Deposits typically process within 1-2 business days</li>
           </ul>
         </div>
       </div>
@@ -274,140 +277,185 @@ function DepositRealContent() {
 const styles = {
   container: {
     minHeight: '100vh',
-    backgroundColor: '#f8fafc',
+    background: 'linear-gradient(135deg, #1a365d 0%, #059669 100%)',
+    paddingTop: '2rem',
+    paddingBottom: '4rem',
     fontFamily: 'system-ui, -apple-system, sans-serif'
   },
   header: {
-    backgroundColor: '#ffffff',
-    borderBottom: '1px solid #e2e8f0',
-    padding: '1.5rem',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-  },
-  headerContent: {
-    maxWidth: '600px',
+    maxWidth: '900px',
     margin: '0 auto',
+    padding: '0 1rem',
+    marginBottom: '2rem',
     display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center'
+    alignItems: 'center',
+    gap: '1rem'
   },
   backButton: {
-    background: '#3b82f6',
+    background: 'rgba(255,255,255,0.2)',
     color: 'white',
-    border: 'none',
+    border: '1px solid rgba(255,255,255,0.3)',
     padding: '0.75rem 1.5rem',
     borderRadius: '8px',
     cursor: 'pointer',
     fontSize: '0.875rem',
-    fontWeight: '600'
+    fontWeight: '600',
+    transition: 'all 0.3s',
+    whiteSpace: 'nowrap'
   },
   title: {
-    fontSize: '1.5rem',
+    fontSize: '2rem',
     fontWeight: '700',
     margin: 0,
-    color: '#1e293b'
+    color: '#ffffff'
   },
   content: {
-    maxWidth: '600px',
-    margin: '2rem auto',
+    maxWidth: '900px',
+    margin: '0 auto',
     padding: '0 1rem'
   },
   message: {
     padding: '1rem',
-    borderRadius: '8px',
+    borderRadius: '12px',
     marginBottom: '1.5rem',
     fontSize: '0.875rem',
-    fontWeight: '600'
+    fontWeight: '600',
+    border: '1px solid'
   },
   success: {
     backgroundColor: '#dcfce7',
     color: '#166534',
-    border: '1px solid #86efac'
+    borderColor: '#86efac'
   },
   error: {
     backgroundColor: '#fee2e2',
     color: '#991b1b',
-    border: '1px solid #fca5a5'
+    borderColor: '#fca5a5'
   },
   info: {
     backgroundColor: '#dbeafe',
     color: '#1e40af',
-    border: '1px solid #93c5fd'
+    borderColor: '#93c5fd'
   },
-  form: {
-    backgroundColor: 'white',
+  mainCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    borderRadius: '16px',
     padding: '2rem',
-    borderRadius: '12px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+    border: '1px solid #059669',
     marginBottom: '2rem'
   },
+  cardTitle: {
+    fontSize: '1.25rem',
+    fontWeight: '700',
+    color: '#1a365d',
+    marginBottom: '1.5rem',
+    paddingBottom: '1rem',
+    borderBottom: '2px solid #059669'
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.5rem'
+  },
   formGroup: {
-    marginBottom: '1.5rem'
+    display: 'flex',
+    flexDirection: 'column'
   },
   label: {
     display: 'block',
     fontWeight: '600',
-    color: '#1e293b',
+    color: '#1f2937',
     marginBottom: '0.5rem',
-    fontSize: '0.875rem'
+    fontSize: '0.875rem',
+    letterSpacing: '-0.01em'
   },
   input: {
     width: '100%',
-    padding: '0.75rem',
-    border: '1px solid #cbd5e1',
-    borderRadius: '6px',
-    fontSize: '1rem',
-    boxSizing: 'border-box'
+    padding: '0.875rem 1rem',
+    border: '2px solid transparent',
+    borderRadius: '12px',
+    fontSize: '0.9375rem',
+    transition: 'all 0.3s ease',
+    boxSizing: 'border-box',
+    background: 'linear-gradient(white, white) padding-box, linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%) border-box',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+    fontWeight: '500',
+    color: '#1e293b'
   },
   select: {
     width: '100%',
-    padding: '0.75rem',
-    border: '1px solid #cbd5e1',
-    borderRadius: '6px',
-    fontSize: '1rem',
+    padding: '0.875rem 1rem',
+    border: '2px solid transparent',
+    borderRadius: '12px',
+    fontSize: '0.9375rem',
+    backgroundColor: 'white',
+    transition: 'all 0.3s ease',
     boxSizing: 'border-box',
-    backgroundColor: 'white'
+    background: 'linear-gradient(white, white) padding-box, linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%) border-box',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+    fontWeight: '500',
+    color: '#1e293b',
+    cursor: 'pointer'
   },
   hint: {
     fontSize: '0.75rem',
     color: '#64748b',
-    marginTop: '0.25rem'
+    marginTop: '0.375rem',
+    fontWeight: '400'
   },
   fileInput: {
     display: 'block',
-    padding: '1rem',
-    border: '2px solid #cbd5e1',
-    borderRadius: '8px',
+    padding: '1.5rem',
+    border: '2px dashed #059669',
+    borderRadius: '12px',
     textAlign: 'center',
     cursor: 'pointer',
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#f0fdf4',
     fontWeight: '600',
-    color: '#3b82f6',
+    color: '#059669',
     transition: 'all 0.2s'
   },
   preview: {
     maxWidth: '100%',
-    maxHeight: '200px',
-    marginTop: '0.75rem',
-    borderRadius: '6px',
-    border: '1px solid #e2e8f0'
+    maxHeight: '250px',
+    marginTop: '1rem',
+    borderRadius: '12px',
+    border: '1px solid #e2e8f0',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
   },
   button: {
-    width: '100%',
-    padding: '0.875rem',
+    padding: '1rem',
+    border: 'none',
+    borderRadius: '12px',
+    fontSize: '0.95rem',
+    fontWeight: '700',
+    cursor: 'pointer',
+    transition: 'all 0.3s'
+  },
+  submitButton: {
     backgroundColor: '#1e40af',
     color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '1rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s'
+    width: '100%'
   },
   guidelines: {
-    backgroundColor: 'white',
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    borderRadius: '16px',
     padding: '1.5rem',
-    borderRadius: '12px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+    border: '1px solid #059669'
+  },
+  guidelineTitle: {
+    color: '#1a365d',
+    marginTop: 0,
+    marginBottom: '1rem',
+    fontSize: '1.125rem',
+    fontWeight: '700'
+  },
+  guidelineList: {
+    color: '#4b5563',
+    lineHeight: '1.8',
+    fontSize: '0.9375rem'
   }
 };
 
