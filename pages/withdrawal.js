@@ -596,6 +596,25 @@ export default function Withdrawal() {
 
       const reference = `WD-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`;
 
+      // Map withdrawal method to withdrawals table format
+      let withdrawalMethodForTable = 'bank_transfer';
+      let destinationAccount = '';
+      let destinationBank = '';
+      let routingNumberForTable = '';
+
+      if (withdrawalForm.withdrawal_method === 'linked_bank') {
+        withdrawalMethodForTable = 'ach';
+        const selectedBank = linkedBanks.find(b => b.id === withdrawalForm.linked_bank_id);
+        destinationAccount = withdrawalForm.linked_bank_id ? `****${selectedBank?.account_number.slice(-4)}` : '';
+        destinationBank = selectedBank?.bank_name || '';
+        routingNumberForTable = selectedBank?.routing_number || '';
+      } else if (withdrawalForm.withdrawal_method === 'debit_card') {
+        withdrawalMethodForTable = 'wire_transfer';
+        const selectedCard = linkedCards.find(c => c.id === withdrawalForm.linked_card_id);
+        destinationAccount = withdrawalForm.linked_card_id ? `${selectedCard?.card_brand?.toUpperCase()} ****${selectedCard?.card_number_last4}` : '';
+      }
+
+      // Insert transaction record
       const { data: transactionData, error: transactionError } = await supabase
         .from('transactions')
         .insert([{
@@ -615,6 +634,35 @@ export default function Withdrawal() {
       if (transactionError) {
         console.error('Transaction error:', transactionError);
         throw new Error(`Transaction failed: ${transactionError.message}`);
+      }
+
+      // Insert withdrawal record for admin management (for non-crypto withdrawals)
+      if (withdrawalForm.withdrawal_method !== 'crypto_wallet') {
+        const { error: withdrawalError } = await supabase
+          .from('withdrawals')
+          .insert([{
+            user_id: currentUser.id,
+            account_id: withdrawalForm.from_account_id,
+            amount: amount,
+            withdrawal_method: withdrawalMethodForTable,
+            destination_account: destinationAccount,
+            destination_bank: destinationBank,
+            routing_number: routingNumberForTable,
+            status: 'pending',
+            reference_number: reference,
+            metadata: {
+              description: withdrawalDescription,
+              fee: fee,
+              verification_code_used: true
+            }
+          }])
+          .select()
+          .single();
+
+        if (withdrawalError) {
+          console.error('Withdrawal record error:', withdrawalError);
+          // Don't throw - this is a secondary operation
+        }
       }
 
       if (fee > 0) {
