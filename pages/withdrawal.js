@@ -607,8 +607,7 @@ export default function Withdrawal() {
           reference: reference,
           status: 'pending',
           balance_before: balanceBefore,
-          balance_after: balanceAfter,
-          metadata: metadata || {}
+          balance_after: balanceAfter
         }])
         .select()
         .single();
@@ -619,7 +618,7 @@ export default function Withdrawal() {
       }
 
       if (fee > 0) {
-        await supabase.from('transactions').insert([{
+        const { error: feeError } = await supabase.from('transactions').insert([{
           user_id: currentUser.id,
           account_id: withdrawalForm.from_account_id,
           type: 'fee',
@@ -630,6 +629,10 @@ export default function Withdrawal() {
           balance_before: balanceAfter,
           balance_after: balanceAfter - fee
         }]);
+        
+        if (feeError) {
+          console.error('Fee transaction error:', feeError);
+        }
       }
 
       const { error: balanceError } = await supabase
