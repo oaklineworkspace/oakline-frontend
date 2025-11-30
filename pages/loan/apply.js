@@ -8,6 +8,7 @@ function LoanApplicationContent() {
   const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [nextLoading, setNextLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [accounts, setAccounts] = useState([]);
@@ -489,13 +490,13 @@ function LoanApplicationContent() {
         return true;
 
       case 2:
-        // Check if both ID documents have been uploaded (should be string paths)
-        if (!idDocuments.front || !idDocuments.back) {
-          setError('Please upload both front and back of your ID');
+        // ID documents are now optional - user can skip
+        if (idDocuments.front && typeof idDocuments.front !== 'string') {
+          setError('Front ID is still uploading. Please wait.');
           return false;
         }
-        if (typeof idDocuments.front !== 'string' || typeof idDocuments.back !== 'string') {
-          setError('ID documents are still uploading. Please wait.');
+        if (idDocuments.back && typeof idDocuments.back !== 'string') {
+          setError('Back ID is still uploading. Please wait.');
           return false;
         }
         return true;
@@ -510,10 +511,16 @@ function LoanApplicationContent() {
   };
 
   const nextStep = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep(currentStep + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    setNextLoading(true);
+    setTimeout(() => {
+      if (validateStep(currentStep)) {
+        setCurrentStep(currentStep + 1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setSuccess('Step completed successfully');
+        setTimeout(() => setSuccess(''), 3000);
+      }
+      setNextLoading(false);
+    }, 300);
   };
 
   const prevStep = () => {
@@ -553,10 +560,10 @@ function LoanApplicationContent() {
         return;
       }
 
-      // Verify ID documents are uploaded (they should already be uploaded from Step 2)
-      if (!idDocuments.front || !idDocuments.back || 
-          typeof idDocuments.front !== 'string' || typeof idDocuments.back !== 'string') {
-        setError('ID documents are missing or not properly uploaded. Please go back to Step 2.');
+      // ID documents are optional now - only validate if they're being uploaded
+      if ((idDocuments.front && typeof idDocuments.front !== 'string') || 
+          (idDocuments.back && typeof idDocuments.back !== 'string')) {
+        setError('ID documents are still uploading. Please wait.');
         setLoading(false);
         return;
       }
@@ -741,6 +748,34 @@ function LoanApplicationContent() {
                 <p style={styles.sectionDesc}>Choose your loan type and specify the amount you need</p>
               </div>
 
+              {/* Loan Products Information */}
+              {loanTypes.length > 0 && (
+                <div style={styles.loanProductsGrid}>
+                  {loanTypes.map(loanType => (
+                    <div key={loanType.value} style={styles.loanProductCard}>
+                      <div style={styles.loanProductIcon}>{loanType.icon}</div>
+                      <h4 style={styles.loanProductName}>{loanType.label}</h4>
+                      <p style={styles.loanProductDesc}>{loanType.desc}</p>
+                      <div style={styles.loanProductDetails}>
+                        <div style={styles.loanProductDetail}>
+                          <span style={styles.loanDetailLabel}>Amount Range:</span>
+                          <span style={styles.loanDetailValue}>${loanType.minAmount.toLocaleString()} - ${loanType.maxAmount.toLocaleString()}</span>
+                        </div>
+                        <div style={styles.loanProductDetail}>
+                          <span style={styles.loanDetailLabel}>Starting Rate:</span>
+                          <span style={styles.loanDetailValue}>{loanType.rates[0]?.apr || loanType.rates[0]?.rate}% APR</span>
+                        </div>
+                        <div style={styles.loanProductDetail}>
+                          <span style={styles.loanDetailLabel}>Term:</span>
+                          <span style={styles.loanDetailValue}>{loanType.rates[0]?.min_term_months || 12} - {loanType.rates[0]?.max_term_months || 360} months</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {success && <div style={styles.successMessage}>✓ {success}</div>}
+
               <div style={styles.formGroup}>
                 <label style={styles.label}>
                   <span style={styles.labelText}>Loan Type</span>
@@ -863,10 +898,10 @@ function LoanApplicationContent() {
                 <button
                   type="button"
                   onClick={nextStep}
-                  disabled={hasActiveLoan || !formData.loan_type}
-                  style={{...styles.submitButton, ...(hasActiveLoan || !formData.loan_type ? styles.submitButtonDisabled : {})}}
+                  disabled={hasActiveLoan || !formData.loan_type || nextLoading}
+                  style={{...styles.submitButton, ...(hasActiveLoan || !formData.loan_type || nextLoading ? styles.submitButtonDisabled : {})}}
                 >
-                  Next: Upload ID Documents →
+                  {nextLoading ? '⏳ Processing...' : 'Next: Upload ID Documents →'}
                 </button>
               </div>
             </div>
@@ -918,26 +953,22 @@ function LoanApplicationContent() {
                 </div>
               </div>
 
+              {success && <div style={styles.successMessage}>✓ {success}</div>}
+              
               <div style={styles.actionSection}>
-                <button type="button" onClick={prevStep} style={styles.cancelButton}>
+                <button type="button" onClick={prevStep} style={styles.cancelButton} disabled={nextLoading}>
                   ← Previous
                 </button>
                 <button
                   type="button"
                   onClick={nextStep}
-                  disabled={!idDocuments.front || !idDocuments.back || 
-                           typeof idDocuments.front !== 'string' || typeof idDocuments.back !== 'string' ||
-                           idDocuments.frontUploading || idDocuments.backUploading}
+                  disabled={idDocuments.frontUploading || idDocuments.backUploading || nextLoading}
                   style={{
                     ...styles.submitButton,
-                    ...(!idDocuments.front || !idDocuments.back || 
-                        typeof idDocuments.front !== 'string' || typeof idDocuments.back !== 'string' ||
-                        idDocuments.frontUploading || idDocuments.backUploading
-                      ? styles.submitButtonDisabled
-                      : {})
+                    ...(idDocuments.frontUploading || idDocuments.backUploading || nextLoading ? styles.submitButtonDisabled : {})
                   }}
                 >
-                  Next: Add Collateral (Optional) →
+                  {nextLoading ? '⏳ Processing...' : 'Next: Add Collateral (Optional) →'}
                 </button>
               </div>
             </div>
@@ -1053,12 +1084,14 @@ function LoanApplicationContent() {
                 </div>
               )}
 
+              {success && <div style={styles.successMessage}>✓ {success}</div>}
+              
               <div style={styles.actionSection}>
-                <button type="button" onClick={prevStep} style={styles.cancelButton}>
+                <button type="button" onClick={prevStep} style={styles.cancelButton} disabled={nextLoading}>
                   ← Previous
                 </button>
-                <button type="button" onClick={nextStep} style={styles.submitButton}>
-                  Next: Review & Submit →
+                <button type="button" onClick={nextStep} style={styles.submitButton} disabled={nextLoading}>
+                  {nextLoading ? '⏳ Processing...' : 'Next: Review & Submit →'}
                 </button>
               </div>
             </div>
@@ -1105,11 +1138,11 @@ function LoanApplicationContent() {
                   <h3 style={styles.reviewTitle}>ID Documents</h3>
                   <div style={styles.reviewRow}>
                     <span>Front of ID:</span>
-                    <strong>{idDocuments.front && typeof idDocuments.front === 'string' ? '✓ Uploaded' : 'Pending'}</strong>
+                    <strong>{idDocuments.front && typeof idDocuments.front === 'string' ? '✓ Uploaded' : '(Optional)'}</strong>
                   </div>
                   <div style={styles.reviewRow}>
                     <span>Back of ID:</span>
-                    <strong>{idDocuments.back && typeof idDocuments.back === 'string' ? '✓ Uploaded' : 'Pending'}</strong>
+                    <strong>{idDocuments.back && typeof idDocuments.back === 'string' ? '✓ Uploaded' : '(Optional)'}</strong>
                   </div>
                 </div>
 
@@ -1126,23 +1159,21 @@ function LoanApplicationContent() {
                 )}
               </div>
 
+              {success && <div style={styles.successMessage}>✓ {success}</div>}
+              
               <div style={styles.actionSection}>
-                <button type="button" onClick={prevStep} style={styles.cancelButton}>
+                <button type="button" onClick={prevStep} style={styles.cancelButton} disabled={loading}>
                   ← Previous
                 </button>
                 <button
                   type="submit"
-                  disabled={loading || !idDocuments.front || !idDocuments.back || 
-                           typeof idDocuments.front !== 'string' || typeof idDocuments.back !== 'string'}
+                  disabled={loading}
                   style={{
                     ...styles.submitButton,
-                    ...(loading || !idDocuments.front || !idDocuments.back || 
-                        typeof idDocuments.front !== 'string' || typeof idDocuments.back !== 'string'
-                      ? styles.submitButtonDisabled
-                      : {})
+                    ...(loading ? styles.submitButtonDisabled : {})
                   }}
                 >
-                  {loading ? 'Submitting...' : 'Submit Application'}
+                  {loading ? '⏳ Submitting...' : '✓ Submit Application'}
                 </button>
               </div>
             </div>
@@ -1604,6 +1635,68 @@ const styles = {
     color: '#1e40af',
     margin: 0,
     lineHeight: '1.5'
+  },
+  loanProductsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gap: '16px',
+    marginBottom: '32px',
+    padding: '20px',
+    backgroundColor: '#f0fdf4',
+    borderRadius: '12px',
+    border: '1px solid #bbf7d0'
+  },
+  loanProductCard: {
+    backgroundColor: 'white',
+    padding: '16px',
+    borderRadius: '10px',
+    border: '1px solid #dbeafe',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+    transition: 'all 0.2s'
+  },
+  loanProductIcon: {
+    fontSize: '32px',
+    marginBottom: '8px'
+  },
+  loanProductName: {
+    fontSize: '14px',
+    fontWeight: '700',
+    color: '#1e293b',
+    margin: '0 0 6px 0'
+  },
+  loanProductDesc: {
+    fontSize: '13px',
+    color: '#64748b',
+    margin: '0 0 12px 0',
+    lineHeight: '1.4'
+  },
+  loanProductDetails: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
+  },
+  loanProductDetail: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontSize: '12px'
+  },
+  loanDetailLabel: {
+    color: '#64748b',
+    fontWeight: '500'
+  },
+  loanDetailValue: {
+    color: '#059669',
+    fontWeight: '600'
+  },
+  successMessage: {
+    backgroundColor: '#dcfce7',
+    color: '#166534',
+    border: '1px solid #86efac',
+    padding: '12px 16px',
+    borderRadius: '8px',
+    marginBottom: '16px',
+    fontSize: '14px',
+    fontWeight: '600'
   }
 };
 
