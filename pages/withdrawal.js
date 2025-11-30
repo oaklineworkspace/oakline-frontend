@@ -608,12 +608,15 @@ export default function Withdrawal() {
           status: 'pending',
           balance_before: balanceBefore,
           balance_after: balanceAfter,
-          metadata: metadata
+          metadata: metadata || {}
         }])
         .select()
         .single();
 
-      if (transactionError) throw transactionError;
+      if (transactionError) {
+        console.error('Transaction error:', transactionError);
+        throw new Error(`Transaction failed: ${transactionError.message}`);
+      }
 
       if (fee > 0) {
         await supabase.from('transactions').insert([{

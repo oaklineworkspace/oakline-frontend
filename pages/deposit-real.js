@@ -83,13 +83,13 @@ function DepositRealContent() {
   const uploadFile = async (file, type) => {
     const fileName = `${user.id}/${Date.now()}_${type}_${file.name}`;
     const { data, error } = await supabase.storage
-      .from('documents')
-      .upload(`checks/${fileName}`, file, { upsert: true });
+      .from('check-deposits')
+      .upload(`${fileName}`, file, { upsert: true });
 
     if (error) throw error;
     const { data: { publicUrl } } = supabase.storage
-      .from('documents')
-      .getPublicUrl(`checks/${fileName}`);
+      .from('check-deposits')
+      .getPublicUrl(`${fileName}`);
     return publicUrl;
   };
 
