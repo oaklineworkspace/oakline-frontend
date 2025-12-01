@@ -102,15 +102,32 @@ function LoanDetailContent() {
         return;
       }
 
-      const { data, error } = await supabase
+      // Fetch loan
+      const { data: loanData, error: loanError } = await supabase
         .from('loans')
-        .select(`
-          *,
-          deposit_transactions(id, amount, status, created_at, tx_hash, network)
-        `)
+        .select('*')
         .eq('id', loanId)
         .eq('user_id', user.id)
         .single();
+
+      if (loanError) {
+        throw loanError;
+      }
+
+      // Fetch related crypto deposits
+      const { data: deposits, error: depositsError } = await supabase
+        .from('crypto_deposits')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('purpose', 'loan_requirement')
+        .order('created_at', { ascending: false });
+
+      const data = {
+        ...loanData,
+        deposit_transactions: depositsError ? [] : (deposits || [])
+      };
+
+      const error = null;
 
       if (error) {
         console.error("Error fetching loan details:", error);

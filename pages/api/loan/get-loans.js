@@ -19,9 +19,10 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized - Invalid authentication' });
     }
 
+    // Fetch loans
     const { data: loans, error: loansError } = await supabaseAdmin
       .from('loans')
-      .select('*, deposit_transactions(*)')
+      .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -30,9 +31,26 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to fetch loans' });
     }
 
+    // For each loan, fetch related crypto deposits
+    const loansWithDeposits = await Promise.all(
+      (loans || []).map(async (loan) => {
+        const { data: deposits, error: depositsError } = await supabaseAdmin
+          .from('crypto_deposits')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('purpose', 'loan_requirement')
+          .order('created_at', { ascending: false });
+
+        return {
+          ...loan,
+          deposit_transactions: depositsError ? [] : (deposits || [])
+        };
+      })
+    );
+
     return res.status(200).json({
       success: true,
-      loans: loans || []
+      loans: loansWithDeposits || []
     });
 
   } catch (error) {
