@@ -771,10 +771,36 @@ function LoanApplicationContent() {
               </div>
             </div>
 
-            <div style={styles.depositInfoBox}>
-              <p style={styles.depositInfoText}>
-                ℹ️ Please complete the 10% security deposit to proceed with the review process. Your application status will be updated via email.
-              </p>
+            <div style={{
+              backgroundColor: '#ecfdf5',
+              border: '2px solid #10b981',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              lineHeight: '1.8'
+            }}>
+              <div style={{ fontSize: '1.05rem', fontWeight: '700', color: '#059669', marginBottom: '0.75rem' }}>✅ Your Loan is Approved!</div>
+              <div style={{ fontSize: '0.95rem', color: '#1e7e34', marginBottom: '1rem' }}>
+                To activate and disburse your loan, submit a 10% security deposit. Here's what you need to do:
+              </div>
+              <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', padding: '1rem', marginBottom: '1rem', fontSize: '0.9rem', color: '#1e5631' }}>
+                <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>📋 Deposit Amount Required:</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#059669', marginBottom: '0.75rem' }}>
+                  ${successData.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <div style={{ fontSize: '0.85rem', color: '#1e7e34' }}>Plus applicable network fees if paying with cryptocurrency</div>
+              </div>
+              <div style={{ fontSize: '0.9rem', color: '#1e7e34', marginBottom: '0.5rem' }}>
+                <strong>📌 Step 1:</strong> Select your cryptocurrency and network
+              </div>
+              <div style={{ fontSize: '0.9rem', color: '#1e7e34', marginBottom: '0.5rem' }}>
+                <strong>📌 Step 2:</strong> Send the exact total amount (base + network fee)
+              </div>
+              <div style={{ fontSize: '0.9rem', color: '#1e7e34', marginBottom: '0.5rem' }}>
+                <strong>📌 Step 3:</strong> Upload your transaction hash or payment proof
+              </div>
+              <div style={{ fontSize: '0.9rem', color: '#1e7e34' }}>
+                <strong>📌 Step 4:</strong> We'll verify and disburse your loan within hours
+              </div>
             </div>
 
             <div style={styles.successModalActions}>

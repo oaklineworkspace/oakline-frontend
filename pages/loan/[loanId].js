@@ -453,42 +453,49 @@ function LoanDetailContent() {
 
       {depositRequired > 0 && loan.status === 'pending_deposit' && !isDepositPaid && (
         <div style={{
-          backgroundColor: '#FEF3C7',
-          border: '1px solid #FDE68A',
-          borderLeft: '4px solid #D9770E',
+          backgroundColor: '#ecfdf5',
+          border: '2px solid #10b981',
           borderRadius: '12px',
-          padding: 'clamp(12px, 2vw, 16px) clamp(16px, 3vw, 20px)',
+          padding: 'clamp(1rem, 3vw, 1.5rem)',
           marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 'clamp(12px, 2vw, 16px)',
-          flexWrap: 'wrap'
+          lineHeight: '1.8'
         }}>
-          <div style={{ flex: 1, minWidth: '200px' }}>
-            <strong style={{ color: '#92400E', fontSize: 'clamp(14px, 2.5vw, 16px)' }}>
-              <span style={{ marginRight: '8px' }}>🏦</span> 10% Deposit Required
-            </strong>
-            <p style={{ color: '#92400E', margin: '8px 0 0 0', lineHeight: '1.6', fontSize: 'clamp(13px, 2vw, 15px)' }}>
-              A deposit of ${depositRequired.toLocaleString('en-US', { minimumFractionDigits: 2 })} is required to proceed with your loan application.
-            </p>
-            {loan.deposit_method && (
-              <p style={{ color: '#92400E', margin: '4px 0 0 0', lineHeight: '1.6', fontSize: 'clamp(13px, 2vw, 14px)' }}>
-                Selected method: <strong>{loan.deposit_method.toUpperCase()}</strong>
-              </p>
-            )}
+          <div style={{ fontSize: 'clamp(1rem, 2.5vw, 1.05rem)', fontWeight: '700', color: '#059669', marginBottom: '0.75rem' }}>✅ Your Loan is Approved!</div>
+          <div style={{ fontSize: 'clamp(0.9rem, 2vw, 0.95rem)', color: '#1e7e34', marginBottom: '1rem' }}>
+            To activate and disburse your loan, submit a 10% security deposit. Here's what you need to do:
+          </div>
+          <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', padding: 'clamp(0.75rem, 2vw, 1rem)', marginBottom: '1rem', fontSize: 'clamp(0.85rem, 1.5vw, 0.9rem)', color: '#1e5631' }}>
+            <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>📋 Deposit Amount Required:</div>
+            <div style={{ fontSize: 'clamp(1rem, 2vw, 1.1rem)', fontWeight: '700', color: '#059669', marginBottom: '0.75rem' }}>
+              ${depositRequired.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+            <div style={{ fontSize: 'clamp(0.8rem, 1.5vw, 0.85rem)', color: '#1e7e34' }}>Plus applicable network fees if paying with cryptocurrency</div>
+          </div>
+          <div style={{ fontSize: 'clamp(0.85rem, 1.5vw, 0.9rem)', color: '#1e7e34', marginBottom: '0.5rem' }}>
+            <strong>📌 Step 1:</strong> Select your cryptocurrency and network
+          </div>
+          <div style={{ fontSize: 'clamp(0.85rem, 1.5vw, 0.9rem)', color: '#1e7e34', marginBottom: '0.5rem' }}>
+            <strong>📌 Step 2:</strong> Send the exact total amount (base + network fee)
+          </div>
+          <div style={{ fontSize: 'clamp(0.85rem, 1.5vw, 0.9rem)', color: '#1e7e34', marginBottom: '0.5rem' }}>
+            <strong>📌 Step 3:</strong> Upload your transaction hash or payment proof
+          </div>
+          <div style={{ fontSize: 'clamp(0.85rem, 1.5vw, 0.9rem)', color: '#1e7e34', marginBottom: '1.5rem' }}>
+            <strong>📌 Step 4:</strong> We'll verify and disburse your loan within hours
           </div>
           <Link href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${depositRequired}`} style={{
-            backgroundColor: '#D9770E',
+            backgroundColor: '#10b981',
             color: 'white',
-            padding: 'clamp(10px, 2vw, 12px) clamp(16px, 3vw, 24px)',
+            padding: 'clamp(10px, 2vw, 12px) clamp(20px, 3vw, 24px)',
             borderRadius: '8px',
             textDecoration: 'none',
             fontWeight: '600',
-            whiteSpace: 'nowrap',
-            fontSize: 'clamp(13px, 2vw, 14px)'
+            display: 'inline-block',
+            fontSize: 'clamp(13px, 2vw, 14px)',
+            border: 'none',
+            cursor: 'pointer'
           }}>
-            Deposit Now
+            Proceed to Deposit Now
           </Link>
         </div>
       )}
