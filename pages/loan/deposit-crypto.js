@@ -1006,7 +1006,7 @@ function LoanDepositCryptoContent() {
                     ))}
                   </div>
                 )}
-            </>
+              </>
             )}
 
             {paymentMethod === 'balance' && (
