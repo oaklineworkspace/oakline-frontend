@@ -1479,7 +1479,7 @@ function DashboardContent() {
                       </div>
                       {tx.transaction_type === 'crypto_deposit' && tx.fee && parseFloat(tx.fee) > 0 && (
                         <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
-                          Fee: ${parseFloat(tx.fee).toFixed(2)} • Net: ${parseFloat(tx.amount).toFixed(2)}
+                          Fee: ${parseFloat(tx.fee).toFixed(2)} • Gross: ${parseFloat(tx.gross_amount || tx.amount).toFixed(2)}
                         </div>
                       )}
                       {tx.transaction_type === 'crypto_deposit' && tx.confirmations !== undefined && (
@@ -1897,7 +1897,7 @@ function DashboardContent() {
                       color: (deposit.status === 'completed' || deposit.status === 'approved') ? '#059669' : '#f59e0b'
                     }}>
                       {(deposit.status === 'completed' || deposit.status === 'approved') ? '+' : ''}
-                      {formatCurrency(parseFloat(deposit.net_amount || deposit.amount || 0))}
+                      {formatCurrency(parseFloat(deposit.amount || 0))}
                     </div>
                     <div style={{
                       ...styles.statusBadge,
