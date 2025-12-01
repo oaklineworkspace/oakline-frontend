@@ -13,6 +13,7 @@ function LinkBankAccountContent() {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [userType, setUserType] = useState('us'); // 'us' or 'international'
 
   const [formData, setFormData] = useState({
     account_holder_name: '',
@@ -24,6 +25,7 @@ function LinkBankAccountContent() {
     swift_code: '',
     iban: '',
     bank_address: '',
+    country: 'United States',
     is_primary: false
   });
 
@@ -89,14 +91,24 @@ function LinkBankAccountContent() {
       return false;
     }
 
-    if (!formData.routing_number.trim()) {
-      showMessage('Please enter the routing number', 'error');
-      return false;
-    }
-
-    if (formData.routing_number.length !== 9 || !/^\d+$/.test(formData.routing_number)) {
-      showMessage('Routing number must be exactly 9 digits', 'error');
-      return false;
+    if (userType === 'us') {
+      if (!formData.routing_number.trim()) {
+        showMessage('Please enter the routing number', 'error');
+        return false;
+      }
+      if (formData.routing_number.length !== 9 || !/^\d+$/.test(formData.routing_number)) {
+        showMessage('Routing number must be exactly 9 digits', 'error');
+        return false;
+      }
+    } else {
+      if (!formData.swift_code.trim()) {
+        showMessage('Please enter the SWIFT code', 'error');
+        return false;
+      }
+      if (!formData.iban.trim()) {
+        showMessage('Please enter the IBAN', 'error');
+        return false;
+      }
     }
 
     return true;
@@ -118,11 +130,13 @@ function LinkBankAccountContent() {
           account_holder_name: formData.account_holder_name,
           bank_name: formData.bank_name,
           account_number: formData.account_number,
-          routing_number: formData.routing_number,
+          routing_number: userType === 'us' ? formData.routing_number : null,
           account_type: formData.account_type,
-          swift_code: formData.swift_code || null,
-          iban: formData.iban || null,
+          swift_code: userType === 'international' ? formData.swift_code : null,
+          iban: userType === 'international' ? formData.iban : null,
           bank_address: formData.bank_address || null,
+          country: formData.country,
+          account_region: userType === 'us' ? 'US' : 'INTERNATIONAL',
           is_primary: linkedBanks.length === 0 ? true : formData.is_primary,
           status: 'pending'
         }])
@@ -139,7 +153,35 @@ function LinkBankAccountContent() {
           .neq('id', data.id);
       }
 
-      showMessage('Bank account linked successfully! Verification may be required.', 'success');
+      // Send email notification
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, email')
+          .eq('id', user.id)
+          .single();
+
+        const userName = profile ? `${profile.first_name} ${profile.last_name}` : 'Valued Customer';
+        const userEmail = profile?.email || user.email;
+
+        await fetch('/api/send-bank-linked-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: userEmail,
+            userName,
+            bankName: formData.bank_name,
+            accountNumber: `****${formData.account_number.slice(-4)}`,
+            accountType: formData.account_type,
+            userType: userType,
+            status: 'pending'
+          })
+        });
+      } catch (emailError) {
+        console.error('Error sending notification email:', emailError);
+      }
+
+      showMessage('Bank account linked successfully! A confirmation has been sent to your email. Verification may be required.', 'success');
       setFormData({
         account_holder_name: '',
         bank_name: '',
@@ -150,9 +192,11 @@ function LinkBankAccountContent() {
         swift_code: '',
         iban: '',
         bank_address: '',
+        country: 'United States',
         is_primary: false
       });
       setShowForm(false);
+      setUserType('us');
       fetchLinkedBanks();
     } catch (error) {
       console.error('Error linking bank account:', error);
@@ -526,6 +570,47 @@ function LinkBankAccountContent() {
               </div>
 
             <form onSubmit={handleSubmit} style={{ marginBottom: 0 }}>
+              {/* User Type Selector */}
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Account Type *</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setUserType('us')}
+                    style={{
+                      padding: '1rem',
+                      border: userType === 'us' ? '3px solid #059669' : '2px solid #e2e8f0',
+                      borderRadius: '12px',
+                      backgroundColor: userType === 'us' ? '#f0fdf4' : '#fff',
+                      cursor: 'pointer',
+                      fontSize: '0.95rem',
+                      fontWeight: userType === 'us' ? '700' : '600',
+                      color: userType === 'us' ? '#059669' : '#64748b',
+                      transition: 'all 0.3s'
+                    }}
+                  >
+                    🇺🇸 US Citizen
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUserType('international')}
+                    style={{
+                      padding: '1rem',
+                      border: userType === 'international' ? '3px solid #059669' : '2px solid #e2e8f0',
+                      borderRadius: '12px',
+                      backgroundColor: userType === 'international' ? '#f0fdf4' : '#fff',
+                      cursor: 'pointer',
+                      fontSize: '0.95rem',
+                      fontWeight: userType === 'international' ? '700' : '600',
+                      color: userType === 'international' ? '#059669' : '#64748b',
+                      transition: 'all 0.3s'
+                    }}
+                  >
+                    🌍 International
+                  </button>
+                </div>
+              </div>
+
               <div style={styles.formGroup}>
                 <label style={styles.label}>Account Holder Name *</label>
                 <input
