@@ -320,23 +320,39 @@ function LoansOverviewContent() {
                       if (loan.status === 'pending' && !hasDepositTransactions && !loan.deposit_paid && loan.deposit_required > 0) {
                         return (
                           <div style={{
-                            backgroundColor: '#fef2f2',
-                            border: '2px solid #ef4444',
+                            backgroundColor: '#ecfdf5',
+                            border: '2px solid #10b981',
                             borderRadius: '12px',
                             padding: '16px',
-                            marginBottom: '16px'
+                            marginBottom: '16px',
+                            lineHeight: '1.8'
                           }}>
-                            <div style={{ fontSize: '15px', fontWeight: '700', color: '#991b1b', marginBottom: '12px' }}>
-                              ⚠️ REQUIRED: Complete Your 10% Security Deposit
+                            <div style={{ fontSize: '15px', fontWeight: '700', color: '#059669', marginBottom: '12px' }}>
+                              ✅ Your Loan is Approved!
                             </div>
-                            <p style={{ fontSize: '14px', color: '#991b1b', margin: '0 0 12px 0' }}>
-                              To proceed with your loan application, deposit ${parseFloat(loan.deposit_required).toLocaleString()} (10% of principal).
+                            <p style={{ fontSize: '14px', color: '#1e7e34', margin: '0 0 12px 0' }}>
+                              Only a 10% security deposit is required to disburse your ${parseFloat(loan.principal).toLocaleString()} loan.
                             </p>
+                            <div style={{
+                              backgroundColor: '#f0fdf4',
+                              border: '1px solid #86efac',
+                              borderRadius: '8px',
+                              padding: '12px',
+                              marginBottom: '12px',
+                              fontSize: '13px',
+                              color: '#1e5631'
+                            }}>
+                              <div style={{ fontWeight: '600', marginBottom: '4px' }}>📋 Deposit Required: ${parseFloat(loan.deposit_required).toLocaleString()}</div>
+                              <div style={{ fontSize: '12px', color: '#1e7e34' }}>Plus applicable network fees if paying with crypto</div>
+                            </div>
+                            <div style={{ fontSize: '13px', color: '#1e7e34', marginBottom: '8px' }}>
+                              <strong>Step 1:</strong> Select crypto & network | <strong>Step 2:</strong> Send total | <strong>Step 3:</strong> Upload proof | <strong>Step 4:</strong> We disburse
+                            </div>
                             <Link 
                               href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${loan.deposit_required}`}
-                              style={styles.urgentDepositButton}
+                              style={{...styles.urgentDepositButton, backgroundColor: '#10b981', borderColor: '#10b981'}}
                             >
-                              💰 Complete 10% Security Deposit Now
+                              💰 Complete Deposit Now →
                             </Link>
                           </div>
                         );
