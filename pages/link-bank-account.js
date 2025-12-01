@@ -387,7 +387,7 @@ function LinkBankAccountContent() {
       <div style={styles.main}>
         <h1 style={styles.pageTitle}>Link Bank Account</h1>
         <p style={styles.pageSubtitle}>
-          Link your external bank account for easy withdrawals
+          Securely link your external bank account for easy withdrawals and transfers
         </p>
 
         {message && (
@@ -401,10 +401,91 @@ function LinkBankAccountContent() {
           </div>
         )}
 
+        {/* Security & Benefits Cards */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '1rem',
+          marginBottom: '2rem'
+        }}>
+          <div style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            borderLeft: '4px solid #059669'
+          }}>
+            <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>🔒</div>
+            <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.5rem' }}>Bank-Level Security</h3>
+            <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0, lineHeight: '1.5' }}>
+              Your account details are encrypted and never stored in plain text
+            </p>
+          </div>
+
+          <div style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            borderLeft: '4px solid #3b82f6'
+          }}>
+            <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>⚡</div>
+            <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.5rem' }}>Fast Transfers</h3>
+            <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0, lineHeight: '1.5' }}>
+              Transfer funds to your linked bank in 1-3 business days
+            </p>
+          </div>
+
+          <div style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            borderLeft: '4px solid #10b981'
+          }}>
+            <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>✅</div>
+            <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.5rem' }}>Verified Transfers</h3>
+            <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0, lineHeight: '1.5' }}>
+              2-3 small deposits verify your account ownership
+            </p>
+          </div>
+        </div>
+
+        {/* How It Works */}
+        <div style={{
+          backgroundColor: '#eff6ff',
+          border: '2px solid #bfdbfe',
+          borderRadius: '12px',
+          padding: '1.5rem',
+          marginBottom: '2rem'
+        }}>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: '700', color: '#1e40af', marginBottom: '1rem', margin: '0 0 1rem 0' }}>
+            📋 How Bank Linking Works
+          </h3>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '1rem'
+          }}>
+            <div style={{ fontSize: '0.875rem', color: '#1e40af', lineHeight: '1.6' }}>
+              <strong>Step 1:</strong> Enter your bank details below
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#1e40af', lineHeight: '1.6' }}>
+              <strong>Step 2:</strong> We send 2-3 small deposits to verify
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#1e40af', lineHeight: '1.6' }}>
+              <strong>Step 3:</strong> Confirm the amounts to activate
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#1e40af', lineHeight: '1.6' }}>
+              <strong>Step 4:</strong> Start transferring funds safely
+            </div>
+          </div>
+        </div>
+
         <div style={styles.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>
-              Your Linked Accounts
+              Your Linked Accounts ({linkedBanks.length})
             </h2>
             <button
               onClick={() => setShowForm(!showForm)}
@@ -419,7 +500,32 @@ function LinkBankAccountContent() {
           </div>
 
           {showForm && (
-            <form onSubmit={handleSubmit} style={{ marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #e2e8f0' }}>
+            <div style={{
+              backgroundColor: '#f0fdf4',
+              border: '2px solid #bbf7d0',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              marginBottom: '2rem'
+            }}>
+              <div style={{
+                backgroundColor: 'white',
+                padding: '1rem',
+                borderRadius: '8px',
+                marginBottom: '1.5rem',
+                display: 'flex',
+                gap: '1rem',
+                alignItems: 'flex-start'
+              }}>
+                <span style={{ fontSize: '1.5rem' }}>🔐</span>
+                <div>
+                  <strong style={{ color: '#065f46' }}>Your data is secure</strong>
+                  <p style={{ fontSize: '0.875rem', color: '#059669', margin: '0.25rem 0 0 0' }}>
+                    We use 256-bit SSL encryption and comply with PCI DSS standards
+                  </p>
+                </div>
+              </div>
+
+            <form onSubmit={handleSubmit} style={{ marginBottom: 0 }}>
               <div style={styles.formGroup}>
                 <label style={styles.label}>Account Holder Name *</label>
                 <input
@@ -569,12 +675,15 @@ function LinkBankAccountContent() {
                 {loading ? 'Linking...' : 'Link Bank Account'}
               </button>
             </form>
+            </div>
           )}
 
           {linkedBanks.length === 0 && !showForm ? (
             <div style={styles.emptyState}>
-              <p style={{ fontSize: '1.125rem', marginBottom: '0.5rem' }}>No linked bank accounts yet</p>
-              <p>Click "Add New Account" to link your first bank account</p>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏦</div>
+              <p style={{ fontSize: '1.125rem', marginBottom: '0.5rem', fontWeight: '600' }}>No linked bank accounts yet</p>
+              <p style={{ color: '#64748b', marginBottom: '1rem' }}>Connect your bank account to enable fast withdrawals and transfers</p>
+              <p style={{ fontSize: '0.875rem', color: '#999', marginTop: '1rem' }}>✓ Bank-level security &nbsp; | &nbsp; ✓ Instant verification &nbsp; | &nbsp; ✓ 24/7 Support</p>
             </div>
           ) : (
             linkedBanks.map(bank => (
@@ -597,19 +706,31 @@ function LinkBankAccountContent() {
                   </div>
                   <div style={styles.detailItem}>
                     <div style={styles.detailLabel}>Account Number</div>
-                    <div style={styles.detailValue}>****{bank.account_number.slice(-4)}</div>
+                    <div style={styles.detailValue}>••••{bank.account_number.slice(-4)}</div>
                   </div>
                   <div style={styles.detailItem}>
                     <div style={styles.detailLabel}>Routing Number</div>
-                    <div style={styles.detailValue}>{bank.routing_number}</div>
+                    <div style={styles.detailValue}>•••••{bank.routing_number.slice(-4)}</div>
                   </div>
                   <div style={styles.detailItem}>
                     <div style={styles.detailLabel}>Status</div>
                     <div style={{
                       ...styles.detailValue,
-                      color: bank.status === 'active' ? '#059669' : '#f59e0b'
+                      color: bank.status === 'active' ? '#059669' : '#f59e0b',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
                     }}>
-                      {bank.status.toUpperCase()}
+                      <span style={{ fontSize: '1rem' }}>
+                        {bank.status === 'active' ? '✅' : '⏳'}
+                      </span>
+                      {bank.status === 'active' ? 'VERIFIED' : 'PENDING VERIFICATION'}
+                    </div>
+                  </div>
+                  <div style={styles.detailItem}>
+                    <div style={styles.detailLabel}>Linked Date</div>
+                    <div style={styles.detailValue}>
+                      {new Date(bank.created_at).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
