@@ -681,45 +681,77 @@ function LinkBankAccountContent() {
                 </div>
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Routing Number (9 digits) *</label>
-                <input
-                  type="text"
-                  name="routing_number"
-                  value={formData.routing_number}
-                  onChange={handleChange}
-                  style={styles.input}
-                  placeholder="021000021"
-                  maxLength={9}
-                  required
-                />
-              </div>
-
-              <div style={styles.formGrid}>
+              {/* US-specific fields */}
+              {userType === 'us' && (
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>SWIFT Code (Optional)</label>
+                  <label style={styles.label}>Routing Number (9 digits) *</label>
                   <input
                     type="text"
-                    name="swift_code"
-                    value={formData.swift_code}
+                    name="routing_number"
+                    value={formData.routing_number}
                     onChange={handleChange}
                     style={styles.input}
-                    placeholder="BOFAUS3N"
+                    placeholder="021000021"
+                    maxLength={9}
+                    required
                   />
+                  <p style={{ fontSize: '0.8rem', color: '#999', margin: '0.5rem 0 0 0' }}>
+                    💡 Find your routing number on your checks or your bank's website
+                  </p>
                 </div>
+              )}
 
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>IBAN (Optional)</label>
-                  <input
-                    type="text"
-                    name="iban"
-                    value={formData.iban}
-                    onChange={handleChange}
-                    style={styles.input}
-                    placeholder="GB82 WEST 1234 5698 7654 32"
-                  />
-                </div>
-              </div>
+              {/* International-specific fields */}
+              {userType === 'international' && (
+                <>
+                  <div style={styles.formGrid}>
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>SWIFT Code *</label>
+                      <input
+                        type="text"
+                        name="swift_code"
+                        value={formData.swift_code}
+                        onChange={handleChange}
+                        style={styles.input}
+                        placeholder="BOFAUS3N"
+                        required
+                      />
+                      <p style={{ fontSize: '0.8rem', color: '#999', margin: '0.5rem 0 0 0' }}>
+                        💡 Ask your bank for your SWIFT code
+                      </p>
+                    </div>
+
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>IBAN *</label>
+                      <input
+                        type="text"
+                        name="iban"
+                        value={formData.iban}
+                        onChange={handleChange}
+                        style={styles.input}
+                        placeholder="GB82 WEST 1234 5698 7654 32"
+                        required
+                      />
+                      <p style={{ fontSize: '0.8rem', color: '#999', margin: '0.5rem 0 0 0' }}>
+                        💡 Find IBAN on bank statements or online banking
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Country *</label>
+                    <input
+                      type="text"
+                      name="country"
+                      value={formData.country}
+                      onChange={handleChange}
+                      style={styles.input}
+                      placeholder="e.g., United Kingdom"
+                      required
+                    />
+                  </div>
+                </>
+              )}
 
               <div style={styles.formGroup}>
                 <label style={styles.label}>Bank Address (Optional)</label>
@@ -793,10 +825,18 @@ function LinkBankAccountContent() {
                     <div style={styles.detailLabel}>Account Number</div>
                     <div style={styles.detailValue}>••••{bank.account_number.slice(-4)}</div>
                   </div>
-                  <div style={styles.detailItem}>
-                    <div style={styles.detailLabel}>Routing Number</div>
-                    <div style={styles.detailValue}>•••••{bank.routing_number.slice(-4)}</div>
-                  </div>
+                  {bank.account_region === 'US' && bank.routing_number && (
+                    <div style={styles.detailItem}>
+                      <div style={styles.detailLabel}>Routing Number</div>
+                      <div style={styles.detailValue}>•••••{bank.routing_number.slice(-4)}</div>
+                    </div>
+                  )}
+                  {bank.account_region === 'INTERNATIONAL' && bank.swift_code && (
+                    <div style={styles.detailItem}>
+                      <div style={styles.detailLabel}>SWIFT Code</div>
+                      <div style={styles.detailValue}>{bank.swift_code}</div>
+                    </div>
+                  )}
                   <div style={styles.detailItem}>
                     <div style={styles.detailLabel}>Status</div>
                     <div style={{
@@ -812,6 +852,18 @@ function LinkBankAccountContent() {
                       {bank.status === 'active' ? 'VERIFIED' : 'PENDING VERIFICATION'}
                     </div>
                   </div>
+                  {bank.account_region === 'INTERNATIONAL' && bank.iban && (
+                    <div style={styles.detailItem}>
+                      <div style={styles.detailLabel}>IBAN</div>
+                      <div style={styles.detailValue}>••••{bank.iban.slice(-6)}</div>
+                    </div>
+                  )}
+                  {bank.country && (
+                    <div style={styles.detailItem}>
+                      <div style={styles.detailLabel}>Country</div>
+                      <div style={styles.detailValue}>{bank.country}</div>
+                    </div>
+                  )}
                   <div style={styles.detailItem}>
                     <div style={styles.detailLabel}>Linked Date</div>
                     <div style={styles.detailValue}>
