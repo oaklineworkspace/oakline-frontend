@@ -741,13 +741,16 @@ function LoanDepositCryptoContent() {
           user_id: user.id,
           account_id: treasuryAccount.id,
           crypto_asset_id: cryptoAsset.id,
-          loan_wallet_id: selectedLoanWallet.id,
+          assigned_wallet_id: selectedLoanWallet.id,
           amount: parseFloat(depositForm.amount),
           fee: parseFloat(calculatedFee.toFixed(2)),
           net_amount: parseFloat(calculatedNetAmount.toFixed(2)),
           status: 'pending',
-          purpose: 'loan_requirement',
-          metadata: metadata
+          required_amount: parseFloat(depositForm.amount),
+          required_confirmations: 3,
+          confirmations: 0,
+          metadata: metadata,
+          proof_path: proofFilePath
         };
 
         // Only add tx_hash if it was provided
@@ -756,10 +759,13 @@ function LoanDepositCryptoContent() {
         }
 
         const { error: depositError } = await supabase
-          .from('crypto_deposits')
+          .from('account_opening_crypto_deposits')
           .insert([depositData]);
 
-        if (depositError) throw new Error('Deposit submission failed');
+        if (depositError) {
+          console.error('Deposit error details:', depositError);
+          throw new Error('Deposit submission failed: ' + (depositError.message || 'Unknown error'));
+        }
 
         await supabase
           .from('loans')
