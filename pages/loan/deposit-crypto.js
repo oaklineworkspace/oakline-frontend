@@ -36,6 +36,9 @@ function LoanDepositCryptoContent() {
   const [proofFile, setProofFile] = useState(null);
   const [proofPath, setProofPath] = useState('');
   const [uploadingProof, setUploadingProof] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('crypto'); // 'crypto' or 'balance'
+  const [userAccounts, setUserAccounts] = useState([]);
+  const [selectedAccount, setSelectedAccount] = useState(null);
 
   const networkIconMap = {
     'Bitcoin': '🟠',
@@ -86,6 +89,7 @@ function LoanDepositCryptoContent() {
         
         if (loan_id) {
           fetchLoanDetails();
+          fetchUserAccounts();
           setupRealtimeSubscription();
         }
       }
@@ -97,6 +101,26 @@ function LoanDepositCryptoContent() {
       supabase.channel(`loan-deposit-${loan_id}`).unsubscribe();
     };
   }, [user, loan_id]);
+
+  const fetchUserAccounts = async () => {
+    try {
+      const { data: accounts, error } = await supabase
+        .from('accounts')
+        .select('id, account_number, account_type, balance')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (!error && accounts) {
+        setUserAccounts(accounts);
+        if (accounts.length > 0) {
+          setSelectedAccount(accounts[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching accounts:', error);
+    }
+  };
 
   const setupRealtimeSubscription = () => {
     const channel = supabase
@@ -421,139 +445,234 @@ function LoanDepositCryptoContent() {
     setMessage('');
     setMessageType('');
 
-    if (!txHash || txHash.trim().length < 10) {
-      setMessage('Please enter a valid transaction hash');
-      setMessageType('error');
-      setSubmitting(false);
-      return;
-    }
-
     try {
-      // Check if deposit already submitted for this loan
-      const { data: existingDeposit, error: depositCheckError } = await supabase
-        .from('crypto_deposits')
-        .select('id, status')
-        .eq('user_id', user.id)
-        .eq('purpose', 'loan_requirement')
-        .contains('metadata', { loan_id: loan_id })
-        .in('status', ['pending', 'processing', 'completed', 'confirmed', 'awaiting_confirmations'])
-        .single();
+      if (paymentMethod === 'balance') {
+        // Balance payment method
+        if (!selectedAccount) {
+          throw new Error('Please select an account');
+        }
 
-      if (existingDeposit && !depositCheckError) {
-        throw new Error('You have already submitted a deposit for this loan. Please wait for confirmation.');
+        const depositAmount = parseFloat(depositForm.amount || 0);
+        if (depositAmount <= 0) {
+          throw new Error('Please enter a valid deposit amount');
+        }
+
+        const selectedAccountData = userAccounts.find(a => a.id === selectedAccount);
+        if (!selectedAccountData || selectedAccountData.balance < depositAmount) {
+          throw new Error('Insufficient balance in selected account');
+        }
+
+        // Check if deposit already submitted
+        const { data: existingDeposit, error: depositCheckError } = await supabase
+          .from('crypto_deposits')
+          .select('id, status')
+          .eq('user_id', user.id)
+          .eq('purpose', 'loan_requirement')
+          .contains('metadata', { loan_id: loan_id })
+          .in('status', ['pending', 'processing', 'completed', 'confirmed', 'awaiting_confirmations'])
+          .single();
+
+        if (existingDeposit && !depositCheckError) {
+          throw new Error('You have already submitted a deposit for this loan.');
+        }
+
+        // Get treasury account
+        const { data: treasuryAccount, error: treasuryError } = await supabase
+          .from('accounts')
+          .select('id')
+          .eq('account_number', '9900000001')
+          .eq('account_type', 'treasury')
+          .single();
+
+        if (treasuryError || !treasuryAccount) {
+          throw new Error('Treasury account not found. Please contact support.');
+        }
+
+        // Create transfer from user account to treasury
+        const { error: transferError } = await supabase
+          .from('transactions')
+          .insert([{
+            user_id: user.id,
+            from_account_id: selectedAccount,
+            to_account_id: treasuryAccount.id,
+            amount: depositAmount,
+            transaction_type: 'debit',
+            description: `Loan 10% Deposit - Loan ID: ${loan_id}`,
+            status: 'completed',
+            reference: `LOAN_DEPOSIT_${loan_id}`,
+            balance_before: selectedAccountData.balance,
+            balance_after: selectedAccountData.balance - depositAmount
+          }]);
+
+        if (transferError) {
+          throw new Error('Failed to process balance transfer');
+        }
+
+        // Update loan with balance payment
+        const { error: loanUpdateError } = await supabase
+          .from('loans')
+          .update({
+            deposit_method: 'balance',
+            deposit_amount: depositAmount,
+            deposit_date: new Date().toISOString(),
+            deposit_status: 'completed',
+            deposit_paid: true,
+            status: 'under_review',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', loan_id);
+
+        if (loanUpdateError) {
+          throw new Error('Failed to update loan status');
+        }
+
+        // Update account balance
+        await supabase
+          .from('accounts')
+          .update({ balance: selectedAccountData.balance - depositAmount })
+          .eq('id', selectedAccount);
+
+        // Create notification
+        await supabase
+          .from('notifications')
+          .insert([{
+            user_id: user.id,
+            type: 'loan',
+            title: 'Loan Deposit Confirmed',
+            message: `Your 10% loan deposit of $${depositAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} has been successfully transferred from your account. Your loan is now under review by our team.`,
+            read: false
+          }]);
+
+        setMessage('Deposit completed successfully! Your loan is now under review.');
+        setMessageType('success');
+
+        setTimeout(() => {
+          router.push('/loan/dashboard');
+        }, 3000);
+
+      } else {
+        // Crypto payment method
+        if (!txHash || txHash.trim().length < 10) {
+          throw new Error('Please enter a valid transaction hash');
+        }
+
+        const { data: existingDeposit, error: depositCheckError } = await supabase
+          .from('crypto_deposits')
+          .select('id, status')
+          .eq('user_id', user.id)
+          .eq('purpose', 'loan_requirement')
+          .contains('metadata', { loan_id: loan_id })
+          .in('status', ['pending', 'processing', 'completed', 'confirmed', 'awaiting_confirmations'])
+          .single();
+
+        if (existingDeposit && !depositCheckError) {
+          throw new Error('You have already submitted a deposit for this loan.');
+        }
+
+        const { data: treasuryAccount, error: treasuryError } = await supabase
+          .from('accounts')
+          .select('id')
+          .eq('account_number', '9900000001')
+          .eq('account_type', 'treasury')
+          .single();
+
+        if (treasuryError || !treasuryAccount) {
+          throw new Error('Treasury account not found. Please contact support.');
+        }
+
+        if (!selectedLoanWallet || !selectedLoanWallet.id) {
+          throw new Error('No loan wallet selected. Please try again or contact support.');
+        }
+
+        const { data: cryptoAsset, error: assetError } = await supabase
+          .from('crypto_assets')
+          .select('id')
+          .eq('crypto_type', depositForm.crypto_type)
+          .eq('network_type', depositForm.network_type)
+          .eq('status', 'active')
+          .single();
+
+        if (assetError || !cryptoAsset) {
+          throw new Error('Crypto asset configuration not found. Please contact support.');
+        }
+
+        const { data: depositData, error: depositError } = await supabase
+          .from('crypto_deposits')
+          .insert([{
+            user_id: user.id,
+            account_id: treasuryAccount.id,
+            crypto_asset_id: cryptoAsset.id,
+            loan_wallet_id: selectedLoanWallet.id,
+            amount: parseFloat(depositForm.amount),
+            fee: parseFloat(calculatedFee.toFixed(2)),
+            net_amount: parseFloat(calculatedNetAmount.toFixed(2)),
+            approved_amount: 0,
+            status: 'pending',
+            purpose: 'loan_requirement',
+            tx_hash: txHash.trim(),
+            metadata: {
+              treasury_deposit: true,
+              loan_id: loan_id,
+              loan_wallet_address: walletAddress,
+              deposit_source: 'loan_deposit_page',
+              fee_percent: networkFeePercent,
+              proof_path: proofPath || null
+            }
+          }])
+          .select()
+          .single();
+
+        if (depositError) {
+          throw new Error(depositError.message || 'Deposit submission failed');
+        }
+
+        const { data: currentLoan, error: loanFetchError } = await supabase
+          .from('loans')
+          .select('deposit_paid, deposit_status')
+          .eq('id', loan_id)
+          .single();
+
+        if (loanFetchError) {
+          console.error('Error fetching loan:', loanFetchError);
+        }
+
+        if (currentLoan && (currentLoan.deposit_paid || currentLoan.deposit_status === 'pending')) {
+          throw new Error('Deposit already submitted for this loan.');
+        }
+
+        const { error: loanUpdateError } = await supabase
+          .from('loans')
+          .update({
+            deposit_method: 'crypto',
+            deposit_amount: parseFloat(depositForm.amount),
+            deposit_date: new Date().toISOString(),
+            deposit_status: 'pending',
+            status: 'pending',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', loan_id);
+
+        if (loanUpdateError) {
+          console.error('Error updating loan:', loanUpdateError);
+        }
+
+        await supabase
+          .from('notifications')
+          .insert([{
+            user_id: user.id,
+            type: 'loan',
+            title: 'Loan Deposit Submitted - Pending Verification',
+            message: `Your 10% loan deposit of $${parseFloat(depositForm.amount).toLocaleString()} (${depositForm.crypto_type} on ${depositForm.network_type}) has been submitted to our treasury. Our team will verify your deposit on the blockchain. Once confirmed, your loan application will proceed to review. This typically takes 1-3 business days.`,
+            read: false
+          }]);
+
+        setMessage('Loan deposit submitted successfully! Your deposit is now pending admin verification on the blockchain. Once our team confirms your deposit, your loan application will proceed to review.');
+        setMessageType('success');
+
+        setTimeout(() => {
+          router.push('/loan/dashboard');
+        }, 4000);
       }
-
-      // Get treasury account
-      const { data: treasuryAccount, error: treasuryError } = await supabase
-        .from('accounts')
-        .select('id')
-        .eq('account_number', '9900000001')
-        .eq('account_type', 'treasury')
-        .single();
-
-      if (treasuryError || !treasuryAccount) {
-        throw new Error('Treasury account not found. Please contact support.');
-      }
-
-      // Validate loan wallet is selected
-      if (!selectedLoanWallet || !selectedLoanWallet.id) {
-        throw new Error('No loan wallet selected. Please try again or contact support.');
-      }
-
-      // Get the crypto_asset_id for this crypto_type and network_type
-      const { data: cryptoAsset, error: assetError } = await supabase
-        .from('crypto_assets')
-        .select('id')
-        .eq('crypto_type', depositForm.crypto_type)
-        .eq('network_type', depositForm.network_type)
-        .eq('status', 'active')
-        .single();
-
-      if (assetError || !cryptoAsset) {
-        throw new Error('Crypto asset configuration not found. Please contact support.');
-      }
-
-      // Create crypto deposit record with purpose = 'loan_requirement'
-      const { data: depositData, error: depositError } = await supabase
-        .from('crypto_deposits')
-        .insert([{
-          user_id: user.id,
-          account_id: treasuryAccount.id,
-          crypto_asset_id: cryptoAsset.id,
-          loan_wallet_id: selectedLoanWallet.id,
-          amount: parseFloat(depositForm.amount),
-          fee: parseFloat(calculatedFee.toFixed(2)),
-          net_amount: parseFloat(calculatedNetAmount.toFixed(2)),
-          approved_amount: 0,
-          status: 'pending',
-          purpose: 'loan_requirement',
-          tx_hash: txHash.trim(),
-          metadata: {
-            treasury_deposit: true,
-            loan_id: loan_id,
-            loan_wallet_address: walletAddress,
-            deposit_source: 'loan_deposit_page',
-            fee_percent: networkFeePercent,
-            proof_path: proofPath || null
-          }
-        }])
-        .select()
-        .single();
-
-      if (depositError) {
-        throw new Error(depositError.message || 'Deposit submission failed');
-      }
-
-      // Check current loan status before updating
-      const { data: currentLoan, error: loanFetchError } = await supabase
-        .from('loans')
-        .select('deposit_paid, deposit_status')
-        .eq('id', loan_id)
-        .single();
-
-      if (loanFetchError) {
-        console.error('Error fetching loan:', loanFetchError);
-      }
-
-      // Prevent duplicate submissions
-      if (currentLoan && (currentLoan.deposit_paid || currentLoan.deposit_status === 'pending')) {
-        throw new Error('Deposit already submitted for this loan.');
-      }
-
-      // Update loan status and deposit information
-      const { error: loanUpdateError } = await supabase
-        .from('loans')
-        .update({
-          deposit_method: 'crypto',
-          deposit_amount: parseFloat(depositForm.amount),
-          deposit_date: new Date().toISOString(),
-          deposit_status: 'pending',
-          status: 'pending',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', loan_id);
-
-      if (loanUpdateError) {
-        console.error('Error updating loan:', loanUpdateError);
-      }
-
-      // Create notification
-      await supabase
-        .from('notifications')
-        .insert([{
-          user_id: user.id,
-          type: 'loan',
-          title: 'Loan Deposit Submitted - Pending Verification',
-          message: `Your 10% loan deposit of $${parseFloat(depositForm.amount).toLocaleString()} (${depositForm.crypto_type} on ${depositForm.network_type}) has been submitted to our treasury. Our team will verify your deposit on the blockchain. Once confirmed, your loan application will proceed to review. This typically takes 1-3 business days.`,
-          read: false
-        }]);
-
-      setMessage('Loan deposit submitted successfully! Your deposit is now pending admin verification on the blockchain. Once our team confirms your deposit, your loan application will proceed to review. You will receive a notification when verification is complete.');
-      setMessageType('success');
-
-      setTimeout(() => {
-        router.push('/loan/dashboard');
-      }, 4000);
 
     } catch (error) {
       console.error('Deposit error:', error);
@@ -759,7 +878,46 @@ function LoanDepositCryptoContent() {
 
         {currentStep === 1 && (
           <div style={styles.card}>
-            <h2 style={styles.sectionTitle}>Select Cryptocurrency</h2>
+            <h2 style={styles.sectionTitle}>Select Payment Method</h2>
+            <div style={{
+              display: 'flex',
+              gap: '1rem',
+              marginBottom: '2rem',
+              flexWrap: 'wrap'
+            }}>
+              <button
+                onClick={() => setPaymentMethod('crypto')}
+                style={{
+                  ...styles.button,
+                  backgroundColor: paymentMethod === 'crypto' ? '#10b981' : '#e5e7eb',
+                  color: paymentMethod === 'crypto' ? '#fff' : '#1f2937',
+                  fontWeight: '600',
+                  padding: '0.75rem 1.5rem',
+                  flex: '1',
+                  minWidth: '150px'
+                }}
+              >
+                🪙 Pay with Crypto
+              </button>
+              <button
+                onClick={() => setPaymentMethod('balance')}
+                style={{
+                  ...styles.button,
+                  backgroundColor: paymentMethod === 'balance' ? '#10b981' : '#e5e7eb',
+                  color: paymentMethod === 'balance' ? '#fff' : '#1f2937',
+                  fontWeight: '600',
+                  padding: '0.75rem 1.5rem',
+                  flex: '1',
+                  minWidth: '150px'
+                }}
+              >
+                💰 Pay from Account
+              </button>
+            </div>
+
+            {paymentMethod === 'crypto' ? (
+              <>
+                <h2 style={styles.sectionTitle}>Select Cryptocurrency</h2>
             <div style={styles.cryptoGrid}>
               {cryptoTypes.map(crypto => (
                 <div
@@ -823,6 +981,55 @@ function LoanDepositCryptoContent() {
                     ))}
                   </div>
                 )}
+              </>
+            ) : (
+              <>
+                <h2 style={styles.sectionTitle}>Select Account & Amount</h2>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                    Select Account:
+                  </label>
+                  <select
+                    value={selectedAccount || ''}
+                    onChange={(e) => setSelectedAccount(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '1rem'
+                    }}
+                  >
+                    <option value="">Choose an account...</option>
+                    {userAccounts.map(account => (
+                      <option key={account.id} value={account.id}>
+                        {account.account_type.toUpperCase()} - {account.account_number} (Balance: ${parseFloat(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                    Deposit Amount:
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Enter amount"
+                    value={depositForm.amount}
+                    onChange={(e) => setDepositForm({ ...depositForm, amount: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '1rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <p style={{ fontSize: '0.9rem', color: '#64748b', marginTop: '0.5rem' }}>
+                    Required deposit: ${parseFloat(amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                </div>
               </>
             )}
 
@@ -1024,7 +1231,54 @@ function LoanDepositCryptoContent() {
           </div>
         )}
 
-        {currentStep === 3 && (
+        {currentStep === 3 && paymentMethod === 'balance' && (
+          <div style={styles.card}>
+            <h2 style={styles.sectionTitle}>Confirm Balance Transfer</h2>
+            <div style={{ marginBottom: '2rem' }}>
+              <div style={styles.summaryRow}>
+                <span>Deposit Amount:</span>
+                <span style={{ fontWeight: '700', color: '#10b981' }}>
+                  ${parseFloat(depositForm.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+              {selectedAccount && userAccounts.find(a => a.id === selectedAccount) && (
+                <div style={styles.summaryRow}>
+                  <span>From Account:</span>
+                  <span style={{ fontWeight: '600' }}>
+                    {userAccounts.find(a => a.id === selectedAccount).account_type.toUpperCase()} - {userAccounts.find(a => a.id === selectedAccount).account_number}
+                  </span>
+                </div>
+              )}
+              <div style={styles.summaryRow}>
+                <span>To:</span>
+                <span style={{ fontWeight: '600' }}>Loan Treasury Account</span>
+              </div>
+            </div>
+
+            <div style={styles.buttonGroup}>
+              <button
+                onClick={() => setCurrentStep(1)}
+                style={{ ...styles.button, ...styles.secondaryButton }}
+              >
+                ← Back
+              </button>
+              <button
+                onClick={handleConfirmPayment}
+                disabled={submitting}
+                style={{
+                  ...styles.button,
+                  ...styles.primaryButton,
+                  opacity: submitting ? 0.6 : 1,
+                  cursor: submitting ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {submitting ? '⏳ Processing...' : '✓ Confirm Transfer'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 3 && paymentMethod === 'crypto' && (
           <div style={styles.card}>
             <h2 style={styles.sectionTitle}>Confirm Payment</h2>
             <div style={{ marginBottom: '2rem' }}>
