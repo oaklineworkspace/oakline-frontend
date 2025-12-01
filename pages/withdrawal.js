@@ -613,7 +613,7 @@ export default function Withdrawal() {
         const selectedCard = linkedCards.find(c => c.id === withdrawalForm.linked_card_id);
         destinationAccount = withdrawalForm.linked_card_id ? `${selectedCard?.card_brand?.toUpperCase()} ****${selectedCard?.card_number_last4}` : '';
       } else if (withdrawalForm.withdrawal_method === 'crypto_wallet') {
-        withdrawalMethodForTable = 'bank_transfer';
+        withdrawalMethodForTable = 'crypto';
         destinationAccount = withdrawalForm.crypto_wallet_address || '';
         destinationBank = 'Cryptocurrency';
       }
