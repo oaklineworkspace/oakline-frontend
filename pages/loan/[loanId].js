@@ -400,8 +400,9 @@ function LoanDetailContent() {
   const monthlyPayment = calculateMonthlyPayment(loan);
   const totalInterest = (monthlyPayment * loan.term_months) - parseFloat(loan.principal);
   const depositRequired = parseFloat(loan.deposit_required || 0);
-  const isDepositPaid = loan.deposit_transactions && loan.deposit_transactions.some(tx => tx.status === 'completed');
-  const depositTransaction = loan.deposit_transactions && loan.deposit_transactions.find(tx => tx.status === 'completed');
+  const hasDepositTransactions = loan.deposit_transactions && Array.isArray(loan.deposit_transactions) && loan.deposit_transactions.length > 0;
+  const isDepositPaid = hasDepositTransactions && loan.deposit_transactions.some(tx => tx.status === 'completed');
+  const depositTransaction = hasDepositTransactions && loan.deposit_transactions.find(tx => tx.status === 'completed');
 
 
   return (
@@ -466,19 +467,17 @@ function LoanDetailContent() {
         </div>
       )}
 
-      {depositRequired > 0 && loan.deposit_status === 'pending' && !loan.deposit_paid && loan.status === 'pending' && (
+      {depositRequired > 0 && hasDepositTransactions && loan.deposit_status === 'pending' && !loan.deposit_paid && loan.status === 'pending' && (
         <div style={{
           backgroundColor: '#fffbeb',
-          border: '1px solid #fde68a',
-          borderLeft: '4px solid #f59e0b',
+          border: '2px solid #f59e0b',
           borderRadius: '12px',
           padding: '16px 20px',
           marginBottom: '20px'
         }}>
-          <strong style={{ color: '#92400e', fontSize: '16px' }}>⏳ Deposit Submitted - Awaiting Confirmation</strong>
+          <strong style={{ color: '#92400e', fontSize: '16px' }}>⏳ Deposit Under Review</strong>
           <p style={{ color: '#92400e', margin: '8px 0 0 0', lineHeight: '1.6' }}>
-            Your 10% deposit has been submitted{loan.deposit_date ? ` on ${new Date(loan.deposit_date).toLocaleDateString()}` : ''} and is being verified by our Loan Department.
-            Your loan application will proceed to review once the deposit is confirmed. This typically takes 1-3 business days.
+            Your 10% deposit has been received and is being verified by our Loan Department. Expected completion: 1-3 business days.
           </p>
         </div>
       )}
