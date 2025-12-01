@@ -26,7 +26,7 @@ out/
 .DS_Store
 Thumbs.db
 
-# Build outputs
+# Build outputs (general)
 dist/
 build/
 
@@ -47,11 +47,6 @@ coverage/
 # Testing
 .turbo
 
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
 # Vercel
 .vercel
 
@@ -59,32 +54,26 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Capacitor mobile app artifacts (keep ios/ and android/ folders - only exclude builds)
-# ios/  ← REMOVED to push project to GitHub
-# android/  ← REMOVED to push project to GitHub
+# Capacitor native build artifacts (NOT the project folders)
 .native-files.json
 capacitor-native-swift-package/
 
-# iOS build artifacts only
+# iOS build artifacts only (NOT the ios/ project folder)
 ios/App/build/
 ios/Pods/
-*.xcarchive
+ios/DerivedData/
+DerivedData/
 
-# Android build artifacts only  
+# Android build artifacts only (NOT the android/ project folder)
 android/app/build/
 android/.gradle/
-local.properties
-keystore.jks
+android/local.properties
 
-# iOS build artifacts
-DerivedData/
+# Build output files
 *.ipa
-*.xcarchive
-*.dsym/
-
-# Android build artifacts
 *.apk
 *.aab
+*.xcarchive
+*.dsym/
 *.jks
 keystore/
-local.properties
