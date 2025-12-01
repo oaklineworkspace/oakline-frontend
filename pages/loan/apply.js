@@ -2186,6 +2186,50 @@ const styles = {
     marginBottom: '16px',
     fontSize: '14px',
     fontWeight: '600'
+  },
+  existingLoansAlert: {
+    backgroundColor: '#fef3c7',
+    border: '2px solid #f59e0b',
+    borderRadius: '12px',
+    padding: '24px',
+    marginBottom: '32px',
+    display: 'flex',
+    gap: '16px'
+  },
+  alertIcon: {
+    fontSize: '32px',
+    flexShrink: 0
+  },
+  alertContent: {
+    flex: 1
+  },
+  alertTitle: {
+    fontSize: '18px',
+    fontWeight: '700',
+    color: '#92400e',
+    margin: '0 0 8px 0'
+  },
+  alertText: {
+    fontSize: '15px',
+    color: '#92400e',
+    margin: '0 0 16px 0',
+    lineHeight: '1.6'
+  },
+  alertButtons: {
+    display: 'flex',
+    gap: '12px',
+    flexWrap: 'wrap'
+  },
+  alertButton: {
+    padding: '12px 24px',
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#fff',
+    backgroundColor: '#f59e0b',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontFamily: 'inherit'
   }
 };
 
