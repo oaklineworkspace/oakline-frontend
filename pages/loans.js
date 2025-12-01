@@ -328,10 +328,10 @@ function LoansOverviewContent() {
                             lineHeight: '1.8'
                           }}>
                             <div style={{ fontSize: '15px', fontWeight: '700', color: '#059669', marginBottom: '12px' }}>
-                              ✅ Your Loan is Approved!
+                              ⏳ Loan Ready for Activation
                             </div>
                             <p style={{ fontSize: '14px', color: '#1e7e34', margin: '0 0 12px 0' }}>
-                              Only a 10% security deposit is required to disburse your ${parseFloat(loan.principal).toLocaleString()} loan.
+                              Your application has been processed. Complete your 10% security deposit to activate and disburse your ${parseFloat(loan.principal).toLocaleString()} loan.
                             </p>
                             <div style={{
                               backgroundColor: '#f0fdf4',

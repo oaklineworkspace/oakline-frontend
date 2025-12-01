@@ -187,9 +187,9 @@ function LoanDetailsCard({ loanDetails, minDeposit }) {
         marginTop: '1.5rem',
         lineHeight: '1.8'
       }}>
-        <div style={{ fontSize: '1.05rem', fontWeight: '700', color: '#059669', marginBottom: '0.75rem' }}>✅ Your Loan is Approved!</div>
+        <div style={{ fontSize: '1.05rem', fontWeight: '700', color: '#059669', marginBottom: '0.75rem' }}>⏳ Loan Ready for Activation</div>
         <div style={{ fontSize: '0.95rem', color: '#1e7e34', marginBottom: '1rem' }}>
-          To activate and disburse your loan, submit a 10% security deposit. Here's what you need to do:
+          Your application has been processed. To activate and disburse your loan, submit a 10% security deposit. Here's what you need to do:
         </div>
         <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', padding: '1rem', marginBottom: '1rem', fontSize: '0.9rem', color: '#1e5631' }}>
           <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>📋 Deposit Amount Required:</div>

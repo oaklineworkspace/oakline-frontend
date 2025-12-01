@@ -268,9 +268,9 @@ function LoanDashboardContent() {
           marginBottom: '1rem',
           lineHeight: '1.8'
         }}>
-          <div style={{ fontSize: '1rem', fontWeight: '700', color: '#059669', marginBottom: '0.5rem' }}>✅ Your Loan is Approved!</div>
+          <div style={{ fontSize: '1rem', fontWeight: '700', color: '#059669', marginBottom: '0.5rem' }}>⏳ Loan Ready for Activation</div>
           <div style={{ fontSize: '0.9rem', color: '#1e7e34', marginBottom: '0.75rem' }}>
-            Only a 10% security deposit is required to disburse your ${parseFloat(loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} loan.
+            Your application has been processed. Complete a 10% security deposit to disburse your ${parseFloat(loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} loan.
           </div>
           <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.85rem', color: '#1e5631' }}>
             <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>📋 Deposit Required: ${depositRequired.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
