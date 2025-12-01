@@ -270,7 +270,7 @@ function LoansOverviewContent() {
                           {(loan.deposit_status === 'completed' || loan.deposit_paid === true) ? (
                             `$${parseFloat(loan.deposit_amount || loan.deposit_required).toLocaleString()} ✓ Confirmed`
                           ) : (loan.deposit_status === 'pending' && loan.deposit_transactions?.length > 0) ? (
-                            `$${parseFloat(loan.deposit_amount || loan.deposit_required).toLocaleString()} ⏳ Under Review`
+                            `$${parseFloat(loan.deposit_amount || loan.deposit_required).toLocaleString()} ⏳ Pending Confirmation`
                           ) : (
                             `$${parseFloat(loan.deposit_required).toLocaleString()} ⏸️ Waiting for Deposit`
                           )}
