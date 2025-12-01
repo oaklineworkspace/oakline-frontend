@@ -1,0 +1,28 @@
+{
+  "appId": "com.oakline.bank",
+  "appName": "OaklineBank",
+  "webDir": "public",
+  "server": {
+    "url": "https://theoaklinebank.com",
+    "cleartext": true,
+    "allowNavigation": ["*"]
+  },
+  "ios": {
+    "preferredContentMode": "mobile",
+    "scrollEnabled": true,
+    "limitsNavigationsToAppBoundDomains": false
+  },
+  "android": {
+    "backgroundColor": "#ffffff"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "showSpinner": true,
+      "spinnerColor": "#059669"
+    },
+    "StatusBar": {
+      "style": "LIGHT"
+    }
+  }
+}

@@ -58,3 +58,24 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Capacitor mobile app artifacts
+ios/
+android/
+dist/
+www/
+.native-files.json
+capacitor-native-swift-package/
+
+# iOS build artifacts
+DerivedData/
+*.ipa
+*.xcarchive
+*.dsym/
+
+# Android build artifacts
+*.apk
+*.aab
+*.jks
+keystore/
+local.properties

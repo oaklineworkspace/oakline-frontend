@@ -1,61 +1,315 @@
-# Oakline Bank Frontend
+# Oakline Bank - Complete Project Documentation
 
-## Overview
-Oakline Bank is a comprehensive Next.js/React-based banking web application providing a full digital banking experience for retail and business clients. It offers account management, transaction processing, card services, loan applications, cryptocurrency trading, bill payments, and investment services. The platform emphasizes security, user experience, and real-time data synchronization, featuring a professional internationalization page and robust administrative functionalities. The project's goal is to deliver a secure, user-friendly, and feature-rich digital banking solution.
+## Project Overview
+Oakline Bank is a professional mobile-responsive loan deposit and banking system built with Next.js and deployed on Vercel. The application now includes Capacitor mobile app support for iOS and Android.
 
-## User Preferences
-Preferred communication style: Simple, everyday language.
+**Production URL**: https://theoaklinebank.com  
+**Mobile App ID**: com.oakline.bank  
+**Mobile App Name**: OaklineBank  
 
-## System Architecture
+---
 
-### Frontend Architecture
-The application uses **Next.js 14.2.3** and React 18.2.0, leveraging SSR/SSG and PWA capabilities. **TanStack React Query** manages server state, and **AuthContext** handles global authentication. Forms are managed with **React Hook Form** and **Zod** for validation. The architecture is modular, feature-based, and responsive, with file-based routing and protected routes. Performance optimizations include SWC minification, code splitting, image optimization, and HTTP caching. Mobile and PWA features, including Apple mobile web app capabilities and a PWA manifest, are integrated.
+## 🏗️ Architecture
 
-### Authentication & Authorization
-**Supabase Auth** is used for email/password and magic link authentication, session persistence, and real-time updates. It supports customer profiles with application-based account creation and admin profiles with role-based access (admin, super_admin, manager). Authorization checks are implemented throughout, with server-side JWT token verification for admin pages.
+### Technology Stack
+- **Frontend**: Next.js 14.2, React 18, TypeScript support
+- **Backend**: Next.js API routes (serverless)
+- **Database**: Supabase (PostgreSQL)
+- **Mobile**: Capacitor (iOS/Android WebView wrapper)
+- **Payments**: Stripe integration
+- **Authentication**: Supabase Auth (email/password)
+- **Email**: Nodemailer (SMTP via SendGrid/Gmail)
 
-### System Design Choices
-- **UI/UX**: Professional, modern banking interface with smooth animations, enhanced shadows, subtle lift effects, and transaction color coding. Dates and times are professionally formatted. The UI is mobile-responsive with optimized styling and touch-friendly hover effects.
-- **Navigation**: Context-aware navigation redirects users based on authentication state. Application form agreement links open in new tabs.
-- **Internationalization**: A dedicated page offers multi-language selection (8 languages), an interactive currency converter, international banking services, global presence display, and transparent fee structures.
-- **Security**: Environment variables replace hardcoded admin passwords. Role-based access control uses the Supabase `admin_profiles` table. Sensitive bank information is protected and visible only to authenticated users. Features 256-bit SSL encryption, FDIC insurance compliance indicators, and PCI DSS compliance.
-- **Database Schema**: Key tables include `accounts`, `applications`, `admin_profiles`, `enrollments`, `transactions`, `cards`, `card_applications`, `user_profiles`, `bills`, `crypto_deposits`, and `user_crypto_wallets`, integrated with Supabase Auth.
-- **Data Flow**: User enrollment involves KYC, account creation, email notification with magic link, password setup, and account activation. Transaction processing includes real-time balance updates, validation, fraud monitoring, instant notifications, and history synchronization. Multi-account management supports 23 account types.
-- **Loan Workflow**: Loan processing involves a dedicated Loan Department workflow, preventing duplicate deposits for the same loan, and providing clear status messages. Email notifications are sent at all loan stages. Loan application redesign is step-based with progress indicators.
-- **Transaction Standardization**: All transfer operations use `debit` and `credit` transaction types, with a complete audit trail (`balance_before`, `balance_after`, `reference`, `user_id`, `created_at`). Transaction icons are mapped, and reference numbers offer copy-to-clipboard functionality.
-- **Zelle Payment System**: Comprehensive Zelle® integration with features like sending money, managing contacts, transaction history, QR code generation, real-time balance updates, email verification codes, and transaction notifications. Security includes two-factor verification and spending limits.
-- **Content Expansion**: Includes 10 new informational banking pages covering various personal finance and banking topics.
-- **Card Application System**: Enhanced apply-card page with active card detection, replacement request options, professional loading overlay with stage-based progress messages, success banner with auto-redirect, and comprehensive validation.
-- **Check Deposit System**: Comprehensive deposit-real page for mobile check deposits with detailed photo-taking instructions, file validation (JPEG/PNG/HEIC, max 10MB), helpful tips, and a $5,000 maximum deposit limit with 1-2 business day processing.
-- **Transaction PIN Reset**: Comprehensive PIN reset workflow with email verification. Features a 3-step process: request verification code, verify code, and set new PIN. Verification codes are bcrypt-hashed, expire after 10 minutes, and are stored in the `pin_reset_codes` table with single-use enforcement.
-- **Login Notifications**: Security feature sending email alerts upon successful logins with comprehensive details (date/time, location, device model, browser, OS, IP address). Users can enable/disable this feature in Security Settings via `user_security_settings.loginalerts`.
-- **Selfie/Video Verification System**: Identity verification system for users with suspicious banking activities. Requires selfie or video verification before account access, featuring a video recording component, dedicated verification page, `selfie_verifications` database table for status tracking, profile integration, authentication flow redirection, API endpoints for file upload, and an admin panel guide for management.
-- **Transaction Blocking for Verification**: Users requiring verification are automatically blocked from accessing all transaction pages and redirected to `/verify-identity` until verified. Blocked pages include internal transfers, external payments, withdrawals, crypto trading, card applications, loan applications, and crypto loan deposits.
-- **Performance Optimizations**: Addressed device crashes on transfer pages through optimizations like aggressive video recording voice cancellation, `priority={true}` and `loading="eager"` for hero images, code splitting for wire transfer styles and validators, improved video recording frame collection, and mobile stability improvements for transfer pages.
-- **Oakline-to-Oakline Payments Styling & Dual Email Alerts**: Overhauled send-to-Oakline user payment page with professional wire transfer styling and comprehensive dual email notifications for both sender and recipient.
+### Key Features
+1. **User Authentication**
+   - Email/password registration and login
+   - Supabase Auth integration
+   - Session management
 
-## External Dependencies
+2. **Account Management**
+   - Multiple account types (checking, savings, money market)
+   - Account opening with KYC/identity verification
+   - Account linking and fund transfers
 
-### Database & Backend
-- **Supabase**: Provides PostgreSQL database, authentication, and real-time capabilities via `@supabase/supabase-js`.
+3. **Loan Management**
+   - Loan applications and approvals
+   - 10% collateral deposit requirement
+   - Cryptocurrency and bank transfer payment methods
+   - Real-time blockchain confirmation tracking
 
-### Payment Processing
-- **Stripe**: Used for payment processing, integrated via `@stripe/stripe-js` and `@stripe/react-stripe-js`.
+4. **Cryptocurrency Deposits**
+   - Bitcoin, Ethereum, USDC, USDT support
+   - Multiple blockchain networks (Bitcoin, Ethereum, Polygon, Solana)
+   - Transaction hash verification
+   - Automatic confirmation tracking
 
-### Email Services
-- **Nodemailer**: Used for transactional emails with SMTP configuration and multiple aliases.
-- **Email Logging**: Comprehensive audit system logs all outbound emails to the `email_logs` table, capturing recipient, subject, type, status, provider, message ID, and full message body.
+5. **Mobile Banking**
+   - Responsive design (mobile-first)
+   - Transaction history and dashboard
+   - Payment processing
+   - Receipt generation
 
-### Security & Validation
-- **Validator**: For input validation.
-- **XSS**: For cross-site scripting prevention.
+---
 
-### Chart & Visualization
-- **Chart.js**: Integrated via React Chart.js 2 wrappers for financial data visualization.
+## 📁 Project Structure
 
-### Deployment
-- **Replit**: Primary deployment platform, configured for autoscale deployment. Environment secrets for Supabase, Plaid, and SMTP are managed through Replit Secrets.
+```
+oakline-bank/
+├── pages/                       # Next.js pages and API routes
+│   ├── api/                    # Backend API endpoints
+│   │   ├── send-loan-deposit-notification.js
+│   │   ├── loan/get-loans.js
+│   │   └── [other APIs]
+│   ├── loan/                   # Loan-related pages
+│   │   ├── deposit-crypto.js   # Cryptocurrency deposit page
+│   │   ├── dashboard.js         # Loan dashboard
+│   │   └── [other loan pages]
+│   ├── account/                # Account pages
+│   ├── dashboard.js            # Main dashboard
+│   └── [other pages]
+├── components/                 # Reusable React components
+├── lib/                        # Utility functions
+│   ├── supabaseClient.js       # Supabase client setup
+│   ├── email.js                # Email service configuration
+│   └── [other utilities]
+├── contexts/                   # React context providers
+├── public/                     # Static assets
+│   ├── index.html             # Capacitor WebView entry point
+│   ├── manifest.json          # PWA manifest
+│   ├── service-worker.js      # Service worker
+│   └── images/
+├── styles/                     # Global styles
+├── capacitor.config.ts        # Capacitor configuration
+├── capacitor.config.json      # Capacitor JSON config backup
+├── CAPACITOR_SETUP_GUIDE.md  # Mobile app setup guide
+└── package.json               # Dependencies
 
-### API Integration
-- **Internal API Routes**: Used for fetching user-specific data.
-- **Backend Communication**: RESTful API communication with environment-based backend URL configuration and authorization headers using Supabase session tokens.
+```
+
+---
+
+## 💾 Database Schema (Key Tables)
+
+### `users`
+- id (UUID)
+- email (text, unique)
+- full_name (text)
+- phone (text)
+- date_of_birth (date)
+- created_at (timestamp)
+
+### `accounts`
+- id (UUID)
+- user_id (UUID, foreign key)
+- account_number (text, unique)
+- account_type (enum: 'checking', 'savings', 'money_market')
+- balance (numeric)
+- status (enum: 'active', 'pending', 'closed')
+- created_at (timestamp)
+
+### `loans`
+- id (UUID)
+- user_id (UUID, foreign key)
+- principal (numeric)
+- interest_rate (numeric)
+- term_months (integer)
+- status (enum: 'pending', 'approved', 'active', 'closed')
+- deposit_status (enum: 'pending', 'verified', 'failed')
+- deposit_method (text: 'crypto', 'bank_transfer')
+- deposit_amount (numeric)
+- created_at (timestamp)
+
+### `loan_payments`
+- id (UUID)
+- loan_id (UUID, foreign key)
+- user_id (UUID, foreign key)
+- amount (numeric)
+- payment_type (enum: 'regular', 'late_fee', 'early_payoff', 'deposit')
+- status (enum: 'pending', 'completed', 'failed')
+- is_deposit (boolean) - True for 10% collateral deposits
+- deposit_method (text: 'crypto', 'account_balance', 'bank_transfer')
+- tx_hash (text) - Transaction hash for crypto deposits
+- fee (numeric) - Network/processing fee
+- gross_amount (numeric) - Amount including fees
+- proof_path (text) - Proof document path
+- metadata (jsonb) - Additional data (crypto_type, network, wallet_address)
+- confirmations (integer) - Blockchain confirmations
+- required_confirmations (integer) - Required confirmations (default: 3)
+- created_at (timestamp)
+
+### `crypto_deposits` (Legacy - being replaced by loan_payments)
+- Used for account opening deposits only
+- Contains historical crypto deposit data
+
+### `transactions`
+- id (UUID)
+- user_id (UUID, foreign key)
+- amount (numeric)
+- transaction_type (enum: 'transfer', 'payment', 'deposit')
+- status (enum: 'pending', 'completed', 'failed')
+- created_at (timestamp)
+
+---
+
+## 🔑 Important Files & Recent Changes
+
+### Loan Deposit System (Updated Dec 1, 2025)
+**Decision**: Using `loan_payments` table exclusively for 10% loan deposits
+- **Migration**: `supabase_migrations/1764603732_add_loan_deposit_columns.sql`
+- **Fields**: deposit_method, tx_hash, fee, gross_amount, proof_path, metadata, confirmations, is_deposit
+- **Files Modified**:
+  - `pages/loan/deposit-crypto.js` - Receipt now shows wallet address; professional 2-column grid layout
+  - `pages/dashboard.js` - Fetches loan deposits from loan_payments table
+  - `pages/api/send-loan-deposit-notification.js` - Enhanced logging for email delivery debugging
+
+### Email Notification System
+- **Status**: Functional but may need email service verification
+- **Service**: Nodemailer (SendGrid/Gmail SMTP)
+- **Logging**: Added console logs to track email sending
+- **File**: `lib/email.js` - Email service configuration
+
+### Receipt Component
+- **Location**: `pages/loan/deposit-crypto.js` (SuccessReceipt component)
+- **Features**: 
+  - Professional green success design
+  - 2-column grid layout for fields
+  - Displays wallet address (if provided)
+  - Shows transaction hash
+  - Professional timing format
+  - Loading spinner during processing
+
+---
+
+## 📱 Capacitor Mobile App Setup
+
+### Installed Components
+- `@capacitor/core` - Framework
+- `@capacitor/cli` - CLI tools
+- `@capacitor/ios` - iOS platform
+- `@capacitor/android` - Android platform
+
+### Configuration Files
+- `capacitor.config.ts` - TypeScript configuration
+- `capacitor.config.json` - JSON backup configuration
+- `public/index.html` - WebView entry point with loading screen
+
+### Available Commands
+```bash
+npm run capacitor:sync        # Sync changes to native projects
+npm run capacitor:open:ios    # Open iOS project in Xcode
+npm run capacitor:open:android # Open Android project in Android Studio
+npm run capacitor:build       # Build web assets and sync
+```
+
+### Build Setup (Requires macOS + Local Development)
+1. Follow `CAPACITOR_SETUP_GUIDE.md` for detailed instructions
+2. Requires Xcode for iOS and Android Studio for Android
+3. Produces native `.ipa` (iOS) and `.aab`/`.apk` (Android) files
+4. Ready for App Store Connect and Google Play Console submissions
+
+---
+
+## 🔐 Security & Environment Variables
+
+### Required Environment Variables (.env.local)
+```
+NEXT_PUBLIC_SUPABASE_URL=https://[project].supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[key]
+SUPABASE_SERVICE_ROLE_KEY=[key]
+NEXT_PUBLIC_STRIPE_PUBLIC_KEY=[key]
+STRIPE_SECRET_KEY=[key]
+NEXT_PUBLIC_APP_URL=https://theoaklinebank.com
+EMAIL_USER=[smtp_user]
+EMAIL_PASSWORD=[smtp_password]
+```
+
+### Data Security
+- Passwords hashed with bcryptjs
+- Supabase Row Level Security (RLS) for database access
+- Supabase Auth for session management
+- HTTPS only for production
+- Capacitor configured for HTTPS only in production
+
+---
+
+## 🚀 Deployment
+
+### Production (Vercel)
+- Deployed at https://theoaklinebank.com
+- Automatic deployments from main branch
+- Next.js optimizations enabled
+- Serverless API routes
+
+### Mobile App Distribution
+**App Store (iOS)**: TestFlight → App Store Connect → Submission
+**Play Store (Android)**: Internal Testing → Beta → Production
+
+See `CAPACITOR_SETUP_GUIDE.md` for detailed store requirements and checklist.
+
+---
+
+## 📊 Recent Fixes & Improvements
+
+### Dec 1, 2025 - Loan Deposit Enhancements
+- ✅ **Wallet Address in Receipt**: Receipt now displays the cryptocurrency wallet address users sent their deposit to
+- ✅ **Professional Receipt Layout**: Updated to 2-column grid layout with proper spacing and typography
+- ✅ **Email Logging**: Added detailed console logging to track email delivery issues
+- ✅ **Transaction Hash Display**: Full transaction hash shown in receipt (not truncated)
+- ✅ **Loan Payments Table Migration**: Created migration for new deposit-specific columns (tx_hash, fees, proof_path, etc.)
+
+### Outstanding Issues to Address
+- **Email Delivery**: Verify email service is properly configured; check logs when testing deposits
+- **Database Migration**: Must run SQL migration in Supabase to add new columns to loan_payments table
+- **Blockchain Confirmation Tracking**: Monitoring confirmations requires blockchain API integration
+
+---
+
+## 🛠️ Development Workflow
+
+### Running Locally
+```bash
+npm install              # Install dependencies
+npm run dev              # Start Next.js dev server (http://localhost:5000)
+npm run build            # Build for production
+npm run lint             # Run ESLint
+```
+
+### Testing Deposits
+1. Navigate to Loan → Collateral Deposit page
+2. Enter deposit amount (min 10% of loan)
+3. Select payment method (crypto or account balance)
+4. Submit deposit
+5. Check email for confirmation (may need to verify email service)
+6. Monitor dashboard for transaction status
+
+### Mobile App Testing
+```bash
+npm run capacitor:sync              # Copy web assets to native projects
+npm run capacitor:open:ios          # Test on iOS simulator/device
+npm run capacitor:open:android      # Test on Android simulator/device
+```
+
+---
+
+## 📞 Support & Resources
+
+- **Capacitor Docs**: https://capacitorjs.com
+- **Next.js Docs**: https://nextjs.org
+- **Supabase Docs**: https://supabase.com/docs
+- **Stripe Docs**: https://stripe.com/docs
+- **App Store Connect**: https://appstoreconnect.apple.com
+- **Google Play Console**: https://play.google.com/console
+
+---
+
+## ✅ Project Status
+
+**Loan Deposit System**: ✅ Production Ready (requires DB migration)  
+**Mobile App**: 🟡 Structure Ready (needs Xcode/Android Studio for native builds)  
+**Email Notifications**: 🟡 Functional (needs email service verification)  
+**App Store Readiness**: 🟡 Ready for build (requires icons, splash screens, screenshots)  
+
+---
+
+*Last Updated: December 1, 2025*  
+*Next Focus*: Complete mobile app build configuration and store submissions
