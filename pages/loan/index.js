@@ -300,15 +300,19 @@ function LoanDashboardContent() {
 
   return (
     <div style={styles.container}>
-      <div style={styles.header} className="loan-index-header">
-        <div>
-          <h1 style={styles.title}>My Loans</h1>
-          <p style={styles.subtitle}>Manage your loan applications and active loans</p>
+      <div style={styles.hero}>
+        <div style={styles.heroContent}>
+          <h1 style={styles.heroTitle}>Loan Management</h1>
+          <p style={styles.heroSubtitle}>Track applications, view payment details, and manage your account</p>
         </div>
-        <Link href="/loan/apply" style={styles.applyButton} className="loan-index-apply-button">
-          + Apply for New Loan
-        </Link>
       </div>
+
+      <div style={styles.mainContent}>
+        <div style={styles.topSection}>
+          <Link href="/loan/apply" style={styles.applyButton} className="loan-index-apply-button">
+            ➕ Apply for New Loan
+          </Link>
+        </div>
 
       {toast.show && (
         <div style={{
@@ -442,7 +446,9 @@ function LoanDashboardContent() {
                     </div>
                   )}
 
-                  {getDepositStatusMessage(loan)}
+                  <div style={styles.depositAlertWrapper}>
+                    {getDepositStatusMessage(loan)}
+                  </div>
 
                   <div style={styles.loanCardActions}>
                     <Link href={`/loan/${loan.id}`} style={styles.viewButton}>
@@ -468,6 +474,7 @@ function LoanDashboardContent() {
           </p>
         </div>
       )}
+      </div>
     </div>
   );
 }
@@ -482,45 +489,54 @@ export default function LoanDashboard() {
 
 const styles = {
   container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '40px 20px',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-    backgroundColor: '#fff'
+    minHeight: '100vh',
+    backgroundColor: '#f8fafc',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
   },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
-    flexWrap: 'wrap',
-    gap: '1rem',
-    borderBottom: '2px solid #e5e7eb',
-    paddingBottom: '2rem'
+  hero: {
+    background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+    padding: '60px 20px',
+    textAlign: 'center',
+    color: '#fff',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
   },
-  title: {
-    fontSize: '32px',
+  heroContent: {
+    maxWidth: '800px',
+    margin: '0 auto'
+  },
+  heroTitle: {
+    fontSize: 'clamp(32px, 5vw, 48px)',
     fontWeight: '700',
-    color: '#1a365d',
-    margin: '0 0 8px 0',
+    marginBottom: '16px',
+    letterSpacing: '-0.5px'
   },
-  subtitle: {
-    fontSize: '16px',
-    color: '#64748b',
-    margin: 0,
+  heroSubtitle: {
+    fontSize: '18px',
+    lineHeight: '1.6',
+    opacity: '0.95'
+  },
+  mainContent: {
+    maxWidth: '1200px',
+    margin: '-40px auto 0',
+    padding: '0 20px 60px'
+  },
+  topSection: {
+    display: 'flex',
+    marginBottom: '40px'
   },
   applyButton: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#10b981',
     color: 'white',
-    padding: '12px 24px',
-    borderRadius: '8px',
+    padding: '16px 32px',
+    borderRadius: '12px',
     textDecoration: 'none',
     fontWeight: '600',
     fontSize: '16px',
     border: 'none',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    boxShadow: '0 2px 4px rgba(0, 123, 255, 0.2)',
+    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+    display: 'inline-block'
   },
   toast: {
     position: 'fixed',
@@ -535,12 +551,13 @@ const styles = {
   },
   filtersContainer: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
-    gap: 'clamp(0.75rem, 2vw, 1rem)',
-    marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
-    padding: 'clamp(1rem, 2vw, 1.25rem)',
-    backgroundColor: '#f8f9fa',
-    borderRadius: '12px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '16px',
+    marginBottom: '32px',
+    padding: '24px',
+    backgroundColor: '#fff',
+    borderRadius: '16px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
   },
   filterGroup: {
     display: 'flex',
@@ -550,21 +567,23 @@ const styles = {
   filterLabel: {
     fontSize: '14px',
     fontWeight: '600',
-    color: '#333',
+    color: '#1e293b',
   },
   select: {
-    padding: '10px 12px',
-    borderRadius: '6px',
-    border: '1px solid #ddd',
+    padding: '12px 16px',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
     fontSize: '14px',
     backgroundColor: 'white',
     cursor: 'pointer',
+    transition: 'border 0.2s'
   },
   searchInput: {
-    padding: '10px 12px',
-    borderRadius: '6px',
-    border: '1px solid #ddd',
+    padding: '12px 16px',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
     fontSize: '14px',
+    transition: 'border 0.2s'
   },
   loadingContainer: {
     textAlign: 'center',
@@ -610,40 +629,40 @@ const styles = {
   },
   loansGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))',
-    gap: 'clamp(1rem, 2vw, 1.5rem)'
+    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 380px), 1fr))',
+    gap: '24px',
+    marginBottom: '32px'
   },
   loanCard: {
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    backgroundColor: '#fff',
+    borderRadius: '16px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
     overflow: 'hidden',
-    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-    cursor: 'pointer',
+    transition: 'transform 0.2s, box-shadow 0.2s',
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'column'
   },
   loanCardHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    padding: '20px',
-    borderBottom: '1px solid #eee',
-    backgroundColor: '#f8f9fa',
+    padding: '24px',
+    borderBottom: '1px solid #e5e7eb',
+    backgroundColor: '#f8fafc'
   },
   loanType: {
     fontSize: '18px',
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: '4px',
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: '6px',
   },
   loanReference: {
-    fontSize: '13px',
-    color: '#666',
+    fontSize: '12px',
+    color: '#64748b',
     fontFamily: 'monospace',
   },
   statusBadge: {
-    padding: '6px 12px',
+    padding: '8px 14px',
     borderRadius: '20px',
     fontSize: '12px',
     fontWeight: '600',
@@ -651,57 +670,63 @@ const styles = {
     letterSpacing: '0.5px',
   },
   loanCardBody: {
-    padding: '20px',
+    padding: '24px',
     flexGrow: 1,
     display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
+    flexDirection: 'column'
   },
   loanDetail: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '12px',
+    padding: '10px 0',
+    borderBottom: '1px solid #f3f4f6'
   },
   loanLabel: {
     fontSize: '14px',
-    color: '#666',
+    color: '#6b7280',
+    fontWeight: '500'
   },
   loanValue: {
     fontSize: '14px',
     fontWeight: '600',
-    color: '#333',
+    color: '#1e293b'
+  },
+  depositAlertWrapper: {
+    marginTop: '16px',
+    marginBottom: '16px'
   },
   depositMessage: {
-    padding: '12px 16px',
-    borderRadius: '8px',
+    padding: '16px',
+    borderRadius: '12px',
     fontSize: '14px',
-    fontWeight: '500',
-    marginTop: '16px',
-    marginBottom: '16px',
+    fontWeight: '600',
+    marginTop: '0',
+    marginBottom: '0',
+    border: '2px solid'
   },
   depositRequired: {
-    backgroundColor: '#FFF3CD',
-    color: '#856404',
-    borderLeft: '4px solid #FFA500',
+    backgroundColor: '#fef2f2',
+    color: '#991b1b',
+    borderColor: '#ef4444',
   },
   depositPending: {
-    backgroundColor: '#D1ECF1',
-    color: '#0C5460',
-    borderLeft: '4px solid #17A2B8',
+    backgroundColor: '#fffbeb',
+    color: '#92400e',
+    borderColor: '#f59e0b',
   },
   depositCompleted: {
-    backgroundColor: '#D4EDDA',
-    color: '#155724',
-    borderLeft: '4px solid #28A745',
+    backgroundColor: '#ecfdf5',
+    color: '#065f46',
+    borderColor: '#10b981',
   },
   depositButton: {
     display: 'inline-block',
     marginLeft: '12px',
-    backgroundColor: '#007BFF',
+    backgroundColor: '#10b981',
     color: 'white',
-    padding: '6px 12px',
-    borderRadius: '4px',
+    padding: '8px 16px',
+    borderRadius: '6px',
     textDecoration: 'none',
     fontSize: '13px',
     fontWeight: '600',
@@ -710,48 +735,46 @@ const styles = {
     display: 'flex',
     gap: '12px',
     marginTop: '20px',
+    marginBottom: '0',
+    paddingTop: '20px',
+    borderTop: '1px solid #f3f4f6'
   },
   viewButton: {
     flex: 1,
     textAlign: 'center',
-    padding: '10px 16px',
-    borderRadius: '6px',
+    padding: '12px 16px',
+    borderRadius: '8px',
     textDecoration: 'none',
     fontWeight: '600',
     fontSize: '14px',
-    backgroundColor: 'white',
-    color: '#007BFF',
-    border: '2px solid #007BFF',
-    transition: 'all 0.3s ease',
-    '&:hover': {
-      backgroundColor: '#007BFF',
-      color: 'white',
-    }
+    backgroundColor: '#f0fdf4',
+    color: '#059669',
+    border: '2px solid #d1fae5',
+    transition: 'all 0.2s'
   },
   payButton: {
     flex: 1,
     textAlign: 'center',
-    padding: '10px 16px',
-    borderRadius: '6px',
+    padding: '12px 16px',
+    borderRadius: '8px',
     textDecoration: 'none',
     fontWeight: '600',
     fontSize: '14px',
-    backgroundColor: '#28A745',
+    backgroundColor: '#10b981',
     color: 'white',
-    border: '2px solid #28A745',
-    transition: 'all 0.3s ease',
-    '&:hover': {
-      backgroundColor: '#218838',
-      borderColor: '#1e7e34',
-    }
+    border: '2px solid #10b981',
+    transition: 'all 0.2s'
   },
   summary: {
     textAlign: 'center',
-    padding: '20px',
-    color: '#666',
+    padding: '24px',
+    backgroundColor: '#fff',
+    borderRadius: '16px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
   },
   summaryText: {
     fontSize: '14px',
+    color: '#64748b',
     margin: 0,
   },
 };
