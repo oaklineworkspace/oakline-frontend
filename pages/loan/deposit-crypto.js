@@ -915,10 +915,10 @@ function LoanDepositCryptoContent() {
               </button>
             </div>
 
-            {paymentMethod === 'crypto' ? (
+            {paymentMethod === 'crypto' && (
               <>
                 <h2 style={styles.sectionTitle}>Select Cryptocurrency</h2>
-            <div style={styles.cryptoGrid}>
+                <div style={styles.cryptoGrid}>
               {cryptoTypes.map(crypto => (
                 <div
                   key={crypto.value}
@@ -982,7 +982,9 @@ function LoanDepositCryptoContent() {
                   </div>
                 )}
               </>
-            ) : (
+            )}
+
+            {paymentMethod === 'balance' && (
               <>
                 <h2 style={styles.sectionTitle}>Select Account & Amount</h2>
                 <div style={{ marginBottom: '1.5rem' }}>
