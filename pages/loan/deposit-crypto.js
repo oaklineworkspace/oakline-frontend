@@ -59,7 +59,14 @@ function LoanDepositCryptoContent() {
     { value: 'Tether USD', label: 'Tether', icon: '₮', color: '#26A17B', symbol: 'USDT' },
     { value: 'Ethereum', label: 'Ethereum', icon: 'Ξ', color: '#627EEA', symbol: 'ETH' },
     { value: 'BNB', label: 'Binance Coin', icon: 'B', color: '#F3BA2F', symbol: 'BNB' },
-    { value: 'USD Coin', label: 'USD Coin', icon: '$', color: '#007AFF', symbol: 'USDC' }
+    { value: 'USD Coin', label: 'USD Coin', icon: '$', color: '#007AFF', symbol: 'USDC' },
+    { value: 'Solana', label: 'Solana', icon: 'S', color: '#9945FF', symbol: 'SOL' },
+    { value: 'Cardano', label: 'Cardano', icon: 'A', color: '#0077fa', symbol: 'ADA' },
+    { value: 'Polygon', label: 'Polygon', icon: 'M', color: '#8247E5', symbol: 'MATIC' },
+    { value: 'Avalanche', label: 'Avalanche', icon: 'A', color: '#E84142', symbol: 'AVAX' },
+    { value: 'Litecoin', label: 'Litecoin', icon: 'Ł', color: '#345D9D', symbol: 'LTC' },
+    { value: 'XRP', label: 'XRP', icon: 'X', color: '#0070D0', symbol: 'XRP' },
+    { value: 'TON', label: 'TON', icon: 'T', color: '#007AFF', symbol: 'TON' }
   ];
 
   useEffect(() => {
