@@ -519,10 +519,8 @@ function LoanDepositCryptoContent() {
     if (selectedNetwork) {
       const feePercent = selectedNetwork.fee || 0;
       setNetworkFeePercent(feePercent);
-      // Auto-fill with total amount (base + fee already calculated)
-      const fee = minDeposit * (feePercent / 100);
-      const totalWithFee = minDeposit + fee;
-      setDepositForm(prev => ({ ...prev, amount: totalWithFee.toFixed(2) }));
+      // Auto-fill with just the base amount (fee will be calculated separately)
+      setDepositForm(prev => ({ ...prev, amount: minDeposit.toFixed(2) }));
     }
     setWalletAddress('');
   };
@@ -548,10 +546,9 @@ function LoanDepositCryptoContent() {
           setMessageType('error');
           return;
         }
-        // Enforce fee inclusion: amount must cover base deposit + network fee
-        const minimumWithFee = minDeposit + calculatedFee;
-        if (currentAmount < minimumWithFee) {
-          setMessage(`Deposit amount must include network fees. Minimum: $${minimumWithFee.toFixed(2)} (Base: $${minDeposit.toFixed(2)} + Fee: $${calculatedFee.toFixed(2)})`);
+        // Check that base deposit amount meets minimum
+        if (currentAmount < minDeposit) {
+          setMessage(`Deposit amount must be at least $${minDeposit.toFixed(2)}`);
           setMessageType('error');
           return;
         }
