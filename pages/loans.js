@@ -240,15 +240,15 @@ function LoansOverviewContent() {
                         <span style={{
                           ...styles.detailValue, 
                           color: (loan.deposit_status === 'completed' || loan.deposit_paid === true) ? '#10b981' : 
-                                 (loan.deposit_status === 'pending') ? '#f59e0b' : '#ef4444',
+                                 (loan.deposit_status === 'pending' && loan.deposit_transactions?.length > 0) ? '#f59e0b' : '#ef4444',
                           fontWeight: '700'
                         }}>
                           {(loan.deposit_status === 'completed' || loan.deposit_paid === true) ? (
                             `$${parseFloat(loan.deposit_amount || loan.deposit_required).toLocaleString()} ✓ Confirmed`
-                          ) : loan.deposit_status === 'pending' ? (
+                          ) : (loan.deposit_status === 'pending' && loan.deposit_transactions?.length > 0) ? (
                             `$${parseFloat(loan.deposit_amount || loan.deposit_required).toLocaleString()} ⏳ Under Review`
                           ) : (
-                            `$${parseFloat(loan.deposit_required).toLocaleString()} ⚠️ Required`
+                            `$${parseFloat(loan.deposit_required).toLocaleString()} ⏸️ Waiting for Deposit`
                           )}
                         </span>
                       </div>
