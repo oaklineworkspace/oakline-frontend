@@ -212,7 +212,7 @@ function LoanDepositCryptoContent() {
   const [successReceipt, setSuccessReceipt] = useState(null);
 
   const [depositForm, setDepositForm] = useState({
-    crypto_type: 'Bitcoin',
+    crypto_type: '',
     network_type: '',
     amount: ''
   });
@@ -434,9 +434,7 @@ function LoanDepositCryptoContent() {
           icon: networkIconMap[asset.network_type] || '🔹'
         }));
         setAvailableNetworks(networks);
-        if (networks.length > 0) {
-          handleNetworkChange(networks[0].value);
-        }
+        // Don't auto-select - let users choose their network
       }
     } catch (error) {
       console.error('Error fetching networks:', error);
