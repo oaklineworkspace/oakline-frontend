@@ -135,9 +135,9 @@ function LoansOverviewContent() {
     <div style={styles.container}>
       <div style={styles.hero}>
         <div style={styles.heroContent}>
-          <h1 style={styles.heroTitle}>My Loans</h1>
+          <h1 style={styles.heroTitle}>Your Loan Portfolio</h1>
           <p style={styles.heroSubtitle}>
-            Manage all your loan applications and active loans in one place
+            Track loan applications, manage payments, and monitor your accounts
           </p>
         </div>
       </div>
@@ -236,7 +236,7 @@ function LoansOverviewContent() {
                     )}
                     {loan.deposit_required && loan.deposit_required > 0 && (
                       <div style={styles.detailRow}>
-                        <span style={styles.detailLabel}>Required Deposit (10%):</span>
+                        <span style={styles.detailLabel}>Security Deposit (10%):</span>
                         <span style={{
                           ...styles.detailValue, 
                           color: (loan.deposit_status === 'completed' || loan.deposit_paid === true) ? '#10b981' : 
@@ -244,75 +244,88 @@ function LoansOverviewContent() {
                           fontWeight: '700'
                         }}>
                           {(loan.deposit_status === 'completed' || loan.deposit_paid === true) ? (
-                            `$${parseFloat(loan.deposit_amount || loan.deposit_required).toLocaleString()} ✓ Paid & Confirmed`
+                            `$${parseFloat(loan.deposit_amount || loan.deposit_required).toLocaleString()} ✓ Confirmed`
                           ) : loan.deposit_status === 'pending' ? (
-                            `$${parseFloat(loan.deposit_amount || loan.deposit_required).toLocaleString()} ⏳ Pending Admin Review`
+                            `$${parseFloat(loan.deposit_amount || loan.deposit_required).toLocaleString()} ⏳ Under Review`
                           ) : (
-                            `$${parseFloat(loan.deposit_required).toLocaleString()} ⚠️ Payment Required`
+                            `$${parseFloat(loan.deposit_required).toLocaleString()} ⚠️ Required`
                           )}
                         </span>
                       </div>
                     )}
                   </div>
 
-                  <div style={styles.loanActions}>
+                  <div style={styles.depositStatusContainer}>
                     {(() => {
-                      // Check if there are actual deposit transactions
                       const hasDepositTransactions = loan.deposit_transactions && Array.isArray(loan.deposit_transactions) && loan.deposit_transactions.length > 0;
                       
-                      // Show deposit verified
                       if (loan.deposit_paid && loan.deposit_status === 'completed') {
                         return (
                           <div style={{
-                            backgroundColor: '#d1fae5',
-                            border: '1px solid #a7f3d0',
-                            borderRadius: '8px',
-                            padding: '12px',
-                            fontSize: '14px',
+                            backgroundColor: '#ecfdf5',
+                            border: '2px solid #10b981',
+                            borderRadius: '12px',
+                            padding: '16px',
+                            fontSize: '15px',
                             color: '#065f46',
-                            marginBottom: '12px',
+                            marginBottom: '16px',
                             fontWeight: '600'
                           }}>
-                            ✅ Deposit confirmed! Loan under review by Loan Department.
+                            ✅ Security Deposit Confirmed — Your application is now under review.
                           </div>
                         );
                       }
 
-                      // Show deposit submitted ONLY if there are actual deposit transactions
-                      if (hasDepositTransactions && loan.deposit_status === 'pending' && !loan.deposit_paid && loan.status === 'pending') {
+                      if (hasDepositTransactions && loan.deposit_status === 'pending' && !loan.deposit_paid) {
                         return (
                           <div style={{
-                            backgroundColor: '#fef3c7',
-                            border: '1px solid #fde68a',
-                            borderRadius: '8px',
-                            padding: '12px',
-                            fontSize: '14px',
+                            backgroundColor: '#fffbeb',
+                            border: '2px solid #f59e0b',
+                            borderRadius: '12px',
+                            padding: '16px',
+                            fontSize: '15px',
                             color: '#92400e',
-                            marginBottom: '12px',
+                            marginBottom: '16px',
                             fontWeight: '600'
                           }}>
-                            ⏳ Deposit submitted{loan.deposit_date ? ` on ${new Date(loan.deposit_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}` : ''}. Awaiting Loan Department verification.
+                            ⏳ Deposit Under Review — Verification in progress. Expected: 1-3 business days.
                           </div>
                         );
                       }
 
-                      // Show deposit required button ONLY if no deposits submitted and deposit not paid
                       if (loan.status === 'pending' && !hasDepositTransactions && !loan.deposit_paid && loan.deposit_required > 0) {
                         return (
-                          <Link 
-                            href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${loan.deposit_required}`}
-                            style={styles.actionButton}
-                          >
-                            💰 Complete 10% Deposit (${parseFloat(loan.deposit_required).toLocaleString()})
-                          </Link>
+                          <div style={{
+                            backgroundColor: '#fef2f2',
+                            border: '2px solid #ef4444',
+                            borderRadius: '12px',
+                            padding: '16px',
+                            marginBottom: '16px'
+                          }}>
+                            <div style={{ fontSize: '15px', fontWeight: '700', color: '#991b1b', marginBottom: '12px' }}>
+                              ⚠️ REQUIRED: Complete Your 10% Security Deposit
+                            </div>
+                            <p style={{ fontSize: '14px', color: '#991b1b', margin: '0 0 12px 0' }}>
+                              To proceed with your loan application, deposit ${parseFloat(loan.deposit_required).toLocaleString()} (10% of principal).
+                            </p>
+                            <Link 
+                              href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${loan.deposit_required}`}
+                              style={styles.urgentDepositButton}
+                            >
+                              💰 Complete 10% Security Deposit Now
+                            </Link>
+                          </div>
                         );
                       }
 
                       return null;
                     })()}
+                  </div>
+
+                  <div style={styles.loanActions}>
                     {(loan.status === 'active' || loan.status === 'approved') && (
                       <Link href={`/loan/${loan.id}`} style={styles.actionButton}>
-                        💳 View & Make Payment
+                        💳 Make Payment
                       </Link>
                     )}
                     <Link href={`/loan/${loan.id}`} style={styles.viewButton}>
@@ -362,7 +375,8 @@ const styles = {
   heroSubtitle: {
     fontSize: '18px',
     lineHeight: '1.6',
-    opacity: '0.95'
+    opacity: '0.95',
+    fontWeight: '400'
   },
   mainContent: {
     maxWidth: '1200px',
@@ -541,6 +555,23 @@ const styles = {
     fontSize: '14px',
     color: '#1e293b',
     fontWeight: '600'
+  },
+  depositStatusContainer: {
+    marginBottom: '16px'
+  },
+  urgentDepositButton: {
+    padding: '14px 20px',
+    fontSize: '15px',
+    fontWeight: '700',
+    color: '#fff',
+    backgroundColor: '#dc2626',
+    border: 'none',
+    borderRadius: '10px',
+    textDecoration: 'none',
+    textAlign: 'center',
+    display: 'block',
+    boxShadow: '0 4px 12px rgba(220, 38, 38, 0.3)',
+    transition: 'all 0.2s'
   },
   loanActions: {
     display: 'flex',
