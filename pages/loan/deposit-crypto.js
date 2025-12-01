@@ -100,7 +100,7 @@ function SuccessReceipt({ depositAmount, depositMethod, cryptoType, txHash, onCl
         color: '#1e40af',
         lineHeight: '1.6'
       }}>
-        ℹ️ Your deposit is now pending verification. Our Loan Department will verify your deposit on the blockchain. This typically takes 1-3 business days. You'll receive email notifications at each stage of the verification process.
+        ℹ️ Your deposit has been received and is pending blockchain confirmation. Confirmation typically completes within 15 minutes to 2 hours. You will receive email notifications as your deposit progresses through verification.
       </div>
 
       <button
@@ -757,9 +757,10 @@ function LoanDepositCryptoContent() {
           depositData.tx_hash = txHash.trim();
         }
 
-        const { error: depositError } = await supabase
+        const { data: insertedDeposit, error: depositError } = await supabase
           .from('crypto_deposits')
-          .insert([depositData]);
+          .insert([depositData])
+          .select();
 
         if (depositError) {
           console.error('Deposit error details:', depositError);
@@ -777,6 +778,31 @@ function LoanDepositCryptoContent() {
             updated_at: new Date().toISOString()
           })
           .eq('id', loan_id);
+
+        // Send email notification immediately
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session && user.email) {
+            await fetch('/api/send-loan-deposit-notification', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+              },
+              body: JSON.stringify({
+                userEmail: user.email,
+                depositAmount: depositForm.amount,
+                cryptoType: depositForm.crypto_type,
+                selectedNetwork: selectedNetwork,
+                walletAddress: walletAddress,
+                txHash: txHash || null,
+                depositId: insertedDeposit?.[0]?.id
+              })
+            });
+          }
+        } catch (emailError) {
+          console.warn('Email notification failed, but deposit was successful:', emailError);
+        }
 
         setSubmitModal({ show: true, status: 'success', message: '✅ Deposit submitted successfully! Your loan will be activated within hours.' });
         setTimeout(() => {
