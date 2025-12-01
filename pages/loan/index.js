@@ -317,16 +317,19 @@ function LoanDashboardContent() {
       <div style={styles.mainContent}>
         {/* Processing Info Banner */}
         <div style={{
-          backgroundColor: '#D1ECF1',
-          borderLeft: '4px solid #17A2B8',
-          padding: '16px 20px',
-          borderRadius: '8px',
-          marginBottom: '24px',
-          fontSize: '14px',
-          color: '#0c5460',
-          lineHeight: '1.6'
+          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+          borderLeft: '4px solid #047857',
+          padding: '20px 24px',
+          borderRadius: '12px',
+          marginBottom: '32px',
+          fontSize: '15px',
+          color: '#ffffff',
+          lineHeight: '1.8',
+          fontWeight: '500',
+          boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
         }}>
-          <strong>💡 Loan Processing Timeline:</strong> Your application is being processed. Once you submit and we verify your 10% security deposit, your complete loan amount will be credited instantly to your account.
+          <strong style={{fontSize: '16px', display: 'block', marginBottom: '8px'}}>💡 Loan Processing Timeline</strong>
+          <div>Your application is being processed. Once you submit and we verify your 10% security deposit, your complete loan amount will be credited instantly to your account.</div>
         </div>
 
         <div style={styles.topSection}>

@@ -176,16 +176,19 @@ function LoansOverviewContent() {
 
         {/* Processing Info Banner */}
         <div style={{
-          backgroundColor: '#D1ECF1',
-          borderLeft: '4px solid #17A2B8',
-          padding: '16px 20px',
-          borderRadius: '8px',
-          marginBottom: '24px',
-          fontSize: '14px',
-          color: '#0c5460',
-          lineHeight: '1.6'
+          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+          borderLeft: '4px solid #047857',
+          padding: '20px 24px',
+          borderRadius: '12px',
+          marginBottom: '32px',
+          fontSize: '15px',
+          color: '#ffffff',
+          lineHeight: '1.8',
+          fontWeight: '500',
+          boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
         }}>
-          <strong>💡 Instant Disbursement Process:</strong> Your 10% security deposit unlocks instant funding. Submit deposit → We verify (1-3 business days) → Loan amount transfers instantly to your account.
+          <strong style={{fontSize: '16px', display: 'block', marginBottom: '8px'}}>💡 Instant Disbursement Process</strong>
+          <div>Your 10% security deposit unlocks instant funding. Submit deposit → We verify (1-3 business days) → Complete loan amount transfers instantly to your account.</div>
         </div>
 
         {/* Action Buttons */}
