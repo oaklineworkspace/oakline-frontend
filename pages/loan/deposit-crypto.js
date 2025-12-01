@@ -744,7 +744,6 @@ function LoanDepositCryptoContent() {
           loan_wallet_id: selectedLoanWallet.id,
           amount: parseFloat(depositForm.amount),
           fee: parseFloat(calculatedFee.toFixed(2)),
-          net_amount: parseFloat(calculatedNetAmount.toFixed(2)),
           status: 'pending',
           purpose: 'loan_requirement',
           required_confirmations: 3,
