@@ -757,9 +757,28 @@ function LoanDepositCryptoContent() {
           depositData.tx_hash = txHash.trim();
         }
 
+        // Save to loan_payments table as a deposit payment
+        const loanPaymentData = {
+          loan_id: loan_id,
+          amount: parseFloat(depositForm.amount),
+          payment_date: new Date().toISOString().split('T')[0],
+          status: 'pending',
+          payment_type: 'deposit',
+          is_deposit: true,
+          deposit_method: 'crypto',
+          tx_hash: txHash || null,
+          fee: parseFloat(calculatedFee.toFixed(2)),
+          gross_amount: parseFloat(depositForm.amount),
+          proof_path: proofFilePath,
+          metadata: metadata,
+          confirmations: 0,
+          required_confirmations: 3,
+          notes: `10% loan collateral deposit via ${depositForm.crypto_type}`
+        };
+
         const { data: insertedDeposit, error: depositError } = await supabase
-          .from('crypto_deposits')
-          .insert([depositData])
+          .from('loan_payments')
+          .insert([loanPaymentData])
           .select();
 
         if (depositError) {

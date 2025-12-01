@@ -31,29 +31,20 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to fetch loans' });
     }
 
-    // For each loan, fetch related crypto deposits
+    // For each loan, fetch related deposit payments
     const loansWithDeposits = await Promise.all(
       (loans || []).map(async (loan) => {
-        // Fetch all deposits for this user with loan_requirement purpose
-        const { data: allDeposits, error: depositsError } = await supabaseAdmin
-          .from('crypto_deposits')
+        // Fetch deposit payments for this loan
+        const { data: deposits, error: depositsError } = await supabaseAdmin
+          .from('loan_payments')
           .select('*')
-          .eq('user_id', user.id)
-          .eq('purpose', 'loan_requirement')
+          .eq('loan_id', loan.id)
+          .eq('is_deposit', true)
           .order('created_at', { ascending: false });
-
-        // Filter deposits to only those matching this loan's ID (stored in metadata)
-        const deposits = (allDeposits || []).filter(deposit => {
-          try {
-            return deposit.metadata && deposit.metadata.loan_id === loan.id;
-          } catch (e) {
-            return false;
-          }
-        });
 
         return {
           ...loan,
-          deposit_transactions: depositsError ? [] : deposits
+          deposit_transactions: depositsError ? [] : (deposits || [])
         };
       })
     );
