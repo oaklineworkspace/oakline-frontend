@@ -302,12 +302,33 @@ function LoanDashboardContent() {
     <div style={styles.container}>
       <div style={styles.hero}>
         <div style={styles.heroContent}>
-          <h1 style={styles.heroTitle}>Loan Management</h1>
-          <p style={styles.heroSubtitle}>Track applications, view payment details, and manage your account</p>
+          <div style={{display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', justifyContent: 'center'}}>
+            <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={{height: '50px', width: 'auto'}} />
+            <div style={{textAlign: 'left'}}>
+              <div style={{fontSize: '14px', opacity: '0.9'}}>Oakline Bank</div>
+              <div style={{fontSize: '20px', fontWeight: '700'}}>Loan Management</div>
+            </div>
+          </div>
+          <h1 style={styles.heroTitle}>Manage Your Loans</h1>
+          <p style={styles.heroSubtitle}>Processing your application: Submit 10% deposit → Instant disbursement to your account</p>
         </div>
       </div>
 
       <div style={styles.mainContent}>
+        {/* Processing Info Banner */}
+        <div style={{
+          backgroundColor: '#D1ECF1',
+          borderLeft: '4px solid #17A2B8',
+          padding: '16px 20px',
+          borderRadius: '8px',
+          marginBottom: '24px',
+          fontSize: '14px',
+          color: '#0c5460',
+          lineHeight: '1.6'
+        }}>
+          <strong>💡 Loan Processing Timeline:</strong> Your application is being processed. Once you submit and we verify your 10% security deposit, your complete loan amount will be credited instantly to your account.
+        </div>
+
         <div style={styles.topSection}>
           <Link href="/loan/apply" style={styles.applyButton} className="loan-index-apply-button">
             ➕ Apply for New Loan

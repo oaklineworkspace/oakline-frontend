@@ -415,14 +415,35 @@ Generated: ${new Date().toLocaleString()}
       {/* Hero Section */}
       <div style={styles.hero}>
         <div style={styles.heroContent}>
-          <h1 style={styles.heroTitle}>Loan Management Dashboard</h1>
+          <div style={{display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', justifyContent: 'center'}}>
+            <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={{height: '50px', width: 'auto'}} />
+            <div style={{textAlign: 'left'}}>
+              <div style={{fontSize: '14px', opacity: '0.9'}}>Oakline Bank</div>
+              <div style={{fontSize: '20px', fontWeight: '700'}}>Loan Management</div>
+            </div>
+          </div>
+          <h1 style={styles.heroTitle}>Your Loan Portfolio</h1>
           <p style={styles.heroSubtitle}>
-            Manage all your loans, make payments, and track your progress
+            Once your 10% security deposit is verified, your loan amount will be disbursed instantly to your account
           </p>
         </div>
       </div>
 
       <div style={styles.mainContent}>
+        {/* Processing Info Banner */}
+        <div style={{
+          backgroundColor: '#D1ECF1',
+          borderLeft: '4px solid #17A2B8',
+          padding: '16px 20px',
+          borderRadius: '8px',
+          marginBottom: '24px',
+          fontSize: '14px',
+          color: '#0c5460',
+          lineHeight: '1.6'
+        }}>
+          <strong>💡 How Loan Processing Works:</strong> Once we receive and verify your 10% security deposit, your approved loan amount will be disbursed instantly to your account. You'll receive email confirmation at each stage.
+        </div>
+
         {/* Alerts */}
         {error && (
           <div style={styles.alert}>

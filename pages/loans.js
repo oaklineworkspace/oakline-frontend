@@ -135,9 +135,16 @@ function LoansOverviewContent() {
     <div style={styles.container}>
       <div style={styles.hero}>
         <div style={styles.heroContent}>
-          <h1 style={styles.heroTitle}>Your Loan Portfolio</h1>
+          <div style={{display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', justifyContent: 'center'}}>
+            <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={{height: '50px', width: 'auto'}} />
+            <div style={{textAlign: 'left'}}>
+              <div style={{fontSize: '14px', opacity: '0.9'}}>Oakline Bank</div>
+              <div style={{fontSize: '20px', fontWeight: '700'}}>Your Loan Portfolio</div>
+            </div>
+          </div>
+          <h1 style={styles.heroTitle}>Loan Applications & Payments</h1>
           <p style={styles.heroSubtitle}>
-            Track loan applications, manage payments, and monitor your accounts
+            Submit your 10% security deposit to unlock instant loan disbursement. Your funds will be transferred immediately upon deposit verification.
           </p>
         </div>
       </div>
@@ -165,6 +172,20 @@ function LoansOverviewContent() {
             <div style={styles.statValue}>${stats.totalRemaining.toLocaleString()}</div>
             <div style={styles.statLabel}>Total Remaining</div>
           </div>
+        </div>
+
+        {/* Processing Info Banner */}
+        <div style={{
+          backgroundColor: '#D1ECF1',
+          borderLeft: '4px solid #17A2B8',
+          padding: '16px 20px',
+          borderRadius: '8px',
+          marginBottom: '24px',
+          fontSize: '14px',
+          color: '#0c5460',
+          lineHeight: '1.6'
+        }}>
+          <strong>💡 Instant Disbursement Process:</strong> Your 10% security deposit unlocks instant funding. Submit deposit → We verify (1-3 business days) → Loan amount transfers instantly to your account.
         </div>
 
         {/* Action Buttons */}
