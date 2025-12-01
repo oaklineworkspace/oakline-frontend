@@ -434,17 +434,17 @@ Generated: ${new Date().toLocaleString()}
         <div style={{
           background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
           borderLeft: '4px solid #047857',
-          padding: '20px 24px',
+          padding: 'clamp(16px, 4vw, 24px)',
           borderRadius: '12px',
           marginBottom: '32px',
-          fontSize: '15px',
+          fontSize: 'clamp(13px, 2vw, 15px)',
           color: '#ffffff',
-          lineHeight: '1.8',
+          lineHeight: '1.6',
           fontWeight: '500',
           boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
         }}>
-          <strong style={{fontSize: '16px', display: 'block', marginBottom: '8px'}}>💡 How Loan Processing Works</strong>
-          <div>Once we receive and verify your 10% security deposit within hours, your approved loan amount will be disbursed instantly to your account. You'll receive email confirmation at each stage.</div>
+          <strong style={{fontSize: 'clamp(15px, 2.5vw, 16px)', display: 'block', marginBottom: 'clamp(6px, 1vw, 8px)'}}>💡 Deposit Required</strong>
+          <div>Submit your 10% security deposit to activate your loan. We'll verify within hours and disburse your funds immediately.</div>
         </div>
 
         {/* Alerts */}
