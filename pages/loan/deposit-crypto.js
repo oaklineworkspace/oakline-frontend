@@ -338,31 +338,56 @@ function LoanDepositCryptoContent() {
     setMessageType('');
 
     if (currentStep === 1) {
-      if (!depositForm.crypto_type) {
-        setMessage('Please select a cryptocurrency');
-        setMessageType('error');
-        return;
-      }
-      if (!depositForm.network_type) {
-        setMessage('Please select a network');
-        setMessageType('error');
-        return;
-      }
+      // Common validation
       if (!depositForm.amount || parseFloat(depositForm.amount) <= 0) {
-        setMessage('Please enter a valid amount');
+        setMessage('Please enter a valid deposit amount');
         setMessageType('error');
         return;
       }
 
-      const selectedNetwork = getAvailableNetworks().find(n => n.value === depositForm.network_type);
-      if (selectedNetwork && calculatedNetAmount < selectedNetwork.minDeposit) {
-        setMessage(`After network fees, your net amount ($${calculatedNetAmount.toFixed(2)}) is below the minimum deposit of ${selectedNetwork.minDeposit} ${depositForm.crypto_type}. Please increase your deposit amount to cover the fee.`);
-        setMessageType('error');
-        return;
-      }
+      // Payment method specific validation
+      if (paymentMethod === 'crypto') {
+        if (!depositForm.crypto_type) {
+          setMessage('Please select a cryptocurrency');
+          setMessageType('error');
+          return;
+        }
+        if (!depositForm.network_type) {
+          setMessage('Please select a network');
+          setMessageType('error');
+          return;
+        }
 
-      setCurrentStep(2);
-    } else if (currentStep === 2) {
+        const selectedNetwork = getAvailableNetworks().find(n => n.value === depositForm.network_type);
+        if (selectedNetwork && calculatedNetAmount < selectedNetwork.minDeposit) {
+          setMessage(`After network fees, your net amount ($${calculatedNetAmount.toFixed(2)}) is below the minimum deposit of ${selectedNetwork.minDeposit} ${depositForm.crypto_type}. Please increase your deposit amount to cover the fee.`);
+          setMessageType('error');
+          return;
+        }
+        setCurrentStep(2);
+      } else if (paymentMethod === 'balance') {
+        if (!selectedAccount) {
+          setMessage('Please select an account');
+          setMessageType('error');
+          return;
+        }
+
+        const selectedAccountData = userAccounts.find(a => a.id === selectedAccount);
+        if (!selectedAccountData) {
+          setMessage('Selected account not found');
+          setMessageType('error');
+          return;
+        }
+
+        if (selectedAccountData.balance < parseFloat(depositForm.amount)) {
+          setMessage('Insufficient balance in selected account');
+          setMessageType('error');
+          return;
+        }
+
+        setCurrentStep(3);
+      }
+    } else if (currentStep === 2 && paymentMethod === 'crypto') {
       if (!walletAddress) {
         setMessage('Cannot proceed without an assigned wallet address');
         setMessageType('error');
@@ -981,8 +1006,6 @@ function LoanDepositCryptoContent() {
                     ))}
                   </div>
                 )}
-              </>
-            )}
               </>
             )}
 
