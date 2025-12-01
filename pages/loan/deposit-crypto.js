@@ -703,22 +703,32 @@ function LoanDepositCryptoContent() {
         // Upload proof file if provided
         if (proofFile) {
           try {
-            const timestamp = Date.now();
-            const fileName = `loan_deposit_proof_${loan_id}_${timestamp}_${proofFile.name}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
-              .from('documents')
-              .upload(fileName, proofFile, {
-                cacheControl: '3600',
-                upsert: false
-              });
-
-            if (uploadError) {
-              console.error('File upload error:', uploadError);
-              throw new Error('Failed to upload proof file');
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (!session) {
+              throw new Error('Session expired. Please log in again.');
             }
 
-            proofFilePath = fileName;
-            metadata.proof_file_path = fileName;
+            const formData = new FormData();
+            formData.append('file', proofFile);
+            formData.append('loanId', loan_id);
+
+            const uploadResponse = await fetch('/api/upload-loan-deposit-proof', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`
+              },
+              body: formData
+            });
+
+            const uploadData = await uploadResponse.json();
+
+            if (!uploadResponse.ok) {
+              throw new Error(uploadData.error || 'Failed to upload proof file');
+            }
+
+            proofFilePath = uploadData.filePath;
+            metadata.proof_file_path = uploadData.filePath;
             metadata.proof_file_name = proofFile.name;
             metadata.proof_file_size = proofFile.size;
             metadata.proof_file_type = proofFile.type;
