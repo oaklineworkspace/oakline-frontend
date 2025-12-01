@@ -5,15 +5,6 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import ProtectedRoute from '../../components/ProtectedRoute';
 
-let QRCode = null;
-if (typeof window !== 'undefined') {
-  try {
-    QRCode = require('react-qr-code').default;
-  } catch (e) {
-    console.warn('QRCode library not loaded');
-  }
-}
-
 function LoadingSpinner() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
@@ -207,7 +198,7 @@ function LoanDetailsCard({ loanDetails, minDeposit }) {
 function LoanDepositCryptoContent() {
   const { user } = useAuth();
   const router = useRouter();
-  const { loan_id } = router.query;
+  const { loan_id, account_id, deposit_type } = router.query;
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -284,6 +275,9 @@ function LoanDepositCryptoContent() {
           fetchLoanDetails();
           fetchUserAccounts();
           setupRealtimeSubscription();
+        } else if (account_id && deposit_type === 'account_opening') {
+          fetchAccountOpeningFeeDetails();
+          fetchUserAccounts();
         }
       }
     };
@@ -292,7 +286,7 @@ function LoanDepositCryptoContent() {
     return () => {
       supabase.channel(`loan-deposit-${loan_id}`).unsubscribe();
     };
-  }, [user, loan_id]);
+  }, [user, loan_id, account_id]);
 
   const fetchUserAccounts = async () => {
     try {
@@ -361,6 +355,52 @@ function LoanDepositCryptoContent() {
       console.error('Error fetching loan details:', err);
       setMessage('Error loading loan details.');
       setMessageType('error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAccountOpeningFeeDetails = async () => {
+    try {
+      const { data: accountData, error: accountError } = await supabase
+        .from('accounts')
+        .select('opening_fee')
+        .eq('id', account_id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (!accountError && accountData) {
+        const feeAmount = accountData.opening_fee || 0;
+        setMinDeposit(feeAmount > 0 ? feeAmount : 50);
+        setDepositForm(prev => ({ ...prev, amount: (feeAmount > 0 ? feeAmount : 50).toFixed(2) }));
+        setLoanDetails({
+          principal: feeAmount,
+          id: account_id,
+          loan_type: 'account_opening',
+          term_months: 0,
+          interest_rate: 0,
+          status: 'pending',
+          label: 'Account Opening Fee'
+        });
+      } else {
+        const defaultFee = 50;
+        setMinDeposit(defaultFee);
+        setDepositForm(prev => ({ ...prev, amount: defaultFee.toFixed(2) }));
+        setLoanDetails({
+          principal: defaultFee,
+          id: account_id,
+          loan_type: 'account_opening',
+          term_months: 0,
+          interest_rate: 0,
+          status: 'pending',
+          label: 'Account Opening Fee'
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching account opening fee:', err);
+      const defaultFee = 50;
+      setMinDeposit(defaultFee);
+      setDepositForm(prev => ({ ...prev, amount: defaultFee.toFixed(2) }));
     } finally {
       setLoading(false);
     }
@@ -1002,9 +1042,6 @@ function LoanDepositCryptoContent() {
                   ⚠️ This is a dedicated loan deposit wallet. Do not use this address for general deposits.
                 </div>
 
-                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                  <QRCode value={walletAddress} size={200} />
-                </div>
 
                 <div style={{
                   backgroundColor: '#f8fafc',
