@@ -1006,6 +1006,8 @@ function LoanDepositCryptoContent() {
                     ))}
                   </div>
                 )}
+            </>
+            )}
               </>
             )}
 
