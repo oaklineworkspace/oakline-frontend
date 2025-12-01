@@ -93,6 +93,38 @@ function LoanDetailContent() {
   const [documents, setDocuments] = useState([]);
   const [uploadProofModal, setUploadProofModal] = useState(false);
   const [proofFile, setProofFile] = useState(null);
+  const [availableNetworks, setAvailableNetworks] = useState([]);
+  const [loadingNetworks, setLoadingNetworks] = useState(false);
+  const [networkFeePercent, setNetworkFeePercent] = useState(0);
+
+  const cryptoTypes = [
+    { value: 'Bitcoin', label: 'Bitcoin', icon: '₿' },
+    { value: 'Ethereum', label: 'Ethereum', icon: 'Ξ' },
+    { value: 'Tether USD', label: 'Tether', icon: '₮' },
+    { value: 'BNB', label: 'Binance Coin', icon: 'B' },
+    { value: 'USD Coin', label: 'USD Coin', icon: '$' },
+    { value: 'Solana', label: 'Solana', icon: 'S' },
+    { value: 'Cardano', label: 'Cardano', icon: 'A' },
+    { value: 'Polygon', label: 'Polygon', icon: 'M' },
+    { value: 'Avalanche', label: 'Avalanche', icon: 'A' },
+    { value: 'Litecoin', label: 'Litecoin', icon: 'Ł' },
+    { value: 'XRP', label: 'XRP', icon: 'X' },
+    { value: 'TON', label: 'TON', icon: 'T' }
+  ];
+
+  const networkIconMap = {
+    'Bitcoin': '🟠',
+    'BNB Smart Chain (BEP20)': '🟡',
+    'Ethereum (ERC20)': '⚪',
+    'Arbitrum One': '🔵',
+    'Optimism': '🔴',
+    'Tron (TRC20)': '🔴',
+    'Solana (SOL)': '🟣',
+    'Polygon (MATIC)': '🟣',
+    'Avalanche (C-Chain)': '🔴',
+    'Litecoin': '⚪',
+    'XRP Ledger': '🔵',
+  };
 
   useEffect(() => {
     if (user && loanId) {
@@ -233,6 +265,57 @@ function LoanDetailContent() {
     return monthlyPayment;
   };
 
+  const handlePaymentCryptoChange = (crypto) => {
+    setPaymentForm({ ...paymentForm, crypto_type: crypto, network_type: '' });
+    setAvailableNetworks([]);
+  };
+
+  const handlePaymentNetworkChange = async (network) => {
+    setPaymentForm({ ...paymentForm, network_type: network });
+    const selectedNetwork = availableNetworks.find(n => n.value === network);
+    if (selectedNetwork) {
+      setNetworkFeePercent(selectedNetwork.fee || 0);
+    }
+  };
+
+  const fetchPaymentNetworks = async (cryptoType) => {
+    if (!cryptoType) {
+      setAvailableNetworks([]);
+      return;
+    }
+
+    setLoadingNetworks(true);
+    try {
+      const { data: cryptoAssets, error } = await supabase
+        .from('crypto_assets')
+        .select('network_type, confirmations_required, deposit_fee_percent')
+        .eq('crypto_type', cryptoType)
+        .eq('status', 'active')
+        .order('network_type');
+
+      if (!error && cryptoAssets && cryptoAssets.length > 0) {
+        const networks = cryptoAssets.map(asset => ({
+          value: asset.network_type,
+          label: asset.network_type,
+          confirmations: asset.confirmations_required || 3,
+          fee: asset.deposit_fee_percent || 0,
+          icon: networkIconMap[asset.network_type] || '🔹'
+        }));
+        setAvailableNetworks(networks);
+      }
+    } catch (error) {
+      console.error('Error fetching networks:', error);
+    } finally {
+      setLoadingNetworks(false);
+    }
+  };
+
+  useEffect(() => {
+    if (paymentForm.crypto_type) {
+      fetchPaymentNetworks(paymentForm.crypto_type);
+    }
+  }, [paymentForm.crypto_type]);
+
   const handleMakePayment = async () => {
     setProcessing(true);
     try {
@@ -257,6 +340,16 @@ function LoanDetailContent() {
       }
 
       if (paymentForm.payment_type === 'crypto') {
+        if (!paymentForm.crypto_type) {
+          showToast('Please select a cryptocurrency', 'error');
+          setProcessing(false);
+          return;
+        }
+        if (!paymentForm.network_type) {
+          showToast('Please select a network', 'error');
+          setProcessing(false);
+          return;
+        }
           console.log("Initiating crypto payment...");
           showToast('Redirecting to crypto payment gateway...', 'info');
           setTimeout(() => {
@@ -688,7 +781,7 @@ function LoanDetailContent() {
 
       {paymentModal && (
         <div style={styles.modal} onClick={() => setPaymentModal(false)}>
-          <div style={styles.modalContent} className="loan-detail-modal" onClick={(e) => e.stopPropagation()}>
+          <div style={{...styles.modalContent, maxHeight: '90vh', overflowY: 'auto'}} className="loan-detail-modal" onClick={(e) => e.stopPropagation()}>
             <h2 style={styles.modalTitle}>Make Loan Payment</h2>
 
             <div style={styles.formGroup}>
@@ -704,23 +797,46 @@ function LoanDetailContent() {
                 style={styles.input}
               />
               <small style={styles.helperText}>
-                Monthly payment: ${monthlyPayment.toFixed(2)} |
-                Remaining balance: ${parseFloat(loan.remaining_balance || loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                Monthly payment: ${monthlyPayment.toFixed(2)} | Remaining balance: ${parseFloat(loan.remaining_balance || loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </small>
             </div>
 
             <div style={styles.formGroup}>
               <label style={styles.label}>Payment Method</label>
-              <select
-                value={paymentForm.payment_type}
-                onChange={(e) => {
-                  setPaymentForm({ ...paymentForm, payment_type: e.target.value, account_id: '' });
-                }}
-                style={styles.select}
-              >
-                <option value="manual">Manual Bank Transfer</option>
-                <option value="crypto">Cryptocurrency</option>
-              </select>
+              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => setPaymentForm({ ...paymentForm, payment_type: 'manual' })}
+                  style={{
+                    flex: 1,
+                    padding: 'clamp(0.5rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)',
+                    borderRadius: '8px',
+                    fontSize: 'clamp(0.9rem, 2vw, 1rem)',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    border: 'none',
+                    backgroundColor: paymentForm.payment_type === 'manual' ? '#10b981' : '#e5e7eb',
+                    color: paymentForm.payment_type === 'manual' ? '#fff' : '#1f2937'
+                  }}
+                >
+                  🏦 Bank Transfer
+                </button>
+                <button
+                  onClick={() => setPaymentForm({ ...paymentForm, payment_type: 'crypto', account_id: '' })}
+                  style={{
+                    flex: 1,
+                    padding: 'clamp(0.5rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)',
+                    borderRadius: '8px',
+                    fontSize: 'clamp(0.9rem, 2vw, 1rem)',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    border: 'none',
+                    backgroundColor: paymentForm.payment_type === 'crypto' ? '#10b981' : '#e5e7eb',
+                    color: paymentForm.payment_type === 'crypto' ? '#fff' : '#1f2937'
+                  }}
+                >
+                  🪙 Crypto
+                </button>
+              </div>
             </div>
 
             {paymentForm.payment_type === 'manual' && (
@@ -731,12 +847,71 @@ function LoanDetailContent() {
                   onChange={(e) => setPaymentForm({ ...paymentForm, account_id: e.target.value })}
                   style={styles.select}
                 >
+                  <option value="">Select an account...</option>
                   {accounts.map(account => (
                     <option key={account.id} value={account.id}>
-                      {account.account_type} - {account.account_number} (Balance: ${parseFloat(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })})
+                      {account.account_type} - {account.account_number} (${parseFloat(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })})
                     </option>
                   ))}
                 </select>
+              </div>
+            )}
+
+            {paymentForm.payment_type === 'crypto' && (
+              <div>
+                <h3 style={{ fontSize: 'clamp(1rem, 2vw, 1.1rem)', fontWeight: '700', color: '#1e293b', marginBottom: '1rem' }}>Select Cryptocurrency</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '0.75rem', marginBottom: '2rem' }}>
+                  {cryptoTypes.map(crypto => (
+                    <div
+                      key={crypto.value}
+                      onClick={() => handlePaymentCryptoChange(crypto.value)}
+                      style={{
+                        padding: 'clamp(0.5rem, 2vw, 0.75rem)',
+                        borderRadius: '12px',
+                        border: paymentForm.crypto_type === crypto.value ? '2px solid #10b981' : '2px solid #e5e7eb',
+                        backgroundColor: paymentForm.crypto_type === crypto.value ? '#f0fdf4' : '#fff',
+                        cursor: 'pointer',
+                        textAlign: 'center'
+                      }}
+                    >
+                      <div style={{ fontSize: 'clamp(1.2rem, 3vw, 1.5rem)', marginBottom: '0.25rem' }}>{crypto.icon}</div>
+                      <div style={{ fontWeight: '600', fontSize: 'clamp(0.75rem, 1.5vw, 0.85rem)' }}>{crypto.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {paymentForm.crypto_type && (
+                  <div>
+                    <h3 style={{ fontSize: 'clamp(1rem, 2vw, 1.1rem)', fontWeight: '700', color: '#1e293b', marginBottom: '1rem' }}>Select Network</h3>
+                    {loadingNetworks ? (
+                      <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Loading networks...</div>
+                    ) : availableNetworks.length === 0 ? (
+                      <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#fef2f2', border: '2px solid #ef4444', borderRadius: '12px', color: '#991b1b' }}>
+                        No networks available
+                      </div>
+                    ) : (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                        {availableNetworks.map(network => (
+                          <div
+                            key={network.value}
+                            onClick={() => handlePaymentNetworkChange(network.value)}
+                            style={{
+                              padding: 'clamp(0.75rem, 2vw, 1rem)',
+                              borderRadius: '12px',
+                              border: paymentForm.network_type === network.value ? '2px solid #10b981' : '2px solid #e5e7eb',
+                              backgroundColor: paymentForm.network_type === network.value ? '#f0fdf4' : '#fff',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <div style={{ fontWeight: '600', marginBottom: '0.5rem', fontSize: 'clamp(0.9rem, 2vw, 1rem)' }}>{network.icon} {network.label}</div>
+                            <div style={{ fontSize: 'clamp(0.75rem, 1.5vw, 0.85rem)', color: '#64748b' }}>{network.confirmations} confirmations</div>
+                            {network.fee > 0 && <div style={{ fontSize: 'clamp(0.75rem, 1.5vw, 0.85rem)', color: '#10b981', fontWeight: '600' }}>Fee: {network.fee}%</div>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
