@@ -458,9 +458,9 @@ function LoanDepositCryptoContent() {
     const depositAmount = parseFloat(depositForm.amount) || 0;
     const feePercent = networkFeePercent || 0;
     const fee = depositAmount * (feePercent / 100);
-    const netAmount = depositAmount - fee;
+    const totalAmount = depositAmount + fee;
     setCalculatedFee(fee);
-    setCalculatedNetAmount(Math.max(0, netAmount));
+    setCalculatedNetAmount(Math.max(0, totalAmount));
   }, [depositForm.amount, networkFeePercent]);
 
   const handleCryptoChange = (crypto) => {
@@ -708,20 +708,20 @@ function LoanDepositCryptoContent() {
       <div style={{
         background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
         color: 'white',
-        padding: '2rem',
+        padding: '1.5rem',
         textAlign: 'center'
       }}>
-        <div style={{ marginBottom: '1rem', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ marginBottom: '1rem', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Image
             src="/images/Oakline_Bank_logo_design_c1b04ae0.png"
             alt="Oakline Bank"
-            width={50}
-            height={50}
-            style={{ objectFit: 'contain' }}
+            width={60}
+            height={60}
+            style={{ objectFit: 'contain', width: 'auto', height: 'auto' }}
           />
         </div>
-        <h1 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '0.5rem' }}>Loan Collateral Deposit</h1>
-        <p style={{ fontSize: '1.1rem', opacity: '0.95' }}>Secure your loan with a 10% deposit</p>
+        <h1 style={{ fontSize: '1.8rem', fontWeight: '700', marginBottom: '0.25rem', lineHeight: '1.3' }}>Loan Collateral Deposit</h1>
+        <p style={{ fontSize: '1rem', opacity: '0.95', marginBottom: 0 }}>Secure your loan with a 10% deposit</p>
       </div>
 
       <div style={{ maxWidth: '800px', margin: '-40px auto 0', padding: '0 20px 60px' }}>
@@ -848,7 +848,7 @@ function LoanDepositCryptoContent() {
                     type="number"
                     step="0.01"
                     min={isNaN(minDeposit) ? '0' : minDeposit}
-                    value={depositForm.amount || ''}
+                    value={depositForm.amount || minDeposit.toFixed(2)}
                     onChange={(e) => setDepositForm({ ...depositForm, amount: e.target.value })}
                     style={{
                       width: '100%',
@@ -1129,7 +1129,7 @@ function LoanDepositCryptoContent() {
                     <span style={{ fontWeight: '600', color: '#1e293b' }}>${calculatedFee.toFixed(2)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontWeight: '500', color: '#334155' }}>Net Amount After Fees:</span>
+                    <span style={{ fontWeight: '500', color: '#334155' }}>Total Amount to Send (with fees):</span>
                     <span style={{ fontWeight: '600', color: '#059669', fontSize: '1.1rem' }}>${calculatedNetAmount.toFixed(2)}</span>
                   </div>
                 </>
