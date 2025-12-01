@@ -605,6 +605,40 @@ function LoanApplicationContent() {
         amount: requiredDeposit,
         loanType: formData.loan_type
       });
+
+      // Send email notification
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, email')
+          .eq('id', user.id)
+          .single();
+
+        const userName = profile ? `${profile.first_name} ${profile.last_name}` : 'Valued Customer';
+        const userEmail = profile?.email || user.email;
+        const selectedLoan = loanTypes.find(lt => lt.value === formData.loan_type);
+        const loanLabel = selectedLoan?.label || formData.loan_type?.replace(/_/g, ' ');
+        const monthlyPaymentAmount = calculateMonthlyPayment();
+
+        await fetch('/api/send-loan-submitted-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: userEmail,
+            userName,
+            loanType: loanLabel,
+            loanAmount: principal,
+            interestRate: parseFloat(formData.interest_rate),
+            termMonths: parseInt(formData.term_months),
+            monthlyPayment: parseFloat(monthlyPaymentAmount),
+            depositRequired: requiredDeposit,
+            status: 'pending'
+          })
+        });
+      } catch (emailError) {
+        console.error('Error sending loan notification email:', emailError);
+      }
+
       setSuccess('success');
 
     } catch (err) {
