@@ -760,27 +760,11 @@ function LoanDepositCryptoContent() {
       <div style={{
         background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
         color: 'white',
-        padding: '2.5rem 2rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        minHeight: 'auto'
+        padding: '2rem',
+        textAlign: 'center'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', flex: 1, width: '100%' }}>
-          <div style={{ minWidth: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Image
-              src="/images/Oakline_Bank_logo_design_c1b04ae0.png"
-              alt="Oakline Bank"
-              width={65}
-              height={65}
-              style={{ objectFit: 'contain', width: 'auto', height: 'auto' }}
-            />
-          </div>
-          <div style={{ flex: 1 }}>
-            <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '0.5rem', lineHeight: '1.1', letterSpacing: '-0.5px' }}>Loan Collateral Deposit</h1>
-            <p style={{ fontSize: '1rem', opacity: '0.95', marginBottom: 0, fontWeight: '500' }}>Secure your loan with a 10% deposit</p>
-          </div>
-        </div>
+        <h1 style={{ fontSize: '1.8rem', fontWeight: '700', marginBottom: '0.5rem', margin: 0 }}>Loan Collateral Deposit</h1>
+        <p style={{ fontSize: '0.95rem', opacity: '0.9', marginBottom: 0, fontWeight: '500' }}>Secure your loan with a 10% deposit</p>
       </div>
 
       <div style={{ maxWidth: '800px', margin: '-40px auto 0', padding: '0 20px 60px' }}>
