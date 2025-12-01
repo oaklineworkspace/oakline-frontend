@@ -357,7 +357,7 @@ function LoanApplicationContent() {
 
       const formDataUpload = new FormData();
       formDataUpload.append('file', file);
-      formDataUpload.append('documentType', `id_${documentType}`);
+      formDataUpload.append('documentType', documentType);
       formDataUpload.append('email', user.email);
 
       const response = await fetch('/api/upload-id-document', {
