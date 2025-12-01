@@ -509,6 +509,37 @@ function DashboardContent() {
         transactionsData = [...transactionsData, ...formattedOaklinePayTransactions];
       }
 
+      // Fetch loan deposit payments (last 30 days)
+      const thirtyDaysAgoForLoans = new Date();
+      thirtyDaysAgoForLoans.setDate(thirtyDaysAgoForLoans.getDate() - 30);
+
+      const { data: loanDepositsData } = await supabase
+        .from('loan_payments')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_deposit', true)
+        .gte('created_at', thirtyDaysAgoForLoans.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      // Format loan deposits as transactions
+      if (loanDepositsData && loanDepositsData.length > 0) {
+        const formattedLoanDeposits = loanDepositsData.map(deposit => ({
+          id: deposit.id,
+          type: 'loan_deposit',
+          transaction_type: 'loan_deposit',
+          description: `Loan 10% Collateral Deposit via ${deposit.deposit_method === 'crypto' ? (deposit.metadata?.crypto_type || 'Cryptocurrency') : 'Transfer'}`,
+          amount: parseFloat(deposit.amount || 0),
+          gross_amount: parseFloat(deposit.gross_amount || 0),
+          fee: parseFloat(deposit.fee || 0),
+          status: deposit.status,
+          created_at: deposit.created_at,
+          is_credit: true,
+          transaction_data: deposit
+        }));
+        transactionsData = [...transactionsData, ...formattedLoanDeposits];
+      }
+
       // Sort all transactions by most recent
       transactionsData = transactionsData
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -745,6 +776,23 @@ function DashboardContent() {
 
             // Fallback to metadata if wallet address still not found
             if (!walletAddress && data.metadata?.wallet_address) {
+              walletAddress = data.metadata.wallet_address;
+              depositDetails.wallet_address = data.metadata.wallet_address;
+            }
+          }
+        } else if (transaction.transaction_type === 'loan_deposit') {
+          const { data, error } = await supabase
+            .from('loan_payments')
+            .select('*')
+            .eq('id', transaction.id)
+            .eq('is_deposit', true)
+            .single();
+
+          if (!error && data) {
+            depositDetails = data;
+
+            // Get wallet address from metadata
+            if (data.metadata?.wallet_address) {
               walletAddress = data.metadata.wallet_address;
               depositDetails.wallet_address = data.metadata.wallet_address;
             }
