@@ -4,9 +4,15 @@ import Image from 'next/image';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import ProtectedRoute from '../../components/ProtectedRoute';
-import dynamic from 'next/dynamic';
 
-const QRCode = dynamic(() => import('react-qr-code'), { ssr: false });
+let QRCode = null;
+if (typeof window !== 'undefined') {
+  try {
+    QRCode = require('react-qr-code').default;
+  } catch (e) {
+    console.warn('QRCode library not loaded');
+  }
+}
 
 function LoadingSpinner() {
   return (
@@ -226,6 +232,7 @@ function LoanDepositCryptoContent() {
   const [calculatedFee, setCalculatedFee] = useState(0);
   const [calculatedNetAmount, setCalculatedNetAmount] = useState(0);
   const [txHash, setTxHash] = useState('');
+  const [proofFile, setProofFile] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('crypto');
   const [userAccounts, setUserAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
@@ -512,6 +519,11 @@ function LoanDepositCryptoContent() {
         setCurrentStep(3);
       }
     } else if (currentStep === 2 && paymentMethod === 'crypto') {
+      if (!txHash && !proofFile) {
+        setMessage('Please provide either a transaction hash or proof of payment file');
+        setMessageType('error');
+        return;
+      }
       setCurrentStep(3);
     }
   };
@@ -708,20 +720,27 @@ function LoanDepositCryptoContent() {
       <div style={{
         background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
         color: 'white',
-        padding: '1.5rem',
-        textAlign: 'center'
+        padding: '1.5rem 2rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        minHeight: '100px'
       }}>
-        <div style={{ marginBottom: '1rem', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Image
-            src="/images/Oakline_Bank_logo_design_c1b04ae0.png"
-            alt="Oakline Bank"
-            width={60}
-            height={60}
-            style={{ objectFit: 'contain', width: 'auto', height: 'auto' }}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1 }}>
+          <div style={{ height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Image
+              src="/images/Oakline_Bank_logo_design_c1b04ae0.png"
+              alt="Oakline Bank"
+              width={50}
+              height={50}
+              style={{ objectFit: 'contain', width: 'auto', height: 'auto' }}
+            />
+          </div>
+          <div>
+            <h1 style={{ fontSize: '1.6rem', fontWeight: '700', marginBottom: '0.25rem', lineHeight: '1.2' }}>Loan Collateral Deposit</h1>
+            <p style={{ fontSize: '0.95rem', opacity: '0.95', marginBottom: 0 }}>Secure your loan with a 10% deposit</p>
+          </div>
         </div>
-        <h1 style={{ fontSize: '1.8rem', fontWeight: '700', marginBottom: '0.25rem', lineHeight: '1.3' }}>Loan Collateral Deposit</h1>
-        <p style={{ fontSize: '1rem', opacity: '0.95', marginBottom: 0 }}>Secure your loan with a 10% deposit</p>
       </div>
 
       <div style={{ maxWidth: '800px', margin: '-40px auto 0', padding: '0 20px 60px' }}>
@@ -1018,8 +1037,12 @@ function LoanDepositCryptoContent() {
                   Copy Address
                 </button>
 
+                <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '1px solid #86efac' }}>
+                  <p style={{ fontSize: '0.9rem', color: '#166534', marginBottom: '1rem', marginTop: 0 }}>✓ Provide either a transaction hash OR upload proof of payment (both optional but at least one required)</p>
+                </div>
+
                 <div style={{ marginBottom: '1.5rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Transaction Hash:</label>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Transaction Hash (Optional):</label>
                   <input
                     type="text"
                     placeholder="Paste your transaction hash here (starts with 0x or similar)"
@@ -1036,8 +1059,30 @@ function LoanDepositCryptoContent() {
                     }}
                   />
                   <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem' }}>
-                    This is the confirmation ID from your wallet after you send the funds.
+                    The confirmation ID from your wallet after sending funds
                   </div>
+                </div>
+
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Proof of Payment (Optional):</label>
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '2px dashed #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '1rem',
+                      boxSizing: 'border-box',
+                      cursor: 'pointer'
+                    }}
+                  />
+                  <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem' }}>
+                    Upload a screenshot or receipt showing the transaction (JPEG, PNG, or PDF)
+                  </div>
+                  {proofFile && <div style={{ fontSize: '0.85rem', color: '#10b981', marginTop: '0.5rem' }}>✓ File selected: {proofFile.name}</div>}
                 </div>
 
                 <div style={{ display: 'flex', gap: '1rem' }}>
@@ -1065,11 +1110,13 @@ function LoanDepositCryptoContent() {
                       borderRadius: '8px',
                       fontSize: '1rem',
                       fontWeight: '600',
-                      cursor: 'pointer',
-                      backgroundColor: '#10b981',
+                      cursor: !txHash && !proofFile ? 'not-allowed' : 'pointer',
+                      backgroundColor: !txHash && !proofFile ? '#d1d5db' : '#10b981',
                       color: 'white',
-                      border: 'none'
+                      border: 'none',
+                      opacity: !txHash && !proofFile ? 0.6 : 1
                     }}
+                    disabled={!txHash && !proofFile}
                   >
                     Continue →
                   </button>
@@ -1119,8 +1166,15 @@ function LoanDepositCryptoContent() {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #eee' }}>
                 <span style={{ fontWeight: '500', color: '#334155' }}>Deposit Amount:</span>
-                <span style={{ fontWeight: '600', color: '#10b981', fontSize: '1.1rem' }}>${parseFloat(depositForm.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span style={{ fontWeight: '600', color: '#10b981', fontSize: '1.1rem' }}>${parseFloat(depositForm.amount || minDeposit).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
+
+              {paymentMethod === 'crypto' && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #eee' }}>
+                  <span style={{ fontWeight: '500', color: '#334155' }}>Proof of Payment:</span>
+                  <span style={{ fontWeight: '600', color: '#1e293b' }}>{proofFile ? `✓ ${proofFile.name}` : txHash ? '✓ Hash provided' : '—'}</span>
+                </div>
+              )}
 
               {paymentMethod === 'crypto' && networkFeePercent > 0 && (
                 <>
