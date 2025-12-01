@@ -1296,10 +1296,7 @@ function LoanDepositCryptoContent() {
                   {walletAddress}
                 </div>
                 <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(walletAddress);
-                    alert('Wallet address copied to clipboard!');
-                  }}
+                  onClick={() => copyToClipboard(walletAddress)}
                   style={{
                     width: '100%',
                     padding: '0.75rem',
