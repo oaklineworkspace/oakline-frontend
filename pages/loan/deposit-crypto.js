@@ -518,11 +518,8 @@ function LoanDepositCryptoContent() {
     const selectedNetwork = availableNetworks.find(n => n.value === network);
     if (selectedNetwork) {
       setNetworkFeePercent(selectedNetwork.fee || 0);
-      // Auto-fill amount with fee included
-      const feePercent = selectedNetwork.fee || 0;
-      const fee = minDeposit * (feePercent / 100);
-      const totalWithFee = minDeposit + fee;
-      setDepositForm(prev => ({ ...prev, amount: totalWithFee.toFixed(2) }));
+      // Auto-fill amount with just the base deposit (fee will be calculated separately)
+      setDepositForm(prev => ({ ...prev, amount: minDeposit.toFixed(2) }));
     }
     setWalletAddress('');
   };
