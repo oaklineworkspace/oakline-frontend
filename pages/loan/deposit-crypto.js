@@ -665,8 +665,12 @@ function LoanDepositCryptoContent() {
           method: 'balance'
         });
       } else {
-        if (!txHash || txHash.trim().length < 10) {
-          throw new Error('Please enter a valid transaction hash');
+        if (!txHash && !proofFile) {
+          throw new Error('Please provide either a transaction hash or proof of payment file');
+        }
+        
+        if (txHash && txHash.trim().length < 10) {
+          throw new Error('Please enter a valid transaction hash (at least 10 characters)');
         }
 
         const { data: cryptoAsset } = await supabase
