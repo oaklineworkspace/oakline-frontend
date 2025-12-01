@@ -248,6 +248,7 @@ function LoanDepositCryptoContent() {
   const [userAccounts, setUserAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const networkSectionRef = useRef(null);
+  const [submitModal, setSubmitModal] = useState({ show: false, status: 'loading', message: '' });
 
   const cryptoTypes = [
     { value: 'Bitcoin', label: 'Bitcoin', icon: '₿' },
@@ -607,6 +608,7 @@ function LoanDepositCryptoContent() {
 
   const handleConfirmPayment = async () => {
     setSubmitting(true);
+    setSubmitModal({ show: true, status: 'loading', message: 'Processing your deposit...' });
     try {
       if (paymentMethod === 'balance') {
         const depositAmount = parseFloat(depositForm.amount);
@@ -721,18 +723,20 @@ function LoanDepositCryptoContent() {
           })
           .eq('id', loan_id);
 
-        setSuccessReceipt({
-          amount: depositForm.amount,
-          method: 'crypto',
-          cryptoType: depositForm.crypto_type,
-          txHash: txHash
-        });
+        setSubmitModal({ show: true, status: 'success', message: '✅ Deposit submitted successfully! Your loan will be activated within hours.' });
+        setTimeout(() => {
+          setSubmitModal({ show: false, status: 'loading', message: '' });
+          setSuccessReceipt({
+            amount: depositForm.amount,
+            method: 'crypto',
+            cryptoType: depositForm.crypto_type,
+            txHash: txHash
+          });
+        }, 2500);
       }
     } catch (error) {
       console.error('Error:', error);
-      setMessage(error.message || 'Submission failed. Please try again.');
-      setMessageType('error');
-    } finally {
+      setSubmitModal({ show: true, status: 'error', message: error.message || 'Submission failed. Please try again.' });
       setSubmitting(false);
     }
   };
@@ -1257,28 +1261,9 @@ function LoanDepositCryptoContent() {
               )}
 
               {paymentMethod === 'crypto' && walletAddress && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #eee', alignItems: 'flex-start', gap: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #eee' }}>
                   <span style={{ fontWeight: '500', color: '#334155' }}>Wallet Address:</span>
-                  <div style={{ textAlign: 'right', flex: 1 }}>
-                    <span style={{ fontWeight: '600', color: '#1e293b', fontFamily: 'monospace', fontSize: '0.85rem', wordBreak: 'break-all' }}>{walletAddress}</span>
-                    <button
-                      onClick={() => copyToClipboard(walletAddress)}
-                      style={{
-                        display: 'block',
-                        marginTop: '0.5rem',
-                        padding: '0.4rem 0.75rem',
-                        backgroundColor: '#10b981',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '0.85rem',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      📋 Copy
-                    </button>
-                  </div>
+                  <span style={{ fontWeight: '600', color: '#1e293b', fontFamily: 'monospace', fontSize: '0.85rem', wordBreak: 'break-all', textAlign: 'right', flex: 1, paddingLeft: '1rem' }}>{walletAddress}</span>
                 </div>
               )}
 
@@ -1299,16 +1284,18 @@ function LoanDepositCryptoContent() {
             <div style={{ display: 'flex', gap: '1rem' }}>
               <button
                 onClick={() => setCurrentStep(paymentMethod === 'crypto' ? 2 : 1)}
+                disabled={submitting}
                 style={{
                   flex: 1,
                   padding: '0.75rem 1.5rem',
                   borderRadius: '8px',
                   fontSize: '1rem',
                   fontWeight: '600',
-                  cursor: 'pointer',
+                  cursor: submitting ? 'not-allowed' : 'pointer',
                   backgroundColor: '#f8fafc',
                   color: '#64748b',
-                  border: '2px solid #e2e8f0'
+                  border: '2px solid #e2e8f0',
+                  opacity: submitting ? 0.6 : 1
                 }}
               >
                 Back
@@ -1331,6 +1318,105 @@ function LoanDepositCryptoContent() {
               >
                 {submitting ? 'Processing...' : 'Confirm & Submit'}
               </button>
+            </div>
+          </div>
+        )}
+
+        {submitModal.show && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999
+          }}>
+            <div style={{
+              backgroundColor: '#fff',
+              borderRadius: '16px',
+              padding: '2rem',
+              textAlign: 'center',
+              maxWidth: '400px',
+              width: '90%',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+            }}>
+              {submitModal.status === 'loading' && (
+                <>
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    border: '4px solid #e5e7eb',
+                    borderTop: '4px solid #10b981',
+                    borderRadius: '50%',
+                    margin: '0 auto 1rem',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                  <style jsx>{`
+                    @keyframes spin {
+                      to { transform: rotate(360deg); }
+                    }
+                  `}</style>
+                  <p style={{ fontSize: '1.1rem', color: '#1e293b', fontWeight: '600', margin: 0 }}>{submitModal.message}</p>
+                </>
+              )}
+
+              {submitModal.status === 'success' && (
+                <>
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    backgroundColor: '#f0fdf4',
+                    border: '2px solid #10b981',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 1rem',
+                    fontSize: '2rem'
+                  }}>✓</div>
+                  <h2 style={{ fontSize: '1.4rem', color: '#166534', fontWeight: '700', margin: '0.5rem 0' }}>Success!</h2>
+                  <p style={{ fontSize: '1rem', color: '#1e293b', margin: '1rem 0 0 0' }}>{submitModal.message}</p>
+                </>
+              )}
+
+              {submitModal.status === 'error' && (
+                <>
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    backgroundColor: '#fef2f2',
+                    border: '2px solid #ef4444',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 1rem',
+                    fontSize: '2rem'
+                  }}>✕</div>
+                  <h2 style={{ fontSize: '1.4rem', color: '#991b1b', fontWeight: '700', margin: '0.5rem 0' }}>Error!</h2>
+                  <p style={{ fontSize: '1rem', color: '#1e293b', margin: '1rem 0 1.5rem 0' }}>{submitModal.message}</p>
+                  <button
+                    onClick={() => setSubmitModal({ show: false, status: 'loading', message: '' })}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Try Again
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
