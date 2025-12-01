@@ -19,7 +19,7 @@ function LoadingSpinner() {
   );
 }
 
-function SuccessReceipt({ depositAmount, depositMethod, cryptoType, txHash, onClose }) {
+function SuccessReceipt({ depositAmount, depositMethod, cryptoType, txHash, walletAddress, onClose }) {
   const receiptDate = new Date().toLocaleString('en-US', { 
     year: 'numeric', 
     month: 'long', 
@@ -34,14 +34,13 @@ function SuccessReceipt({ depositAmount, depositMethod, cryptoType, txHash, onCl
       border: '2px solid #16a34a',
       borderRadius: '16px',
       padding: '2rem',
-      textAlign: 'center',
       marginBottom: '2rem'
     }}>
-      <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
-      <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#166534', marginBottom: '1rem' }}>
+      <div style={{ fontSize: '3rem', marginBottom: '1rem', textAlign: 'center' }}>✅</div>
+      <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#166534', marginBottom: '0.5rem', textAlign: 'center' }}>
         Deposit Submitted Successfully!
       </h2>
-      <p style={{ color: '#166534', marginBottom: '2rem', lineHeight: '1.6' }}>
+      <p style={{ color: '#166534', marginBottom: '2rem', lineHeight: '1.6', textAlign: 'center' }}>
         Your 10% loan deposit has been submitted to Oakline Bank Treasury and is now pending verification.
       </p>
       
@@ -50,44 +49,73 @@ function SuccessReceipt({ depositAmount, depositMethod, cryptoType, txHash, onCl
         border: '1px solid #d1d5db',
         borderRadius: '12px',
         padding: '1.5rem',
-        textAlign: 'left',
         marginBottom: '2rem'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #eee' }}>
-          <span style={{ fontWeight: '600', color: '#64748b' }}>Deposit Amount:</span>
-          <span style={{ fontWeight: '700', color: '#1e293b' }}>${parseFloat(depositAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-        </div>
+        <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#1e293b', marginBottom: '1rem', marginTop: 0 }}>Receipt Details</h3>
         
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+          <div>
+            <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.25rem', fontWeight: '600' }}>Deposit Amount</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#059669' }}>${parseFloat(depositAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          </div>
+          
+          <div>
+            <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.25rem', fontWeight: '600' }}>Payment Method</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#1e293b' }}>{depositMethod === 'crypto' ? 'Cryptocurrency' : 'Account Transfer'}</div>
+          </div>
+        </div>
+
         {depositMethod === 'crypto' && (
           <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #eee' }}>
-              <span style={{ fontWeight: '600', color: '#64748b' }}>Payment Method:</span>
-              <span style={{ fontWeight: '700', color: '#1e293b' }}>Cryptocurrency</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+              <div>
+                <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.25rem', fontWeight: '600' }}>Crypto Type</div>
+                <div style={{ fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>{cryptoType}</div>
+              </div>
+              
+              <div>
+                <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.25rem', fontWeight: '600' }}>Submitted</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#1e293b' }}>{receiptDate}</div>
+              </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #eee' }}>
-              <span style={{ fontWeight: '600', color: '#64748b' }}>Crypto Type:</span>
-              <span style={{ fontWeight: '700', color: '#1e293b' }}>{cryptoType}</span>
-            </div>
+
+            {walletAddress && (
+              <div style={{ marginBottom: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
+                <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '600' }}>Wallet Address</div>
+                <div style={{ 
+                  fontSize: '0.8rem', 
+                  fontFamily: 'monospace', 
+                  color: '#1e293b', 
+                  wordBreak: 'break-all',
+                  backgroundColor: '#f8fafc',
+                  padding: '0.75rem',
+                  borderRadius: '6px',
+                  border: '1px solid #e2e8f0'
+                }}>
+                  {walletAddress}
+                </div>
+              </div>
+            )}
+
             {txHash && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #eee' }}>
-                <span style={{ fontWeight: '600', color: '#64748b' }}>Transaction Hash:</span>
-                <span style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#1e293b', wordBreak: 'break-all' }}>{txHash.substring(0, 20)}...</span>
+              <div style={{ marginBottom: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
+                <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '600' }}>Transaction Hash</div>
+                <div style={{ 
+                  fontSize: '0.8rem', 
+                  fontFamily: 'monospace', 
+                  color: '#1e293b', 
+                  wordBreak: 'break-all',
+                  backgroundColor: '#f8fafc',
+                  padding: '0.75rem',
+                  borderRadius: '6px',
+                  border: '1px solid #e2e8f0'
+                }}>
+                  {txHash}
+                </div>
               </div>
             )}
           </>
         )}
-        
-        {depositMethod === 'balance' && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <span style={{ fontWeight: '600', color: '#64748b' }}>Payment Method:</span>
-            <span style={{ fontWeight: '700', color: '#1e293b' }}>Account Transfer</span>
-          </div>
-        )}
-        
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ fontWeight: '600', color: '#64748b' }}>Submitted:</span>
-          <span style={{ fontWeight: '700', color: '#1e293b' }}>{receiptDate}</span>
-        </div>
       </div>
 
       <div style={{
@@ -830,7 +858,8 @@ function LoanDepositCryptoContent() {
             amount: depositForm.amount,
             method: 'crypto',
             cryptoType: depositForm.crypto_type,
-            txHash: txHash
+            txHash: txHash,
+            walletAddress: walletAddress
           });
         }, 2500);
       }
@@ -885,6 +914,7 @@ function LoanDepositCryptoContent() {
             depositMethod={successReceipt.method}
             cryptoType={successReceipt.cryptoType}
             txHash={successReceipt.txHash}
+            walletAddress={successReceipt.walletAddress}
             onClose={() => router.push('/loan/dashboard')}
           />
         </div>

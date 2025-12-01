@@ -135,12 +135,14 @@ export default async function handler(req, res) {
     `;
 
     // Send the email
-    await sendEmail({
+    console.log('Sending loan deposit email to:', userEmail);
+    const emailResult = await sendEmail({
       to: userEmail,
       subject: 'Loan Deposit Received - Pending Blockchain Confirmation',
       html: emailHtml,
       type: 'loan_deposit'
     });
+    console.log('Email result:', emailResult);
 
     return res.status(200).json({
       success: true,
