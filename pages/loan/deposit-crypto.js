@@ -1256,6 +1256,32 @@ function LoanDepositCryptoContent() {
                 </div>
               )}
 
+              {paymentMethod === 'crypto' && walletAddress && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #eee', alignItems: 'flex-start', gap: '1rem' }}>
+                  <span style={{ fontWeight: '500', color: '#334155' }}>Wallet Address:</span>
+                  <div style={{ textAlign: 'right', flex: 1 }}>
+                    <span style={{ fontWeight: '600', color: '#1e293b', fontFamily: 'monospace', fontSize: '0.85rem', wordBreak: 'break-all' }}>{walletAddress}</span>
+                    <button
+                      onClick={() => copyToClipboard(walletAddress)}
+                      style={{
+                        display: 'block',
+                        marginTop: '0.5rem',
+                        padding: '0.4rem 0.75rem',
+                        backgroundColor: '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      📋 Copy
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {paymentMethod === 'crypto' && networkFeePercent > 0 && (
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #eee' }}>
@@ -1269,54 +1295,6 @@ function LoanDepositCryptoContent() {
                 </>
               )}
             </div>
-
-            {paymentMethod === 'crypto' && walletAddress && (
-              <div style={{
-                backgroundColor: '#f0fdf4',
-                border: '2px solid #10b981',
-                borderRadius: '12px',
-                padding: '1.5rem',
-                marginBottom: '2rem'
-              }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#166534', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  🔐 Deposit Wallet Address
-                </h3>
-                <div style={{
-                  backgroundColor: '#fff',
-                  padding: '1rem',
-                  borderRadius: '8px',
-                  wordBreak: 'break-all',
-                  fontFamily: 'monospace',
-                  fontSize: '0.85rem',
-                  lineHeight: '1.6',
-                  color: '#1e293b',
-                  border: '1px solid #d1fae5',
-                  marginBottom: '1rem'
-                }}>
-                  {walletAddress}
-                </div>
-                <button
-                  onClick={() => copyToClipboard(walletAddress)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    backgroundColor: '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    marginBottom: '1rem'
-                  }}
-                >
-                  📋 Copy Wallet Address
-                </button>
-                <p style={{ fontSize: '0.85rem', color: '#166534', margin: 0 }}>
-                  ✓ This is your dedicated loan deposit wallet. Save this address for your records.
-                </p>
-              </div>
-            )}
 
             <div style={{ display: 'flex', gap: '1rem' }}>
               <button
