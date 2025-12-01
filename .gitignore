@@ -59,13 +59,22 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Capacitor mobile app artifacts
-ios/
-android/
-dist/
-www/
+# Capacitor mobile app artifacts (keep ios/ and android/ folders - only exclude builds)
+# ios/  ← REMOVED to push project to GitHub
+# android/  ← REMOVED to push project to GitHub
 .native-files.json
 capacitor-native-swift-package/
+
+# iOS build artifacts only
+ios/App/build/
+ios/Pods/
+*.xcarchive
+
+# Android build artifacts only  
+android/app/build/
+android/.gradle/
+local.properties
+keystore.jks
 
 # iOS build artifacts
 DerivedData/

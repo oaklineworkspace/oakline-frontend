@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">OaklineBank</string>
+    <string name="title_activity_main">OaklineBank</string>
+    <string name="package_name">com.oakline.bank</string>
+    <string name="custom_url_scheme">com.oakline.bank</string>
+</resources>
