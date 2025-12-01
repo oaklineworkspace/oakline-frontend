@@ -692,7 +692,6 @@ function LoanDepositCryptoContent() {
 
         if (!treasuryAccount) throw new Error('Treasury account not found');
 
-        let proofFilePath = null;
         const metadata = {
           treasury_deposit: true,
           loan_id: loan_id,
@@ -700,21 +699,12 @@ function LoanDepositCryptoContent() {
           deposit_source: 'loan_deposit_page'
         };
 
-        // Upload proof file if provided
+        // Store proof file info if provided
         if (proofFile) {
-          const fileName = `${user.id}/${loan_id}/${Date.now()}_${proofFile.name}`;
-          const { error: uploadError } = await supabase
-            .storage
-            .from('loan_deposits')
-            .upload(fileName, proofFile);
-
-          if (uploadError) {
-            console.error('File upload error:', uploadError);
-            // Continue anyway - don't fail the entire submission
-          } else {
-            proofFilePath = fileName;
-            metadata.proof_file_path = fileName;
-          }
+          metadata.proof_file_name = proofFile.name;
+          metadata.proof_file_size = proofFile.size;
+          metadata.proof_file_type = proofFile.type;
+          metadata.proof_file_submitted_at = new Date().toISOString();
         }
 
         const depositData = {
@@ -831,14 +821,14 @@ function LoanDepositCryptoContent() {
       <div style={{
         background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
         color: 'white',
-        padding: '2rem',
+        padding: '2rem 2rem 4rem 2rem',
         textAlign: 'center'
       }}>
         <h1 style={{ fontSize: '1.8rem', fontWeight: '700', marginBottom: '0.5rem', margin: 0 }}>Loan Collateral Deposit</h1>
         <p style={{ fontSize: '0.95rem', opacity: '0.9', marginBottom: 0, fontWeight: '500' }}>Secure your loan with a 10% deposit</p>
       </div>
 
-      <div style={{ maxWidth: '800px', margin: '-40px auto 0', padding: '0 20px 60px' }}>
+      <div style={{ maxWidth: '800px', margin: '-60px auto 0', padding: '0 20px 60px' }}>
         {message && (
           <div style={{
             padding: '1rem',
