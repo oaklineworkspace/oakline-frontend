@@ -329,7 +329,7 @@ function LoanDashboardContent() {
           boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
         }}>
           <strong style={{fontSize: '16px', display: 'block', marginBottom: '8px'}}>💡 Loan Processing Timeline</strong>
-          <div>Your application is being processed. Once you submit and we verify your 10% security deposit, your complete loan amount will be credited instantly to your account.</div>
+          <div>Your application is being processed. Once you submit and we verify your 10% security deposit within hours, your complete loan amount will be credited instantly to your account.</div>
         </div>
 
         <div style={styles.topSection}>

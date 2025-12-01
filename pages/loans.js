@@ -188,7 +188,7 @@ function LoansOverviewContent() {
           boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
         }}>
           <strong style={{fontSize: '16px', display: 'block', marginBottom: '8px'}}>💡 Instant Disbursement Process</strong>
-          <div>Your 10% security deposit unlocks instant funding. Submit deposit → We verify (1-3 business days) → Complete loan amount transfers instantly to your account.</div>
+          <div>Your 10% security deposit unlocks instant funding. Submit deposit → Verified within hours → Complete loan amount transfers instantly to your account.</div>
         </div>
 
         {/* Action Buttons */}

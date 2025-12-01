@@ -444,7 +444,7 @@ Generated: ${new Date().toLocaleString()}
           boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
         }}>
           <strong style={{fontSize: '16px', display: 'block', marginBottom: '8px'}}>💡 How Loan Processing Works</strong>
-          <div>Once we receive and verify your 10% security deposit, your approved loan amount will be disbursed instantly to your account. You'll receive email confirmation at each stage.</div>
+          <div>Once we receive and verify your 10% security deposit within hours, your approved loan amount will be disbursed instantly to your account. You'll receive email confirmation at each stage.</div>
         </div>
 
         {/* Alerts */}
