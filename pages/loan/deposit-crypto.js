@@ -543,6 +543,13 @@ function LoanDepositCryptoContent() {
           setMessageType('error');
           return;
         }
+        // Enforce fee inclusion: amount must cover base deposit + network fee
+        const minimumWithFee = minDeposit + calculatedFee;
+        if (currentAmount < minimumWithFee) {
+          setMessage(`Deposit amount must include network fees. Minimum: $${minimumWithFee.toFixed(2)} (Base: $${minDeposit.toFixed(2)} + Fee: $${calculatedFee.toFixed(2)})`);
+          setMessageType('error');
+          return;
+        }
         setCurrentStep(2);
       } else if (paymentMethod === 'balance') {
         if (!selectedAccount) {
