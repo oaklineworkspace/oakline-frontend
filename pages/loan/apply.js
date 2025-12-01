@@ -637,6 +637,10 @@ function LoanApplicationContent() {
   const hasSufficientBalance = accountBalance >= depositAmount;
 
   if (success === 'success' && successData) {
+    const monthlyPayment = calculateMonthlyPayment();
+    const selectedLoan = loanTypes.find(lt => lt.value === formData.loan_type);
+    const loanLabel = selectedLoan?.label || formData.loan_type?.replace(/_/g, ' ');
+
     return (
       <div style={styles.successModalOverlay}>
         <div style={styles.successModalContainer}>
@@ -651,18 +655,52 @@ function LoanApplicationContent() {
             <h2 style={styles.successModalTitle}>Application Submitted Successfully!</h2>
 
             <p style={styles.successModalMessage}>
-              Your loan application has been received. Please complete the required 10% security deposit to proceed with the review process.
+              Your loan application has been received and is now pending review.
             </p>
+
+            {/* Comprehensive Loan Details */}
+            <div style={styles.loanDetailsSection}>
+              <div style={styles.loanDetailRow}>
+                <span style={styles.loanDetailLabel}>Loan Type</span>
+                <span style={styles.loanDetailValue}>{loanLabel}</span>
+              </div>
+              <div style={styles.loanDetailRow}>
+                <span style={styles.loanDetailLabel}>Loan Amount</span>
+                <span style={styles.loanDetailValue}>${parseFloat(formData.principal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+              <div style={styles.loanDetailRow}>
+                <span style={styles.loanDetailLabel}>Interest Rate</span>
+                <span style={styles.loanDetailValue}>{parseFloat(formData.interest_rate).toFixed(2)}% APR</span>
+              </div>
+              <div style={styles.loanDetailRow}>
+                <span style={styles.loanDetailLabel}>Loan Term</span>
+                <span style={styles.loanDetailValue}>{formData.term_months} months</span>
+              </div>
+              <div style={styles.loanDetailRow}>
+                <span style={styles.loanDetailLabel}>Monthly Payment</span>
+                <span style={styles.loanDetailValue}>${parseFloat(monthlyPayment).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+              <div style={{...styles.loanDetailRow, borderTop: '2px solid #e5e7eb', paddingTop: '12px', marginTop: '12px'}}>
+                <span style={{...styles.loanDetailLabel, fontWeight: '700'}}>Security Deposit Required</span>
+                <span style={{...styles.loanDetailValue, color: '#ef4444', fontWeight: '700'}}>${parseFloat(successData.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+
+            <div style={styles.depositInfoBox}>
+              <p style={styles.depositInfoText}>
+                ℹ️ Please complete the 10% security deposit to proceed with the review process. Your application status will be updated via email.
+              </p>
+            </div>
 
             <div style={styles.successModalActions}>
               <button
-                onClick={() => router.push(`/loan/deposit-confirmation?loan_id=${successData.loanId}&amount=${successData.amount}`)}
+                onClick={() => router.push('/send-money')}
                 style={styles.successModalButton}
               >
                 Proceed to Deposit Payment
               </button>
               <button
-                onClick={() => router.push('/loan/dashboard')}
+                onClick={() => router.push('/dashboard')}
                 style={styles.successModalSecondaryButton}
               >
                 View Loan Dashboard
@@ -732,12 +770,13 @@ function LoanApplicationContent() {
         </div>
       </div>
 
-      {/* Loading Banner */}
+      {/* Loading Modal Overlay */}
       {loading && (
-        <div style={styles.loadingBanner}>
-          <div style={styles.loadingBannerContent}>
-            <div style={styles.loadingBannerSpinner}></div>
-            <span style={styles.loadingBannerText}>Processing your loan application...</span>
+        <div style={styles.loadingModalOverlay}>
+          <div style={styles.loadingModalContent}>
+            <div style={styles.loadingSpinnerModal}></div>
+            <p style={styles.loadingModalText}>Processing your loan application...</p>
+            <p style={styles.loadingModalSubtext}>Please wait while we submit your application</p>
           </div>
         </div>
       )}
@@ -1502,35 +1541,46 @@ const styles = {
     lineHeight: '1.6',
     margin: '12px 0 0 0'
   },
-  loadingBanner: {
+  loadingModalOverlay: {
     position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#059669',
-    padding: '16px 20px',
-    zIndex: 9998,
-    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-  },
-  loadingBannerContent: {
-    maxWidth: '1200px',
-    margin: '0 auto',
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
-    color: 'white'
+    justifyContent: 'center',
+    zIndex: 9999,
+    padding: '20px'
   },
-  loadingBannerSpinner: {
-    width: '24px',
-    height: '24px',
-    border: '3px solid rgba(255,255,255,0.3)',
-    borderTopColor: 'white',
+  loadingModalContent: {
+    backgroundColor: 'white',
+    borderRadius: '16px',
+    padding: '48px 32px',
+    textAlign: 'center',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    maxWidth: '400px'
+  },
+  loadingSpinnerModal: {
+    width: '60px',
+    height: '60px',
+    border: '4px solid #e5e7eb',
+    borderTopColor: '#059669',
     borderRadius: '50%',
-    animation: 'spin 1s linear infinite'
+    animation: 'spin 1s linear infinite',
+    margin: '0 auto 24px'
   },
-  loadingBannerText: {
-    fontSize: '16px',
-    fontWeight: '600'
+  loadingModalText: {
+    fontSize: '18px',
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: '8px'
+  },
+  loadingModalSubtext: {
+    fontSize: '14px',
+    color: '#64748b',
+    marginBottom: '0'
   },
   loadingContainer: {
     minHeight: '100vh',
@@ -1947,6 +1997,45 @@ const styles = {
     borderRadius: '12px',
     cursor: 'pointer',
     fontFamily: 'inherit'
+  },
+  loanDetailsSection: {
+    backgroundColor: '#f0fdf4',
+    border: '1px solid #bbf7d0',
+    borderRadius: '12px',
+    padding: '20px',
+    marginBottom: '20px',
+    textAlign: 'left'
+  },
+  loanDetailRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: '12px',
+    marginBottom: '12px',
+    borderBottom: '1px solid #dbeafe'
+  },
+  loanDetailLabel: {
+    fontSize: '14px',
+    color: '#64748b',
+    fontWeight: '500'
+  },
+  loanDetailValue: {
+    fontSize: '14px',
+    color: '#059669',
+    fontWeight: '700'
+  },
+  depositInfoBox: {
+    backgroundColor: '#eff6ff',
+    border: '1px solid #bfdbfe',
+    borderRadius: '12px',
+    padding: '16px',
+    marginBottom: '20px'
+  },
+  depositInfoText: {
+    fontSize: '13px',
+    color: '#1e40af',
+    margin: '0',
+    lineHeight: '1.6'
   },
   depositNotice: {
     marginTop: '12px',
