@@ -480,6 +480,7 @@ const styles = {
     margin: '0 auto',
     padding: '40px 20px',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    backgroundColor: '#fff'
   },
   header: {
     display: 'flex',
@@ -487,17 +488,19 @@ const styles = {
     alignItems: 'flex-start',
     marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
     flexWrap: 'wrap',
-    gap: '1rem'
+    gap: '1rem',
+    borderBottom: '2px solid #e5e7eb',
+    paddingBottom: '2rem'
   },
   title: {
     fontSize: '32px',
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1a365d',
     margin: '0 0 8px 0',
   },
   subtitle: {
     fontSize: '16px',
-    color: '#666',
+    color: '#64748b',
     margin: 0,
   },
   applyButton: {

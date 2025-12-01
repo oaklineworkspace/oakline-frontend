@@ -692,6 +692,35 @@ function LoanApplicationContent() {
   const accountBalance = accounts.length > 0 ? parseFloat(accounts[0].balance) : 0;
   const hasSufficientBalance = accountBalance >= depositAmount;
 
+  // Show existing loans alert
+  if (currentStep === 1 && existingLoans.length > 0 && !success) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.existingLoansAlert}>
+          <div style={styles.alertIcon}>📋</div>
+          <div style={styles.alertContent}>
+            <h3 style={styles.alertTitle}>You Have Existing Loans</h3>
+            <p style={styles.alertText}>You currently have {existingLoans.length} active or pending loan(s). You can still apply for a new loan, but review your existing loans first.</p>
+            <div style={styles.alertButtons}>
+              <button
+                onClick={() => router.push('/loan')}
+                style={styles.alertButton}
+              >
+                View My Loans
+              </button>
+              <button
+                onClick={() => setExistingLoans([])}
+                style={{...styles.alertButton, backgroundColor: 'transparent', color: '#059669', border: '2px solid #059669'}}
+              >
+                Continue Application
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (success === 'success' && successData) {
     const monthlyPayment = calculateMonthlyPayment();
     const selectedLoan = loanTypes.find(lt => lt.value === formData.loan_type);
@@ -2234,38 +2263,6 @@ const styles = {
 };
 
 export default function LoanApplication() {
-  // Display existing loans if any
-  if (currentStep === 1 && existingLoans.length > 0 && !success) {
-    return (
-      <ProtectedRoute>
-        <div style={styles.container}>
-          <div style={styles.existingLoansAlert}>
-            <div style={styles.alertIcon}>📋</div>
-            <div style={styles.alertContent}>
-              <h3 style={styles.alertTitle}>You Have Existing Loans</h3>
-              <p style={styles.alertText}>You currently have {existingLoans.length} active or pending loan(s). You can still apply for a new loan, but review your existing loans first.</p>
-              <div style={styles.alertButtons}>
-                <button
-                  onClick={() => router.push('/loan')}
-                  style={styles.alertButton}
-                >
-                  View My Loans
-                </button>
-                <button
-                  onClick={() => setExistingLoans([])}
-                  style={{...styles.alertButton, backgroundColor: 'transparent', color: '#059669', border: '2px solid #059669'}}
-                >
-                  Continue Application
-                </button>
-              </div>
-            </div>
-          </div>
-          <LoanApplicationContent />
-        </div>
-      </ProtectedRoute>
-    );
-  }
-
   return (
     <ProtectedRoute>
       <LoanApplicationContent />
