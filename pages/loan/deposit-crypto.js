@@ -983,6 +983,8 @@ function LoanDepositCryptoContent() {
                 )}
               </>
             )}
+              </>
+            )}
 
             {paymentMethod === 'balance' && (
               <>
