@@ -38,6 +38,7 @@ export default async function handler(req, res) {
           .from('crypto_deposits')
           .select('*')
           .eq('user_id', user.id)
+          .eq('loan_wallet_id', loan.loan_wallet_id)
           .eq('purpose', 'loan_requirement')
           .order('created_at', { ascending: false });
 
