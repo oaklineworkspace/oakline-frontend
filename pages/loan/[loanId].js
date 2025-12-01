@@ -29,11 +29,17 @@ function LoanDetailContent() {
       @media (max-width: 768px) {
         .loan-detail-tabs {
           overflow-x: auto;
+          overflow-y: hidden;
           -webkit-overflow-scrolling: touch;
+          gap: 0 !important;
+          margin-bottom: 1rem !important;
         }
         .loan-detail-tabs button {
           white-space: nowrap;
-          min-width: 100px;
+          min-width: auto;
+          flex-shrink: 0;
+          padding: 10px 12px !important;
+          font-size: 12px !important;
         }
         .loan-detail-header {
           flex-direction: column !important;
@@ -48,7 +54,27 @@ function LoanDetailContent() {
           width: 100% !important;
         }
       }
+      @media (max-width: 600px) {
+        .loan-detail-tabs {
+          gap: 0 !important;
+        }
+        .loan-detail-tabs button {
+          padding: 10px 10px !important;
+          font-size: 11px !important;
+          flex-shrink: 0;
+          border-bottom: 3px solid transparent !important;
+        }
+      }
       @media (max-width: 414px) {
+        .loan-detail-tabs {
+          margin-bottom: 1rem !important;
+          gap: 0 !important;
+        }
+        .loan-detail-tabs button {
+          padding: 8px 8px !important;
+          font-size: 10px !important;
+          flex-shrink: 0;
+        }
         .loan-detail-modal {
           padding: 1rem !important;
           margin: 0.5rem !important;
@@ -510,19 +536,19 @@ function LoanDetailContent() {
           style={activeTab === 'payments' ? { ...styles.tab, ...styles.activeTab } : styles.tab}
           onClick={() => setActiveTab('payments')}
         >
-          Payment History
+          Payments
         </button>
         <button
           style={activeTab === 'schedule' ? { ...styles.tab, ...styles.activeTab } : styles.tab}
           onClick={() => setActiveTab('schedule')}
         >
-          Amortization Schedule
+          Schedule
         </button>
         <button
           style={activeTab === 'auto-pay' ? { ...styles.tab, ...styles.activeTab } : styles.tab}
           onClick={() => setActiveTab('auto-pay')}
         >
-          Auto-Payment
+          Auto-Pay
         </button>
       </div>
 
@@ -889,11 +915,12 @@ const styles = {
   },
   tabs: {
     display: 'flex',
-    gap: 'clamp(4px, 1vw, 8px)',
+    gap: '0',
     borderBottom: '2px solid #e0e0e0',
     marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
     overflowX: 'auto',
     WebkitOverflowScrolling: 'touch',
+    scrollBehavior: 'smooth',
   },
   tab: {
     padding: 'clamp(10px, 2vw, 12px) clamp(12px, 2vw, 24px)',
