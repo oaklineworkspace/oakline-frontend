@@ -312,7 +312,7 @@ function LoansOverviewContent() {
                             marginBottom: '16px',
                             fontWeight: '600'
                           }}>
-                            ⏳ Deposit Under Review — Verification in progress. Expected: 1-3 business days.
+                            ⏳ Blockchain Verification Pending — Confirmation typically completes within 15 minutes to 2 hours.
                           </div>
                         );
                       }

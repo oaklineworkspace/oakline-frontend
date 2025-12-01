@@ -601,9 +601,9 @@ function LoanDetailContent() {
           padding: '16px 20px',
           marginBottom: '20px'
         }}>
-          <strong style={{ color: '#92400e', fontSize: '16px' }}>⏳ Deposit Under Review</strong>
+          <strong style={{ color: '#92400e', fontSize: '16px' }}>⏳ Blockchain Verification Pending</strong>
           <p style={{ color: '#92400e', margin: '8px 0 0 0', lineHeight: '1.6' }}>
-            Your 10% deposit has been received and is being verified by our Loan Department. Expected completion: 1-3 business days.
+            Your 10% loan deposit has been successfully submitted to the blockchain. Verification typically completes within 15 minutes to 2 hours. You will receive email notifications as your deposit progresses through confirmation.
           </p>
         </div>
       )}
