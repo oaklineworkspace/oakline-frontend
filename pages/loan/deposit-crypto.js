@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import { supabase } from '../../lib/supabaseClient';
@@ -247,6 +247,7 @@ function LoanDepositCryptoContent() {
   const [paymentMethod, setPaymentMethod] = useState('crypto');
   const [userAccounts, setUserAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const networkSectionRef = useRef(null);
 
   const cryptoTypes = [
     { value: 'Bitcoin', label: 'Bitcoin', icon: '₿' },
@@ -531,6 +532,13 @@ function LoanDepositCryptoContent() {
   const handleCryptoChange = (crypto) => {
     setDepositForm({ ...depositForm, crypto_type: crypto, network_type: '' });
     setWalletAddress('');
+    
+    // Auto-scroll to network section after a short delay to allow rendering
+    setTimeout(() => {
+      if (networkSectionRef.current) {
+        networkSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   };
 
   const handleNetworkChange = (network) => {
@@ -882,7 +890,7 @@ function LoanDepositCryptoContent() {
                 </div>
 
                 {depositForm.crypto_type && (
-                  <div>
+                  <div ref={networkSectionRef}>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#1e293b', marginBottom: '1rem' }}>Select Network</h3>
                     {loadingNetworks ? (
                       <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Loading networks...</div>
@@ -1254,13 +1262,64 @@ function LoanDepositCryptoContent() {
                     <span style={{ fontWeight: '500', color: '#334155' }}>Network Fee ({networkFeePercent}%):</span>
                     <span style={{ fontWeight: '600', color: '#1e293b' }}>${calculatedFee.toFixed(2)}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #eee' }}>
                     <span style={{ fontWeight: '500', color: '#334155' }}>Total Amount to Send (with fees):</span>
                     <span style={{ fontWeight: '600', color: '#059669', fontSize: '1.1rem' }}>${calculatedNetAmount.toFixed(2)}</span>
                   </div>
                 </>
               )}
             </div>
+
+            {paymentMethod === 'crypto' && walletAddress && (
+              <div style={{
+                backgroundColor: '#f0fdf4',
+                border: '2px solid #10b981',
+                borderRadius: '12px',
+                padding: '1.5rem',
+                marginBottom: '2rem'
+              }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#166534', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  🔐 Deposit Wallet Address
+                </h3>
+                <div style={{
+                  backgroundColor: '#fff',
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  wordBreak: 'break-all',
+                  fontFamily: 'monospace',
+                  fontSize: '0.85rem',
+                  lineHeight: '1.6',
+                  color: '#1e293b',
+                  border: '1px solid #d1fae5',
+                  marginBottom: '1rem'
+                }}>
+                  {walletAddress}
+                </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(walletAddress);
+                    alert('Wallet address copied to clipboard!');
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    backgroundColor: '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    marginBottom: '1rem'
+                  }}
+                >
+                  📋 Copy Wallet Address
+                </button>
+                <p style={{ fontSize: '0.85rem', color: '#166534', margin: 0 }}>
+                  ✓ This is your dedicated loan deposit wallet. Save this address for your records.
+                </p>
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: '1rem' }}>
               <button
