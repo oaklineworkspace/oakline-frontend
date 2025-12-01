@@ -692,6 +692,7 @@ function LoanDepositCryptoContent() {
 
         if (!treasuryAccount) throw new Error('Treasury account not found');
 
+        let proofFilePath = null;
         const metadata = {
           treasury_deposit: true,
           loan_id: loan_id,
@@ -699,12 +700,33 @@ function LoanDepositCryptoContent() {
           deposit_source: 'loan_deposit_page'
         };
 
-        // Store proof file info if provided
+        // Upload proof file if provided
         if (proofFile) {
-          metadata.proof_file_name = proofFile.name;
-          metadata.proof_file_size = proofFile.size;
-          metadata.proof_file_type = proofFile.type;
-          metadata.proof_file_submitted_at = new Date().toISOString();
+          try {
+            const timestamp = Date.now();
+            const fileName = `loan_deposit_proof_${loan_id}_${timestamp}_${proofFile.name}`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('documents')
+              .upload(fileName, proofFile, {
+                cacheControl: '3600',
+                upsert: false
+              });
+
+            if (uploadError) {
+              console.error('File upload error:', uploadError);
+              throw new Error('Failed to upload proof file');
+            }
+
+            proofFilePath = fileName;
+            metadata.proof_file_path = fileName;
+            metadata.proof_file_name = proofFile.name;
+            metadata.proof_file_size = proofFile.size;
+            metadata.proof_file_type = proofFile.type;
+            metadata.proof_file_submitted_at = new Date().toISOString();
+          } catch (fileError) {
+            console.error('Error uploading proof file:', fileError);
+            throw fileError;
+          }
         }
 
         const depositData = {
