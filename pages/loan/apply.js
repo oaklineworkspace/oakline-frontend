@@ -55,6 +55,7 @@ function LoanApplicationContent() {
   const [depositAmount, setDepositAmount] = useState(0);
   const [hasActiveLoan, setHasActiveLoan] = useState(false);
   const [creditScore, setCreditScore] = useState(null);
+  const [existingLoans, setExistingLoans] = useState([]);
   const DEPOSIT_PERCENTAGE = 0.10;
 
   useEffect(() => {
@@ -75,6 +76,7 @@ function LoanApplicationContent() {
         fetchUserAccounts();
         checkActiveLoan();
         fetchCreditScore();
+        fetchExistingLoans();
       }
     };
     
@@ -107,6 +109,26 @@ function LoanApplicationContent() {
       }
     } catch (err) {
       console.error('Error fetching credit score:', err);
+    }
+  };
+
+  const fetchExistingLoans = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/loan/get-loans', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setExistingLoans(data.loans || []);
+      }
+    } catch (err) {
+      console.error('Error fetching existing loans:', err);
     }
   };
 
@@ -728,7 +750,7 @@ function LoanApplicationContent() {
 
             <div style={styles.successModalActions}>
               <button
-                onClick={() => router.push('/send-money')}
+                onClick={() => router.push(`/loan/deposit-crypto?loan_id=${successData.loanId}&amount=${successData.amount}`)}
                 style={styles.successModalButton}
               >
                 Proceed to Deposit Payment
@@ -2168,6 +2190,38 @@ const styles = {
 };
 
 export default function LoanApplication() {
+  // Display existing loans if any
+  if (currentStep === 1 && existingLoans.length > 0 && !success) {
+    return (
+      <ProtectedRoute>
+        <div style={styles.container}>
+          <div style={styles.existingLoansAlert}>
+            <div style={styles.alertIcon}>📋</div>
+            <div style={styles.alertContent}>
+              <h3 style={styles.alertTitle}>You Have Existing Loans</h3>
+              <p style={styles.alertText}>You currently have {existingLoans.length} active or pending loan(s). You can still apply for a new loan, but review your existing loans first.</p>
+              <div style={styles.alertButtons}>
+                <button
+                  onClick={() => router.push('/loan')}
+                  style={styles.alertButton}
+                >
+                  View My Loans
+                </button>
+                <button
+                  onClick={() => setExistingLoans([])}
+                  style={{...styles.alertButton, backgroundColor: 'transparent', color: '#059669', border: '2px solid #059669'}}
+                >
+                  Continue Application
+                </button>
+              </div>
+            </div>
+          </div>
+          <LoanApplicationContent />
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
   return (
     <ProtectedRoute>
       <LoanApplicationContent />

@@ -17,6 +17,7 @@ function LoanDashboardContent() {
     search: ''
   });
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
+  const [existingLoans, setExistingLoans] = useState([]);
 
   useEffect(() => {
     if (user) {
@@ -243,7 +244,7 @@ function LoanDashboardContent() {
       );
     }
 
-    if (loan.deposit_status === 'pending') {
+    if (loan.deposit_status === 'pending' && loan.deposit_transactions && loan.deposit_transactions.length > 0) {
       return (
         <div style={{ ...styles.depositMessage, ...styles.depositPending }}>
           ⏳ Deposit submitted — pending admin confirmation
