@@ -236,8 +236,8 @@ function LoanDashboardContent() {
       return null;
     }
 
-    // Only show deposit completed if status is explicitly 'completed'
-    if (loan.deposit_status === 'completed') {
+    // Show deposit verified if deposit is paid and completed
+    if (loan.deposit_paid && loan.deposit_status === 'completed') {
       return (
         <div style={{ ...styles.depositMessage, ...styles.depositCompleted }}>
           ✓ Deposit verified (${depositRequired.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
@@ -245,9 +245,8 @@ function LoanDashboardContent() {
       );
     }
 
-    // Only show deposit pending if there are actual deposit transactions submitted
-    const hasDepositTransactions = loan.deposit_transactions && Array.isArray(loan.deposit_transactions) && loan.deposit_transactions.length > 0;
-    if (hasDepositTransactions && (loan.deposit_status === 'pending' || loan.deposit_status === 'under_review')) {
+    // Show deposit submitted only if deposit_status is pending AND deposit is NOT paid yet
+    if (depositRequired > 0 && loan.deposit_status === 'pending' && !loan.deposit_paid && loan.status === 'pending') {
       return (
         <div style={{ ...styles.depositMessage, ...styles.depositPending }}>
           ⏳ Deposit submitted — pending admin confirmation
@@ -255,8 +254,8 @@ function LoanDashboardContent() {
       );
     }
 
-    // Show deposit required only if loan status is pending and no deposits have been submitted
-    if (loan.status === 'pending' && !hasDepositTransactions) {
+    // Show deposit required only if loan is pending and deposit hasn't been paid
+    if (loan.status === 'pending' && !loan.deposit_paid) {
       return (
         <div style={{ ...styles.depositMessage, ...styles.depositRequired }}>
           ⚠️ 10% deposit required: ${depositRequired.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
