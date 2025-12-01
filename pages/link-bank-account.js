@@ -136,8 +136,6 @@ function LinkBankAccountContent() {
           swift_code: userType === 'international' ? formData.swift_code : null,
           iban: userType === 'international' ? formData.iban : null,
           bank_address: formData.bank_address || null,
-          country: formData.country,
-          account_region: userType === 'us' ? 'US' : 'INTERNATIONAL',
           is_primary: linkedBanks.length === 0 ? true : formData.is_primary,
           status: 'pending'
         }])
