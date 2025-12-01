@@ -28,6 +28,7 @@ function LinkBankAccountContent() {
     country: 'United States',
     is_primary: false
   });
+  const [useCustomAccountType, setUseCustomAccountType] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -197,6 +198,7 @@ function LinkBankAccountContent() {
       });
       setShowForm(false);
       setUserType('us');
+      setUseCustomAccountType(false);
       fetchLinkedBanks();
     } catch (error) {
       console.error('Error linking bank account:', error);
@@ -490,7 +492,7 @@ function LinkBankAccountContent() {
             <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>✅</div>
             <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.5rem' }}>Verified Transfers</h3>
             <p style={{ fontSize: '0.875rem', color: '#64748b', margin: 0, lineHeight: '1.5' }}>
-              2-3 small deposits verify your account ownership
+              We securely verify your account ownership
             </p>
           </div>
         </div>
@@ -515,7 +517,7 @@ function LinkBankAccountContent() {
               <strong>Step 1:</strong> Enter your bank details below
             </div>
             <div style={{ fontSize: '0.875rem', color: '#1e40af', lineHeight: '1.6' }}>
-              <strong>Step 2:</strong> We send 2-3 small deposits to verify
+              <strong>Step 2:</strong> We need to verify your account
             </div>
             <div style={{ fontSize: '0.875rem', color: '#1e40af', lineHeight: '1.6' }}>
               <strong>Step 3:</strong> Confirm the amounts to activate
@@ -640,16 +642,71 @@ function LinkBankAccountContent() {
 
                 <div style={styles.formGroup}>
                   <label style={styles.label}>Account Type *</label>
-                  <select
-                    name="account_type"
-                    value={formData.account_type}
-                    onChange={handleChange}
-                    style={styles.select}
-                    required
+                  {!useCustomAccountType ? (
+                    <select
+                      value={formData.account_type === 'custom' ? 'custom' : formData.account_type}
+                      onChange={(e) => {
+                        if (e.target.value === 'custom') {
+                          setUseCustomAccountType(true);
+                          setFormData(prev => ({ ...prev, account_type: '' }));
+                        } else {
+                          setFormData(prev => ({ ...prev, account_type: e.target.value }));
+                        }
+                      }}
+                      style={styles.select}
+                      required
+                    >
+                      <option value="">-- Select Account Type --</option>
+                      <option value="checking">Checking</option>
+                      <option value="savings">Savings</option>
+                      <option value="money_market">Money Market</option>
+                      <option value="certificate_of_deposit">Certificate of Deposit (CD)</option>
+                      <option value="individual_retirement">Individual Retirement Account (IRA)</option>
+                      <option value="business_checking">Business Checking</option>
+                      <option value="business_savings">Business Savings</option>
+                      <option value="sweep_account">Sweep Account</option>
+                      <option value="investment">Investment Account</option>
+                      <option value="escrow">Escrow Account</option>
+                      <option value="current">Current Account</option>
+                      <option value="fixed_deposit">Fixed Deposit</option>
+                      <option value="multi_currency">Multi-Currency Account</option>
+                      <option value="nostro">Nostro Account</option>
+                      <option value="vostro">Vostro Account</option>
+                      <option value="custom">Other (Enter Manually)</option>
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={formData.account_type}
+                      onChange={(e) => setFormData(prev => ({ ...prev, account_type: e.target.value }))}
+                      style={styles.input}
+                      placeholder="e.g., Trust Account"
+                      required
+                    />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUseCustomAccountType(!useCustomAccountType);
+                      if (!useCustomAccountType) {
+                        setFormData(prev => ({ ...prev, account_type: '' }));
+                      } else {
+                        setFormData(prev => ({ ...prev, account_type: 'checking' }));
+                      }
+                    }}
+                    style={{
+                      marginTop: '0.5rem',
+                      padding: '0.375rem 0.75rem',
+                      fontSize: '0.8rem',
+                      backgroundColor: '#f0f0f0',
+                      border: '1px solid #ddd',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      color: '#064e3b'
+                    }}
                   >
-                    <option value="checking">Checking</option>
-                    <option value="savings">Savings</option>
-                  </select>
+                    {useCustomAccountType ? '← Back to List' : 'Can\'t Find Your Type? →'}
+                  </button>
                 </div>
               </div>
 
