@@ -431,23 +431,23 @@ function LoanDetailContent() {
           border: '1px solid #FDE68A',
           borderLeft: '4px solid #D9770E',
           borderRadius: '12px',
-          padding: '16px 20px',
-          marginBottom: '20px',
+          padding: 'clamp(12px, 2vw, 16px) clamp(16px, 3vw, 20px)',
+          marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          gap: '16px',
+          gap: 'clamp(12px, 2vw, 16px)',
           flexWrap: 'wrap'
         }}>
-          <div>
-            <strong style={{ color: '#92400E', fontSize: '16px' }}>
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            <strong style={{ color: '#92400E', fontSize: 'clamp(14px, 2.5vw, 16px)' }}>
               <span style={{ marginRight: '8px' }}>🏦</span> 10% Deposit Required
             </strong>
-            <p style={{ color: '#92400E', margin: '8px 0 0 0', lineHeight: '1.6' }}>
+            <p style={{ color: '#92400E', margin: '8px 0 0 0', lineHeight: '1.6', fontSize: 'clamp(13px, 2vw, 15px)' }}>
               A deposit of ${depositRequired.toLocaleString('en-US', { minimumFractionDigits: 2 })} is required to proceed with your loan application.
             </p>
             {loan.deposit_method && (
-              <p style={{ color: '#92400E', margin: '4px 0 0 0', lineHeight: '1.6' }}>
+              <p style={{ color: '#92400E', margin: '4px 0 0 0', lineHeight: '1.6', fontSize: 'clamp(13px, 2vw, 14px)' }}>
                 Selected method: <strong>{loan.deposit_method.toUpperCase()}</strong>
               </p>
             )}
@@ -455,12 +455,12 @@ function LoanDetailContent() {
           <Link href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${depositRequired}`} style={{
             backgroundColor: '#D9770E',
             color: 'white',
-            padding: '12px 24px',
+            padding: 'clamp(10px, 2vw, 12px) clamp(16px, 3vw, 24px)',
             borderRadius: '8px',
             textDecoration: 'none',
             fontWeight: '600',
             whiteSpace: 'nowrap',
-            fontSize: '14px'
+            fontSize: 'clamp(13px, 2vw, 14px)'
           }}>
             Deposit Now
           </Link>
@@ -797,35 +797,39 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: '30px',
+    marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
+    flexWrap: 'wrap',
+    gap: '12px',
   },
   backLink: {
     color: '#007BFF',
     textDecoration: 'none',
-    fontSize: '14px',
+    fontSize: 'clamp(12px, 2vw, 14px)',
     fontWeight: '500',
-    marginBottom: '12px',
+    marginBottom: '8px',
     display: 'inline-block',
   },
   title: {
-    fontSize: '32px',
+    fontSize: 'clamp(24px, 6vw, 32px)',
     fontWeight: '700',
     color: '#1a1a1a',
-    margin: '8px 0',
+    margin: '6px 0',
   },
   subtitle: {
-    fontSize: '14px',
+    fontSize: 'clamp(12px, 2vw, 14px)',
     color: '#666',
     fontFamily: 'monospace',
     margin: 0,
+    wordBreak: 'break-word',
   },
   statusBadge: {
-    padding: '8px 16px',
+    padding: 'clamp(6px, 1.5vw, 8px) clamp(12px, 2vw, 16px)',
     borderRadius: '20px',
-    fontSize: '13px',
+    fontSize: 'clamp(11px, 2vw, 13px)',
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
+    whiteSpace: 'nowrap',
   },
   toast: {
     position: 'fixed',
@@ -841,59 +845,67 @@ const styles = {
   depositBanner: {
     backgroundColor: '#FFF3CD',
     borderLeft: '4px solid #FFA500',
-    padding: '20px',
+    padding: 'clamp(12px, 3vw, 20px)',
     borderRadius: '8px',
-    marginBottom: '30px',
+    marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
   },
   depositBannerContent: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: '20px',
+    gap: 'clamp(12px, 2vw, 20px)',
+    flexWrap: 'wrap',
   },
   depositBannerText: {
     margin: '8px 0 0 0',
     color: '#666',
+    fontSize: 'clamp(13px, 2vw, 15px)',
   },
   depositNowButton: {
     backgroundColor: '#007BFF',
     color: 'white',
-    padding: '12px 24px',
+    padding: 'clamp(10px, 2vw, 12px) clamp(16px, 3vw, 24px)',
     borderRadius: '6px',
     textDecoration: 'none',
     fontWeight: '600',
+    fontSize: 'clamp(13px, 2vw, 14px)',
     whiteSpace: 'nowrap',
   },
   infoBanner: {
     backgroundColor: '#D1ECF1',
     borderLeft: '4px solid #17A2B8',
-    padding: '16px 20px',
+    padding: 'clamp(12px, 2vw, 16px) clamp(16px, 3vw, 20px)',
     borderRadius: '8px',
-    marginBottom: '30px',
+    marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
+    fontSize: 'clamp(13px, 2vw, 15px)',
   },
   successBanner: {
     backgroundColor: '#D4EDDA',
     borderLeft: '4px solid #28A745',
-    padding: '16px 20px',
+    padding: 'clamp(12px, 2vw, 16px) clamp(16px, 3vw, 20px)',
     borderRadius: '8px',
-    marginBottom: '30px',
+    marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
+    fontSize: 'clamp(13px, 2vw, 15px)',
   },
   tabs: {
     display: 'flex',
-    gap: '8px',
+    gap: 'clamp(4px, 1vw, 8px)',
     borderBottom: '2px solid #e0e0e0',
-    marginBottom: '30px',
+    marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
+    overflowX: 'auto',
+    WebkitOverflowScrolling: 'touch',
   },
   tab: {
-    padding: '12px 24px',
+    padding: 'clamp(10px, 2vw, 12px) clamp(12px, 2vw, 24px)',
     backgroundColor: 'transparent',
     border: 'none',
     borderBottom: '3px solid transparent',
     cursor: 'pointer',
-    fontSize: '15px',
+    fontSize: 'clamp(13px, 2vw, 15px)',
     fontWeight: '500',
     color: '#666',
     transition: 'all 0.3s ease',
+    whiteSpace: 'nowrap',
   },
   activeTab: {
     color: '#007BFF',
@@ -902,7 +914,7 @@ const styles = {
   content: {
     backgroundColor: 'white',
     borderRadius: '12px',
-    padding: '30px',
+    padding: 'clamp(16px, 3vw, 30px)',
     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
   },
   infoGrid: {
@@ -932,18 +944,18 @@ const styles = {
     wordBreak: 'break-word',
   },
   section: {
-    marginTop: '30px',
-    paddingTop: '30px',
+    marginTop: 'clamp(1.5rem, 3vw, 2rem)',
+    paddingTop: 'clamp(1.5rem, 3vw, 2rem)',
     borderTop: '1px solid #e0e0e0',
   },
   sectionTitle: {
-    fontSize: '20px',
+    fontSize: 'clamp(16px, 4vw, 20px)',
     fontWeight: '600',
     color: '#333',
-    marginBottom: '16px',
+    marginBottom: 'clamp(12px, 2vw, 16px)',
   },
   sectionText: {
-    fontSize: '15px',
+    fontSize: 'clamp(13px, 2vw, 15px)',
     color: '#666',
     lineHeight: '1.6',
   },
