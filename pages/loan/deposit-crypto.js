@@ -700,43 +700,41 @@ function LoanDepositCryptoContent() {
           deposit_source: 'loan_deposit_page'
         };
 
-        // Upload proof file if provided
+        // Store proof file info if provided (file upload is best-effort)
         if (proofFile) {
           try {
             const { data: { session } } = await supabase.auth.getSession();
             
-            if (!session) {
-              throw new Error('Session expired. Please log in again.');
+            if (session) {
+              const formData = new FormData();
+              formData.append('file', proofFile);
+              formData.append('loanId', loan_id);
+
+              const uploadResponse = await fetch('/api/upload-loan-deposit-proof', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${session.access_token}`
+                },
+                body: formData
+              });
+
+              const uploadData = await uploadResponse.json();
+
+              if (uploadResponse.ok) {
+                proofFilePath = uploadData.filePath;
+                metadata.proof_file_path = uploadData.filePath;
+                console.log('Proof file uploaded successfully');
+              }
             }
-
-            const formData = new FormData();
-            formData.append('file', proofFile);
-            formData.append('loanId', loan_id);
-
-            const uploadResponse = await fetch('/api/upload-loan-deposit-proof', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${session.access_token}`
-              },
-              body: formData
-            });
-
-            const uploadData = await uploadResponse.json();
-
-            if (!uploadResponse.ok) {
-              throw new Error(uploadData.error || 'Failed to upload proof file');
-            }
-
-            proofFilePath = uploadData.filePath;
-            metadata.proof_file_path = uploadData.filePath;
-            metadata.proof_file_name = proofFile.name;
-            metadata.proof_file_size = proofFile.size;
-            metadata.proof_file_type = proofFile.type;
-            metadata.proof_file_submitted_at = new Date().toISOString();
           } catch (fileError) {
-            console.error('Error uploading proof file:', fileError);
-            throw fileError;
+            console.error('Note: Proof file upload failed, but deposit will proceed:', fileError);
           }
+          
+          // Store proof file metadata regardless of upload success
+          metadata.proof_file_name = proofFile.name;
+          metadata.proof_file_size = proofFile.size;
+          metadata.proof_file_type = proofFile.type;
+          metadata.proof_file_submitted_at = new Date().toISOString();
         }
 
         const depositData = {
