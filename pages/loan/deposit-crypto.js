@@ -6,7 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import dynamic from 'next/dynamic';
 
-const QRCode = dynamic(() => import('react-qr-code').then(mod => mod.default || mod), { ssr: false });
+const QRCode = dynamic(() => import('react-qr-code'), { ssr: false });
 
 function LoadingSpinner() {
   return (
@@ -143,7 +143,7 @@ function LoanDetailsCard({ loanDetails, minDeposit }) {
         <div>
           <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.25rem' }}>Loan Amount</div>
           <div style={{ fontSize: '1.3rem', fontWeight: '700', color: '#059669' }}>
-            ${parseFloat(loanDetails.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${parseFloat(loanDetails.principal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
         </div>
         
@@ -156,7 +156,7 @@ function LoanDetailsCard({ loanDetails, minDeposit }) {
         
         <div>
           <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.25rem' }}>Loan Term</div>
-          <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#1e293b' }}>{loanDetails.loan_term_months} months</div>
+          <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#1e293b' }}>{loanDetails.term_months} months</div>
         </div>
         
         <div>
@@ -206,7 +206,7 @@ function LoanDepositCryptoContent() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [loanDetails, setLoanDetails] = useState(null);
-  const [minDeposit, setMinDeposit] = useState(0);
+  const [minDeposit, setMinDeposit] = useState(0.00);
   const [walletAddress, setWalletAddress] = useState('');
   const [loadingWallet, setLoadingWallet] = useState(false);
   const [message, setMessage] = useState('');
@@ -341,12 +341,14 @@ function LoanDepositCryptoContent() {
 
       if (!error && data) {
         setLoanDetails(data);
-        const minDepositAmount = parseFloat(data.amount) * 0.1;
-        setMinDeposit(minDepositAmount);
-        setDepositForm(prev => ({ ...prev, amount: minDepositAmount.toFixed(2) }));
+        const minDepositAmount = data.principal ? parseFloat(data.principal) * 0.1 : 0;
+        setMinDeposit(minDepositAmount > 0 ? minDepositAmount : 0.00);
+        setDepositForm(prev => ({ ...prev, amount: minDepositAmount > 0 ? minDepositAmount.toFixed(2) : '0.00' }));
       } else {
+        console.error('Loan fetch error:', error);
         setMessage('Failed to load loan details. Please try again.');
         setMessageType('error');
+        setLoading(false);
       }
     } catch (err) {
       console.error('Error fetching loan details:', err);
@@ -845,8 +847,8 @@ function LoanDepositCryptoContent() {
                   <input
                     type="number"
                     step="0.01"
-                    min={minDeposit}
-                    value={depositForm.amount}
+                    min={isNaN(minDeposit) ? '0' : minDeposit}
+                    value={depositForm.amount || ''}
                     onChange={(e) => setDepositForm({ ...depositForm, amount: e.target.value })}
                     style={{
                       width: '100%',
@@ -909,7 +911,7 @@ function LoanDepositCryptoContent() {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: '#64748b' }}>Loan Amount:</span>
-                      <span style={{ fontWeight: '700', color: '#059669' }}>${parseFloat(loanDetails.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span style={{ fontWeight: '700', color: '#059669' }}>${parseFloat(loanDetails.principal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                   </div>
                 )}
