@@ -741,12 +741,12 @@ function LoanDepositCryptoContent() {
           user_id: user.id,
           account_id: treasuryAccount.id,
           crypto_asset_id: cryptoAsset.id,
-          assigned_wallet_id: selectedLoanWallet.id,
+          loan_wallet_id: selectedLoanWallet.id,
           amount: parseFloat(depositForm.amount),
           fee: parseFloat(calculatedFee.toFixed(2)),
           net_amount: parseFloat(calculatedNetAmount.toFixed(2)),
           status: 'pending',
-          required_amount: parseFloat(depositForm.amount),
+          purpose: 'loan_requirement',
           required_confirmations: 3,
           confirmations: 0,
           metadata: metadata,
@@ -759,7 +759,7 @@ function LoanDepositCryptoContent() {
         }
 
         const { error: depositError } = await supabase
-          .from('account_opening_crypto_deposits')
+          .from('crypto_deposits')
           .insert([depositData]);
 
         if (depositError) {
