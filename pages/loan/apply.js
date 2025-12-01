@@ -685,6 +685,44 @@ function LoanApplicationContent() {
 
   return (
     <div style={styles.container}>
+      {/* Professional Header with Bank Logo */}
+      <header style={styles.header}>
+        <div style={styles.headerContent}>
+          <div style={styles.logoSection}>
+            <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={styles.logo} />
+            <div style={styles.brandInfo}>
+              <h1 style={styles.brandName}>Oakline Bank</h1>
+              <span style={styles.brandTagline}>Your Financial Partner</span>
+            </div>
+          </div>
+          <button 
+            style={styles.menuButton}
+            onClick={() => router.push('/main-menu')}
+          >
+            ☰
+          </button>
+        </div>
+      </header>
+
+      {/* Error Modal Overlay */}
+      {error && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.errorModal}>
+            <div style={styles.errorCircle}>
+              <div style={styles.errorIcon}>✕</div>
+            </div>
+            <h2 style={styles.errorModalTitle}>Error!</h2>
+            <p style={styles.errorModalMessage}>{error}</p>
+            <button 
+              onClick={() => setError('')}
+              style={styles.errorModalButton}
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
+
       <div style={styles.hero}>
         <div style={styles.heroContent}>
           <h1 style={styles.heroTitle}>Apply for Your Loan Today</h1>
@@ -1161,6 +1199,96 @@ function LoanApplicationContent() {
 
               {success && <div style={styles.successMessage}>✓ {success}</div>}
               
+              {/* Loan Agreement & Terms Section */}
+              <div style={styles.agreementSection}>
+                <h3 style={styles.agreementTitle}>📋 Loan Agreement & Terms and Conditions</h3>
+                
+                <div style={styles.agreementContent}>
+                  <div style={styles.agreementBlock}>
+                    <h4 style={styles.agreementSubtitle}>1. Interest Rate & APR</h4>
+                    <p style={styles.agreementText}>
+                      Your Annual Percentage Rate (APR) is <strong>{formData.interest_rate}%</strong>. This rate includes the base interest rate plus any applicable fees, expressed as a yearly rate. The interest rate is fixed for the duration of the loan term.
+                    </p>
+                  </div>
+
+                  <div style={styles.agreementBlock}>
+                    <h4 style={styles.agreementSubtitle}>2. Monthly Payment & Repayment Schedule</h4>
+                    <p style={styles.agreementText}>
+                      Your estimated monthly payment is <strong>${calculateMonthlyPayment()}</strong> for <strong>{formData.term_months} months</strong>. Payments are due on the same day each month. Failure to make timely payments may result in late fees and negatively impact your credit score.
+                    </p>
+                  </div>
+
+                  <div style={styles.agreementBlock}>
+                    <h4 style={styles.agreementSubtitle}>3. Late Payment Policy</h4>
+                    <p style={styles.agreementText}>
+                      A late fee of up to $25 will be charged for payments received more than 10 days after the due date. If payment is 30 days or more past due, the entire remaining loan balance may be declared in default and acceleration fees may apply.
+                    </p>
+                  </div>
+
+                  <div style={styles.agreementBlock}>
+                    <h4 style={styles.agreementSubtitle}>4. Default & Penalties</h4>
+                    <p style={styles.agreementText}>
+                      If you default on this loan, Oakline Bank may pursue collection activities, report the default to credit bureaus, and pursue legal remedies. Default may result in loss of collateral (if applicable), garnishment of wages, or other collection actions.
+                    </p>
+                  </div>
+
+                  <div style={styles.agreementBlock}>
+                    <h4 style={styles.agreementSubtitle}>5. Prepayment Terms</h4>
+                    <p style={styles.agreementText}>
+                      You may prepay this loan in full or in part at any time without penalty. Prepayment will reduce the total interest paid over the life of the loan. Contact us for prepayment options and calculations.
+                    </p>
+                  </div>
+
+                  <div style={styles.agreementBlock}>
+                    <h4 style={styles.agreementSubtitle}>6. Security Deposit</h4>
+                    <p style={styles.agreementText}>
+                      A minimum security deposit of <strong>${depositAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong> (10% of loan amount) is required upon approval. This deposit will be held in a secure account and applied toward your final loan payment or returned after full repayment.
+                    </p>
+                  </div>
+
+                  <div style={styles.agreementBlock}>
+                    <h4 style={styles.agreementSubtitle}>7. Borrower Responsibilities</h4>
+                    <ul style={styles.agreementList}>
+                      <li>Make all payments on time and in full</li>
+                      <li>Maintain any required insurance coverage</li>
+                      <li>Preserve collateral in good condition (if applicable)</li>
+                      <li>Notify Oakline Bank of any changes in contact information</li>
+                      <li>Comply with all applicable laws and regulations</li>
+                    </ul>
+                  </div>
+
+                  <div style={styles.agreementBlock}>
+                    <h4 style={styles.agreementSubtitle}>8. Bank Rights</h4>
+                    <p style={styles.agreementText}>
+                      Oakline Bank reserves the right to assign this loan to another lender, modify terms in accordance with applicable law, and enforce all rights under this agreement. The bank may also pursue collection activities upon default.
+                    </p>
+                  </div>
+
+                  <div style={styles.agreementBlock}>
+                    <h4 style={styles.agreementSubtitle}>9. Privacy & Data Protection</h4>
+                    <p style={styles.agreementText}>
+                      All personal information provided will be kept confidential and used only for loan processing and servicing purposes. Your data will be protected in accordance with applicable privacy laws and regulations.
+                    </p>
+                  </div>
+
+                  <div style={styles.agreementBlock}>
+                    <h4 style={styles.agreementSubtitle}>10. Dispute Resolution</h4>
+                    <p style={styles.agreementText}>
+                      Any disputes arising from this loan agreement will be governed by applicable state law. Both parties agree to attempt resolution through good faith negotiation before pursuing legal action.
+                    </p>
+                  </div>
+
+                  <div style={styles.disclaimerBox}>
+                    <strong>⚠️ Important Disclaimer:</strong>
+                    <p style={styles.disclaimerText}>
+                      By submitting this application, you certify that all information provided is true and accurate. You acknowledge that you have read and agree to all terms and conditions outlined above. You also understand that this loan is subject to final approval and verification of all information provided.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {success && <div style={styles.successMessage}>✓ {success}</div>}
+              
               <div style={styles.actionSection}>
                 <button type="button" onClick={prevStep} style={styles.cancelButton} disabled={loading}>
                   ← Previous
@@ -1189,6 +1317,180 @@ const styles = {
     minHeight: '100vh',
     backgroundColor: '#f8fafc',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+  },
+  header: {
+    background: 'linear-gradient(135deg, #1a365d 0%, #2d5986 100%)',
+    color: 'white',
+    padding: '20px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+  },
+  headerContent: {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  logoSection: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    textDecoration: 'none',
+    color: 'white'
+  },
+  logo: {
+    height: '50px',
+    width: 'auto'
+  },
+  brandInfo: {
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  brandName: {
+    fontSize: '24px',
+    fontWeight: 'bold',
+    margin: 0,
+    letterSpacing: '-0.01em'
+  },
+  brandTagline: {
+    fontSize: '13px',
+    opacity: 0.9,
+    fontWeight: '400'
+  },
+  menuButton: {
+    background: 'rgba(255,255,255,0.2)',
+    border: 'none',
+    color: 'white',
+    padding: '10px 15px',
+    borderRadius: '8px',
+    fontSize: '18px',
+    cursor: 'pointer',
+    transition: 'all 0.3s'
+  },
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999,
+    padding: '20px'
+  },
+  errorModal: {
+    backgroundColor: 'white',
+    borderRadius: '24px',
+    padding: '50px 40px',
+    maxWidth: '520px',
+    width: '100%',
+    boxShadow: '0 25px 80px rgba(0,0,0,0.4)',
+    textAlign: 'center',
+    border: '3px solid #dc2626'
+  },
+  errorCircle: {
+    width: '100px',
+    height: '100px',
+    borderRadius: '50%',
+    backgroundColor: '#fee2e2',
+    border: '5px solid #dc2626',
+    margin: '0 auto 25px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 8px 20px rgba(220, 38, 38, 0.3)'
+  },
+  errorIcon: {
+    fontSize: '60px',
+    color: '#dc2626',
+    fontWeight: 'bold'
+  },
+  errorModalTitle: {
+    fontSize: '32px',
+    fontWeight: 'bold',
+    color: '#dc2626',
+    margin: '0 0 20px 0'
+  },
+  errorModalMessage: {
+    fontSize: '18px',
+    color: '#1e293b',
+    margin: '0 0 30px 0',
+    fontWeight: '500',
+    lineHeight: '1.5'
+  },
+  errorModalButton: {
+    backgroundColor: '#dc2626',
+    color: 'white',
+    border: 'none',
+    padding: '14px 40px',
+    borderRadius: '10px',
+    fontSize: '16px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    boxShadow: '0 4px 12px rgba(220, 38, 38, 0.4)',
+    transition: 'all 0.3s ease'
+  },
+  agreementSection: {
+    marginTop: '48px',
+    padding: '32px',
+    backgroundColor: '#fff',
+    borderRadius: '16px',
+    border: '1px solid #e5e7eb',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+  },
+  agreementTitle: {
+    fontSize: '24px',
+    fontWeight: '700',
+    color: '#1a365d',
+    marginBottom: '24px',
+    paddingBottom: '16px',
+    borderBottom: '2px solid #059669'
+  },
+  agreementContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '20px'
+  },
+  agreementBlock: {
+    padding: '16px',
+    backgroundColor: '#f8fafc',
+    borderRadius: '12px',
+    border: '1px solid #e2e8f0'
+  },
+  agreementSubtitle: {
+    fontSize: '16px',
+    fontWeight: '700',
+    color: '#1e293b',
+    marginTop: 0,
+    marginBottom: '12px'
+  },
+  agreementText: {
+    fontSize: '14px',
+    color: '#4b5563',
+    lineHeight: '1.6',
+    margin: '0 0 12px 0'
+  },
+  agreementList: {
+    fontSize: '14px',
+    color: '#4b5563',
+    lineHeight: '1.8',
+    marginLeft: '20px',
+    paddingLeft: 0
+  },
+  disclaimerBox: {
+    marginTop: '24px',
+    padding: '20px',
+    backgroundColor: '#fef3c7',
+    border: '2px solid #f59e0b',
+    borderRadius: '12px'
+  },
+  disclaimerText: {
+    fontSize: '14px',
+    color: '#78350f',
+    lineHeight: '1.6',
+    margin: '12px 0 0 0'
   },
   loadingContainer: {
     minHeight: '100vh',
