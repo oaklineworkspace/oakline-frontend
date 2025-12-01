@@ -760,25 +760,25 @@ function LoanDepositCryptoContent() {
       <div style={{
         background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
         color: 'white',
-        padding: '1.5rem 2rem',
+        padding: '2.5rem 2rem',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        minHeight: '100px'
+        minHeight: 'auto'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1 }}>
-          <div style={{ height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', flex: 1, width: '100%' }}>
+          <div style={{ minWidth: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Image
               src="/images/Oakline_Bank_logo_design_c1b04ae0.png"
               alt="Oakline Bank"
-              width={50}
-              height={50}
+              width={65}
+              height={65}
               style={{ objectFit: 'contain', width: 'auto', height: 'auto' }}
             />
           </div>
-          <div>
-            <h1 style={{ fontSize: '1.6rem', fontWeight: '700', marginBottom: '0.25rem', lineHeight: '1.2' }}>Loan Collateral Deposit</h1>
-            <p style={{ fontSize: '0.95rem', opacity: '0.95', marginBottom: 0 }}>Secure your loan with a 10% deposit</p>
+          <div style={{ flex: 1 }}>
+            <h1 style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '0.5rem', lineHeight: '1.1', letterSpacing: '-0.5px' }}>Loan Collateral Deposit</h1>
+            <p style={{ fontSize: '1rem', opacity: '0.95', marginBottom: 0, fontWeight: '500' }}>Secure your loan with a 10% deposit</p>
           </div>
         </div>
       </div>
@@ -918,9 +918,31 @@ function LoanDepositCryptoContent() {
                       boxSizing: 'border-box'
                     }}
                   />
-                  <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem' }}>
+                  <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem', marginBottom: '0.75rem' }}>
                     Minimum: ${minDeposit.toFixed(2)}
                   </div>
+                  {networkFeePercent > 0 && depositForm.amount && (
+                    <div style={{
+                      backgroundColor: '#f0fdf4',
+                      border: '1px solid #86efac',
+                      borderRadius: '8px',
+                      padding: '1rem',
+                      marginTop: '0.75rem'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.95rem' }}>
+                        <span style={{ color: '#334155' }}>Base Amount:</span>
+                        <span style={{ fontWeight: '600', color: '#1e293b' }}>${parseFloat(depositForm.amount).toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.95rem', paddingBottom: '0.5rem', borderBottom: '1px solid #d1d5db' }}>
+                        <span style={{ color: '#334155' }}>Network Fee ({networkFeePercent}%):</span>
+                        <span style={{ fontWeight: '600', color: '#10b981' }}>${calculatedFee.toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', fontWeight: '700' }}>
+                        <span style={{ color: '#166534' }}>Total to Send:</span>
+                        <span style={{ color: '#059669' }}>${calculatedNetAmount.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
