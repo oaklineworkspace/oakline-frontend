@@ -1,0 +1,82 @@
+name: Build iOS App (Testflight)
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Capacitor assets
+        run: npm install --save-dev @capacitor/assets
+
+      - name: Build Next.js
+        run: npm run build
+
+      - name: Generate icons and splash
+        run: npx capacitor-assets generate
+
+      - name: Sync to iOS
+        run: npx cap sync ios
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+          bundler-cache: true
+
+      - name: Install Fastlane
+        run: |
+          cd ios/App
+          gem install fastlane
+          fastlane setup
+
+      - name: Build iOS App
+        run: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -derivedDataPath build \
+            -archivePath build/App.xcarchive \
+            archive
+
+      - name: Export IPA
+        run: |
+          cd ios/App
+          xcodebuild -exportArchive \
+            -archivePath build/App.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath build/ipa \
+            -allowProvisioningUpdates
+
+      - name: Upload IPA to Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: OaklineBank.ipa
+          path: ios/App/build/ipa/OaklineBank.ipa
+          if-no-files-found: warn
+
+      - name: Upload to TestFlight (requires API key)
+        if: secrets.APP_STORE_CONNECT_API_KEY != ''
+        run: |
+          xcrun altool --upload-app \
+            --file ios/App/build/ipa/OaklineBank.ipa \
+            --type ios \
+            --apiKey ${{ secrets.APP_STORE_CONNECT_API_KEY }} \
+            --apiIssuer ${{ secrets.APP_STORE_CONNECT_API_ISSUER }}
