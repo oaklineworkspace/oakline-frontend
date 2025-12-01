@@ -692,26 +692,52 @@ function LoanDepositCryptoContent() {
 
         if (!treasuryAccount) throw new Error('Treasury account not found');
 
+        let proofFilePath = null;
+        const metadata = {
+          treasury_deposit: true,
+          loan_id: loan_id,
+          loan_wallet_address: walletAddress,
+          deposit_source: 'loan_deposit_page'
+        };
+
+        // Upload proof file if provided
+        if (proofFile) {
+          const fileName = `${user.id}/${loan_id}/${Date.now()}_${proofFile.name}`;
+          const { error: uploadError } = await supabase
+            .storage
+            .from('loan_deposits')
+            .upload(fileName, proofFile);
+
+          if (uploadError) {
+            console.error('File upload error:', uploadError);
+            // Continue anyway - don't fail the entire submission
+          } else {
+            proofFilePath = fileName;
+            metadata.proof_file_path = fileName;
+          }
+        }
+
+        const depositData = {
+          user_id: user.id,
+          account_id: treasuryAccount.id,
+          crypto_asset_id: cryptoAsset.id,
+          loan_wallet_id: selectedLoanWallet.id,
+          amount: parseFloat(depositForm.amount),
+          fee: parseFloat(calculatedFee.toFixed(2)),
+          net_amount: parseFloat(calculatedNetAmount.toFixed(2)),
+          status: 'pending',
+          purpose: 'loan_requirement',
+          metadata: metadata
+        };
+
+        // Only add tx_hash if it was provided
+        if (txHash && txHash.trim()) {
+          depositData.tx_hash = txHash.trim();
+        }
+
         const { error: depositError } = await supabase
           .from('crypto_deposits')
-          .insert([{
-            user_id: user.id,
-            account_id: treasuryAccount.id,
-            crypto_asset_id: cryptoAsset.id,
-            loan_wallet_id: selectedLoanWallet.id,
-            amount: parseFloat(depositForm.amount),
-            fee: parseFloat(calculatedFee.toFixed(2)),
-            net_amount: parseFloat(calculatedNetAmount.toFixed(2)),
-            status: 'pending',
-            purpose: 'loan_requirement',
-            tx_hash: txHash.trim(),
-            metadata: {
-              treasury_deposit: true,
-              loan_id: loan_id,
-              loan_wallet_address: walletAddress,
-              deposit_source: 'loan_deposit_page'
-            }
-          }]);
+          .insert([depositData]);
 
         if (depositError) throw new Error('Deposit submission failed');
 
