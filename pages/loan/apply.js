@@ -1955,7 +1955,9 @@ const styles = {
     borderRadius: '16px',
     padding: '48px',
     textAlign: 'center',
-    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    maxHeight: '90vh',
+    overflowY: 'auto'
   },
   successCheckmark: {
     marginBottom: '24px'
