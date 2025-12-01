@@ -256,72 +256,66 @@ function LoansOverviewContent() {
                   </div>
 
                   <div style={styles.loanActions}>
-                    {loan.status === 'pending' && loan.deposit_required > 0 && loan.deposit_status !== 'completed' && loan.deposit_status !== 'pending' && !loan.deposit_paid && (
-                      <Link 
-                        href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${loan.deposit_required}`}
-                        style={styles.actionButton}
-                      >
-                        💰 Complete 10% Deposit (${parseFloat(loan.deposit_required).toLocaleString()})
-                      </Link>
-                    )}
-                    {loan.deposit_required > 0 && (loan.deposit_status === 'pending' || loan.deposit_paid) && loan.deposit_status !== 'completed' && loan.status === 'pending' && (
-                      <div style={{
-                        backgroundColor: '#fef3c7',
-                        border: '1px solid #fde68a',
-                        borderRadius: '8px',
-                        padding: '12px',
-                        fontSize: '14px',
-                        color: '#92400e',
-                        marginBottom: '12px'
-                      }}>
-                        ⏳ Deposit submitted{loan.deposit_date ? ` on ${new Date(loan.deposit_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}` : ''}. Awaiting Loan Department verification.
-                      </div>
-                    )}
-                    {loan.deposit_paid && loan.deposit_status === 'completed' && (loan.status === 'pending' || loan.status === 'under_review') && (
-                      <div style={{
-                        backgroundColor: '#d1fae5',
-                        border: '1px solid #a7f3d0',
-                        borderRadius: '8px',
-                        padding: '12px',
-                        fontSize: '14px',
-                        color: '#065f46',
-                        marginBottom: '12px'
-                      }}>
-                        ✅ Deposit confirmed! Loan under review by Loan Department.
-                      </div>
-                    )}
-                    {((loan.deposit_status === 'completed' || loan.deposit_paid) && loan.status === 'pending') && (
-                      <div style={{
-                        backgroundColor: '#d1fae5',
-                        border: '1px solid #a7f3d0',
-                        borderRadius: '8px',
-                        padding: '12px',
-                        fontSize: '14px',
-                        color: '#065f46',
-                        marginBottom: '12px'
-                      }}>
-                        ✅ 10% Deposit confirmed{loan.deposit_date ? ` on ${new Date(loan.deposit_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}` : ''}! Your loan is under review for final approval.
-                      </div>
-                    )}
-                    {loan.deposit_status === 'completed' && (loan.status === 'approved' || loan.status === 'active') && (
-                      <div style={{
-                        backgroundColor: '#d1fae5',
-                        border: '1px solid #a7f3d0',
-                        borderRadius: '8px',
-                        padding: '12px',
-                        fontSize: '14px',
-                        color: '#065f46',
-                        marginBottom: '12px'
-                      }}>
-                        ✅ Loan approved and active{loan.approved_at ? ` since ${new Date(loan.approved_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}` : ''}! Funds have been disbursed to your account.
-                      </div>
-                    )}
+                    {(() => {
+                      // Check if there are actual deposit transactions
+                      const hasDepositTransactions = loan.deposit_transactions && Array.isArray(loan.deposit_transactions) && loan.deposit_transactions.length > 0;
+                      
+                      // Show deposit verified
+                      if (loan.deposit_paid && loan.deposit_status === 'completed') {
+                        return (
+                          <div style={{
+                            backgroundColor: '#d1fae5',
+                            border: '1px solid #a7f3d0',
+                            borderRadius: '8px',
+                            padding: '12px',
+                            fontSize: '14px',
+                            color: '#065f46',
+                            marginBottom: '12px',
+                            fontWeight: '600'
+                          }}>
+                            ✅ Deposit confirmed! Loan under review by Loan Department.
+                          </div>
+                        );
+                      }
+
+                      // Show deposit submitted ONLY if there are actual deposit transactions
+                      if (hasDepositTransactions && loan.deposit_status === 'pending' && !loan.deposit_paid && loan.status === 'pending') {
+                        return (
+                          <div style={{
+                            backgroundColor: '#fef3c7',
+                            border: '1px solid #fde68a',
+                            borderRadius: '8px',
+                            padding: '12px',
+                            fontSize: '14px',
+                            color: '#92400e',
+                            marginBottom: '12px',
+                            fontWeight: '600'
+                          }}>
+                            ⏳ Deposit submitted{loan.deposit_date ? ` on ${new Date(loan.deposit_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}` : ''}. Awaiting Loan Department verification.
+                          </div>
+                        );
+                      }
+
+                      // Show deposit required button ONLY if no deposits submitted and deposit not paid
+                      if (loan.status === 'pending' && !hasDepositTransactions && !loan.deposit_paid && loan.deposit_required > 0) {
+                        return (
+                          <Link 
+                            href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${loan.deposit_required}`}
+                            style={styles.actionButton}
+                          >
+                            💰 Complete 10% Deposit (${parseFloat(loan.deposit_required).toLocaleString()})
+                          </Link>
+                        );
+                      }
+
+                      return null;
+                    })()}
                     {(loan.status === 'active' || loan.status === 'approved') && (
-                      <Link href="/loan/dashboard" style={styles.actionButton}>
-                        💳 Make Payment
+                      <Link href={`/loan/${loan.id}`} style={styles.actionButton}>
+                        💳 View & Make Payment
                       </Link>
                     )}
-                    <Link href="/loan/dashboard" style={styles.viewButton}>
+                    <Link href={`/loan/${loan.id}`} style={styles.viewButton}>
                       👁️ View Details
                     </Link>
                   </div>
