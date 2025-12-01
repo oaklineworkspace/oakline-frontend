@@ -732,6 +732,16 @@ function LoanApplicationContent() {
         </div>
       </div>
 
+      {/* Loading Banner */}
+      {loading && (
+        <div style={styles.loadingBanner}>
+          <div style={styles.loadingBannerContent}>
+            <div style={styles.loadingBannerSpinner}></div>
+            <span style={styles.loadingBannerText}>Processing your loan application...</span>
+          </div>
+        </div>
+      )}
+
       <div style={styles.mainContent}>
         {hasActiveLoan && (
           <div style={styles.warningAlert}>
@@ -1491,6 +1501,36 @@ const styles = {
     color: '#78350f',
     lineHeight: '1.6',
     margin: '12px 0 0 0'
+  },
+  loadingBanner: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#059669',
+    padding: '16px 20px',
+    zIndex: 9998,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+  },
+  loadingBannerContent: {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    color: 'white'
+  },
+  loadingBannerSpinner: {
+    width: '24px',
+    height: '24px',
+    border: '3px solid rgba(255,255,255,0.3)',
+    borderTopColor: 'white',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite'
+  },
+  loadingBannerText: {
+    fontSize: '16px',
+    fontWeight: '600'
   },
   loadingContainer: {
     minHeight: '100vh',

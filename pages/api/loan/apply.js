@@ -93,7 +93,7 @@ export default async function handler(req, res) {
         total_amount: totalDue,
         next_payment_date: firstPaymentDate.toISOString().split('T')[0],
         payments_made: 0,
-        status: 'pending_deposit',
+        status: 'pending',
         deposit_required: deposit_required || 0,
         deposit_paid: false,
         deposit_status: 'pending',
