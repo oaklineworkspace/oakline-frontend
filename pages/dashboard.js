@@ -514,16 +514,20 @@ function DashboardContent() {
       thirtyDaysAgoForLoans.setDate(thirtyDaysAgoForLoans.getDate() - 30);
 
       // First, get user's loans to filter payments
-      const { data: userLoans } = await supabase
+      const { data: userLoans, error: loansError } = await supabase
         .from('loans')
         .select('id')
         .eq('user_id', userId);
+
+      if (loansError) {
+        console.error('Error fetching user loans:', loansError);
+      }
 
       const loanIds = userLoans?.map(loan => loan.id) || [];
 
       let loanPaymentsData = [];
       if (loanIds.length > 0) {
-        const { data: paymentsData } = await supabase
+        const { data: paymentsData, error: paymentsError } = await supabase
           .from('loan_payments')
           .select(`
             *,
@@ -539,11 +543,19 @@ function DashboardContent() {
           .order('created_at', { ascending: false })
           .limit(15);
         
-        loanPaymentsData = paymentsData || [];
+        if (paymentsError) {
+          console.error('Error fetching loan payments:', paymentsError);
+        } else {
+          loanPaymentsData = paymentsData || [];
+          console.log('Fetched loan payments:', loanPaymentsData.length);
+        }
+      } else {
+        console.log('No loans found for user');
       }
 
       // Format loan payments as transactions
       if (loanPaymentsData && loanPaymentsData.length > 0) {
+        console.log('Formatting loan payments for display:', loanPaymentsData);
         const formattedLoanPayments = loanPaymentsData.map(payment => {
           // Determine if this is a deposit or regular payment
           const isDeposit = payment.is_deposit || payment.payment_type === 'deposit';
@@ -585,7 +597,10 @@ function DashboardContent() {
             required_confirmations: payment.required_confirmations
           };
         });
+        console.log('Formatted loan payments:', formattedLoanPayments);
         transactionsData = [...transactionsData, ...formattedLoanPayments];
+      } else {
+        console.log('No loan payments to format');
       }
 
       // Sort all transactions by most recent
@@ -593,6 +608,9 @@ function DashboardContent() {
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
         .slice(0, 15); // Get top 15 recent transactions (mix of types)
 
+      console.log('Final transactions data:', transactionsData);
+      console.log('Loan payment transactions:', transactionsData.filter(t => t.transaction_type === 'loan_payment' || t.transaction_type === 'loan_deposit'));
+      
       setTransactions(transactionsData);
 
       // Fetch user cards
@@ -1420,6 +1438,11 @@ function DashboardContent() {
 
               // Determine if it's a credit (money in) or debit (money out) based on transaction type
               let isCredit = false;
+
+              // Check if it's explicitly marked as credit from the transaction data
+              if (tx.is_credit !== undefined) {
+                isCredit = tx.is_credit;
+              }
 
               // Check description for "transfer to" or "transfer from"
               const isTransferTo = description.includes('transfer to') || description.includes('sent to');
