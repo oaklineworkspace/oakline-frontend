@@ -136,13 +136,20 @@ export default async function handler(req, res) {
 
     // Send the email
     console.log('Sending loan deposit email to:', userEmail);
+    console.log('Email details:', { userEmail, depositAmount, cryptoType, selectedNetwork });
+    
     const emailResult = await sendEmail({
       to: userEmail,
       subject: 'Loan Deposit Received - Pending Blockchain Confirmation',
       html: emailHtml,
-      type: 'loan_deposit'
+      emailType: 'loan_deposit'
     });
+    
     console.log('Email result:', emailResult);
+    
+    if (!emailResult || !emailResult.messageId) {
+      console.warn('Email may not have been sent - no messageId returned');
+    }
 
     return res.status(200).json({
       success: true,

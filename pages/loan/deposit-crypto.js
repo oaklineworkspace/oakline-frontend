@@ -1199,7 +1199,10 @@ function LoanDepositCryptoContent() {
             boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
             marginBottom: '2rem'
           }}>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: '700', color: '#1e293b', marginBottom: '1.5rem' }}>Send Cryptocurrency Payment</h2>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.5rem' }}>Complete Your 10% Security Deposit</h2>
+            <p style={{ fontSize: '0.95rem', color: '#64748b', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+              Send exactly <strong style={{ color: '#10b981' }}>${parseFloat(depositForm.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong> worth of <strong>{depositForm.crypto_type}</strong> to the wallet address below to activate your loan.
+            </p>
             {loadingWallet ? (
               <div style={{ textAlign: 'center', padding: '3rem' }}>
                 <LoadingSpinner />
@@ -1207,52 +1210,93 @@ function LoanDepositCryptoContent() {
             ) : walletAddress ? (
               <div>
                 <div style={{
-                  backgroundColor: '#eff6ff',
-                  border: '2px solid #3b82f6',
-                  borderRadius: '12px',
-                  padding: '1rem',
+                  background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+                  borderRadius: '16px',
+                  padding: '1.5rem',
                   marginBottom: '1.5rem',
-                  textAlign: 'center',
-                  color: '#1e40af',
-                  fontSize: '0.9rem'
+                  color: '#ffffff'
                 }}>
-                  ⚠️ This is a dedicated loan deposit wallet. Do not use this address for general deposits.
-                </div>
-
-
-                <div style={{
-                  backgroundColor: '#f8fafc',
-                  padding: '1rem',
-                  borderRadius: '8px',
-                  wordBreak: 'break-all',
-                  fontFamily: 'monospace',
-                  marginBottom: '1rem',
-                  fontSize: '0.9rem',
-                  lineHeight: '1.6'
-                }}>
-                  {walletAddress}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
+                    <span style={{ fontSize: '1.5rem' }}>🏦</span>
+                    <div>
+                      <div style={{ fontSize: '0.8rem', opacity: '0.9', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Oakline Bank Treasury Wallet</div>
+                      <div style={{ fontSize: '1rem', fontWeight: '700' }}>{depositForm.crypto_type} ({selectedNetwork || depositForm.network_type})</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', opacity: '0.85', marginBottom: '0.75rem' }}>Send your 10% deposit to this address:</div>
+                  <div style={{
+                    backgroundColor: 'rgba(255,255,255,0.15)',
+                    padding: '1rem',
+                    borderRadius: '10px',
+                    wordBreak: 'break-all',
+                    fontFamily: 'monospace',
+                    fontSize: '0.85rem',
+                    lineHeight: '1.5',
+                    border: '1px solid rgba(255,255,255,0.2)'
+                  }}>
+                    {walletAddress}
+                  </div>
                 </div>
 
                 <button
                   onClick={() => copyToClipboard(walletAddress)}
                   style={{
                     width: '100%',
-                    padding: '0.75rem',
+                    padding: '1rem',
                     backgroundColor: '#10b981',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '10px',
                     fontSize: '1rem',
-                    fontWeight: '600',
+                    fontWeight: '700',
                     cursor: 'pointer',
-                    marginBottom: '1rem'
+                    marginBottom: '1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
                   }}
                 >
-                  Copy Address
+                  📋 Copy Wallet Address
                 </button>
 
-                <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f0fdf4', borderRadius: '8px', border: '1px solid #86efac' }}>
-                  <p style={{ fontSize: '0.9rem', color: '#166534', marginBottom: '1rem', marginTop: 0 }}>✓ Provide either a transaction hash OR upload proof of payment (both optional but at least one required)</p>
+                <div style={{
+                  backgroundColor: '#fefce8',
+                  border: '1px solid #fde047',
+                  borderRadius: '12px',
+                  padding: '1rem',
+                  marginBottom: '1.5rem'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                    <div>
+                      <div style={{ fontWeight: '700', color: '#854d0e', marginBottom: '0.5rem' }}>Important Instructions</div>
+                      <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#713f12', fontSize: '0.9rem', lineHeight: '1.6' }}>
+                        <li>This wallet is for your <strong>10% loan security deposit only</strong></li>
+                        <li>Send the exact amount shown above in {depositForm.crypto_type}</li>
+                        <li>Double-check the wallet address before sending</li>
+                        <li>Your loan will be activated within hours after verification</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{
+                  backgroundColor: '#f0fdf4',
+                  border: '1px solid #86efac',
+                  borderRadius: '12px',
+                  padding: '1rem',
+                  marginBottom: '1.5rem'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <span style={{ fontSize: '1.25rem' }}>✅</span>
+                    <div>
+                      <div style={{ fontWeight: '700', color: '#166534', marginBottom: '0.25rem' }}>After Sending Payment</div>
+                      <p style={{ fontSize: '0.9rem', color: '#15803d', margin: 0, lineHeight: '1.5' }}>
+                        Provide your transaction hash OR upload a screenshot as proof of payment. At least one is required for verification.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div style={{ marginBottom: '1.5rem' }}>
