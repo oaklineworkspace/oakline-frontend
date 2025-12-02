@@ -28,7 +28,7 @@ export default function Withdrawal() {
 
   const [withdrawalForm, setWithdrawalForm] = useState({
     from_account_id: '',
-    withdrawal_method: 'crypto_wallet',
+    withdrawal_method: 'linked_bank',
     amount: '',
     crypto_type: '',
     network_type: '',
@@ -735,7 +735,7 @@ export default function Withdrawal() {
     setGeneratedCode('');
     setWithdrawalForm({
       from_account_id: accounts[0]?.id || '',
-      withdrawal_method: 'crypto_wallet',
+      withdrawal_method: 'linked_bank',
       amount: '',
       crypto_asset_id: '',
       crypto_wallet_address: '',
@@ -1230,7 +1230,6 @@ export default function Withdrawal() {
                   onChange={(e) => setWithdrawalForm(prev => ({ ...prev, withdrawal_method: e.target.value }))}
                   style={styles.select}
                 >
-                  <option value="crypto_wallet">💎 Cryptocurrency ($5 base + 1.5% network fee)</option>
                   <option value="linked_bank">🏦 Bank Account - ACH (Free, 1-3 business days)</option>
                   <option value="debit_card">💳 Debit Card - Instant ($5-$15 fee)</option>
                 </select>

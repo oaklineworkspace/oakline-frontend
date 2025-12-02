@@ -1605,13 +1605,17 @@ function DashboardContent() {
             <span style={styles.quickActionIcon}>💸</span>
             <span style={styles.quickActionText}>Transfer Money</span>
           </Link>
+          <Link href="/deposit-crypto" style={styles.standardActionButton}>
+            <span style={styles.quickActionIcon}>➕</span>
+            <span style={styles.quickActionText}>Add Funds via Crypto</span>
+          </Link>
+          <Link href="/withdrawal" style={styles.standardActionButton}>
+            <span style={styles.quickActionIcon}>💰</span>
+            <span style={styles.quickActionText}>Withdraw Funds</span>
+          </Link>
           <Link href="/link-debit-card" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>💳</span>
             <span style={styles.quickActionText}>Link Debit Card</span>
-          </Link>
-          <Link href="/deposit-crypto" style={styles.standardActionButton}>
-            <span style={styles.quickActionIcon}>₿</span>
-            <span style={styles.quickActionText}>Add Funds via Crypto</span>
           </Link>
           <Link href="/request-account" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>➕</span>
