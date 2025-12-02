@@ -41,8 +41,9 @@ export default async function handler(req, res) {
       }).format(amt || 0);
     };
 
-    const logoUrl = bankDetails?.logo_url || 
-                   `${process.env.NEXT_PUBLIC_APP_URL || 'https://49f5c4d7-9070-4436-9975-16d6fad8b9df-00-a5694ekw18y7.worf.replit.dev'}/images/Oakline_Bank_logo_design_c1b04ae0.png`;
+    // Use bank logo URL from database, or fallback to public image URL
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://theoaklinebank.com';
+    const logoUrl = bankDetails?.logo_url || `${baseUrl}/images/Oakline_Bank_logo_design_c1b04ae0.png`;
 
     const emailHtml = `
       <!DOCTYPE html>

@@ -642,56 +642,45 @@ function LoanDepositCryptoContent() {
         const depositAmount = parseFloat(depositForm.amount);
         const accountData = userAccounts.find(a => a.id === selectedAccount);
 
-        const { data: treasuryAccount, error: treasuryError } = await supabase
-          .from('accounts')
-          .select('id')
-          .eq('account_number', '9900000001')
-          .eq('account_type', 'treasury')
-          .single();
-
-        if (treasuryError || !treasuryAccount) {
-          throw new Error('Treasury account not found');
+        if (!accountData || accountData.balance < depositAmount) {
+          throw new Error('Insufficient balance in selected account');
         }
 
-        const { error: transferError } = await supabase
-          .from('transactions')
-          .insert([{
-            user_id: user.id,
-            from_account_id: selectedAccount,
-            to_account_id: treasuryAccount.id,
+        // Get session for API call
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error('Session expired. Please login again.');
+        }
+
+        // Call the API to process the deposit
+        const response = await fetch('/api/loan/process-deposit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            loan_id: loan_id,
+            account_id: selectedAccount,
             amount: depositAmount,
-            transaction_type: 'debit',
-            description: `Loan 10% Deposit - Loan ID: ${loan_id}`,
-            status: 'completed',
-            reference: `LOAN_DEPOSIT_${loan_id}`,
-            balance_before: accountData.balance,
-            balance_after: accountData.balance - depositAmount
-          }]);
-
-        if (transferError) throw new Error('Failed to process transfer');
-
-        await supabase
-          .from('loans')
-          .update({
-            deposit_method: 'balance',
-            deposit_amount: depositAmount,
-            deposit_date: new Date().toISOString(),
-            deposit_status: 'completed',
-            deposit_paid: true,
-            status: 'under_review',
-            updated_at: new Date().toISOString()
+            deposit_method: 'balance'
           })
-          .eq('id', loan_id);
-
-        await supabase
-          .from('accounts')
-          .update({ balance: accountData.balance - depositAmount })
-          .eq('id', selectedAccount);
-
-        setSuccessReceipt({
-          amount: depositAmount,
-          method: 'balance'
         });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to process deposit');
+        }
+
+        setSubmitModal({ show: true, status: 'success', message: '✅ Deposit processed successfully! Your loan is now under review.' });
+        setTimeout(() => {
+          setSubmitModal({ show: false, status: 'loading', message: '' });
+          setSuccessReceipt({
+            amount: depositAmount,
+            method: 'balance'
+          });
+        }, 2500);
       } else {
         if (!txHash && !proofFile) {
           throw new Error('Please provide either a transaction hash or proof of payment file');

@@ -1,4 +1,3 @@
-
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
 
 export default async function handler(req, res) {
@@ -65,7 +64,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Insufficient funds in account' });
       }
 
-      // Deduct deposit from account
+      // Deduct deposit from account (pending, can be reversed if rejected)
       const newBalance = accountBalance - amount;
       const { error: updateAccountError } = await supabaseAdmin
         .from('accounts')
@@ -80,59 +79,71 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Failed to process deposit' });
       }
 
-      // Create transaction record
+      // Create transaction record with HOLD status (can be reversed)
       const loanTypeName = loan.loan_type ? loan.loan_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Loan';
+      const referenceNumber = `LOAN-DEP-${loan_id.substring(0, 8).toUpperCase()}`;
+
       const { error: transactionError } = await supabaseAdmin
         .from('transactions')
         .insert([{
           user_id: user.id,
           account_id: account_id,
           type: 'debit',
-          amount: amount,
-          balance_before: accountBalance,
+          amount: -parseFloat(amount),
+          balance_before: parseFloat(account.balance),
           balance_after: newBalance,
-          description: `Loan Deposit - ${loanTypeName} Application (10% Collateral)`,
-          status: 'completed',
-          reference: `LOAN-DEP-${loan_id.substring(0, 8).toUpperCase()}`,
+          description: `Loan Deposit - ${loanTypeName} Application (10% Collateral) - Pending Admin Approval`,
+          status: 'hold',
+          reference: referenceNumber,
           created_at: new Date().toISOString()
         }]);
 
       if (transactionError) {
         console.error('Error creating transaction record:', transactionError);
+        // Rollback account balance
+        await supabaseAdmin
+          .from('accounts')
+          .update({ balance: accountBalance })
+          .eq('id', account_id);
+        return res.status(500).json({ error: 'Failed to create transaction record' });
       }
 
-      // Update loan with deposit information and change status to under_review
+      // Update loan with deposit information - status is PENDING for admin review
       const { error: updateLoanError } = await supabaseAdmin
         .from('loans')
         .update({
-          deposit_paid: true,
+          deposit_paid: false, // Will be set to true after admin approval
           deposit_amount: amount,
           deposit_date: new Date().toISOString(),
           deposit_method: 'balance',
-          deposit_status: 'completed',
-          status: 'under_review',
+          deposit_status: 'pending',
+          status: 'pending',
           updated_at: new Date().toISOString()
         })
         .eq('id', loan_id);
 
       if (updateLoanError) {
         console.error('Error updating loan:', updateLoanError);
-        // Rollback account balance
+        // Rollback account balance and transaction
         await supabaseAdmin
           .from('accounts')
           .update({ balance: accountBalance })
           .eq('id', account_id);
+        await supabaseAdmin
+          .from('transactions')
+          .delete()
+          .eq('reference', referenceNumber);
         return res.status(500).json({ error: 'Failed to update loan status' });
       }
 
-      // Send notification
+      // Send notification to user
       await supabaseAdmin
         .from('notifications')
         .insert([{
           user_id: user.id,
           type: 'loan',
-          title: 'Loan Deposit Received',
-          message: `Your deposit of $${amount.toLocaleString()} has been received. Your loan application is now under review by our Loan Department.`,
+          title: 'Loan Deposit Submitted',
+          message: `Your deposit of $${amount.toLocaleString()} has been submitted and is pending admin approval. Funds are on hold and will be processed once your loan is reviewed.`,
           read: false
         }]);
 
@@ -149,7 +160,7 @@ export default async function handler(req, res) {
       // Send deposit confirmed email
       try {
         const { sendDepositConfirmedEmail } = require('../../../lib/email');
-        
+
         await sendDepositConfirmedEmail({
           to: userEmail,
           userName,
@@ -162,7 +173,7 @@ export default async function handler(req, res) {
 
       return res.status(200).json({
         success: true,
-        message: 'Deposit processed successfully',
+        message: 'Deposit submitted successfully. Pending admin approval.',
         new_balance: newBalance
       });
     } else if (deposit_method === 'crypto') {
