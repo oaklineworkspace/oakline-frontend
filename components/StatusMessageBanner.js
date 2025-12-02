@@ -186,8 +186,6 @@ const styles = {
     marginBottom: '1.5rem',
     textAlign: 'left',
     border: '1px solid rgba(255, 255, 255, 0.2)',
-    maxHeight: '200px',
-    overflowY: 'auto',
     wordWrap: 'break-word',
     whiteSpace: 'pre-wrap',
   },
