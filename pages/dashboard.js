@@ -513,50 +513,32 @@ function DashboardContent() {
       const thirtyDaysAgoForLoans = new Date();
       thirtyDaysAgoForLoans.setDate(thirtyDaysAgoForLoans.getDate() - 30);
 
-      // First, get user's loans to filter payments
-      const { data: userLoans, error: loansError } = await supabase
-        .from('loans')
-        .select('id, loan_type, status, loan_reference, remaining_balance, principal')
-        .eq('user_id', userId);
-
-      if (loansError) {
-        console.error('Error fetching user loans:', loansError);
-      }
-
-      console.log('User loans found:', userLoans);
-      const loanIds = userLoans?.map(loan => loan.id) || [];
-      console.log('Loan IDs to fetch payments for:', loanIds);
-
-      // Create a map of loan details for easy lookup
-      const loansMap = {};
-      if (userLoans && userLoans.length > 0) {
-        userLoans.forEach(loan => {
-          loansMap[loan.id] = loan;
-        });
-      }
-
       let loanPaymentsData = [];
-      if (loanIds.length > 0) {
-        const { data: paymentsData, error: paymentsError } = await supabase
-          .from('loan_payments')
-          .select('*')
-          .in('loan_id', loanIds)
-          .gte('created_at', thirtyDaysAgoForLoans.toISOString())
-          .order('created_at', { ascending: false })
-          .limit(15);
-        
-        if (paymentsError) {
-          console.error('Error fetching loan payments:', paymentsError);
-        } else {
-          // Enrich payments with loan details from the map
-          loanPaymentsData = (paymentsData || []).map(payment => ({
-            ...payment,
-            loans: loansMap[payment.loan_id] || null
-          }));
-          console.log('Fetched and enriched loan payments:', loanPaymentsData.length);
-        }
+      
+      // Fetch loan payments with joined loan data directly
+      const { data: paymentsData, error: paymentsError } = await supabase
+        .from('loan_payments')
+        .select(`
+          *,
+          loans:loan_id (
+            id,
+            loan_type,
+            status,
+            loan_reference,
+            remaining_balance,
+            principal
+          )
+        `)
+        .eq('loans.user_id', userId)
+        .gte('created_at', thirtyDaysAgoForLoans.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(15);
+      
+      if (paymentsError) {
+        console.error('Error fetching loan payments:', paymentsError);
       } else {
-        console.log('No loans found for user');
+        loanPaymentsData = paymentsData || [];
+        console.log('Fetched loan payments with joined data:', loanPaymentsData.length);
       }
 
       // Format loan payments as transactions
