@@ -1016,6 +1016,7 @@ function DashboardContent() {
                     <Link href="/main-menu" style={styles.dropdownLink}>📋 Main Menu</Link>
                     <Link href="/account-details" style={styles.dropdownLink}>🏦 Account Details</Link>
                     <Link href="/transfer" style={styles.dropdownLink}>💸 Transfer Money</Link>
+                    <Link href="/withdrawal" style={styles.dropdownLink}>💰 Withdraw Funds</Link>
                     <Link href="/cards" style={styles.dropdownLink}>💳 My Cards</Link>
                     <Link href="/transactions" style={styles.dropdownLink}>📜 Transaction History</Link>
                     <Link href="/deposit-crypto" style={styles.dropdownLink}>₿ Deposit Funds via Cryptocurrency</Link>
@@ -1209,12 +1210,6 @@ function DashboardContent() {
                         <div>
                           <div style={styles.dropdownItemTitle}>₿ Crypto Deposit</div>
                           <div style={styles.dropdownItemDesc}>Add funds to your balance using cryptocurrency</div>
-                        </div>
-                      </Link>
-                      <Link href="/withdrawal" style={styles.addFundsDropdownItem}>
-                        <div>
-                          <div style={styles.dropdownItemTitle}>💰 Withdraw Funds</div>
-                          <div style={styles.dropdownItemDesc}>Withdraw to your bank account or debit card</div>
                         </div>
                       </Link>
                     </div>
