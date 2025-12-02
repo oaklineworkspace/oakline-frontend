@@ -516,7 +516,7 @@ function DashboardContent() {
       // First, get user's loans to filter payments
       const { data: userLoans, error: loansError } = await supabase
         .from('loans')
-        .select('id, loan_type, status')
+        .select('id, loan_type, status, loan_reference, remaining_balance, principal')
         .eq('user_id', userId);
 
       if (loansError) {
@@ -527,41 +527,19 @@ function DashboardContent() {
       const loanIds = userLoans?.map(loan => loan.id) || [];
       console.log('Loan IDs to fetch payments for:', loanIds);
 
+      // Create a map of loan details for easy lookup
+      const loansMap = {};
+      if (userLoans && userLoans.length > 0) {
+        userLoans.forEach(loan => {
+          loansMap[loan.id] = loan;
+        });
+      }
+
       let loanPaymentsData = [];
       if (loanIds.length > 0) {
         const { data: paymentsData, error: paymentsError } = await supabase
           .from('loan_payments')
-          .select(`
-            id,
-            loan_id,
-            amount,
-            payment_date,
-            status,
-            created_at,
-            updated_at,
-            payment_type,
-            principal_amount,
-            interest_amount,
-            late_fee,
-            balance_after,
-            reference_number,
-            notes,
-            deposit_method,
-            tx_hash,
-            fee,
-            gross_amount,
-            proof_path,
-            metadata,
-            confirmations,
-            required_confirmations,
-            is_deposit,
-            loans:loan_id (
-              id,
-              loan_type,
-              loan_reference,
-              remaining_balance
-            )
-          `)
+          .select('*')
           .in('loan_id', loanIds)
           .gte('created_at', thirtyDaysAgoForLoans.toISOString())
           .order('created_at', { ascending: false })
@@ -570,8 +548,12 @@ function DashboardContent() {
         if (paymentsError) {
           console.error('Error fetching loan payments:', paymentsError);
         } else {
-          loanPaymentsData = paymentsData || [];
-          console.log('Fetched loan payments:', loanPaymentsData.length);
+          // Enrich payments with loan details from the map
+          loanPaymentsData = (paymentsData || []).map(payment => ({
+            ...payment,
+            loans: loansMap[payment.loan_id] || null
+          }));
+          console.log('Fetched and enriched loan payments:', loanPaymentsData.length);
         }
       } else {
         console.log('No loans found for user');
@@ -585,6 +567,10 @@ function DashboardContent() {
           // Determine if this is a deposit or regular payment
           const isDeposit = payment.is_deposit === true || payment.payment_type === 'deposit';
           
+          // Get loan details
+          const loanType = payment.loans?.loan_type || 'Loan';
+          const loanReference = payment.loans?.loan_reference || '';
+          
           // Build description based on payment type
           let description = '';
           if (isDeposit) {
@@ -596,15 +582,19 @@ function DashboardContent() {
               description = `Loan 10% Collateral Deposit via ${cryptoSymbol} (${networkType})`;
             } else if (payment.deposit_method === 'bank_transfer') {
               description = `Loan 10% Collateral Deposit via Bank Transfer`;
-            } else {
+            } else if (payment.deposit_method === 'account_balance') {
               description = `Loan 10% Collateral Deposit via Account Balance`;
+            } else {
+              description = `Loan 10% Collateral Deposit`;
             }
           } else if (payment.payment_type === 'early_payoff') {
-            description = `Loan Early Payoff - ${payment.loans?.loan_type?.replace(/_/g, ' ').toUpperCase() || 'Loan'}`;
+            description = `Loan Early Payoff - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
           } else if (payment.payment_type === 'late_fee') {
-            description = `Loan Late Fee - ${payment.loans?.loan_type?.replace(/_/g, ' ').toUpperCase() || 'Loan'}`;
+            description = `Loan Late Fee - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
+          } else if (payment.payment_type === 'auto_payment') {
+            description = `Auto Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
           } else {
-            description = `Loan Payment - ${payment.loans?.loan_type?.replace(/_/g, ' ').toUpperCase() || 'Loan'}`;
+            description = `Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
           }
 
           return {
@@ -613,23 +603,29 @@ function DashboardContent() {
             transaction_type: isDeposit ? 'loan_deposit' : 'loan_payment',
             description: description,
             amount: parseFloat(payment.amount || 0),
-            gross_amount: parseFloat(payment.gross_amount || 0),
+            gross_amount: parseFloat(payment.gross_amount || payment.amount || 0),
             fee: parseFloat(payment.fee || 0),
-            status: payment.status,
+            status: payment.status || 'completed',
             created_at: payment.created_at,
-            payment_date: payment.payment_date,
+            updated_at: payment.updated_at,
+            payment_date: payment.payment_date || payment.created_at,
             is_credit: isDeposit, // Deposits are credits, payments are debits
             transaction_data: payment,
             reference: payment.reference_number || `LOAN-${payment.id.substring(0, 8).toUpperCase()}`,
-            loan_reference: payment.loans?.loan_reference,
-            principal_amount: payment.principal_amount,
-            interest_amount: payment.interest_amount,
-            late_fee: payment.late_fee,
-            balance_after: payment.balance_after,
+            loan_reference: loanReference,
+            loan_type: loanType,
+            loan_id: payment.loan_id,
+            principal_amount: parseFloat(payment.principal_amount || 0),
+            interest_amount: parseFloat(payment.interest_amount || 0),
+            late_fee: parseFloat(payment.late_fee || 0),
+            balance_after: parseFloat(payment.balance_after || 0),
             payment_type: payment.payment_type,
             tx_hash: payment.tx_hash,
             confirmations: payment.confirmations,
-            required_confirmations: payment.required_confirmations
+            required_confirmations: payment.required_confirmations,
+            deposit_method: payment.deposit_method,
+            metadata: payment.metadata,
+            notes: payment.notes
           };
         });
         console.log('Formatted loan payments:', formattedLoanPayments);
