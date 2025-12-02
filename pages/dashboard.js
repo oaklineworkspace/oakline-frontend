@@ -516,21 +516,45 @@ function DashboardContent() {
       // First, get user's loans to filter payments
       const { data: userLoans, error: loansError } = await supabase
         .from('loans')
-        .select('id')
+        .select('id, loan_type, status')
         .eq('user_id', userId);
 
       if (loansError) {
         console.error('Error fetching user loans:', loansError);
       }
 
+      console.log('User loans found:', userLoans);
       const loanIds = userLoans?.map(loan => loan.id) || [];
+      console.log('Loan IDs to fetch payments for:', loanIds);
 
       let loanPaymentsData = [];
       if (loanIds.length > 0) {
         const { data: paymentsData, error: paymentsError } = await supabase
           .from('loan_payments')
           .select(`
-            *,
+            id,
+            loan_id,
+            amount,
+            payment_date,
+            status,
+            created_at,
+            updated_at,
+            payment_type,
+            principal_amount,
+            interest_amount,
+            late_fee,
+            balance_after,
+            reference_number,
+            notes,
+            deposit_method,
+            tx_hash,
+            fee,
+            gross_amount,
+            proof_path,
+            metadata,
+            confirmations,
+            required_confirmations,
+            is_deposit,
             loans:loan_id (
               id,
               loan_type,
@@ -556,14 +580,25 @@ function DashboardContent() {
       // Format loan payments as transactions
       if (loanPaymentsData && loanPaymentsData.length > 0) {
         console.log('Formatting loan payments for display:', loanPaymentsData);
+        console.log('Loan payments raw data:', JSON.stringify(loanPaymentsData, null, 2));
         const formattedLoanPayments = loanPaymentsData.map(payment => {
           // Determine if this is a deposit or regular payment
-          const isDeposit = payment.is_deposit || payment.payment_type === 'deposit';
+          const isDeposit = payment.is_deposit === true || payment.payment_type === 'deposit';
           
           // Build description based on payment type
           let description = '';
           if (isDeposit) {
-            description = `Loan 10% Collateral Deposit via ${payment.deposit_method === 'crypto' ? (payment.metadata?.crypto_type || 'Cryptocurrency') : payment.deposit_method === 'bank_transfer' ? 'Bank Transfer' : 'Account Balance'}`;
+            // Get crypto details from metadata
+            const cryptoSymbol = payment.metadata?.crypto_symbol || payment.metadata?.symbol || 'CRYPTO';
+            const networkType = payment.metadata?.network_type || 'Network';
+            
+            if (payment.deposit_method === 'crypto') {
+              description = `Loan 10% Collateral Deposit via ${cryptoSymbol} (${networkType})`;
+            } else if (payment.deposit_method === 'bank_transfer') {
+              description = `Loan 10% Collateral Deposit via Bank Transfer`;
+            } else {
+              description = `Loan 10% Collateral Deposit via Account Balance`;
+            }
           } else if (payment.payment_type === 'early_payoff') {
             description = `Loan Early Payoff - ${payment.loans?.loan_type?.replace(/_/g, ' ').toUpperCase() || 'Loan'}`;
           } else if (payment.payment_type === 'late_fee') {
