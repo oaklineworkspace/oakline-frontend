@@ -162,93 +162,33 @@ export default function LoginPage() {
           // Continue with normal login if device check fails
         }
 
-        // Stage 3: Checking account status
+        // Stage 3: Checking account status - Check profile directly (most reliable)
         setLoadingStage(2);
 
-        const statusResponse = await fetch('/api/check-account-status', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`
-          },
-          body: JSON.stringify({ userId: data.user.id })
-        });
+        // Fetch bank support email
+        const { data: bankDetails } = await supabase
+          .from('bank_details')
+          .select('email_security, email_support, email_contact')
+          .limit(1)
+          .single();
+        const supportEmail = bankDetails?.email_security || bankDetails?.email_support || 'support@theoaklinebank.com';
 
-        if (!statusResponse.ok) {
-          await supabase.auth.signOut({ scope: 'local' });
-          setLoading(false);
-          setLoadingStage(0);
-          setError('Unable to verify account status. Please try again or contact support.');
-          return;
-        }
-
-        const accountStatus = await statusResponse.json();
-        const supportEmail = accountStatus?.supportEmail || 'support@theoaklinebank.com';
-
-        if (!accountStatus || accountStatus.isBlocked === undefined) {
-          await supabase.auth.signOut({ scope: 'local' });
-          setLoading(false);
-          setLoadingStage(0);
-          setError('Account verification failed. Please try again or contact support.');
-          return;
-        }
-
-        console.log('Account Status Check:', {
-          isBlocked: accountStatus.isBlocked,
-          blockingType: accountStatus.blockingType,
-          restriction_display_message: accountStatus.restriction_display_message,
-          suspension_reason: accountStatus.suspension_reason
-        });
-
-        if (accountStatus.isBlocked) {
-          // Special handling for verification requirement - let user log in and show banner
-          if (accountStatus.blockingType === 'verification_required') {
-            // User can log in with verification required - they'll see the banner on dashboard
-            // Continue to normal dashboard redirect below
-            console.log('Verification required - allowing login with notification banner');
-          } else {
-            // For other blocks (banned, suspended, closed, locked), sign out and show restriction
-            console.log('Account blocked - showing restriction banner');
-            await supabase.auth.signOut({ scope: 'local' });
-            setLoading(false);
-            setLoadingStage(0);
-
-            // Use restriction_display_message for customer-facing message
-            const displayMessage = accountStatus.restriction_display_message || 
-                                  accountStatus.reason || 
-                                  accountStatus.ban_reason || 
-                                  accountStatus.locked_reason || 
-                                  'Your account access has been restricted.';
-
-            console.log('Setting error:', {
-              type: accountStatus.blockingType,
-              reason: displayMessage
-            });
-
-            setError({
-              type: accountStatus.blockingType,
-              reason: displayMessage,
-              supportEmail: supportEmail
-            });
-            setErrorType('restriction_error');
-            return;
-          }
-        } else {
-          console.log('Account is NOT blocked - checking profile directly');
-        }
-
-        // Additional check: verify profile status after successful auth
+        // PRIMARY CHECK: Fetch profile directly from database - this is the source of truth
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('is_banned, status, ban_reason, restriction_display_message, suspension_reason, closure_reason')
+          .select('is_banned, ban_reason, status, suspension_reason, restriction_display_message, closure_reason, requires_verification, verification_reason')
           .eq('id', data.user.id)
           .single();
 
-        if (profileError) {
-          console.error('Profile fetch error:', profileError);
-        }
+        console.log('Profile suspension check:', {
+          profileExists: !!profile,
+          is_banned: profile?.is_banned,
+          status: profile?.status,
+          suspension_reason: profile?.suspension_reason,
+          restriction_display_message: profile?.restriction_display_message
+        });
 
-        // Check for any account restrictions
+        // Check for ANY account restrictions - Priority: banned > suspended > closed > verification_required
         let restrictionType = null;
         let restrictionMessage = null;
 
@@ -256,18 +196,26 @@ export default function LoginPage() {
           if (profile.is_banned === true) {
             restrictionType = 'banned';
             restrictionMessage = profile.ban_reason || 'Your account has been permanently banned.';
+            console.log('BANNED user detected');
           } else if (profile.status === 'suspended' || profile.suspension_reason) {
             restrictionType = 'suspended';
             restrictionMessage = profile.restriction_display_message || profile.suspension_reason || 'Your account has been temporarily suspended.';
+            console.log('SUSPENDED user detected');
           } else if (profile.status === 'closed' || profile.closure_reason) {
             restrictionType = 'closed';
             restrictionMessage = profile.restriction_display_message || profile.closure_reason || 'Your account has been closed.';
+            console.log('CLOSED account detected');
+          } else if (profile.requires_verification === true) {
+            restrictionType = 'verification_required';
+            restrictionMessage = profile.verification_reason || 'Your account requires identity verification.';
+            console.log('VERIFICATION REQUIRED detected - allowing login to dashboard');
           }
         }
 
-        // If any restriction is found, sign them out and display banner
-        if (restrictionType) {
-          await supabase.auth.signOut();
+        // If any blocking restriction is found (not verification), sign them out and display banner
+        if (restrictionType && restrictionType !== 'verification_required') {
+          console.log('Showing restriction banner for type:', restrictionType);
+          await supabase.auth.signOut({ scope: 'local' });
           setError({
             type: restrictionType,
             reason: restrictionMessage,
@@ -277,6 +225,11 @@ export default function LoginPage() {
           setLoading(false);
           setLoadingStage(0);
           return;
+        }
+
+        if (restrictionType === 'verification_required') {
+          console.log('Verification required - allowing login with notification banner');
+          // User can log in with verification required - they'll see the banner on dashboard
         }
 
 
