@@ -1085,12 +1085,14 @@ const styles = {
     fontWeight: '800',
     marginBottom: '1rem',
     letterSpacing: '-0.02em',
-    lineHeight: '1.2'
+    lineHeight: '1.2',
+    color: '#ffffff'
   },
   heroSubtitle: {
     fontSize: 'clamp(1rem, 2.5vw, 1.25rem)',
     opacity: '0.95',
-    lineHeight: '1.6'
+    lineHeight: '1.6',
+    color: '#ffffff'
   },
   mainContent: {
     maxWidth: '1400px',
