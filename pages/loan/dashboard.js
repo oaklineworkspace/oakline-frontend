@@ -418,8 +418,8 @@ Generated: ${new Date().toLocaleString()}
           <div style={{display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', justifyContent: 'center'}}>
             <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={{height: '50px', width: 'auto'}} />
             <div style={{textAlign: 'left'}}>
-              <div style={{fontSize: '14px', opacity: '0.9'}}>Oakline Bank</div>
-              <div style={{fontSize: '20px', fontWeight: '700'}}>Loan Management</div>
+              <div style={{fontSize: '14px', opacity: '0.9', color: '#ffffff'}}>Oakline Bank</div>
+              <div style={{fontSize: '20px', fontWeight: '700', color: '#ffffff'}}>Loan Management</div>
             </div>
           </div>
           <h1 style={styles.heroTitle}>Your Loan Portfolio</h1>
@@ -430,21 +430,25 @@ Generated: ${new Date().toLocaleString()}
       </div>
 
       <div style={styles.mainContent}>
-        {/* Processing Info Banner */}
+        {/* Processing Info Banner - Compact */}
         <div style={{
           background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
           borderLeft: '4px solid #047857',
-          padding: 'clamp(16px, 4vw, 24px)',
-          borderRadius: '12px',
-          marginBottom: '32px',
-          fontSize: 'clamp(13px, 2vw, 15px)',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          marginBottom: '20px',
+          fontSize: '13px',
           color: '#ffffff',
-          lineHeight: '1.6',
+          lineHeight: '1.4',
           fontWeight: '500',
-          boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
+          boxShadow: '0 2px 8px rgba(16, 185, 129, 0.2)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          flexWrap: 'wrap'
         }}>
-          <strong style={{fontSize: 'clamp(15px, 2.5vw, 16px)', display: 'block', marginBottom: 'clamp(6px, 1vw, 8px)'}}>💡 Deposit Required</strong>
-          <div>Submit your 10% security deposit to activate your loan. We'll verify within hours and disburse your funds immediately.</div>
+          <strong style={{fontSize: '14px'}}>💡 Deposit Required</strong>
+          <span style={{opacity: '0.95'}}>Submit your 10% security deposit to activate your loan. We'll verify within hours and disburse your funds immediately.</span>
         </div>
 
         {/* Alerts */}
@@ -528,6 +532,9 @@ Generated: ${new Date().toLocaleString()}
 
         {/* Quick Actions */}
         <div style={styles.quickActions} className="loan-quick-actions">
+          <Link href="/loan" style={styles.actionButton} className="loan-action-button">
+            📋 View All Loans
+          </Link>
           <Link href="/loan/apply" style={styles.actionButton} className="loan-action-button">
             ➕ Apply for New Loan
           </Link>
