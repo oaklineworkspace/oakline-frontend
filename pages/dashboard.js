@@ -509,35 +509,83 @@ function DashboardContent() {
         transactionsData = [...transactionsData, ...formattedOaklinePayTransactions];
       }
 
-      // Fetch loan deposit payments (last 30 days)
+      // Fetch loan payments (both deposits and regular payments - last 30 days)
       const thirtyDaysAgoForLoans = new Date();
       thirtyDaysAgoForLoans.setDate(thirtyDaysAgoForLoans.getDate() - 30);
 
-      const { data: loanDepositsData } = await supabase
-        .from('loan_payments')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('is_deposit', true)
-        .gte('created_at', thirtyDaysAgoForLoans.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(10);
+      // First, get user's loans to filter payments
+      const { data: userLoans } = await supabase
+        .from('loans')
+        .select('id')
+        .eq('user_id', userId);
 
-      // Format loan deposits as transactions
-      if (loanDepositsData && loanDepositsData.length > 0) {
-        const formattedLoanDeposits = loanDepositsData.map(deposit => ({
-          id: deposit.id,
-          type: 'loan_deposit',
-          transaction_type: 'loan_deposit',
-          description: `Loan 10% Collateral Deposit via ${deposit.deposit_method === 'crypto' ? (deposit.metadata?.crypto_type || 'Cryptocurrency') : 'Transfer'}`,
-          amount: parseFloat(deposit.amount || 0),
-          gross_amount: parseFloat(deposit.gross_amount || 0),
-          fee: parseFloat(deposit.fee || 0),
-          status: deposit.status,
-          created_at: deposit.created_at,
-          is_credit: true,
-          transaction_data: deposit
-        }));
-        transactionsData = [...transactionsData, ...formattedLoanDeposits];
+      const loanIds = userLoans?.map(loan => loan.id) || [];
+
+      let loanPaymentsData = [];
+      if (loanIds.length > 0) {
+        const { data: paymentsData } = await supabase
+          .from('loan_payments')
+          .select(`
+            *,
+            loans:loan_id (
+              id,
+              loan_type,
+              loan_reference,
+              remaining_balance
+            )
+          `)
+          .in('loan_id', loanIds)
+          .gte('created_at', thirtyDaysAgoForLoans.toISOString())
+          .order('created_at', { ascending: false })
+          .limit(15);
+        
+        loanPaymentsData = paymentsData || [];
+      }
+
+      // Format loan payments as transactions
+      if (loanPaymentsData && loanPaymentsData.length > 0) {
+        const formattedLoanPayments = loanPaymentsData.map(payment => {
+          // Determine if this is a deposit or regular payment
+          const isDeposit = payment.is_deposit || payment.payment_type === 'deposit';
+          
+          // Build description based on payment type
+          let description = '';
+          if (isDeposit) {
+            description = `Loan 10% Collateral Deposit via ${payment.deposit_method === 'crypto' ? (payment.metadata?.crypto_type || 'Cryptocurrency') : payment.deposit_method === 'bank_transfer' ? 'Bank Transfer' : 'Account Balance'}`;
+          } else if (payment.payment_type === 'early_payoff') {
+            description = `Loan Early Payoff - ${payment.loans?.loan_type?.replace(/_/g, ' ').toUpperCase() || 'Loan'}`;
+          } else if (payment.payment_type === 'late_fee') {
+            description = `Loan Late Fee - ${payment.loans?.loan_type?.replace(/_/g, ' ').toUpperCase() || 'Loan'}`;
+          } else {
+            description = `Loan Payment - ${payment.loans?.loan_type?.replace(/_/g, ' ').toUpperCase() || 'Loan'}`;
+          }
+
+          return {
+            id: payment.id,
+            type: isDeposit ? 'loan_deposit' : 'loan_payment',
+            transaction_type: isDeposit ? 'loan_deposit' : 'loan_payment',
+            description: description,
+            amount: parseFloat(payment.amount || 0),
+            gross_amount: parseFloat(payment.gross_amount || 0),
+            fee: parseFloat(payment.fee || 0),
+            status: payment.status,
+            created_at: payment.created_at,
+            payment_date: payment.payment_date,
+            is_credit: isDeposit, // Deposits are credits, payments are debits
+            transaction_data: payment,
+            reference: payment.reference_number || `LOAN-${payment.id.substring(0, 8).toUpperCase()}`,
+            loan_reference: payment.loans?.loan_reference,
+            principal_amount: payment.principal_amount,
+            interest_amount: payment.interest_amount,
+            late_fee: payment.late_fee,
+            balance_after: payment.balance_after,
+            payment_type: payment.payment_type,
+            tx_hash: payment.tx_hash,
+            confirmations: payment.confirmations,
+            required_confirmations: payment.required_confirmations
+          };
+        });
+        transactionsData = [...transactionsData, ...formattedLoanPayments];
       }
 
       // Sort all transactions by most recent
@@ -1407,6 +1455,7 @@ function DashboardContent() {
                   txType === 'salary' ||
                   txType === 'payment_received' ||
                   txType === 'crypto_deposit' ||
+                  txType === 'loan_deposit' ||
                   isTransferFrom) {
                 isCredit = true;
               }
@@ -1420,6 +1469,7 @@ function DashboardContent() {
                        txType === 'zelle_send' ||
                        txType === 'oakline_pay_send' ||
                        txType === 'payment_sent' ||
+                       txType === 'loan_payment' ||
                        description.includes('online shopping') ||
                        description.includes('purchase') ||
                        description.includes('shopping') ||
@@ -1475,6 +1525,8 @@ function DashboardContent() {
                   case 'zelle_receive': return 'Z';
                   case 'oakline_pay_send': return 'O';
                   case 'oakline_pay_receive': return 'O';
+                  case 'loan_deposit': return '🏦';
+                  case 'loan_payment': return '💳';
                   case 'crypto_deposit':
                   case 'account_opening_deposit':
                     return getCryptoIcon(transaction?.crypto_symbol || transaction?.crypto_type);
@@ -1549,6 +1601,27 @@ function DashboardContent() {
                         }}>
                           Hash: {tx.transaction_hash.substring(0, 16)}...
                         </div>
+                      )}
+                      {(tx.transaction_type === 'loan_payment' || tx.transaction_type === 'loan_deposit') && (
+                        <>
+                          {tx.reference && (
+                            <div style={{ fontSize: '0.65rem', color: '#1e40af', marginTop: '0.2rem', fontFamily: 'monospace' }}>
+                              Ref: {tx.reference}
+                            </div>
+                          )}
+                          {tx.principal_amount && parseFloat(tx.principal_amount) > 0 && (
+                            <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+                              Principal: ${parseFloat(tx.principal_amount).toFixed(2)}
+                              {tx.interest_amount && parseFloat(tx.interest_amount) > 0 && ` • Interest: $${parseFloat(tx.interest_amount).toFixed(2)}`}
+                              {tx.late_fee && parseFloat(tx.late_fee) > 0 && ` • Late Fee: $${parseFloat(tx.late_fee).toFixed(2)}`}
+                            </div>
+                          )}
+                          {tx.balance_after !== undefined && (
+                            <div style={{ fontSize: '0.65rem', color: '#059669', marginTop: '0.2rem' }}>
+                              Balance After: ${parseFloat(tx.balance_after).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
