@@ -87,11 +87,74 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        // Stage 2: Checking account status
+        // Stage 2: Checking for new device
         setLoadingStage(1);
         await new Promise(resolve => setTimeout(resolve, 500));
 
         const { data: { session: currentSession } } = await supabase.auth.getSession();
+
+        // Get device info for new device check
+        const ua = navigator?.userAgent || '';
+        let browser = 'Unknown';
+        let os = 'Unknown';
+        let deviceType = 'Desktop';
+
+        if (ua.includes('iPhone')) {
+          os = 'iOS';
+          deviceType = 'iPhone';
+          browser = ua.includes('CriOS') ? 'Chrome' : 'Safari';
+        } else if (ua.includes('Android')) {
+          os = 'Android';
+          deviceType = ua.includes('Samsung') ? 'Samsung' : 'Android Device';
+          browser = ua.includes('Chrome') ? 'Chrome' : 'Firefox';
+        } else {
+          if (ua.includes('Windows')) os = 'Windows';
+          else if (ua.includes('Mac')) os = 'macOS';
+          else if (ua.includes('Linux')) os = 'Linux';
+
+          if (ua.includes('Chrome') && !ua.includes('Edge')) browser = 'Chrome';
+          else if (ua.includes('Safari')) browser = 'Safari';
+          else if (ua.includes('Firefox')) browser = 'Firefox';
+        }
+
+        const deviceInfo = { os, browser, deviceType };
+
+        // Check if this is a new device
+        try {
+          const deviceCheckResponse = await fetch('/api/check-new-device', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${currentSession?.access_token}`
+            },
+            body: JSON.stringify({ deviceInfo })
+          });
+
+          const deviceCheck = await deviceCheckResponse.json();
+
+          if (deviceCheck.isNewDevice) {
+            // New device detected - redirect to device verification page
+            await supabase.auth.signOut({ scope: 'local' });
+            setLoading(false);
+            setLoadingStage(0);
+
+            // Store device info in session storage for verification page
+            sessionStorage.setItem('pendingDeviceVerification', JSON.stringify({
+              userId: data.user.id,
+              email: formData.email,
+              deviceInfo
+            }));
+
+            router.push('/verify-device-login');
+            return;
+          }
+        } catch (deviceError) {
+          console.error('Device check error:', deviceError);
+          // Continue with normal login if device check fails
+        }
+
+        // Stage 3: Checking account status
+        setLoadingStage(2);
 
         const statusResponse = await fetch('/api/check-account-status', {
           method: 'POST',
@@ -122,39 +185,38 @@ export default function LoginPage() {
         }
 
         if (accountStatus.isBlocked) {
-          // Check if it's a verification requirement (don't sign out, redirect to verification)
+          // Special handling for verification requirement - let user log in and show banner
           if (accountStatus.blockingType === 'verification_required') {
+            // User can log in with verification required - they'll see the banner on dashboard
+            // Continue to normal dashboard redirect below
+            console.log('Verification required - allowing login with notification banner');
+          } else {
+            // For other blocks (banned, suspended, closed, locked), sign out and show restriction
+            await supabase.auth.signOut({ scope: 'local' });
             setLoading(false);
             setLoadingStage(0);
-            router.push('/verify-identity');
+
+            // Use restriction_display_message for customer-facing message
+            const displayMessage = accountStatus.restriction_display_message || 
+                                  accountStatus.reason || 
+                                  accountStatus.ban_reason || 
+                                  accountStatus.locked_reason || 
+                                  'Your account access has been restricted.';
+
+            setError({
+              type: accountStatus.blockingType,
+              reason: displayMessage,
+              supportEmail: supportEmail
+            });
+            setErrorType('restriction_error');
             return;
           }
-
-          // For other restrictions, sign out and show error
-          await supabase.auth.signOut({ scope: 'local' });
-          setLoading(false);
-          setLoadingStage(0);
-
-          // Use restriction_display_message for customer-facing message
-          const displayMessage = accountStatus.restriction_display_message || 
-                                accountStatus.reason || 
-                                accountStatus.ban_reason || 
-                                accountStatus.locked_reason || 
-                                'Your account access has been restricted.';
-
-          setError({
-            type: accountStatus.blockingType,
-            reason: displayMessage,
-            supportEmail: supportEmail
-          });
-          setErrorType('restriction_error');
-          return;
         }
 
         // Additional check: verify profile status after successful auth
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('is_banned, status, ban_reason, restriction_display_message, requires_verification, suspension_reason, closure_reason')
+          .select('is_banned, status, ban_reason, restriction_display_message, suspension_reason, closure_reason')
           .eq('id', data.user.id)
           .single();
 
@@ -167,13 +229,7 @@ export default function LoginPage() {
         let restrictionMessage = null;
 
         if (profile) {
-          if (profile.requires_verification === true) {
-            // Redirect to verification page
-            setLoading(false);
-            setLoadingStage(0);
-            router.push('/verify-identity');
-            return;
-          } else if (profile.is_banned === true) {
+          if (profile.is_banned === true) {
             restrictionType = 'banned';
             restrictionMessage = profile.ban_reason || 'Your account has been permanently banned.';
           } else if (profile.status === 'suspended' || profile.suspension_reason) {
@@ -200,8 +256,8 @@ export default function LoginPage() {
         }
 
 
-        // Stage 3: Authenticating account
-        setLoadingStage(2);
+        // Stage 4: Authenticating account
+        setLoadingStage(3);
         await new Promise(resolve => setTimeout(resolve, 700));
 
         // Send login notification if enabled
@@ -292,8 +348,8 @@ export default function LoginPage() {
           console.error('Failed to send login notification:', notifError);
         }
 
-        // Stage 4: Securing connection
-        setLoadingStage(3);
+        // Stage 5: Securing connection
+        setLoadingStage(4);
         await new Promise(resolve => setTimeout(resolve, 600));
 
         // Navigate to dashboard
@@ -333,7 +389,7 @@ export default function LoginPage() {
         <div style={styles.fullScreenBannedContainer}>
           <StatusMessageBanner
             type={error.type}
-            reason={error.reason}
+            reason={error.reason || ''}
             contactEmail={error.supportEmail || "support@theoaklinebank.com"}
             onBack={() => {
               setError('');
@@ -365,12 +421,12 @@ export default function LoginPage() {
                 <div 
                   style={{
                     ...styles.progressBarFill,
-                    width: `${((loadingStage + 1) / 4) * 100}%`
+                    width: `${Math.min(((loadingStage + 1) / 4) * 100, 100)}%`
                   }}
                 ></div>
               </div>
               <div style={styles.progressPercentage}>
-                {Math.round(((loadingStage + 1) / 4) * 100)}%
+                {Math.min(Math.round(((loadingStage + 1) / 4) * 100), 100)}%
               </div>
             </div>
 
@@ -513,72 +569,25 @@ export default function LoginPage() {
               )}
 
               {/* Error Message - Professional restriction banner */}
-              {error && typeof error === 'object' && error.type === 'restriction_error' && (
+              {error && typeof error === 'string' && errorType === 'restriction_error' && (
                 <div style={styles.restrictionBanner}>
                   <div style={styles.restrictionHeader}>
                     <span style={styles.restrictionIcon}>⚠️</span>
                     <span style={styles.restrictionTitle}>Account Access Restricted</span>
                   </div>
-                  <p style={styles.restrictionReason}>{error.reason}</p>
+                  <p style={styles.restrictionReason}>{error}</p>
                   <div style={styles.restrictionContact}>
                     <p style={styles.contactPrompt}>For assistance, please contact our security team:</p>
                     <div style={styles.contactDetails}>
                       <div style={styles.contactItem}>
                         <span style={styles.contactIcon}>✉️</span>
-                        <a href="mailto:support@theoaklinebank.com" style={styles.contactLink}>
-                          support@theoaklinebank.com
+                        <a href="mailto:security@theoaklinebank.com" style={styles.contactLink}>
+                          security@theoaklinebank.com
                         </a>
                       </div>
-                      {error.supportEmail && error.supportEmail !== 'support@theoaklinebank.com' && (
-                        <div style={styles.contactItem}>
-                          <span style={styles.contactIcon}>✉️</span>
-                          <a href={`mailto:${error.supportEmail}`} style={styles.contactLink}>
-                            {error.supportEmail}
-                          </a>
-                        </div>
-                      )}
                     </div>
                     <p style={styles.supportHours}>
                       Available Monday - Friday, 9:00 AM - 5:00 PM EST
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Error Message - Banned banner */}
-              {error && typeof error === 'object' && error.type === 'banned' && (
-                <div style={styles.bannedMessage}>
-                  <div style={styles.bannedHeader}>
-                    <span style={styles.bannedIcon}>🚫</span>
-                    <span style={styles.bannedTitle}>Account Permanently Banned</span>
-                  </div>
-                  <p style={styles.bannedText}>{error.reason}</p>
-                  <div style={styles.bannedContactSection}>
-                    <p style={styles.bannedContactTitle}>
-                      If you believe this is an error, please contact our support team:
-                    </p>
-                    <div style={styles.contactMethods}>
-                      <div style={styles.contactMethod}>
-                        <span style={styles.contactIcon}>✉️</span>
-                        <div>
-                          <p style={styles.contactLabel}>Email</p>
-                          <a href="mailto:security@theoaklinebank.com" style={styles.contactValue}>
-                            security@theoaklinebank.com
-                          </a>
-                        </div>
-                      </div>
-                      <div style={styles.contactMethod}>
-                        <span style={styles.contactIcon}>📞</span>
-                        <div>
-                          <p style={styles.contactLabel}>Phone</p>
-                          <a href="tel:(636) 635-6122" style={styles.contactValue}>
-                            (636) 635-6122
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                    <p style={styles.bannedFooter}>
-                      Support is available Monday to Friday, 9:00 AM to 5:00 PM EST. Please have your account details ready.
                     </p>
                   </div>
                 </div>

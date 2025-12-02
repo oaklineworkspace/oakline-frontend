@@ -96,7 +96,9 @@ export default async function handler(req, res) {
     const isBlocked = 
       profile?.is_banned === true ||
       profile?.status === 'suspended' ||
+      profile?.suspension_reason ||
       profile?.status === 'closed' ||
+      profile?.closure_reason ||
       securitySettings?.account_locked === true ||
       profile?.requires_verification === true;
 
@@ -106,8 +108,8 @@ export default async function handler(req, res) {
     if (profile?.requires_verification) blockingType = 'verification_required';
     else if (profile?.is_banned) blockingType = 'banned';
     else if (securitySettings?.account_locked) blockingType = 'locked';
-    else if (profile?.status === 'suspended') blockingType = 'suspended';
-    else if (profile?.status === 'closed') blockingType = 'closed';
+    else if (profile?.status === 'suspended' || profile?.suspension_reason) blockingType = 'suspended';
+    else if (profile?.status === 'closed' || profile?.closure_reason) blockingType = 'closed';
 
     // Get the actual reason from the profile table
     const reason = profile?.ban_reason || null;
