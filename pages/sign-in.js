@@ -91,7 +91,16 @@ export default function LoginPage() {
         setLoadingStage(1);
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        // Use the access token from the sign-in response
+        const accessToken = data.session?.access_token;
+        
+        if (!accessToken) {
+          console.error('No access token in sign-in response');
+          setLoading(false);
+          setLoadingStage(0);
+          setError('Authentication failed. Please try again.');
+          return;
+        }
         
         // Get device info for new device check
         const ua = navigator?.userAgent || '';
@@ -125,7 +134,7 @@ export default function LoginPage() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${accessToken}`
             },
             body: JSON.stringify({ deviceInfo })
           });
@@ -160,7 +169,7 @@ export default function LoginPage() {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${currentSession?.access_token}`
+            'Authorization': `Bearer ${accessToken}`
           },
           body: JSON.stringify({ userId: data.user.id })
         });
@@ -333,7 +342,7 @@ export default function LoginPage() {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${accessToken}`
             },
             body: JSON.stringify({
               loginDetails: {
