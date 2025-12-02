@@ -840,7 +840,7 @@ function LoanDepositCryptoContent() {
                 userEmail: user.email,
                 depositAmount: depositForm.amount,
                 cryptoType: depositForm.crypto_type,
-                selectedNetwork: selectedNetwork,
+                selectedNetwork: depositForm.network_type,
                 walletAddress: walletAddress,
                 txHash: txHash || null,
                 depositId: insertedDeposit?.[0]?.id
@@ -1220,7 +1220,7 @@ function LoanDepositCryptoContent() {
                     <span style={{ fontSize: '1.5rem' }}>🏦</span>
                     <div>
                       <div style={{ fontSize: '0.8rem', opacity: '0.9', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Oakline Bank Treasury Wallet</div>
-                      <div style={{ fontSize: '1rem', fontWeight: '700' }}>{depositForm.crypto_type} ({selectedNetwork || depositForm.network_type})</div>
+                      <div style={{ fontSize: '1rem', fontWeight: '700' }}>{depositForm.crypto_type} ({depositForm.network_type})</div>
                     </div>
                   </div>
                   <div style={{ fontSize: '0.75rem', opacity: '0.85', marginBottom: '0.75rem' }}>Send your 10% deposit to this address:</div>
