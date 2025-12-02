@@ -10,6 +10,8 @@ export default async function handler(req, res) {
     const {
       userEmail,
       depositAmount,
+      baseAmount,
+      fee,
       cryptoType,
       selectedNetwork,
       walletAddress,
@@ -72,8 +74,19 @@ export default async function handler(req, res) {
             <div style="background-color: #f0fdf4; border: 1px solid #d1e7dd; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
               <h2 style="color: #166534; font-size: 16px; font-weight: 600; margin: 0 0 16px 0;">Deposit Details</h2>
               
+              ${baseAmount && fee ? `
               <div style="margin-bottom: 12px;">
-                <span style="color: #64748b; font-size: 14px;">Deposit Amount:</span>
+                <span style="color: #64748b; font-size: 14px;">Base Amount:</span>
+                <div style="color: #166534; font-size: 16px; font-weight: 600;">${formatCurrency(baseAmount)}</div>
+              </div>
+              <div style="margin-bottom: 12px;">
+                <span style="color: #64748b; font-size: 14px;">Network Fee:</span>
+                <div style="color: #166534; font-size: 16px; font-weight: 600;">${formatCurrency(fee)}</div>
+              </div>
+              ` : ''}
+
+              <div style="margin-bottom: 12px;">
+                <span style="color: #64748b; font-size: 14px;">Total Deposit Amount:</span>
                 <div style="color: #166534; font-size: 18px; font-weight: 700;">${formatCurrency(depositAmount)}</div>
               </div>
 

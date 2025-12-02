@@ -838,7 +838,9 @@ function LoanDepositCryptoContent() {
               },
               body: JSON.stringify({
                 userEmail: user.email,
-                depositAmount: depositForm.amount,
+                depositAmount: calculatedNetAmount.toFixed(2),
+                baseAmount: depositForm.amount,
+                fee: calculatedFee.toFixed(2),
                 cryptoType: depositForm.crypto_type,
                 selectedNetwork: depositForm.network_type,
                 walletAddress: walletAddress,
@@ -1201,7 +1203,7 @@ function LoanDepositCryptoContent() {
           }}>
             <h2 style={{ fontSize: '1.4rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.5rem' }}>Complete Your 10% Security Deposit</h2>
             <p style={{ fontSize: '0.95rem', color: '#64748b', marginBottom: '1.5rem', lineHeight: '1.5' }}>
-              Send exactly <strong style={{ color: '#10b981' }}>${parseFloat(depositForm.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong> worth of <strong>{depositForm.crypto_type}</strong> to the wallet address below to activate your loan.
+              Send exactly <strong style={{ color: '#10b981' }}>${calculatedNetAmount.toFixed(2)}</strong> worth of <strong>{depositForm.crypto_type}</strong> to the wallet address below to activate your loan.
             </p>
             {loadingWallet ? (
               <div style={{ textAlign: 'center', padding: '3rem' }}>
@@ -1216,14 +1218,11 @@ function LoanDepositCryptoContent() {
                   marginBottom: '1.5rem',
                   color: '#ffffff'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>🏦</span>
-                    <div>
-                      <div style={{ fontSize: '0.8rem', opacity: '0.9', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Oakline Bank Treasury Wallet</div>
-                      <div style={{ fontSize: '1rem', fontWeight: '700' }}>{depositForm.crypto_type} ({depositForm.network_type})</div>
-                    </div>
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontSize: '0.8rem', opacity: '0.9', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>Oakline Bank Treasury Wallet</div>
+                    <div style={{ fontSize: '1rem', fontWeight: '700' }}>{depositForm.crypto_type} ({depositForm.network_type})</div>
                   </div>
-                  <div style={{ fontSize: '0.75rem', opacity: '0.85', marginBottom: '0.75rem' }}>Send your 10% deposit to this address:</div>
+                  <div style={{ fontSize: '0.75rem', opacity: '0.85', marginBottom: '0.75rem' }}>Send your deposit to this address:</div>
                   <div style={{
                     backgroundColor: 'rgba(255,255,255,0.15)',
                     padding: '1rem',
