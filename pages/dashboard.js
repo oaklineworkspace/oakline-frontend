@@ -1211,6 +1211,12 @@ function DashboardContent() {
                           <div style={styles.dropdownItemDesc}>Add funds to your balance using cryptocurrency</div>
                         </div>
                       </Link>
+                      <Link href="/withdrawal" style={styles.addFundsDropdownItem}>
+                        <div>
+                          <div style={styles.dropdownItemTitle}>💰 Withdraw Funds</div>
+                          <div style={styles.dropdownItemDesc}>Withdraw to your bank account or debit card</div>
+                        </div>
+                      </Link>
                     </div>
                   )}
                 </div>
@@ -1608,10 +1614,6 @@ function DashboardContent() {
           <Link href="/deposit-crypto" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>➕</span>
             <span style={styles.quickActionText}>Add Funds via Crypto</span>
-          </Link>
-          <Link href="/withdrawal" style={styles.standardActionButton}>
-            <span style={styles.quickActionIcon}>💰</span>
-            <span style={styles.quickActionText}>Withdraw Funds</span>
           </Link>
           <Link href="/link-debit-card" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>💳</span>
