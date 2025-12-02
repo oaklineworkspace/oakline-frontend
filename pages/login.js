@@ -184,6 +184,13 @@ export default function LoginPage() {
           return;
         }
 
+        console.log('Account Status Check:', {
+          isBlocked: accountStatus.isBlocked,
+          blockingType: accountStatus.blockingType,
+          restriction_display_message: accountStatus.restriction_display_message,
+          suspension_reason: accountStatus.suspension_reason
+        });
+
         if (accountStatus.isBlocked) {
           // Special handling for verification requirement - let user log in and show banner
           if (accountStatus.blockingType === 'verification_required') {
@@ -192,6 +199,7 @@ export default function LoginPage() {
             console.log('Verification required - allowing login with notification banner');
           } else {
             // For other blocks (banned, suspended, closed, locked), sign out and show restriction
+            console.log('Account blocked - showing restriction banner');
             await supabase.auth.signOut({ scope: 'local' });
             setLoading(false);
             setLoadingStage(0);
@@ -203,6 +211,11 @@ export default function LoginPage() {
                                   accountStatus.locked_reason || 
                                   'Your account access has been restricted.';
 
+            console.log('Setting error:', {
+              type: accountStatus.blockingType,
+              reason: displayMessage
+            });
+
             setError({
               type: accountStatus.blockingType,
               reason: displayMessage,
@@ -211,6 +224,8 @@ export default function LoginPage() {
             setErrorType('restriction_error');
             return;
           }
+        } else {
+          console.log('Account is NOT blocked - checking profile directly');
         }
 
         // Additional check: verify profile status after successful auth
