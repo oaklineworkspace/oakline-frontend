@@ -1648,11 +1648,6 @@ function DashboardContent() {
                               {tx.late_fee && parseFloat(tx.late_fee) > 0 && ` • Late Fee: $${parseFloat(tx.late_fee).toFixed(2)}`}
                             </div>
                           )}
-                          {tx.balance_after !== undefined && (
-                            <div style={{ fontSize: '0.65rem', color: '#059669', marginTop: '0.2rem' }}>
-                              Balance After: ${parseFloat(tx.balance_after).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </div>
-                          )}
                         </>
                       )}
                     </div>
@@ -2290,19 +2285,21 @@ function DashboardContent() {
             </span>
           </div>
 
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            padding: '0.75rem 0',
-            borderBottom: '1px solid #f1f5f9'
-          }}>
-            <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
-              Account Number
-            </span>
-            <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right' }}>
-              {selectedTransaction.accounts?.account_number || 'N/A'}
-            </span>
-          </div>
+          {!(selectedTransaction.transaction_type === 'loan_deposit' && selectedTransaction.transaction_data?.deposit_method === 'crypto') && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '0.75rem 0',
+              borderBottom: '1px solid #f1f5f9'
+            }}>
+              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                Account Number
+              </span>
+              <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right' }}>
+                {selectedTransaction.accounts?.account_number || 'N/A'}
+              </span>
+            </div>
+          )}
 
           {/* Loan Deposit Payment Method Details */}
           {selectedTransaction.transaction_type === 'loan_deposit' && selectedTransaction.transaction_data && (
