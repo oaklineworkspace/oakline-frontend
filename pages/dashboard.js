@@ -1637,11 +1637,6 @@ function DashboardContent() {
                       )}
                       {(tx.transaction_type === 'loan_payment' || tx.transaction_type === 'loan_deposit') && (
                         <>
-                          {tx.reference && (
-                            <div style={{ fontSize: '0.65rem', color: '#1e40af', marginTop: '0.2rem', fontFamily: 'monospace' }}>
-                              Ref: {tx.reference}
-                            </div>
-                          )}
                           {tx.principal_amount && parseFloat(tx.principal_amount) > 0 && (
                             <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
                               Principal: ${parseFloat(tx.principal_amount).toFixed(2)}
@@ -2287,7 +2282,7 @@ function DashboardContent() {
               Reference Number
             </span>
             <span style={{ fontSize: '0.8rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right' }}>
-              {selectedTransaction.id?.slice(0, 8).toUpperCase() || 'N/A'}
+              {selectedTransaction.reference || selectedTransaction.id?.slice(0, 8).toUpperCase() || 'N/A'}
             </span>
           </div>
 
