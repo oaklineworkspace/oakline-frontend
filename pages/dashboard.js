@@ -1103,6 +1103,14 @@ function DashboardContent() {
                   </div>
                   <div style={styles.dropdownDivider}></div>
                   <div style={styles.dropdownSection}>
+                    <h4 style={styles.dropdownSectionTitle}>💰 Loans & Credit</h4>
+                    <Link href="/loan/dashboard" style={styles.dropdownLink}>📊 Loan Dashboard</Link>
+                    <Link href="/loan" style={styles.dropdownLink}>📋 View All Loans</Link>
+                    <Link href="/loan/apply" style={styles.dropdownLink}>➕ Apply for Loan</Link>
+                    <Link href="/credit-report" style={styles.dropdownLink}>📈 Credit Report</Link>
+                  </div>
+                  <div style={styles.dropdownDivider}></div>
+                  <div style={styles.dropdownSection}>
                     <h4 style={styles.dropdownSectionTitle}>🛡️ Security & Settings</h4>
                     <Link href="/security" style={styles.dropdownLink}>🔒 Security Settings</Link>
                     <Link href="/notifications" style={styles.dropdownLink}>🔔 Notifications</Link>

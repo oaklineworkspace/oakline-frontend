@@ -532,6 +532,9 @@ Generated: ${new Date().toLocaleString()}
 
         {/* Quick Actions */}
         <div style={styles.quickActions} className="loan-quick-actions">
+          <Link href="/loan/dashboard" style={styles.actionButton} className="loan-action-button">
+            📊 Loan Dashboard
+          </Link>
           <Link href="/loan" style={styles.actionButton} className="loan-action-button">
             📋 View All Loans
           </Link>
