@@ -467,16 +467,16 @@ function DashboardContent() {
           const otherUserId = isSender ? tx.recipient_id : tx.sender_id;
           const isInstant = tx.status === 'completed' && tx.claim_token === null;
           const account = isSender ? tx.sender_account : tx.recipient_account;
-          
+
           // Use contact fields which contain the Oakline tag or email
           const recipientDisplay = tx.recipient_contact || 'User';
           const senderDisplay = tx.sender_contact || 'Sender';
-          
+
           return {
             id: tx.id,
             type: isSender ? 'oakline_pay_send' : 'oakline_pay_receive',
             transaction_type: isSender ? 'oakline_pay_send' : 'oakline_pay_receive',
-            description: isSender 
+            description: isSender
               ? `Oakline Pay to ${recipientDisplay}`
               : `Oakline Pay from ${senderDisplay}`,
             amount: isSender ? -parseFloat(tx.amount) : parseFloat(tx.amount),
@@ -492,7 +492,7 @@ function DashboardContent() {
             is_instant: isInstant,
             reference_number: tx.reference_number,
             memo: tx.memo,
-            accounts: account ? { 
+            accounts: account ? {
               account_number: account.account_number,
               account_type: account.account_type
             } : null,
@@ -514,7 +514,7 @@ function DashboardContent() {
       thirtyDaysAgoForLoans.setDate(thirtyDaysAgoForLoans.getDate() - 30);
 
       let loanPaymentsData = [];
-      
+
       // Fetch loan payments with joined loan data directly
       const { data: paymentsData, error: paymentsError } = await supabase
         .from('loan_payments')
@@ -532,7 +532,7 @@ function DashboardContent() {
         .gte('created_at', thirtyDaysAgoForLoans.toISOString())
         .order('created_at', { ascending: false })
         .limit(15);
-      
+
       if (paymentsError) {
         console.error('Error fetching loan payments:', paymentsError);
       } else {
@@ -547,17 +547,17 @@ function DashboardContent() {
         const formattedLoanPayments = loanPaymentsData.map(payment => {
           // Determine if this is a deposit or regular payment
           const isDeposit = payment.is_deposit === true || payment.payment_type === 'deposit';
-          
+
           // Get loan details
           const loanType = payment.loans?.loan_type || 'Loan';
-          
+
           // Build description based on payment type
           let description = '';
           if (isDeposit) {
             // Get crypto details from metadata
             const cryptoSymbol = payment.metadata?.crypto_symbol || payment.metadata?.symbol || 'CRYPTO';
             const networkType = payment.metadata?.network_type || 'Network';
-            
+
             if (payment.deposit_method === 'crypto') {
               description = `Loan 10% Collateral Deposit via ${cryptoSymbol} (${networkType})`;
             } else if (payment.deposit_method === 'bank_transfer') {
@@ -620,7 +620,7 @@ function DashboardContent() {
 
       console.log('Final transactions data:', transactionsData);
       console.log('Loan payment transactions:', transactionsData.filter(t => t.transaction_type === 'loan_payment' || t.transaction_type === 'loan_deposit'));
-      
+
       setTransactions(transactionsData);
 
       // Fetch user cards
@@ -811,9 +811,9 @@ function DashboardContent() {
       setShowReceiptModal(true);
       return;
     }
-    
+
     // Fetch additional details for crypto deposits
-    if (transaction.type === 'account_opening_deposit' || transaction.transaction_type === 'crypto_deposit') {
+    if (transaction.type === 'account_opening_deposit' || transaction.transaction_type === 'crypto_deposit' || transaction.transaction_type === 'loan_deposit') {
       try {
         let depositDetails = null;
         let walletAddress = transaction.wallet_address; // Start with what we have
@@ -859,13 +859,15 @@ function DashboardContent() {
         } else if (transaction.transaction_type === 'loan_deposit') {
           const { data, error } = await supabase
             .from('loan_payments')
-            .select('*')
+            .select('*, metadata, tx_hash, deposit_method, loan_id') // Select necessary fields
             .eq('id', transaction.id)
             .eq('is_deposit', true)
             .single();
 
           if (!error && data) {
             depositDetails = data;
+            // Explicitly add transaction_data to the transaction object for receipt modal
+            transaction.transaction_data = data;
 
             // Get wallet address from metadata
             if (data.metadata?.wallet_address) {
@@ -922,7 +924,9 @@ function DashboardContent() {
         setSelectedTransaction({
           ...transaction,
           depositDetails,
-          wallet_address: walletAddress || transaction.wallet_address
+          wallet_address: walletAddress || transaction.wallet_address,
+          // Ensure transaction_data is available for loan deposits if fetched
+          ...(transaction.transaction_type === 'loan_deposit' && { transaction_data: depositDetails })
         });
       } catch (error) {
         console.error('Error fetching transaction details:', error);
@@ -2211,7 +2215,7 @@ function DashboardContent() {
               </span>
               <div style={{ textAlign: 'right' }}>
                 <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', maxWidth: '60%', wordBreak: 'break-word' }}>
-                  {(selectedTransaction.type || selectedTransaction.transaction_type) === 'oakline_pay_send' 
+                  {(selectedTransaction.type || selectedTransaction.transaction_type) === 'oakline_pay_send'
                     ? (selectedTransaction.recipient_contact ? `@${selectedTransaction.recipient_contact}` : selectedTransaction.recipient_display || 'User')
                     : (selectedTransaction.sender_contact ? `@${selectedTransaction.sender_contact}` : selectedTransaction.sender_display || 'User')}
                 </span>
@@ -2300,6 +2304,111 @@ function DashboardContent() {
             </span>
           </div>
 
+          {/* Loan Deposit Payment Method Details */}
+          {selectedTransaction.transaction_type === 'loan_deposit' && selectedTransaction.transaction_data && (
+            <>
+              <div style={{
+                marginTop: '1.5rem',
+                paddingTop: '1.5rem',
+                borderTop: '2px solid #e2e8f0'
+              }}>
+                <h3 style={{
+                  fontSize: '1.1rem',
+                  fontWeight: '700',
+                  color: '#1e293b',
+                  marginBottom: '1rem'
+                }}>
+                  Payment Method Details
+                </h3>
+              </div>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Payment Method</span>
+                <span style={styles.receiptValue}>
+                  {selectedTransaction.transaction_data?.deposit_method === 'crypto' ? '🪙 Cryptocurrency' :
+                   selectedTransaction.transaction_data?.deposit_method === 'balance' ? '💰 Account Balance' :
+                   selectedTransaction.transaction_data?.deposit_method === 'account_balance' ? '💰 Account Balance' :
+                   'Cryptocurrency'}
+                </span>
+              </div>
+
+              {selectedTransaction.transaction_data?.deposit_method === 'crypto' && selectedTransaction.transaction_data?.metadata && (
+                <>
+                  <div style={styles.receiptRow}>
+                    <span style={styles.receiptLabel}>Cryptocurrency</span>
+                    <span style={styles.receiptValue}>
+                      {selectedTransaction.transaction_data.metadata.crypto_symbol || selectedTransaction.transaction_data.metadata.crypto_type || 'Cryptocurrency'}
+                    </span>
+                  </div>
+                  <div style={styles.receiptRow}>
+                    <span style={styles.receiptLabel}>Network</span>
+                    <span style={styles.receiptValue}>
+                      {selectedTransaction.transaction_data.metadata.network_type || 'Network'}
+                    </span>
+                  </div>
+                  {selectedTransaction.transaction_data.metadata.wallet_address && (
+                    <div style={styles.receiptRow}>
+                      <span style={styles.receiptLabel}>Wallet Address</span>
+                      <span style={{
+                        ...styles.receiptValue,
+                        fontFamily: 'monospace',
+                        fontSize: '0.75rem',
+                        wordBreak: 'break-all'
+                      }}>
+                        {selectedTransaction.transaction_data.metadata.wallet_address}
+                      </span>
+                    </div>
+                  )}
+                  {selectedTransaction.transaction_data.tx_hash && (
+                    <div style={styles.receiptRow}>
+                      <span style={styles.receiptLabel}>Transaction Hash</span>
+                      <span style={{
+                        ...styles.receiptValue,
+                        fontFamily: 'monospace',
+                        fontSize: '0.75rem',
+                        wordBreak: 'break-all'
+                      }}>
+                        {selectedTransaction.transaction_data.tx_hash}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {(selectedTransaction.transaction_data?.deposit_method === 'balance' ||
+                selectedTransaction.transaction_data?.deposit_method === 'account_balance') &&
+               selectedTransaction.accounts && (
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Account Number</span>
+                  <span style={styles.receiptValue}>
+                    {selectedTransaction.accounts.account_number || 'N/A'}
+                  </span>
+                </div>
+              )}
+
+              {selectedTransaction.transaction_data?.fee > 0 && (
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Network Fee</span>
+                  <span style={styles.receiptValue}>
+                    ${parseFloat(selectedTransaction.transaction_data.fee).toFixed(2)}
+                  </span>
+                </div>
+              )}
+
+              {selectedTransaction.transaction_data?.loan_id && (
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Loan Reference</span>
+                  <span style={{
+                    ...styles.receiptValue,
+                    fontFamily: 'monospace',
+                    fontSize: '0.85rem'
+                  }}>
+                    {selectedTransaction.transaction_data.loan_id.substring(0, 16).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </>
+          )}
+
           {(selectedTransaction.type === 'account_opening_deposit' || selectedTransaction.transaction_type === 'crypto_deposit') && selectedTransaction.depositDetails && (
             <>
               <div style={{
@@ -2316,49 +2425,25 @@ function DashboardContent() {
                   Cryptocurrency Details
                 </h3>
               </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '0.75rem 0',
-                borderBottom: '1px solid #f1f5f9'
-              }}>
-                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
-                  Cryptocurrency
-                </span>
-                <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Cryptocurrency</span>
+                <span style={styles.receiptValue}>
                   {selectedTransaction.depositDetails.crypto_assets?.symbol || selectedTransaction.crypto_symbol || 'BTC'} - {selectedTransaction.depositDetails.crypto_assets?.crypto_type || selectedTransaction.crypto_type || 'Bitcoin'}
                 </span>
               </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '0.75rem 0',
-                borderBottom: '1px solid #f1f5f9'
-              }}>
-                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
-                  Network
-                </span>
-                <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Network</span>
+                <span style={styles.receiptValue}>
                   {selectedTransaction.depositDetails.crypto_assets?.network_type || selectedTransaction.network_type || 'N/A'}
                 </span>
               </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '0.75rem 0',
-                borderBottom: '1px solid #f1f5f9'
-              }}>
-                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
-                  Wallet Address
-                </span>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Wallet Address</span>
                 <span style={{
-                  fontSize: '0.75rem',
-                  color: '#1e293b',
-                  fontWeight: '600',
+                  ...styles.receiptValue,
                   fontFamily: 'monospace',
-                  wordBreak: 'break-all',
-                  textAlign: 'right',
-                  maxWidth: '60%'
+                  fontSize: '0.75rem',
+                  wordBreak: 'break-all'
                 }}>
                   {selectedTransaction.wallet_address ||
                    selectedTransaction.depositDetails?.wallet_address ||
@@ -2368,89 +2453,48 @@ function DashboardContent() {
                 </span>
               </div>
               {selectedTransaction.depositDetails.memo && (
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  padding: '0.75rem 0',
-                  borderBottom: '1px solid #f1f5f9'
-                }}>
-                  <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
-                    Memo/Tag
-                  </span>
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Memo/Tag</span>
                   <span style={{
-                    fontSize: '0.75rem',
-                    color: '#1e293b',
-                    fontWeight: '600',
+                    ...styles.receiptValue,
                     fontFamily: 'monospace',
-                    wordBreak: 'break-all',
-                    textAlign: 'right',
-                    maxWidth: '60%'
+                    fontSize: '0.75rem',
+                    wordBreak: 'break-all'
                   }}>
                     {selectedTransaction.depositDetails.memo}
                   </span>
                 </div>
               )}
               {(selectedTransaction.depositDetails.tx_hash || selectedTransaction.transaction_hash) && (
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  padding: '0.75rem 0',
-                  borderBottom: '1px solid #f1f5f9'
-                }}>
-                  <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
-                    Transaction Hash
-                  </span>
+                <div style={styles.receiptRow}>
+                  <span style={styles.receiptLabel}>Transaction Hash</span>
                   <span style={{
-                    fontSize: '0.75rem',
-                    color: '#1e293b',
-                    fontWeight: '600',
+                    ...styles.receiptValue,
                     fontFamily: 'monospace',
-                    wordBreak: 'break-all',
-                    textAlign: 'right',
-                    maxWidth: '60%'
+                    fontSize: '0.75rem',
+                    wordBreak: 'break-all'
                   }}>
                     {selectedTransaction.depositDetails.tx_hash || selectedTransaction.transaction_hash}
                   </span>
                 </div>
               )}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '0.75rem 0',
-                borderBottom: '1px solid #f1f5f9'
-              }}>
-                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
-                  Confirmations
-                </span>
-                <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+              <div style={styles.receiptRow}>
+                <span style={styles.receiptLabel}>Confirmations</span>
+                <span style={styles.receiptValue}>
                   {selectedTransaction.depositDetails.confirmations || selectedTransaction.confirmations || 0} / {selectedTransaction.depositDetails.required_confirmations || selectedTransaction.required_confirmations || 3}
                 </span>
               </div>
               {selectedTransaction.depositDetails.fee && parseFloat(selectedTransaction.depositDetails.fee) > 0 && (
                 <>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '0.75rem 0',
-                    borderBottom: '1px solid #f1f5f9'
-                  }}>
-                    <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
-                      Network Fee
-                    </span>
-                    <span style={{ fontSize: '0.9rem', color: '#dc2626', fontWeight: '600', textAlign: 'right' }}>
+                  <div style={styles.receiptRow}>
+                    <span style={styles.receiptLabel}>Network Fee</span>
+                    <span style={styles.receiptValue}>
                       -{formatCurrency(parseFloat(selectedTransaction.depositDetails.fee))}
                     </span>
                   </div>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '0.75rem 0',
-                    borderBottom: '1px solid #f1f5f9'
-                  }}>
-                    <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
-                      Gross Amount
-                    </span>
-                    <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                  <div style={styles.receiptRow}>
+                    <span style={styles.receiptLabel}>Gross Amount</span>
+                    <span style={styles.receiptValue}>
                       {formatCurrency(parseFloat(selectedTransaction.depositDetails.amount) || parseFloat(selectedTransaction.gross_amount) || 0)}
                     </span>
                   </div>
@@ -2809,53 +2853,6 @@ headerSignOutButton: {
   textAlign: 'center'
 },
 
-logoutButton: {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  padding: '0.5rem 0.75rem',
-  background: 'rgba(255,255,255,0.2)',
-  color: 'white',
-  border: 'none',
-  borderRadius: '6px',
-  cursor: 'pointer',
-  fontSize: '0.85rem',
-  fontWeight: '500',
-  transition: 'all 0.2s'
-},
-routingInfo: {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'flex-end',
-  gap: '0.25rem'
-},
-routingLabel: {
-  fontSize: '0.7rem',
-  color: '#bfdbfe',
-  fontWeight: '500'
-},
-routingNumber: {
-  fontSize: '0.8rem',
-  color: '#059669',
-  fontWeight: '700',
-  fontFamily: 'monospace',
-  letterSpacing: '1px'
-},
-phoneInfo: {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  padding: '0.5rem 0.75rem',
-  background: 'rgba(5, 150, 105, 0.2)',
-  borderRadius: '8px',
-  fontSize: '0.85rem',
-  fontWeight: '600',
-  color: '#059669'
-},
-phoneIcon: {
-  fontSize: '1rem'
-},
-
 // Mobile Styles
   '@media (max-width: 768px)': {
     container: {
@@ -2880,7 +2877,10 @@ phoneIcon: {
       gap: '0.15rem',
       minWidth: 'calc(50% - 0.25rem)',
       maxWidth: 'calc(50% - 0.25rem)',
-      flex: '0 0 calc(50% - 0.25rem)'
+      flex: '0 0 calc(50% - 0.25rem)',
+      flexWrap: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis'
     },
     userSection: {
       order: 1,
@@ -3639,13 +3639,6 @@ cardStatus: {
   gap: '0.75rem',
   marginTop: '0.5rem'
 },
-statusBadge: {
-  padding: '0.5rem 1rem',
-  borderRadius: '20px',
-  color: 'white',
-  fontSize: '0.85rem',
-  fontWeight: '600'
-},
 cardDetailsToggleButton: {
   background: '#1e40af',
   color: 'white',
@@ -3816,5 +3809,23 @@ dropdownButton: {
     fontSize: '0.95rem',
     fontWeight: '600',
     color: '#1e293b'
+  },
+  receiptRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '0.75rem 0',
+    borderBottom: '1px solid #f1f5f9'
+  },
+  receiptLabel: {
+    fontSize: '0.9rem',
+    color: '#64748b',
+    fontWeight: '500'
+  },
+  receiptValue: {
+    fontSize: '0.9rem',
+    color: '#1e293b',
+    fontWeight: '600',
+    textAlign: 'right',
+    maxWidth: '60%'
   }
 };
