@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
 import { logAuthActivity, ActivityActions, logLoginActivity } from '../lib/activityLogger';
@@ -19,7 +19,85 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [verificationRequired, setVerificationRequired] = useState(false);
   const [verificationReason, setVerificationReason] = useState(null);
+  const [sessionTimeout, setSessionTimeout] = useState(30); // Default 30 minutes
   const router = useRouter();
+  const sessionTimeoutRef = useRef(null);
+  const lastActivityRef = useRef(Date.now());
+
+  // Auto-logout on inactivity
+  const handleSessionTimeout = async () => {
+    console.log('Session expired due to inactivity');
+    await signOut();
+    if (typeof window !== 'undefined') {
+      alert('Your session has expired due to inactivity. Please log in again.');
+    }
+  };
+
+  const resetSessionTimeout = () => {
+    if (sessionTimeoutRef.current) {
+      clearTimeout(sessionTimeoutRef.current);
+    }
+
+    lastActivityRef.current = Date.now();
+
+    if (user) {
+      const timeoutMs = sessionTimeout * 60 * 1000;
+      sessionTimeoutRef.current = setTimeout(handleSessionTimeout, timeoutMs);
+    }
+  };
+
+  // Fetch user's session timeout preference
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchSessionTimeout = async () => {
+      const { data } = await supabase
+        .from('user_security_settings')
+        .select('session_timeout')
+        .eq('user_id', user.id)
+        .single();
+
+      if (data?.session_timeout) {
+        setSessionTimeout(data.session_timeout);
+      }
+    };
+
+    fetchSessionTimeout();
+  }, [user?.id]);
+
+  // Track user activity and reset timeout
+  useEffect(() => {
+    if (!user) return;
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    const throttledReset = (() => {
+      let timeoutId;
+      return () => {
+        if (!timeoutId) {
+          timeoutId = setTimeout(() => {
+            resetSessionTimeout();
+            timeoutId = null;
+          }, 1000);
+        }
+      };
+    })();
+
+    events.forEach(event => {
+      document.addEventListener(event, throttledReset, true);
+    });
+
+    resetSessionTimeout();
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, throttledReset, true);
+      });
+      if (sessionTimeoutRef.current) {
+        clearTimeout(sessionTimeoutRef.current);
+      }
+    };
+  }, [user, sessionTimeout]);
 
   useEffect(() => {
     // Get initial session
@@ -281,6 +359,8 @@ export const AuthProvider = ({ children }) => {
     resetPassword,
     verificationRequired,
     verificationReason,
+    sessionTimeout,
+    lastActivity: lastActivityRef.current,
   };
 
   return (

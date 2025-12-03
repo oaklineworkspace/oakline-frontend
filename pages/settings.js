@@ -656,6 +656,12 @@ export default function Settings() {
                     <option value="240">4 hours</option>
                   </select>
                 </div>
+
+                <div style={{...styles.infoBox, marginTop: '1rem'}}>
+                  <p style={{margin: 0, fontSize: '0.9rem', color: '#64748b'}}>
+                    ℹ️ Your session will automatically end after {settings.session_timeout} minutes of inactivity for security purposes.
+                  </p>
+                </div>
               </div>
 
               <div style={styles.infoBox}>

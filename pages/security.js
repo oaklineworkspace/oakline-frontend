@@ -50,6 +50,9 @@ export default function Security() {
   const [showEmailError, setShowEmailError] = useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = useState('');
 
+  // Active Sessions State
+  const [sessions, setSessions] = useState([]);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -65,6 +68,7 @@ export default function Security() {
       }
       setUser(user);
       await loadSecuritySettings(user.id);
+      await fetchSessions(); // Fetch sessions when the user is loaded
     } catch (error) {
       console.error('Error checking user:', error);
       setError('Failed to load user data');
@@ -106,6 +110,52 @@ export default function Security() {
       setError('Failed to load security settings.');
     }
   };
+
+  const fetchSessions = async () => {
+    try {
+      const { data: sessionsData, error } = await supabase
+        .from('user_sessions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('last_activity', { ascending: false });
+
+      if (error) throw error;
+      setSessions(sessionsData || []);
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+    }
+  };
+
+  const handleEndAllSessions = async () => {
+    if (!confirm('Are you sure you want to end all active sessions? You will be logged out.')) {
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const response = await fetch('/api/end-all-sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        alert('All sessions have been ended. You will now be logged out.');
+        await supabase.auth.signOut();
+        window.location.href = '/sign-in';
+      } else {
+        throw new Error('Failed to end sessions');
+      }
+    } catch (error) {
+      console.error('Error ending sessions:', error);
+      alert('Failed to end sessions. Please try again.');
+    }
+  };
+
 
   const handlePasswordChange = async () => {
     setPasswordLoading(true);
@@ -170,18 +220,18 @@ export default function Security() {
     setEmailLoading(true);
     setShowEmailError(false);
     setEmailErrorMessage('');
-    
+
     try {
       // Get fresh session with slight delay to ensure it's available
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
       if (sessionError) {
         console.error('Session error:', sessionError);
         throw new Error('❌ Auth session missing! Please try refreshing the page.');
       }
-      
+
       if (!session || !session.access_token) {
         throw new Error('❌ Session expired. Please log in again');
       }
@@ -334,7 +384,7 @@ export default function Security() {
       setEmailSuccessMessage('✅ Email changed successfully! Confirmation sent to your old email.');
       setShowEmailSuccess(true);
       setShowEmailModal(false);
-      
+
       // Close success modal and refresh user data after 3 seconds
       setTimeout(() => {
         setShowEmailSuccess(false);
@@ -386,7 +436,7 @@ export default function Security() {
 
       setSuccessMessage('✅ Security setting updated successfully');
       setShowSuccessModal(true);
-      
+
       // Auto-close modal after 3 seconds
       setTimeout(() => {
         setShowSuccessModal(false);
@@ -654,7 +704,54 @@ export default function Security() {
         </div>
       </div>
 
-      
+      {/* Active Sessions */}
+      <div style={styles.card}>
+        <div style={styles.sectionCard}>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
+            <h2 style={styles.sectionTitle}>🔐 Active Sessions</h2>
+            {sessions.length > 0 && (
+              <button
+                onClick={handleEndAllSessions}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: '#dc2626',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: '600'
+                }}
+              >
+                End All Sessions
+              </button>
+            )}
+          </div>
+          <div style={styles.sessionsContainer}>
+            {sessions.length === 0 ? (
+              <p style={styles.noData}>No active sessions found</p>
+            ) : (
+              sessions.map((session, idx) => (
+                <div key={idx} style={styles.sessionCard}>
+                  <div style={styles.sessionHeader}>
+                    <span style={styles.deviceIcon}>
+                      {session.device_type === 'mobile' ? '📱' : '💻'}
+                    </span>
+                    <div style={styles.sessionInfo}>
+                      <div style={styles.sessionDevice}>{session.user_agent || 'Unknown Device'}</div>
+                      <div style={styles.sessionDetail}>IP: {session.ip_address || 'Unknown'}</div>
+                      <div style={styles.sessionDetail}>
+                        Last active: {new Date(session.last_activity).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
 
       {/* Quick Actions */}
       <div style={styles.card}>
@@ -1717,5 +1814,63 @@ const styles = {
     justifyContent: 'center',
     zIndex: 10001,
     padding: '20px'
+  },
+  sectionCard: { // Added for the active sessions section
+    backgroundColor: 'white',
+    margin: '20px',
+    borderRadius: '16px',
+    padding: '25px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+    border: '1px solid #e2e8f0'
+  },
+  sectionTitle: { // Added for the active sessions section title
+    fontSize: '20px',
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: '20px',
+    paddingBottom: '15px',
+    borderBottom: '2px solid #e2e8f0'
+  },
+  sessionsContainer: { // Added for the active sessions container
+    marginTop: '20px'
+  },
+  sessionCard: { // Added for individual session card
+    backgroundColor: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: '12px',
+    padding: '15px 20px',
+    marginBottom: '15px',
+    display: 'flex',
+    alignItems: 'center'
+  },
+  sessionHeader: { // Added for session header
+    display: 'flex',
+    alignItems: 'center',
+    width: '100%'
+  },
+  deviceIcon: { // Added for device icon
+    fontSize: '24px',
+    marginRight: '15px',
+    color: '#3b82f6'
+  },
+  sessionInfo: { // Added for session info container
+    flexGrow: 1
+  },
+  sessionDevice: { // Added for device name
+    fontSize: '15px',
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: '5px'
+  },
+  sessionDetail: { // Added for session details like IP, last active
+    fontSize: '13px',
+    color: '#64748b',
+    marginTop: '4px'
+  },
+  noData: { // Added for no sessions message
+    textAlign: 'center',
+    color: '#64748b',
+    padding: '30px 0',
+    fontSize: '15px'
   }
 };
