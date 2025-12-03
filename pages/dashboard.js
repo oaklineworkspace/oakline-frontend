@@ -1726,6 +1726,10 @@ function DashboardContent() {
             <span style={styles.quickActionIcon}>➕</span>
             <span style={styles.quickActionText}>Request Additional Account</span>
           </Link>
+          <Link href="/loan/dashboard" style={styles.standardActionButton}>
+            <span style={styles.quickActionIcon}>💰</span>
+            <span style={styles.quickActionText}>Loans</span>
+          </Link>
         </div>)}
       </section>
 
