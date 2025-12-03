@@ -524,7 +524,6 @@ function DashboardContent() {
             id,
             loan_type,
             status,
-            loan_reference,
             remaining_balance,
             principal
           )
@@ -551,7 +550,6 @@ function DashboardContent() {
           
           // Get loan details
           const loanType = payment.loans?.loan_type || 'Loan';
-          const loanReference = payment.loans?.loan_reference || '';
           
           // Build description based on payment type
           let description = '';
@@ -594,7 +592,6 @@ function DashboardContent() {
             is_credit: isDeposit, // Deposits are credits, payments are debits
             transaction_data: payment,
             reference: payment.reference_number || `LOAN-${payment.id.substring(0, 8).toUpperCase()}`,
-            loan_reference: loanReference,
             loan_type: loanType,
             loan_id: payment.loan_id,
             principal_amount: parseFloat(payment.principal_amount || 0),
