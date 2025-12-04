@@ -117,21 +117,23 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to record payment' });
     }
 
-    // Create transaction record with pending status
-    const { error: transactionError } = await supabaseAdmin
+    // Create transaction record with hold status (amount should be positive)
+    const { data: transaction, error: transactionError } = await supabaseAdmin
       .from('transactions')
       .insert([{
         user_id: user.id,
         account_id: account_id,
         type: 'debit',
-        amount: -parseFloat(amount),
+        amount: parseFloat(amount), // Corrected: amount should be positive for debit transactions
         balance_before: parseFloat(account.balance),
         balance_after: newAccountBalance,
         description: `Loan Payment - Pending Admin Approval`,
         status: 'hold',
         reference: referenceNumber,
         created_at: new Date().toISOString()
-      }]);
+      }])
+      .select()
+      .single();
 
     if (transactionError) {
       console.error('Error creating transaction record:', transactionError);
