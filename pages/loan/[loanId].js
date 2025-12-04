@@ -303,8 +303,7 @@ function LoanDetailContent() {
         .single();
 
       if (!cryptoAsset) {
-        setMessage('Crypto asset configuration not found. Please contact support.');
-        setMessageType('error');
+        showToast('Crypto asset configuration not found. Please contact support.', 'error');
         return;
       }
 
@@ -317,8 +316,7 @@ function LoanDetailContent() {
         .eq('purpose', 'loan_requirement');
 
       if (error || !loanWallets || loanWallets.length === 0) {
-        setMessage('No available loan wallet. Please try another payment method.');
-        setMessageType('error');
+        showToast('No available loan wallet. Please try another payment method.', 'error');
         return;
       }
 
@@ -344,12 +342,9 @@ function LoanDetailContent() {
 
       setWalletAddress(selectedWallet.wallet_address);
       setSelectedLoanWallet(selectedWallet);
-      setMessage('');
-      setMessageType('');
     } catch (error) {
       console.error('Error fetching wallet:', error);
-      setMessage('Error loading wallet. Please try again.');
-      setMessageType('error');
+      showToast('Error loading wallet. Please try again.', 'error');
     } finally {
       setLoadingWallet(false);
     }
