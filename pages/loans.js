@@ -283,7 +283,7 @@ function LoansOverviewContent() {
                     {(() => {
                       const hasDepositTransactions = loan.deposit_transactions && Array.isArray(loan.deposit_transactions) && loan.deposit_transactions.length > 0;
                       
-                      if (loan.deposit_paid && loan.deposit_status === 'completed') {
+                      if (loan.deposit_paid && loan.deposit_status === 'completed' && (loan.status === 'pending' || loan.status === 'under_review')) {
                         return (
                           <div style={{
                             backgroundColor: '#ecfdf5',
