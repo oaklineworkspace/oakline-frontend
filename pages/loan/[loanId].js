@@ -828,13 +828,9 @@ function LoanDetailContent() {
 
           {loan.status === 'active' && (
             <div style={styles.actionButtons} className="loan-detail-actions">
-              <button onClick={() => {
-                  setPaymentForm(prev => ({...prev, payment_type: 'manual'}));
-                  setPaymentModal(true);
-                }}
-                style={styles.primaryButton}>
+              <Link href={`/loan/make-payment?loanId=${loan.id}`} style={{...styles.primaryButton, textDecoration: 'none', textAlign: 'center', display: 'block'}}>
                 Make Payment
-              </button>
+              </Link>
             </div>
           )}
 

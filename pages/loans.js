@@ -364,7 +364,7 @@ function LoansOverviewContent() {
 
                   <div style={styles.loanActions}>
                     {(loan.status === 'active' || loan.status === 'approved') && (
-                      <Link href={`/loan/${loan.id}`} style={styles.actionButton}>
+                      <Link href={`/loan/make-payment?loanId=${loan.id}`} style={styles.actionButton}>
                         💳 Make Payment
                       </Link>
                     )}
