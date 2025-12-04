@@ -91,8 +91,6 @@ function LoanDetailContent() {
   const [processing, setProcessing] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
   const [documents, setDocuments] = useState([]);
-  const [uploadProofModal, setUploadProofModal] = useState(false);
-  const [proofFile, setProofFile] = useState(null);
   const [availableNetworks, setAvailableNetworks] = useState([]);
   const [loadingNetworks, setLoadingNetworks] = useState(false);
   const [networkFeePercent, setNetworkFeePercent] = useState(0);
@@ -405,57 +403,6 @@ function LoanDetailContent() {
     }
   };
 
-  const handleUploadProof = async () => {
-    if (!proofFile) {
-      showToast('Please select a file to upload', 'error');
-      return;
-    }
-
-    if (proofFile.size > 5 * 1024 * 1024) {
-      showToast('File size must be less than 5MB', 'error');
-      return;
-    }
-
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-    if (!allowedTypes.includes(proofFile.type)) {
-      showToast('Only JPG, PNG, and PDF files are allowed', 'error');
-      return;
-    }
-
-    setProcessing(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', proofFile);
-      formData.append('loan_id', loanId);
-
-      const { data: { session } } = await supabase.auth.getSession();
-
-      const response = await fetch('/api/user/upload-deposit-proof', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: formData
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        showToast('Proof uploaded successfully!', 'success');
-        setUploadProofModal(false);
-        setProofFile(null);
-        fetchLoanDetails();
-      } else {
-        showToast(data.error || 'Failed to upload proof', 'error');
-      }
-    } catch (err) {
-      console.error('Error uploading proof:', err);
-      showToast('An error occurred while uploading proof', 'error');
-    } finally {
-      setProcessing(false);
-    }
-  };
-
   const showToast = (message, type = 'info') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: '' }), 5000);
@@ -735,9 +682,6 @@ function LoanDetailContent() {
                 style={styles.primaryButton}>
                 Make Payment
               </button>
-              <button onClick={() => setUploadProofModal(true)} style={styles.secondaryButton}>
-                Upload Payment Proof
-              </button>
             </div>
           )}
 
@@ -931,40 +875,6 @@ function LoanDetailContent() {
         </div>
       )}
 
-      {uploadProofModal && (
-        <div style={styles.modal} onClick={() => setUploadProofModal(false)}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h2 style={styles.modalTitle}>Upload Payment Proof</h2>
-            <p style={styles.modalText}>
-              Upload proof of your payment (transaction hash, receipt, etc.)
-            </p>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Select File (JPG, PNG, or PDF, max 5MB)</label>
-              <input
-                type="file"
-                accept=".jpg,.jpeg,.png,.pdf"
-                onChange={(e) => setProofFile(e.target.files[0])}
-                style={styles.fileInput}
-              />
-              {proofFile && (
-                <small style={styles.helperText}>
-                  Selected: {proofFile.name} ({(proofFile.size / 1024 / 1024).toFixed(2)} MB)
-                </small>
-              )}
-            </div>
-
-            <div style={styles.modalActions}>
-              <button onClick={() => setUploadProofModal(false)} style={styles.cancelButton} disabled={processing}>
-                Cancel
-              </button>
-              <button onClick={handleUploadProof} style={styles.submitButton} disabled={processing || !proofFile}>
-                {processing ? 'Uploading...' : 'Upload Proof'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -287,11 +287,14 @@ export default function PaymentHistory({ loanId }) {
                   <div style={{
                     ...styles.paymentStatus,
                     backgroundColor: payment.status === 'completed' ? '#d1fae5' :
+                                   payment.status === 'approved' ? '#d1fae5' :
                                    payment.status === 'pending' ? '#fef3c7' : '#fee2e2',
                     color: payment.status === 'completed' ? '#059669' :
+                          payment.status === 'approved' ? '#059669' :
                           payment.status === 'pending' ? '#d97706' : '#dc2626'
                   }}>
                     {payment.status === 'completed' ? '✓' :
+                     payment.status === 'approved' ? '✓' :
                      payment.status === 'pending' ? '⏳' : '✗'} {payment.status.toUpperCase()}
                   </div>
                 </div>
