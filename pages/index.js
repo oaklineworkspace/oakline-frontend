@@ -654,9 +654,9 @@ export default function Home() {
                 </div>
 
                 <div style={styles.newBankingImageActions}>
-                  <Link href="/apply" style={styles.newBankingImageButtonPrimary}>
+                  <Link href={user ? "/dashboard" : "/apply"} style={styles.newBankingImageButtonPrimary}>
                     <span style={styles.buttonIcon}>🚀</span>
-                    <TranslatedText>Get Started</TranslatedText>
+                    {user ? <TranslatedText>Go to Dashboard</TranslatedText> : <TranslatedText>Get Started</TranslatedText>}
                   </Link>
                   <Link href="/about" style={styles.newBankingImageButtonSecondary}>
                     <span style={styles.buttonIcon}>ℹ️</span>
@@ -739,9 +739,9 @@ export default function Home() {
                     <span style={styles.buttonIcon}>💳</span>
                     <TranslatedText>Explore All Cards</TranslatedText>
                   </Link>
-                  <Link href="/apply" style={styles.professionalCardsButtonSecondary}>
+                  <Link href={user ? "/account-types" : "/apply"} style={styles.professionalCardsButtonSecondary}>
                     <span style={styles.buttonIcon}>📝</span>
-                    <TranslatedText>Apply Now</TranslatedText>
+                    {user ? <TranslatedText>View Account Types</TranslatedText> : <TranslatedText>Apply Now</TranslatedText>}
                   </Link>
                 </div>
               </div>
@@ -1190,83 +1190,6 @@ export default function Home() {
               <p style={styles.actionNote}>
                 <TranslatedText>Get detailed comparisons, features, and eligibility requirements</TranslatedText>
               </p>
-            </div>
-          </div>
-        </section>
-
-
-
-        {/* Modern Banking Facility Section */}
-        <section style={styles.facilitySection} id="modern-facility" data-animate>
-          <div style={styles.container}>
-            <div style={{
-              ...styles.sectionHeader,
-              ...(isVisible['modern-facility'] ? styles.fadeInUp : {})
-            }}>
-              <TranslatedText as="h2" style={styles.sectionTitle}>State-of-the-Art Banking Facilities</TranslatedText>
-              <TranslatedText as="p" style={styles.sectionSubtitle}>
-                Experience banking in our modern, secure, and comfortable branch locations designed for your convenience
-              </TranslatedText>
-              <div style={styles.titleUnderline}></div>
-            </div>
-
-            <div style={styles.facilityGrid}>
-              <div style={styles.facilityImageContainer}>
-                <LocalizedImage
-                  src="/images/Modern_bank_lobby_interior_d535acc7.png"
-                  alt="Modern Bank Lobby Interior"
-                  style={styles.facilityImage}
-                  fallbackSrc="/images/fallback-modern-bank-lobby-interior.png"
-                />
-                <div style={styles.facilityOverlay}>
-                  <div style={styles.facilityBadge}>
-                    <span style={styles.facilityBadgeIcon}>🏆</span>
-                    <span><TranslatedText>Award-Winning Design</TranslatedText></span>
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.facilityContent}>
-                <h3 style={styles.facilityTitle}><TranslatedText>Premium Banking Environment</TranslatedText></h3>
-                <p style={styles.facilityDescription}>
-                  <TranslatedText>Our modern branches combine cutting-edge technology with elegant design to create a premium banking experience. Every location is designed with your comfort, privacy, and security in mind.</TranslatedText>
-                </p>
-
-                <div style={styles.facilityFeatures}>
-                  <div style={styles.facilityFeature}>
-                    <span style={styles.facilityFeatureIcon}>🔒</span>
-                    <div>
-                      <h4 style={styles.facilityFeatureTitle}><TranslatedText>Advanced Security</TranslatedText></h4>
-                      <p style={styles.facilityFeatureDesc}><TranslatedText>Multi-layer security systems protect your transactions</TranslatedText></p>
-                    </div>
-                  </div>
-                  <div style={styles.facilityFeature}>
-                    <span style={styles.facilityFeatureIcon}>💺</span>
-                    <div>
-                      <h4 style={styles.facilityFeatureTitle}><TranslatedText>Comfortable Environment</TranslatedText></h4>
-                      <p style={styles.facilityFeatureDesc}><TranslatedText>Luxurious seating and private consultation areas</TranslatedText></p>
-                    </div>
-                  </div>
-                  <div style={styles.facilityFeature}>
-                    <span style={styles.facilityFeatureIcon}>📱</span>
-                    <div>
-                      <h4 style={styles.facilityFeatureTitle}><TranslatedText>Digital Integration</TranslatedText></h4>
-                      <p style={styles.facilityFeatureDesc}><TranslatedText>Seamless blend of digital and personal banking</TranslatedText></p>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={styles.facilityActions}>
-                  <Link href="/branch-locator" style={styles.facilityButtonPrimary}>
-                    <span style={styles.buttonIcon}>📍</span>
-                    <TranslatedText>Find Nearest Branch</TranslatedText>
-                  </Link>
-                  <Link href="/apply" style={styles.facilityButtonSecondary}>
-                    <span style={styles.buttonIcon}>📅</span>
-                    <TranslatedText>Schedule Visit</TranslatedText>
-                  </Link>
-                </div>
-              </div>
             </div>
           </div>
         </section>
