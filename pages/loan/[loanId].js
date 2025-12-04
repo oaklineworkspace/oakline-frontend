@@ -94,6 +94,8 @@ function LoanDetailContent() {
   const [availableNetworks, setAvailableNetworks] = useState([]);
   const [loadingNetworks, setLoadingNetworks] = useState(false);
   const [networkFeePercent, setNetworkFeePercent] = useState(0);
+  const calculatedFee = paymentForm.amount ? (parseFloat(paymentForm.amount) * networkFeePercent / 100) : 0;
+  const totalAmountWithFee = paymentForm.amount ? (parseFloat(paymentForm.amount) + calculatedFee) : 0;
 
   const cryptoTypes = [
     { value: 'Bitcoin', label: 'Bitcoin', icon: '₿' },
@@ -266,6 +268,9 @@ function LoanDetailContent() {
   const [walletAddress, setWalletAddress] = useState('');
   const [selectedLoanWallet, setSelectedLoanWallet] = useState(null);
   const [loadingWallet, setLoadingWallet] = useState(false);
+  const [cryptoPaymentModal, setCryptoPaymentModal] = useState(false);
+  const [paymentProof, setPaymentProof] = useState({ txHash: '', proofFile: null });
+  const [submittingProof, setSubmittingProof] = useState(false);
 
   const handlePaymentCryptoChange = (crypto) => {
     setPaymentForm({ ...paymentForm, crypto_type: crypto, network_type: '' });
@@ -422,15 +427,17 @@ function LoanDetailContent() {
           setProcessing(false);
           return;
         }
-          console.log("Initiating crypto payment...");
-          showToast('Redirecting to crypto payment gateway...', 'info');
-          setTimeout(() => {
-              setProcessing(false);
-              setPaymentModal(false);
-              showToast('Crypto payment initiated. Please complete it on the gateway.', 'success');
-              fetchLoanDetails();
-          }, 2000);
+        if (!walletAddress || !selectedLoanWallet) {
+          showToast('Wallet address not loaded. Please try again.', 'error');
+          setProcessing(false);
           return;
+        }
+        
+        // Show crypto payment details modal
+        setProcessing(false);
+        setPaymentModal(false);
+        setCryptoPaymentModal(true);
+        return;
       }
 
 
@@ -480,6 +487,78 @@ function LoanDetailContent() {
   const showToast = (message, type = 'info') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: '' }), 5000);
+  };
+
+  const handleSubmitCryptoPayment = async () => {
+    if (!paymentProof.txHash && !paymentProof.proofFile) {
+      showToast('Please provide transaction hash or upload payment proof', 'error');
+      return;
+    }
+
+    setSubmittingProof(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        showToast('Session expired. Please log in again.', 'error');
+        setSubmittingProof(false);
+        return;
+      }
+
+      let proofPath = null;
+      if (paymentProof.proofFile) {
+        const fileExt = paymentProof.proofFile.name.split('.').pop();
+        const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('crypto_deposit_proofs')
+          .upload(fileName, paymentProof.proofFile);
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          showToast('Failed to upload proof file', 'error');
+          setSubmittingProof(false);
+          return;
+        }
+        proofPath = uploadData.path;
+      }
+
+      const response = await fetch('/api/loan/payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          loan_id: loanId,
+          amount: parseFloat(paymentForm.amount),
+          payment_method: 'crypto',
+          crypto_data: {
+            crypto_type: paymentForm.crypto_type,
+            network_type: paymentForm.network_type,
+            tx_hash: paymentProof.txHash || null,
+            proof_path: proofPath,
+            wallet_address: walletAddress,
+            wallet_id: selectedLoanWallet.id,
+            fee: calculatedFee
+          }
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showToast('Crypto payment submitted successfully. Pending verification.', 'success');
+        setCryptoPaymentModal(false);
+        setPaymentProof({ txHash: '', proofFile: null });
+        fetchLoanDetails();
+      } else {
+        showToast(data.error || 'Failed to submit crypto payment', 'error');
+      }
+    } catch (err) {
+      console.error('Error submitting crypto payment:', err);
+      showToast('An error occurred while submitting payment', 'error');
+    } finally {
+      setSubmittingProof(false);
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -945,6 +1024,125 @@ function LoanDetailContent() {
                 {processing ? 'Processing...' : paymentForm.payment_type === 'crypto' ? 'Continue to Crypto Payment' : 'Confirm Payment'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {cryptoPaymentModal && (
+        <div style={styles.modal} onClick={() => setCryptoPaymentModal(false)}>
+          <div style={{...styles.modalContent, maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto'}} onClick={(e) => e.stopPropagation()}>
+            <h2 style={styles.modalTitle}>Complete Crypto Payment</h2>
+            
+            <div style={{backgroundColor: '#f0fdf4', border: '2px solid #10b981', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.5rem'}}>
+              <div style={{fontSize: '0.9rem', color: '#065f46', marginBottom: '1rem'}}>
+                <strong>Payment Amount:</strong> ${parseFloat(paymentForm.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </div>
+              <div style={{fontSize: '0.9rem', color: '#065f46', marginBottom: '1rem'}}>
+                <strong>Network Fee ({networkFeePercent}%):</strong> ${calculatedFee.toFixed(2)}
+              </div>
+              <div style={{fontSize: '1.1rem', fontWeight: '700', color: '#047857', paddingTop: '0.5rem', borderTop: '1px solid #86efac'}}>
+                <strong>Total to Send:</strong> ${totalAmountWithFee.toFixed(2)}
+              </div>
+            </div>
+
+            {loadingWallet ? (
+              <div style={{textAlign: 'center', padding: '2rem'}}>
+                <div style={styles.spinner}></div>
+                <p>Loading wallet address...</p>
+              </div>
+            ) : (
+              <>
+                <div style={{background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.5rem', color: '#fff'}}>
+                  <div style={{marginBottom: '1rem'}}>
+                    <div style={{fontSize: '0.75rem', opacity: '0.9', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.5rem'}}>
+                      {paymentForm.crypto_type} ({paymentForm.network_type})
+                    </div>
+                    <div style={{fontSize: '0.85rem', fontWeight: '600', marginBottom: '0.5rem'}}>Wallet Address:</div>
+                    <div style={{backgroundColor: 'rgba(255,255,255,0.2)', padding: '12px', borderRadius: '8px', wordBreak: 'break-all', fontSize: '0.9rem', fontFamily: 'monospace'}}>
+                      {walletAddress}
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(walletAddress);
+                      showToast('Wallet address copied!', 'success');
+                    }}
+                    style={{backgroundColor: 'rgba(255,255,255,0.2)', color: '#fff', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600'}}
+                  >
+                    📋 Copy Address
+                  </button>
+
+                  {selectedLoanWallet?.memo && (
+                    <div style={{marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)'}}>
+                      <div style={{fontSize: '0.85rem', fontWeight: '600', marginBottom: '0.5rem'}}>Memo/Tag (if required):</div>
+                      <div style={{backgroundColor: 'rgba(255,255,255,0.2)', padding: '8px', borderRadius: '6px', fontFamily: 'monospace', fontSize: '0.9rem'}}>
+                        {selectedLoanWallet.memo}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{backgroundColor: '#fffbeb', border: '1px solid #fbbf24', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem'}}>
+                  <div style={{fontSize: '0.85rem', color: '#92400e', lineHeight: '1.6'}}>
+                    <strong>⚠️ Important:</strong>
+                    <ul style={{margin: '0.5rem 0', paddingLeft: '1.5rem'}}>
+                      <li>Send exactly <strong>${totalAmountWithFee.toFixed(2)}</strong> worth of {paymentForm.crypto_type}</li>
+                      <li>Use only the <strong>{paymentForm.network_type}</strong> network</li>
+                      <li>Double-check the wallet address before sending</li>
+                      <li>After sending, submit your transaction hash below</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Transaction Hash (Optional)</label>
+                  <input
+                    type="text"
+                    value={paymentProof.txHash}
+                    onChange={(e) => setPaymentProof({...paymentProof, txHash: e.target.value})}
+                    placeholder="Enter your transaction hash"
+                    style={styles.input}
+                  />
+                </div>
+
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Payment Proof (Optional)</label>
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => setPaymentProof({...paymentProof, proofFile: e.target.files[0]})}
+                    style={styles.fileInput}
+                  />
+                  <small style={styles.helperText}>
+                    Upload a screenshot or PDF of your payment confirmation
+                  </small>
+                </div>
+
+                <div style={styles.modalActions}>
+                  <button 
+                    onClick={() => {
+                      setCryptoPaymentModal(false);
+                      setPaymentProof({ txHash: '', proofFile: null });
+                    }} 
+                    style={styles.cancelButton}
+                    disabled={submittingProof}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSubmitCryptoPayment}
+                    disabled={submittingProof || (!paymentProof.txHash && !paymentProof.proofFile)}
+                    style={{
+                      ...styles.submitButton,
+                      opacity: submittingProof || (!paymentProof.txHash && !paymentProof.proofFile) ? 0.5 : 1
+                    }}
+                  >
+                    {submittingProof ? 'Submitting...' : 'Submit Payment Proof'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
