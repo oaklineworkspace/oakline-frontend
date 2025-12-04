@@ -553,10 +553,14 @@ function DashboardContent() {
 
           // Build description based on payment type
           let description = '';
-          if (isDeposit) {
-            // Get crypto details from metadata
-            const cryptoSymbol = payment.metadata?.crypto_symbol || payment.metadata?.symbol || 'CRYPTO';
-            const networkType = payment.metadata?.network_type || 'Network';
+          if (payment.is_deposit) {
+            // Extract crypto details from metadata if available
+            const cryptoType = payment.metadata?.crypto_type || 'Cryptocurrency';
+            const networkType = payment.metadata?.network_type || '';
+            const cryptoSymbol = cryptoType === 'Bitcoin' ? 'BTC' :
+                               cryptoType === 'Ethereum' ? 'ETH' :
+                               cryptoType === 'Tether USD' ? 'USDT' :
+                               cryptoType === 'USD Coin' ? 'USDC' : cryptoType;
 
             if (payment.deposit_method === 'crypto') {
               description = `Loan 10% Collateral Deposit via ${cryptoSymbol} (${networkType})`;
@@ -573,6 +577,15 @@ function DashboardContent() {
             description = `Loan Late Fee - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
           } else if (payment.payment_type === 'auto_payment') {
             description = `Auto Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
+          } else if (payment.deposit_method === 'crypto' && payment.metadata?.crypto_type) {
+            // Regular loan payment made with crypto
+            const cryptoType = payment.metadata.crypto_type;
+            const networkType = payment.metadata.network_type || '';
+            const cryptoSymbol = cryptoType === 'Bitcoin' ? 'BTC' :
+                               cryptoType === 'Ethereum' ? 'ETH' :
+                               cryptoType === 'Tether USD' ? 'USDT' :
+                               cryptoType === 'USD Coin' ? 'USDC' : cryptoType;
+            description = `Loan Payment via ${cryptoSymbol} (${networkType}) - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
           } else {
             description = `Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
           }
@@ -2169,8 +2182,8 @@ function DashboardContent() {
             <div style={{
               fontSize: '2rem',
               fontWeight: '700',
-              color: (selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('deposit') ||
-                     (selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('credit') ?
+              color: ((selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('deposit') ||
+                     (selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('credit')) ?
                      '#059669' : '#dc2626'
             }}>
               {((selectedTransaction.type || selectedTransaction.transaction_type || '').toLowerCase().includes('deposit') ||
@@ -3655,7 +3668,7 @@ cardDetailsToggleButton: {
   borderRadius: '8px',
   padding: '0.6rem 1.2rem',
   cursor: 'pointer',
-  fontSize: '0.85rem',
+    fontSize: '0.85rem',
   fontWeight: '600',
   transition: 'all 0.2s',
   display: 'flex',

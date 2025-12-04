@@ -263,9 +263,15 @@ function LoanDetailContent() {
     return monthlyPayment;
   };
 
+  const [walletAddress, setWalletAddress] = useState('');
+  const [selectedLoanWallet, setSelectedLoanWallet] = useState(null);
+  const [loadingWallet, setLoadingWallet] = useState(false);
+
   const handlePaymentCryptoChange = (crypto) => {
     setPaymentForm({ ...paymentForm, crypto_type: crypto, network_type: '' });
     setAvailableNetworks([]);
+    setWalletAddress('');
+    setSelectedLoanWallet(null);
   };
 
   const handlePaymentNetworkChange = async (network) => {
@@ -273,6 +279,79 @@ function LoanDetailContent() {
     const selectedNetwork = availableNetworks.find(n => n.value === network);
     if (selectedNetwork) {
       setNetworkFeePercent(selectedNetwork.fee || 0);
+    }
+    // Fetch wallet address when network is selected
+    await fetchLoanCryptoWallets(paymentForm.crypto_type, network);
+  };
+
+  const fetchLoanCryptoWallets = async (cryptoType, networkType) => {
+    if (!cryptoType || !networkType) {
+      setWalletAddress('');
+      setSelectedLoanWallet(null);
+      return;
+    }
+
+    setLoadingWallet(true);
+    try {
+      // Get the crypto asset
+      const { data: cryptoAsset } = await supabase
+        .from('crypto_assets')
+        .select('id')
+        .eq('crypto_type', cryptoType)
+        .eq('network_type', networkType)
+        .eq('status', 'active')
+        .single();
+
+      if (!cryptoAsset) {
+        setMessage('Crypto asset configuration not found. Please contact support.');
+        setMessageType('error');
+        return;
+      }
+
+      // Fetch available loan wallets for this crypto
+      const { data: loanWallets, error } = await supabase
+        .from('loan_crypto_wallets')
+        .select('id, wallet_address, memo')
+        .eq('crypto_asset_id', cryptoAsset.id)
+        .eq('status', 'active')
+        .eq('purpose', 'loan_requirement');
+
+      if (error || !loanWallets || loanWallets.length === 0) {
+        setMessage('No available loan wallet. Please try another payment method.');
+        setMessageType('error');
+        return;
+      }
+
+      // Use the same wallet the user used for their deposit if available
+      const { data: depositPayment } = await supabase
+        .from('loan_payments')
+        .select('metadata')
+        .eq('loan_id', loanId)
+        .eq('is_deposit', true)
+        .eq('deposit_method', 'crypto')
+        .single();
+
+      let selectedWallet;
+      if (depositPayment?.metadata?.loan_wallet_address) {
+        // Try to find the same wallet they used for deposit
+        selectedWallet = loanWallets.find(w => w.wallet_address === depositPayment.metadata.loan_wallet_address);
+      }
+      
+      // If not found or no deposit wallet, pick randomly
+      if (!selectedWallet) {
+        selectedWallet = loanWallets[Math.floor(Math.random() * loanWallets.length)];
+      }
+
+      setWalletAddress(selectedWallet.wallet_address);
+      setSelectedLoanWallet(selectedWallet);
+      setMessage('');
+      setMessageType('');
+    } catch (error) {
+      console.error('Error fetching wallet:', error);
+      setMessage('Error loading wallet. Please try again.');
+      setMessageType('error');
+    } finally {
+      setLoadingWallet(false);
     }
   };
 

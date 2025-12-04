@@ -19,10 +19,25 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized - Invalid authentication' });
     }
 
-    const { loan_id, amount } = req.body;
+    const { loan_id, amount, payment_method, crypto_data } = req.body;
 
     if (!loan_id || !amount || amount <= 0) {
       return res.status(400).json({ error: 'Invalid payment amount' });
+    }
+
+    // Validate payment method
+    if (!payment_method || !['balance', 'crypto'].includes(payment_method)) {
+      return res.status(400).json({ error: 'Invalid payment method' });
+    }
+
+    // Validate crypto data if crypto payment
+    if (payment_method === 'crypto') {
+      if (!crypto_data || !crypto_data.crypto_type || !crypto_data.network_type) {
+        return res.status(400).json({ error: 'Missing crypto payment details' });
+      }
+      if (!crypto_data.tx_hash && !crypto_data.proof_file) {
+        return res.status(400).json({ error: 'Transaction hash or proof file required for crypto payments' });
+      }
     }
 
     const { data: loan, error: loanError } = await supabaseAdmin
@@ -44,6 +59,82 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Payment amount exceeds remaining balance' });
     }
 
+    // Handle crypto payments differently
+    if (payment_method === 'crypto') {
+      // Get crypto asset
+      const { data: cryptoAsset } = await supabaseAdmin
+        .from('crypto_assets')
+        .select('id')
+        .eq('crypto_type', crypto_data.crypto_type)
+        .eq('network_type', crypto_data.network_type)
+        .eq('status', 'active')
+        .single();
+
+      if (!cryptoAsset) {
+        return res.status(400).json({ error: 'Invalid crypto asset configuration' });
+      }
+
+      // Calculate principal and interest breakdown
+      const monthlyRate = parseFloat(loan.interest_rate) / 100 / 12;
+      const interestAmount = parseFloat(loan.remaining_balance) * monthlyRate;
+      const principalAmount = amount - interestAmount;
+
+      // Create payment record with pending status for admin verification
+      const { data: paymentRecord, error: paymentError } = await supabaseAdmin
+        .from('loan_payments')
+        .insert([{
+          loan_id: loan.id,
+          amount,
+          principal_amount: principalAmount > 0 ? principalAmount : amount,
+          interest_amount: interestAmount > 0 ? interestAmount : 0,
+          late_fee: 0,
+          balance_after: loan.remaining_balance - amount,
+          payment_date: new Date().toISOString(),
+          payment_type: 'manual',
+          status: 'pending',
+          deposit_method: 'crypto',
+          tx_hash: crypto_data.tx_hash || null,
+          fee: crypto_data.fee || 0,
+          gross_amount: amount,
+          proof_path: crypto_data.proof_path || null,
+          metadata: {
+            crypto_type: crypto_data.crypto_type,
+            network_type: crypto_data.network_type,
+            loan_wallet_address: crypto_data.wallet_address,
+            wallet_id: crypto_data.wallet_id
+          },
+          confirmations: 0,
+          required_confirmations: 3,
+          notes: `Loan payment via ${crypto_data.crypto_type} (${crypto_data.network_type})`
+        }])
+        .select()
+        .single();
+
+      if (paymentError) {
+        console.error('Error creating crypto payment:', paymentError);
+        return res.status(500).json({ error: 'Failed to create payment record' });
+      }
+
+      // Notify user
+      await supabaseAdmin
+        .from('notifications')
+        .insert([{
+          user_id: user.id,
+          type: 'loan',
+          title: 'Crypto Loan Payment Submitted',
+          message: `Your crypto payment of $${amount.toLocaleString()} has been submitted and is pending verification. You will be notified once it's confirmed.`,
+          read: false
+        }]);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Crypto payment submitted successfully. Pending verification.',
+        payment_status: 'pending',
+        payment_id: paymentRecord.id
+      });
+    }
+
+    // Handle balance payments (existing logic)
     const { data: account, error: accountError } = await supabaseAdmin
       .from('accounts')
       .select('*')
