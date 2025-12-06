@@ -603,7 +603,7 @@ function DashboardContent() {
                                cryptoType === 'Tether USD' ? 'USDT' :
                                cryptoType === 'USD Coin' ? 'USDC' : cryptoType;
             description = `Loan Payment via ${cryptoSymbol} (${networkType}) - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
-          } else if (payment.deposit_method === 'balance' || !payment.deposit_method) {
+          } else if (payment.deposit_method === 'balance' || payment.payment_method === 'account_balance' || !payment.deposit_method) {
             // Regular loan payment made with account balance
             description = `Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
           } else {
@@ -636,8 +636,10 @@ function DashboardContent() {
             confirmations: payment.confirmations,
             required_confirmations: payment.required_confirmations,
             deposit_method: payment.deposit_method,
+            payment_method: payment.payment_method,
             metadata: payment.metadata,
             notes: payment.notes,
+            account_id: payment.account_id,
             accounts: payment.accounts || null // Include account details for payments made via account balance
           };
         });
@@ -2333,7 +2335,7 @@ function DashboardContent() {
             </span>
           </div>
 
-          {!((selectedTransaction.transaction_type === 'loan_deposit' || selectedTransaction.transaction_type === 'loan_payment') && selectedTransaction.transaction_data?.deposit_method === 'crypto') && (
+          {!((selectedTransaction.transaction_type === 'loan_deposit' || selectedTransaction.transaction_type === 'loan_payment') && (selectedTransaction.transaction_data?.deposit_method === 'crypto' || selectedTransaction.deposit_method === 'crypto')) && (
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
