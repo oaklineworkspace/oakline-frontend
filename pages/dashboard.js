@@ -133,6 +133,7 @@ function DashboardContent() {
             `)
             .in('account_id', accountIds)
             .gte('created_at', thirtyDaysAgo.toISOString())
+            .neq('description', 'Loan Payment - Pending Admin Approval')
             .order('created_at', { ascending: false })
             .limit(10)
         );
@@ -542,11 +543,17 @@ function DashboardContent() {
         console.log('Fetched loan payments with joined data:', loanPaymentsData.length);
       }
 
-      // Format loan payments as transactions
+      // Filter out old pending transactions and format loan payments as transactions
       if (loanPaymentsData && loanPaymentsData.length > 0) {
         console.log('Formatting loan payments for display:', loanPaymentsData);
         console.log('Loan payments raw data:', JSON.stringify(loanPaymentsData, null, 2));
-        const formattedLoanPayments = loanPaymentsData.map(payment => {
+        const formattedLoanPayments = loanPaymentsData
+          .filter(payment => {
+            // Filter out old-style pending admin approval transactions
+            // These should now be shown from the loan_payments table with proper status
+            return payment.status !== 'pending_admin_approval';
+          })
+          .map(payment => {
           // Determine if this is a deposit or regular payment
           const isDeposit = payment.is_deposit === true || payment.payment_type === 'deposit';
 
