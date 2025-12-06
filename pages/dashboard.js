@@ -515,7 +515,7 @@ function DashboardContent() {
 
       let loanPaymentsData = [];
 
-      // Fetch loan payments with joined loan data directly
+      // Fetch loan payments with joined loan data and account data directly
       const { data: paymentsData, error: paymentsError } = await supabase
         .from('loan_payments')
         .select(`
@@ -525,7 +525,13 @@ function DashboardContent() {
             loan_type,
             status,
             remaining_balance,
-            principal
+            principal,
+            account_id
+          ),
+          accounts:account_id (
+            id,
+            account_number,
+            account_type
           )
         `)
         .eq('loans.user_id', userId)
@@ -617,7 +623,8 @@ function DashboardContent() {
             required_confirmations: payment.required_confirmations,
             deposit_method: payment.deposit_method,
             metadata: payment.metadata,
-            notes: payment.notes
+            notes: payment.notes,
+            accounts: payment.accounts || null // Include account details for payments made via account balance
           };
         });
         console.log('Formatted loan payments:', formattedLoanPayments);
