@@ -356,6 +356,7 @@ export default function TransactionsHistory() {
       case 'completed':
         return { bg: '#d1fae5', color: '#047857', fontWeight: '600' };
       case 'pending':
+      case 'hold':
         return { bg: '#fef3c7', color: '#b45309', fontWeight: '600' };
       case 'failed':
         return { bg: '#fee2e2', color: '#b91c1c', fontWeight: '700' };
@@ -366,6 +367,10 @@ export default function TransactionsHistory() {
       default:
         return { bg: '#e0e7ff', color: '#4338ca', fontWeight: '600' };
     }
+  };
+
+  const getDisplayStatus = (status) => {
+    return status?.toLowerCase() === 'hold' ? 'Pending' : status;
   };
 
   const getFilteredTransactions = () => {
@@ -547,7 +552,7 @@ export default function TransactionsHistory() {
                   <div style={styles.transactionRight}>
                     <div style={{
                       ...styles.transactionAmount,
-                      color: status?.toLowerCase() === 'pending' ? '#d97706' :
+                      color: (status?.toLowerCase() === 'pending' || status?.toLowerCase() === 'hold') ? '#d97706' :
                              status?.toLowerCase() === 'cancelled' ? '#6b7280' :
                              status?.toLowerCase() === 'reversed' ? '#6b7280' :
                              (isCredit ? '#047857' : '#b91c1c'),
@@ -561,7 +566,7 @@ export default function TransactionsHistory() {
                       color: statusColors.color,
                       fontWeight: statusColors.fontWeight
                     }}>
-                      {status}
+                      {getDisplayStatus(status)}
                     </div>
                   </div>
                 </div>
@@ -613,7 +618,7 @@ export default function TransactionsHistory() {
                   ...styles.statusBadge,
                   ...getStatusColor(selectedTransaction.status || 'completed')
                 }}>
-                  {selectedTransaction.status || 'completed'}
+                  {getDisplayStatus(selectedTransaction.status || 'completed')}
                 </span>
               </div>
 

@@ -92,6 +92,7 @@ export default async function handler(req, res) {
       .from('loan_payments')
       .insert([{
         loan_id: loan_id,
+        account_id: account_id,
         amount: parseFloat(amount),
         principal_amount: principalAmount > 0 ? principalAmount : parseFloat(amount),
         interest_amount: interestAmount > 0 ? interestAmount : 0,
@@ -102,6 +103,7 @@ export default async function handler(req, res) {
         status: 'pending',
         processed_by: user.id,
         reference_number: referenceNumber,
+        deposit_method: 'balance',
         notes: `Payment submitted by user. Awaiting admin confirmation.`
       }])
       .select()

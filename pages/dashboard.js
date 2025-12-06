@@ -1603,6 +1603,7 @@ function DashboardContent() {
                   case 'completed':
                     return { bg: '#d1fae5', color: '#059669' };
                   case 'pending':
+                  case 'hold':
                     return { bg: '#fef3c7', color: '#f59e0b' };
                   case 'failed':
                     return { bg: '#fee2e2', color: '#dc2626' };
@@ -1616,6 +1617,7 @@ function DashboardContent() {
               };
 
               const statusColors = getStatusColor(status);
+              const displayStatus = status?.toLowerCase() === 'hold' ? 'Pending' : status;
 
               return (
                 <div
@@ -1682,7 +1684,7 @@ function DashboardContent() {
                   <div style={styles.transactionRight}>
                     <div style={{
                       ...styles.transactionAmount,
-                      color: status?.toLowerCase() === 'pending' ? '#f59e0b' :
+                      color: (status?.toLowerCase() === 'pending' || status?.toLowerCase() === 'hold') ? '#f59e0b' :
                              status?.toLowerCase() === 'cancelled' ? '#6b7280' :
                              status?.toLowerCase() === 'reversed' ? '#6b7280' :
                              (isCredit ? '#059669' : '#dc2626')
@@ -1695,7 +1697,7 @@ function DashboardContent() {
                       backgroundColor: statusColors.bg,
                       color: statusColors.color
                     }}>
-                      {status}
+                      {displayStatus}
                     </div>
                   </div>
                 </div>
@@ -2276,7 +2278,7 @@ function DashboardContent() {
                 const status = (selectedTransaction.status || 'completed').toLowerCase();
                 if (status === 'completed' || status === 'approved' || status === 'confirmed') {
                   return { color: '#065f46', backgroundColor: '#d1fae5', padding: '0.25rem 0.75rem', borderRadius: '12px' };
-                } else if (status === 'pending' || status === 'awaiting_confirmations' || status === 'processing') {
+                } else if (status === 'pending' || status === 'awaiting_confirmations' || status === 'processing' || status === 'hold') {
                   return { color: '#92400e', backgroundColor: '#fef3c7', padding: '0.25rem 0.75rem', borderRadius: '12px' };
                 } else if (status === 'failed' || status === 'rejected') {
                   return { color: '#991b1b', backgroundColor: '#fee2e2', padding: '0.25rem 0.75rem', borderRadius: '12px' };
@@ -2284,7 +2286,7 @@ function DashboardContent() {
                 return { color: '#4b5563' };
               })()
             }}>
-              {(selectedTransaction.status || 'Completed').replace(/_/g, ' ').toUpperCase()}
+              {(selectedTransaction.status?.toLowerCase() === 'hold' ? 'PENDING' : (selectedTransaction.status || 'Completed').replace(/_/g, ' ').toUpperCase())}
             </span>
           </div>
 
