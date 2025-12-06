@@ -568,7 +568,7 @@ function DashboardContent() {
               description = `Loan 10% Collateral Deposit via ${cryptoSymbol} (${networkType})`;
             } else if (payment.deposit_method === 'bank_transfer') {
               description = `Loan 10% Collateral Deposit via Bank Transfer`;
-            } else if (payment.deposit_method === 'account_balance') {
+            } else if (payment.deposit_method === 'account_balance' || payment.deposit_method === 'balance') {
               description = `Loan 10% Collateral Deposit via Account Balance`;
             } else {
               description = `Loan 10% Collateral Deposit`;
@@ -588,6 +588,9 @@ function DashboardContent() {
                                cryptoType === 'Tether USD' ? 'USDT' :
                                cryptoType === 'USD Coin' ? 'USDC' : cryptoType;
             description = `Loan Payment via ${cryptoSymbol} (${networkType}) - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
+          } else if (payment.deposit_method === 'balance' || !payment.deposit_method) {
+            // Regular loan payment made with account balance
+            description = `Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
           } else {
             description = `Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
           }

@@ -182,7 +182,8 @@ export default async function handler(req, res) {
         payment_date: new Date().toISOString(),
         payment_type: 'manual',
         status: 'completed',
-        processed_by: user.id
+        processed_by: user.id,
+        deposit_method: 'balance'
       }])
       .select()
       .single();
@@ -249,15 +250,11 @@ export default async function handler(req, res) {
         amount: -amount,
         balance_before: originalAccountBalance,
         balance_after: newBalance,
-        description: `Loan payment for ${loan.loan_type?.replace(/_/g, ' ')} loan`,
+        description: `Loan Payment - ${loan.loan_type?.replace(/_/g, ' ').toUpperCase()}`,
         status: 'completed',
         reference: `LOAN-PAY-${loan.id.substring(0, 8)}`,
         created_at: new Date().toISOString()
       }]);
-
-      if (transactionError) {
-        console.error('Error creating loan payment transaction:', transactionError);
-      }
 
     if (transactionError) {
       console.error('Error creating transaction record:', transactionError);
