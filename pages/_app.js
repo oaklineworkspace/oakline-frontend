@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { AuthProvider } from '../contexts/AuthContext';
 import { LanguageProvider } from '../contexts/LanguageContext';
+import { SessionTimeoutProvider } from '../contexts/SessionTimeoutContext';
 import StickyFooter from '../components/StickyFooter';
 
 
@@ -24,10 +25,12 @@ const App = function App({ Component, pageProps }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <LanguageProvider>
-          <Component {...pageProps} />
-          <StickyFooter />
-        </LanguageProvider>
+        <SessionTimeoutProvider>
+          <LanguageProvider>
+            <Component {...pageProps} />
+            <StickyFooter />
+          </LanguageProvider>
+        </SessionTimeoutProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

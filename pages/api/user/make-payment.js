@@ -117,7 +117,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to record payment' });
     }
 
-    // Create transaction record with hold status (amount should be positive)
+    // Create transaction record with pending status (amount should be positive)
     const { data: transaction, error: transactionError } = await supabaseAdmin
       .from('transactions')
       .insert([{
@@ -128,7 +128,7 @@ export default async function handler(req, res) {
         balance_before: parseFloat(account.balance),
         balance_after: newAccountBalance,
         description: `Loan Payment - Pending Admin Approval`,
-        status: 'hold',
+        status: 'pending',
         reference: referenceNumber,
         created_at: new Date().toISOString()
       }])
