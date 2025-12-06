@@ -2330,7 +2330,7 @@ function DashboardContent() {
             </span>
           </div>
 
-          {!(selectedTransaction.transaction_type === 'loan_deposit' && selectedTransaction.transaction_data?.deposit_method === 'crypto') && (
+          {!((selectedTransaction.transaction_type === 'loan_deposit' || selectedTransaction.transaction_type === 'loan_payment') && selectedTransaction.transaction_data?.deposit_method === 'crypto') && (
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -2346,8 +2346,8 @@ function DashboardContent() {
             </div>
           )}
 
-          {/* Loan Deposit Payment Method Details */}
-          {selectedTransaction.transaction_type === 'loan_deposit' && selectedTransaction.transaction_data && (
+          {/* Loan Payment Payment Method Details */}
+          {(selectedTransaction.transaction_type === 'loan_deposit' || selectedTransaction.transaction_type === 'loan_payment') && selectedTransaction.transaction_data && (
             <>
               <div style={{
                 marginTop: '1.5rem',
@@ -2369,7 +2369,8 @@ function DashboardContent() {
                   {selectedTransaction.transaction_data?.deposit_method === 'crypto' ? '🪙 Cryptocurrency' :
                    selectedTransaction.transaction_data?.deposit_method === 'balance' ? '💰 Account Balance' :
                    selectedTransaction.transaction_data?.deposit_method === 'account_balance' ? '💰 Account Balance' :
-                   'Cryptocurrency'}
+                   !selectedTransaction.transaction_data?.deposit_method ? '💰 Account Balance' :
+                   'Account Balance'}
                 </span>
               </div>
 
@@ -2416,12 +2417,17 @@ function DashboardContent() {
                 </>
               )}
 
-              {(selectedTransaction.transaction_data?.deposit_method === 'balance' ||
-                selectedTransaction.transaction_data?.deposit_method === 'account_balance') &&
-               selectedTransaction.accounts && (
+              {((selectedTransaction.transaction_data?.deposit_method === 'balance' ||
+                 selectedTransaction.transaction_data?.deposit_method === 'account_balance' ||
+                 !selectedTransaction.transaction_data?.deposit_method) &&
+                selectedTransaction.accounts) && (
                 <div style={styles.receiptRow}>
                   <span style={styles.receiptLabel}>Account Number</span>
-                  <span style={styles.receiptValue}>
+                  <span style={{
+                    ...styles.receiptValue,
+                    fontFamily: 'monospace',
+                    fontSize: '0.9rem'
+                  }}>
                     {selectedTransaction.accounts.account_number || 'N/A'}
                   </span>
                 </div>
