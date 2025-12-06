@@ -550,8 +550,13 @@ function DashboardContent() {
           // Determine if this is a deposit or regular payment
           const isDeposit = payment.is_deposit === true || payment.payment_type === 'deposit';
 
-          // Get loan details
-          const loanType = payment.loans?.loan_type || 'Loan';
+          // Get loan details - fallback to extracting from metadata if loans data not joined
+          let loanType = payment.loans?.loan_type || 'PERSONAL LOAN';
+          
+          // If no loan type from join, try to extract from transaction description or reference
+          if (!payment.loans?.loan_type && payment.metadata?.loan_type) {
+            loanType = payment.metadata.loan_type;
+          }
 
           // Build description based on payment type
           let description = '';
