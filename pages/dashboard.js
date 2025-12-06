@@ -523,7 +523,8 @@ function DashboardContent() {
             status,
             remaining_balance,
             principal,
-            account_id
+            account_id,
+            user_id
           ),
           accounts:account_id (
             id,
@@ -531,7 +532,6 @@ function DashboardContent() {
             account_type
           )
         `)
-        .eq('loans.user_id', userId)
         .gte('created_at', thirtyDaysAgoForLoans.toISOString())
         .order('created_at', { ascending: false })
         .limit(15);
@@ -539,7 +539,10 @@ function DashboardContent() {
       if (paymentsError) {
         console.error('Error fetching loan payments:', paymentsError);
       } else {
-        loanPaymentsData = paymentsData || [];
+        // Filter to only include payments for the current user's loans
+        loanPaymentsData = (paymentsData || []).filter(payment => 
+          payment.loans?.user_id === userId
+        );
         console.log('Fetched loan payments with joined data:', loanPaymentsData.length);
       }
 
