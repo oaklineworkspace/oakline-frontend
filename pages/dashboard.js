@@ -38,15 +38,11 @@ function DashboardContent() {
   const [message, setMessage] = useState(''); // State for messages
   const [error, setError] = useState(null); // State for errors
 
-  const checkUser = () => { // Renamed from useEffect's callback for clarity
+  useEffect(() => {
     if (!user) {
       router.push('/login');
     }
-  };
-
-  useEffect(() => {
-    checkUser();
-  }, [user]);
+  }, [user, router]);
 
   // Load dashboard data when user is available
   useEffect(() => {
@@ -3076,7 +3072,7 @@ cardSubtext: {
 },
 primaryBalanceCard: {
     gridColumn: 'span 1',
-    backgroundColor: '#1a365d',
+    background: 'linear-gradient(135deg, #1a365d 0%, #2c5a87 100%)',
     borderRadius: '16px',
     padding: '2rem',
     color: 'white',
