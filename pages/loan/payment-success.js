@@ -26,15 +26,6 @@ function PaymentSuccessContent() {
   return (
     <div style={styles.container}>
       <div style={styles.successCard}>
-        <div style={styles.iconContainer}>
-          <div style={styles.checkmark}>✓</div>
-        </div>
-
-        <h1 style={styles.title}>Payment Submitted Successfully!</h1>
-        <p style={styles.subtitle}>
-          Your loan payment has been received and is being processed. You will receive confirmation once the transaction is complete.
-        </p>
-
         <div style={styles.receiptContainer}>
           <div style={styles.receiptHeader}>
             <h2 style={styles.receiptTitle}>Payment Receipt</h2>
@@ -102,6 +93,15 @@ function PaymentSuccessContent() {
             </div>
           </div>
         </div>
+
+        <div style={styles.iconContainer}>
+          <div style={styles.checkmark}>✓</div>
+        </div>
+
+        <h1 style={styles.title}>Payment Submitted Successfully!</h1>
+        <p style={styles.subtitle}>
+          Your loan payment has been received and is being processed. You will receive confirmation once the transaction is complete.
+        </p>
 
         <div style={styles.actions}>
           <button onClick={printReceipt} style={styles.printButton}>

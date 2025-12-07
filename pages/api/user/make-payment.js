@@ -149,7 +149,7 @@ export default async function handler(req, res) {
         user_id: user.id,
         type: 'loan',
         title: 'Loan Payment Submitted',
-        message: `Your loan payment of $${parseFloat(amount).toLocaleString()} has been submitted and is pending admin approval. Reference: ${referenceNumber}`,
+        message: `Your loan payment of $${parseFloat(amount).toLocaleString()} has been submitted and is being processed. Reference: ${referenceNumber}`,
         read: false
       }]);
 
@@ -184,7 +184,7 @@ export default async function handler(req, res) {
             </h1>
 
             <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
-              Dear ${userName}, your loan payment has been submitted and is pending admin approval.
+              Dear ${userName}, thank you for your loan payment. Your transaction has been submitted and is currently being processed by our Loan Department.
             </p>
 
             <div style="background-color: #f7fafc; border-radius: 12px; padding: 24px; margin: 24px 0;">
@@ -241,7 +241,7 @@ export default async function handler(req, res) {
     try {
       await sendEmail({
         to: userEmail,
-        subject: '✅ Loan Payment Submitted - Pending Approval',
+        subject: '✅ Loan Payment Confirmation - Oakline Bank',
         html: emailHtml,
         emailType: 'loans',
         userId: user.id
@@ -299,7 +299,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: 'Payment submitted successfully. Awaiting admin approval.',
+      message: 'Payment submitted successfully. Your transaction is being processed.',
       payment: {
         id: paymentRecord.id,
         reference_number: paymentRecord.reference_number,
