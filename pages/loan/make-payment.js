@@ -303,6 +303,9 @@ function MakePaymentContent() {
         return;
       }
 
+      // Show processing banner
+      showToast('Processing your payment...', 'info');
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         showToast('Session expired. Please log in again.', 'error');
@@ -453,6 +456,17 @@ function MakePaymentContent() {
         <Link href={`/loan/${loanId}`} style={styles.backLink}>← Back to Loan Details</Link>
         <h1 style={styles.title}>Make Loan Payment</h1>
       </div>
+
+      {/* Processing Banner */}
+      {processing && (
+        <div style={styles.processingBanner}>
+          <div style={styles.processingSpinner}></div>
+          <div>
+            <strong>Processing Your Payment</strong>
+            <p style={{ margin: '4px 0 0 0', fontSize: '14px' }}>Please wait while we process your loan payment...</p>
+          </div>
+        </div>
+      )}
 
       {toast.show && (
         <div style={{
@@ -1082,6 +1096,26 @@ const styles = {
     boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
     zIndex: 1000,
     fontWeight: '500'
+  },
+  processingBanner: {
+    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    borderLeft: '4px solid #047857',
+    padding: '16px 20px',
+    borderRadius: '12px',
+    marginBottom: '20px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    color: '#ffffff',
+    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+  },
+  processingSpinner: {
+    width: '24px',
+    height: '24px',
+    border: '3px solid rgba(255,255,255,0.3)',
+    borderTop: '3px solid #ffffff',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite'
   },
   loadingText: {
     textAlign: 'center',

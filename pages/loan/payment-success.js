@@ -83,13 +83,19 @@ function PaymentSuccessContent() {
             )}
             <div style={styles.detailRow}>
               <span style={styles.detailLabel}>Status</span>
-              <span style={styles.statusPending}>Pending Approval</span>
+              <span style={payment_method === 'crypto' ? styles.statusPending : styles.statusCompleted}>
+                {payment_method === 'crypto' ? 'Pending Verification' : 'Completed'}
+              </span>
             </div>
           </div>
 
           <div style={styles.infoBox}>
             <p style={styles.infoText}>
-              ⏳ Your payment is currently being reviewed by our team. You will receive a confirmation email once it's approved. This typically takes 1-2 business days.
+              {payment_method === 'crypto' ? (
+                <>⏳ Your cryptocurrency payment is currently being verified by our team. You will receive a confirmation email once it's approved. This typically takes 1-2 business days.</>
+              ) : (
+                <>✅ Your payment has been successfully processed and applied to your loan. Your updated loan balance is now reflected in your account.</>
+              )}
             </p>
           </div>
 
@@ -240,6 +246,14 @@ const styles = {
     color: '#f59e0b',
     fontWeight: '700',
     backgroundColor: '#fffbeb',
+    padding: '0.25rem 0.75rem',
+    borderRadius: '6px'
+  },
+  statusCompleted: {
+    fontSize: '0.875rem',
+    color: '#10b981',
+    fontWeight: '700',
+    backgroundColor: '#d1fae5',
     padding: '0.25rem 0.75rem',
     borderRadius: '6px'
   },

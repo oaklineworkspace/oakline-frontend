@@ -258,6 +258,8 @@ function LoanDashboardContent() {
     // Redirect to the dedicated make-payment page
     if (selectedLoan && selectedLoan.id) {
       router.push(`/loan/make-payment?loanId=${selectedLoan.id}`);
+    } else {
+      setError('Please select a loan to make a payment');
     }
   };
 
