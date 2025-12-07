@@ -68,8 +68,8 @@ export default async function handler(req, res) {
           interest_amount: interestAmount,
           late_fee: lateFee,
           payment_type: payment.payment_type || 'manual',
-          // Ensure we use the actual payment_date, not created_at
-          payment_date: payment.payment_date
+          // Use payment_date if available, otherwise use created_at
+          payment_date: payment.payment_date || payment.created_at
         };
       });
 

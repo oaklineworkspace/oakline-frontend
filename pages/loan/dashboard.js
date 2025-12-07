@@ -65,6 +65,20 @@ function LoanDashboardContent() {
     }
   }, [user]);
 
+  // Refresh loans when returning to the page
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        fetchUserLoans();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user]);
+
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
