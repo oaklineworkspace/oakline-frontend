@@ -269,9 +269,8 @@ function MakePaymentContent() {
         return;
       }
 
-      // Allow payment up to remaining balance (including full payoff)
-      // Add a small tolerance for floating point comparison
-      if (amount > remainingBalance + 0.50) {
+      // Strict validation - payment cannot exceed remaining balance
+      if (amount > remainingBalance) {
         showToast(`Payment amount cannot exceed remaining balance of $${remainingBalance.toFixed(2)}`, 'error');
         setProcessing(false);
         return;
