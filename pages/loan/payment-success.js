@@ -83,19 +83,15 @@ function PaymentSuccessContent() {
             )}
             <div style={styles.detailRow}>
               <span style={styles.detailLabel}>Status</span>
-              <span style={payment_method === 'crypto' ? styles.statusPending : styles.statusCompleted}>
-                {payment_method === 'crypto' ? 'Pending Verification' : 'Completed'}
+              <span style={styles.statusPending}>
+                Pending
               </span>
             </div>
           </div>
 
           <div style={styles.infoBox}>
             <p style={styles.infoText}>
-              {payment_method === 'crypto' ? (
-                <>⏳ Your cryptocurrency payment is currently being verified by our team. You will receive a confirmation email once it's approved. This typically takes 1-2 business days.</>
-              ) : (
-                <>✅ Your payment has been successfully processed and applied to your loan. Your updated loan balance is now reflected in your account.</>
-              )}
+              ⏳ Your payment is currently being reviewed by our team. You will receive a confirmation email once it's approved.
             </p>
           </div>
 

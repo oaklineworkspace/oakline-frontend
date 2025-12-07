@@ -1685,17 +1685,6 @@ function DashboardContent() {
                           Hash: {tx.transaction_hash.substring(0, 16)}...
                         </div>
                       )}
-                      {(tx.transaction_type === 'loan_payment' || tx.transaction_type === 'loan_deposit') && (
-                        <>
-                          {tx.principal_amount && parseFloat(tx.principal_amount) > 0 && (
-                            <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.2rem' }}>
-                              Principal: ${parseFloat(tx.principal_amount).toFixed(2)}
-                              {tx.interest_amount && parseFloat(tx.interest_amount) > 0 && ` • Interest: $${parseFloat(tx.interest_amount).toFixed(2)}`}
-                              {tx.late_fee && parseFloat(tx.late_fee) > 0 && ` • Late Fee: $${parseFloat(tx.late_fee).toFixed(2)}`}
-                            </div>
-                          )}
-                        </>
-                      )}
                     </div>
                   </div>
                   <div style={styles.transactionRight}>

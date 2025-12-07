@@ -214,7 +214,7 @@ export default async function handler(req, res) {
 
             <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0;">
               <p style="color: #92400e; font-size: 14px; margin: 0;">
-                ⏳ Your payment is currently being reviewed by our team. You will receive a confirmation email once it's approved. This typically takes 1-2 business days.
+                ⏳ Your payment is currently being reviewed by our team. You will receive a confirmation email once it's approved.
               </p>
             </div>
           </div>
@@ -241,7 +241,9 @@ export default async function handler(req, res) {
       await sendEmail({
         to: userEmail,
         subject: '✅ Loan Payment Submitted - Pending Approval',
-        html: emailHtml
+        html: emailHtml,
+        emailType: 'loans',
+        userId: user.id
       });
     } catch (emailError) {
       console.error('Error sending email:', emailError);
