@@ -89,9 +89,9 @@ function PaymentSuccessContent() {
             </div>
           </div>
 
-          <div style={styles.infoBox}>
-            <p style={styles.infoText}>
-              ⏳ Your payment is currently being reviewed by our team. You will receive a confirmation email once it's approved.
+          <div style={styles.infoBoxGreen}>
+            <p style={styles.infoTextGreen}>
+              Your payment is being processed. You will receive an email confirmation once complete.
             </p>
           </div>
 
@@ -263,6 +263,19 @@ const styles = {
   infoText: {
     fontSize: '0.875rem',
     color: '#92400e',
+    margin: 0,
+    lineHeight: '1.6'
+  },
+  infoBoxGreen: {
+    backgroundColor: '#ecfdf5',
+    border: '1px solid #a7f3d0',
+    borderRadius: '8px',
+    padding: '1rem',
+    marginBottom: '1.5rem'
+  },
+  infoTextGreen: {
+    fontSize: '0.875rem',
+    color: '#065f46',
     margin: 0,
     lineHeight: '1.6'
   },

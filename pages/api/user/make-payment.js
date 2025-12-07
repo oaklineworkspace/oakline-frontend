@@ -203,7 +203,7 @@ export default async function handler(req, res) {
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; color: #64748b;">Status:</td>
-                  <td style="padding: 8px 0; color: #f59e0b; font-weight: 600; text-align: right;">Pending Approval</td>
+                  <td style="padding: 8px 0; color: #f59e0b; font-weight: 600; text-align: right;">Pending</td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; color: #64748b;">Loan Type:</td>
@@ -212,9 +212,9 @@ export default async function handler(req, res) {
               </table>
             </div>
 
-            <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; margin: 24px 0;">
-              <p style="color: #92400e; font-size: 14px; margin: 0;">
-                ⏳ Your payment is currently being reviewed by our team. You will receive a confirmation email once it's approved.
+            <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0;">
+              <p style="color: #065f46; font-size: 14px; margin: 0;">
+                Your payment is being processed. You will receive an email confirmation once complete.
               </p>
             </div>
           </div>
