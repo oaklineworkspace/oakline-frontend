@@ -76,6 +76,17 @@ export default async function handler(req, res) {
         };
       });
 
+    const summary = {
+      total_payments: enrichedPayments.length,
+      completed_payments: enrichedPayments.filter(p => p.status === 'completed').length,
+      pending_payments: enrichedPayments.filter(p => p.status === 'pending').length,
+      failed_payments: enrichedPayments.filter(p => p.status === 'failed').length,
+      total_paid: parseFloat(totalPaid.toFixed(2)),
+      total_principal_paid: parseFloat(totalPrincipalPaid.toFixed(2)),
+      total_interest_paid: parseFloat(totalInterestPaid.toFixed(2)),
+      total_late_fees: parseFloat(totalLateFees.toFixed(2))
+    };
+
     return res.status(200).json({
       success: true,
       loan_info: {
@@ -85,16 +96,7 @@ export default async function handler(req, res) {
         remaining_balance: parseFloat(loan.remaining_balance || 0),
         status: loan.status
       },
-      payment_summary: {
-        total_payments: enrichedPayments.length,
-        completed_payments: enrichedPayments.filter(p => p.status === 'completed').length,
-        pending_payments: enrichedPayments.filter(p => p.status === 'pending').length,
-        failed_payments: enrichedPayments.filter(p => p.status === 'failed').length,
-        total_paid: parseFloat(totalPaid.toFixed(2)),
-        total_principal_paid: parseFloat(totalPrincipalPaid.toFixed(2)),
-        total_interest_paid: parseFloat(totalInterestPaid.toFixed(2)),
-        total_late_fees: parseFloat(totalLateFees.toFixed(2))
-      },
+      payment_summary: summary,
       payments: enrichedPayments
     });
 
