@@ -103,7 +103,7 @@ export default async function handler(req, res) {
         status: 'pending',
         processed_by: user.id,
         reference_number: referenceNumber,
-        deposit_method: 'balance',
+        deposit_method: 'account_balance',
         notes: `Payment submitted by user. Awaiting admin confirmation.`
       }])
       .select()
