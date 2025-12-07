@@ -267,7 +267,7 @@ export default function MainMenu({ user }) {
                       <div style={styles.dropdownSection}>
                         <h4 style={styles.dropdownHeading}>💼 Loans & Credit</h4>
                         <Link href="/loan/dashboard" style={styles.dropdownLink}>💳 My Loan Dashboard</Link>
-                        <Link href="/loan" style={styles.dropdownLink}>📋 All My Loans</Link>
+                        <Link href="/loans" style={styles.dropdownLink}>📋 All My Loans</Link>
                         <Link href="/loans" style={styles.dropdownLink}>📊 Loans Overview</Link>
                         <Link href="/loan/apply" style={styles.dropdownLink}>➕ Apply for New Loan</Link>
                         <Link href="/loan/apply" style={styles.dropdownLink}>🏠 Home Mortgage</Link>

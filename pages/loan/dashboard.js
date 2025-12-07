@@ -84,8 +84,8 @@ function LoanDashboardContent() {
     style.innerHTML = `
       @media (max-width: 768px) {
         .loan-stats-grid {
-          grid-template-columns: 1fr !important;
-          gap: 1rem !important;
+          grid-template-columns: repeat(2, 1fr) !important;
+          gap: 0.75rem !important;
         }
         .loan-overview-grid {
           grid-template-columns: 1fr !important;
@@ -130,10 +130,27 @@ function LoanDashboardContent() {
           font-size: 1.5rem !important;
         }
         .loan-stat-card {
-          padding: 1rem !important;
+          padding: 0.75rem !important;
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          min-width: 0 !important;
         }
         .loan-stat-value {
-          font-size: 1.25rem !important;
+          font-size: 1rem !important;
+          word-break: break-word !important;
+          overflow-wrap: break-word !important;
+          max-width: 100% !important;
+        }
+        .loan-stat-label {
+          font-size: 0.7rem !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.03em !important;
+        }
+        .loan-stat-subtext {
+          font-size: 0.65rem !important;
+        }
+        .loan-stat-icon {
+          font-size: 1.5rem !important;
         }
         .loan-overview-card,
         .loan-tab-content {
@@ -145,15 +162,30 @@ function LoanDashboardContent() {
           width: calc(100% - 1rem) !important;
         }
       }
-      @media (max-width: 480px) {
+      @media (max-width: 420px) {
+        .loan-stats-grid {
+          grid-template-columns: repeat(2, 1fr) !important;
+          gap: 0.5rem !important;
+        }
         .loan-hero-title {
           font-size: 1.25rem !important;
         }
+        .loan-stat-card {
+          padding: 0.6rem !important;
+        }
         .loan-stat-icon {
-          font-size: 2rem !important;
+          font-size: 1.25rem !important;
+          margin-bottom: 0.25rem !important;
         }
         .loan-stat-value {
-          font-size: 1.1rem !important;
+          font-size: 0.9rem !important;
+          line-height: 1.2 !important;
+        }
+        .loan-stat-label {
+          font-size: 0.6rem !important;
+        }
+        .loan-stat-subtext {
+          font-size: 0.55rem !important;
         }
         .loan-overview-card {
           padding: 0.75rem !important;
@@ -445,46 +477,46 @@ Generated: ${new Date().toLocaleString()}
         {/* Stats Dashboard */}
         <div style={styles.statsGrid} className="loan-stats-grid">
           <div style={styles.statCard} className="loan-stat-card">
-            <div style={styles.statIcon}>📊</div>
+            <div style={styles.statIcon} className="loan-stat-icon">📊</div>
             <div style={styles.statContent}>
-              <div style={styles.statLabel}>Total Loans</div>
+              <div style={styles.statLabel} className="loan-stat-label">Total Loans</div>
               <div style={styles.statValue} className="loan-stat-value">{stats.totalLoans}</div>
-              <div style={styles.statSubtext}>{stats.activeLoans} active</div>
+              <div style={styles.statSubtext} className="loan-stat-subtext">{stats.activeLoans} active</div>
             </div>
           </div>
 
           <div style={styles.statCard} className="loan-stat-card">
-            <div style={styles.statIcon}>💰</div>
+            <div style={styles.statIcon} className="loan-stat-icon">💰</div>
             <div style={styles.statContent}>
-              <div style={styles.statLabel}>Total Borrowed</div>
+              <div style={styles.statLabel} className="loan-stat-label">Total Borrowed</div>
               <div style={styles.statValue} className="loan-stat-value">${stats.totalBorrowed.toLocaleString()}</div>
-              <div style={styles.statSubtext}>All time</div>
+              <div style={styles.statSubtext} className="loan-stat-subtext">All time</div>
             </div>
           </div>
 
           <div style={styles.statCard} className="loan-stat-card">
-            <div style={styles.statIcon}>📈</div>
+            <div style={styles.statIcon} className="loan-stat-icon">📈</div>
             <div style={styles.statContent}>
-              <div style={styles.statLabel}>Total Paid</div>
+              <div style={styles.statLabel} className="loan-stat-label">Total Paid</div>
               <div style={styles.statValue} className="loan-stat-value">${stats.totalPaid.toLocaleString()}</div>
-              <div style={styles.statSubtext}>Principal reduction</div>
+              <div style={styles.statSubtext} className="loan-stat-subtext">Principal reduction</div>
             </div>
           </div>
 
           <div style={styles.statCard} className="loan-stat-card">
-            <div style={styles.statIcon}>💳</div>
+            <div style={styles.statIcon} className="loan-stat-icon">💳</div>
             <div style={styles.statContent}>
-              <div style={styles.statLabel}>Remaining Balance</div>
+              <div style={styles.statLabel} className="loan-stat-label">Remaining Balance</div>
               <div style={styles.statValue} className="loan-stat-value">${stats.remainingBalance.toLocaleString()}</div>
-              <div style={styles.statSubtext}>Across all loans</div>
+              <div style={styles.statSubtext} className="loan-stat-subtext">Across all loans</div>
             </div>
           </div>
 
           {stats.nextPaymentDue && stats.remainingBalance > 0 && (
             <div style={{...styles.statCard, gridColumn: 'span 2'}} className="loan-stat-card">
-              <div style={styles.statIcon}>📅</div>
+              <div style={styles.statIcon} className="loan-stat-icon">📅</div>
               <div style={styles.statContent}>
-                <div style={styles.statLabel}>Next Payment Due</div>
+                <div style={styles.statLabel} className="loan-stat-label">Next Payment Due</div>
                 <div style={styles.statValue} className="loan-stat-value">
                   {new Date(stats.nextPaymentDue).toLocaleDateString('en-US', { 
                     year: 'numeric', 
@@ -492,7 +524,7 @@ Generated: ${new Date().toLocaleString()}
                     day: 'numeric' 
                   })}
                 </div>
-                <div style={styles.statSubtext}>
+                <div style={styles.statSubtext} className="loan-stat-subtext">
                   ${stats.nextPaymentAmount.toLocaleString()} • {getDaysUntilPayment(stats.nextPaymentDue)} days
                 </div>
               </div>
@@ -502,10 +534,7 @@ Generated: ${new Date().toLocaleString()}
 
         {/* Quick Actions */}
         <div style={styles.quickActions} className="loan-quick-actions">
-          <Link href="/loan/dashboard" style={styles.actionButton} className="loan-action-button">
-            📊 Loan Dashboard
-          </Link>
-          <Link href="/loan" style={styles.actionButton} className="loan-action-button">
+          <Link href="/loans" style={styles.actionButton} className="loan-action-button">
             📋 View All Loans
           </Link>
           <Link href="/loan/apply" style={styles.actionButton} className="loan-action-button">

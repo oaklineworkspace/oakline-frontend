@@ -610,7 +610,7 @@ function LoanDetailContent() {
       <div style={styles.container}>
         <div style={styles.emptyState}>
           <h2>Loan not found</h2>
-          <Link href="/loan" style={styles.backButton}>← Back to Loans</Link>
+          <Link href="/loans" style={styles.backButton}>← Back to Loans</Link>
         </div>
       </div>
     );
@@ -628,7 +628,7 @@ function LoanDetailContent() {
     <div style={styles.container}>
       <div style={styles.header} className="loan-detail-header">
         <div>
-          <Link href="/loan" style={styles.backLink}>← Back to Loans</Link>
+          <Link href="/loans" style={styles.backLink}>← Back to Loans</Link>
           <h1 style={styles.title}>{getLoanTypeLabel(loan.loan_type)}</h1>
           <p style={styles.subtitle}>Reference: {loan.loan_reference || loan.id.slice(0, 12)}</p>
         </div>
