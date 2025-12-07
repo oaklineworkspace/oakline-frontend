@@ -264,15 +264,22 @@ export default function PaymentHistory({ loanId }) {
                     <div style={styles.paymentNumber}>#{filteredPayments.length - index}</div>
                     <div>
                       <div style={styles.paymentDate}>
-                        {new Date(payment.payment_date).toLocaleString('en-US', {
-                          weekday: 'short',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          timeZoneName: 'short'
-                        })}
+                        {(() => {
+                          // Use created_at for the actual payment time, fallback to payment_date
+                          const paymentTime = payment.created_at || payment.payment_date;
+                          const date = new Date(paymentTime);
+                          const dateStr = date.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          });
+                          const timeStr = date.toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                          });
+                          return `${dateStr} – ${timeStr}`;
+                        })()}
                       </div>
                       {payment.payment_type && (
                         <div style={styles.paymentTypeLabel}>
