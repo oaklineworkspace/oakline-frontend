@@ -65,12 +65,13 @@ export default async function handler(req, res) {
     }
 
     // Reserve funds from user's account (optimistic deduction, pending admin approval)
+    const currentDateTime = new Date().toISOString();
     const newAccountBalance = parseFloat(account.balance) - paymentAmount;
     const { error: updateAccountError } = await supabaseAdmin
       .from('accounts')
       .update({ 
         balance: newAccountBalance,
-        updated_at: new Date().toISOString() 
+        updated_at: currentDateTime 
       })
       .eq('id', account_id);
 
@@ -86,6 +87,7 @@ export default async function handler(req, res) {
     const newRemainingBalance = remainingBalance - paymentAmount;
 
     // Create payment with pending status - admin must approve
+    const currentDateTime = new Date().toISOString();
     const referenceNumber = `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
     const { data: paymentRecord, error: paymentError } = await supabaseAdmin
@@ -98,7 +100,7 @@ export default async function handler(req, res) {
         interest_amount: interestAmount > 0 ? interestAmount : 0,
         late_fee: 0,
         balance_after: newRemainingBalance,
-        payment_date: new Date().toISOString(),
+        payment_date: currentDateTime,
         payment_type: payment_type || 'manual',
         status: 'pending',
         processed_by: user.id,
@@ -132,7 +134,7 @@ export default async function handler(req, res) {
         description: `Loan Payment - Pending Admin Approval`,
         status: 'pending',
         reference: referenceNumber,
-        created_at: new Date().toISOString()
+        created_at: currentDateTime
       }])
       .select()
       .single();
@@ -284,9 +286,9 @@ export default async function handler(req, res) {
         remaining_balance: newRemainingBalance,
         status: loanStatus,
         payments_made: totalPaymentsMade,
-        last_payment_date: new Date().toISOString(),
+        last_payment_date: currentDateTime,
         next_payment_date: nextPaymentDate,
-        updated_at: new Date().toISOString()
+        updated_at: currentDateTime
       })
       .eq('id', loan.id);
 
