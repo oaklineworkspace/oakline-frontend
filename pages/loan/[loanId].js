@@ -826,7 +826,7 @@ function LoanDetailContent() {
             </div>
           )}
 
-          {loan.status === 'active' && (
+          {(loan.status === 'active' || loan.status === 'approved') && (
             <div style={styles.actionButtons} className="loan-detail-actions">
               <Link href={`/loan/make-payment?loanId=${loan.id}`} style={{...styles.primaryButton, textDecoration: 'none', textAlign: 'center', display: 'block'}}>
                 Make Payment

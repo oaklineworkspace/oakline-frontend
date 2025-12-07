@@ -303,8 +303,6 @@ function MakePaymentContent() {
         return;
       }
 
-      // Show processing banner
-      showToast('Processing your payment...', 'info');
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
