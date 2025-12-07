@@ -108,9 +108,9 @@ export default function PaymentHistory({ loanId }) {
 
   // Apply sorting
   if (sortBy === 'date_desc') {
-    filteredPayments.sort((a, b) => new Date(b.payment_date || b.created_at) - new Date(a.payment_date || a.created_at));
+    filteredPayments.sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date));
   } else if (sortBy === 'date_asc') {
-    filteredPayments.sort((a, b) => new Date(a.payment_date || a.created_at) - new Date(b.payment_date || b.created_at));
+    filteredPayments.sort((a, b) => new Date(a.payment_date) - new Date(b.payment_date));
   } else if (sortBy === 'amount_desc') {
     filteredPayments.sort((a, b) => parseFloat(b.amount || 0) - parseFloat(a.amount || 0));
   } else if (sortBy === 'amount_asc') {
@@ -264,14 +264,13 @@ export default function PaymentHistory({ loanId }) {
                     <div style={styles.paymentNumber}>#{filteredPayments.length - index}</div>
                     <div>
                       <div style={styles.paymentDate}>
-                        {new Date(payment.payment_date || payment.created_at).toLocaleString('en-US', {
+                        {new Date(payment.payment_date).toLocaleString('en-US', {
                           weekday: 'short',
                           year: 'numeric',
                           month: 'long',
                           day: 'numeric',
                           hour: '2-digit',
                           minute: '2-digit',
-                          second: '2-digit',
                           timeZoneName: 'short'
                         })}
                       </div>

@@ -32,7 +32,7 @@ function PaymentSuccessContent() {
 
         <h1 style={styles.title}>Payment Submitted Successfully!</h1>
         <p style={styles.subtitle}>
-          Your loan payment has been submitted and is pending admin approval.
+          Your loan payment has been received and is being processed. You will receive confirmation once the transaction is complete.
         </p>
 
         <div style={styles.receiptContainer}>

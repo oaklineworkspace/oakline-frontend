@@ -82,10 +82,12 @@ export default async function handler(req, res) {
             <!-- Next Steps -->
             <p style="font-size: 15px; color: #4b5563; margin: 0 0 1.5rem 0; line-height: 1.6;">
               <strong>What happens next?</strong><br>
-              • Your application is under review by our loan team<br>
-              • We'll verify your information and assess your eligibility<br>
-              • Complete your security deposit to expedite the process<br>
-              • You'll receive updates via email as we progress
+              <ul>
+                <li style="margin-bottom: 8px;">Your application is being reviewed by our lending team</li>
+                <li style="margin-bottom: 8px;">Processing typically takes 24-48 business hours</li>
+                <li style="margin-bottom: 8px;">You'll receive email updates throughout the process</li>
+                <li>Track your application status in real-time via the loan dashboard</li>
+              </ul>
             </p>
 
             <!-- Security Notice -->
