@@ -137,7 +137,12 @@ export default function AmortizationSchedule({ loanId }) {
           <div style={styles.progressInfo}>
             <div style={styles.progressLabel}>Loan Progress</div>
             <div style={styles.progressStats}>
-              {loan_details.payments_made} of {loan_details.term_months} payments completed
+              {summary.payments_completed || loan_details.payments_made} of {loan_details.term_months} scheduled payments completed
+              {summary.payments_completed > loan_details.payments_made && (
+                <span style={{color: '#059669', fontWeight: '700', marginLeft: '8px'}}>
+                  ({summary.payments_completed - loan_details.payments_made} ahead)
+                </span>
+              )}
             </div>
           </div>
           <div style={styles.progressPercent}>{progressPercent}%</div>
@@ -189,7 +194,14 @@ export default function AmortizationSchedule({ loanId }) {
           <div style={styles.summaryIcon}>📅</div>
           <div>
             <div style={styles.summaryLabel}>Payments Remaining</div>
-            <div style={styles.summaryValue}>{loan_details.term_months - loan_details.payments_made}</div>
+            <div style={styles.summaryValue}>
+              {summary.payments_remaining || (loan_details.term_months - loan_details.payments_made)}
+            </div>
+            {loan_details.current_balance && loan_details.current_balance <= 0.01 && (
+              <div style={{fontSize: '0.75rem', color: '#10b981', fontWeight: '700', marginTop: '4px'}}>
+                ✓ Fully Paid
+              </div>
+            )}
           </div>
         </div>
       </div>

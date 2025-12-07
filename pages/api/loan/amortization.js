@@ -53,6 +53,7 @@ export default async function handler(req, res) {
     const monthlyRate = parseFloat(loan.interest_rate) / 100 / 12;
     const termMonths = parseInt(loan.term_months);
     const paymentsMade = parseInt(loan.payments_made || 0);
+    const currentRemainingBalance = parseFloat(loan.remaining_balance || 0);
 
     let monthlyPayment;
     if (monthlyRate === 0) {
@@ -62,17 +63,29 @@ export default async function handler(req, res) {
                        (Math.pow(1 + monthlyRate, termMonths) - 1);
     }
 
-    // Generate amortization schedule
+    // Calculate total amount paid so far
+    const totalPaid = payments && payments.length > 0
+      ? payments.reduce((sum, p) => sum + parseFloat(p.principal_amount || 0), 0)
+      : 0;
+
+    // Generate amortization schedule with actual payment tracking
     const schedule = [];
-    let remainingBalance = principal;
+    let simulatedBalance = principal;
+    let actualPaymentIndex = 0;
 
     for (let i = 1; i <= termMonths; i++) {
-      const interestPayment = remainingBalance * monthlyRate;
-      const principalPayment = monthlyPayment - interestPayment;
-      remainingBalance = Math.max(0, remainingBalance - principalPayment);
+      const interestPayment = simulatedBalance * monthlyRate;
+      const principalPayment = Math.min(monthlyPayment - interestPayment, simulatedBalance);
+      simulatedBalance = Math.max(0, simulatedBalance - principalPayment);
 
       const paymentDate = new Date(loan.start_date || loan.created_at);
       paymentDate.setMonth(paymentDate.getMonth() + i);
+
+      // Determine if this payment has been made based on actual payments and remaining balance
+      // If the user has paid more than expected, mark additional payments as paid
+      const principalPaidSoFar = principal - currentRemainingBalance;
+      const expectedPrincipalForPayment = principal - simulatedBalance;
+      const isPaid = expectedPrincipalForPayment <= principalPaidSoFar;
 
       schedule.push({
         payment_number: i,
@@ -80,13 +93,26 @@ export default async function handler(req, res) {
         payment_amount: parseFloat(monthlyPayment.toFixed(2)),
         principal_amount: parseFloat(principalPayment.toFixed(2)),
         interest_amount: parseFloat(interestPayment.toFixed(2)),
-        remaining_balance: parseFloat(remainingBalance.toFixed(2)),
-        is_paid: i <= paymentsMade
+        remaining_balance: parseFloat(simulatedBalance.toFixed(2)),
+        is_paid: isPaid
       });
+
+      // Stop generating future payments if balance is paid off
+      if (currentRemainingBalance <= 0.01 && isPaid) {
+        break;
+      }
     }
 
-    const totalInterest = (monthlyPayment * termMonths) - principal;
-    const totalPayments = monthlyPayment * termMonths;
+    // Calculate actual remaining payments
+    const remainingPayments = schedule.filter(s => !s.is_paid);
+    const paidPayments = schedule.filter(s => s.is_paid);
+    
+    const totalInterestPaid = paidPayments.reduce((sum, s) => sum + s.interest_amount, 0);
+    const totalInterestRemaining = remainingPayments.reduce((sum, s) => sum + s.interest_amount, 0);
+    const totalInterest = totalInterestPaid + totalInterestRemaining;
+    
+    const totalAmountPaid = principal - currentRemainingBalance + totalInterestPaid;
+    const totalAmountRemaining = currentRemainingBalance + totalInterestRemaining;
 
     return res.status(200).json({
       success: true,
@@ -97,13 +123,20 @@ export default async function handler(req, res) {
         interest_rate: parseFloat(loan.interest_rate),
         term_months: termMonths,
         payments_made: paymentsMade,
-        status: loan.status
+        remaining_payments: remainingPayments.length,
+        status: loan.status,
+        current_balance: parseFloat(currentRemainingBalance.toFixed(2))
       },
       schedule,
       summary: {
         total_interest: parseFloat(totalInterest.toFixed(2)),
-        total_payments: parseFloat(totalPayments.toFixed(2)),
-        monthly_payment: parseFloat(monthlyPayment.toFixed(2))
+        total_interest_paid: parseFloat(totalInterestPaid.toFixed(2)),
+        total_interest_remaining: parseFloat(totalInterestRemaining.toFixed(2)),
+        total_amount_paid: parseFloat(totalAmountPaid.toFixed(2)),
+        total_amount_remaining: parseFloat(totalAmountRemaining.toFixed(2)),
+        monthly_payment: parseFloat(monthlyPayment.toFixed(2)),
+        payments_completed: paidPayments.length,
+        payments_remaining: remainingPayments.length
       }
     });
 
