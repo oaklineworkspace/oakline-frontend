@@ -108,7 +108,7 @@ export default function AmortizationSchedule({ loanId }) {
     return null;
   }
 
-  const { loan_details, schedule, summary } = scheduleData;
+  const { loan_details, schedule, summary = {} } = scheduleData;
   
   let filteredSchedule = schedule;
   if (viewMode === 'upcoming') {
@@ -117,7 +117,7 @@ export default function AmortizationSchedule({ loanId }) {
     filteredSchedule = schedule.filter(s => s.is_paid);
   }
 
-  const progressPercent = ((loan_details.payments_made / loan_details.term_months) * 100).toFixed(1);
+  const progressPercent = loan_details?.term_months ? ((loan_details.payments_made / loan_details.term_months) * 100).toFixed(1) : '0.0';
 
   return (
     <div style={styles.container}>
@@ -137,10 +137,10 @@ export default function AmortizationSchedule({ loanId }) {
           <div style={styles.progressInfo}>
             <div style={styles.progressLabel}>Loan Progress</div>
             <div style={styles.progressStats}>
-              {summary.payments_completed || loan_details.payments_made} of {loan_details.term_months} scheduled payments completed
-              {summary.payments_completed > loan_details.payments_made && (
+              {summary.payments_completed || loan_details?.payments_made || 0} of {loan_details?.term_months || 0} scheduled payments completed
+              {(summary.payments_completed || 0) > (loan_details?.payments_made || 0) && (
                 <span style={{color: '#059669', fontWeight: '700', marginLeft: '8px'}}>
-                  ({summary.payments_completed - loan_details.payments_made} ahead)
+                  ({(summary.payments_completed || 0) - (loan_details?.payments_made || 0)} ahead)
                 </span>
               )}
             </div>
@@ -180,14 +180,14 @@ export default function AmortizationSchedule({ loanId }) {
           <div style={styles.summaryIcon}>💰</div>
           <div>
             <div style={styles.summaryLabel}>Total Interest</div>
-            <div style={styles.summaryValue}>${summary.total_interest.toLocaleString()}</div>
+            <div style={styles.summaryValue}>${(summary.total_interest || 0).toLocaleString()}</div>
           </div>
         </div>
         <div style={styles.summaryCard}>
           <div style={styles.summaryIcon}>💸</div>
           <div>
             <div style={styles.summaryLabel}>Total Payments</div>
-            <div style={styles.summaryValue}>${summary.total_payments.toLocaleString()}</div>
+            <div style={styles.summaryValue}>${(summary.total_payments || 0).toLocaleString()}</div>
           </div>
         </div>
         <div style={styles.summaryCard}>
@@ -195,9 +195,9 @@ export default function AmortizationSchedule({ loanId }) {
           <div>
             <div style={styles.summaryLabel}>Payments Remaining</div>
             <div style={styles.summaryValue}>
-              {summary.payments_remaining || (loan_details.term_months - loan_details.payments_made)}
+              {summary.payments_remaining || ((loan_details?.term_months || 0) - (loan_details?.payments_made || 0))}
             </div>
-            {loan_details.current_balance && loan_details.current_balance <= 0.01 && (
+            {loan_details?.current_balance && loan_details.current_balance <= 0.01 && (
               <div style={{fontSize: '0.75rem', color: '#10b981', fontWeight: '700', marginTop: '4px'}}>
                 ✓ Fully Paid
               </div>
