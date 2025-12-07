@@ -261,6 +261,7 @@ function MakePaymentContent() {
     setProcessing(true);
     try {
       const amount = parseFloat(paymentForm.amount);
+      const remainingBalance = parseFloat(loan.remaining_balance);
 
       if (!amount || amount <= 0) {
         showToast('Please enter a valid payment amount', 'error');
@@ -268,8 +269,9 @@ function MakePaymentContent() {
         return;
       }
 
-      if (amount > parseFloat(loan.remaining_balance)) {
-        showToast('Payment amount cannot exceed remaining balance', 'error');
+      // Allow payment up to remaining balance (including full payoff)
+      if (amount > remainingBalance + 0.01) {
+        showToast(`Payment amount cannot exceed remaining balance of $${remainingBalance.toFixed(2)}`, 'error');
         setProcessing(false);
         return;
       }
@@ -421,6 +423,30 @@ function MakePaymentContent() {
     }
   };
 
+  const getStatusBadge = (status) => {
+    const badges = {
+      pending: { color: '#f59e0b', bg: '#fef3c7', text: 'Pending' },
+      approved: { color: '#10b981', bg: '#d1fae5', text: 'Approved' },
+      active: { color: '#059669', bg: '#d1fae5', text: 'Active' },
+      rejected: { color: '#ef4444', bg: '#fee2e2', text: 'Rejected' },
+      completed: { color: '#6b7280', bg: '#f3f4f6', text: 'Completed' },
+      paid: { color: '#059669', bg: '#d1fae5', text: 'Paid' },
+      closed: { color: '#6b7280', bg: '#f3f4f6', text: 'Closed' }
+    };
+
+    const badge = badges[status] || { color: '#6b7280', bg: '#f3f4f6', text: status };
+
+    return (
+      <span style={{
+        ...styles.statusBadge,
+        color: badge.color,
+        backgroundColor: badge.bg
+      }}>
+        {badge.text}
+      </span>
+    );
+  };
+
   const showToast = (message, type = 'info') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: '' }), 5000);
@@ -450,9 +476,43 @@ function MakePaymentContent() {
 
   return (
     <div style={styles.container}>
-      <div style={styles.header}>
-        <Link href={`/loan/${loanId}`} style={styles.backLink}>← Back to Loan Details</Link>
-        <h1 style={styles.title}>Make Loan Payment</h1>
+      {/* Professional Header */}
+      <div style={styles.professionalHeader}>
+        <div style={styles.headerTop}>
+          <div style={styles.headerLeft}>
+            <Link href={`/loan/${loanId}`} style={styles.backLink}>
+              <span style={styles.backArrow}>←</span> Back to Loan Details
+            </Link>
+            <div style={styles.headerTitleSection}>
+              <div style={styles.loanIconLarge}>💳</div>
+              <div>
+                <h1 style={styles.headerTitle}>Make Loan Payment</h1>
+                <p style={styles.headerReference}>Loan ID: {loan.id.slice(0, 12)}</p>
+              </div>
+            </div>
+          </div>
+          <div style={styles.headerRight}>
+            {getStatusBadge(loan.status)}
+          </div>
+        </div>
+
+        {/* Key Stats Row */}
+        <div style={styles.headerStatsRow}>
+          <div style={styles.headerStat}>
+            <div style={styles.headerStatLabel}>Remaining Balance</div>
+            <div style={styles.headerStatValue}>
+              ${parseFloat(loan.remaining_balance || loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </div>
+          </div>
+          <div style={styles.headerStat}>
+            <div style={styles.headerStatLabel}>Monthly Payment</div>
+            <div style={styles.headerStatValue}>${monthlyPayment.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+          </div>
+          <div style={styles.headerStat}>
+            <div style={styles.headerStatLabel}>Interest Rate</div>
+            <div style={styles.headerStatValue}>{parseFloat(loan.interest_rate).toFixed(1)}% APR</div>
+          </div>
+        </div>
       </div>
 
       {/* Professional Full-Screen Processing Overlay */}
@@ -558,12 +618,12 @@ function MakePaymentContent() {
             onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
             placeholder="0.00"
             step="0.01"
-            min="0"
-            max={loan.remaining_balance}
+            min="0.01"
+            max={parseFloat(loan.remaining_balance).toFixed(2)}
             style={styles.input}
           />
           <small style={styles.helperText}>
-            Suggested: ${monthlyPayment.toFixed(2)} | Maximum: ${parseFloat(loan.remaining_balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            Monthly Payment: ${monthlyPayment.toFixed(2)} | Full Payoff: ${parseFloat(loan.remaining_balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </small>
         </div>
 
@@ -789,12 +849,10 @@ export default function MakePayment() {
 
 const styles = {
   container: {
-    maxWidth: '900px',
-    margin: '0 auto',
-    padding: '2rem 1rem',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     minHeight: '100vh',
-    backgroundColor: '#f8fafc'
+    backgroundColor: '#f8fafc',
+    paddingBottom: '2rem'
   },
   loadingContainer: {
     textAlign: 'center',
@@ -814,24 +872,112 @@ const styles = {
     borderRadius: '50%',
     animation: 'spin 1s linear infinite'
   },
-  header: {
+  // Professional Header Styles
+  professionalHeader: {
+    background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+    color: '#fff',
+    padding: '2rem',
+    boxShadow: '0 4px 20px rgba(30, 58, 138, 0.3)',
     marginBottom: '2rem'
   },
+  headerTop: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '2rem',
+    gap: '1.5rem',
+    flexWrap: 'wrap'
+  },
+  headerLeft: {
+    flex: 1,
+    minWidth: '300px'
+  },
   backLink: {
-    color: '#007BFF',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    color: 'rgba(255, 255, 255, 0.9)',
     textDecoration: 'none',
-    fontSize: '14px',
+    fontSize: '0.9rem',
     fontWeight: '500',
     marginBottom: '1rem',
-    display: 'inline-block'
+    transition: 'color 0.2s'
   },
-  title: {
-    fontSize: '32px',
+  backArrow: {
+    fontSize: '1.2rem'
+  },
+  headerTitleSection: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem'
+  },
+  loanIconLarge: {
+    fontSize: '3rem',
+    width: '70px',
+    height: '70px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: '16px',
+    backdropFilter: 'blur(10px)'
+  },
+  headerTitle: {
+    fontSize: '2rem',
+    fontWeight: '800',
+    margin: '0 0 0.25rem 0',
+    color: '#fff',
+    letterSpacing: '-0.5px'
+  },
+  headerReference: {
+    fontSize: '0.85rem',
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontFamily: 'monospace',
+    margin: 0
+  },
+  headerRight: {
+    display: 'flex',
+    alignItems: 'flex-start'
+  },
+  statusBadge: {
+    padding: '0.75rem 1.5rem',
+    borderRadius: '20px',
+    fontSize: '0.875rem',
     fontWeight: '700',
-    color: '#1a1a1a',
-    margin: '0'
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+  },
+  headerStatsRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+    gap: '1.5rem',
+    marginTop: '1.5rem'
+  },
+  headerStat: {
+    background: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(10px)',
+    padding: '1rem',
+    borderRadius: '12px',
+    textAlign: 'center'
+  },
+  headerStatLabel: {
+    fontSize: '0.75rem',
+    color: 'rgba(255, 255, 255, 0.8)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    marginBottom: '0.5rem',
+    fontWeight: '600'
+  },
+  headerStatValue: {
+    fontSize: '1.25rem',
+    fontWeight: '800',
+    color: '#fff'
   },
   content: {
+    maxWidth: '900px',
+    margin: '0 auto',
+    padding: '0 1rem',
     backgroundColor: '#fff',
     borderRadius: '12px',
     padding: '2rem',
