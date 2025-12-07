@@ -20,66 +20,28 @@ function LoanDetailContent() {
   const [paymentForm, setPaymentForm] = useState({
     amount: '',
     account_id: '',
-    payment_type: 'manual' // Default to manual
+    payment_type: 'manual'
   });
 
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
       @media (max-width: 768px) {
-        .loan-detail-tabs {
-          overflow-x: auto;
-          overflow-y: hidden;
-          -webkit-overflow-scrolling: touch;
-          gap: 0 !important;
-          margin-bottom: 1rem !important;
-        }
-        .loan-detail-tabs button {
-          white-space: nowrap;
-          min-width: auto;
-          flex-shrink: 0;
-          padding: 10px 12px !important;
-          font-size: 12px !important;
-        }
-        .loan-detail-header {
+        .loan-detail-header-top {
           flex-direction: column !important;
           align-items: flex-start !important;
           gap: 1rem !important;
         }
-        .loan-detail-actions {
-          width: 100%;
-          flex-direction: column !important;
-        }
-        .loan-detail-actions button {
-          width: 100% !important;
-        }
-      }
-      @media (max-width: 600px) {
         .loan-detail-tabs {
-          gap: 0 !important;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
         }
         .loan-detail-tabs button {
-          padding: 10px 10px !important;
-          font-size: 11px !important;
-          flex-shrink: 0;
-          border-bottom: 3px solid transparent !important;
+          white-space: nowrap;
+          min-width: 100px;
         }
-      }
-      @media (max-width: 414px) {
-        .loan-detail-tabs {
-          margin-bottom: 1rem !important;
-          gap: 0 !important;
-        }
-        .loan-detail-tabs button {
-          padding: 8px 8px !important;
-          font-size: 10px !important;
-          flex-shrink: 0;
-        }
-        .loan-detail-modal {
-          padding: 1rem !important;
-          margin: 0.5rem !important;
-          max-height: 90vh !important;
-          overflow-y: auto !important;
+        .loan-info-grid {
+          grid-template-columns: 1fr !important;
         }
       }
     `;
@@ -160,7 +122,6 @@ function LoanDetailContent() {
         return;
       }
 
-      // Fetch loan
       const { data: loanData, error: loanError } = await supabase
         .from('loans')
         .select('*')
@@ -172,7 +133,6 @@ function LoanDetailContent() {
         throw loanError;
       }
 
-      // Fetch related crypto deposits
       const { data: deposits, error: depositsError } = await supabase
         .from('crypto_deposits')
         .select('*')
@@ -190,7 +150,7 @@ function LoanDetailContent() {
       if (error) {
         console.error("Error fetching loan details:", error);
         showToast('Failed to fetch loan details', 'error');
-        router.push('/loan');
+        router.push('/loans');
         return;
       }
 
@@ -285,7 +245,6 @@ function LoanDetailContent() {
     if (selectedNetwork) {
       setNetworkFeePercent(selectedNetwork.fee || 0);
     }
-    // Fetch wallet address when network is selected
     await fetchLoanCryptoWallets(paymentForm.crypto_type, network);
   };
 
@@ -298,7 +257,6 @@ function LoanDetailContent() {
 
     setLoadingWallet(true);
     try {
-      // Get the crypto asset
       const { data: cryptoAsset } = await supabase
         .from('crypto_assets')
         .select('id')
@@ -312,7 +270,6 @@ function LoanDetailContent() {
         return;
       }
 
-      // Fetch available loan wallets for this crypto
       const { data: loanWallets, error } = await supabase
         .from('loan_crypto_wallets')
         .select('id, wallet_address, memo')
@@ -325,7 +282,6 @@ function LoanDetailContent() {
         return;
       }
 
-      // Use the same wallet the user used for their deposit if available
       const { data: depositPayment } = await supabase
         .from('loan_payments')
         .select('metadata')
@@ -336,11 +292,9 @@ function LoanDetailContent() {
 
       let selectedWallet;
       if (depositPayment?.metadata?.loan_wallet_address) {
-        // Try to find the same wallet they used for deposit
         selectedWallet = loanWallets.find(w => w.wallet_address === depositPayment.metadata.loan_wallet_address);
       }
-      
-      // If not found or no deposit wallet, pick randomly
+
       if (!selectedWallet) {
         selectedWallet = loanWallets[Math.floor(Math.random() * loanWallets.length)];
       }
@@ -432,14 +386,12 @@ function LoanDetailContent() {
           setProcessing(false);
           return;
         }
-        
-        // Show crypto payment details modal
+
         setProcessing(false);
         setPaymentModal(false);
         setCryptoPaymentModal(true);
         return;
       }
-
 
       const selectedAccount = accounts.find(acc => acc.id === paymentForm.account_id);
       if (!selectedAccount || parseFloat(selectedAccount.balance) < amount) {
@@ -563,15 +515,18 @@ function LoanDetailContent() {
 
   const getStatusBadge = (status) => {
     const badges = {
-      pending_deposit: { color: '#FFA500', bg: '#FFF3CD', text: 'Pending Deposit' },
-      under_review: { color: '#007BFF', bg: '#D1ECF1', text: 'Under Review' },
-      approved: { color: '#28A745', bg: '#D4EDDA', text: 'Approved' },
-      active: { color: '#28A745', bg: '#D4EDDA', text: 'Active' },
-      rejected: { color: '#DC3545', bg: '#F8D7DA', text: 'Rejected' },
-      completed: { color: '#6C757D', bg: '#E2E3E5', text: 'Completed' }
+      pending: { color: '#f59e0b', bg: '#fef3c7', text: 'Pending' },
+      pending_deposit: { color: '#f59e0b', bg: '#fef3c7', text: 'Pending Deposit' },
+      under_review: { color: '#3b82f6', bg: '#dbeafe', text: 'Under Review' },
+      approved: { color: '#10b981', bg: '#d1fae5', text: 'Approved' },
+      active: { color: '#059669', bg: '#d1fae5', text: 'Active' },
+      rejected: { color: '#ef4444', bg: '#fee2e2', text: 'Rejected' },
+      completed: { color: '#6b7280', bg: '#f3f4f6', text: 'Completed' },
+      paid: { color: '#059669', bg: '#d1fae5', text: 'Paid' },
+      closed: { color: '#6b7280', bg: '#f3f4f6', text: 'Closed' }
     };
 
-    const badge = badges[status] || { color: '#6C757D', bg: '#E2E3E5', text: status };
+    const badge = badges[status] || { color: '#6b7280', bg: '#f3f4f6', text: status };
 
     return (
       <span style={{
@@ -627,7 +582,7 @@ function LoanDetailContent() {
     return (
       <div style={styles.loadingContainer}>
         <div style={styles.spinner}></div>
-        <p>Loading loan details...</p>
+        <p style={styles.loadingText}>Loading loan details...</p>
       </div>
     );
   }
@@ -648,269 +603,140 @@ function LoanDetailContent() {
   const depositRequired = parseFloat(loan.deposit_required || 0);
   const hasDepositTransactions = loan.deposit_transactions && Array.isArray(loan.deposit_transactions) && loan.deposit_transactions.length > 0;
   const isDepositPaid = hasDepositTransactions && loan.deposit_transactions.some(tx => tx.status === 'completed');
-  const depositTransaction = hasDepositTransactions && loan.deposit_transactions.find(tx => tx.status === 'completed');
-
 
   return (
     <div style={styles.container}>
-      <div style={styles.header} className="loan-detail-header">
-        <div>
-          <Link href="/loans" style={styles.backLink}>← Back to Loans</Link>
-          <h1 style={styles.title}>{getLoanTypeIcon(loan.loan_type)} {getLoanTypeLabel(loan.loan_type)}</h1>
-          <p style={styles.subtitle}>Reference: {loan.loan_reference || loan.id.slice(0, 12)}</p>
+      {/* Professional Header */}
+      <div style={styles.professionalHeader}>
+        <div style={styles.headerTop} className="loan-detail-header-top">
+          <div style={styles.headerLeft}>
+            <Link href="/loans" style={styles.backLink}>
+              <span style={styles.backArrow}>←</span> Back to Loans
+            </Link>
+            <div style={styles.headerTitleSection}>
+              <div style={styles.loanIconLarge}>{getLoanTypeIcon(loan.loan_type)}</div>
+              <div>
+                <h1 style={styles.headerTitle}>{getLoanTypeLabel(loan.loan_type)}</h1>
+                <p style={styles.headerReference}>Ref: {loan.loan_reference || loan.id.slice(0, 12)}</p>
+              </div>
+            </div>
+          </div>
+          <div style={styles.headerRight}>
+            {getStatusBadge(loan.status)}
+          </div>
         </div>
-        {getStatusBadge(loan.status)}
-      </div>
 
-      {/* Paid Ahead or Fully Paid Status Banner */}
-      {loan.status === 'active' && (() => {
-        const monthsAhead = (loan.payments_made || 0) - Math.ceil((new Date() - new Date(loan.disbursed_at || loan.approved_at || loan.created_at)) / (30 * 24 * 60 * 60 * 1000));
-        if (isFullyPaid) {
-          return (
-            <div style={{
-              backgroundColor: '#d1fae5',
-              border: '1px solid #a7f3d0',
-              borderRadius: '12px',
-              padding: '16px 20px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
-              <span style={{ fontSize: '24px' }}>🎉</span>
-              <div>
-                <strong style={{ color: '#065f46', fontSize: '16px' }}>Congratulations! Loan Fully Paid</strong>
-                <p style={{ color: '#047857', margin: '4px 0 0 0', fontSize: '14px' }}>
-                  You've successfully completed all payments on this loan. No more payments required.
-                </p>
-              </div>
+        {/* Key Stats Row */}
+        <div style={styles.headerStatsRow}>
+          <div style={styles.headerStat}>
+            <div style={styles.headerStatLabel}>Loan Amount</div>
+            <div style={styles.headerStatValue}>${parseFloat(loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+          </div>
+          <div style={styles.headerStat}>
+            <div style={styles.headerStatLabel}>Remaining Balance</div>
+            <div style={{...styles.headerStatValue, color: isFullyPaid ? '#10b981' : '#ef4444'}}>
+              ${parseFloat(loan.remaining_balance || loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </div>
-          );
-        } else if (monthsAhead > 0) {
-          return (
-            <div style={{
-              backgroundColor: '#ecfdf5',
-              border: '1px solid #a7f3d0',
-              borderRadius: '12px',
-              padding: '16px 20px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
-              <span style={{ fontSize: '24px' }}>✓</span>
-              <div>
-                <strong style={{ color: '#065f46', fontSize: '16px' }}>{monthsAhead} Month{monthsAhead !== 1 ? 's' : ''} Paid Ahead</strong>
-                <p style={{ color: '#047857', margin: '4px 0 0 0', fontSize: '14px' }}>
-                  You're ahead of schedule on your loan payments!
-                </p>
-              </div>
-            </div>
-          );
-        }
-        return null;
-      })()}
+          </div>
+          <div style={styles.headerStat}>
+            <div style={styles.headerStatLabel}>Monthly Payment</div>
+            <div style={styles.headerStatValue}>${monthlyPayment.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+          </div>
+          <div style={styles.headerStat}>
+            <div style={styles.headerStatLabel}>Interest Rate</div>
+            <div style={styles.headerStatValue}>{parseFloat(loan.interest_rate).toFixed(1)}% APR</div>
+          </div>
+        </div>
+      </div>
 
       {toast.show && (
         <div style={{
           ...styles.toast,
-          backgroundColor: toast.type === 'error' ? '#DC3545' : toast.type === 'success' ? '#28A745' : '#007BFF'
+          backgroundColor: toast.type === 'error' ? '#ef4444' : toast.type === 'success' ? '#10b981' : '#3b82f6'
         }}>
           {toast.message}
         </div>
       )}
 
+      {/* Deposit Status Banners */}
       {depositRequired > 0 && loan.status === 'pending_deposit' && !isDepositPaid && (
-        <div style={{
-          backgroundColor: '#ecfdf5',
-          border: '2px solid #10b981',
-          borderRadius: '12px',
-          padding: 'clamp(1rem, 3vw, 1.5rem)',
-          marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
-          lineHeight: '1.8'
-        }}>
-          <div style={{ fontSize: 'clamp(1rem, 2.5vw, 1.05rem)', fontWeight: '700', color: '#059669', marginBottom: '0.75rem' }}>⏳ Loan Ready for Activation</div>
-          <div style={{ fontSize: 'clamp(0.9rem, 2vw, 0.95rem)', color: '#1e7e34', marginBottom: '1rem' }}>
-            Your application has been processed. To activate and disburse your loan, submit a 10% security deposit. Here's what you need to do:
+        <div style={styles.depositBanner}>
+          <div style={styles.bannerIcon}>⏳</div>
+          <div style={styles.bannerContent}>
+            <strong style={styles.bannerTitle}>Loan Ready for Activation</strong>
+            <p style={styles.bannerText}>
+              Submit your 10% security deposit (${depositRequired.toLocaleString()}) to activate and disburse your loan.
+            </p>
+            <Link href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${depositRequired}`} style={styles.bannerButton}>
+              Complete Deposit Now →
+            </Link>
           </div>
-          <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', padding: 'clamp(0.75rem, 2vw, 1rem)', marginBottom: '1rem', fontSize: 'clamp(0.85rem, 1.5vw, 0.9rem)', color: '#1e5631' }}>
-            <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>📋 Deposit Amount Required:</div>
-            <div style={{ fontSize: 'clamp(1rem, 2vw, 1.1rem)', fontWeight: '700', color: '#059669', marginBottom: '0.75rem' }}>
-              ${depositRequired.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-            <div style={{ fontSize: 'clamp(0.8rem, 1.5vw, 0.85rem)', color: '#1e7e34' }}>Plus applicable network fees if paying with cryptocurrency</div>
-          </div>
-          <div style={{ fontSize: 'clamp(0.85rem, 1.5vw, 0.9rem)', color: '#1e7e34', marginBottom: '0.5rem' }}>
-            <strong>📌 Step 1:</strong> Select your cryptocurrency and network
-          </div>
-          <div style={{ fontSize: 'clamp(0.85rem, 1.5vw, 0.9rem)', color: '#1e7e34', marginBottom: '0.5rem' }}>
-            <strong>📌 Step 2:</strong> Send the exact total amount (base + network fee)
-          </div>
-          <div style={{ fontSize: 'clamp(0.85rem, 1.5vw, 0.9rem)', color: '#1e7e34', marginBottom: '0.5rem' }}>
-            <strong>📌 Step 3:</strong> Upload your transaction hash or payment proof
-          </div>
-          <div style={{ fontSize: 'clamp(0.85rem, 1.5vw, 0.9rem)', color: '#1e7e34', marginBottom: '1.5rem' }}>
-            <strong>📌 Step 4:</strong> We'll verify and disburse your loan within hours
-          </div>
-          <Link href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${depositRequired}`} style={{
-            backgroundColor: '#10b981',
-            color: 'white',
-            padding: 'clamp(10px, 2vw, 12px) clamp(20px, 3vw, 24px)',
-            borderRadius: '8px',
-            textDecoration: 'none',
-            fontWeight: '600',
-            display: 'inline-block',
-            fontSize: 'clamp(13px, 2vw, 14px)',
-            border: 'none',
-            cursor: 'pointer'
-          }}>
-            Proceed to Deposit Now
-          </Link>
         </div>
       )}
 
-      {depositRequired > 0 && hasDepositTransactions && loan.deposit_status === 'pending' && !loan.deposit_paid && loan.status === 'pending' && (
-        <div style={{
-          backgroundColor: '#fffbeb',
-          border: '2px solid #f59e0b',
-          borderRadius: '12px',
-          padding: '16px 20px',
-          marginBottom: '20px'
-        }}>
-          <strong style={{ color: '#92400e', fontSize: '16px' }}>⏳ Blockchain Verification Pending</strong>
-          <p style={{ color: '#92400e', margin: '8px 0 0 0', lineHeight: '1.6' }}>
-            Your 10% loan deposit has been successfully submitted to the blockchain. Verification typically completes within 15 minutes to 2 hours. You will receive email notifications as your deposit progresses through confirmation.
-          </p>
-        </div>
-      )}
-
-      {loan.deposit_paid && loan.deposit_status === 'completed' && (loan.status === 'pending' || loan.status === 'under_review') && (
-        <div style={{
-          backgroundColor: '#d1fae5',
-          border: '1px solid #a7f3d0',
-          borderLeft: '4px solid #10b981',
-          borderRadius: '12px',
-          padding: '16px 20px',
-          marginBottom: '20px'
-        }}>
-          <strong style={{ color: '#065f46', fontSize: '16px' }}>✅ Deposit Confirmed - Under Review</strong>
-          <p style={{ color: '#047857', margin: '8px 0 0 0', lineHeight: '1.6' }}>
-            Your ${parseFloat(loan.deposit_amount || depositRequired).toLocaleString()} deposit has been confirmed by our Loan Department.
-            Your loan application is now under review and you will receive a decision within 24-48 hours.
-          </p>
-        </div>
-      )}
-
+      {/* Tabs */}
       <div style={styles.tabs} className="loan-detail-tabs">
         <button
           style={activeTab === 'overview' ? { ...styles.tab, ...styles.activeTab } : styles.tab}
           onClick={() => setActiveTab('overview')}
         >
-          Overview
+          📊 Overview
         </button>
         <button
           style={activeTab === 'payments' ? { ...styles.tab, ...styles.activeTab } : styles.tab}
           onClick={() => setActiveTab('payments')}
         >
-          Payments
+          💳 Payments
         </button>
         <button
           style={activeTab === 'schedule' ? { ...styles.tab, ...styles.activeTab } : styles.tab}
           onClick={() => setActiveTab('schedule')}
         >
-          Schedule
+          📅 Schedule
         </button>
         <button
           style={activeTab === 'auto-pay' ? { ...styles.tab, ...styles.activeTab } : styles.tab}
           onClick={() => setActiveTab('auto-pay')}
         >
-          Auto-Pay
+          🔄 Auto-Pay
         </button>
       </div>
 
+      {/* Content Area */}
       {activeTab === 'overview' && (
         <div style={styles.content}>
           {/* Progress Section */}
           {(loan.status === 'active' || loan.status === 'approved') && (
-            <div style={{
-              backgroundColor: '#eff6ff',
-              borderRadius: '16px',
-              padding: '20px',
-              marginBottom: '24px',
-              border: '1px solid #dbeafe'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <div style={styles.progressCard}>
+              <div style={styles.progressHeader}>
                 <div>
-                  <div style={{ fontSize: '12px', fontWeight: '700', color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    Loan Progress
-                  </div>
-                  <div style={{ fontSize: '14px', color: '#3b82f6', marginTop: '4px' }}>
+                  <div style={styles.progressLabel}>Loan Progress</div>
+                  <div style={styles.progressSubtext}>
                     {isFullyPaid ? (
-                      <span style={{ color: '#059669', fontWeight: '700' }}>✓ Fully Paid</span>
+                      <span style={{color: '#059669', fontWeight: '700'}}>✓ Fully Paid</span>
                     ) : (
                       `${loan.payments_made || 0} of ${loan.term_months} payments completed`
                     )}
                   </div>
                 </div>
-                <div style={{ fontSize: '28px', fontWeight: '800', color: '#1e40af' }}>
-                  {progressPercent.toFixed(1)}%
-                </div>
+                <div style={styles.progressPercent}>{progressPercent.toFixed(1)}%</div>
               </div>
-              <div style={{
-                width: '100%',
-                height: '12px',
-                backgroundColor: '#dbeafe',
-                borderRadius: '6px',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  width: `${progressPercent}%`,
-                  height: '100%',
-                  background: isFullyPaid ? 'linear-gradient(90deg, #10b981 0%, #059669 100%)' : 'linear-gradient(90deg, #3b82f6 0%, #1e40af 100%)',
-                  borderRadius: '6px',
-                  transition: 'width 0.5s ease'
-                }}></div>
+              <div style={styles.progressBarContainer}>
+                <div style={{...styles.progressBarFill, width: `${progressPercent}%`, background: isFullyPaid ? 'linear-gradient(90deg, #10b981 0%, #059669 100%)' : 'linear-gradient(90deg, #3b82f6 0%, #1e40af 100%)'}}></div>
               </div>
             </div>
           )}
 
-          <div style={styles.infoGrid}>
+          {/* Loan Details Grid */}
+          <div style={styles.infoGrid} className="loan-info-grid">
             <div style={styles.infoCard}>
-              <div style={styles.infoLabel}>Original Amount</div>
-              <div style={styles.infoValue}>
-                ${parseFloat(loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </div>
-            </div>
-
-            <div style={styles.infoCard}>
-              <div style={styles.infoLabel}>Current Balance</div>
-              <div style={{ ...styles.infoValue, color: isFullyPaid ? '#10b981' : '#DC3545' }}>
-                ${parseFloat(loan.remaining_balance || loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </div>
-            </div>
-
-            <div style={styles.infoCard}>
-              <div style={styles.infoLabel}>Interest Rate</div>
-              <div style={styles.infoValue}>{parseFloat(loan.interest_rate).toFixed(1)}% APR</div>
-            </div>
-
-            <div style={styles.infoCard}>
-              <div style={styles.infoLabel}>Monthly Payment</div>
-              <div style={styles.infoValue}>
-                ${monthlyPayment.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </div>
-            </div>
-
-            <div style={styles.infoCard}>
-              <div style={styles.infoLabel}>Term</div>
+              <div style={styles.infoLabel}>Loan Term</div>
               <div style={styles.infoValue}>{loan.term_months} months</div>
             </div>
 
             <div style={styles.infoCard}>
               <div style={styles.infoLabel}>Total Interest</div>
-              <div style={styles.infoValue}>
-                ${totalInterest.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </div>
+              <div style={styles.infoValue}>${totalInterest.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
             </div>
 
             <div style={styles.infoCard}>
@@ -921,7 +747,7 @@ function LoanDetailContent() {
             {loan.next_payment_date && !isFullyPaid && (
               <div style={styles.infoCard}>
                 <div style={styles.infoLabel}>Next Payment Due</div>
-                <div style={{ ...styles.infoValue, color: '#1e40af' }}>
+                <div style={{...styles.infoValue, color: '#3b82f6'}}>
                   {new Date(loan.next_payment_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </div>
               </div>
@@ -946,36 +772,26 @@ function LoanDetailContent() {
             )}
           </div>
 
+          {/* Loan Purpose */}
           {loan.purpose && (
-            <div style={styles.section}>
+            <div style={styles.purposeSection}>
               <h3 style={styles.sectionTitle}>Loan Purpose</h3>
-              <p style={styles.sectionText}>{loan.purpose}</p>
+              <p style={styles.purposeText}>{loan.purpose}</p>
             </div>
           )}
 
+          {/* Action Buttons */}
           {(loan.status === 'active' || loan.status === 'approved') && !isFullyPaid && (
-            <div style={styles.actionButtons} className="loan-detail-actions">
-              <Link href={`/loan/make-payment?loanId=${loan.id}`} style={{...styles.primaryButton, textDecoration: 'none', textAlign: 'center', display: 'block'}}>
+            <div style={styles.actionButtons}>
+              <button
+                onClick={() => setPaymentModal(true)}
+                style={styles.primaryActionButton}
+              >
                 💳 Make Payment
+              </button>
+              <Link href={`/loan/make-payment?loanId=${loan.id}`} style={styles.secondaryActionButton}>
+                View Payment Options
               </Link>
-            </div>
-          )}
-
-          {documents.length > 0 && (
-            <div style={styles.section}>
-              <h3 style={styles.sectionTitle}>Documents</h3>
-              <div style={styles.documentsList}>
-                {documents.map((doc, index) => (
-                  <div key={index} style={styles.documentItem}>
-                    <span>📄 {doc.name || `Document ${index + 1}`}</span>
-                    {doc.url && (
-                      <a href={doc.url} target="_blank" rel="noopener noreferrer" style={styles.downloadLink}>
-                        Download
-                      </a>
-                    )}
-                  </div>
-                ))}
-              </div>
             </div>
           )}
         </div>
@@ -999,11 +815,11 @@ function LoanDetailContent() {
         </div>
       )}
 
+      {/* Payment Modal (keeping existing modal code) */}
       {paymentModal && (
         <div style={styles.modal} onClick={() => setPaymentModal(false)}>
-          <div style={{...styles.modalContent, maxHeight: '90vh', overflowY: 'auto'}} className="loan-detail-modal" onClick={(e) => e.stopPropagation()}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <h2 style={styles.modalTitle}>Make Loan Payment</h2>
-
             <div style={styles.formGroup}>
               <label style={styles.label}>Payment Amount ($)</label>
               <input
@@ -1017,20 +833,20 @@ function LoanDetailContent() {
                 style={styles.input}
               />
               <small style={styles.helperText}>
-                Monthly payment: ${monthlyPayment.toFixed(2)} | Remaining balance: ${parseFloat(loan.remaining_balance || loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                Monthly payment: ${monthlyPayment.toFixed(2)} | Remaining: ${parseFloat(loan.remaining_balance || loan.principal).toLocaleString()}
               </small>
             </div>
 
             <div style={styles.formGroup}>
               <label style={styles.label}>Payment Method</label>
-              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
                 <button
                   onClick={() => setPaymentForm({ ...paymentForm, payment_type: 'manual' })}
                   style={{
                     flex: 1,
-                    padding: 'clamp(0.5rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)',
+                    padding: '0.75rem 1.5rem',
                     borderRadius: '8px',
-                    fontSize: 'clamp(0.9rem, 2vw, 1rem)',
+                    fontSize: '1rem',
                     fontWeight: '600',
                     cursor: 'pointer',
                     border: 'none',
@@ -1044,9 +860,9 @@ function LoanDetailContent() {
                   onClick={() => setPaymentForm({ ...paymentForm, payment_type: 'crypto', account_id: '' })}
                   style={{
                     flex: 1,
-                    padding: 'clamp(0.5rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)',
+                    padding: '0.75rem 1.5rem',
                     borderRadius: '8px',
-                    fontSize: 'clamp(0.9rem, 2vw, 1rem)',
+                    fontSize: '1rem',
                     fontWeight: '600',
                     cursor: 'pointer',
                     border: 'none',
@@ -1070,68 +886,10 @@ function LoanDetailContent() {
                   <option value="">Select an account...</option>
                   {accounts.map(account => (
                     <option key={account.id} value={account.id}>
-                      {account.account_type} - {account.account_number} (${parseFloat(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })})
+                      {account.account_type} - {account.account_number} (${parseFloat(account.balance).toLocaleString()})
                     </option>
                   ))}
                 </select>
-              </div>
-            )}
-
-            {paymentForm.payment_type === 'crypto' && (
-              <div>
-                <h3 style={{ fontSize: 'clamp(1rem, 2vw, 1.1rem)', fontWeight: '700', color: '#1e293b', marginBottom: '1rem' }}>Select Cryptocurrency</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '0.75rem', marginBottom: '2rem' }}>
-                  {cryptoTypes.map(crypto => (
-                    <div
-                      key={crypto.value}
-                      onClick={() => handlePaymentCryptoChange(crypto.value)}
-                      style={{
-                        padding: 'clamp(0.5rem, 2vw, 0.75rem)',
-                        borderRadius: '12px',
-                        border: paymentForm.crypto_type === crypto.value ? '2px solid #10b981' : '2px solid #e5e7eb',
-                        backgroundColor: paymentForm.crypto_type === crypto.value ? '#f0fdf4' : '#fff',
-                        cursor: 'pointer',
-                        textAlign: 'center'
-                      }}
-                    >
-                      <div style={{ fontSize: 'clamp(1.2rem, 3vw, 1.5rem)', marginBottom: '0.25rem' }}>{crypto.icon}</div>
-                      <div style={{ fontWeight: '600', fontSize: 'clamp(0.75rem, 1.5vw, 0.85rem)' }}>{crypto.label}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {paymentForm.crypto_type && (
-                  <div>
-                    <h3 style={{ fontSize: 'clamp(1rem, 2vw, 1.1rem)', fontWeight: '700', color: '#1e293b', marginBottom: '1rem' }}>Select Network</h3>
-                    {loadingNetworks ? (
-                      <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Loading networks...</div>
-                    ) : availableNetworks.length === 0 ? (
-                      <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#fef2f2', border: '2px solid #ef4444', borderRadius: '12px', color: '#991b1b' }}>
-                        No networks available
-                      </div>
-                    ) : (
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                        {availableNetworks.map(network => (
-                          <div
-                            key={network.value}
-                            onClick={() => handlePaymentNetworkChange(network.value)}
-                            style={{
-                              padding: 'clamp(0.75rem, 2vw, 1rem)',
-                              borderRadius: '12px',
-                              border: paymentForm.network_type === network.value ? '2px solid #10b981' : '2px solid #e5e7eb',
-                              backgroundColor: paymentForm.network_type === network.value ? '#f0fdf4' : '#fff',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <div style={{ fontWeight: '600', marginBottom: '0.5rem', fontSize: 'clamp(0.9rem, 2vw, 1rem)' }}>{network.icon} {network.label}</div>
-                            <div style={{ fontSize: 'clamp(0.75rem, 1.5vw, 0.85rem)', color: '#64748b' }}>{network.confirmations} confirmations</div>
-                            {network.fee > 0 && <div style={{ fontSize: 'clamp(0.75rem, 1.5vw, 0.85rem)', color: '#10b981', fontWeight: '600' }}>Fee: {network.fee}%</div>}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             )}
 
@@ -1144,132 +902,12 @@ function LoanDetailContent() {
                 disabled={processing}
                 style={styles.submitButton}
               >
-                {processing ? 'Processing...' : paymentForm.payment_type === 'crypto' ? 'Continue to Crypto Payment' : 'Confirm Payment'}
+                {processing ? 'Processing...' : 'Confirm Payment'}
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {cryptoPaymentModal && (
-        <div style={styles.modal} onClick={() => setCryptoPaymentModal(false)}>
-          <div style={{...styles.modalContent, maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto'}} onClick={(e) => e.stopPropagation()}>
-            <h2 style={styles.modalTitle}>Complete Crypto Payment</h2>
-            
-            <div style={{backgroundColor: '#f0fdf4', border: '2px solid #10b981', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.5rem'}}>
-              <div style={{fontSize: '0.9rem', color: '#065f46', marginBottom: '1rem'}}>
-                <strong>Payment Amount:</strong> ${parseFloat(paymentForm.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </div>
-              <div style={{fontSize: '0.9rem', color: '#065f46', marginBottom: '1rem'}}>
-                <strong>Network Fee ({networkFeePercent}%):</strong> ${calculatedFee.toFixed(2)}
-              </div>
-              <div style={{fontSize: '1.1rem', fontWeight: '700', color: '#047857', paddingTop: '0.5rem', borderTop: '1px solid #86efac'}}>
-                <strong>Total to Send:</strong> ${totalAmountWithFee.toFixed(2)}
-              </div>
-            </div>
-
-            {loadingWallet ? (
-              <div style={{textAlign: 'center', padding: '2rem'}}>
-                <div style={styles.spinner}></div>
-                <p>Loading wallet address...</p>
-              </div>
-            ) : (
-              <>
-                <div style={{background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)', borderRadius: '12px', padding: '1.5rem', marginBottom: '1.5rem', color: '#fff'}}>
-                  <div style={{marginBottom: '1rem'}}>
-                    <div style={{fontSize: '0.75rem', opacity: '0.9', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.5rem'}}>
-                      {paymentForm.crypto_type} ({paymentForm.network_type})
-                    </div>
-                    <div style={{fontSize: '0.85rem', fontWeight: '600', marginBottom: '0.5rem'}}>Wallet Address:</div>
-                    <div style={{backgroundColor: 'rgba(255,255,255,0.2)', padding: '12px', borderRadius: '8px', wordBreak: 'break-all', fontSize: '0.9rem', fontFamily: 'monospace'}}>
-                      {walletAddress}
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(walletAddress);
-                      showToast('Wallet address copied!', 'success');
-                    }}
-                    style={{backgroundColor: 'rgba(255,255,255,0.2)', color: '#fff', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600'}}
-                  >
-                    📋 Copy Address
-                  </button>
-
-                  {selectedLoanWallet?.memo && (
-                    <div style={{marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.2)'}}>
-                      <div style={{fontSize: '0.85rem', fontWeight: '600', marginBottom: '0.5rem'}}>Memo/Tag (if required):</div>
-                      <div style={{backgroundColor: 'rgba(255,255,255,0.2)', padding: '8px', borderRadius: '6px', fontFamily: 'monospace', fontSize: '0.9rem'}}>
-                        {selectedLoanWallet.memo}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div style={{backgroundColor: '#fffbeb', border: '1px solid #fbbf24', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem'}}>
-                  <div style={{fontSize: '0.85rem', color: '#92400e', lineHeight: '1.6'}}>
-                    <strong>⚠️ Important:</strong>
-                    <ul style={{margin: '0.5rem 0', paddingLeft: '1.5rem'}}>
-                      <li>Send exactly <strong>${totalAmountWithFee.toFixed(2)}</strong> worth of {paymentForm.crypto_type}</li>
-                      <li>Use only the <strong>{paymentForm.network_type}</strong> network</li>
-                      <li>Double-check the wallet address before sending</li>
-                      <li>After sending, submit your transaction hash below</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Transaction Hash (Optional)</label>
-                  <input
-                    type="text"
-                    value={paymentProof.txHash}
-                    onChange={(e) => setPaymentProof({...paymentProof, txHash: e.target.value})}
-                    placeholder="Enter your transaction hash"
-                    style={styles.input}
-                  />
-                </div>
-
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Payment Proof (Optional)</label>
-                  <input
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={(e) => setPaymentProof({...paymentProof, proofFile: e.target.files[0]})}
-                    style={styles.fileInput}
-                  />
-                  <small style={styles.helperText}>
-                    Upload a screenshot or PDF of your payment confirmation
-                  </small>
-                </div>
-
-                <div style={styles.modalActions}>
-                  <button 
-                    onClick={() => {
-                      setCryptoPaymentModal(false);
-                      setPaymentProof({ txHash: '', proofFile: null });
-                    }} 
-                    style={styles.cancelButton}
-                    disabled={submittingProof}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSubmitCryptoPayment}
-                    disabled={submittingProof || (!paymentProof.txHash && !paymentProof.proofFile)}
-                    style={{
-                      ...styles.submitButton,
-                      opacity: submittingProof || (!paymentProof.txHash && !paymentProof.proofFile) ? 0.5 : 1
-                    }}
-                  >
-                    {submittingProof ? 'Submitting...' : 'Submit Payment Proof'}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }
@@ -1284,374 +922,464 @@ export default function LoanDetail() {
 
 const styles = {
   container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: 'clamp(1rem, 3vw, 2.5rem) clamp(0.75rem, 3vw, 1.25rem)',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     minHeight: '100vh',
     backgroundColor: '#f8fafc',
-    width: '100%',
-    boxSizing: 'border-box'
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    paddingBottom: '2rem'
   },
+
+  // Professional Header Styles
+  professionalHeader: {
+    background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+    color: '#fff',
+    padding: '2rem',
+    boxShadow: '0 4px 20px rgba(30, 58, 138, 0.3)'
+  },
+  headerTop: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '2rem',
+    gap: '1.5rem'
+  },
+  headerLeft: {
+    flex: 1
+  },
+  backLink: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    color: 'rgba(255, 255, 255, 0.9)',
+    textDecoration: 'none',
+    fontSize: '0.9rem',
+    fontWeight: '500',
+    marginBottom: '1rem',
+    transition: 'color 0.2s'
+  },
+  backArrow: {
+    fontSize: '1.2rem'
+  },
+  headerTitleSection: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem'
+  },
+  loanIconLarge: {
+    fontSize: '3rem',
+    width: '70px',
+    height: '70px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: '16px',
+    backdropFilter: 'blur(10px)'
+  },
+  headerTitle: {
+    fontSize: '2rem',
+    fontWeight: '800',
+    margin: '0 0 0.25rem 0',
+    color: '#fff',
+    letterSpacing: '-0.5px'
+  },
+  headerReference: {
+    fontSize: '0.85rem',
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontFamily: 'monospace',
+    margin: 0
+  },
+  headerRight: {
+    display: 'flex',
+    alignItems: 'flex-start'
+  },
+  statusBadge: {
+    padding: '0.75rem 1.5rem',
+    borderRadius: '20px',
+    fontSize: '0.875rem',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+  },
+  headerStatsRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+    gap: '1.5rem',
+    marginTop: '1.5rem'
+  },
+  headerStat: {
+    background: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(10px)',
+    padding: '1rem',
+    borderRadius: '12px',
+    textAlign: 'center'
+  },
+  headerStatLabel: {
+    fontSize: '0.75rem',
+    color: 'rgba(255, 255, 255, 0.8)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    marginBottom: '0.5rem',
+    fontWeight: '600'
+  },
+  headerStatValue: {
+    fontSize: '1.25rem',
+    fontWeight: '800',
+    color: '#fff'
+  },
+
+  // Loading States
   loadingContainer: {
-    textAlign: 'center',
-    padding: '60px 20px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '100vh',
+    backgroundColor: '#f8fafc'
   },
   spinner: {
     width: '50px',
     height: '50px',
     margin: '0 auto 20px',
     border: '4px solid #f3f3f3',
-    borderTop: '4px solid #007BFF',
+    borderTop: '4px solid #3b82f6',
     borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
+    animation: 'spin 1s linear infinite'
   },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
-    flexWrap: 'wrap',
-    gap: '12px',
+  loadingText: {
+    fontSize: '1rem',
+    color: '#64748b',
+    fontWeight: '500'
   },
-  backLink: {
-    color: '#007BFF',
-    textDecoration: 'none',
-    fontSize: 'clamp(12px, 2vw, 14px)',
-    fontWeight: '500',
-    marginBottom: '8px',
-    display: 'inline-block',
-  },
-  title: {
-    fontSize: 'clamp(24px, 6vw, 32px)',
-    fontWeight: '700',
-    color: '#1a1a1a',
-    margin: '6px 0',
-  },
-  subtitle: {
-    fontSize: 'clamp(12px, 2vw, 14px)',
-    color: '#666',
-    fontFamily: 'monospace',
-    margin: 0,
-    wordBreak: 'break-word',
-  },
-  statusBadge: {
-    padding: 'clamp(6px, 1.5vw, 8px) clamp(12px, 2vw, 16px)',
-    borderRadius: '20px',
-    fontSize: 'clamp(11px, 2vw, 13px)',
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    whiteSpace: 'nowrap',
-  },
+
+  // Toast Notification
   toast: {
     position: 'fixed',
     top: '20px',
     right: '20px',
     color: 'white',
-    padding: '16px 24px',
-    borderRadius: '8px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+    padding: '1rem 1.5rem',
+    borderRadius: '12px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
     zIndex: 1000,
-    fontWeight: '500',
-  },
-  depositBanner: {
-    backgroundColor: '#FFF3CD',
-    borderLeft: '4px solid #FFA500',
-    padding: 'clamp(12px, 3vw, 20px)',
-    borderRadius: '8px',
-    marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
-  },
-  depositBannerContent: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 'clamp(12px, 2vw, 20px)',
-    flexWrap: 'wrap',
-  },
-  depositBannerText: {
-    margin: '8px 0 0 0',
-    color: '#666',
-    fontSize: 'clamp(13px, 2vw, 15px)',
-  },
-  depositNowButton: {
-    backgroundColor: '#007BFF',
-    color: 'white',
-    padding: 'clamp(10px, 2vw, 12px) clamp(16px, 3vw, 24px)',
-    borderRadius: '6px',
-    textDecoration: 'none',
     fontWeight: '600',
-    fontSize: 'clamp(13px, 2vw, 14px)',
-    whiteSpace: 'nowrap',
+    fontSize: '0.95rem'
   },
-  infoBanner: {
-    backgroundColor: '#D1ECF1',
-    borderLeft: '4px solid #17A2B8',
-    padding: 'clamp(12px, 2vw, 16px) clamp(16px, 3vw, 20px)',
-    borderRadius: '8px',
-    marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
-    fontSize: 'clamp(13px, 2vw, 15px)',
+
+  // Banner Styles
+  depositBanner: {
+    backgroundColor: '#ecfdf5',
+    border: '2px solid #10b981',
+    borderRadius: '16px',
+    padding: '1.5rem',
+    margin: '2rem',
+    display: 'flex',
+    gap: '1rem',
+    alignItems: 'flex-start',
+    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.1)'
   },
-  successBanner: {
-    backgroundColor: '#D4EDDA',
-    borderLeft: '4px solid #28A745',
-    padding: 'clamp(12px, 2vw, 16px) clamp(16px, 3vw, 20px)',
-    borderRadius: '8px',
-    marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
-    fontSize: 'clamp(13px, 2vw, 15px)',
+  bannerIcon: {
+    fontSize: '2rem',
+    flexShrink: 0
   },
+  bannerContent: {
+    flex: 1
+  },
+  bannerTitle: {
+    fontSize: '1.1rem',
+    fontWeight: '700',
+    color: '#065f46',
+    marginBottom: '0.5rem',
+    display: 'block'
+  },
+  bannerText: {
+    fontSize: '0.95rem',
+    color: '#047857',
+    lineHeight: '1.6',
+    margin: '0 0 1rem 0'
+  },
+  bannerButton: {
+    display: 'inline-block',
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#10b981',
+    color: '#fff',
+    textDecoration: 'none',
+    borderRadius: '10px',
+    fontWeight: '700',
+    fontSize: '0.95rem',
+    transition: 'all 0.2s',
+    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+  },
+
+  // Tabs
   tabs: {
     display: 'flex',
-    gap: '0',
-    borderBottom: '2px solid #e0e0e0',
-    marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
-    overflowX: 'auto',
-    WebkitOverflowScrolling: 'touch',
-    scrollBehavior: 'smooth',
+    gap: '0.5rem',
+    padding: '0 2rem',
+    backgroundColor: '#fff',
+    borderBottom: '2px solid #e5e7eb',
+    overflowX: 'auto'
   },
   tab: {
-    padding: 'clamp(10px, 2vw, 12px) clamp(12px, 2vw, 24px)',
+    padding: '1rem 1.5rem',
     backgroundColor: 'transparent',
     border: 'none',
     borderBottom: '3px solid transparent',
     cursor: 'pointer',
-    fontSize: 'clamp(13px, 2vw, 15px)',
-    fontWeight: '500',
-    color: '#666',
-    transition: 'all 0.3s ease',
-    whiteSpace: 'nowrap',
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    color: '#64748b',
+    transition: 'all 0.2s',
+    whiteSpace: 'nowrap'
   },
   activeTab: {
-    color: '#007BFF',
-    borderBottomColor: '#007BFF',
+    color: '#3b82f6',
+    borderBottomColor: '#3b82f6'
   },
+
+  // Content Area
   content: {
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    padding: 'clamp(16px, 3vw, 30px)',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '2rem'
   },
-  infoGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',
-    gap: 'clamp(0.75rem, 2vw, 1.25rem)',
-    marginBottom: 'clamp(1.5rem, 3vw, 2rem)',
+
+  // Progress Card
+  progressCard: {
+    backgroundColor: '#eff6ff',
+    borderRadius: '16px',
+    padding: '1.5rem',
+    marginBottom: '2rem',
+    border: '1px solid #dbeafe'
   },
-  infoCard: {
-    padding: 'clamp(0.75rem, 2vw, 1.25rem)',
-    backgroundColor: '#f8f9fa',
-    borderRadius: '8px',
-    border: '1px solid #e0e0e0',
-  },
-  infoLabel: {
-    fontSize: 'clamp(0.7rem, 2vw, 0.8125rem)',
-    color: '#666',
-    fontWeight: '500',
-    marginBottom: '6px',
-    textTransform: 'uppercase',
-    letterSpacing: '0.3px',
-  },
-  infoValue: {
-    fontSize: 'clamp(1.1rem, 4vw, 1.5rem)',
-    fontWeight: '700',
-    color: '#333',
-    wordBreak: 'break-word',
-  },
-  section: {
-    marginTop: 'clamp(1.5rem, 3vw, 2rem)',
-    paddingTop: 'clamp(1.5rem, 3vw, 2rem)',
-    borderTop: '1px solid #e0e0e0',
-  },
-  sectionTitle: {
-    fontSize: 'clamp(16px, 4vw, 20px)',
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 'clamp(12px, 2vw, 16px)',
-  },
-  sectionText: {
-    fontSize: 'clamp(13px, 2vw, 15px)',
-    color: '#666',
-    lineHeight: '1.6',
-  },
-  actionButtons: {
-    display: 'flex',
-    gap: '12px',
-    marginTop: '30px',
-    flexDirection: 'column',
-    '@media (min-width: 600px)': {
-      flexDirection: 'row'
-    }
-  },
-  primaryButton: {
-    flex: 1,
-    width: '100%',
-    backgroundColor: '#28A745',
-    color: 'white',
-    padding: 'clamp(0.75rem, 2vw, 0.875rem) clamp(1rem, 3vw, 1.75rem)',
-    borderRadius: '8px',
-    border: 'none',
-    fontSize: 'clamp(0.9rem, 2.5vw, 1rem)',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-  },
-  secondaryButton: {
-    flex: 1,
-    width: '100%',
-    backgroundColor: 'white',
-    color: '#007BFF',
-    padding: 'clamp(0.75rem, 2vw, 0.875rem) clamp(1rem, 3vw, 1.75rem)',
-    borderRadius: '8px',
-    border: '2px solid #007BFF',
-    fontSize: 'clamp(0.9rem, 2.5vw, 1rem)',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-  },
-  documentsList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-  },
-  documentItem: {
+  progressHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '12px 16px',
-    backgroundColor: '#f8f9fa',
+    marginBottom: '1rem'
+  },
+  progressLabel: {
+    fontSize: '0.875rem',
+    fontWeight: '700',
+    color: '#1e40af',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
+  },
+  progressSubtext: {
+    fontSize: '0.875rem',
+    color: '#3b82f6',
+    marginTop: '0.25rem'
+  },
+  progressPercent: {
+    fontSize: '1.75rem',
+    fontWeight: '800',
+    color: '#1e40af'
+  },
+  progressBarContainer: {
+    width: '100%',
+    height: '12px',
+    backgroundColor: '#dbeafe',
     borderRadius: '6px',
+    overflow: 'hidden'
   },
-  downloadLink: {
-    color: '#007BFF',
+  progressBarFill: {
+    height: '100%',
+    borderRadius: '6px',
+    transition: 'width 0.5s ease'
+  },
+
+  // Info Grid
+  infoGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '1.5rem',
+    marginBottom: '2rem'
+  },
+  infoCard: {
+    padding: '1.25rem',
+    backgroundColor: '#f9fafb',
+    borderRadius: '12px',
+    border: '1px solid #e5e7eb'
+  },
+  infoLabel: {
+    fontSize: '0.75rem',
+    color: '#6b7280',
+    textTransform: 'uppercase',
+    fontWeight: '700',
+    letterSpacing: '0.5px',
+    marginBottom: '0.5rem'
+  },
+  infoValue: {
+    fontSize: '1.25rem',
+    fontWeight: '800',
+    color: '#1f2937'
+  },
+
+  // Purpose Section
+  purposeSection: {
+    backgroundColor: '#fff',
+    borderRadius: '12px',
+    padding: '1.5rem',
+    marginBottom: '2rem',
+    border: '1px solid #e5e7eb'
+  },
+  sectionTitle: {
+    fontSize: '1.1rem',
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: '1rem'
+  },
+  purposeText: {
+    fontSize: '0.95rem',
+    color: '#4b5563',
+    lineHeight: '1.6'
+  },
+
+  // Action Buttons
+  actionButtons: {
+    display: 'flex',
+    gap: '1rem',
+    flexWrap: 'wrap'
+  },
+  primaryActionButton: {
+    flex: 1,
+    minWidth: '200px',
+    padding: '1rem 2rem',
+    fontSize: '1rem',
+    fontWeight: '700',
+    color: '#fff',
+    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    border: 'none',
+    borderRadius: '12px',
+    cursor: 'pointer',
+    transition: 'all 0.3s',
+    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+  },
+  secondaryActionButton: {
+    flex: 1,
+    minWidth: '200px',
+    padding: '1rem 2rem',
+    fontSize: '1rem',
+    fontWeight: '700',
+    color: '#3b82f6',
+    backgroundColor: '#fff',
+    border: '2px solid #3b82f6',
+    borderRadius: '12px',
     textDecoration: 'none',
-    fontWeight: '500',
-    fontSize: '14px',
+    textAlign: 'center',
+    display: 'inline-block',
+    transition: 'all 0.3s'
   },
+
+  // Modal Styles
   modal: {
     position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
+    padding: '1rem'
   },
   modalContent: {
     backgroundColor: 'white',
-    borderRadius: '12px',
-    padding: '30px',
+    borderRadius: '16px',
+    padding: '2rem',
     maxWidth: '500px',
-    width: '90%',
+    width: '100%',
     maxHeight: '90vh',
     overflowY: 'auto',
+    boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
   },
   modalTitle: {
-    fontSize: '24px',
+    fontSize: '1.5rem',
     fontWeight: '700',
-    color: '#333',
-    marginBottom: '8px',
-  },
-  modalText: {
-    fontSize: '14px',
-    color: '#666',
-    marginBottom: '24px',
+    color: '#1f2937',
+    marginBottom: '1.5rem'
   },
   formGroup: {
-    marginBottom: '24px',
+    marginBottom: '1.5rem'
   },
   label: {
     display: 'block',
-    fontSize: '14px',
+    fontSize: '0.875rem',
     fontWeight: '600',
-    color: '#333',
-    marginBottom: '8px',
+    color: '#374151',
+    marginBottom: '0.5rem'
   },
   input: {
     width: '100%',
-    padding: '12px',
-    borderRadius: '6px',
-    border: '1px solid #ddd',
-    fontSize: '15px',
-    boxSizing: 'border-box',
+    padding: '0.75rem',
+    borderRadius: '8px',
+    border: '1px solid #d1d5db',
+    fontSize: '1rem',
+    boxSizing: 'border-box'
   },
   select: {
     width: '100%',
-    padding: '12px',
-    borderRadius: '6px',
-    border: '1px solid #ddd',
-    fontSize: '15px',
+    padding: '0.75rem',
+    borderRadius: '8px',
+    border: '1px solid #d1d5db',
+    fontSize: '1rem',
     backgroundColor: 'white',
-    cursor: 'pointer',
-  },
-  fileInput: {
-    width: '100%',
-    padding: '8px',
-    fontSize: '14px',
+    cursor: 'pointer'
   },
   helperText: {
     display: 'block',
-    marginTop: '6px',
-    fontSize: '13px',
-    color: '#666',
+    marginTop: '0.5rem',
+    fontSize: '0.8rem',
+    color: '#6b7280'
   },
   modalActions: {
     display: 'flex',
-    gap: '12px',
-    marginTop: '30px',
+    gap: '1rem',
+    marginTop: '2rem'
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: 'white',
-    color: '#666',
-    padding: '12px 24px',
-    borderRadius: '6px',
-    border: '1px solid #ddd',
-    fontSize: '15px',
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#f3f4f6',
+    color: '#4b5563',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '1rem',
     fontWeight: '600',
-    cursor: 'pointer',
+    cursor: 'pointer'
   },
   submitButton: {
     flex: 1,
-    backgroundColor: '#007BFF',
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#3b82f6',
     color: 'white',
-    padding: '12px 24px',
-    borderRadius: '6px',
     border: 'none',
-    fontSize: '15px',
+    borderRadius: '8px',
+    fontSize: '1rem',
     fontWeight: '600',
-    cursor: 'pointer',
+    cursor: 'pointer'
   },
+
+  // Empty State
   emptyState: {
     textAlign: 'center',
-    padding: '60px 20px',
+    padding: '4rem 2rem',
+    minHeight: '50vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   backButton: {
     display: 'inline-block',
-    marginTop: '20px',
-    backgroundColor: '#007BFF',
+    marginTop: '1.5rem',
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#3b82f6',
     color: 'white',
-    padding: '12px 24px',
-    borderRadius: '8px',
     textDecoration: 'none',
-    fontWeight: '600',
-  },
-  notesText: {
-    fontSize: '0.85rem',
-    color: '#78350f',
-    lineHeight: '1.6'
-  },
-  warningBox: {
-    backgroundColor: '#fffbeb',
-    border: '1px solid #fde68a',
-    borderLeft: '4px solid #f59e0b',
     borderRadius: '8px',
-    padding: '16px 20px',
-    marginBottom: '20px',
-    display: 'flex',
-    gap: '12px',
-    alignItems: 'flex-start'
+    fontWeight: '600'
   }
 };
