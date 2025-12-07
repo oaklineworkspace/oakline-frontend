@@ -368,9 +368,12 @@ function LoansOverviewContent() {
                         💳 Make Payment
                       </Link>
                     )}
-                    <Link href={`/loan/${loan.id}`} style={styles.viewButton}>
+                    <button
+                      onClick={() => router.push(`/loan/${loan.id}`)}
+                      style={{...styles.viewButton, border: 'none', cursor: 'pointer'}}
+                    >
                       👁️ View Details
-                    </Link>
+                    </button>
                   </div>
 
                   {loan.purpose && (

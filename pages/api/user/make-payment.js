@@ -87,7 +87,6 @@ export default async function handler(req, res) {
     const newRemainingBalance = remainingBalance - paymentAmount;
 
     // Create payment with pending status - admin must approve
-    const currentDateTime = new Date().toISOString();
     const referenceNumber = `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
     const { data: paymentRecord, error: paymentError } = await supabaseAdmin
