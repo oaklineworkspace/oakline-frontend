@@ -117,7 +117,10 @@ export default function AmortizationSchedule({ loanId }) {
     filteredSchedule = schedule.filter(s => s.is_paid);
   }
 
-  const progressPercent = loan_details?.term_months ? ((loan_details.payments_made / loan_details.term_months) * 100).toFixed(1) : '0.0';
+  const remainingBalance = parseFloat(loan_details?.current_balance || loan_details?.remaining_balance || 0);
+  const principal = parseFloat(loan_details?.principal || 0);
+  const isFullyPaid = remainingBalance <= 0.50 || loan_details?.status === 'paid' || loan_details?.status === 'closed' || (principal > 0 && remainingBalance <= principal * 0.001);
+  const progressPercent = isFullyPaid ? '100.0' : (loan_details?.term_months ? ((loan_details.payments_made / loan_details.term_months) * 100).toFixed(1) : '0.0');
 
   return (
     <div style={styles.container}>
@@ -137,11 +140,19 @@ export default function AmortizationSchedule({ loanId }) {
           <div style={styles.progressInfo}>
             <div style={styles.progressLabel}>Loan Progress</div>
             <div style={styles.progressStats}>
-              {summary.payments_completed || loan_details?.payments_made || 0} of {loan_details?.term_months || 0} scheduled payments completed
-              {(summary.payments_completed || 0) > (loan_details?.payments_made || 0) && (
-                <span style={{color: '#059669', fontWeight: '700', marginLeft: '8px'}}>
-                  ({(summary.payments_completed || 0) - (loan_details?.payments_made || 0)} ahead)
+              {isFullyPaid ? (
+                <span style={{color: '#059669', fontWeight: '700'}}>
+                  ✓ Loan Fully Paid - All payments completed
                 </span>
+              ) : (
+                <>
+                  {summary.payments_completed || loan_details?.payments_made || 0} of {loan_details?.term_months || 0} scheduled payments completed
+                  {(summary.payments_completed || 0) > (loan_details?.payments_made || 0) && (
+                    <span style={{color: '#059669', fontWeight: '700', marginLeft: '8px'}}>
+                      ({(summary.payments_completed || 0) - (loan_details?.payments_made || 0)} ahead)
+                    </span>
+                  )}
+                </>
               )}
             </div>
           </div>

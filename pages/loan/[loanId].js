@@ -586,15 +586,42 @@ function LoanDetailContent() {
 
   const getLoanTypeLabel = (type) => {
     const types = {
-      personal: '👤 Personal Loan',
-      home_mortgage: '🏠 Home Mortgage',
-      auto_loan: '🚗 Auto Loan',
-      business: '🏢 Business Loan',
-      student: '🎓 Student Loan',
-      home_equity: '🏡 Home Equity Loan'
+      personal: 'Personal Loan',
+      personal_loan: 'Personal Loan',
+      home_mortgage: 'Home Mortgage',
+      auto_loan: 'Auto Loan',
+      auto: 'Auto Loan',
+      business: 'Business Loan',
+      business_loan: 'Business Loan',
+      student: 'Student Loan',
+      student_loan: 'Student Loan',
+      home_equity: 'Home Equity Loan',
+      home_equity_loan: 'Home Equity Loan'
     };
-    return types[type] || type;
+    return types[type] || type?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Loan';
   };
+
+  const getLoanTypeIcon = (type) => {
+    const icons = {
+      personal: '👤',
+      personal_loan: '👤',
+      home_mortgage: '🏠',
+      auto_loan: '🚗',
+      auto: '🚗',
+      business: '🏢',
+      business_loan: '🏢',
+      student: '🎓',
+      student_loan: '🎓',
+      home_equity: '🏡',
+      home_equity_loan: '🏡'
+    };
+    return icons[type] || '💰';
+  };
+
+  const remainingBalance = parseFloat(loan?.remaining_balance || 0);
+  const principal = parseFloat(loan?.principal || 0);
+  const isFullyPaid = remainingBalance <= 0.50 || loan?.status === 'paid' || loan?.status === 'closed' || (principal > 0 && remainingBalance <= principal * 0.001);
+  const progressPercent = isFullyPaid ? 100 : (loan?.term_months ? ((loan.payments_made || 0) / loan.term_months) * 100 : 0);
 
   if (loading) {
     return (
@@ -629,11 +656,60 @@ function LoanDetailContent() {
       <div style={styles.header} className="loan-detail-header">
         <div>
           <Link href="/loans" style={styles.backLink}>← Back to Loans</Link>
-          <h1 style={styles.title}>{getLoanTypeLabel(loan.loan_type)}</h1>
+          <h1 style={styles.title}>{getLoanTypeIcon(loan.loan_type)} {getLoanTypeLabel(loan.loan_type)}</h1>
           <p style={styles.subtitle}>Reference: {loan.loan_reference || loan.id.slice(0, 12)}</p>
         </div>
         {getStatusBadge(loan.status)}
       </div>
+
+      {/* Paid Ahead or Fully Paid Status Banner */}
+      {loan.status === 'active' && (() => {
+        const monthsAhead = (loan.payments_made || 0) - Math.ceil((new Date() - new Date(loan.disbursed_at || loan.approved_at || loan.created_at)) / (30 * 24 * 60 * 60 * 1000));
+        if (isFullyPaid) {
+          return (
+            <div style={{
+              backgroundColor: '#d1fae5',
+              border: '1px solid #a7f3d0',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <span style={{ fontSize: '24px' }}>🎉</span>
+              <div>
+                <strong style={{ color: '#065f46', fontSize: '16px' }}>Congratulations! Loan Fully Paid</strong>
+                <p style={{ color: '#047857', margin: '4px 0 0 0', fontSize: '14px' }}>
+                  You've successfully completed all payments on this loan. No more payments required.
+                </p>
+              </div>
+            </div>
+          );
+        } else if (monthsAhead > 0) {
+          return (
+            <div style={{
+              backgroundColor: '#ecfdf5',
+              border: '1px solid #a7f3d0',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <span style={{ fontSize: '24px' }}>✓</span>
+              <div>
+                <strong style={{ color: '#065f46', fontSize: '16px' }}>{monthsAhead} Month{monthsAhead !== 1 ? 's' : ''} Paid Ahead</strong>
+                <p style={{ color: '#047857', margin: '4px 0 0 0', fontSize: '14px' }}>
+                  You're ahead of schedule on your loan payments!
+                </p>
+              </div>
+            </div>
+          );
+        }
+        return null;
+      })()}
 
       {toast.show && (
         <div style={{
@@ -754,24 +830,68 @@ function LoanDetailContent() {
 
       {activeTab === 'overview' && (
         <div style={styles.content}>
+          {/* Progress Section */}
+          {(loan.status === 'active' || loan.status === 'approved') && (
+            <div style={{
+              backgroundColor: '#eff6ff',
+              borderRadius: '16px',
+              padding: '20px',
+              marginBottom: '24px',
+              border: '1px solid #dbeafe'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: '700', color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Loan Progress
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#3b82f6', marginTop: '4px' }}>
+                    {isFullyPaid ? (
+                      <span style={{ color: '#059669', fontWeight: '700' }}>✓ Fully Paid</span>
+                    ) : (
+                      `${loan.payments_made || 0} of ${loan.term_months} payments completed`
+                    )}
+                  </div>
+                </div>
+                <div style={{ fontSize: '28px', fontWeight: '800', color: '#1e40af' }}>
+                  {progressPercent.toFixed(1)}%
+                </div>
+              </div>
+              <div style={{
+                width: '100%',
+                height: '12px',
+                backgroundColor: '#dbeafe',
+                borderRadius: '6px',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  width: `${progressPercent}%`,
+                  height: '100%',
+                  background: isFullyPaid ? 'linear-gradient(90deg, #10b981 0%, #059669 100%)' : 'linear-gradient(90deg, #3b82f6 0%, #1e40af 100%)',
+                  borderRadius: '6px',
+                  transition: 'width 0.5s ease'
+                }}></div>
+              </div>
+            </div>
+          )}
+
           <div style={styles.infoGrid}>
             <div style={styles.infoCard}>
-              <div style={styles.infoLabel}>Principal Amount</div>
+              <div style={styles.infoLabel}>Original Amount</div>
               <div style={styles.infoValue}>
                 ${parseFloat(loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
             </div>
 
             <div style={styles.infoCard}>
-              <div style={styles.infoLabel}>Remaining Balance</div>
-              <div style={{ ...styles.infoValue, color: '#DC3545' }}>
+              <div style={styles.infoLabel}>Current Balance</div>
+              <div style={{ ...styles.infoValue, color: isFullyPaid ? '#10b981' : '#DC3545' }}>
                 ${parseFloat(loan.remaining_balance || loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
             </div>
 
             <div style={styles.infoCard}>
               <div style={styles.infoLabel}>Interest Rate</div>
-              <div style={styles.infoValue}>{parseFloat(loan.interest_rate).toFixed(2)}% APR</div>
+              <div style={styles.infoValue}>{parseFloat(loan.interest_rate).toFixed(1)}% APR</div>
             </div>
 
             <div style={styles.infoCard}>
@@ -794,11 +914,18 @@ function LoanDetailContent() {
             </div>
 
             <div style={styles.infoCard}>
-              <div style={styles.infoLabel}>Application Date</div>
-              <div style={styles.infoValue}>
-                {new Date(loan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-              </div>
+              <div style={styles.infoLabel}>Payments Made</div>
+              <div style={styles.infoValue}>{loan.payments_made || 0} / {loan.term_months}</div>
             </div>
+
+            {loan.next_payment_date && !isFullyPaid && (
+              <div style={styles.infoCard}>
+                <div style={styles.infoLabel}>Next Payment Due</div>
+                <div style={{ ...styles.infoValue, color: '#1e40af' }}>
+                  {new Date(loan.next_payment_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </div>
+              </div>
+            )}
 
             {loan.approved_at && (
               <div style={styles.infoCard}>
@@ -826,10 +953,10 @@ function LoanDetailContent() {
             </div>
           )}
 
-          {(loan.status === 'active' || loan.status === 'approved') && (
+          {(loan.status === 'active' || loan.status === 'approved') && !isFullyPaid && (
             <div style={styles.actionButtons} className="loan-detail-actions">
               <Link href={`/loan/make-payment?loanId=${loan.id}`} style={{...styles.primaryButton, textDecoration: 'none', textAlign: 'center', display: 'block'}}>
-                Make Payment
+                💳 Make Payment
               </Link>
             </div>
           )}

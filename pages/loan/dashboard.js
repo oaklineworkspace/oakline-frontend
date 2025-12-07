@@ -740,24 +740,30 @@ Generated: ${new Date().toLocaleString()}
                   </div>
 
                   {/* Progress Bar */}
-                  {(selectedLoan.status === 'active' || selectedLoan.status === 'approved') && (
-                    <div style={styles.progressSection}>
-                      <div style={styles.progressHeader}>
-                        <span style={styles.progressLabel}>Loan Progress</span>
-                        <span style={styles.progressText}>
-                          {((selectedLoan.payments_made / selectedLoan.term_months) * 100).toFixed(1)}% Complete
-                        </span>
+                  {(selectedLoan.status === 'active' || selectedLoan.status === 'approved') && (() => {
+                    const remainingBalance = parseFloat(selectedLoan.remaining_balance || 0);
+                    const principal = parseFloat(selectedLoan.principal || 0);
+                    const isFullyPaid = remainingBalance <= 0.50 || selectedLoan.status === 'paid' || selectedLoan.status === 'closed' || (principal > 0 && remainingBalance <= principal * 0.001);
+                    const progressPercent = isFullyPaid ? 100 : ((selectedLoan.payments_made / selectedLoan.term_months) * 100);
+                    return (
+                      <div style={styles.progressSection}>
+                        <div style={styles.progressHeader}>
+                          <span style={styles.progressLabel}>Loan Progress</span>
+                          <span style={styles.progressText}>
+                            {progressPercent.toFixed(1)}% Complete
+                          </span>
+                        </div>
+                        <div style={styles.progressBar}>
+                          <div
+                            style={{
+                              ...styles.progressFill,
+                              width: `${progressPercent}%`
+                            }}
+                          ></div>
+                        </div>
                       </div>
-                      <div style={styles.progressBar}>
-                        <div
-                          style={{
-                            ...styles.progressFill,
-                            width: `${(selectedLoan.payments_made / selectedLoan.term_months) * 100}%`
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Loan Actions */}
                   <div style={styles.loanActions} className="loan-actions">
