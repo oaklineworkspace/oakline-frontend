@@ -305,7 +305,9 @@ export default async function handler(req, res) {
         created_at: paymentRecord.payment_date,
         balance_after: paymentRecord.balance_after,
         principal_amount: paymentRecord.principal_amount,
-        interest_amount: paymentRecord.interest_amount
+        interest_amount: paymentRecord.interest_amount,
+        deposit_method: paymentRecord.deposit_method,
+        account_number: account.account_number
       }
     });
 

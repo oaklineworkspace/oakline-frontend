@@ -254,56 +254,10 @@ function LoanDashboardContent() {
     }
   };
 
-  const handleMakePayment = async () => {
-    if (!paymentAmount || parseFloat(paymentAmount) <= 0) {
-      setError('Please enter a valid payment amount');
-      return;
-    }
-
-    if (!selectedAccount) {
-      setError('Please select a payment account');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setError('Session expired. Please log in again.');
-        return;
-      }
-
-      const response = await fetch('/api/loan/payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-          loan_id: selectedLoan.id,
-          amount: parseFloat(paymentAmount),
-          account_id: selectedAccount
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setSuccess('Payment processed successfully!');
-        setShowPaymentModal(false);
-        setPaymentAmount('');
-        fetchUserLoans();
-        setTimeout(() => setSuccess(''), 5000);
-      } else {
-        setError(data.error || 'Payment failed');
-      }
-    } catch (err) {
-      setError('An error occurred while processing payment');
-    } finally {
-      setLoading(false);
+  const handleMakePayment = () => {
+    // Redirect to the dedicated make-payment page
+    if (selectedLoan && selectedLoan.id) {
+      router.push(`/loan/make-payment?loanId=${selectedLoan.id}`);
     }
   };
 
@@ -918,65 +872,21 @@ Generated: ${new Date().toLocaleString()}
         )}
       </div>
 
-      {/* Payment Modal */}
+      {/* Payment Modal - Redirect to dedicated page */}
       {showPaymentModal && (
         <div style={styles.modalOverlay} onClick={() => setShowPaymentModal(false)}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()} className="loan-modal-content">
             <h2 style={styles.modalTitle}>Make a Payment</h2>
 
             <div style={styles.modalLoanInfo}>
-              <div>Loan: {selectedLoan?.loan_type.replace(/_/g, ' ').toUpperCase()}</div>
-              <div>Current Balance: ${parseFloat(selectedLoan?.remaining_balance || 0).toLocaleString()}</div>
-              <div>Minimum Payment: ${parseFloat(selectedLoan?.monthly_payment_amount || 0).toLocaleString()}</div>
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Payment Amount</label>
-              <input
-                type="number"
-                value={paymentAmount}
-                onChange={(e) => setPaymentAmount(e.target.value)}
-                placeholder="Enter amount"
-                min={selectedLoan?.monthly_payment_amount}
-                step="0.01"
-                style={styles.input}
-              />
-              <div style={styles.quickActions}>
-                <button
-                  onClick={() => setPaymentAmount(selectedLoan?.monthly_payment_amount)}
-                  style={styles.quickButton}
-                >
-                  Minimum
-                </button>
-                <button
-                  onClick={() => setPaymentAmount(parseFloat(selectedLoan?.monthly_payment_amount || 0) * 2)}
-                  style={styles.quickButton}
-                >
-                  2x Minimum
-                </button>
-                <button
-                  onClick={() => setPaymentAmount(selectedLoan?.remaining_balance)}
-                  style={styles.quickButton}
-                >
-                  Full Balance
-                </button>
+              <div style={{marginBottom: '12px', fontSize: '16px', fontWeight: '600'}}>
+                Loan: {selectedLoan?.loan_type.replace(/_/g, ' ').toUpperCase()}
               </div>
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Payment Account</label>
-              <select
-                value={selectedAccount}
-                onChange={(e) => setSelectedAccount(e.target.value)}
-                style={styles.input}
-              >
-                {accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.account_type.toUpperCase()} - ****{account.account_number.slice(-4)}
-                    (${parseFloat(account.balance).toLocaleString()})
-                  </option>
-                ))}
-              </select>
+              <div style={{marginBottom: '8px'}}>Current Balance: ${parseFloat(selectedLoan?.remaining_balance || 0).toLocaleString()}</div>
+              <div style={{marginBottom: '8px'}}>Monthly Payment: ${parseFloat(selectedLoan?.monthly_payment_amount || 0).toLocaleString()}</div>
+              <div style={{marginTop: '16px', padding: '12px', backgroundColor: '#eff6ff', borderRadius: '8px', fontSize: '14px', color: '#1e40af'}}>
+                💡 You'll be redirected to our secure payment page where you can choose your payment method (Account Balance or Cryptocurrency) and complete your payment.
+              </div>
             </div>
 
             <div style={styles.modalActions}>
@@ -988,10 +898,9 @@ Generated: ${new Date().toLocaleString()}
               </button>
               <button
                 onClick={handleMakePayment}
-                disabled={loading}
                 style={styles.confirmButton}
               >
-                {loading ? 'Processing...' : 'Confirm Payment'}
+                Continue to Payment →
               </button>
             </div>
           </div>

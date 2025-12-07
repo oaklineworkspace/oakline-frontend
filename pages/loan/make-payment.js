@@ -327,7 +327,16 @@ function MakePaymentContent() {
       const data = await response.json();
 
       if (response.ok) {
-        router.push(`/loan/payment-success?reference=${data.payment.reference_number}&amount=${data.payment.amount}&loan_id=${loanId}`);
+        const paymentMethod = paymentForm.payment_type === 'crypto' ? 'crypto' : 'balance';
+        let successUrl = `/loan/payment-success?reference=${data.payment.reference_number}&amount=${data.payment.amount}&loan_id=${loanId}&payment_method=${paymentMethod}`;
+        
+        if (paymentMethod === 'balance' && data.payment.account_number) {
+          successUrl += `&account_number=${data.payment.account_number}`;
+        } else if (paymentMethod === 'crypto') {
+          successUrl += `&crypto_type=${paymentForm.crypto_type}&network_type=${paymentForm.network_type}`;
+        }
+        
+        router.push(successUrl);
       } else {
         showToast(data.error || 'Failed to process payment', 'error');
       }

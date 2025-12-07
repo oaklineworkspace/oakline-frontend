@@ -8,9 +8,20 @@ function PaymentSuccessContent() {
   const { reference, amount, loan_id } = router.query;
   const [currentTime] = useState(new Date());
 
+  // Handle the redirect for the payment modal in the loan dashboard
+  useEffect(() => {
+    if (router.pathname === '/loan/dashboard' && router.query.showPaymentModal === 'true') {
+      router.push(`/loan/${loan_id}?makePayment=true`);
+    }
+  }, [router, loan_id]);
+
+
   const printReceipt = () => {
     window.print();
   };
+
+  // Extract payment method and account details from query parameters
+  const { payment_method, account_number, crypto_payment_id } = router.query;
 
   return (
     <div style={styles.container}>
@@ -28,6 +39,10 @@ function PaymentSuccessContent() {
           <div style={styles.receiptHeader}>
             <h2 style={styles.receiptTitle}>Payment Receipt</h2>
             <p style={styles.receiptSubtitle}>Please save this for your records</p>
+            {/* Optional: Add a logo here */}
+            {/* <div style={styles.bankLogo}>
+              <img src="/path/to/your/logo.png" alt="Bank Logo" style={{ maxWidth: '150px' }} />
+            </div> */}
           </div>
 
           <div style={styles.detailsGrid}>
@@ -48,6 +63,24 @@ function PaymentSuccessContent() {
                 })}
               </span>
             </div>
+             {payment_method && (
+              <div style={styles.detailRow}>
+                <span style={styles.detailLabel}>Payment Method</span>
+                <span style={styles.detailValue}>{payment_method}</span>
+              </div>
+            )}
+            {payment_method === 'balance' && account_number && (
+              <div style={styles.detailRow}>
+                <span style={styles.detailLabel}>Account Number</span>
+                <span style={styles.detailValue}>**** **** **** {account_number.slice(-4)}</span>
+              </div>
+            )}
+            {payment_method === 'crypto' && crypto_payment_id && (
+              <div style={styles.detailRow}>
+                <span style={styles.detailLabel}>Crypto Transaction ID</span>
+                <span style={styles.detailValue}>{crypto_payment_id}</span>
+              </div>
+            )}
             <div style={styles.detailRow}>
               <span style={styles.detailLabel}>Status</span>
               <span style={styles.statusPending}>Pending Approval</span>
@@ -58,6 +91,13 @@ function PaymentSuccessContent() {
             <p style={styles.infoText}>
               ⏳ Your payment is currently being reviewed by our team. You will receive a confirmation email once it's approved. This typically takes 1-2 business days.
             </p>
+          </div>
+
+          <div style={styles.footerInfo}>
+            <div style={styles.footerRow}>
+              <span>Thank you for your payment!</span>
+              <span>{loan_id ? `Loan ID: ${loan_id}` : ''}</span>
+            </div>
           </div>
         </div>
 
@@ -96,7 +136,7 @@ const styles = {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
   },
   successCard: {
-    maxWidth: '600px',
+    maxWidth: '700px',
     width: '100%',
     backgroundColor: 'white',
     borderRadius: '16px',
@@ -122,9 +162,11 @@ const styles = {
   },
   title: {
     fontSize: '2rem',
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#1a365d',
-    marginBottom: '1rem'
+    marginBottom: '1rem',
+    letterSpacing: '-0.02em',
+    lineHeight: '1.2'
   },
   subtitle: {
     fontSize: '1.125rem',
@@ -142,7 +184,14 @@ const styles = {
   receiptHeader: {
     marginBottom: '1.5rem',
     paddingBottom: '1rem',
-    borderBottom: '2px solid #e2e8f0'
+    borderBottom: '2px solid #e2e8f0',
+    textAlign: 'center'
+  },
+  bankLogo: {
+    marginBottom: '12px',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   receiptTitle: {
     fontSize: '1.5rem',
@@ -153,7 +202,7 @@ const styles = {
   receiptSubtitle: {
     fontSize: '0.875rem',
     color: '#64748b',
-    margin: 0
+    margin: '4px 0'
   },
   detailsGrid: {
     display: 'flex',
@@ -172,16 +221,17 @@ const styles = {
   detailLabel: {
     fontSize: '0.875rem',
     color: '#64748b',
-    fontWeight: '500'
+    fontWeight: '600'
   },
   detailValue: {
     fontSize: '0.875rem',
     color: '#1a365d',
     fontWeight: '600',
-    fontFamily: 'monospace'
+    fontFamily: 'monospace',
+    textAlign: 'right'
   },
   detailValueAmount: {
-    fontSize: '1.25rem',
+    fontSize: '1.5rem',
     color: '#10b981',
     fontWeight: '700'
   },
@@ -197,13 +247,28 @@ const styles = {
     backgroundColor: '#fffbeb',
     border: '1px solid #fde68a',
     borderRadius: '8px',
-    padding: '1rem'
+    padding: '1rem',
+    marginBottom: '1.5rem'
   },
   infoText: {
     fontSize: '0.875rem',
     color: '#92400e',
     margin: 0,
     lineHeight: '1.6'
+  },
+  footerInfo: {
+    marginTop: '1.5rem',
+    paddingTop: '1.5rem',
+    borderTop: '2px solid #e2e8f0',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem'
+  },
+  footerRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontSize: '0.75rem',
+    color: '#64748b'
   },
   actions: {
     display: 'flex',
@@ -243,54 +308,5 @@ const styles = {
     textDecoration: 'none',
     display: 'block',
     transition: 'all 0.2s'
-  },
-  infoIcon: {
-    fontSize: '1.5rem',
-    marginRight: '0.5rem',
-    flexShrink: 0
-  },
-  infoTitle: {
-    fontSize: '1.1rem',
-    fontWeight: '700',
-    color: '#1a365d',
-    marginBottom: '0.5rem'
-  },
-  infoList: {
-    listStyle: 'none',
-    paddingLeft: 0,
-    margin: 0,
-    color: '#4b5563',
-    fontSize: '0.875rem',
-    lineHeight: '1.7'
-  },
-  downloadLink: {
-    display: 'inline-block',
-    marginTop: '1rem',
-    padding: '0.75rem 2rem',
-    backgroundColor: '#fff',
-    color: '#10b981',
-    border: '2px solid #10b981',
-    borderRadius: '8px',
-    textDecoration: 'none',
-    fontWeight: '600',
-    transition: 'all 0.3s'
-  },
-  warningBox: {
-    backgroundColor: '#fffbeb',
-    border: '1px solid #fde68a',
-    borderLeft: '4px solid #f59e0b',
-    borderRadius: '12px',
-    padding: '1.25rem',
-    marginTop: '2rem',
-    display: 'flex',
-    gap: '1rem',
-    alignItems: 'flex-start',
-    fontSize: '0.95rem',
-    color: '#92400e',
-    lineHeight: '1.6'
-  },
-  warningIcon: {
-    fontSize: '1.5rem',
-    flexShrink: 0
   }
 };
