@@ -1,13 +1,14 @@
 
 {
-  "name": "Oakline Bank",
-  "short_name": "Oakline",
-  "description": "Your trusted banking partner - secure mobile banking",
+  "name": "OaklineBank - Mobile Banking",
+  "short_name": "OaklineBank",
+  "description": "Secure mobile banking with cryptocurrency deposit support",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1A3E6F",
-  "theme_color": "#1A3E6F",
-  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#059669",
+  "orientation": "portrait",
+  "scope": "/",
   "icons": [
     {
       "src": "/images/pages/Oakline_Bank_logo_design_c1b04ae0.png",
@@ -33,6 +34,11 @@
       "name": "Transfer Money",
       "url": "/transfer",
       "description": "Make a transfer"
+    },
+    {
+      "name": "Loan Application",
+      "url": "/loan/apply",
+      "description": "Apply for a loan"
     }
   ]
 }

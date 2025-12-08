@@ -1,12 +1,14 @@
 
 // Oakline Bank Service Worker
-const CACHE_NAME = 'oakline-bank-v1';
+const CACHE_NAME = 'oakline-bank-v2';
 const urlsToCache = [
   '/',
   '/dashboard',
   '/main-menu',
+  '/sign-in',
   '/manifest.json',
-  '/images/pages/Oakline_Bank_logo_design_c1b04ae0.png'
+  '/images/pages/Oakline_Bank_logo_design_c1b04ae0.png',
+  '/favicon.ico'
 ];
 
 // Install service worker

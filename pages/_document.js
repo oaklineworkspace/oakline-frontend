@@ -7,11 +7,15 @@ export default function Document() {
 
         {/* Mobile Web App Capabilities */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Oakline Bank" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="OaklineBank" />
 
         {/* PWA Icons */}
-        <link rel="apple-touch-icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/images/pages/Oakline_Bank_logo_design_c1b04ae0.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/images/pages/Oakline_Bank_logo_design_c1b04ae0.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/images/pages/Oakline_Bank_logo_design_c1b04ae0.png" />
         <link rel="manifest" href="/manifest.json" />
         
         {/* Service Worker Registration */}
