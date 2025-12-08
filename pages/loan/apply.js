@@ -983,9 +983,8 @@ function LoanApplicationContent() {
                   name="loan_type"
                   value={formData.loan_type}
                   onChange={handleInputChange}
-                  style={{...styles.select, cursor: 'pointer'}}
+                  style={styles.select}
                   required
-                  disabled={hasActiveLoan}
                 >
                   <option value="">Select loan type...</option>
                   {loanTypes.map(type => (
@@ -1011,7 +1010,6 @@ function LoanApplicationContent() {
                     step="100"
                     required
                     style={styles.input}
-                    disabled={hasActiveLoan}
                   />
                   {formData.principal && depositAmount > 0 && (
                     <div style={styles.depositNotice}>
@@ -1042,7 +1040,6 @@ function LoanApplicationContent() {
                     max={selectedLoanTypeData?.rates?.[0]?.max_term_months || 360}
                     required
                     style={styles.input}
-                    disabled={hasActiveLoan}
                   />
                 </div>
 
@@ -1071,7 +1068,6 @@ function LoanApplicationContent() {
                     onChange={handleInputChange}
                     style={styles.select}
                     required
-                    disabled={hasActiveLoan}
                   >
                     <option value="">Select purpose...</option>
                     {loanPurposes.map(purpose => (
@@ -1087,7 +1083,6 @@ function LoanApplicationContent() {
                     required
                     rows="4"
                     style={styles.textarea}
-                    disabled={hasActiveLoan}
                   />
                 )}
               </div>
@@ -1096,8 +1091,8 @@ function LoanApplicationContent() {
                 <button
                   type="button"
                   onClick={nextStep}
-                  disabled={hasActiveLoan || !formData.loan_type || nextLoading}
-                  style={{...styles.submitButton, ...(hasActiveLoan || !formData.loan_type || nextLoading ? styles.submitButtonDisabled : {})}}
+                  disabled={!formData.loan_type || nextLoading}
+                  style={{...styles.submitButton, ...(!formData.loan_type || nextLoading ? styles.submitButtonDisabled : {})}}
                 >
                   {nextLoading ? '⏳ Processing...' : 'Next: Upload ID Documents →'}
                 </button>
@@ -1875,7 +1870,6 @@ const styles = {
     fontFamily: 'inherit',
     backgroundColor: '#fff',
     color: '#1e293b',
-    cursor: 'text',
     WebkitAppearance: 'none',
     MozAppearance: 'none'
   },
