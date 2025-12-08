@@ -11,11 +11,12 @@ export default function Document() {
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="OaklineBank" />
 
-        {/* PWA Icons */}
+        {/* PWA Icons - Using Oakline Bank Logo for Home Screen */}
         <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" href="/images/pages/Oakline_Bank_logo_design_c1b04ae0.png" />
-        <link rel="apple-touch-icon" sizes="192x192" href="/images/pages/Oakline_Bank_logo_design_c1b04ae0.png" />
-        <link rel="apple-touch-icon" sizes="512x512" href="/images/pages/Oakline_Bank_logo_design_c1b04ae0.png" />
+        <link rel="apple-touch-icon" href="/images/Oakline_Bank_logo_design_c1b04ae0.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/images/Oakline_Bank_logo_design_c1b04ae0.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/images/Oakline_Bank_logo_design_c1b04ae0.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/images/Oakline_Bank_logo_design_c1b04ae0.png" />
         <link rel="manifest" href="/manifest.json" />
         
         {/* Service Worker Registration */}
