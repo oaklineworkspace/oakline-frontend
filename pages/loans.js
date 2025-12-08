@@ -174,22 +174,28 @@ function LoansOverviewContent() {
           </div>
         </div>
 
-        {/* Processing Info Banner */}
-        <div style={{
-          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-          borderLeft: '4px solid #047857',
-          padding: '20px 24px',
-          borderRadius: '12px',
-          marginBottom: '32px',
-          fontSize: '15px',
-          color: '#ffffff',
-          lineHeight: '1.8',
-          fontWeight: '500',
-          boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
-        }}>
-          <strong style={{fontSize: '16px', display: 'block', marginBottom: '8px'}}>💡 Instant Disbursement Process</strong>
-          <div>Your 10% security deposit unlocks instant funding. Submit deposit → Verified within hours → Complete loan amount transfers instantly to your account.</div>
-        </div>
+        {/* Processing Info Banner - Only show if there's a loan requiring deposit */}
+        {loans.some(loan => 
+          (loan.status === 'pending' || loan.status === 'pending_deposit' || loan.status === 'awaiting_approval') && 
+          parseFloat(loan.deposit_required || 0) > 0 && 
+          !loan.deposit_paid
+        ) && (
+          <div style={{
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            borderLeft: '4px solid #047857',
+            padding: '20px 24px',
+            borderRadius: '12px',
+            marginBottom: '32px',
+            fontSize: '15px',
+            color: '#ffffff',
+            lineHeight: '1.8',
+            fontWeight: '500',
+            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
+          }}>
+            <strong style={{fontSize: '16px', display: 'block', marginBottom: '8px'}}>💡 Instant Disbursement Process</strong>
+            <div>Your 10% security deposit unlocks instant funding. Submit deposit → Verified within hours → Complete loan amount transfers instantly to your account.</div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div style={styles.actionSection} className="loans-action-section">
