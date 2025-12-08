@@ -67,19 +67,19 @@ function LoanApplicationContent() {
           .select('requires_verification')
           .eq('id', user.id)
           .single();
-        
+
         if (profile?.requires_verification) {
           router.push('/verify-identity');
           return;
         }
-        
+
         fetchUserAccounts();
         checkActiveLoan();
         fetchCreditScore();
         fetchExistingLoans();
       }
     };
-    
+
     fetchBankDetails();
     fetchLoanTypes();
     fetchLoanPurposes();
@@ -391,7 +391,7 @@ function LoanApplicationContent() {
       });
 
       const result = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(result.error || `Failed to upload ${documentType} ID`);
       }
@@ -402,7 +402,7 @@ function LoanApplicationContent() {
         [documentType]: result.filePath,
         [`${documentType}Uploading`]: false
       }));
-      
+
       setError('');
     } catch (err) {
       console.error(`Error uploading ${documentType} ID:`, err);
@@ -416,7 +416,7 @@ function LoanApplicationContent() {
     }
   };
 
-  
+
 
   const handleCollateralPhotoUpload = async (files) => {
     if (!files || files.length === 0) return;
@@ -972,8 +972,7 @@ function LoanApplicationContent() {
                   ))}
                 </div>
               )}
-              {success && <div style={styles.successMessage}>✓ {success}</div>}
-
+              
               <div style={styles.formGroup}>
                 <label style={styles.label}>
                   <span style={styles.labelText}>Loan Type</span>
@@ -1146,8 +1145,6 @@ function LoanApplicationContent() {
                 </div>
               </div>
 
-              {success && <div style={styles.successMessage}>✓ {success}</div>}
-              
               <div style={styles.actionSection}>
                 <button type="button" onClick={prevStep} style={styles.cancelButton} disabled={nextLoading}>
                   ← Previous
@@ -1277,8 +1274,6 @@ function LoanApplicationContent() {
                 </div>
               )}
 
-              {success && <div style={styles.successMessage}>✓ {success}</div>}
-              
               <div style={styles.actionSection}>
                 <button type="button" onClick={prevStep} style={styles.cancelButton} disabled={nextLoading}>
                   ← Previous
@@ -1352,12 +1347,10 @@ function LoanApplicationContent() {
                 )}
               </div>
 
-              {success && <div style={styles.successMessage}>✓ {success}</div>}
-              
               {/* Loan Agreement & Terms Section */}
               <div style={styles.agreementSection}>
                 <h3 style={styles.agreementTitle}>📋 Loan Agreement & Terms and Conditions</h3>
-                
+
                 <div style={styles.agreementContent}>
                   <div style={styles.agreementBlock}>
                     <h4 style={styles.agreementSubtitle}>1. Interest Rate & APR</h4>
@@ -1442,8 +1435,6 @@ function LoanApplicationContent() {
                 </div>
               </div>
 
-              {success && <div style={styles.successMessage}>✓ {success}</div>}
-              
               <div style={styles.actionSection}>
                 <button type="button" onClick={prevStep} style={styles.cancelButton} disabled={loading}>
                   ← Previous
@@ -2001,10 +1992,11 @@ const styles = {
     marginBottom: '32px'
   },
   reviewCard: {
-    padding: '24px',
-    backgroundColor: '#f8fafc',
-    borderRadius: '12px',
-    border: '1px solid #e5e7eb'
+    padding: '28px',
+    backgroundColor: '#fafbfc',
+    borderRadius: '16px',
+    border: '2px solid #e2e8f0',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
   },
   reviewTitle: {
     fontSize: '18px',
