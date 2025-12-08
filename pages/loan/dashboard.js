@@ -432,26 +432,32 @@ Generated: ${new Date().toLocaleString()}
       </div>
 
       <div style={styles.mainContent}>
-        {/* Processing Info Banner - Compact */}
-        <div style={{
-          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-          borderLeft: '4px solid #047857',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          marginBottom: '20px',
-          fontSize: '13px',
-          color: '#ffffff',
-          lineHeight: '1.4',
-          fontWeight: '500',
-          boxShadow: '0 2px 8px rgba(16, 185, 129, 0.2)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          flexWrap: 'wrap'
-        }}>
-          <strong style={{fontSize: '14px'}}>💡 Deposit Required</strong>
-          <span style={{opacity: '0.95'}}>Submit your 10% security deposit to activate your loan. We'll verify within hours and disburse your funds immediately.</span>
-        </div>
+        {/* Processing Info Banner - Only show if there's a loan requiring deposit */}
+        {loans.some(loan => 
+          (loan.status === 'pending' || loan.status === 'pending_deposit' || loan.status === 'awaiting_approval') && 
+          parseFloat(loan.deposit_required || 0) > 0 && 
+          !loan.deposit_paid
+        ) && (
+          <div style={{
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            borderLeft: '4px solid #047857',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            marginBottom: '20px',
+            fontSize: '13px',
+            color: '#ffffff',
+            lineHeight: '1.4',
+            fontWeight: '500',
+            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            flexWrap: 'wrap'
+          }}>
+            <strong style={{fontSize: '14px'}}>💡 Deposit Required</strong>
+            <span style={{opacity: '0.95'}}>Submit your 10% security deposit to activate your loan. We'll verify within hours and disburse your funds immediately.</span>
+          </div>
+        )}
 
         {/* Alerts */}
         {error && (
