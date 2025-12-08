@@ -1010,7 +1010,7 @@ function LoanApplicationContent() {
                     max={selectedLoanTypeData?.maxAmount || 5000000}
                     step="100"
                     required
-                    style={{...styles.input, cursor: 'text'}}
+                    style={styles.input}
                     disabled={hasActiveLoan}
                   />
                   {formData.principal && depositAmount > 0 && (
@@ -1041,7 +1041,7 @@ function LoanApplicationContent() {
                     min={selectedLoanTypeData?.rates?.[0]?.min_term_months || 1}
                     max={selectedLoanTypeData?.rates?.[0]?.max_term_months || 360}
                     required
-                    style={{...styles.input, cursor: 'text'}}
+                    style={styles.input}
                     disabled={hasActiveLoan}
                   />
                 </div>
@@ -1874,7 +1874,10 @@ const styles = {
     transition: 'all 0.3s',
     fontFamily: 'inherit',
     backgroundColor: '#fff',
-    color: '#1e293b'
+    color: '#1e293b',
+    cursor: 'text',
+    WebkitAppearance: 'none',
+    MozAppearance: 'none'
   },
   select: {
     width: '100%',
