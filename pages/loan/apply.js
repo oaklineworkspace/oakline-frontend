@@ -49,14 +49,16 @@ function LoanApplicationContent() {
   });
 
   const [error, setError] = useState('');
+  const [errorTitle, setErrorTitle] = useState('Error');
   const [success, setSuccess] = useState('');
   const [successData, setSuccessData] = useState(null);
   const [bankDetails, setBankDetails] = useState(null);
   const [depositAmount, setDepositAmount] = useState(0);
-  const [hasActiveLoan, setHasActiveLoan] = useState(false);
+  const [activeLoansCount, setActiveLoansCount] = useState(0);
   const [creditScore, setCreditScore] = useState(null);
   const [existingLoans, setExistingLoans] = useState([]);
   const DEPOSIT_PERCENTAGE = 0.10;
+  const MAX_ACTIVE_LOANS = 2;
 
   useEffect(() => {
     const checkVerification = async () => {
@@ -304,8 +306,8 @@ function LoanApplicationContent() {
         .eq('user_id', user.id)
         .in('status', ['pending_deposit', 'under_review', 'active', 'approved']);
 
-      if (!error && data && data.length > 0) {
-        setHasActiveLoan(true);
+      if (!error && data) {
+        setActiveLoansCount(data.length);
       }
     } catch (err) {
       console.error('Error checking active loans:', err);
@@ -563,8 +565,9 @@ function LoanApplicationContent() {
         return;
       }
 
-      if (hasActiveLoan) {
-        setError('You already have an active or pending loan.');
+      if (activeLoansCount >= MAX_ACTIVE_LOANS) {
+        setErrorTitle('Maximum Loan Limit Reached');
+        setError(`You currently have ${activeLoansCount} active or pending loan(s). Please complete or resolve at least one of your current loans before applying for a new one.`);
         setLoading(false);
         return;
       }
@@ -619,7 +622,11 @@ function LoanApplicationContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to submit loan application');
+        if (data.maxLoans) {
+          setErrorTitle(data.error || 'Maximum Loan Limit Reached');
+          throw new Error(data.message || data.error || 'Failed to submit loan application');
+        }
+        throw new Error(data.message || data.error || 'Failed to submit loan application');
       }
 
       setSuccessData({
@@ -857,16 +864,23 @@ function LoanApplicationContent() {
       {error && (
         <div style={styles.modalOverlay}>
           <div style={styles.errorModal}>
+            <button 
+              onClick={() => { setError(''); setErrorTitle('Error'); }}
+              style={styles.errorModalCloseButton}
+              aria-label="Close"
+            >
+              ✕
+            </button>
             <div style={styles.errorCircle}>
               <div style={styles.errorIcon}>✕</div>
             </div>
-            <h2 style={styles.errorModalTitle}>Error!</h2>
+            <h2 style={styles.errorModalTitle}>{errorTitle}</h2>
             <p style={styles.errorModalMessage}>{error}</p>
             <button 
-              onClick={() => setError('')}
+              onClick={() => { setError(''); setErrorTitle('Error'); }}
               style={styles.errorModalButton}
             >
-              Try Again
+              Close
             </button>
           </div>
         </div>
@@ -893,13 +907,13 @@ function LoanApplicationContent() {
       )}
 
       <div style={styles.mainContent}>
-        {hasActiveLoan && (
+        {activeLoansCount >= MAX_ACTIVE_LOANS && (
           <div style={styles.warningAlert}>
             <div style={styles.alertIcon}>⚠️</div>
             <div>
-              <strong style={styles.alertTitle}>Active Loan Detected</strong>
+              <strong style={styles.alertTitle}>Maximum Loan Limit Reached</strong>
               <p style={styles.alertMessage}>
-                You currently have an active loan. Please complete it before applying for a new one.
+                You currently have {activeLoansCount} active or pending loan(s). Please complete or resolve at least one of your current loans before applying for a new one.
               </p>
             </div>
           </div>
@@ -1534,7 +1548,27 @@ const styles = {
     width: '100%',
     boxShadow: '0 25px 80px rgba(0,0,0,0.4)',
     textAlign: 'center',
-    border: '3px solid #dc2626'
+    border: '3px solid #dc2626',
+    position: 'relative'
+  },
+  errorModalCloseButton: {
+    position: 'absolute',
+    top: '15px',
+    right: '15px',
+    background: 'none',
+    border: 'none',
+    fontSize: '24px',
+    color: '#9ca3af',
+    cursor: 'pointer',
+    padding: '8px',
+    lineHeight: '1',
+    borderRadius: '50%',
+    width: '40px',
+    height: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s ease'
   },
   errorCircle: {
     width: '100px',

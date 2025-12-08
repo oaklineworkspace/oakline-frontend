@@ -34,15 +34,21 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid loan parameters' });
     }
 
-    // Check for existing active or pending loans
+    // Check for existing active or pending loans - allow maximum 2 active loans
+    const MAX_ACTIVE_LOANS = 2;
     const { data: existingLoans, error: existingLoansError} = await supabaseAdmin
       .from('loans')
       .select('id, status')
       .eq('user_id', user.id)
       .in('status', ['pending_deposit', 'under_review', 'active', 'approved']);
 
-    if (!existingLoansError && existingLoans && existingLoans.length > 0) {
-      return res.status(400).json({ error: 'You already have an active or pending loan. Please complete your existing loan before applying for a new one.' });
+    if (!existingLoansError && existingLoans && existingLoans.length >= MAX_ACTIVE_LOANS) {
+      return res.status(400).json({ 
+        error: 'Maximum Loan Limit Reached',
+        message: `You currently have ${existingLoans.length} active or pending loan(s). Please complete or resolve at least one of your current loans before applying for a new one.`,
+        activeLoansCount: existingLoans.length,
+        maxLoans: MAX_ACTIVE_LOANS
+      });
     }
 
     const { data: activeAccounts, error: accountError } = await supabaseAdmin
