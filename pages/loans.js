@@ -72,12 +72,12 @@ function LoansOverviewContent() {
 
       if (response.ok && data.loans) {
         setLoans(data.loans);
-        
+
         // Calculate stats
         const totalBorrowed = data.loans.reduce((sum, loan) => sum + parseFloat(loan.principal || 0), 0);
         const totalRemaining = data.loans.reduce((sum, loan) => sum + parseFloat(loan.remaining_balance || 0), 0);
         const activeLoans = data.loans.filter(loan => loan.status === 'active' || loan.status === 'approved').length;
-        
+
         setStats({
           totalLoans: data.loans.length,
           activeLoans,
@@ -101,9 +101,9 @@ function LoansOverviewContent() {
       'rejected': { color: '#ef4444', bg: '#fee2e2', label: 'Rejected' },
       'closed': { color: '#6b7280', bg: '#f3f4f6', label: 'Closed' }
     };
-    
+
     const config = statusConfig[status] || statusConfig['pending'];
-    
+
     return (
       <span style={{
         backgroundColor: config.bg,
@@ -267,8 +267,8 @@ function LoansOverviewContent() {
                     {(loan.status === 'active' || loan.status === 'approved') && (
                       <div style={styles.detailRow}>
                         <span style={styles.detailLabel}>Remaining Balance:</span>
-                        <span style={{...styles.detailValue, color: isLoanPaidOff(loan.remaining_balance) ? '#059669' : '#10b981', fontWeight: '700'}}>
-                          {isLoanPaidOff(loan.remaining_balance) ? '✓ Paid Off' : formatRemainingBalance(loan.remaining_balance)}
+                        <span style={{...styles.detailValue, color: parseFloat(loan.remaining_balance || 0) < 0.50 ? '#10b981' : 'inherit'}}>
+                          {parseFloat(loan.remaining_balance || 0) < 0.50 ? '$0.00 (Paid Off)' : '$' + parseFloat(loan.remaining_balance || loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </div>
                     )}
@@ -296,7 +296,7 @@ function LoansOverviewContent() {
                   <div style={styles.depositStatusContainer}>
                     {(() => {
                       const hasDepositTransactions = loan.deposit_transactions && Array.isArray(loan.deposit_transactions) && loan.deposit_transactions.length > 0;
-                      
+
                       if (loan.deposit_paid && loan.deposit_status === 'completed' && (loan.status === 'pending' || loan.status === 'under_review')) {
                         return (
                           <div style={{

@@ -224,8 +224,15 @@ function LoanDetailContent() {
 
   const remainingBalance = parseFloat(loan?.remaining_balance || 0);
   const principal = parseFloat(loan?.principal || 0);
-  const isFullyPaid = remainingBalance <= 0.50 || loan?.status === 'paid' || loan?.status === 'closed' || (principal > 0 && remainingBalance <= principal * 0.001);
+  const isFullyPaid = remainingBalance < 0.50 || loan?.status === 'paid' || loan?.status === 'closed' || (principal > 0 && remainingBalance <= principal * 0.001);
   const progressPercent = isFullyPaid ? 100 : (loan?.term_months ? ((loan.payments_made || 0) / loan.term_months) * 100 : 0);
+
+  // Helper function to format remaining balance
+  const formatRemainingBalance = (balance) => {
+    const numBalance = parseFloat(balance || 0);
+    if (numBalance < 0.50) return '$0.00';
+    return '$' + numBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
 
   if (loading) {
     return (
@@ -284,7 +291,7 @@ function LoanDetailContent() {
           <div style={styles.headerStat}>
             <div style={styles.headerStatLabel}>Remaining Balance</div>
             <div style={{...styles.headerStatValue, color: isFullyPaid ? '#10b981' : '#fff'}}>
-              {isFullyPaid ? '$0.00 (Paid Off)' : '$' + parseFloat(loan.remaining_balance || loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {isFullyPaid ? '$0.00 (Paid Off)' : formatRemainingBalance(loan.remaining_balance || loan.principal)}
             </div>
           </div>
           <div style={styles.headerStat}>
@@ -430,7 +437,20 @@ function LoanDetailContent() {
           )}
 
           {/* Action Buttons */}
-          {(loan.status === 'active' || loan.status === 'approved') && !isFullyPaid && (
+          {isFullyPaid ? (
+            <div style={{
+              padding: '1.5rem',
+              backgroundColor: '#d1fae5',
+              borderRadius: '12px',
+              textAlign: 'center',
+              color: '#065f46',
+              fontWeight: '700',
+              fontSize: '1.25rem',
+              marginTop: '2rem'
+            }}>
+              🎉 Loan Fully Paid Off - Congratulations!
+            </div>
+          ) : (loan.status === 'active' || loan.status === 'approved') && (
             <div style={styles.actionButtons}>
               <Link href={`/loan/make-payment?loanId=${loan.id}`} style={styles.primaryActionButton}>
                 💳 Make Payment

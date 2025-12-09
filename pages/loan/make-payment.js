@@ -524,12 +524,12 @@ function MakePaymentContent() {
   // Helper function to format remaining balance - treat tiny amounts as zero
   const formatRemainingBalance = (balance) => {
     const numBalance = parseFloat(balance || 0);
-    if (numBalance < 0.01) return '$0.00';
+    if (numBalance < 0.50) return '$0.00';
     return '$' + numBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
   
   // Check if loan is essentially paid off
-  const isLoanPaidOff = parseFloat(loan.remaining_balance || 0) < 0.01;
+  const isLoanPaidOff = parseFloat(loan.remaining_balance || 0) < 0.50;
 
   // Show paid off message if loan balance is essentially zero
   if (isLoanPaidOff) {

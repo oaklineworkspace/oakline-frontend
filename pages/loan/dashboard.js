@@ -402,13 +402,16 @@ Generated: ${new Date().toLocaleString()}
     return days;
   };
 
+  // Helper function to format remaining balance - treat tiny amounts as zero
   const formatRemainingBalance = (balance) => {
     const numBalance = parseFloat(balance || 0);
-    if (numBalance < 0.01) return '$0.00';
+    if (numBalance < 0.50) return '$0.00'; // Treat anything under 50 cents as paid off
     return '$' + numBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const isLoanPaidOff = (balance) => parseFloat(balance || 0) < 0.01;
+  // Check if loan is essentially paid off
+  const isLoanPaidOff = parseFloat(selectedLoan?.remaining_balance || 0) < 0.50;
+
 
   if (loading && loans.length === 0) {
     return (
@@ -520,7 +523,7 @@ Generated: ${new Date().toLocaleString()}
             <div style={styles.statIcon} className="loan-stat-icon">💳</div>
             <div style={styles.statContent}>
               <div style={styles.statLabel} className="loan-stat-label">Remaining Balance</div>
-              <div style={styles.statValue} className="loan-stat-value">{stats.remainingBalance < 0.01 ? '$0.00' : '$' + stats.remainingBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              <div style={styles.statValue} className="loan-stat-value">{stats.remainingBalance < 0.50 ? '$0.00' : '$' + stats.remainingBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
               <div style={styles.statSubtext} className="loan-stat-subtext">Across all loans</div>
             </div>
           </div>
@@ -675,8 +678,8 @@ Generated: ${new Date().toLocaleString()}
 
                     <div style={styles.overviewItem}>
                       <div style={styles.overviewLabel}>Current Balance</div>
-                      <div style={{...styles.overviewValue, color: isLoanPaidOff(selectedLoan.remaining_balance) ? '#059669' : '#10b981'}}>
-                        {isLoanPaidOff(selectedLoan.remaining_balance) ? '✓ Paid Off' : formatRemainingBalance(selectedLoan.remaining_balance)}
+                      <div style={{...styles.overviewValue, color: isLoanPaidOff ? '#059669' : '#10b981'}}>
+                        {isLoanPaidOff ? '✓ Paid Off' : formatRemainingBalance(selectedLoan.remaining_balance)}
                       </div>
                     </div>
 
@@ -735,7 +738,7 @@ Generated: ${new Date().toLocaleString()}
                       </div>
                     )}
 
-                    {parseFloat(selectedLoan.remaining_balance || 0) <= 0.01 && selectedLoan.status === 'active' && (
+                    {isLoanPaidOff && selectedLoan.status === 'active' && (
                       <div style={{...styles.overviewItem, gridColumn: 'span 2'}}>
                         <div style={{
                           backgroundColor: '#d1fae5',
@@ -780,7 +783,7 @@ Generated: ${new Date().toLocaleString()}
 
                   {/* Loan Actions */}
                   <div style={styles.loanActions} className="loan-actions">
-                    {(selectedLoan.status === 'active' || selectedLoan.status === 'approved') && (
+                    {(selectedLoan.status === 'active' || selectedLoan.status === 'approved') && !isLoanPaidOff && (
                       <>
                         <button
                           onClick={() => setShowPaymentModal(true)}
