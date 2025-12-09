@@ -41,7 +41,11 @@ export default function SessionTimeoutModal({
       <div style={styles.modal}>
         <div style={styles.header}>
           <div style={styles.logoContainer}>
-            <div style={styles.logo}>🏦</div>
+            <img 
+              src="/images/Oakline_Bank_logo_design_c1b04ae0.png" 
+              alt="Oakline Bank" 
+              style={styles.logo}
+            />
             <span style={styles.bankName}>Oakline Bank</span>
           </div>
         </div>
@@ -151,7 +155,10 @@ const styles = {
     gap: '12px',
   },
   logo: {
-    fontSize: '28px',
+    width: '40px',
+    height: '40px',
+    objectFit: 'contain',
+    borderRadius: '6px',
   },
   bankName: {
     color: '#ffffff',

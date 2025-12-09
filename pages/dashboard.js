@@ -1742,7 +1742,7 @@ function DashboardContent() {
             <span style={styles.quickActionText}>Transfer Money</span>
           </Link>
           <Link href="/withdrawal" style={styles.standardActionButton}>
-            <span style={styles.quickActionIcon}>🏧</span>
+            <span style={styles.quickActionIcon}>💵</span>
             <span style={styles.quickActionText}>Withdrawal</span>
           </Link>
           <Link href="/deposit-crypto" style={styles.standardActionButton}>

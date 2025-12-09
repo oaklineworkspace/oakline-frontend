@@ -28,9 +28,6 @@ export const AuthProvider = ({ children }) => {
   const handleSessionTimeout = async () => {
     console.log('Session expired due to inactivity');
     await signOut();
-    if (typeof window !== 'undefined') {
-      alert('Your session has expired due to inactivity. Please log in again.');
-    }
   };
 
   const resetSessionTimeout = () => {
