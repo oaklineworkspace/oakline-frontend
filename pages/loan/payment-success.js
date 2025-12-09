@@ -21,7 +21,9 @@ function PaymentSuccessContent() {
   };
 
   // Extract payment method and account details from query parameters
-  const { payment_method, account_number, crypto_payment_id } = router.query;
+  const { payment_method, account_number, crypto_payment_id, crypto_type, network_type, status, tx_hash } = router.query;
+  
+  const isPending = status === 'pending' || payment_method === 'crypto';
 
   return (
     <div style={styles.container}>
@@ -66,25 +68,51 @@ function PaymentSuccessContent() {
                 <span style={styles.detailValue}>**** **** **** {account_number.slice(-4)}</span>
               </div>
             )}
+            {payment_method === 'crypto' && crypto_type && (
+              <div style={styles.detailRow}>
+                <span style={styles.detailLabel}>Cryptocurrency</span>
+                <span style={styles.detailValue}>{crypto_type}</span>
+              </div>
+            )}
+            {payment_method === 'crypto' && network_type && (
+              <div style={styles.detailRow}>
+                <span style={styles.detailLabel}>Network</span>
+                <span style={styles.detailValue}>{network_type}</span>
+              </div>
+            )}
+            {payment_method === 'crypto' && tx_hash && (
+              <div style={styles.detailRow}>
+                <span style={styles.detailLabel}>Transaction Hash</span>
+                <span style={{...styles.detailValue, fontSize: '0.75rem', wordBreak: 'break-all'}}>{tx_hash}</span>
+              </div>
+            )}
             {payment_method === 'crypto' && crypto_payment_id && (
               <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>Crypto Transaction ID</span>
-                <span style={styles.detailValue}>{crypto_payment_id}</span>
+                <span style={styles.detailLabel}>Payment ID</span>
+                <span style={styles.detailValue}>{crypto_payment_id.slice(0, 8)}...</span>
               </div>
             )}
             <div style={styles.detailRow}>
               <span style={styles.detailLabel}>Status</span>
-              <span style={styles.statusPending}>
-                Pending
+              <span style={isPending ? styles.statusPending : styles.statusCompleted}>
+                {isPending ? 'Pending Verification' : 'Completed'}
               </span>
             </div>
           </div>
 
-          <div style={styles.infoBoxGreen}>
-            <p style={styles.infoTextGreen}>
-              Your payment is being processed. You will receive an email confirmation once complete.
-            </p>
-          </div>
+          {payment_method === 'crypto' ? (
+            <div style={styles.infoBox}>
+              <p style={styles.infoText}>
+                <strong>Crypto Payment Submitted:</strong> Your payment is pending verification by our team. This typically takes 24-48 hours. You will receive an email confirmation once your payment has been verified and applied to your loan.
+              </p>
+            </div>
+          ) : (
+            <div style={styles.infoBoxGreen}>
+              <p style={styles.infoTextGreen}>
+                Your payment is being processed. You will receive an email confirmation once complete.
+              </p>
+            </div>
+          )}
 
           <div style={styles.footerInfo}>
             <div style={styles.footerRow}>

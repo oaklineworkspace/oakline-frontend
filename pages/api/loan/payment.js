@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
+import { sendEmail, EMAIL_TYPES } from '../../../lib/email';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -35,9 +36,7 @@ export default async function handler(req, res) {
       if (!crypto_data || !crypto_data.crypto_type || !crypto_data.network_type) {
         return res.status(400).json({ error: 'Missing crypto payment details' });
       }
-      if (!crypto_data.tx_hash && !crypto_data.proof_file) {
-        return res.status(400).json({ error: 'Transaction hash or proof file required for crypto payments' });
-      }
+      // Transaction hash and proof are optional - user can provide one, both, or neither
     }
 
     const { data: loan, error: loanError } = await supabaseAdmin
@@ -115,7 +114,7 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Failed to create payment record' });
       }
 
-      // Notify user
+      // Notify user via notification
       await supabaseAdmin
         .from('notifications')
         .insert([{
@@ -126,11 +125,88 @@ export default async function handler(req, res) {
           read: false
         }]);
 
+      // Generate reference number
+      const referenceNumber = `LPC-${Date.now().toString(36).toUpperCase()}-${paymentRecord.id.slice(0, 8).toUpperCase()}`;
+
+      // Update payment with reference number
+      await supabaseAdmin
+        .from('loan_payments')
+        .update({ reference_number: referenceNumber })
+        .eq('id', paymentRecord.id);
+
+      // Send email notification to user
+      try {
+        const { data: userProfile } = await supabaseAdmin
+          .from('user_profiles')
+          .select('first_name, last_name, email')
+          .eq('user_id', user.id)
+          .single();
+
+        const { data: bankDetails } = await supabaseAdmin
+          .from('bank_details')
+          .select('bank_name')
+          .limit(1)
+          .single();
+
+        const bankName = bankDetails?.bank_name || 'Oakline Bank';
+        const userName = userProfile?.first_name || 'Valued Customer';
+        const userEmail = userProfile?.email || user.email;
+
+        if (userEmail) {
+          const emailHtml = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 30px; text-align: center;">
+                <h1 style="color: white; margin: 0;">${bankName}</h1>
+              </div>
+              <div style="padding: 30px; background: #ffffff;">
+                <h2 style="color: #1e3a8a; margin-bottom: 20px;">Crypto Loan Payment Submitted</h2>
+                <p style="color: #333; line-height: 1.6;">Dear ${userName},</p>
+                <p style="color: #333; line-height: 1.6;">Your crypto loan payment has been successfully submitted and is pending verification.</p>
+                
+                <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid #10b981;">
+                  <h3 style="color: #1e3a8a; margin: 0 0 15px 0;">Payment Details</h3>
+                  <p style="margin: 8px 0;"><strong>Reference:</strong> ${referenceNumber}</p>
+                  <p style="margin: 8px 0;"><strong>Amount:</strong> $${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                  <p style="margin: 8px 0;"><strong>Cryptocurrency:</strong> ${crypto_data.crypto_type}</p>
+                  <p style="margin: 8px 0;"><strong>Network:</strong> ${crypto_data.network_type}</p>
+                  <p style="margin: 8px 0;"><strong>Status:</strong> <span style="color: #f59e0b; font-weight: bold;">Pending Verification</span></p>
+                  <p style="margin: 8px 0;"><strong>Date:</strong> ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
+
+                <p style="color: #333; line-height: 1.6;">Our team will verify your payment within 24-48 hours. You will receive an email confirmation once your payment has been verified and applied to your loan.</p>
+                
+                <p style="color: #666; font-size: 14px; margin-top: 30px;">If you have any questions, please contact our support team.</p>
+                
+                <p style="color: #333; line-height: 1.6;">Thank you for choosing ${bankName}.</p>
+              </div>
+              <div style="background: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b;">
+                <p style="margin: 0;">This is an automated message from ${bankName}.</p>
+              </div>
+            </div>
+          `;
+
+          await sendEmail({
+            to: userEmail,
+            subject: `Crypto Loan Payment Submitted - ${referenceNumber}`,
+            html: emailHtml,
+            text: `Dear ${userName}, Your crypto loan payment of $${amount} has been submitted and is pending verification. Reference: ${referenceNumber}. You will be notified once verified.`,
+            emailType: EMAIL_TYPES.LOAN
+          });
+        }
+      } catch (emailError) {
+        console.error('Error sending crypto payment email:', emailError);
+        // Don't fail the request if email fails
+      }
+
       return res.status(200).json({
         success: true,
         message: 'Crypto payment submitted successfully. Pending verification.',
         payment_status: 'pending',
-        payment_id: paymentRecord.id
+        payment_id: paymentRecord.id,
+        reference_number: referenceNumber,
+        amount: amount,
+        crypto_type: crypto_data.crypto_type,
+        network_type: crypto_data.network_type
       });
     }
 
