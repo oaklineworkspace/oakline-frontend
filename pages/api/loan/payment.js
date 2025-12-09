@@ -90,9 +90,10 @@ export default async function handler(req, res) {
           balance_after: loan.remaining_balance - amount,
           payment_date: new Date().toISOString(),
           payment_type: 'manual',
-          payment_method: 'crypto',
+          payment_method: 'crypto', // Explicitly set to crypto for crypto payments
           status: 'pending',
-          deposit_method: 'crypto',
+          deposit_method: 'crypto', // Keep for backwards compatibility
+          account_id: null, // Ensure no account is linked for crypto payments
           tx_hash: crypto_data.tx_hash || null,
           fee: crypto_data.fee || 0,
           gross_amount: amount,
@@ -265,9 +266,11 @@ export default async function handler(req, res) {
         balance_after: newRemainingBalance,
         payment_date: new Date().toISOString(),
         payment_type: 'manual',
+        payment_method: 'account_balance', // Explicitly set for balance payments
         status: 'completed',
         processed_by: user.id,
-        deposit_method: 'balance'
+        deposit_method: 'balance',
+        account_id: account.id // Link to the account used
       }])
       .select()
       .single();

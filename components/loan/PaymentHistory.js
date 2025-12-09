@@ -460,7 +460,11 @@ const styles = {
     borderRadius: '16px',
     padding: '2rem',
     boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-    border: '1px solid #e5e7eb'
+    border: '1px solid #e5e7eb',
+    '@media (max-width: 768px)': {
+      padding: '1rem',
+      borderRadius: '12px'
+    }
   },
   header: {
     display: 'flex',
@@ -871,12 +875,16 @@ const styles = {
   },
   cryptoDetailsBox: {
     display: 'flex',
+    flexDirection: 'column',
     gap: '0.75rem',
     padding: '1rem',
     backgroundColor: '#f0f9ff',
     borderRadius: '8px',
     border: '1px solid #bae6fd',
-    marginBottom: '1rem'
+    marginBottom: '1rem',
+    '@media (min-width: 768px)': {
+      flexDirection: 'row'
+    }
   },
   cryptoDetailsIcon: {
     fontSize: '1.5rem',
@@ -892,11 +900,19 @@ const styles = {
   },
   cryptoDetailRow: {
     display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
     fontSize: '0.85rem',
-    marginBottom: '0.25rem',
-    gap: '1rem'
+    marginBottom: '0.5rem',
+    gap: '0.25rem',
+    '@media (min-width: 768px)': {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: '1rem',
+      marginBottom: '0.25rem'
+    }
   },
   cryptoDetailKey: {
     color: '#0369a1',
@@ -906,7 +922,9 @@ const styles = {
   cryptoDetailValue: {
     color: '#0c4a6e',
     fontWeight: '500',
-    fontFamily: 'monospace'
+    fontFamily: 'monospace',
+    wordBreak: 'break-all',
+    width: '100%'
   },
   cryptoDetailHash: {
     color: '#0c4a6e',
@@ -914,7 +932,11 @@ const styles = {
     fontFamily: 'monospace',
     cursor: 'pointer',
     textDecoration: 'underline',
-    flex: 1,
-    textAlign: 'right'
+    wordBreak: 'break-all',
+    width: '100%',
+    '@media (min-width: 768px)': {
+      flex: 1,
+      textAlign: 'right'
+    }
   }
 };
