@@ -1,0 +1,203 @@
+Build Error
+
+Failed to compile
+
+Next.js (14.2.3) is outdated (learn more)
+./pages/api/user/make-payment.js
+Error: 
+  × the name `monthlyRate` is defined multiple times
+     ╭─[/home/runner/workspace/pages/api/user/make-payment.js:82:1]
+  82 │     }
+  83 │ 
+  84 │     // Calculate payment breakdown
+  85 │     const monthlyRate = parseFloat(loan.interest_rate) / 100 / 12;
+     ·           ─────┬─────
+     ·                ╰── previous definition of `monthlyRate` here
+  86 │     const interestAmount = remainingBalance * monthlyRate;
+  87 │     const principalAmount = paymentAmount - interestAmount;
+  88 │     const newRemainingBalance = remainingBalance - paymentAmount;
+  89 │ 
+  90 │     // Create payment with pending status - admin must approve
+  91 │     const referenceNumber = `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+  92 │ 
+  93 │     const { data: paymentRecord, error: paymentError } = await supabaseAdmin
+  94 │       .from('loan_payments')
+  95 │       .insert([{
+  96 │         loan_id: loan_id,
+  97 │         account_id: account_id,
+  98 │         amount: parseFloat(amount),
+  99 │         principal_amount: principalAmount > 0 ? principalAmount : parseFloat(amount),
+ 100 │         interest_amount: interestAmount > 0 ? interestAmount : 0,
+ 101 │         late_fee: 0,
+ 102 │         balance_after: newRemainingBalance,
+ 103 │         payment_date: currentDateTime,
+ 104 │         payment_type: payment_type || 'manual',
+ 105 │         status: 'pending',
+ 106 │         processed_by: user.id,
+ 107 │         reference_number: referenceNumber,
+ 108 │         deposit_method: 'account_balance',
+ 109 │         notes: `Payment submitted by user. Awaiting admin confirmation.`
+ 110 │       }])
+ 111 │       .select()
+ 112 │       .single();
+ 113 │ 
+ 114 │     if (paymentError) {
+ 115 │       console.error('Error creating payment record:', paymentError);
+ 116 │       // Rollback account balance
+ 117 │       await supabaseAdmin
+ 118 │         .from('accounts')
+ 119 │         .update({ balance: account.balance })
+ 120 │         .eq('id', account_id);
+ 121 │       return res.status(500).json({ error: 'Failed to record payment' });
+ 122 │     }
+ 123 │ 
+ 124 │     // Create transaction record with pending status (amount should be positive)
+ 125 │     const { data: transaction, error: transactionError } = await supabaseAdmin
+ 126 │       .from('transactions')
+ 127 │       .insert([{
+ 128 │         user_id: user.id,
+ 129 │         account_id: account_id,
+ 130 │         type: 'debit',
+ 131 │         amount: parseFloat(amount), // Corrected: amount should be positive for debit transactions
+ 132 │         balance_before: parseFloat(account.balance),
+ 133 │         balance_after: newAccountBalance,
+ 134 │         description: `Loan Payment - Pending Admin Approval`,
+ 135 │         status: 'pending',
+ 136 │         reference: referenceNumber,
+ 137 │         created_at: currentDateTime
+ 138 │       }])
+ 139 │       .select()
+ 140 │       .single();
+ 141 │ 
+ 142 │     if (transactionError) {
+ 143 │       console.error('Error creating transaction record:', transactionError);
+ 144 │     }
+ 145 │ 
+ 146 │     // Send notification to user
+ 147 │     await supabaseAdmin
+ 148 │       .from('notifications')
+ 149 │       .insert([{
+ 150 │         user_id: user.id,
+ 151 │         type: 'loan',
+ 152 │         title: 'Loan Payment Submitted',
+ 153 │         message: `Your loan payment of $${parseFloat(amount).toLocaleString()} has been submitted and is being processed. Reference: ${referenceNumber}`,
+ 154 │         read: false
+ 155 │       }]);
+ 156 │ 
+ 157 │     // Get user profile for email
+ 158 │     const { data: profile } = await supabaseAdmin
+ 159 │       .from('profiles')
+ 160 │       .select('first_name, last_name, email')
+ 161 │       .eq('id', user.id)
+ 162 │       .single();
+ 163 │ 
+ 164 │     const userName = profile ? `${profile.first_name} ${profile.last_name}` : 'Valued Customer';
+ 165 │     const userEmail = profile?.email || user.email;
+ 166 │ 
+ 167 │     // Send confirmation email
+ 168 │     const emailHtml = `
+ 169 │       <!DOCTYPE html>
+ 170 │       <html>
+ 171 │       <head>
+ 172 │         <meta charset="utf-8">
+ 173 │         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ 174 │       </head>
+ 175 │       <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #f8fafc;">
+ 176 │         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+ 177 │           <div style="background: linear-gradient(135deg, #1a365d 0%, #2c5aa0 100%); padding: 32px 24px; text-align: center;">
+ 178 │             <div style="color: #ffffff; font-size: 32px; margin-bottom: 8px;">🏦</div>
+ 179 │             <div style="color: #ffffff; font-size: 28px; font-weight: 700;">Oakline Bank</div>
+ 180 │           </div>
+ 181 │ 
+ 182 │           <div style="padding: 40px 32px;">
+ 183 │             <h1 style="color: #1a365d; font-size: 28px; font-weight: 700; margin: 0 0 16px 0;">
+ 184 │               ✅ Payment Submitted Successfully
+ 185 │             </h1>
+ 186 │ 
+ 187 │             <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+ 188 │               Dear ${userName}, thank you for your loan payment. Your transaction has been submitted and is currently being processed by our Loan Department.
+ 189 │             </p>
+ 190 │ 
+ 191 │             <div style="background-color: #f7fafc; border-radius: 12px; padding: 24px; margin: 24px 0;">
+ 192 │               <h3 style="color: #1a365d; font-size: 18px; font-weight: 600; margin: 0 0 16px 0;">Payment Details</h3>
+ 193 │               <table style="width: 100%; border-collapse: collapse;">
+ 194 │                 <tr>
+ 195 │                   <td style="padding: 8px 0; color: #64748b;">Reference Number:</td>
+ 196 │                   <td style="padding: 8px 0; color: #1a365d; font-weight: 600; text-align: right; font-family: monospace;">${referenceNumber}</td>
+ 197 │                 </tr>
+ 198 │                 <tr>
+ 199 │                   <td style="padding: 8px 0; color: #64748b;">Amount Paid:</td>
+ 200 │                   <td style="padding: 8px 0; color: #1a365d; font-weight: 600; text-align: right;">$${paymentAmount.toFixed(2)}</td>
+ 201 │                 </tr>
+ 202 │                 <tr>
+ 203 │                   <td style="padding: 8px 0; color: #64748b;">Payment Date:</td>
+ 204 │                   <td style="padding: 8px 0; color: #1a365d; font-weight: 600; text-align: right;">${new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</td>
+ 205 │                 </tr>
+ 206 │                 <tr>
+ 207 │                   <td style="padding: 8px 0; color: #64748b;">Status:</td>
+ 208 │                   <td style="padding: 8px 0; color: #f59e0b; font-weight: 600; text-align: right;">Pending</td>
+ 209 │                 </tr>
+ 210 │                 <tr>
+ 211 │                   <td style="padding: 8px 0; color: #64748b;">Loan Type:</td>
+ 212 │                   <td style="padding: 8px 0; color: #1a365d; font-weight: 600; text-align: right;">${loan.loan_type?.replace(/_/g, ' ').toUpperCase()}</td>
+ 213 │                 </tr>
+ 214 │               </table>
+ 215 │             </div>
+ 216 │ 
+ 217 │             <div style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0;">
+ 218 │               <p style="color: #065f46; font-size: 14px; margin: 0;">
+ 219 │                 Your payment is being processed. You will receive an email confirmation once complete.
+ 220 │               </p>
+ 221 │             </div>
+ 222 │           </div>
+ 223 │ 
+ 224 │           <div style="background-color: #f7fafc; padding: 32px 24px; text-align: center; border-top: 1px solid #e2e8f0;">
+ 225 │             <p style="color: #718096; font-size: 14px; margin: 0 0 16px 0;">
+ 226 │               Questions? Contact our support team 24/7:
+ 227 │             </p>
+ 228 │             <p style="color: #4a5568; font-size: 14px; font-weight: 600; margin: 0 0 8px 0;">
+ 229 │               📧 contact-us@theoaklinebank.com | 📞 (636) 635-6122
+ 230 │             </p>
+ 231 │             <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 20px;">
+ 232 │               <p style="color: #718096; font-size: 12px; margin: 0;">
+ 233 │                 © ${new Date().getFullYear()} Oakline Bank. All rights reserved.
+ 234 │               </p>
+ 235 │             </div>
+ 236 │           </div>
+ 237 │         </div>
+ 238 │       </body>
+ 239 │       </html>
+ 240 │     `;
+ 241 │ 
+ 242 │     try {
+ 243 │       await sendEmail({
+ 244 │         to: userEmail,
+ 245 │         subject: '✅ Loan Payment Confirmation - Oakline Bank',
+ 246 │         html: emailHtml,
+ 247 │         emailType: 'loans',
+ 248 │         userId: user.id
+ 249 │       });
+ 250 │     } catch (emailError) {
+ 251 │       console.error('Error sending email:', emailError);
+ 252 │       // Don't fail the payment if email fails
+ 253 │     }
+ 254 │ 
+ 255 │     // Determine the loan status based on remaining balance and term
+ 256 │     let loanStatus = loan.status;
+ 257 │     if (newRemainingBalance <= 0) {
+ 258 │       loanStatus = 'paid';
+ 259 │     } else if (newRemainingBalance < parseFloat(loan.principal) && loan.status === 'approved') {
+ 260 │       loanStatus = 'active';
+ 261 │     }
+ 262 │ 
+ 263 │     // Update loan details including next_payment_date
+ 264 │     // Calculate how many payments were made with this payment
+ 265 │     // Use the actual principal paid vs expected principal per payment for accuracy
+ 266 │     const monthlyPayment = parseFloat(loan.monthly_payment_amount || 0);
+ 267 │     const monthlyRate = parseFloat(loan.interest_rate) / 100 / 12;
+     ·           ─────┬─────
+     ·                ╰── `monthlyRate` redefined here
+ 268 │     const currentBalance = parseFloat(loan.remaining_balance || loan.principal);
+ 269 │     
+ 270 │     // Calculate expected principal per monthly payment
+     ╰────
