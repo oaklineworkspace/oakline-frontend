@@ -86,7 +86,12 @@ export default async function handler(req, res) {
     const monthlyRate = parseFloat(loan.interest_rate) / 100 / 12;
     const interestAmount = remainingBalance * monthlyRate;
     const principalAmount = paymentAmount - interestAmount;
-    const newRemainingBalance = remainingBalance - paymentAmount;
+    let newRemainingBalance = remainingBalance - paymentAmount;
+    
+    // Ensure balance doesn't go negative due to floating-point precision
+    if (newRemainingBalance < 0 && newRemainingBalance > -0.01) {
+      newRemainingBalance = 0;
+    }
 
     // Create payment with pending status - admin must approve
     const referenceNumber = `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;

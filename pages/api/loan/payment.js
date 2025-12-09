@@ -79,6 +79,12 @@ export default async function handler(req, res) {
       const monthlyRate = parseFloat(loan.interest_rate) / 100 / 12;
       const interestAmount = parseFloat(loan.remaining_balance) * monthlyRate;
       const principalAmount = amount - interestAmount;
+      let balanceAfterPayment = parseFloat(loan.remaining_balance) - amount;
+      
+      // Ensure balance doesn't go negative due to floating-point precision
+      if (balanceAfterPayment < 0 && balanceAfterPayment > -0.01) {
+        balanceAfterPayment = 0;
+      }
 
       // Create payment record with pending status for admin verification
       const { data: paymentRecord, error: paymentError } = await supabaseAdmin
@@ -89,7 +95,7 @@ export default async function handler(req, res) {
           principal_amount: principalAmount > 0 ? principalAmount : amount,
           interest_amount: interestAmount > 0 ? interestAmount : 0,
           late_fee: 0,
-          balance_after: loan.remaining_balance - amount,
+          balance_after: balanceAfterPayment,
           payment_date: new Date().toISOString(),
           payment_type: 'manual',
           payment_method: 'crypto', // Explicitly set to crypto for crypto payments
@@ -239,7 +245,13 @@ export default async function handler(req, res) {
 
     const originalAccountBalance = parseFloat(account.balance);
     const newBalance = originalAccountBalance - amount;
-    const newRemainingBalance = loan.remaining_balance - amount;
+    let newRemainingBalance = loan.remaining_balance - amount;
+    
+    // Ensure balance doesn't go negative due to floating-point precision
+    if (newRemainingBalance < 0 && newRemainingBalance > -0.01) {
+      newRemainingBalance = 0;
+    }
+    
     const loanStatus = newRemainingBalance <= 0.01 ? 'completed' : 'active';
 
     const { error: updateAccountError } = await supabaseAdmin
