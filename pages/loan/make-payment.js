@@ -520,6 +520,74 @@ function MakePaymentContent() {
   }
 
   const monthlyPayment = calculateMonthlyPayment(loan);
+  
+  // Helper function to format remaining balance - treat tiny amounts as zero
+  const formatRemainingBalance = (balance) => {
+    const numBalance = parseFloat(balance || 0);
+    if (numBalance < 0.01) return '$0.00';
+    return '$' + numBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+  
+  // Check if loan is essentially paid off
+  const isLoanPaidOff = parseFloat(loan.remaining_balance || 0) < 0.01;
+
+  // Show paid off message if loan balance is essentially zero
+  if (isLoanPaidOff) {
+    return (
+      <div style={styles.container}>
+        <div style={{...styles.professionalHeader, background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'}}>
+          <div style={styles.headerTop}>
+            <div style={styles.headerLeft}>
+              <Link href={`/loan/${loanId}`} style={styles.backLink}>
+                <span style={styles.backArrow}>←</span> Back to Loan Details
+              </Link>
+              <div style={styles.headerTitleSection}>
+                <div style={styles.loanIconLarge}>🎉</div>
+                <div>
+                  <h1 style={styles.headerTitle}>Loan Paid Off!</h1>
+                  <p style={styles.headerReference}>Congratulations on completing your loan</p>
+                </div>
+              </div>
+            </div>
+            <div style={styles.headerRight}>
+              <span style={{
+                padding: '0.75rem 1.5rem',
+                borderRadius: '20px',
+                fontSize: '0.875rem',
+                fontWeight: '700',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                color: '#059669',
+                backgroundColor: '#d1fae5'
+              }}>
+                ✓ Paid Off
+              </span>
+            </div>
+          </div>
+        </div>
+        <div style={{...styles.content, textAlign: 'center', padding: '3rem 2rem'}}>
+          <div style={{fontSize: '4rem', marginBottom: '1rem'}}>🎊</div>
+          <h2 style={{color: '#10b981', fontSize: '1.75rem', marginBottom: '1rem'}}>This Loan Has Been Fully Paid Off</h2>
+          <p style={{color: '#64748b', fontSize: '1.1rem', marginBottom: '2rem', maxWidth: '500px', margin: '0 auto 2rem'}}>
+            No payment is required. Your remaining balance is $0.00.
+          </p>
+          <Link href={`/loan/${loanId}`} style={{
+            display: 'inline-block',
+            backgroundColor: '#10b981',
+            color: 'white',
+            padding: '14px 28px',
+            borderRadius: '8px',
+            textDecoration: 'none',
+            fontWeight: '600',
+            fontSize: '1rem'
+          }}>
+            View Loan Details
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>

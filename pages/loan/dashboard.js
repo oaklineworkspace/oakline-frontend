@@ -364,7 +364,7 @@ OAKLINE BANK - LOAN STATEMENT
 Loan ID: ${loan.id}
 Loan Type: ${loan.loan_type}
 Original Amount: $${parseFloat(loan.principal).toLocaleString()}
-Current Balance: $${parseFloat(loan.remaining_balance).toLocaleString()}
+Current Balance: ${parseFloat(loan.remaining_balance) < 0.01 ? '$0.00 (Paid Off)' : '$' + parseFloat(loan.remaining_balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 Interest Rate: ${loan.interest_rate}% APR
 Monthly Payment: $${parseFloat(loan.monthly_payment_amount).toLocaleString()}
 Term: ${loan.term_months} months
@@ -401,6 +401,14 @@ Generated: ${new Date().toLocaleString()}
     const days = Math.ceil((new Date(date) - new Date()) / (1000 * 60 * 60 * 24));
     return days;
   };
+
+  const formatRemainingBalance = (balance) => {
+    const numBalance = parseFloat(balance || 0);
+    if (numBalance < 0.01) return '$0.00';
+    return '$' + numBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const isLoanPaidOff = (balance) => parseFloat(balance || 0) < 0.01;
 
   if (loading && loans.length === 0) {
     return (
@@ -512,7 +520,7 @@ Generated: ${new Date().toLocaleString()}
             <div style={styles.statIcon} className="loan-stat-icon">💳</div>
             <div style={styles.statContent}>
               <div style={styles.statLabel} className="loan-stat-label">Remaining Balance</div>
-              <div style={styles.statValue} className="loan-stat-value">${stats.remainingBalance.toLocaleString()}</div>
+              <div style={styles.statValue} className="loan-stat-value">{stats.remainingBalance < 0.01 ? '$0.00' : '$' + stats.remainingBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
               <div style={styles.statSubtext} className="loan-stat-subtext">Across all loans</div>
             </div>
           </div>
@@ -667,8 +675,8 @@ Generated: ${new Date().toLocaleString()}
 
                     <div style={styles.overviewItem}>
                       <div style={styles.overviewLabel}>Current Balance</div>
-                      <div style={{...styles.overviewValue, color: '#10b981'}}>
-                        ${parseFloat(selectedLoan.remaining_balance || 0).toLocaleString()}
+                      <div style={{...styles.overviewValue, color: isLoanPaidOff(selectedLoan.remaining_balance) ? '#059669' : '#10b981'}}>
+                        {isLoanPaidOff(selectedLoan.remaining_balance) ? '✓ Paid Off' : formatRemainingBalance(selectedLoan.remaining_balance)}
                       </div>
                     </div>
 

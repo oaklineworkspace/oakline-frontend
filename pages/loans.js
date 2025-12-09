@@ -17,6 +17,14 @@ function LoansOverviewContent() {
     totalRemaining: 0
   });
 
+  const formatRemainingBalance = (balance) => {
+    const numBalance = parseFloat(balance || 0);
+    if (numBalance < 0.01) return '$0.00';
+    return '$' + numBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const isLoanPaidOff = (balance) => parseFloat(balance || 0) < 0.01;
+
   useEffect(() => {
     if (user) {
       fetchUserLoans();
@@ -259,8 +267,8 @@ function LoansOverviewContent() {
                     {(loan.status === 'active' || loan.status === 'approved') && (
                       <div style={styles.detailRow}>
                         <span style={styles.detailLabel}>Remaining Balance:</span>
-                        <span style={{...styles.detailValue, color: '#10b981', fontWeight: '700'}}>
-                          ${parseFloat(loan.remaining_balance || 0).toLocaleString()}
+                        <span style={{...styles.detailValue, color: isLoanPaidOff(loan.remaining_balance) ? '#059669' : '#10b981', fontWeight: '700'}}>
+                          {isLoanPaidOff(loan.remaining_balance) ? '✓ Paid Off' : formatRemainingBalance(loan.remaining_balance)}
                         </span>
                       </div>
                     )}
@@ -369,7 +377,7 @@ function LoansOverviewContent() {
                   </div>
 
                   <div style={styles.loanActions}>
-                    {(loan.status === 'active' || loan.status === 'approved') && (
+                    {(loan.status === 'active' || loan.status === 'approved') && !isLoanPaidOff(loan.remaining_balance) && (
                       <Link href={`/loan/make-payment?loanId=${loan.id}`} style={styles.actionButton}>
                         💳 Make Payment
                       </Link>
