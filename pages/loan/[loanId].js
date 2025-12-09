@@ -16,7 +16,7 @@ function LoanDetailContent() {
   const [loan, setLoan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  
+
 
   useEffect(() => {
     const style = document.createElement('style');
@@ -61,7 +61,7 @@ function LoanDetailContent() {
     };
   }, [user, loanId]);
 
-  
+
 
   const fetchLoanDetails = async () => {
     setLoading(true);
@@ -117,7 +117,7 @@ function LoanDetailContent() {
     }
   };
 
-  
+
 
   const subscribeToLoanUpdates = () => {
     supabase
@@ -283,8 +283,8 @@ function LoanDetailContent() {
           </div>
           <div style={styles.headerStat}>
             <div style={styles.headerStatLabel}>Remaining Balance</div>
-            <div style={{...styles.headerStatValue, color: isFullyPaid ? '#10b981' : '#ef4444'}}>
-              ${parseFloat(loan.remaining_balance || loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            <div style={{...styles.headerStatValue, color: isFullyPaid ? '#10b981' : '#1e40af'}}>
+              ${parseFloat(loan.remaining_balance || loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
           <div style={styles.headerStat}>
@@ -458,7 +458,7 @@ function LoanDetailContent() {
         </div>
       )}
 
-      
+
     </div>
   );
 }

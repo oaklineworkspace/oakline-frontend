@@ -25,7 +25,7 @@ export default function PaymentHistory({ loanId }) {
         return;
       }
 
-      const response = await fetch(`/api/loan/payment-history?loan_id=${loanId}`, {
+      const response = await fetch(`/api/loan/payment-history?loanId=${loanId}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }

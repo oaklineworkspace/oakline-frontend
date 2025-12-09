@@ -19,16 +19,17 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized - Invalid authentication' });
     }
 
-    const { loan_id } = req.query;
+    const { loanId, loan_id } = req.query;
+    const actualLoanId = loanId || loan_id;
 
-    if (!loan_id) {
-      return res.status(400).json({ error: 'Missing loan_id' });
+    if (!actualLoanId) {
+      return res.status(400).json({ error: 'Loan ID is required' });
     }
 
     const { data: loan, error: loanError } = await supabaseAdmin
       .from('loans')
       .select('*')
-      .eq('id', loan_id)
+      .eq('id', actualLoanId)
       .eq('user_id', user.id)
       .single();
 
@@ -40,8 +41,8 @@ export default async function handler(req, res) {
     const { data: payments, error: paymentsError } = await supabaseAdmin
       .from('loan_payments')
       .select('*')
-      .eq('loan_id', loan_id)
-      .order('created_at', { ascending: false });
+      .eq('loan_id', actualLoanId)
+      .order('payment_date', { ascending: false });
 
     if (paymentsError) {
       console.error('Error fetching payment history:', paymentsError);
