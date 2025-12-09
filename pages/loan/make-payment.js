@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -101,7 +100,7 @@ function MakePaymentContent() {
       }
 
       setLoan(loanData);
-      
+
       const monthlyPayment = calculateMonthlyPayment(loanData);
       setPaymentForm(prev => ({
         ...prev,
@@ -240,13 +239,13 @@ function MakePaymentContent() {
     setWalletAddress('');
     setSelectedLoanWallet(null);
     setShowCryptoDetails(false);
-    
+
     // Auto-scroll to network section after a brief delay
     setTimeout(() => {
       if (networkSectionRef.current) {
-        networkSectionRef.current.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center' 
+        networkSectionRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
         });
       }
     }, 300);
@@ -347,13 +346,13 @@ function MakePaymentContent() {
         // Immediately redirect to success page without delay
         const paymentMethod = paymentForm.payment_type === 'crypto' ? 'crypto' : 'balance';
         let successUrl = `/loan/payment-success?reference=${data.payment.reference_number}&amount=${data.payment.amount}&loan_id=${loanId}&payment_method=${paymentMethod}`;
-        
+
         if (paymentMethod === 'balance' && data.payment.account_number) {
           successUrl += `&account_number=${data.payment.account_number}`;
         } else if (paymentMethod === 'crypto') {
           successUrl += `&crypto_type=${paymentForm.crypto_type}&network_type=${paymentForm.network_type}`;
         }
-        
+
         // Use router.replace for instant navigation
         router.replace(successUrl);
       } else {
@@ -826,7 +825,7 @@ function MakePaymentContent() {
             </div>
 
             {paymentForm.crypto_type && (
-              <div 
+              <div
                 ref={networkSectionRef}
                 style={{
                   ...styles.section,
@@ -988,15 +987,48 @@ function MakePaymentContent() {
           </button>
           <button
             onClick={paymentForm.payment_type === 'crypto' && showCryptoDetails ? handleSubmitCryptoPayment : handleMakePayment}
-            disabled={processing || submittingProof || (!paymentForm.account_id && paymentForm.payment_type === 'manual') || (paymentForm.payment_type === 'crypto' && !showCryptoDetails)}
+            disabled={
+              processing ||
+              submittingProof ||
+              (paymentForm.payment_type === 'manual' && !paymentForm.account_id) ||
+              (paymentForm.payment_type === 'crypto' && !showCryptoDetails) ||
+              (paymentForm.payment_type === 'crypto' && showCryptoDetails && !paymentProof.txHash && !paymentProof.proofFile)
+            }
             style={{
               ...styles.submitButton,
-              opacity: (processing || submittingProof || (!paymentForm.account_id && paymentForm.payment_type === 'manual') || (paymentForm.payment_type === 'crypto' && !showCryptoDetails)) ? 0.5 : 1
+              opacity: (
+                processing ||
+                submittingProof ||
+                (paymentForm.payment_type === 'manual' && !paymentForm.account_id) ||
+                (paymentForm.payment_type === 'crypto' && !showCryptoDetails) ||
+                (paymentForm.payment_type === 'crypto' && showCryptoDetails && !paymentProof.txHash && !paymentProof.proofFile)
+              ) ? 0.5 : 1,
+              cursor: (
+                processing ||
+                submittingProof ||
+                (paymentForm.payment_type === 'manual' && !paymentForm.account_id) ||
+                (paymentForm.payment_type === 'crypto' && !showCryptoDetails) ||
+                (paymentForm.payment_type === 'crypto' && showCryptoDetails && !paymentProof.txHash && !paymentProof.proofFile)
+              ) ? 'not-allowed' : 'pointer'
             }}
           >
             {processing || submittingProof ? 'Processing...' : paymentForm.payment_type === 'crypto' && showCryptoDetails ? 'Submit Payment Proof' : 'Confirm Payment'}
           </button>
         </div>
+        {paymentForm.payment_type === 'crypto' && showCryptoDetails && !paymentProof.txHash && !paymentProof.proofFile && (
+          <div style={{
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '8px',
+            padding: '0.75rem',
+            marginTop: '1rem',
+            color: '#991b1b',
+            fontSize: '0.875rem',
+            textAlign: 'center'
+          }}>
+            ⚠️ Please provide either a transaction hash OR upload proof of payment to continue
+          </div>
+        )}
       </div>
     </div>
   );
