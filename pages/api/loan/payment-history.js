@@ -36,11 +36,12 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Loan not found' });
     }
 
+    // Fetch all loan payments including deposits
     const { data: payments, error: paymentsError } = await supabaseAdmin
       .from('loan_payments')
       .select('*')
       .eq('loan_id', loan_id)
-      .order('payment_date', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (paymentsError) {
       console.error('Error fetching payment history:', paymentsError);
@@ -56,31 +57,50 @@ export default async function handler(req, res) {
         const principalAmount = parseFloat(payment.principal_amount || 0);
         const interestAmount = parseFloat(payment.interest_amount || 0);
         const lateFee = parseFloat(payment.late_fee || 0);
+        const amount = parseFloat(payment.amount || 0);
 
-        totalPaid += parseFloat(payment.amount);
-        totalPrincipalPaid += principalAmount;
-        totalInterestPaid += interestAmount;
-        totalLateFees += lateFee;
+        // Only count completed/approved payments in totals
+        if (payment.status === 'completed' || payment.status === 'approved') {
+          totalPaid += amount;
+          totalPrincipalPaid += principalAmount;
+          totalInterestPaid += interestAmount;
+          totalLateFees += lateFee;
+        }
+
+        // Determine display payment type
+        let displayPaymentType = payment.payment_type || 'manual';
+        if (payment.is_deposit) {
+          displayPaymentType = 'deposit';
+        } else if (payment.payment_method === 'crypto' || payment.deposit_method === 'crypto') {
+          displayPaymentType = 'crypto_payment';
+        } else if (payment.payment_method === 'account_balance' || payment.deposit_method === 'account_balance') {
+          displayPaymentType = 'account_balance';
+        }
 
         return {
           ...payment,
           principal_amount: principalAmount,
           interest_amount: interestAmount,
           late_fee: lateFee,
-          payment_type: payment.payment_type || 'manual',
+          payment_type: displayPaymentType,
           // Keep both timestamps for accurate display
           payment_date: payment.payment_date || payment.created_at,
           created_at: payment.created_at,
           updated_at: payment.updated_at,
-          completed_at: payment.completed_at
+          completed_at: payment.completed_at,
+          // Include crypto/payment method info
+          crypto_type: payment.metadata?.crypto_type || null,
+          network_type: payment.metadata?.network_type || null,
+          tx_hash: payment.tx_hash || payment.metadata?.tx_hash || null,
+          wallet_address: payment.metadata?.wallet_address || null
         };
       });
 
     const summary = {
       total_payments: enrichedPayments.length,
-      completed_payments: enrichedPayments.filter(p => p.status === 'completed').length,
+      completed_payments: enrichedPayments.filter(p => p.status === 'completed' || p.status === 'approved').length,
       pending_payments: enrichedPayments.filter(p => p.status === 'pending').length,
-      failed_payments: enrichedPayments.filter(p => p.status === 'failed').length,
+      failed_payments: enrichedPayments.filter(p => p.status === 'failed' || p.status === 'rejected').length,
       total_paid: parseFloat(totalPaid.toFixed(2)),
       total_principal_paid: parseFloat(totalPrincipalPaid.toFixed(2)),
       total_interest_paid: parseFloat(totalInterestPaid.toFixed(2)),

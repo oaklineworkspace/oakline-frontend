@@ -16,12 +16,7 @@ function LoanDetailContent() {
   const [loan, setLoan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  const [paymentModal, setPaymentModal] = useState(false);
-  const [paymentForm, setPaymentForm] = useState({
-    amount: '',
-    account_id: '',
-    payment_type: 'manual'
-  });
+  
 
   useEffect(() => {
     const style = document.createElement('style');
@@ -783,14 +778,8 @@ function LoanDetailContent() {
           {/* Action Buttons */}
           {(loan.status === 'active' || loan.status === 'approved') && !isFullyPaid && (
             <div style={styles.actionButtons}>
-              <button
-                onClick={() => setPaymentModal(true)}
-                style={styles.primaryActionButton}
-              >
+              <Link href={`/loan/make-payment?loanId=${loan.id}`} style={styles.primaryActionButton}>
                 💳 Make Payment
-              </button>
-              <Link href={`/loan/make-payment?loanId=${loan.id}`} style={styles.secondaryActionButton}>
-                View Payment Options
               </Link>
             </div>
           )}
@@ -815,114 +804,7 @@ function LoanDetailContent() {
         </div>
       )}
 
-      {/* Payment Modal (keeping existing modal code) */}
-      {paymentModal && (
-        <div style={styles.modal} onClick={() => setPaymentModal(false)}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h2 style={styles.modalTitle}>Make Loan Payment</h2>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Payment Amount ($)</label>
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => setPaymentForm({ ...paymentForm, amount: parseFloat(loan.monthly_payment_amount || 0).toFixed(2) })}
-                  style={{...styles.quickFillButton, flex: '1 1 auto', minWidth: '120px'}}
-                  type="button"
-                >
-                  Monthly (${parseFloat(loan.monthly_payment_amount || 0).toFixed(2)})
-                </button>
-                <button
-                  onClick={() => setPaymentForm({ ...paymentForm, amount: parseFloat(loan.remaining_balance).toFixed(6) })}
-                  style={{...styles.quickFillButton, backgroundColor: '#10b981', color: '#fff', border: '2px solid #10b981', flex: '1 1 auto', minWidth: '120px'}}
-                  type="button"
-                >
-                  💰 Pay Full (${parseFloat(loan.remaining_balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
-                </button>
-              </div>
-              <input
-                type="number"
-                value={paymentForm.amount}
-                onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
-                placeholder="0.00"
-                step="0.01"
-                min="0.01"
-                style={styles.input}
-              />
-              <small style={styles.helperText}>
-                Monthly payment: ${monthlyPayment.toFixed(2)} | Remaining: ${parseFloat(loan.remaining_balance || loan.principal).toLocaleString()}
-              </small>
-            </div>
-
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Payment Method</label>
-              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-                <button
-                  onClick={() => setPaymentForm({ ...paymentForm, payment_type: 'manual' })}
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    border: 'none',
-                    backgroundColor: paymentForm.payment_type === 'manual' ? '#10b981' : '#e5e7eb',
-                    color: paymentForm.payment_type === 'manual' ? '#fff' : '#1f2937'
-                  }}
-                >
-                  🏦 Bank Transfer
-                </button>
-                <button
-                  onClick={() => setPaymentForm({ ...paymentForm, payment_type: 'crypto', account_id: '' })}
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    border: 'none',
-                    backgroundColor: paymentForm.payment_type === 'crypto' ? '#10b981' : '#e5e7eb',
-                    color: paymentForm.payment_type === 'crypto' ? '#fff' : '#1f2937'
-                  }}
-                >
-                  🪙 Crypto
-                </button>
-              </div>
-            </div>
-
-            {paymentForm.payment_type === 'manual' && (
-              <div style={styles.formGroup}>
-                <label style={styles.label}>Pay from Account</label>
-                <select
-                  value={paymentForm.account_id}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, account_id: e.target.value })}
-                  style={styles.select}
-                >
-                  <option value="">Select an account...</option>
-                  {accounts.map(account => (
-                    <option key={account.id} value={account.id}>
-                      {account.account_type} - {account.account_number} (${parseFloat(account.balance).toLocaleString()})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div style={styles.modalActions}>
-              <button onClick={() => setPaymentModal(false)} style={styles.cancelButton} disabled={processing}>
-                Cancel
-              </button>
-              <button
-                onClick={handleMakePayment}
-                disabled={processing}
-                style={styles.submitButton}
-              >
-                {processing ? 'Processing...' : 'Confirm Payment'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 }

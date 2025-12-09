@@ -283,7 +283,10 @@ export default function PaymentHistory({ loanId }) {
                       </div>
                       {payment.payment_type && (
                         <div style={styles.paymentTypeLabel}>
-                          {payment.payment_type === 'auto_payment' ? '🤖 Auto Payment' :
+                          {payment.payment_type === 'deposit' ? '💰 Security Deposit' :
+                           payment.payment_type === 'crypto_payment' ? '🪙 Crypto Payment' :
+                           payment.payment_type === 'account_balance' ? '🏦 Account Balance' :
+                           payment.payment_type === 'auto_payment' ? '🤖 Auto Payment' :
                            payment.payment_type === 'early_payoff' ? '⚡ Early Payoff' :
                            payment.payment_type === 'late_fee' ? '⚠️ Late Fee' : '👤 Manual Payment'}
                         </div>
@@ -364,6 +367,48 @@ export default function PaymentHistory({ loanId }) {
                       >
                         {payment.reference_number} 📋
                       </span>
+                    </div>
+                  )}
+
+                  {(payment.crypto_type || payment.network_type || payment.tx_hash) && (
+                    <div style={styles.cryptoDetailsBox}>
+                      <div style={styles.cryptoDetailsIcon}>🪙</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={styles.cryptoDetailsLabel}>Crypto Payment Details</div>
+                        {payment.crypto_type && (
+                          <div style={styles.cryptoDetailRow}>
+                            <span style={styles.cryptoDetailKey}>Currency:</span>
+                            <span style={styles.cryptoDetailValue}>{payment.crypto_type}</span>
+                          </div>
+                        )}
+                        {payment.network_type && (
+                          <div style={styles.cryptoDetailRow}>
+                            <span style={styles.cryptoDetailKey}>Network:</span>
+                            <span style={styles.cryptoDetailValue}>{payment.network_type}</span>
+                          </div>
+                        )}
+                        {payment.tx_hash && (
+                          <div style={styles.cryptoDetailRow}>
+                            <span style={styles.cryptoDetailKey}>Transaction Hash:</span>
+                            <span 
+                              style={styles.cryptoDetailHash}
+                              onClick={() => {
+                                navigator.clipboard.writeText(payment.tx_hash);
+                                alert('Transaction hash copied!');
+                              }}
+                              title="Click to copy"
+                            >
+                              {payment.tx_hash.substring(0, 20)}...{payment.tx_hash.substring(payment.tx_hash.length - 10)} 📋
+                            </span>
+                          </div>
+                        )}
+                        {payment.wallet_address && (
+                          <div style={styles.cryptoDetailRow}>
+                            <span style={styles.cryptoDetailKey}>Wallet:</span>
+                            <span style={styles.cryptoDetailValue}>{payment.wallet_address.substring(0, 15)}...{payment.wallet_address.substring(payment.wallet_address.length - 5)}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -800,5 +845,53 @@ const styles = {
     fontSize: '0.85rem',
     color: '#78350f',
     lineHeight: '1.6'
+  },
+  cryptoDetailsBox: {
+    display: 'flex',
+    gap: '0.75rem',
+    padding: '1rem',
+    backgroundColor: '#f0f9ff',
+    borderRadius: '8px',
+    border: '1px solid #bae6fd',
+    marginBottom: '1rem'
+  },
+  cryptoDetailsIcon: {
+    fontSize: '1.5rem',
+    flexShrink: 0
+  },
+  cryptoDetailsLabel: {
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    color: '#075985',
+    marginBottom: '0.5rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
+  },
+  cryptoDetailRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    fontSize: '0.85rem',
+    marginBottom: '0.25rem',
+    gap: '1rem'
+  },
+  cryptoDetailKey: {
+    color: '#0369a1',
+    fontWeight: '600',
+    minWidth: '120px'
+  },
+  cryptoDetailValue: {
+    color: '#0c4a6e',
+    fontWeight: '500',
+    fontFamily: 'monospace'
+  },
+  cryptoDetailHash: {
+    color: '#0c4a6e',
+    fontWeight: '500',
+    fontFamily: 'monospace',
+    cursor: 'pointer',
+    textDecoration: 'underline',
+    flex: 1,
+    textAlign: 'right'
   }
 };
