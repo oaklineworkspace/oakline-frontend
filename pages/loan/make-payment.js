@@ -368,10 +368,8 @@ function MakePaymentContent() {
   };
 
   const handleSubmitCryptoPayment = async () => {
-    if (!paymentProof.txHash && !paymentProof.proofFile) {
-      showToast('Please provide transaction hash or upload payment proof', 'error');
-      return;
-    }
+    // Note: Either tx hash or proof file is helpful but not strictly required
+    // The payment can be submitted for admin review even without them
 
     setSubmittingProof(true);
     try {
@@ -869,6 +867,9 @@ function MakePaymentContent() {
                         placeholder="Enter your transaction hash"
                         style={styles.input}
                       />
+                      <small style={styles.helperText}>
+                        Provide your transaction hash to speed up verification
+                      </small>
                     </div>
 
                     <div style={styles.section}>
@@ -880,7 +881,7 @@ function MakePaymentContent() {
                         style={styles.fileInput}
                       />
                       <small style={styles.helperText}>
-                        Upload a screenshot or PDF of your payment confirmation
+                        Upload a screenshot or PDF of your payment confirmation. This helps speed up the review process.
                       </small>
                     </div>
                   </>
@@ -901,10 +902,10 @@ function MakePaymentContent() {
           </button>
           <button
             onClick={paymentForm.payment_type === 'crypto' && showCryptoDetails ? handleSubmitCryptoPayment : handleMakePayment}
-            disabled={processing || submittingProof || (!paymentForm.account_id && paymentForm.payment_type === 'manual') || (paymentForm.payment_type === 'crypto' && (!showCryptoDetails || (!paymentProof.txHash && !paymentProof.proofFile)))}
+            disabled={processing || submittingProof || (!paymentForm.account_id && paymentForm.payment_type === 'manual') || (paymentForm.payment_type === 'crypto' && !showCryptoDetails)}
             style={{
               ...styles.submitButton,
-              opacity: (processing || submittingProof || (!paymentForm.account_id && paymentForm.payment_type === 'manual') || (paymentForm.payment_type === 'crypto' && (!showCryptoDetails || (!paymentProof.txHash && !paymentProof.proofFile)))) ? 0.5 : 1
+              opacity: (processing || submittingProof || (!paymentForm.account_id && paymentForm.payment_type === 'manual') || (paymentForm.payment_type === 'crypto' && !showCryptoDetails)) ? 0.5 : 1
             }}
           >
             {processing || submittingProof ? 'Processing...' : paymentForm.payment_type === 'crypto' && showCryptoDetails ? 'Submit Payment Proof' : 'Confirm Payment'}

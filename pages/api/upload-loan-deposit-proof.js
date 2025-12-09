@@ -1,6 +1,6 @@
-import { supabaseAdmin } from '../../lib/supabaseAdmin';
 import formidable from 'formidable';
 import fs from 'fs';
+import { supabaseAdmin } from '../../lib/supabaseAdmin';
 
 export const config = {
   api: {
