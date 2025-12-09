@@ -264,7 +264,6 @@ export default async function handler(req, res) {
     // Calculate how many payments were made with this payment
     // Use the actual principal paid vs expected principal per payment for accuracy
     const monthlyPayment = parseFloat(loan.monthly_payment_amount || 0);
-    const monthlyRate = parseFloat(loan.interest_rate) / 100 / 12;
     const currentBalance = parseFloat(loan.remaining_balance || loan.principal);
     
     // Calculate expected principal per monthly payment
