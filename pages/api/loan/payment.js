@@ -170,6 +170,7 @@ export default async function handler(req, res) {
                   <h3 style="color: #1e3a8a; margin: 0 0 15px 0;">Payment Details</h3>
                   <p style="margin: 8px 0;"><strong>Reference:</strong> ${referenceNumber}</p>
                   <p style="margin: 8px 0;"><strong>Amount:</strong> $${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                  <p style="margin: 8px 0;"><strong>Payment Method:</strong> Cryptocurrency</p>
                   <p style="margin: 8px 0;"><strong>Cryptocurrency:</strong> ${crypto_data.crypto_type}</p>
                   <p style="margin: 8px 0;"><strong>Network:</strong> ${crypto_data.network_type}</p>
                   <p style="margin: 8px 0;"><strong>Wallet Address:</strong> <span style="font-family: monospace; font-size: 12px;">${crypto_data.wallet_address}</span></p>
@@ -179,7 +180,7 @@ export default async function handler(req, res) {
 
                 <p style="color: #333; line-height: 1.6;">You will receive a confirmation email once your payment has been verified and applied to your loan balance.</p>
                 
-                <p style="color: #666; font-size: 14px; margin-top: 30px;">If you have any questions regarding your loan payment, please contact our Loan Department.</p>
+                <p style="color: #666; font-size: 14px; margin-top: 30px;">If you have any questions regarding your loan payment, please contact our Loan Department at ${loansEmail}.</p>
                 
                 <p style="color: #333; line-height: 1.6;">Thank you for banking with ${bankName}.</p>
               </div>
@@ -194,8 +195,8 @@ export default async function handler(req, res) {
             subject: `Loan Payment Received - ${referenceNumber}`,
             html: emailHtml,
             text: `Dear ${fullName}, Thank you for your loan payment. Your transaction has been submitted and is currently being processed by our Loan Department. Reference: ${referenceNumber}. Amount: $${amount}. You will receive a confirmation once verified.`,
-            emailType: EMAIL_TYPES.LOAN,
-            fromAddress: loansEmail
+            emailType: EMAIL_TYPES.LOANS,
+            from: loansEmail
           });
         }
       } catch (emailError) {
@@ -351,6 +352,92 @@ export default async function handler(req, res) {
         message: `Your loan payment of $${amount.toLocaleString()} has been processed successfully. ${loanStatus === 'closed' ? 'Your loan has been fully paid off!' : `Remaining balance: $${newRemainingBalance.toFixed(2)}`}`,
         read: false
       }]);
+
+    // Send email notification to user for balance payment
+    try {
+      const { data: userProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('first_name, last_name, email')
+        .eq('id', user.id)
+        .single();
+
+      const { data: bankDetails } = await supabaseAdmin
+        .from('bank_details')
+        .select('name, email_loans')
+        .limit(1)
+        .single();
+
+      const bankName = bankDetails?.name || 'Oakline Bank';
+      const loansEmail = bankDetails?.email_loans || 'loans@theoaklinebank.com';
+      const fullName = userProfile?.first_name && userProfile?.last_name 
+        ? `${userProfile.first_name} ${userProfile.last_name}` 
+        : 'Valued Customer';
+      const userEmail = userProfile?.email || user.email;
+
+      // Generate reference number
+      const referenceNumber = `LPB-${Date.now().toString(36).toUpperCase()}-${paymentRecord.id.slice(0, 8).toUpperCase()}`;
+
+      // Update payment with reference number
+      await supabaseAdmin
+        .from('loan_payments')
+        .update({ reference_number: referenceNumber })
+        .eq('id', paymentRecord.id);
+
+      if (userEmail) {
+        const statusText = loanStatus === 'completed' ? 'Completed' : 'Processed';
+        const statusColor = loanStatus === 'completed' ? '#10b981' : '#3b82f6';
+        
+        const emailHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 30px; text-align: center;">
+              <h1 style="color: white; margin: 0;">${bankName}</h1>
+            </div>
+            <div style="padding: 30px; background: #ffffff;">
+              <h2 style="color: #1e3a8a; margin-bottom: 20px;">Loan Payment Received</h2>
+              <p style="color: #333; line-height: 1.6;">Dear ${fullName},</p>
+              <p style="color: #333; line-height: 1.6;">Thank you for your loan payment. Your transaction has been processed successfully by our Loan Department.</p>
+              
+              <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid ${statusColor};">
+                <h3 style="color: #1e3a8a; margin: 0 0 15px 0;">Payment Details</h3>
+                <p style="margin: 8px 0;"><strong>Reference:</strong> ${referenceNumber}</p>
+                <p style="margin: 8px 0;"><strong>Amount:</strong> $${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                <p style="margin: 8px 0;"><strong>Payment Method:</strong> Account Balance</p>
+                <p style="margin: 8px 0;"><strong>Account:</strong> ****${account.account_number.slice(-4)}</p>
+                <p style="margin: 8px 0;"><strong>Principal Amount:</strong> $${parseFloat(principalAmount > 0 ? principalAmount : amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                <p style="margin: 8px 0;"><strong>Interest Amount:</strong> $${parseFloat(interestAmount > 0 ? interestAmount : 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                <p style="margin: 8px 0;"><strong>New Loan Balance:</strong> $${parseFloat(newRemainingBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                <p style="margin: 8px 0;"><strong>Status:</strong> <span style="color: ${statusColor}; font-weight: bold;">${statusText}</span></p>
+                <p style="margin: 8px 0;"><strong>Date:</strong> ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              </div>
+
+              ${loanStatus === 'completed' ? 
+                '<p style="color: #10b981; line-height: 1.6; font-weight: bold;">🎉 Congratulations! Your loan has been fully paid off.</p>' : 
+                '<p style="color: #333; line-height: 1.6;">Your payment has been successfully applied to your loan balance.</p>'
+              }
+              
+              <p style="color: #666; font-size: 14px; margin-top: 30px;">If you have any questions regarding your loan payment, please contact our Loan Department at ${loansEmail}.</p>
+              
+              <p style="color: #333; line-height: 1.6;">Thank you for banking with ${bankName}.</p>
+            </div>
+            <div style="background: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b;">
+              <p style="margin: 0;">This is an automated message from ${bankName} Loan Department.</p>
+            </div>
+          </div>
+        `;
+
+        await sendEmail({
+          to: userEmail,
+          subject: `Loan Payment ${statusText} - ${referenceNumber}`,
+          html: emailHtml,
+          text: `Dear ${fullName}, Thank you for your loan payment. Your transaction of $${amount} has been processed successfully. Reference: ${referenceNumber}. New balance: $${newRemainingBalance.toFixed(2)}.`,
+          emailType: EMAIL_TYPES.LOANS,
+          from: loansEmail
+        });
+      }
+    } catch (emailError) {
+      console.error('Error sending balance payment email:', emailError);
+      // Don't fail the request if email fails
+    }
 
     return res.status(200).json({
       success: true,
