@@ -354,6 +354,19 @@ export default function PaymentHistory({ loanId }) {
                           </div>
                         )}
                       </div>
+                      {parseFloat(payment.principal_amount || 0) > parseFloat(loan_info?.monthly_payment_amount || 0) && (
+                        <div style={{
+                          marginTop: '12px',
+                          padding: '10px',
+                          backgroundColor: '#eff6ff',
+                          borderRadius: '6px',
+                          fontSize: '0.75rem',
+                          color: '#1e40af',
+                          fontWeight: '600'
+                        }}>
+                          💡 This payment covers multiple payment periods
+                        </div>
+                      )}
                     </div>
                   )}
 

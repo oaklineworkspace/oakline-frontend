@@ -262,18 +262,31 @@ export default async function handler(req, res) {
 
     // Update loan details including next_payment_date
     // Calculate how many payments were made with this payment
-    const monthlyPayment = parseFloat(loan.monthly_payment_amount);
-    const paymentsMadeCount = monthlyPayment > 0 ? Math.floor(amount / monthlyPayment) : 1;
+    // Use the actual principal paid vs expected principal per payment for accuracy
+    const monthlyPayment = parseFloat(loan.monthly_payment_amount || 0);
+    const monthlyRate = parseFloat(loan.interest_rate) / 100 / 12;
+    const currentBalance = parseFloat(loan.remaining_balance || loan.principal);
+    
+    // Calculate expected principal per monthly payment
+    const expectedInterest = currentBalance * monthlyRate;
+    const expectedPrincipal = monthlyPayment > expectedInterest ? monthlyPayment - expectedInterest : monthlyPayment;
+    
+    // Determine how many equivalent payments were made based on principal reduction
+    let paymentsMadeCount = 1;
+    if (expectedPrincipal > 0 && principalAmount > 0) {
+      paymentsMadeCount = Math.max(1, Math.floor(principalAmount / expectedPrincipal));
+    }
+    
     const totalPaymentsMade = (loan.payments_made || 0) + paymentsMadeCount;
 
-    // Calculate next payment date based on remaining balance
+    // Calculate next payment date based on remaining balance and payments made
     let nextPaymentDate = null;
     if (loanStatus === 'active' && newRemainingBalance > 0.01) {
       // Only set next payment date if there's still balance remaining
       const startDate = new Date(loan.start_date || loan.created_at);
-      const monthsToAdd = totalPaymentsMade;
+      // Next payment is one month after the last counted payment
       nextPaymentDate = new Date(startDate);
-      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + monthsToAdd + 1);
+      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + totalPaymentsMade + 1);
       nextPaymentDate = nextPaymentDate.toISOString().split('T')[0];
     } else if (newRemainingBalance <= 0.01) {
       // Loan is fully paid, no next payment needed

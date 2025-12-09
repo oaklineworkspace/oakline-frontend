@@ -120,7 +120,11 @@ export default function AmortizationSchedule({ loanId }) {
   const remainingBalance = parseFloat(loan_details?.current_balance || loan_details?.remaining_balance || 0);
   const principal = parseFloat(loan_details?.principal || 0);
   const isFullyPaid = remainingBalance <= 0.50 || loan_details?.status === 'paid' || loan_details?.status === 'closed' || (principal > 0 && remainingBalance <= principal * 0.001);
-  const progressPercent = isFullyPaid ? '100.0' : (loan_details?.term_months ? ((loan_details.payments_made / loan_details.term_months) * 100).toFixed(1) : '0.0');
+  
+  // Calculate progress based on actual payments made or amount paid
+  const paymentsMade = parseInt(loan_details?.payments_made || 0);
+  const termMonths = parseInt(loan_details?.term_months || 1);
+  const progressPercent = isFullyPaid ? '100.0' : ((paymentsMade / termMonths) * 100).toFixed(1);
 
   return (
     <div style={styles.container}>
