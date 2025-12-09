@@ -102,20 +102,24 @@ export default function PaymentHistory({ loanId }) {
 
   const { loan_info, payment_summary, payments } = historyData;
 
+  // Filter payments first
   let filteredPayments = filter === 'all'
-    ? payments
+    ? [...payments]
     : payments.filter(p => p.status === filter);
 
-  // Apply sorting
-  if (sortBy === 'date_desc') {
-    filteredPayments.sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date));
-  } else if (sortBy === 'date_asc') {
-    filteredPayments.sort((a, b) => new Date(a.payment_date) - new Date(b.payment_date));
-  } else if (sortBy === 'amount_desc') {
-    filteredPayments.sort((a, b) => parseFloat(b.amount || 0) - parseFloat(a.amount || 0));
-  } else if (sortBy === 'amount_asc') {
-    filteredPayments.sort((a, b) => parseFloat(a.amount || 0) - parseFloat(b.amount || 0));
-  }
+  // Apply sorting - create a new sorted array
+  filteredPayments = [...filteredPayments].sort((a, b) => {
+    if (sortBy === 'date_desc') {
+      return new Date(b.payment_date || b.created_at) - new Date(a.payment_date || a.created_at);
+    } else if (sortBy === 'date_asc') {
+      return new Date(a.payment_date || a.created_at) - new Date(b.payment_date || b.created_at);
+    } else if (sortBy === 'amount_desc') {
+      return parseFloat(b.amount || 0) - parseFloat(a.amount || 0);
+    } else if (sortBy === 'amount_asc') {
+      return parseFloat(a.amount || 0) - parseFloat(b.amount || 0);
+    }
+    return 0;
+  });
 
   return (
     <div style={styles.container}>
