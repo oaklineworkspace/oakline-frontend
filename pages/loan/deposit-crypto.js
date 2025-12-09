@@ -617,8 +617,14 @@ function LoanDepositCryptoContent() {
           return;
         }
         const accountData = userAccounts.find(a => a.id === selectedAccount);
-        if (!accountData || accountData.balance < currentAmount) {
-          setMessage('Insufficient balance in selected account');
+        if (!accountData) {
+          setMessage('Selected account not found. Please select a valid account.');
+          setMessageType('error');
+          return;
+        }
+        const accountBalance = parseFloat(accountData.balance || 0);
+        if (accountBalance < currentAmount) {
+          setMessage(`Insufficient balance in selected account. Your balance is $${accountBalance.toFixed(2)} but you need $${currentAmount.toFixed(2)}.`);
           setMessageType('error');
           return;
         }
@@ -639,11 +645,27 @@ function LoanDepositCryptoContent() {
     setSubmitModal({ show: true, status: 'loading', message: 'Processing your deposit...' });
     try {
       if (paymentMethod === 'balance') {
-        const depositAmount = parseFloat(depositForm.amount);
+        // Validate deposit amount is present and valid
+        const depositAmountRaw = parseFloat(depositForm.amount);
+        if (isNaN(depositAmountRaw) || depositAmountRaw <= 0) {
+          throw new Error('Please enter a valid deposit amount.');
+        }
+        
+        const depositAmount = depositAmountRaw;
+        
+        // Validate minimum deposit amount
+        if (depositAmount < minDeposit) {
+          throw new Error(`Deposit amount must be at least $${minDeposit.toFixed(2)} (10% of your loan).`);
+        }
+        
         const accountData = userAccounts.find(a => a.id === selectedAccount);
-
-        if (!accountData || accountData.balance < depositAmount) {
-          throw new Error('Insufficient balance in selected account');
+        if (!accountData) {
+          throw new Error('Selected account not found. Please go back and select a valid account.');
+        }
+        
+        const accountBalance = parseFloat(accountData.balance || 0);
+        if (accountBalance < depositAmount) {
+          throw new Error(`Insufficient balance in selected account. Your balance is $${accountBalance.toFixed(2)} but you need $${depositAmount.toFixed(2)}.`);
         }
 
         // Get session for API call
@@ -1118,29 +1140,75 @@ function LoanDepositCryptoContent() {
                 </div>
 
                 {selectedAccount && (
-                  <div style={{
-                    backgroundColor: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '12px',
-                    padding: '1.5rem',
-                    marginBottom: '2rem'
-                  }}>
-                    <h4 style={{ fontSize: '1rem', fontWeight: '700', color: '#1e293b', marginBottom: '1rem' }}>📋 Summary</h4>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid #e5e7eb' }}>
-                      <span style={{ color: '#64748b' }}>Required Deposit:</span>
-                      <span style={{ fontWeight: '700', color: '#10b981' }}>${minDeposit.toFixed(2)}</span>
+                  <>
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>Deposit Amount (USD):</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min={minDeposit}
+                        value={depositForm.amount || minDeposit.toFixed(2)}
+                        onChange={(e) => setDepositForm({ ...depositForm, amount: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '8px',
+                          fontSize: '1rem',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                      <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem' }}>
+                        Minimum required: ${minDeposit.toFixed(2)} (10% of your loan)
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid #e5e7eb' }}>
-                      <span style={{ color: '#64748b' }}>Account Balance:</span>
-                      <span style={{ fontWeight: '700', color: '#1e293b' }}>
-                        ${parseFloat(userAccounts.find(a => a.id === selectedAccount)?.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
+
+                    <div style={{
+                      backgroundColor: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      padding: '1.5rem',
+                      marginBottom: '2rem'
+                    }}>
+                      <h4 style={{ fontSize: '1rem', fontWeight: '700', color: '#1e293b', marginBottom: '1rem' }}>📋 Transfer Summary</h4>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid #e5e7eb' }}>
+                        <span style={{ color: '#64748b' }}>Current Balance:</span>
+                        <span style={{ fontWeight: '700', color: '#1e293b' }}>
+                          ${parseFloat(userAccounts.find(a => a.id === selectedAccount)?.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid #e5e7eb' }}>
+                        <span style={{ color: '#64748b' }}>Deposit Amount:</span>
+                        <span style={{ fontWeight: '700', color: '#dc2626' }}>
+                          -${parseFloat(depositForm.amount || minDeposit).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid #e5e7eb' }}>
+                        <span style={{ color: '#64748b' }}>Balance After Transfer:</span>
+                        <span style={{ fontWeight: '700', color: parseFloat(userAccounts.find(a => a.id === selectedAccount)?.balance || 0) - parseFloat(depositForm.amount || minDeposit) >= 0 ? '#10b981' : '#dc2626' }}>
+                          ${(parseFloat(userAccounts.find(a => a.id === selectedAccount)?.balance || 0) - parseFloat(depositForm.amount || minDeposit)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#64748b' }}>Loan Amount:</span>
+                        <span style={{ fontWeight: '700', color: '#059669' }}>${parseFloat(loanDetails.principal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      </div>
+                      
+                      {parseFloat(userAccounts.find(a => a.id === selectedAccount)?.balance || 0) < parseFloat(depositForm.amount || minDeposit) && (
+                        <div style={{
+                          backgroundColor: '#fef2f2',
+                          border: '1px solid #fecaca',
+                          borderRadius: '8px',
+                          padding: '0.75rem',
+                          marginTop: '1rem',
+                          color: '#991b1b',
+                          fontSize: '0.9rem'
+                        }}>
+                          ⚠️ Insufficient balance. Please reduce the deposit amount or select a different account.
+                        </div>
+                      )}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#64748b' }}>Loan Amount:</span>
-                      <span style={{ fontWeight: '700', color: '#059669' }}>${parseFloat(loanDetails.principal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
             )}
@@ -1412,8 +1480,25 @@ function LoanDepositCryptoContent() {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #eee' }}>
                 <span style={{ fontWeight: '500', color: '#334155' }}>Deposit Amount:</span>
-                <span style={{ fontWeight: '600', color: '#10b981', fontSize: '1.1rem' }}>${parseFloat(depositForm.amount || minDeposit).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span style={{ fontWeight: '600', color: '#10b981', fontSize: '1.1rem' }}>${parseFloat(depositForm.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
+
+              {paymentMethod === 'balance' && selectedAccount && (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #eee' }}>
+                    <span style={{ fontWeight: '500', color: '#334155' }}>From Account:</span>
+                    <span style={{ fontWeight: '600', color: '#1e293b' }}>
+                      {userAccounts.find(a => a.id === selectedAccount)?.account_type?.toUpperCase() || ''} - {userAccounts.find(a => a.id === selectedAccount)?.account_number || ''}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #eee' }}>
+                    <span style={{ fontWeight: '500', color: '#334155' }}>Balance After Transfer:</span>
+                    <span style={{ fontWeight: '600', color: '#059669' }}>
+                      ${(parseFloat(userAccounts.find(a => a.id === selectedAccount)?.balance || 0) - parseFloat(depositForm.amount)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </>
+              )}
 
               {paymentMethod === 'crypto' && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #eee' }}>
