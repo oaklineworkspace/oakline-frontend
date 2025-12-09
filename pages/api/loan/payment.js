@@ -251,8 +251,7 @@ export default async function handler(req, res) {
     }
 
     // Calculate principal and interest breakdown
-    const monthlyRate = parseFloat(loan.interest_rate) / 100 / 12;
-    const interestAmount = parseFloat(loan.remaining_balance) * monthlyRate;
+    const interestAmount = parseFloat(loan.remaining_balance) * (parseFloat(loan.interest_rate) / 100 / 12);
     const principalAmount = amount - interestAmount;
 
     const { data: paymentRecord, error: paymentError } = await supabaseAdmin
