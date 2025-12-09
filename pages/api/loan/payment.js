@@ -144,12 +144,15 @@ export default async function handler(req, res) {
 
         const { data: bankDetails } = await supabaseAdmin
           .from('bank_details')
-          .select('bank_name')
+          .select('name, email_loans')
           .limit(1)
           .single();
 
-        const bankName = bankDetails?.bank_name || 'Oakline Bank';
-        const userName = userProfile?.first_name || 'Valued Customer';
+        const bankName = bankDetails?.name || 'Oakline Bank';
+        const loansEmail = bankDetails?.email_loans || 'loans@theoaklinebank.com';
+        const fullName = userProfile?.first_name && userProfile?.last_name 
+          ? `${userProfile.first_name} ${userProfile.last_name}` 
+          : 'Valued Customer';
         const userEmail = userProfile?.email || user.email;
 
         if (userEmail) {
@@ -159,9 +162,9 @@ export default async function handler(req, res) {
                 <h1 style="color: white; margin: 0;">${bankName}</h1>
               </div>
               <div style="padding: 30px; background: #ffffff;">
-                <h2 style="color: #1e3a8a; margin-bottom: 20px;">Crypto Loan Payment Submitted</h2>
-                <p style="color: #333; line-height: 1.6;">Dear ${userName},</p>
-                <p style="color: #333; line-height: 1.6;">Your crypto loan payment has been successfully submitted and is pending verification.</p>
+                <h2 style="color: #1e3a8a; margin-bottom: 20px;">Loan Payment Received</h2>
+                <p style="color: #333; line-height: 1.6;">Dear ${fullName},</p>
+                <p style="color: #333; line-height: 1.6;">Thank you for your loan payment. Your transaction has been submitted and is currently being processed by our Loan Department.</p>
                 
                 <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid #10b981;">
                   <h3 style="color: #1e3a8a; margin: 0 0 15px 0;">Payment Details</h3>
@@ -169,28 +172,30 @@ export default async function handler(req, res) {
                   <p style="margin: 8px 0;"><strong>Amount:</strong> $${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                   <p style="margin: 8px 0;"><strong>Cryptocurrency:</strong> ${crypto_data.crypto_type}</p>
                   <p style="margin: 8px 0;"><strong>Network:</strong> ${crypto_data.network_type}</p>
-                  <p style="margin: 8px 0;"><strong>Status:</strong> <span style="color: #f59e0b; font-weight: bold;">Pending Verification</span></p>
+                  <p style="margin: 8px 0;"><strong>Wallet Address:</strong> <span style="font-family: monospace; font-size: 12px;">${crypto_data.wallet_address}</span></p>
+                  <p style="margin: 8px 0;"><strong>Status:</strong> <span style="color: #f59e0b; font-weight: bold;">Pending</span></p>
                   <p style="margin: 8px 0;"><strong>Date:</strong> ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 </div>
 
-                <p style="color: #333; line-height: 1.6;">Our team will verify your payment within 24-48 hours. You will receive an email confirmation once your payment has been verified and applied to your loan.</p>
+                <p style="color: #333; line-height: 1.6;">You will receive a confirmation email once your payment has been verified and applied to your loan balance.</p>
                 
-                <p style="color: #666; font-size: 14px; margin-top: 30px;">If you have any questions, please contact our support team.</p>
+                <p style="color: #666; font-size: 14px; margin-top: 30px;">If you have any questions regarding your loan payment, please contact our Loan Department.</p>
                 
-                <p style="color: #333; line-height: 1.6;">Thank you for choosing ${bankName}.</p>
+                <p style="color: #333; line-height: 1.6;">Thank you for banking with ${bankName}.</p>
               </div>
               <div style="background: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b;">
-                <p style="margin: 0;">This is an automated message from ${bankName}.</p>
+                <p style="margin: 0;">This is an automated message from ${bankName} Loan Department.</p>
               </div>
             </div>
           `;
 
           await sendEmail({
             to: userEmail,
-            subject: `Crypto Loan Payment Submitted - ${referenceNumber}`,
+            subject: `Loan Payment Received - ${referenceNumber}`,
             html: emailHtml,
-            text: `Dear ${userName}, Your crypto loan payment of $${amount} has been submitted and is pending verification. Reference: ${referenceNumber}. You will be notified once verified.`,
-            emailType: EMAIL_TYPES.LOAN
+            text: `Dear ${fullName}, Thank you for your loan payment. Your transaction has been submitted and is currently being processed by our Loan Department. Reference: ${referenceNumber}. Amount: $${amount}. You will receive a confirmation once verified.`,
+            emailType: EMAIL_TYPES.LOAN,
+            fromAddress: loansEmail
           });
         }
       } catch (emailError) {
@@ -200,13 +205,14 @@ export default async function handler(req, res) {
 
       return res.status(200).json({
         success: true,
-        message: 'Crypto payment submitted successfully. Pending verification.',
+        message: 'Crypto payment submitted successfully.',
         payment_status: 'pending',
         payment_id: paymentRecord.id,
         reference_number: referenceNumber,
         amount: amount,
         crypto_type: crypto_data.crypto_type,
-        network_type: crypto_data.network_type
+        network_type: crypto_data.network_type,
+        wallet_address: crypto_data.wallet_address
       });
     }
 

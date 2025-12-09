@@ -455,6 +455,9 @@ function MakePaymentContent() {
         if (paymentProof.txHash?.trim()) {
           successUrl += `&tx_hash=${encodeURIComponent(paymentProof.txHash.trim())}`;
         }
+        if (data.wallet_address) {
+          successUrl += `&wallet_address=${encodeURIComponent(data.wallet_address)}`;
+        }
         router.replace(successUrl);
       } else {
         showToast(data.error || 'Failed to submit crypto payment', 'error');
@@ -619,7 +622,7 @@ function MakePaymentContent() {
             fontSize: '0.875rem',
             textAlign: 'center'
           }}>
-            Your payment will be verified within 24-48 hours
+            Your payment is being securely processed
           </div>
         </div>
       )}

@@ -21,7 +21,7 @@ function PaymentSuccessContent() {
   };
 
   // Extract payment method and account details from query parameters
-  const { payment_method, account_number, crypto_payment_id, crypto_type, network_type, status, tx_hash } = router.query;
+  const { payment_method, account_number, crypto_payment_id, crypto_type, network_type, status, tx_hash, wallet_address } = router.query;
   
   const isPending = status === 'pending' || payment_method === 'crypto';
 
@@ -80,6 +80,12 @@ function PaymentSuccessContent() {
                 <span style={styles.detailValue}>{network_type}</span>
               </div>
             )}
+            {payment_method === 'crypto' && wallet_address && (
+              <div style={styles.detailRow}>
+                <span style={styles.detailLabel}>Wallet Address</span>
+                <span style={{...styles.detailValue, fontSize: '0.7rem', wordBreak: 'break-all', maxWidth: '200px'}}>{wallet_address}</span>
+              </div>
+            )}
             {payment_method === 'crypto' && tx_hash && (
               <div style={styles.detailRow}>
                 <span style={styles.detailLabel}>Transaction Hash</span>
@@ -95,7 +101,7 @@ function PaymentSuccessContent() {
             <div style={styles.detailRow}>
               <span style={styles.detailLabel}>Status</span>
               <span style={isPending ? styles.statusPending : styles.statusCompleted}>
-                {isPending ? 'Pending Verification' : 'Completed'}
+                {isPending ? 'Pending' : 'Completed'}
               </span>
             </div>
           </div>
@@ -103,7 +109,7 @@ function PaymentSuccessContent() {
           {payment_method === 'crypto' ? (
             <div style={styles.infoBox}>
               <p style={styles.infoText}>
-                <strong>Crypto Payment Submitted:</strong> Your payment is pending verification by our team. This typically takes 24-48 hours. You will receive an email confirmation once your payment has been verified and applied to your loan.
+                Your payment has been submitted and is currently being processed by our Loan Department. You will receive an email confirmation once your payment has been verified and applied to your loan.
               </p>
             </div>
           ) : (
