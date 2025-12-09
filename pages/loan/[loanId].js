@@ -44,49 +44,12 @@ function LoanDetailContent() {
     return () => document.head.removeChild(style);
   }, []);
 
-  const [accounts, setAccounts] = useState([]);
-  const [processing, setProcessing] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
   const [documents, setDocuments] = useState([]);
-  const [availableNetworks, setAvailableNetworks] = useState([]);
-  const [loadingNetworks, setLoadingNetworks] = useState(false);
-  const [networkFeePercent, setNetworkFeePercent] = useState(0);
-  const calculatedFee = paymentForm.amount ? (parseFloat(paymentForm.amount) * networkFeePercent / 100) : 0;
-  const totalAmountWithFee = paymentForm.amount ? (parseFloat(paymentForm.amount) + calculatedFee) : 0;
-
-  const cryptoTypes = [
-    { value: 'Bitcoin', label: 'Bitcoin', icon: '₿' },
-    { value: 'Ethereum', label: 'Ethereum', icon: 'Ξ' },
-    { value: 'Tether USD', label: 'Tether', icon: '₮' },
-    { value: 'BNB', label: 'Binance Coin', icon: 'B' },
-    { value: 'USD Coin', label: 'USD Coin', icon: '$' },
-    { value: 'Solana', label: 'Solana', icon: 'S' },
-    { value: 'Cardano', label: 'Cardano', icon: 'A' },
-    { value: 'Polygon', label: 'Polygon', icon: 'M' },
-    { value: 'Avalanche', label: 'Avalanche', icon: 'A' },
-    { value: 'Litecoin', label: 'Litecoin', icon: 'Ł' },
-    { value: 'XRP', label: 'XRP', icon: 'X' },
-    { value: 'TON', label: 'TON', icon: 'T' }
-  ];
-
-  const networkIconMap = {
-    'Bitcoin': '🟠',
-    'BNB Smart Chain (BEP20)': '🟡',
-    'Ethereum (ERC20)': '⚪',
-    'Arbitrum One': '🔵',
-    'Optimism': '🔴',
-    'Tron (TRC20)': '🔴',
-    'Solana (SOL)': '🟣',
-    'Polygon (MATIC)': '🟣',
-    'Avalanche (C-Chain)': '🔴',
-    'Litecoin': '⚪',
-    'XRP Ledger': '🔵',
-  };
 
   useEffect(() => {
     if (user && loanId) {
       fetchLoanDetails();
-      fetchUserAccounts();
       subscribeToLoanUpdates();
     }
 
@@ -98,15 +61,7 @@ function LoanDetailContent() {
     };
   }, [user, loanId]);
 
-  useEffect(() => {
-    if (action === 'payment' && loan) {
-      setPaymentModal(true);
-      setPaymentForm({
-        ...paymentForm,
-        amount: calculateMonthlyPayment(loan).toFixed(2)
-      });
-    }
-  }, [action, loan]);
+  
 
   const fetchLoanDetails = async () => {
     setLoading(true);
@@ -162,25 +117,7 @@ function LoanDetailContent() {
     }
   };
 
-  const fetchUserAccounts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('accounts')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .order('balance', { ascending: false });
-
-      if (!error && data) {
-        setAccounts(data);
-        if (data.length > 0) {
-          setPaymentForm(prev => ({ ...prev, account_id: data[0].id }));
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching accounts:', err);
-    }
-  };
+  
 
   const subscribeToLoanUpdates = () => {
     supabase
@@ -220,292 +157,9 @@ function LoanDetailContent() {
     return monthlyPayment;
   };
 
-  const [walletAddress, setWalletAddress] = useState('');
-  const [selectedLoanWallet, setSelectedLoanWallet] = useState(null);
-  const [loadingWallet, setLoadingWallet] = useState(false);
-  const [cryptoPaymentModal, setCryptoPaymentModal] = useState(false);
-  const [paymentProof, setPaymentProof] = useState({ txHash: '', proofFile: null });
-  const [submittingProof, setSubmittingProof] = useState(false);
-
-  const handlePaymentCryptoChange = (crypto) => {
-    setPaymentForm({ ...paymentForm, crypto_type: crypto, network_type: '' });
-    setAvailableNetworks([]);
-    setWalletAddress('');
-    setSelectedLoanWallet(null);
-  };
-
-  const handlePaymentNetworkChange = async (network) => {
-    setPaymentForm({ ...paymentForm, network_type: network });
-    const selectedNetwork = availableNetworks.find(n => n.value === network);
-    if (selectedNetwork) {
-      setNetworkFeePercent(selectedNetwork.fee || 0);
-    }
-    await fetchLoanCryptoWallets(paymentForm.crypto_type, network);
-  };
-
-  const fetchLoanCryptoWallets = async (cryptoType, networkType) => {
-    if (!cryptoType || !networkType) {
-      setWalletAddress('');
-      setSelectedLoanWallet(null);
-      return;
-    }
-
-    setLoadingWallet(true);
-    try {
-      const { data: cryptoAsset } = await supabase
-        .from('crypto_assets')
-        .select('id')
-        .eq('crypto_type', cryptoType)
-        .eq('network_type', networkType)
-        .eq('status', 'active')
-        .single();
-
-      if (!cryptoAsset) {
-        showToast('Crypto asset configuration not found. Please contact support.', 'error');
-        return;
-      }
-
-      const { data: loanWallets, error } = await supabase
-        .from('loan_crypto_wallets')
-        .select('id, wallet_address, memo')
-        .eq('crypto_asset_id', cryptoAsset.id)
-        .eq('status', 'active')
-        .eq('purpose', 'loan_requirement');
-
-      if (error || !loanWallets || loanWallets.length === 0) {
-        showToast('No available loan wallet. Please try another payment method.', 'error');
-        return;
-      }
-
-      const { data: depositPayment } = await supabase
-        .from('loan_payments')
-        .select('metadata')
-        .eq('loan_id', loanId)
-        .eq('is_deposit', true)
-        .eq('deposit_method', 'crypto')
-        .single();
-
-      let selectedWallet;
-      if (depositPayment?.metadata?.loan_wallet_address) {
-        selectedWallet = loanWallets.find(w => w.wallet_address === depositPayment.metadata.loan_wallet_address);
-      }
-
-      if (!selectedWallet) {
-        selectedWallet = loanWallets[Math.floor(Math.random() * loanWallets.length)];
-      }
-
-      setWalletAddress(selectedWallet.wallet_address);
-      setSelectedLoanWallet(selectedWallet);
-    } catch (error) {
-      console.error('Error fetching wallet:', error);
-      showToast('Error loading wallet. Please try again.', 'error');
-    } finally {
-      setLoadingWallet(false);
-    }
-  };
-
-  const fetchPaymentNetworks = async (cryptoType) => {
-    if (!cryptoType) {
-      setAvailableNetworks([]);
-      return;
-    }
-
-    setLoadingNetworks(true);
-    try {
-      const { data: cryptoAssets, error } = await supabase
-        .from('crypto_assets')
-        .select('network_type, confirmations_required, deposit_fee_percent')
-        .eq('crypto_type', cryptoType)
-        .eq('status', 'active')
-        .order('network_type');
-
-      if (!error && cryptoAssets && cryptoAssets.length > 0) {
-        const networks = cryptoAssets.map(asset => ({
-          value: asset.network_type,
-          label: asset.network_type,
-          confirmations: asset.confirmations_required || 3,
-          fee: asset.deposit_fee_percent || 0,
-          icon: networkIconMap[asset.network_type] || '🔹'
-        }));
-        setAvailableNetworks(networks);
-      }
-    } catch (error) {
-      console.error('Error fetching networks:', error);
-    } finally {
-      setLoadingNetworks(false);
-    }
-  };
-
-  useEffect(() => {
-    if (paymentForm.crypto_type) {
-      fetchPaymentNetworks(paymentForm.crypto_type);
-    }
-  }, [paymentForm.crypto_type]);
-
-  const handleMakePayment = async () => {
-    setProcessing(true);
-    try {
-      const amount = parseFloat(paymentForm.amount);
-
-      if (!amount || amount <= 0) {
-        showToast('Please enter a valid payment amount', 'error');
-        setProcessing(false);
-        return;
-      }
-
-      if (amount > parseFloat(loan.remaining_balance)) {
-        showToast('Payment amount cannot exceed remaining balance', 'error');
-        setProcessing(false);
-        return;
-      }
-
-      if (!paymentForm.account_id && paymentForm.payment_type !== 'crypto') {
-        showToast('Please select an account', 'error');
-        setProcessing(false);
-        return;
-      }
-
-      if (paymentForm.payment_type === 'crypto') {
-        if (!paymentForm.crypto_type) {
-          showToast('Please select a cryptocurrency', 'error');
-          setProcessing(false);
-          return;
-        }
-        if (!paymentForm.network_type) {
-          showToast('Please select a network', 'error');
-          setProcessing(false);
-          return;
-        }
-        if (!walletAddress || !selectedLoanWallet) {
-          showToast('Wallet address not loaded. Please try again.', 'error');
-          setProcessing(false);
-          return;
-        }
-
-        setProcessing(false);
-        setPaymentModal(false);
-        setCryptoPaymentModal(true);
-        return;
-      }
-
-      const selectedAccount = accounts.find(acc => acc.id === paymentForm.account_id);
-      if (!selectedAccount || parseFloat(selectedAccount.balance) < amount) {
-        showToast('Insufficient funds in selected account', 'error');
-        setProcessing(false);
-        return;
-      }
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        showToast('Session expired. Please log in again.', 'error');
-        setProcessing(false);
-        return;
-      }
-
-      const response = await fetch('/api/user/make-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-          loan_id: loanId,
-          account_id: paymentForm.account_id,
-          amount: amount,
-          payment_type: paymentForm.payment_type
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        router.push(`/loan/payment-success?reference=${data.payment.reference_number}&amount=${data.payment.amount}&loan_id=${loanId}`);
-      } else {
-        showToast(data.error || 'Failed to process payment', 'error');
-      }
-    } catch (err) {
-      console.error('Error processing payment:', err);
-      showToast('An error occurred while processing payment', 'error');
-    } finally {
-      setProcessing(false);
-    }
-  };
-
   const showToast = (message, type = 'info') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: '' }), 5000);
-  };
-
-  const handleSubmitCryptoPayment = async () => {
-    if (!paymentProof.txHash && !paymentProof.proofFile) {
-      showToast('Please provide transaction hash or upload payment proof', 'error');
-      return;
-    }
-
-    setSubmittingProof(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        showToast('Session expired. Please log in again.', 'error');
-        setSubmittingProof(false);
-        return;
-      }
-
-      let proofPath = null;
-      if (paymentProof.proofFile) {
-        const fileExt = paymentProof.proofFile.name.split('.').pop();
-        const fileName = `${user.id}_${Date.now()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('crypto_deposit_proofs')
-          .upload(fileName, paymentProof.proofFile);
-
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          showToast('Failed to upload proof file', 'error');
-          setSubmittingProof(false);
-          return;
-        }
-        proofPath = uploadData.path;
-      }
-
-      const response = await fetch('/api/loan/payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-          loan_id: loanId,
-          amount: parseFloat(paymentForm.amount),
-          payment_method: 'crypto',
-          crypto_data: {
-            crypto_type: paymentForm.crypto_type,
-            network_type: paymentForm.network_type,
-            tx_hash: paymentProof.txHash || null,
-            proof_path: proofPath,
-            wallet_address: walletAddress,
-            wallet_id: selectedLoanWallet.id,
-            fee: calculatedFee
-          }
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        showToast('Crypto payment submitted successfully. Pending verification.', 'success');
-        setCryptoPaymentModal(false);
-        setPaymentProof({ txHash: '', proofFile: null });
-        fetchLoanDetails();
-      } else {
-        showToast(data.error || 'Failed to submit crypto payment', 'error');
-      }
-    } catch (err) {
-      console.error('Error submitting crypto payment:', err);
-      showToast('An error occurred while submitting payment', 'error');
-    } finally {
-      setSubmittingProof(false);
-    }
   };
 
   const getStatusBadge = (status) => {
