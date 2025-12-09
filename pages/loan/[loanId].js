@@ -283,7 +283,7 @@ function LoanDetailContent() {
           </div>
           <div style={styles.headerStat}>
             <div style={styles.headerStatLabel}>Remaining Balance</div>
-            <div style={{...styles.headerStatValue, color: isFullyPaid ? '#10b981' : '#1e40af'}}>
+            <div style={{...styles.headerStatValue, color: isFullyPaid ? '#10b981' : '#fff'}}>
               ${parseFloat(loan.remaining_balance || loan.principal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
