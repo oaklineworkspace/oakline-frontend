@@ -370,7 +370,7 @@ export default function PaymentHistory({ loanId }) {
                     </div>
                   )}
 
-                  {(payment.crypto_type || payment.network_type || payment.tx_hash) && (
+                  {(payment.crypto_type || payment.network_type || payment.tx_hash || payment.payment_method === 'crypto' || payment.payment_type === 'crypto_payment') && (
                     <div style={styles.cryptoDetailsBox}>
                       <div style={styles.cryptoDetailsIcon}>🪙</div>
                       <div style={{ flex: 1 }}>
@@ -398,14 +398,37 @@ export default function PaymentHistory({ loanId }) {
                               }}
                               title="Click to copy"
                             >
-                              {payment.tx_hash.substring(0, 20)}...{payment.tx_hash.substring(payment.tx_hash.length - 10)} 📋
+                              {payment.tx_hash.length > 30 
+                                ? `${payment.tx_hash.substring(0, 20)}...${payment.tx_hash.substring(payment.tx_hash.length - 10)}`
+                                : payment.tx_hash} 📋
                             </span>
                           </div>
                         )}
                         {payment.wallet_address && (
                           <div style={styles.cryptoDetailRow}>
                             <span style={styles.cryptoDetailKey}>Wallet:</span>
-                            <span style={styles.cryptoDetailValue}>{payment.wallet_address.substring(0, 15)}...{payment.wallet_address.substring(payment.wallet_address.length - 5)}</span>
+                            <span style={styles.cryptoDetailValue}>
+                              {payment.wallet_address.length > 20
+                                ? `${payment.wallet_address.substring(0, 15)}...${payment.wallet_address.substring(payment.wallet_address.length - 5)}`
+                                : payment.wallet_address}
+                            </span>
+                          </div>
+                        )}
+                        {payment.fee && parseFloat(payment.fee) > 0 && (
+                          <div style={styles.cryptoDetailRow}>
+                            <span style={styles.cryptoDetailKey}>Network Fee:</span>
+                            <span style={styles.cryptoDetailValue}>${parseFloat(payment.fee).toFixed(2)}</span>
+                          </div>
+                        )}
+                        {payment.confirmations !== undefined && payment.required_confirmations && (
+                          <div style={styles.cryptoDetailRow}>
+                            <span style={styles.cryptoDetailKey}>Confirmations:</span>
+                            <span style={{
+                              ...styles.cryptoDetailValue,
+                              color: payment.confirmations >= payment.required_confirmations ? '#059669' : '#f59e0b'
+                            }}>
+                              {payment.confirmations} / {payment.required_confirmations}
+                            </span>
                           </div>
                         )}
                       </div>

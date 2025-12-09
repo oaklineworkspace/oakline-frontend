@@ -37,7 +37,7 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Loan not found' });
     }
 
-    // Fetch all loan payments including deposits
+    // Fetch all loan payments including deposits - get both crypto and balance payments
     const { data: payments, error: paymentsError } = await supabaseAdmin
       .from('loan_payments')
       .select('*')
@@ -47,6 +47,15 @@ export default async function handler(req, res) {
     if (paymentsError) {
       console.error('Error fetching payment history:', paymentsError);
       return res.status(500).json({ error: 'Failed to fetch payment history' });
+    }
+
+    console.log(`Found ${payments?.length || 0} total payments for loan ${actualLoanId}`);
+    
+    // Log payment methods to debug
+    if (payments && payments.length > 0) {
+      payments.forEach(p => {
+        console.log(`Payment ${p.id}: payment_method=${p.payment_method}, deposit_method=${p.deposit_method}, is_deposit=${p.is_deposit}, status=${p.status}, amount=${p.amount}`);
+      });
     }
 
     let totalPaid = 0;
@@ -68,15 +77,22 @@ export default async function handler(req, res) {
           totalLateFees += lateFee;
         }
 
-        // Determine display payment type
+        // Determine display payment type - check both payment_method and deposit_method
         let displayPaymentType = payment.payment_type || 'manual';
+        const paymentMethod = payment.payment_method || payment.deposit_method;
+        
         if (payment.is_deposit) {
           displayPaymentType = 'deposit';
-        } else if (payment.payment_method === 'crypto' || payment.deposit_method === 'crypto') {
+        } else if (paymentMethod === 'crypto') {
           displayPaymentType = 'crypto_payment';
-        } else if (payment.payment_method === 'account_balance' || payment.deposit_method === 'account_balance') {
+        } else if (paymentMethod === 'account_balance' || paymentMethod === 'balance') {
           displayPaymentType = 'account_balance';
         }
+
+        // Extract crypto info from metadata if available
+        const cryptoType = payment.metadata?.crypto_type || null;
+        const networkType = payment.metadata?.network_type || null;
+        const walletAddress = payment.metadata?.loan_wallet_address || payment.metadata?.wallet_address || null;
 
         return {
           ...payment,
@@ -84,16 +100,18 @@ export default async function handler(req, res) {
           interest_amount: interestAmount,
           late_fee: lateFee,
           payment_type: displayPaymentType,
+          payment_method: paymentMethod,
           // Keep both timestamps for accurate display
           payment_date: payment.payment_date || payment.created_at,
           created_at: payment.created_at,
           updated_at: payment.updated_at,
           completed_at: payment.completed_at,
           // Include crypto/payment method info
-          crypto_type: payment.metadata?.crypto_type || null,
-          network_type: payment.metadata?.network_type || null,
-          tx_hash: payment.tx_hash || payment.metadata?.tx_hash || null,
-          wallet_address: payment.metadata?.wallet_address || null
+          crypto_type: cryptoType,
+          network_type: networkType,
+          tx_hash: payment.tx_hash || null,
+          wallet_address: walletAddress,
+          proof_path: payment.proof_path || null
         };
       });
 
