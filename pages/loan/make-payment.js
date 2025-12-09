@@ -204,6 +204,7 @@ function MakePaymentContent() {
 
       if (!cryptoAsset) {
         showToast('Crypto asset configuration not found. Please contact support.', 'error');
+        setLoadingWallet(false);
         return;
       }
 
@@ -216,6 +217,7 @@ function MakePaymentContent() {
 
       if (error || !loanWallets || loanWallets.length === 0) {
         showToast('No available loan wallet. Please try another payment method.', 'error');
+        setLoadingWallet(false);
         return;
       }
 
@@ -371,19 +373,31 @@ function MakePaymentContent() {
 
       let proofPath = null;
       if (paymentProof.proofFile) {
-        const fileExt = paymentProof.proofFile.name.split('.').pop();
-        const fileName = `${user.id}_${Date.now()}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('crypto_deposit_proofs')
-          .upload(fileName, paymentProof.proofFile);
+        try {
+          const formData = new FormData();
+          formData.append('file', paymentProof.proofFile);
+          formData.append('loanId', loanId);
 
-        if (uploadError) {
+          const uploadResponse = await fetch('/api/upload-loan-deposit-proof', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`
+            },
+            body: formData
+          });
+
+          const uploadData = await uploadResponse.json();
+
+          if (uploadResponse.ok && uploadData.filePath) {
+            proofPath = uploadData.filePath;
+            console.log('Proof file uploaded successfully:', proofPath);
+          } else {
+            console.warn('Proof file upload failed, but payment will proceed with transaction hash');
+          }
+        } catch (uploadError) {
           console.error('Upload error:', uploadError);
-          showToast('Failed to upload proof file', 'error');
-          setSubmittingProof(false);
-          return;
+          console.warn('Proof file upload failed, but payment will proceed with transaction hash');
         }
-        proofPath = uploadData.path;
       }
 
       const response = await fetch('/api/loan/payment', {
@@ -698,7 +712,7 @@ function MakePaymentContent() {
         {paymentForm.payment_type === 'crypto' && (
           <div>
             <div style={styles.section}>
-              <h3 style={styles.subsectionTitle}>Select Cryptocurrency</h3>
+              <h3 style={styles.subsectionTitle}>Step 1: Select Cryptocurrency</h3>
               <div style={styles.cryptoGrid}>
                 {cryptoTypes.map(crypto => (
                   <div
@@ -717,12 +731,37 @@ function MakePaymentContent() {
             </div>
 
             {paymentForm.crypto_type && (
-              <div style={styles.section}>
-                <h3 style={styles.subsectionTitle}>Select Network</h3>
+              <div style={{
+                ...styles.section,
+                backgroundColor: '#f0f9ff',
+                borderRadius: '12px',
+                padding: '1.5rem',
+                border: '2px solid #3b82f6',
+                marginTop: '1rem'
+              }}>
+                <h3 style={{
+                  ...styles.subsectionTitle,
+                  color: '#1e40af',
+                  marginBottom: '1rem',
+                  fontSize: '18px'
+                }}>
+                  Step 2: Select Network for {paymentForm.crypto_type} ⚠️
+                </h3>
+                <div style={{
+                  backgroundColor: '#fef3c7',
+                  border: '1px solid #f59e0b',
+                  borderRadius: '8px',
+                  padding: '0.75rem',
+                  marginBottom: '1rem',
+                  fontSize: '14px',
+                  color: '#92400e'
+                }}>
+                  ⚠️ Important: Choose the correct network. Sending to the wrong network will result in loss of funds.
+                </div>
                 {loadingNetworks ? (
-                  <div style={styles.loadingText}>Loading networks...</div>
+                  <div style={styles.loadingText}>Loading available networks...</div>
                 ) : availableNetworks.length === 0 ? (
-                  <div style={styles.errorBox}>No networks available</div>
+                  <div style={styles.errorBox}>No networks available for {paymentForm.crypto_type}</div>
                 ) : (
                   <div style={styles.networkGrid}>
                     {availableNetworks.map(network => (
@@ -735,7 +774,7 @@ function MakePaymentContent() {
                         }}
                       >
                         <div style={styles.networkHeader}>
-                          <span>{network.icon}</span>
+                          <span style={{ fontSize: '20px' }}>{network.icon}</span>
                           <span style={styles.networkLabel}>{network.label}</span>
                         </div>
                         <div style={styles.networkDetails}>
