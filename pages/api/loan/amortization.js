@@ -114,6 +114,9 @@ export default async function handler(req, res) {
     const totalAmountPaid = principal - currentRemainingBalance + totalInterestPaid;
     const totalAmountRemaining = currentRemainingBalance + totalInterestRemaining;
 
+    // Calculate total payments (principal + all interest)
+    const totalPaymentsAmount = principal + totalInterest;
+
     return res.status(200).json({
       success: true,
       loan_details: {
@@ -134,6 +137,7 @@ export default async function handler(req, res) {
         total_interest_remaining: parseFloat(totalInterestRemaining.toFixed(2)),
         total_amount_paid: parseFloat(totalAmountPaid.toFixed(2)),
         total_amount_remaining: parseFloat(totalAmountRemaining.toFixed(2)),
+        total_payments: parseFloat(totalPaymentsAmount.toFixed(2)),
         monthly_payment: parseFloat(monthlyPayment.toFixed(2)),
         payments_completed: paidPayments.length,
         payments_remaining: remainingPayments.length
