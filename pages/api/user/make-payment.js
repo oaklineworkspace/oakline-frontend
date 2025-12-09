@@ -261,8 +261,8 @@ export default async function handler(req, res) {
 
     // Determine the loan status based on remaining balance and term
     let loanStatus = loan.status;
-    if (newRemainingBalance <= 0) {
-      loanStatus = 'paid';
+    if (newRemainingBalance <= 0.01) {
+      loanStatus = 'completed';
     } else if (newRemainingBalance < parseFloat(loan.principal) && loan.status === 'approved') {
       loanStatus = 'active';
     }
