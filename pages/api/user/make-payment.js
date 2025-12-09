@@ -45,7 +45,8 @@ export default async function handler(req, res) {
     const remainingBalance = parseFloat(loan.remaining_balance || loan.principal);
 
     // Strict validation - payment cannot exceed remaining balance
-    if (paymentAmount > remainingBalance) {
+    const tolerance = 0.01;
+    if (paymentAmount > remainingBalance + tolerance) {
       return res.status(400).json({ error: `Payment amount cannot exceed remaining balance of $${remainingBalance.toFixed(2)}` });
     }
 
@@ -265,17 +266,17 @@ export default async function handler(req, res) {
     // Use the actual principal paid vs expected principal per payment for accuracy
     const monthlyPayment = parseFloat(loan.monthly_payment_amount || 0);
     const currentBalance = parseFloat(loan.remaining_balance || loan.principal);
-    
+
     // Calculate expected principal per monthly payment
     const expectedInterest = currentBalance * monthlyRate;
     const expectedPrincipal = monthlyPayment > expectedInterest ? monthlyPayment - expectedInterest : monthlyPayment;
-    
+
     // Determine how many equivalent payments were made based on principal reduction
     let paymentsMadeCount = 1;
     if (expectedPrincipal > 0 && principalAmount > 0) {
       paymentsMadeCount = Math.max(1, Math.floor(principalAmount / expectedPrincipal));
     }
-    
+
     const totalPaymentsMade = (loan.payments_made || 0) + paymentsMadeCount;
 
     // Calculate next payment date based on remaining balance and payments made

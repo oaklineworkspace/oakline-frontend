@@ -54,8 +54,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Can only make payments on active loans' });
     }
 
-    if (amount > loan.remaining_balance) {
-      return res.status(400).json({ error: 'Payment amount exceeds remaining balance' });
+    // Allow full payment with tolerance for floating point precision (within 1 cent)
+    const tolerance = 0.01;
+    if (amount > parseFloat(loan.remaining_balance) + tolerance) {
+      return res.status(400).json({ error: `Payment amount cannot exceed remaining balance of $${parseFloat(loan.remaining_balance).toFixed(2)}` });
     }
 
     // Handle crypto payments differently

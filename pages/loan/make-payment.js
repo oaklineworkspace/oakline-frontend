@@ -744,9 +744,9 @@ function MakePaymentContent() {
             value={paymentForm.amount}
             onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
             placeholder="0.00"
-            step="0.000001"
+            step="0.01"
             min="0.01"
-            max={parseFloat(loan.remaining_balance).toFixed(6)}
+            max={parseFloat(loan.remaining_balance).toFixed(2)}
             style={styles.input}
           />
           <small style={styles.helperText}>
