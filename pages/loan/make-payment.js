@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { supabase } from '../../lib/supabaseClient';
@@ -25,6 +25,7 @@ function MakePaymentContent() {
   const [showCryptoDetails, setShowCryptoDetails] = useState(false);
   const [paymentProof, setPaymentProof] = useState({ txHash: '', proofFile: null });
   const [submittingProof, setSubmittingProof] = useState(false);
+  const networkSectionRef = useRef(null);
 
   const [paymentForm, setPaymentForm] = useState({
     amount: '',
@@ -239,6 +240,16 @@ function MakePaymentContent() {
     setWalletAddress('');
     setSelectedLoanWallet(null);
     setShowCryptoDetails(false);
+    
+    // Auto-scroll to network section after a brief delay
+    setTimeout(() => {
+      if (networkSectionRef.current) {
+        networkSectionRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+      }
+    }, 300);
   };
 
   const handlePaymentNetworkChange = async (network) => {
@@ -731,21 +742,28 @@ function MakePaymentContent() {
             </div>
 
             {paymentForm.crypto_type && (
-              <div style={{
-                ...styles.section,
-                backgroundColor: '#f0f9ff',
-                borderRadius: '12px',
-                padding: '1.5rem',
-                border: '2px solid #3b82f6',
-                marginTop: '1rem'
-              }}>
+              <div 
+                ref={networkSectionRef}
+                style={{
+                  ...styles.section,
+                  backgroundColor: '#f0f9ff',
+                  borderRadius: '12px',
+                  padding: '1.5rem',
+                  border: '2px solid #3b82f6',
+                  marginTop: '1rem',
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+                }}>
                 <h3 style={{
                   ...styles.subsectionTitle,
                   color: '#1e40af',
                   marginBottom: '1rem',
-                  fontSize: '18px'
+                  fontSize: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
                 }}>
-                  Step 2: Select Network for {paymentForm.crypto_type} ⚠️
+                  <span style={{ fontSize: '24px' }}>⚠️</span>
+                  Step 2: Select Network for {paymentForm.crypto_type}
                 </h3>
                 <div style={{
                   backgroundColor: '#fef3c7',
