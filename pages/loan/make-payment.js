@@ -269,8 +269,9 @@ function MakePaymentContent() {
         return;
       }
 
-      // Strict validation - payment cannot exceed remaining balance
-      if (amount > remainingBalance) {
+      // Allow full payment with tolerance for floating point precision (within 1 cent)
+      const tolerance = 0.01;
+      if (amount > remainingBalance + tolerance) {
         showToast(`Payment amount cannot exceed remaining balance of $${remainingBalance.toFixed(2)}`, 'error');
         setProcessing(false);
         return;
@@ -614,20 +615,20 @@ function MakePaymentContent() {
         {/* Payment Amount */}
         <div style={styles.section}>
           <label style={styles.label}>Payment Amount ($)</label>
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
             <button
               onClick={() => setPaymentForm({ ...paymentForm, amount: monthlyPayment.toFixed(2) })}
-              style={styles.quickFillButton}
+              style={{...styles.quickFillButton, flex: '1 1 auto', minWidth: '140px'}}
               type="button"
             >
-              Monthly Payment (${monthlyPayment.toFixed(2)})
+              Monthly (${monthlyPayment.toFixed(2)})
             </button>
             <button
-              onClick={() => setPaymentForm({ ...paymentForm, amount: parseFloat(loan.remaining_balance).toFixed(2) })}
-              style={{...styles.quickFillButton, backgroundColor: '#10b981', color: '#fff'}}
+              onClick={() => setPaymentForm({ ...paymentForm, amount: parseFloat(loan.remaining_balance).toFixed(6) })}
+              style={{...styles.quickFillButton, backgroundColor: '#10b981', color: '#fff', flex: '1 1 auto', minWidth: '140px'}}
               type="button"
             >
-              💰 Pay Full Amount (${parseFloat(loan.remaining_balance).toLocaleString('en-US', { minimumFractionDigits: 2 })})
+              💰 Pay Full (${parseFloat(loan.remaining_balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
             </button>
           </div>
           <input
@@ -635,9 +636,9 @@ function MakePaymentContent() {
             value={paymentForm.amount}
             onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
             placeholder="0.00"
-            step="0.01"
+            step="0.000001"
             min="0.01"
-            max={parseFloat(loan.remaining_balance).toFixed(2)}
+            max={parseFloat(loan.remaining_balance).toFixed(6)}
             style={styles.input}
           />
           <small style={styles.helperText}>
@@ -1361,9 +1362,10 @@ const styles = {
     fontWeight: '600'
   },
   quickFillButton: {
-    flex: 1,
-    padding: '10px 16px',
-    fontSize: '14px',
+    flex: '1 1 auto',
+    minWidth: '140px',
+    padding: '10px 12px',
+    fontSize: '13px',
     fontWeight: '600',
     backgroundColor: '#f3f4f6',
     color: '#1f2937',
@@ -1371,6 +1373,8 @@ const styles = {
     borderRadius: '8px',
     cursor: 'pointer',
     transition: 'all 0.2s',
-    whiteSpace: 'nowrap'
+    whiteSpace: 'normal',
+    textAlign: 'center',
+    lineHeight: '1.3'
   }
 };

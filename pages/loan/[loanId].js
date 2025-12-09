@@ -822,20 +822,20 @@ function LoanDetailContent() {
             <h2 style={styles.modalTitle}>Make Loan Payment</h2>
             <div style={styles.formGroup}>
               <label style={styles.label}>Payment Amount ($)</label>
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
                 <button
                   onClick={() => setPaymentForm({ ...paymentForm, amount: parseFloat(loan.monthly_payment_amount || 0).toFixed(2) })}
-                  style={styles.quickFillButton}
+                  style={{...styles.quickFillButton, flex: '1 1 auto', minWidth: '120px'}}
                   type="button"
                 >
                   Monthly (${parseFloat(loan.monthly_payment_amount || 0).toFixed(2)})
                 </button>
                 <button
-                  onClick={() => setPaymentForm({ ...paymentForm, amount: parseFloat(loan.remaining_balance).toFixed(2) })}
-                  style={{...styles.quickFillButton, backgroundColor: '#10b981', color: '#fff', border: '2px solid #10b981'}}
+                  onClick={() => setPaymentForm({ ...paymentForm, amount: parseFloat(loan.remaining_balance).toFixed(6) })}
+                  style={{...styles.quickFillButton, backgroundColor: '#10b981', color: '#fff', border: '2px solid #10b981', flex: '1 1 auto', minWidth: '120px'}}
                   type="button"
                 >
-                  💰 Full Amount (${parseFloat(loan.remaining_balance).toLocaleString('en-US', { minimumFractionDigits: 2 })})
+                  💰 Pay Full (${parseFloat(loan.remaining_balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                 </button>
               </div>
               <input
@@ -1335,9 +1335,10 @@ const styles = {
     boxSizing: 'border-box'
   },
   quickFillButton: {
-    flex: 1,
-    padding: '0.5rem 0.75rem',
-    fontSize: '0.875rem',
+    flex: '1 1 auto',
+    minWidth: '120px',
+    padding: '0.5rem 0.5rem',
+    fontSize: '0.8rem',
     fontWeight: '600',
     color: '#1f2937',
     backgroundColor: '#e5e7eb',
@@ -1345,9 +1346,9 @@ const styles = {
     borderRadius: '8px',
     cursor: 'pointer',
     transition: 'all 0.2s',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis'
+    whiteSpace: 'normal',
+    textAlign: 'center',
+    lineHeight: '1.3'
   },
   select: {
     width: '100%',
