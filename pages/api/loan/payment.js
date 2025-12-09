@@ -58,7 +58,14 @@ export default async function handler(req, res) {
     const remainingBalance = parseFloat(loan.remaining_balance);
     const tolerance = 0.02; // Increased tolerance for decimal precision issues
     
-    if (amount > remainingBalance + tolerance) {
+    // If user is paying very close to the remaining balance, treat it as full payoff
+    // This handles floating-point precision issues where the user intends to pay off the full loan
+    let adjustedAmount = amount;
+    if (Math.abs(amount - remainingBalance) < tolerance) {
+      adjustedAmount = remainingBalance; // Use exact remaining balance to avoid leftover cents
+    }
+    
+    if (adjustedAmount > remainingBalance + tolerance) {
       return res.status(400).json({ error: `Payment amount cannot exceed remaining balance of $${remainingBalance.toFixed(2)}` });
     }
 
@@ -80,8 +87,8 @@ export default async function handler(req, res) {
       // Calculate principal and interest breakdown
       const monthlyRate = parseFloat(loan.interest_rate) / 100 / 12;
       const interestAmount = parseFloat(loan.remaining_balance) * monthlyRate;
-      const principalAmount = amount - interestAmount;
-      let balanceAfterPayment = parseFloat(loan.remaining_balance) - amount;
+      const principalAmount = adjustedAmount - interestAmount;
+      let balanceAfterPayment = parseFloat(loan.remaining_balance) - adjustedAmount;
       
       // Ensure balance doesn't go negative due to floating-point precision
       if (balanceAfterPayment < 0 && balanceAfterPayment > -0.01) {
@@ -93,8 +100,8 @@ export default async function handler(req, res) {
         .from('loan_payments')
         .insert([{
           loan_id: loan.id,
-          amount,
-          principal_amount: principalAmount > 0 ? principalAmount : amount,
+          amount: adjustedAmount,
+          principal_amount: principalAmount > 0 ? principalAmount : adjustedAmount,
           interest_amount: interestAmount > 0 ? interestAmount : 0,
           late_fee: 0,
           balance_after: balanceAfterPayment,
@@ -106,7 +113,7 @@ export default async function handler(req, res) {
           account_id: null, // Ensure no account is linked for crypto payments
           tx_hash: crypto_data.tx_hash || null,
           fee: crypto_data.fee || 0,
-          gross_amount: amount,
+          gross_amount: adjustedAmount,
           proof_path: crypto_data.proof_path || null,
           metadata: {
             crypto_type: crypto_data.crypto_type,
@@ -133,7 +140,7 @@ export default async function handler(req, res) {
           user_id: user.id,
           type: 'loan',
           title: 'Loan Payment Submitted',
-          message: `Your payment of $${amount.toLocaleString()} has been submitted and is currently being processed by our Loan Department.`,
+          message: `Your payment of $${adjustedAmount.toLocaleString()} has been submitted and is currently being processed by our Loan Department.`,
           read: false
         }]);
 
@@ -181,7 +188,7 @@ export default async function handler(req, res) {
                 <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid #10b981;">
                   <h3 style="color: #1e3a8a; margin: 0 0 15px 0;">Payment Details</h3>
                   <p style="margin: 8px 0;"><strong>Reference:</strong> ${referenceNumber}</p>
-                  <p style="margin: 8px 0;"><strong>Amount:</strong> $${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                  <p style="margin: 8px 0;"><strong>Amount:</strong> $${parseFloat(adjustedAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                   <p style="margin: 8px 0;"><strong>Payment Method:</strong> Cryptocurrency</p>
                   <p style="margin: 8px 0;"><strong>Cryptocurrency:</strong> ${crypto_data.crypto_type}</p>
                   <p style="margin: 8px 0;"><strong>Network:</strong> ${crypto_data.network_type}</p>
@@ -206,7 +213,7 @@ export default async function handler(req, res) {
             to: userEmail,
             subject: `Loan Payment Received - ${referenceNumber}`,
             html: emailHtml,
-            text: `Dear ${fullName}, Thank you for your loan payment. Your transaction has been submitted and is currently being processed by our Loan Department. Reference: ${referenceNumber}. Amount: $${amount}. You will receive a confirmation once verified.`,
+            text: `Dear ${fullName}, Thank you for your loan payment. Your transaction has been submitted and is currently being processed by our Loan Department. Reference: ${referenceNumber}. Amount: $${adjustedAmount}. You will receive a confirmation once verified.`,
             emailType: EMAIL_TYPES.LOANS,
             from: loansEmail
           });
@@ -222,7 +229,7 @@ export default async function handler(req, res) {
         payment_status: 'pending',
         payment_id: paymentRecord.id,
         reference_number: referenceNumber,
-        amount: amount,
+        amount: adjustedAmount,
         crypto_type: crypto_data.crypto_type,
         network_type: crypto_data.network_type,
         wallet_address: crypto_data.wallet_address
@@ -241,13 +248,13 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Account not found' });
     }
 
-    if (parseFloat(account.balance) < amount) {
+    if (parseFloat(account.balance) < adjustedAmount) {
       return res.status(400).json({ error: 'Insufficient funds in account' });
     }
 
     const originalAccountBalance = parseFloat(account.balance);
-    const newBalance = originalAccountBalance - amount;
-    let newRemainingBalance = loan.remaining_balance - amount;
+    const newBalance = originalAccountBalance - adjustedAmount;
+    let newRemainingBalance = loan.remaining_balance - adjustedAmount;
     
     // Ensure balance doesn't go negative due to floating-point precision
     if (newRemainingBalance < 0 && newRemainingBalance > -0.01) {
@@ -268,14 +275,14 @@ export default async function handler(req, res) {
 
     // Calculate principal and interest breakdown
     const interestAmount = parseFloat(loan.remaining_balance) * (parseFloat(loan.interest_rate) / 100 / 12);
-    const principalAmount = amount - interestAmount;
+    const principalAmount = adjustedAmount - interestAmount;
 
     const { data: paymentRecord, error: paymentError } = await supabaseAdmin
       .from('loan_payments')
       .insert([{
         loan_id: loan.id,
-        amount,
-        principal_amount: principalAmount > 0 ? principalAmount : amount,
+        amount: adjustedAmount,
+        principal_amount: principalAmount > 0 ? principalAmount : adjustedAmount,
         interest_amount: interestAmount > 0 ? interestAmount : 0,
         late_fee: 0,
         balance_after: newRemainingBalance,
@@ -362,7 +369,7 @@ export default async function handler(req, res) {
         account_id: account.id,
         user_id: user.id,
         type: 'debit',
-        amount: -amount,
+        amount: -adjustedAmount,
         balance_before: originalAccountBalance,
         balance_after: newBalance,
         description: `Loan Payment - ${loan.loan_type?.replace(/_/g, ' ').toUpperCase()}`,
@@ -381,7 +388,7 @@ export default async function handler(req, res) {
         user_id: user.id,
         type: 'loan',
         title: 'Loan Payment Processed',
-        message: `Your loan payment of $${amount.toLocaleString()} has been processed successfully. ${loanStatus === 'closed' ? 'Your loan has been fully paid off!' : `Remaining balance: $${newRemainingBalance.toFixed(2)}`}`,
+        message: `Your loan payment of $${adjustedAmount.toLocaleString()} has been processed successfully. ${loanStatus === 'closed' ? 'Your loan has been fully paid off!' : `Remaining balance: $${newRemainingBalance.toFixed(2)}`}`,
         read: false
       }]);
 
@@ -432,10 +439,10 @@ export default async function handler(req, res) {
               <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid ${statusColor};">
                 <h3 style="color: #1e3a8a; margin: 0 0 15px 0;">Payment Details</h3>
                 <p style="margin: 8px 0;"><strong>Reference:</strong> ${referenceNumber}</p>
-                <p style="margin: 8px 0;"><strong>Amount:</strong> $${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                <p style="margin: 8px 0;"><strong>Amount:</strong> $${parseFloat(adjustedAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                 <p style="margin: 8px 0;"><strong>Payment Method:</strong> Account Balance</p>
                 <p style="margin: 8px 0;"><strong>Account:</strong> ****${account.account_number.slice(-4)}</p>
-                <p style="margin: 8px 0;"><strong>Principal Amount:</strong> $${parseFloat(principalAmount > 0 ? principalAmount : amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                <p style="margin: 8px 0;"><strong>Principal Amount:</strong> $${parseFloat(principalAmount > 0 ? principalAmount : adjustedAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                 <p style="margin: 8px 0;"><strong>Interest Amount:</strong> $${parseFloat(interestAmount > 0 ? interestAmount : 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                 <p style="margin: 8px 0;"><strong>New Loan Balance:</strong> $${parseFloat(newRemainingBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                 <p style="margin: 8px 0;"><strong>Status:</strong> <span style="color: ${statusColor}; font-weight: bold;">${statusText}</span></p>
@@ -461,7 +468,7 @@ export default async function handler(req, res) {
           to: userEmail,
           subject: `Loan Payment ${statusText} - ${referenceNumber}`,
           html: emailHtml,
-          text: `Dear ${fullName}, Thank you for your loan payment. Your transaction of $${amount} has been processed successfully. Reference: ${referenceNumber}. New balance: $${newRemainingBalance.toFixed(2)}.`,
+          text: `Dear ${fullName}, Thank you for your loan payment. Your transaction of $${adjustedAmount} has been processed successfully. Reference: ${referenceNumber}. New balance: $${newRemainingBalance.toFixed(2)}.`,
           emailType: EMAIL_TYPES.LOANS,
           from: loansEmail
         });

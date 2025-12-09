@@ -733,7 +733,13 @@ function MakePaymentContent() {
               Monthly (${monthlyPayment.toFixed(2)})
             </button>
             <button
-              onClick={() => setPaymentForm({ ...paymentForm, amount: parseFloat(loan.remaining_balance).toFixed(6) })}
+              onClick={() => {
+                // Use the exact remaining balance to avoid floating-point precision issues
+                const exactBalance = parseFloat(loan.remaining_balance);
+                // Round to 2 decimal places to ensure exact match with server calculations
+                const roundedBalance = Math.ceil(exactBalance * 100) / 100;
+                setPaymentForm({ ...paymentForm, amount: roundedBalance.toFixed(2) });
+              }}
               style={{...styles.quickFillButton, backgroundColor: '#10b981', color: '#fff', flex: '1 1 auto', minWidth: '140px'}}
               type="button"
             >

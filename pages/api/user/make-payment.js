@@ -41,11 +41,17 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Can only make payments on active or approved loans' });
     }
 
-    const paymentAmount = parseFloat(amount);
+    let paymentAmount = parseFloat(amount);
     const remainingBalance = parseFloat(loan.remaining_balance || loan.principal);
 
     // Allow full payment with tolerance for floating point precision
     const tolerance = 0.02; // Increased tolerance for decimal precision issues
+    
+    // If user is paying very close to the remaining balance, treat it as full payoff
+    // This handles floating-point precision issues where the user intends to pay off the full loan
+    if (Math.abs(paymentAmount - remainingBalance) < tolerance) {
+      paymentAmount = remainingBalance; // Use exact remaining balance to avoid leftover cents
+    }
     
     if (paymentAmount > remainingBalance + tolerance) {
       return res.status(400).json({ error: `Payment amount cannot exceed remaining balance of $${remainingBalance.toFixed(2)}` });
