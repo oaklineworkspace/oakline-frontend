@@ -90,6 +90,7 @@ export default async function handler(req, res) {
           balance_after: loan.remaining_balance - amount,
           payment_date: new Date().toISOString(),
           payment_type: 'manual',
+          payment_method: 'crypto',
           status: 'pending',
           deposit_method: 'crypto',
           tx_hash: crypto_data.tx_hash || null,

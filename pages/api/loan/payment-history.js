@@ -79,15 +79,19 @@ export default async function handler(req, res) {
 
         // Determine display payment type - check both payment_method and deposit_method
         let displayPaymentType = payment.payment_type || 'manual';
+        // Check both fields for payment method, prioritize payment_method over deposit_method
         const paymentMethod = payment.payment_method || payment.deposit_method;
         
         if (payment.is_deposit) {
           displayPaymentType = 'deposit';
-        } else if (paymentMethod === 'crypto') {
+        } else if (paymentMethod === 'crypto' || payment.deposit_method === 'crypto') {
           displayPaymentType = 'crypto_payment';
         } else if (paymentMethod === 'account_balance' || paymentMethod === 'balance') {
           displayPaymentType = 'account_balance';
         }
+        
+        // Ensure payment_method is set for proper filtering
+        const finalPaymentMethod = paymentMethod || (payment.is_deposit && payment.deposit_method) || 'account_balance';
 
         // Extract crypto info from metadata if available
         const cryptoType = payment.metadata?.crypto_type || null;
@@ -100,7 +104,7 @@ export default async function handler(req, res) {
           interest_amount: interestAmount,
           late_fee: lateFee,
           payment_type: displayPaymentType,
-          payment_method: paymentMethod,
+          payment_method: finalPaymentMethod,
           // Keep both timestamps for accurate display
           payment_date: payment.payment_date || payment.created_at,
           created_at: payment.created_at,
