@@ -108,12 +108,14 @@ function PaymentSuccessContent() {
 
           {payment_method === 'crypto' ? (
             <div style={styles.infoBox}>
+              <div style={{fontWeight: '700', marginBottom: '8px', color: '#92400e'}}>Status: Pending</div>
               <p style={styles.infoText}>
-                Your payment has been submitted and is currently being processed by our Loan Department. You will receive an email confirmation once your payment has been verified and applied to your loan.
+                Your transaction has been submitted and is currently being processed by our Loan Department. You will receive email notifications as your payment progresses through verification.
               </p>
             </div>
           ) : (
             <div style={styles.infoBoxGreen}>
+              <div style={{fontWeight: '700', marginBottom: '8px', color: '#065f46'}}>Status: Processing</div>
               <p style={styles.infoTextGreen}>
                 Your payment is being processed. You will receive an email confirmation once complete.
               </p>

@@ -120,8 +120,8 @@ export default async function handler(req, res) {
         .insert([{
           user_id: user.id,
           type: 'loan',
-          title: 'Crypto Loan Payment Submitted',
-          message: `Your crypto payment of $${amount.toLocaleString()} has been submitted and is pending verification. You will be notified once it's confirmed.`,
+          title: 'Loan Payment Submitted',
+          message: `Your payment of $${amount.toLocaleString()} has been submitted and is currently being processed by our Loan Department.`,
           read: false
         }]);
 
@@ -137,9 +137,9 @@ export default async function handler(req, res) {
       // Send email notification to user
       try {
         const { data: userProfile } = await supabaseAdmin
-          .from('user_profiles')
+          .from('profiles')
           .select('first_name, last_name, email')
-          .eq('user_id', user.id)
+          .eq('id', user.id)
           .single();
 
         const { data: bankDetails } = await supabaseAdmin

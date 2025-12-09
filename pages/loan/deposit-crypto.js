@@ -9,7 +9,7 @@ function LoadingSpinner() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
       <div style={{ width: '20px', height: '20px', border: '3px solid #e5e7eb', borderTop: '3px solid #10b981', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-      <span>Processing your deposit...</span>
+      <span>Processing your transaction...</span>
       <style jsx>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
@@ -19,7 +19,7 @@ function LoadingSpinner() {
   );
 }
 
-function SuccessReceipt({ depositAmount, depositMethod, cryptoType, txHash, walletAddress, onClose }) {
+function SuccessReceipt({ depositAmount, depositMethod, cryptoType, txHash, walletAddress, networkType, onClose }) {
   const receiptDate = new Date().toLocaleString('en-US', { 
     year: 'numeric', 
     month: 'long', 
@@ -38,10 +38,10 @@ function SuccessReceipt({ depositAmount, depositMethod, cryptoType, txHash, wall
     }}>
       <div style={{ fontSize: '3rem', marginBottom: '1rem', textAlign: 'center' }}>✅</div>
       <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#166534', marginBottom: '0.5rem', textAlign: 'center' }}>
-        Deposit Submitted Successfully!
+        Transaction Submitted Successfully
       </h2>
       <p style={{ color: '#166534', marginBottom: '2rem', lineHeight: '1.6', textAlign: 'center' }}>
-        Your 10% loan deposit has been submitted to Oakline Bank Treasury and is now pending verification.
+        Your loan deposit has been submitted to Oakline Bank Loan Department and is currently being processed.
       </p>
       
       <div style={{
@@ -79,9 +79,18 @@ function SuccessReceipt({ depositAmount, depositMethod, cryptoType, txHash, wall
               </div>
             </div>
 
+            {networkType && (
+              <div style={{ marginBottom: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
+                <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '600' }}>Network</div>
+                <div style={{ fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>
+                  {networkType}
+                </div>
+              </div>
+            )}
+
             {walletAddress && (
               <div style={{ marginBottom: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
-                <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '600' }}>Wallet Address</div>
+                <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '600' }}>Destination Wallet Address</div>
                 <div style={{ 
                   fontSize: '0.8rem', 
                   fontFamily: 'monospace', 
@@ -128,7 +137,8 @@ function SuccessReceipt({ depositAmount, depositMethod, cryptoType, txHash, wall
         color: '#1e40af',
         lineHeight: '1.6'
       }}>
-        ℹ️ Your deposit has been received and is pending blockchain confirmation. Confirmation typically completes within 15 minutes to 2 hours. You will receive email notifications as your deposit progresses through verification.
+        <div style={{ fontWeight: '700', marginBottom: '0.5rem' }}>Status: Pending</div>
+        Your transaction has been submitted and is currently being processed by our Loan Department. You will receive email notifications as your deposit progresses through verification.
       </div>
 
       <button
@@ -700,7 +710,8 @@ function LoanDepositCryptoContent() {
           setSubmitModal({ show: false, status: 'loading', message: '' });
           setSuccessReceipt({
             amount: depositAmount,
-            method: 'balance'
+            method: 'balance',
+            networkType: null
           });
         }, 2500);
       } else {
@@ -864,13 +875,14 @@ function LoanDepositCryptoContent() {
           console.warn('Email notification failed, but deposit was successful:', emailError);
         }
 
-        setSubmitModal({ show: true, status: 'success', message: '✅ Deposit submitted successfully! Your loan will be activated within hours.' });
+        setSubmitModal({ show: true, status: 'success', message: '✅ Transaction submitted successfully and is being processed by our Loan Department.' });
         setTimeout(() => {
           setSubmitModal({ show: false, status: 'loading', message: '' });
           setSuccessReceipt({
             amount: depositForm.amount,
             method: 'crypto',
             cryptoType: depositForm.crypto_type,
+            networkType: depositForm.network_type,
             txHash: txHash,
             walletAddress: walletAddress
           });
