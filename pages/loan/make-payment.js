@@ -368,9 +368,6 @@ function MakePaymentContent() {
   };
 
   const handleSubmitCryptoPayment = async () => {
-    // Note: Either tx hash or proof file is helpful but not strictly required
-    // The payment can be submitted for admin review even without them
-
     setSubmittingProof(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -401,12 +398,26 @@ function MakePaymentContent() {
             proofPath = uploadData.filePath;
             console.log('Proof file uploaded successfully:', proofPath);
           } else {
-            console.warn('Proof file upload failed, but payment will proceed with transaction hash');
+            console.warn('Proof file upload failed:', uploadData.error);
           }
         } catch (uploadError) {
           console.error('Upload error:', uploadError);
-          console.warn('Proof file upload failed, but payment will proceed with transaction hash');
         }
+      }
+
+      // Fetch crypto asset ID
+      const { data: cryptoAsset, error: assetError } = await supabase
+        .from('crypto_assets')
+        .select('id')
+        .eq('crypto_type', paymentForm.crypto_type)
+        .eq('network_type', paymentForm.network_type)
+        .eq('status', 'active')
+        .single();
+
+      if (assetError || !cryptoAsset) {
+        showToast('Crypto asset configuration not found', 'error');
+        setSubmittingProof(false);
+        return;
       }
 
       const response = await fetch('/api/loan/payment', {
@@ -422,11 +433,13 @@ function MakePaymentContent() {
           crypto_data: {
             crypto_type: paymentForm.crypto_type,
             network_type: paymentForm.network_type,
-            tx_hash: paymentProof.txHash || null,
+            crypto_asset_id: cryptoAsset.id,
+            tx_hash: paymentProof.txHash?.trim() || null,
             proof_path: proofPath,
             wallet_address: walletAddress,
             wallet_id: selectedLoanWallet.id,
-            fee: calculatedFee
+            fee: calculatedFee,
+            gross_amount: totalAmountWithFee
           }
         })
       });
