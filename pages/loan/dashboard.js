@@ -45,11 +45,11 @@ function LoanDashboardContent() {
 
   const calculatePaymentStatus = (loan) => {
     if (!loan) return { monthsAhead: 0, isAhead: false, isBehind: false, isOnTrack: true };
-    
+
     const paymentsMade = loan.payments_made || 0;
     const monthsSinceLoanStart = getMonthsSinceLoanStart(loan.disbursed_at || loan.approved_at || loan.created_at);
     const monthsAhead = paymentsMade - monthsSinceLoanStart;
-    
+
     return {
       monthsAhead,
       isAhead: monthsAhead > 0,
@@ -249,7 +249,7 @@ function LoanDashboardContent() {
           const hasNextPayment = loan.next_payment_date && loan.next_payment_date !== null;
           return isActiveLoan && hasBalance && hasNextPayment;
         });
-        
+
         const nextPayment = activeLoansWithPayments.length > 0
           ? activeLoansWithPayments.reduce((earliest, loan) => {
               if (!earliest) return loan;
@@ -300,13 +300,12 @@ function LoanDashboardContent() {
     }
   };
 
-  const handleMakePayment = () => {
-    // Redirect to the dedicated make-payment page
-    if (selectedLoan && selectedLoan.id) {
-      router.push(`/loan/make-payment?loanId=${selectedLoan.id}`);
-    } else {
-      setError('Please select a loan to make a payment');
-    }
+  const handleMakePayment = async () => {
+    if (!selectedLoan) return;
+
+    // Close modal and redirect immediately
+    setShowPaymentModal(false);
+    router.push(`/loan/make-payment?loanId=${selectedLoan.id}`);
   };
 
   const handleEarlyPayoff = async () => {

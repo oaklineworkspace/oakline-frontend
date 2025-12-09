@@ -7,6 +7,12 @@ function PaymentSuccessContent() {
   const router = useRouter();
   const { reference, amount, loan_id } = router.query;
   const [currentTime] = useState(new Date());
+  const [isReady, setIsReady] = useState(false);
+
+  // Immediately mark as ready when component mounts
+  useEffect(() => {
+    setIsReady(true);
+  }, []);
 
   // Handle the redirect for the payment modal in the loan dashboard
   useEffect(() => {

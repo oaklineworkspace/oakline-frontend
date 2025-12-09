@@ -330,6 +330,7 @@ function MakePaymentContent() {
       const data = await response.json();
 
       if (response.ok) {
+        // Immediately redirect to success page without delay
         const paymentMethod = paymentForm.payment_type === 'crypto' ? 'crypto' : 'balance';
         let successUrl = `/loan/payment-success?reference=${data.payment.reference_number}&amount=${data.payment.amount}&loan_id=${loanId}&payment_method=${paymentMethod}`;
         
@@ -339,7 +340,8 @@ function MakePaymentContent() {
           successUrl += `&crypto_type=${paymentForm.crypto_type}&network_type=${paymentForm.network_type}`;
         }
         
-        router.push(successUrl);
+        // Use router.replace for instant navigation
+        router.replace(successUrl);
       } else {
         showToast(data.error || 'Failed to process payment', 'error');
       }
@@ -612,6 +614,22 @@ function MakePaymentContent() {
         {/* Payment Amount */}
         <div style={styles.section}>
           <label style={styles.label}>Payment Amount ($)</label>
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <button
+              onClick={() => setPaymentForm({ ...paymentForm, amount: monthlyPayment.toFixed(2) })}
+              style={styles.quickFillButton}
+              type="button"
+            >
+              Monthly Payment (${monthlyPayment.toFixed(2)})
+            </button>
+            <button
+              onClick={() => setPaymentForm({ ...paymentForm, amount: parseFloat(loan.remaining_balance).toFixed(2) })}
+              style={{...styles.quickFillButton, backgroundColor: '#10b981', color: '#fff'}}
+              type="button"
+            >
+              💰 Pay Full Amount (${parseFloat(loan.remaining_balance).toLocaleString('en-US', { minimumFractionDigits: 2 })})
+            </button>
+          </div>
           <input
             type="number"
             value={paymentForm.amount}
@@ -623,7 +641,7 @@ function MakePaymentContent() {
             style={styles.input}
           />
           <small style={styles.helperText}>
-            Monthly Payment: ${monthlyPayment.toFixed(2)} | Full Payoff: ${parseFloat(loan.remaining_balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            Enter a custom amount or use the quick-fill buttons above
           </small>
         </div>
 
@@ -1341,5 +1359,18 @@ const styles = {
     borderRadius: '8px',
     textDecoration: 'none',
     fontWeight: '600'
+  },
+  quickFillButton: {
+    flex: 1,
+    padding: '10px 16px',
+    fontSize: '14px',
+    fontWeight: '600',
+    backgroundColor: '#f3f4f6',
+    color: '#1f2937',
+    border: '2px solid #e5e7eb',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    whiteSpace: 'nowrap'
   }
 };

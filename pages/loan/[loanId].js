@@ -822,14 +822,29 @@ function LoanDetailContent() {
             <h2 style={styles.modalTitle}>Make Loan Payment</h2>
             <div style={styles.formGroup}>
               <label style={styles.label}>Payment Amount ($)</label>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <button
+                  onClick={() => setPaymentForm({ ...paymentForm, amount: parseFloat(loan.monthly_payment_amount || 0).toFixed(2) })}
+                  style={styles.quickFillButton}
+                  type="button"
+                >
+                  Monthly (${parseFloat(loan.monthly_payment_amount || 0).toFixed(2)})
+                </button>
+                <button
+                  onClick={() => setPaymentForm({ ...paymentForm, amount: parseFloat(loan.remaining_balance).toFixed(2) })}
+                  style={{...styles.quickFillButton, backgroundColor: '#10b981', color: '#fff', border: '2px solid #10b981'}}
+                  type="button"
+                >
+                  💰 Full Amount (${parseFloat(loan.remaining_balance).toLocaleString('en-US', { minimumFractionDigits: 2 })})
+                </button>
+              </div>
               <input
                 type="number"
                 value={paymentForm.amount}
                 onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
                 placeholder="0.00"
                 step="0.01"
-                min="0"
-                max={loan.remaining_balance}
+                min="0.01"
                 style={styles.input}
               />
               <small style={styles.helperText}>
@@ -1318,6 +1333,21 @@ const styles = {
     border: '1px solid #d1d5db',
     fontSize: '1rem',
     boxSizing: 'border-box'
+  },
+  quickFillButton: {
+    flex: 1,
+    padding: '0.5rem 0.75rem',
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    color: '#1f2937',
+    backgroundColor: '#e5e7eb',
+    border: '2px solid #e5e7eb',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis'
   },
   select: {
     width: '100%',
