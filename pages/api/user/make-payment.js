@@ -259,63 +259,8 @@ export default async function handler(req, res) {
       // Don't fail the payment if email fails
     }
 
-    // Determine the loan status based on remaining balance and term
-    let loanStatus = loan.status;
-    if (newRemainingBalance <= 0.01) {
-      loanStatus = 'completed';
-    } else if (newRemainingBalance < parseFloat(loan.principal) && loan.status === 'approved') {
-      loanStatus = 'active';
-    }
-
-    // Update loan details including next_payment_date
-    // Calculate how many payments were made with this payment
-    // Use the actual principal paid vs expected principal per payment for accuracy
-    const monthlyPayment = parseFloat(loan.monthly_payment_amount || 0);
-    const currentBalance = parseFloat(loan.remaining_balance || loan.principal);
-
-    // Calculate expected principal per monthly payment
-    const expectedInterest = currentBalance * monthlyRate;
-    const expectedPrincipal = monthlyPayment > expectedInterest ? monthlyPayment - expectedInterest : monthlyPayment;
-
-    // Determine how many equivalent payments were made based on principal reduction
-    let paymentsMadeCount = 1;
-    if (expectedPrincipal > 0 && principalAmount > 0) {
-      paymentsMadeCount = Math.max(1, Math.floor(principalAmount / expectedPrincipal));
-    }
-
-    const totalPaymentsMade = (loan.payments_made || 0) + paymentsMadeCount;
-
-    // Calculate next payment date based on remaining balance and payments made
-    let nextPaymentDate = null;
-    if (loanStatus === 'active' && newRemainingBalance > 0.01) {
-      // Only set next payment date if there's still balance remaining
-      const startDate = new Date(loan.start_date || loan.created_at);
-      // Next payment is one month after the last counted payment
-      nextPaymentDate = new Date(startDate);
-      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + totalPaymentsMade + 1);
-      nextPaymentDate = nextPaymentDate.toISOString().split('T')[0];
-    } else if (newRemainingBalance <= 0.01) {
-      // Loan is fully paid, no next payment needed
-      nextPaymentDate = null;
-    }
-
-    const { error: updateLoanError } = await supabaseAdmin
-      .from('loans')
-      .update({ 
-        remaining_balance: newRemainingBalance,
-        status: loanStatus,
-        payments_made: totalPaymentsMade,
-        last_payment_date: currentDateTime,
-        next_payment_date: nextPaymentDate,
-        updated_at: currentDateTime
-      })
-      .eq('id', loan.id);
-
-    if (updateLoanError) {
-      console.error('Error updating loan:', updateLoanError);
-      // Consider rolling back account and payment if loan update fails critically
-      return res.status(500).json({ error: 'Failed to update loan status' });
-    }
+    // Note: Loan status and balance will be updated by admin after approving the payment
+    // We don't update the loan here since payment is pending admin approval
 
     return res.status(200).json({
       success: true,
