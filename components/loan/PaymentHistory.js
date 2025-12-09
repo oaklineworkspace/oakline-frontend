@@ -108,11 +108,17 @@ export default function PaymentHistory({ loanId }) {
     : payments.filter(p => p.status === filter);
 
   // Apply sorting - create a new sorted array
+  // Use created_at as primary sort field for accurate timestamp ordering
   filteredPayments = [...filteredPayments].sort((a, b) => {
     if (sortBy === 'date_desc') {
-      return new Date(b.payment_date || b.created_at) - new Date(a.payment_date || a.created_at);
+      // Use created_at for accurate time-based sorting (payment_date may lack time precision)
+      const dateA = new Date(a.created_at || a.payment_date);
+      const dateB = new Date(b.created_at || b.payment_date);
+      return dateB.getTime() - dateA.getTime();
     } else if (sortBy === 'date_asc') {
-      return new Date(a.payment_date || a.created_at) - new Date(b.payment_date || b.created_at);
+      const dateA = new Date(a.created_at || a.payment_date);
+      const dateB = new Date(b.created_at || b.payment_date);
+      return dateA.getTime() - dateB.getTime();
     } else if (sortBy === 'amount_desc') {
       return parseFloat(b.amount || 0) - parseFloat(a.amount || 0);
     } else if (sortBy === 'amount_asc') {

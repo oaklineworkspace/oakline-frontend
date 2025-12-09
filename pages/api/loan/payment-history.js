@@ -38,11 +38,12 @@ export default async function handler(req, res) {
     }
 
     // Fetch all loan payments including deposits - get both crypto and balance payments
+    // Sort by created_at for accurate timestamp ordering (payment_date may not have time precision)
     const { data: payments, error: paymentsError } = await supabaseAdmin
       .from('loan_payments')
       .select('*')
       .eq('loan_id', actualLoanId)
-      .order('payment_date', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (paymentsError) {
       console.error('Error fetching payment history:', paymentsError);
