@@ -44,8 +44,9 @@ export default async function handler(req, res) {
     const paymentAmount = parseFloat(amount);
     const remainingBalance = parseFloat(loan.remaining_balance || loan.principal);
 
-    // Strict validation - payment cannot exceed remaining balance
-    const tolerance = 0.01;
+    // Allow full payment with tolerance for floating point precision
+    const tolerance = 0.02; // Increased tolerance for decimal precision issues
+    
     if (paymentAmount > remainingBalance + tolerance) {
       return res.status(400).json({ error: `Payment amount cannot exceed remaining balance of $${remainingBalance.toFixed(2)}` });
     }

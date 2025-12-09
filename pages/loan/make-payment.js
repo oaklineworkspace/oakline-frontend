@@ -281,8 +281,9 @@ function MakePaymentContent() {
         return;
       }
 
-      // Allow full payment with tolerance for floating point precision (within 1 cent)
-      const tolerance = 0.01;
+      // Allow full payment with tolerance for floating point precision
+      const tolerance = 0.02; // Match server tolerance
+      
       if (amount > remainingBalance + tolerance) {
         showToast(`Payment amount cannot exceed remaining balance of $${remainingBalance.toFixed(2)}`, 'error');
         setProcessing(false);
