@@ -152,8 +152,8 @@ export default async function handler(req, res) {
 
         const bankName = bankDetails?.name || 'Oakline Bank';
         const loansEmail = bankDetails?.email_loans || 'loans@theoaklinebank.com';
-        const fullName = userProfile?.first_name && userProfile?.last_name 
-          ? `${userProfile.first_name} ${userProfile.last_name}` 
+        const fullName = userProfile?.first_name && userProfile?.last_name
+          ? `${userProfile.first_name} ${userProfile.last_name}`
           : 'Valued Customer';
         const userEmail = userProfile?.email || user.email;
 
@@ -167,7 +167,7 @@ export default async function handler(req, res) {
                 <h2 style="color: #1e3a8a; margin-bottom: 20px;">Loan Payment Received</h2>
                 <p style="color: #333; line-height: 1.6;">Dear ${fullName},</p>
                 <p style="color: #333; line-height: 1.6;">Thank you for your loan payment. Your transaction has been submitted and is currently being processed by our Loan Department.</p>
-                
+
                 <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid #10b981;">
                   <h3 style="color: #1e3a8a; margin: 0 0 15px 0;">Payment Details</h3>
                   <p style="margin: 8px 0;"><strong>Reference:</strong> ${referenceNumber}</p>
@@ -181,9 +181,9 @@ export default async function handler(req, res) {
                 </div>
 
                 <p style="color: #333; line-height: 1.6;">You will receive a confirmation email once your payment has been verified and applied to your loan balance.</p>
-                
+
                 <p style="color: #666; font-size: 14px; margin-top: 30px;">If you have any questions regarding your loan payment, please contact our Loan Department at ${loansEmail}.</p>
-                
+
                 <p style="color: #333; line-height: 1.6;">Thank you for banking with ${bankName}.</p>
               </div>
               <div style="background: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b;">
@@ -305,7 +305,7 @@ export default async function handler(req, res) {
 
     const { error: updateLoanError } = await supabaseAdmin
       .from('loans')
-      .update({ 
+      .update({
         remaining_balance: newRemainingBalance,
         status: loanStatus,
         payments_made: totalPaymentsMade,
@@ -373,8 +373,8 @@ export default async function handler(req, res) {
 
       const bankName = bankDetails?.name || 'Oakline Bank';
       const loansEmail = bankDetails?.email_loans || 'loans@theoaklinebank.com';
-      const fullName = userProfile?.first_name && userProfile?.last_name 
-        ? `${userProfile.first_name} ${userProfile.last_name}` 
+      const fullName = userProfile?.first_name && userProfile?.last_name
+        ? `${userProfile.first_name} ${userProfile.last_name}`
         : 'Valued Customer';
       const userEmail = userProfile?.email || user.email;
 
@@ -390,7 +390,7 @@ export default async function handler(req, res) {
       if (userEmail) {
         const statusText = loanStatus === 'completed' ? 'Completed' : 'Processed';
         const statusColor = loanStatus === 'completed' ? '#10b981' : '#3b82f6';
-        
+
         const emailHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 30px; text-align: center;">
@@ -400,7 +400,7 @@ export default async function handler(req, res) {
               <h2 style="color: #1e3a8a; margin-bottom: 20px;">Loan Payment Received</h2>
               <p style="color: #333; line-height: 1.6;">Dear ${fullName},</p>
               <p style="color: #333; line-height: 1.6;">Thank you for your loan payment. Your transaction has been processed successfully by our Loan Department.</p>
-              
+
               <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid ${statusColor};">
                 <h3 style="color: #1e3a8a; margin: 0 0 15px 0;">Payment Details</h3>
                 <p style="margin: 8px 0;"><strong>Reference:</strong> ${referenceNumber}</p>
@@ -414,13 +414,13 @@ export default async function handler(req, res) {
                 <p style="margin: 8px 0;"><strong>Date:</strong> ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
               </div>
 
-              ${loanStatus === 'completed' ? 
-                '<p style="color: #10b981; line-height: 1.6; font-weight: bold;">🎉 Congratulations! Your loan has been fully paid off.</p>' : 
+              ${loanStatus === 'completed' ?
+                '<p style="color: #10b981; line-height: 1.6; font-weight: bold;">🎉 Congratulations! Your loan has been fully paid off.</p>' :
                 '<p style="color: #333; line-height: 1.6;">Your payment has been successfully applied to your loan balance.</p>'
               }
-              
+
               <p style="color: #666; font-size: 14px; margin-top: 30px;">If you have any questions regarding your loan payment, please contact our Loan Department at ${loansEmail}.</p>
-              
+
               <p style="color: #333; line-height: 1.6;">Thank you for banking with ${bankName}.</p>
             </div>
             <div style="background: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b;">

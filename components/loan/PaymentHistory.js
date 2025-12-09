@@ -322,7 +322,7 @@ export default function PaymentHistory({ loanId }) {
                   <div style={styles.amountSection}>
                     <div style={styles.mainAmount}>
                       <span style={styles.amountLabel}>Payment Amount</span>
-                      <span style={styles.amountValue}>${parseFloat(payment.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span style={styles.amountValue}>${parseFloat(payment.payment_amount || payment.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </div>
                   </div>
 

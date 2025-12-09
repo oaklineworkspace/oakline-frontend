@@ -65,10 +65,12 @@ export default async function handler(req, res) {
     let totalLateFees = 0;
 
     const enrichedPayments = (payments || []).map(payment => {
-        const principalAmount = parseFloat(payment.principal_amount || 0);
+        // Use payment_amount if available, fallback to amount
+        const paymentAmount = parseFloat(payment.payment_amount || payment.amount || 0);
+        const principalAmount = parseFloat(payment.principal_amount || paymentAmount);
         const interestAmount = parseFloat(payment.interest_amount || 0);
         const lateFee = parseFloat(payment.late_fee || 0);
-        const amount = parseFloat(payment.amount || 0);
+        const amount = parseFloat(payment.amount || paymentAmount);
 
         // Only count completed/approved payments in totals
         if (payment.status === 'completed' || payment.status === 'approved') {
