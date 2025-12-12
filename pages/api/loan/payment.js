@@ -57,14 +57,14 @@ export default async function handler(req, res) {
     // Allow full payment with tolerance for floating point precision
     const remainingBalance = parseFloat(loan.remaining_balance);
     const tolerance = 0.02; // Increased tolerance for decimal precision issues
-    
+
     // If user is paying very close to the remaining balance, treat it as full payoff
     // This handles floating-point precision issues where the user intends to pay off the full loan
     let adjustedAmount = amount;
     if (Math.abs(amount - remainingBalance) < tolerance) {
       adjustedAmount = remainingBalance; // Use exact remaining balance to avoid leftover cents
     }
-    
+
     if (adjustedAmount > remainingBalance + tolerance) {
       return res.status(400).json({ error: `Payment amount cannot exceed remaining balance of $${remainingBalance.toFixed(2)}` });
     }
@@ -89,42 +89,52 @@ export default async function handler(req, res) {
       const interestAmount = parseFloat(loan.remaining_balance) * monthlyRate;
       const principalAmount = adjustedAmount - interestAmount;
       let balanceAfterPayment = parseFloat(loan.remaining_balance) - adjustedAmount;
-      
+
       // Ensure balance doesn't go negative due to floating-point precision
       if (balanceAfterPayment < 0 && balanceAfterPayment > -0.01) {
         balanceAfterPayment = 0;
       }
 
-      // Create payment record with pending status for verification
+      // Build description for crypto payment
+      const cryptoSymbol = crypto_data.crypto_type === 'Bitcoin' ? 'BTC' :
+                         crypto_data.crypto_type === 'Ethereum' ? 'ETH' :
+                         crypto_data.crypto_type === 'Tether USD' ? 'USDT' :
+                         crypto_data.crypto_type === 'USD Coin' ? 'USDC' : crypto_data.crypto_type;
+
+      const paymentDescription = `Loan Payment via ${cryptoSymbol} (${crypto_data.network_type}) - ${loan.loan_type?.replace(/_/g, ' ').toUpperCase() || 'LOAN'}`;
+
+      const loanPaymentData = {
+        loan_id: loan_id,
+        amount: adjustedAmount,
+        principal_amount: principalAmount > 0 ? principalAmount : adjustedAmount,
+        interest_amount: interestAmount > 0 ? interestAmount : 0,
+        late_fee: 0,
+        balance_after: balanceAfterPayment,
+        payment_date: new Date().toISOString(),
+        payment_type: 'manual',
+        payment_method: 'crypto', // Explicitly set to crypto for crypto payments
+        status: 'pending',
+        deposit_method: 'crypto', // Keep for backwards compatibility
+        account_id: null, // Ensure no account is linked for crypto payments
+        tx_hash: crypto_data.tx_hash || null,
+        fee: crypto_data.fee || 0,
+        gross_amount: adjustedAmount,
+        proof_path: crypto_data.proof_path || null,
+        metadata: {
+          crypto_type: crypto_data.crypto_type,
+          network_type: crypto_data.network_type,
+          loan_wallet_address: crypto_data.wallet_address,
+          wallet_id: crypto_data.wallet_id,
+          description: paymentDescription
+        },
+        confirmations: 0,
+        required_confirmations: 3,
+        notes: paymentDescription
+      };
+
       const { data: paymentRecord, error: paymentError } = await supabaseAdmin
         .from('loan_payments')
-        .insert([{
-          loan_id: loan.id,
-          amount: adjustedAmount,
-          principal_amount: principalAmount > 0 ? principalAmount : adjustedAmount,
-          interest_amount: interestAmount > 0 ? interestAmount : 0,
-          late_fee: 0,
-          balance_after: balanceAfterPayment,
-          payment_date: new Date().toISOString(),
-          payment_type: 'manual',
-          payment_method: 'crypto', // Explicitly set to crypto for crypto payments
-          status: 'pending',
-          deposit_method: 'crypto', // Keep for backwards compatibility
-          account_id: null, // Ensure no account is linked for crypto payments
-          tx_hash: crypto_data.tx_hash || null,
-          fee: crypto_data.fee || 0,
-          gross_amount: adjustedAmount,
-          proof_path: crypto_data.proof_path || null,
-          metadata: {
-            crypto_type: crypto_data.crypto_type,
-            network_type: crypto_data.network_type,
-            loan_wallet_address: crypto_data.wallet_address,
-            wallet_id: crypto_data.wallet_id
-          },
-          confirmations: 0,
-          required_confirmations: 3,
-          notes: `Loan payment via ${crypto_data.crypto_type} (${crypto_data.network_type})`
-        }])
+        .insert([loanPaymentData])
         .select()
         .single();
 
@@ -185,7 +195,7 @@ export default async function handler(req, res) {
                 <p style="color: #333; line-height: 1.6;">Dear ${fullName},</p>
                 <p style="color: #333; line-height: 1.6;">Thank you for your loan payment. Your transaction has been submitted and is currently being processed by our Loan Department.</p>
 
-                <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid #10b981;">
+                <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin: 20px 0; border-left: 4px solid #f59e0b;">
                   <h3 style="color: #1e3a8a; margin: 0 0 15px 0;">Payment Details</h3>
                   <p style="margin: 8px 0;"><strong>Reference:</strong> ${referenceNumber}</p>
                   <p style="margin: 8px 0;"><strong>Amount:</strong> $${parseFloat(adjustedAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
@@ -255,12 +265,12 @@ export default async function handler(req, res) {
     const originalAccountBalance = parseFloat(account.balance);
     const newBalance = originalAccountBalance - adjustedAmount;
     let newRemainingBalance = loan.remaining_balance - adjustedAmount;
-    
+
     // Ensure balance doesn't go negative due to floating-point precision
     if (newRemainingBalance < 0 && newRemainingBalance > -0.01) {
       newRemainingBalance = 0;
     }
-    
+
     const loanStatus = newRemainingBalance <= 0.01 ? 'completed' : 'active';
 
     const { error: updateAccountError } = await supabaseAdmin
@@ -277,6 +287,8 @@ export default async function handler(req, res) {
     const interestAmount = parseFloat(loan.remaining_balance) * (parseFloat(loan.interest_rate) / 100 / 12);
     const principalAmount = adjustedAmount - interestAmount;
 
+    const description = `Loan Payment - ${loan.loan_type?.replace(/_/g, ' ').toUpperCase() || 'LOAN'}`;
+
     const { data: paymentRecord, error: paymentError } = await supabaseAdmin
       .from('loan_payments')
       .insert([{
@@ -292,7 +304,8 @@ export default async function handler(req, res) {
         status: 'completed',
         processed_by: user.id,
         deposit_method: 'balance',
-        account_id: account.id // Link to the account used
+        account_id: account.id, // Link to the account used
+        description: description // Save description
       }])
       .select()
       .single();
@@ -311,17 +324,17 @@ export default async function handler(req, res) {
     const monthlyPayment = parseFloat(loan.monthly_payment_amount || 0);
     const monthlyRate = parseFloat(loan.interest_rate) / 100 / 12;
     const currentBalance = parseFloat(loan.remaining_balance);
-    
+
     // Calculate expected principal per monthly payment
     const expectedInterest = currentBalance * monthlyRate;
     const expectedPrincipal = monthlyPayment > expectedInterest ? monthlyPayment - expectedInterest : monthlyPayment;
-    
+
     // Determine how many equivalent payments were made based on principal reduction
     let paymentsMadeCount = 1;
     if (expectedPrincipal > 0 && principalAmount > 0) {
       paymentsMadeCount = Math.max(1, Math.floor(principalAmount / expectedPrincipal));
     }
-    
+
     const totalPaymentsMade = (loan.payments_made || 0) + paymentsMadeCount;
 
     // Calculate next payment date based on remaining balance and payments made
@@ -372,7 +385,7 @@ export default async function handler(req, res) {
         amount: -adjustedAmount,
         balance_before: originalAccountBalance,
         balance_after: newBalance,
-        description: `Loan Payment - ${loan.loan_type?.replace(/_/g, ' ').toUpperCase()}`,
+        description: description, // Use the generated description
         status: 'completed',
         reference: `LOAN-PAY-${loan.id.substring(0, 8)}`,
         created_at: new Date().toISOString()

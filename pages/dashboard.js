@@ -568,46 +568,50 @@ function DashboardContent() {
             loanType = payment.metadata.loan_type;
           }
 
-          // Build description based on payment type
-          let description = '';
-          if (payment.is_deposit) {
-            // Extract crypto details from metadata if available
-            const cryptoType = payment.metadata?.crypto_type || 'Cryptocurrency';
-            const networkType = payment.metadata?.network_type || '';
-            const cryptoSymbol = cryptoType === 'Bitcoin' ? 'BTC' :
-                               cryptoType === 'Ethereum' ? 'ETH' :
-                               cryptoType === 'Tether USD' ? 'USDT' :
-                               cryptoType === 'USD Coin' ? 'USDC' : cryptoType;
+          // Try to get description from database first (metadata.description or notes)
+          let description = payment.metadata?.description || payment.notes;
 
-            if (payment.deposit_method === 'crypto') {
-              description = `Loan 10% Collateral Deposit via ${cryptoSymbol} (${networkType})`;
-            } else if (payment.deposit_method === 'bank_transfer') {
-              description = `Loan 10% Collateral Deposit via Bank Transfer`;
-            } else if (payment.deposit_method === 'account_balance' || payment.deposit_method === 'balance') {
-              description = `Loan 10% Collateral Deposit via Account Balance`;
+          // If no description in database, build it (for backward compatibility with old records)
+          if (!description) {
+            if (payment.is_deposit) {
+              // Extract crypto details from metadata if available
+              const cryptoType = payment.metadata?.crypto_type || 'Cryptocurrency';
+              const networkType = payment.metadata?.network_type || '';
+              const cryptoSymbol = cryptoType === 'Bitcoin' ? 'BTC' :
+                                 cryptoType === 'Ethereum' ? 'ETH' :
+                                 cryptoType === 'Tether USD' ? 'USDT' :
+                                 cryptoType === 'USD Coin' ? 'USDC' : cryptoType;
+
+              if (payment.deposit_method === 'crypto') {
+                description = `Loan 10% Collateral Deposit via ${cryptoSymbol} (${networkType})`;
+              } else if (payment.deposit_method === 'bank_transfer') {
+                description = `Loan 10% Collateral Deposit via Bank Transfer`;
+              } else if (payment.deposit_method === 'account_balance' || payment.deposit_method === 'balance') {
+                description = `Loan 10% Collateral Deposit via Account Balance`;
+              } else {
+                description = `Loan 10% Collateral Deposit`;
+              }
+            } else if (payment.payment_type === 'early_payoff') {
+              description = `Loan Early Payoff - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
+            } else if (payment.payment_type === 'late_fee') {
+              description = `Loan Late Fee - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
+            } else if (payment.payment_type === 'auto_payment') {
+              description = `Auto Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
+            } else if (payment.payment_method === 'crypto' && payment.metadata?.crypto_type) {
+              // Regular loan payment made with crypto
+              const cryptoType = payment.metadata.crypto_type;
+              const networkType = payment.metadata.network_type || '';
+              const cryptoSymbol = cryptoType === 'Bitcoin' ? 'BTC' :
+                                 cryptoType === 'Ethereum' ? 'ETH' :
+                                 cryptoType === 'Tether USD' ? 'USDT' :
+                                 cryptoType === 'USD Coin' ? 'USDC' : cryptoType;
+              description = `Loan Payment via ${cryptoSymbol} (${networkType}) - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
+            } else if (payment.deposit_method === 'balance' || payment.payment_method === 'account_balance' || !payment.payment_method) {
+              // Regular loan payment made with account balance
+              description = `Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
             } else {
-              description = `Loan 10% Collateral Deposit`;
+              description = `Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
             }
-          } else if (payment.payment_type === 'early_payoff') {
-            description = `Loan Early Payoff - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
-          } else if (payment.payment_type === 'late_fee') {
-            description = `Loan Late Fee - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
-          } else if (payment.payment_type === 'auto_payment') {
-            description = `Auto Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
-          } else if (payment.deposit_method === 'crypto' && payment.metadata?.crypto_type) {
-            // Regular loan payment made with crypto
-            const cryptoType = payment.metadata.crypto_type;
-            const networkType = payment.metadata.network_type || '';
-            const cryptoSymbol = cryptoType === 'Bitcoin' ? 'BTC' :
-                               cryptoType === 'Ethereum' ? 'ETH' :
-                               cryptoType === 'Tether USD' ? 'USDT' :
-                               cryptoType === 'USD Coin' ? 'USDC' : cryptoType;
-            description = `Loan Payment via ${cryptoSymbol} (${networkType}) - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
-          } else if (payment.deposit_method === 'balance' || payment.payment_method === 'account_balance' || !payment.deposit_method) {
-            // Regular loan payment made with account balance
-            description = `Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
-          } else {
-            description = `Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
           }
 
           return {

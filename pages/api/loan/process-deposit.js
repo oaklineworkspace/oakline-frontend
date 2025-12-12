@@ -82,6 +82,7 @@ export default async function handler(req, res) {
       // Create transaction record with HOLD status (can be reversed)
       const loanTypeName = loan.loan_type ? loan.loan_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Loan';
       const referenceNumber = `LOAN-DEP-${loan_id.substring(0, 8).toUpperCase()}`;
+      const depositDescription = `Loan 10% Collateral Deposit via Account Balance - ${loanTypeName}`;
 
       const { error: transactionError } = await supabaseAdmin
         .from('transactions')
@@ -92,7 +93,7 @@ export default async function handler(req, res) {
           amount: -parseFloat(amount),
           balance_before: parseFloat(account.balance),
           balance_after: newBalance,
-          description: `Loan Deposit - ${loanTypeName} Application (10% Collateral) - Pending Admin Approval`,
+          description: depositDescription,
           status: 'hold',
           reference: referenceNumber,
           created_at: new Date().toISOString()
