@@ -95,7 +95,7 @@ export default async function handler(req, res) {
         balanceAfterPayment = 0;
       }
 
-      // Create payment record with pending status for admin verification
+      // Create payment record with pending status for verification
       const { data: paymentRecord, error: paymentError } = await supabaseAdmin
         .from('loan_payments')
         .insert([{
@@ -140,7 +140,7 @@ export default async function handler(req, res) {
           user_id: user.id,
           type: 'loan',
           title: 'Loan Payment Submitted',
-          message: `Your payment of $${adjustedAmount.toLocaleString()} has been submitted and is currently being processed by our Loan Department.`,
+          message: `Your payment of $${adjustedAmount.toLocaleString()} has been submitted and is being processed.`,
           read: false
         }]);
 
