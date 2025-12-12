@@ -134,24 +134,78 @@ export default function TransactionsHistory() {
 
       // Format loan payments as transactions
       if (loanPaymentsData && loanPaymentsData.length > 0) {
-        const formattedLoanPayments = loanPaymentsData.map(payment => ({
-          id: payment.id,
-          type: 'loan_payment',
-          transaction_type: 'loan_payment',
-          description: `Loan Payment - ${payment.loans?.loan_type?.replace(/_/g, ' ').toUpperCase() || 'Loan'}`,
-          amount: payment.amount || 0,
-          status: payment.status || 'pending',
-          created_at: payment.created_at,
-          updated_at: payment.updated_at,
-          payment_date: payment.payment_date,
-          accounts: payment.accounts,
-          reference: payment.reference_number || `LOAN-${payment.id.substring(0, 8).toUpperCase()}`,
-          loan_reference: payment.loans?.loan_reference,
-          principal_amount: payment.principal_amount,
-          interest_amount: payment.interest_amount,
-          late_fee: payment.late_fee,
-          balance_after: payment.balance_after
-        }));
+        const formattedLoanPayments = loanPaymentsData.map(payment => {
+          const isDeposit = payment.is_deposit === true || payment.payment_type === 'deposit';
+          const loanType = payment.loans?.loan_type || 'PERSONAL LOAN';
+
+          // Build description based on payment type
+          let description = '';
+          if (payment.is_deposit) {
+            // Extract crypto details from metadata if available
+            const cryptoType = payment.metadata?.crypto_type || 'Cryptocurrency';
+            const networkType = payment.metadata?.network_type || '';
+            const cryptoSymbol = cryptoType === 'Bitcoin' ? 'BTC' :
+                               cryptoType === 'Ethereum' ? 'ETH' :
+                               cryptoType === 'Tether USD' ? 'USDT' :
+                               cryptoType === 'USD Coin' ? 'USDC' : cryptoType;
+
+            if (payment.deposit_method === 'crypto') {
+              description = `Loan 10% Collateral Deposit via ${cryptoSymbol} (${networkType})`;
+            } else if (payment.deposit_method === 'bank_transfer') {
+              description = `Loan 10% Collateral Deposit via Bank Transfer`;
+            } else if (payment.deposit_method === 'account_balance' || payment.deposit_method === 'balance') {
+              description = `Loan 10% Collateral Deposit via Account Balance`;
+            } else {
+              description = `Loan 10% Collateral Deposit`;
+            }
+          } else if (payment.payment_type === 'early_payoff') {
+            description = `Loan Early Payoff - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
+          } else if (payment.payment_type === 'late_fee') {
+            description = `Loan Late Fee - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
+          } else if (payment.payment_type === 'auto_payment') {
+            description = `Auto Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
+          } else if (payment.deposit_method === 'crypto' && payment.metadata?.crypto_type) {
+            // Regular loan payment made with crypto
+            const cryptoType = payment.metadata.crypto_type;
+            const networkType = payment.metadata.network_type || '';
+            const cryptoSymbol = cryptoType === 'Bitcoin' ? 'BTC' :
+                               cryptoType === 'Ethereum' ? 'ETH' :
+                               cryptoType === 'Tether USD' ? 'USDT' :
+                               cryptoType === 'USD Coin' ? 'USDC' : cryptoType;
+            description = `Loan Payment via ${cryptoSymbol} (${networkType}) - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
+          } else if (payment.deposit_method === 'balance' || payment.payment_method === 'account_balance' || !payment.deposit_method) {
+            // Regular loan payment made with account balance
+            description = `Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
+          } else {
+            description = `Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
+          }
+
+          return {
+            id: payment.id,
+            type: isDeposit ? 'loan_deposit' : 'loan_payment',
+            transaction_type: isDeposit ? 'loan_deposit' : 'loan_payment',
+            description: description,
+            amount: payment.amount || 0,
+            status: payment.status || 'pending',
+            created_at: payment.created_at,
+            updated_at: payment.updated_at,
+            payment_date: payment.payment_date,
+            accounts: payment.accounts,
+            reference: payment.reference_number || `LOAN-${payment.id.substring(0, 8).toUpperCase()}`,
+            loan_reference: payment.loans?.loan_reference,
+            principal_amount: payment.principal_amount,
+            interest_amount: payment.interest_amount,
+            late_fee: payment.late_fee,
+            balance_after: payment.balance_after,
+            payment_type: payment.payment_type,
+            deposit_method: payment.deposit_method,
+            payment_method: payment.payment_method,
+            metadata: payment.metadata,
+            tx_hash: payment.tx_hash,
+            fee: payment.fee,
+            gross_amount: payment.gross_amount
+          };
+        });
 
         transactionsData = [...transactionsData, ...formattedLoanPayments];
       }
