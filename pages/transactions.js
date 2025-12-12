@@ -194,6 +194,8 @@ export default function TransactionsHistory() {
             accounts: payment.accounts,
             reference: payment.reference_number || `LOAN-${payment.id.substring(0, 8).toUpperCase()}`,
             loan_reference: payment.loans?.loan_reference,
+            loan_type: loanType,
+            loan_id: payment.loan_id,
             principal_amount: payment.principal_amount,
             interest_amount: payment.interest_amount,
             late_fee: payment.late_fee,
@@ -205,7 +207,11 @@ export default function TransactionsHistory() {
             tx_hash: payment.tx_hash,
             fee: payment.fee,
             gross_amount: payment.gross_amount,
-            user_id: user.id
+            confirmations: payment.confirmations,
+            required_confirmations: payment.required_confirmations,
+            is_deposit: payment.is_deposit,
+            user_id: user.id,
+            transaction_data: payment
           };
         });
 
@@ -704,10 +710,19 @@ export default function TransactionsHistory() {
                 </div>
               )}
 
-              {selectedTransaction.transaction_type === 'loan_payment' && (
+              {(selectedTransaction.transaction_type === 'loan_payment' || selectedTransaction.transaction_type === 'loan_deposit') && (
                 <>
                   <div style={styles.divider}></div>
-                  <h3 style={styles.sectionTitle}>Loan Payment Details</h3>
+                  <h3 style={styles.sectionTitle}>
+                    {selectedTransaction.transaction_type === 'loan_deposit' ? 'Loan Deposit Details' : 'Loan Payment Details'}
+                  </h3>
+
+                  {selectedTransaction.loan_type && (
+                    <div style={styles.detailRow}>
+                      <span style={styles.detailLabel}>Loan Type:</span>
+                      <span style={styles.detailValue}>{selectedTransaction.loan_type.replace(/_/g, ' ').toUpperCase()}</span>
+                    </div>
+                  )}
 
                   {selectedTransaction.loan_reference && (
                     <div style={styles.detailRow}>
@@ -716,32 +731,112 @@ export default function TransactionsHistory() {
                     </div>
                   )}
 
-                  {selectedTransaction.principal_amount && (
+                  <div style={styles.divider}></div>
+                  <h3 style={styles.sectionTitle}>Payment Method Details</h3>
+
+                  <div style={styles.detailRow}>
+                    <span style={styles.detailLabel}>Payment Method:</span>
+                    <span style={styles.detailValue}>
+                      {selectedTransaction.deposit_method === 'crypto' || selectedTransaction.payment_method === 'crypto' ? '🪙 Cryptocurrency' :
+                       selectedTransaction.deposit_method === 'balance' || selectedTransaction.payment_method === 'account_balance' || !selectedTransaction.payment_method ? '💰 Account Balance' :
+                       selectedTransaction.deposit_method === 'bank_transfer' ? '🏦 Bank Transfer' :
+                       'Account Balance'}
+                    </span>
+                  </div>
+
+                  {(selectedTransaction.deposit_method === 'crypto' || selectedTransaction.payment_method === 'crypto') && selectedTransaction.metadata && (
+                    <>
+                      <div style={styles.detailRow}>
+                        <span style={styles.detailLabel}>Cryptocurrency:</span>
+                        <span style={styles.detailValue}>
+                          {selectedTransaction.metadata.crypto_symbol || selectedTransaction.metadata.crypto_type || 'Cryptocurrency'}
+                        </span>
+                      </div>
+                      <div style={styles.detailRow}>
+                        <span style={styles.detailLabel}>Network:</span>
+                        <span style={styles.detailValue}>
+                          {selectedTransaction.metadata.network_type || 'Network'}
+                        </span>
+                      </div>
+                      {selectedTransaction.metadata.wallet_address && (
+                        <div style={styles.detailRow}>
+                          <span style={styles.detailLabel}>Wallet Address:</span>
+                          <span 
+                            style={{...styles.detailValue, ...styles.copyableText, fontSize: '0.75rem'}}
+                            onClick={() => copyToClipboard(selectedTransaction.metadata.wallet_address)}
+                          >
+                            {selectedTransaction.metadata.wallet_address.substring(0, 20)}...{selectedTransaction.metadata.wallet_address.slice(-10)} 📋
+                          </span>
+                        </div>
+                      )}
+                      {selectedTransaction.tx_hash && (
+                        <div style={styles.detailRow}>
+                          <span style={styles.detailLabel}>Transaction Hash:</span>
+                          <span 
+                            style={{...styles.detailValue, ...styles.copyableText, fontSize: '0.75rem'}}
+                            onClick={() => copyToClipboard(selectedTransaction.tx_hash)}
+                          >
+                            {selectedTransaction.tx_hash.substring(0, 20)}...{selectedTransaction.tx_hash.slice(-10)} 📋
+                          </span>
+                        </div>
+                      )}
+                      {selectedTransaction.fee > 0 && (
+                        <div style={styles.detailRow}>
+                          <span style={styles.detailLabel}>Network Fee:</span>
+                          <span style={styles.detailValue}>{formatCurrency(selectedTransaction.fee)}</span>
+                        </div>
+                      )}
+                      {selectedTransaction.gross_amount && (
+                        <div style={styles.detailRow}>
+                          <span style={styles.detailLabel}>Gross Amount:</span>
+                          <span style={styles.detailValue}>{formatCurrency(selectedTransaction.gross_amount)}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {((selectedTransaction.deposit_method === 'balance' || selectedTransaction.payment_method === 'account_balance' || !selectedTransaction.payment_method) && selectedTransaction.accounts) && (
                     <div style={styles.detailRow}>
-                      <span style={styles.detailLabel}>Principal:</span>
-                      <span style={styles.detailValue}>{formatCurrency(selectedTransaction.principal_amount)}</span>
+                      <span style={styles.detailLabel}>Account Number:</span>
+                      <span style={{...styles.detailValue, fontFamily: 'monospace'}}>
+                        {selectedTransaction.accounts.account_number || 'N/A'}
+                      </span>
                     </div>
                   )}
 
-                  {selectedTransaction.interest_amount && (
-                    <div style={styles.detailRow}>
-                      <span style={styles.detailLabel}>Interest:</span>
-                      <span style={styles.detailValue}>{formatCurrency(selectedTransaction.interest_amount)}</span>
-                    </div>
-                  )}
+                  {selectedTransaction.transaction_type === 'loan_payment' && (
+                    <>
+                      <div style={styles.divider}></div>
+                      <h3 style={styles.sectionTitle}>Payment Breakdown</h3>
 
-                  {selectedTransaction.late_fee && parseFloat(selectedTransaction.late_fee) > 0 && (
-                    <div style={styles.detailRow}>
-                      <span style={styles.detailLabel}>Late Fee:</span>
-                      <span style={{...styles.detailValue, color: '#ef4444'}}>{formatCurrency(selectedTransaction.late_fee)}</span>
-                    </div>
-                  )}
+                      {selectedTransaction.principal_amount && (
+                        <div style={styles.detailRow}>
+                          <span style={styles.detailLabel}>Principal:</span>
+                          <span style={styles.detailValue}>{formatCurrency(selectedTransaction.principal_amount)}</span>
+                        </div>
+                      )}
 
-                  {selectedTransaction.balance_after !== undefined && (
-                    <div style={styles.detailRow}>
-                      <span style={styles.detailLabel}>Remaining Balance:</span>
-                      <span style={styles.detailValue}>{formatCurrency(selectedTransaction.balance_after)}</span>
-                    </div>
+                      {selectedTransaction.interest_amount && (
+                        <div style={styles.detailRow}>
+                          <span style={styles.detailLabel}>Interest:</span>
+                          <span style={styles.detailValue}>{formatCurrency(selectedTransaction.interest_amount)}</span>
+                        </div>
+                      )}
+
+                      {selectedTransaction.late_fee && parseFloat(selectedTransaction.late_fee) > 0 && (
+                        <div style={styles.detailRow}>
+                          <span style={styles.detailLabel}>Late Fee:</span>
+                          <span style={{...styles.detailValue, color: '#ef4444'}}>{formatCurrency(selectedTransaction.late_fee)}</span>
+                        </div>
+                      )}
+
+                      {selectedTransaction.balance_after !== undefined && (
+                        <div style={styles.detailRow}>
+                          <span style={styles.detailLabel}>Remaining Balance:</span>
+                          <span style={styles.detailValue}>{formatCurrency(selectedTransaction.balance_after)}</span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </>
               )}
