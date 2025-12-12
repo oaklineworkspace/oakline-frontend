@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -134,6 +133,8 @@ export default function TransactionsHistory() {
 
       // Format loan payments as transactions
       if (loanPaymentsData && loanPaymentsData.length > 0) {
+        console.log('Formatting loan payments for display:', loanPaymentsData);
+        console.log('Loan payments raw data:', JSON.stringify(loanPaymentsData, null, 2));
         const formattedLoanPayments = loanPaymentsData.map(payment => {
           const isDeposit = payment.is_deposit === true || payment.payment_type === 'deposit';
           const loanType = payment.loans?.loan_type || 'PERSONAL LOAN';
