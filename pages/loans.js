@@ -378,9 +378,15 @@ function LoansOverviewContent() {
 
                   <div style={styles.loanActions}>
                     {(loan.status === 'active' || loan.status === 'approved') && !isLoanPaidOff(loan.remaining_balance) && (
-                      <Link href={`/loan/make-payment?loanId=${loan.id}`} style={styles.actionButton}>
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          router.push(`/loan/make-payment?loanId=${loan.id}`);
+                        }}
+                        style={{...styles.actionButton, border: 'none', cursor: 'pointer', display: 'block', width: '100%'}}
+                      >
                         💳 Make Payment
-                      </Link>
+                      </button>
                     )}
                     <Link href={`/loan/${loan.id}`} style={styles.viewButton}>
                       👁️ View Details

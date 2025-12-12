@@ -88,13 +88,14 @@ function MakePaymentContent() {
         .single();
 
       if (loanError || !loanData) {
+        console.error('Loan fetch error:', loanError);
         showToast('Loan not found', 'error');
         router.push('/loans');
         return;
       }
 
       if (loanData.status !== 'active' && loanData.status !== 'approved') {
-        showToast('Can only make payments on active loans', 'error');
+        showToast('Can only make payments on active or approved loans', 'error');
         router.push(`/loan/${loanId}`);
         return;
       }
@@ -102,13 +103,21 @@ function MakePaymentContent() {
       setLoan(loanData);
 
       const monthlyPayment = calculateMonthlyPayment(loanData);
-      setPaymentForm(prev => ({
-        ...prev,
-        amount: monthlyPayment.toFixed(2)
-      }));
+      if (monthlyPayment && !isNaN(monthlyPayment) && monthlyPayment > 0) {
+        setPaymentForm(prev => ({
+          ...prev,
+          amount: monthlyPayment.toFixed(2)
+        }));
+      } else {
+        setPaymentForm(prev => ({
+          ...prev,
+          amount: parseFloat(loanData.remaining_balance || loanData.principal || 0).toFixed(2)
+        }));
+      }
     } catch (err) {
       console.error('Error fetching loan details:', err);
       showToast('An error occurred while fetching loan details', 'error');
+      router.push('/loans');
     } finally {
       setLoading(false);
     }
