@@ -138,7 +138,7 @@ export default function TransactionsHistory() {
           const isDeposit = payment.is_deposit === true || payment.payment_type === 'deposit';
           const loanType = payment.loans?.loan_type || 'PERSONAL LOAN';
 
-          // Build description based on payment type
+          // Build description based on payment type - MATCH DASHBOARD EXACTLY
           let description = '';
           if (payment.is_deposit) {
             // Extract crypto details from metadata if available
@@ -164,8 +164,8 @@ export default function TransactionsHistory() {
             description = `Loan Late Fee - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
           } else if (payment.payment_type === 'auto_payment') {
             description = `Auto Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
-          } else if (payment.deposit_method === 'crypto' && payment.metadata?.crypto_type) {
-            // Regular loan payment made with crypto
+          } else if (payment.payment_method === 'crypto' && payment.metadata?.crypto_type) {
+            // Regular loan payment made with crypto - check payment_method, not deposit_method
             const cryptoType = payment.metadata.crypto_type;
             const networkType = payment.metadata.network_type || '';
             const cryptoSymbol = cryptoType === 'Bitcoin' ? 'BTC' :
@@ -173,7 +173,7 @@ export default function TransactionsHistory() {
                                cryptoType === 'Tether USD' ? 'USDT' :
                                cryptoType === 'USD Coin' ? 'USDC' : cryptoType;
             description = `Loan Payment via ${cryptoSymbol} (${networkType}) - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
-          } else if (payment.deposit_method === 'balance' || payment.payment_method === 'account_balance' || !payment.deposit_method) {
+          } else if (payment.payment_method === 'account_balance' || payment.deposit_method === 'balance' || !payment.payment_method) {
             // Regular loan payment made with account balance
             description = `Loan Payment - ${loanType.replace(/_/g, ' ').toUpperCase()}`;
           } else {
@@ -186,7 +186,7 @@ export default function TransactionsHistory() {
             transaction_type: isDeposit ? 'loan_deposit' : 'loan_payment',
             description: description,
             amount: payment.amount || 0,
-            status: payment.status || 'pending',
+            status: payment.status || 'completed',
             created_at: payment.created_at,
             updated_at: payment.updated_at,
             payment_date: payment.payment_date,
@@ -203,7 +203,8 @@ export default function TransactionsHistory() {
             metadata: payment.metadata,
             tx_hash: payment.tx_hash,
             fee: payment.fee,
-            gross_amount: payment.gross_amount
+            gross_amount: payment.gross_amount,
+            user_id: user.id
           };
         });
 
