@@ -65,7 +65,7 @@ export default async function handler(req, res) {
     // Store verification code using direct insert
     try {
       const { error: codeError } = await supabaseAdmin
-        .from('device_verification_codes')
+        .from('login_verification_codes')
         .insert({
           user_id: user.id,
           device_fingerprint: fingerprint,
@@ -124,7 +124,7 @@ export default async function handler(req, res) {
           <div class="content">
             <p>Hi ${userName},</p>
             <p>A new device is attempting to access your Oakline Bank account. For your security, we need you to verify this device.</p>
-            
+
             <p><strong>Your verification code:</strong></p>
             <div class="code-box">
               <div class="code">${verificationCode}</div>
