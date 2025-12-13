@@ -333,20 +333,23 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to record payment' });
     }
 
-    // Calculate how many payments were made with this payment
-    // Use the actual principal paid vs expected principal per payment for accuracy
+    // Calculate how many equivalent monthly payments this payment represents
     const monthlyPayment = parseFloat(loan.monthly_payment_amount || 0);
     const monthlyRate = parseFloat(loan.interest_rate) / 100 / 12;
-    const currentBalance = parseFloat(loan.remaining_balance);
-
-    // Calculate expected principal per monthly payment
-    const expectedInterest = currentBalance * monthlyRate;
-    const expectedPrincipal = monthlyPayment > expectedInterest ? monthlyPayment - expectedInterest : monthlyPayment;
-
-    // Determine how many equivalent payments were made based on principal reduction
+    
+    // For large payments, calculate how many monthly payments worth of principal this represents
     let paymentsMadeCount = 1;
-    if (expectedPrincipal > 0 && principalAmount > 0) {
-      paymentsMadeCount = Math.max(1, Math.floor(principalAmount / expectedPrincipal));
+    if (monthlyPayment > 0 && principalAmount > 0) {
+      // Calculate average principal per monthly payment over the remaining term
+      const remainingTermMonths = parseInt(loan.term_months) - (loan.payments_made || 0);
+      const avgMonthlyInterest = parseFloat(loan.remaining_balance) * monthlyRate / 2; // Average over remaining term
+      const avgMonthlyPrincipal = monthlyPayment - avgMonthlyInterest;
+      
+      if (avgMonthlyPrincipal > 0) {
+        // How many monthly payments worth of principal was paid?
+        const equivalentPayments = Math.ceil(principalAmount / avgMonthlyPrincipal);
+        paymentsMadeCount = Math.max(1, Math.min(equivalentPayments, remainingTermMonths));
+      }
     }
 
     const totalPaymentsMade = (loan.payments_made || 0) + paymentsMadeCount;

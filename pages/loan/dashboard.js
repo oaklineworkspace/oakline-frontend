@@ -760,7 +760,11 @@ Generated: ${new Date().toLocaleString()}
                     const remainingBalance = parseFloat(selectedLoan.remaining_balance || 0);
                     const principal = parseFloat(selectedLoan.principal || 0);
                     const isFullyPaid = remainingBalance <= 0.50 || selectedLoan.status === 'paid' || selectedLoan.status === 'closed' || (principal > 0 && remainingBalance <= principal * 0.001);
-                    const progressPercent = isFullyPaid ? 100 : ((selectedLoan.payments_made / selectedLoan.term_months) * 100);
+                    
+                    // Calculate progress based on principal paid, not just payment count
+                    const principalPaid = principal - remainingBalance;
+                    const progressPercent = isFullyPaid ? 100 : ((principalPaid / principal) * 100);
+                    
                     return (
                       <div style={styles.progressSection}>
                         <div style={styles.progressHeader}>
@@ -776,6 +780,9 @@ Generated: ${new Date().toLocaleString()}
                               width: `${progressPercent}%`
                             }}
                           ></div>
+                        </div>
+                        <div style={{marginTop: '0.5rem', fontSize: '0.875rem', color: '#6b7280', textAlign: 'center'}}>
+                          ${principalPaid.toLocaleString('en-US', {minimumFractionDigits: 2})} of ${principal.toLocaleString('en-US', {minimumFractionDigits: 2})} paid
                         </div>
                       </div>
                     );

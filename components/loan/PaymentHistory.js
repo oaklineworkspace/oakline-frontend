@@ -102,10 +102,50 @@ export default function PaymentHistory({ loanId }) {
 
   const { loan_info, payment_summary, payments } = historyData;
 
+  // Process payments and calculate summary
+  const enrichedPayments = payments.map(p => ({
+    ...p,
+    payment_date: p.payment_date || p.created_at, // Use payment_date if available, else created_at
+    payment_amount: p.amount || 0,
+    principal_amount: p.principal_amount || 0,
+    interest_amount: p.interest_amount || 0,
+    late_fee: p.late_fee || 0
+  }));
+
+  let totalPaid = 0;
+  let totalPrincipalPaid = 0;
+  let totalInterestPaid = 0;
+  let totalLateFees = 0;
+
+  enrichedPayments.forEach(p => {
+    if (p.status === 'completed' || p.status === 'approved') {
+      totalPaid += parseFloat(p.payment_amount);
+      totalPrincipalPaid += parseFloat(p.principal_amount);
+      totalInterestPaid += parseFloat(p.interest_amount);
+      totalLateFees += parseFloat(p.late_fee);
+    }
+  });
+
+  const summary = {
+      total_payments: enrichedPayments.length,
+      completed_payments: enrichedPayments.filter(p => p.status === 'completed' || p.status === 'approved').length,
+      pending_payments: enrichedPayments.filter(p => p.status === 'pending').length,
+      failed_payments: enrichedPayments.filter(p => p.status === 'failed' || p.status === 'rejected').length,
+      total_paid: parseFloat(totalPaid.toFixed(2)),
+      total_principal_paid: parseFloat(totalPrincipalPaid.toFixed(2)),
+      total_interest_paid: parseFloat(totalInterestPaid.toFixed(2)),
+      total_late_fees: parseFloat(totalLateFees.toFixed(2)),
+      // Calculate actual loan progress
+      loan_progress_percent: loan_info?.principal > 0 
+        ? ((totalPrincipalPaid / parseFloat(loan_info.principal)) * 100).toFixed(1)
+        : 0
+    };
+
+
   // Filter payments first
   let filteredPayments = filter === 'all'
-    ? [...payments]
-    : payments.filter(p => p.status === filter);
+    ? [...enrichedPayments]
+    : enrichedPayments.filter(p => p.status === filter);
 
   // Apply sorting - create a new sorted array
   // Use created_at as primary sort field for accurate timestamp ordering
@@ -145,8 +185,8 @@ export default function PaymentHistory({ loanId }) {
           <div style={styles.summaryIcon}>📊</div>
           <div>
             <div style={styles.summaryLabel}>Total Payments</div>
-            <div style={styles.summaryValue}>{(payment_summary?.total_payments || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-            <div style={styles.summarySubtext}>{payment_summary?.completed_payments || 0} completed</div>
+            <div style={styles.summaryValue}>{(summary?.total_payments || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div style={styles.summarySubtext}>{summary?.completed_payments || 0} completed</div>
           </div>
         </div>
 
@@ -154,7 +194,7 @@ export default function PaymentHistory({ loanId }) {
           <div style={styles.summaryIcon}>💰</div>
           <div>
             <div style={styles.summaryLabel}>Total Paid</div>
-            <div style={styles.summaryValue}>${parseFloat(payment_summary?.total_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div style={styles.summaryValue}>${parseFloat(summary?.total_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <div style={styles.summarySubtext}>All time</div>
           </div>
         </div>
@@ -163,7 +203,7 @@ export default function PaymentHistory({ loanId }) {
           <div style={styles.summaryIcon}>📈</div>
           <div>
             <div style={styles.summaryLabel}>Principal Paid</div>
-            <div style={styles.summaryValue}>${parseFloat(payment_summary?.total_principal_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div style={styles.summaryValue}>${parseFloat(summary?.total_principal_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <div style={styles.summarySubtext}>Reducing balance</div>
           </div>
         </div>
@@ -172,15 +212,26 @@ export default function PaymentHistory({ loanId }) {
           <div style={styles.summaryIcon}>💸</div>
           <div>
             <div style={styles.summaryLabel}>Interest Paid</div>
-            <div style={styles.summaryValue}>${parseFloat(payment_summary?.total_interest_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-            {payment_summary?.total_late_fees > 0 && (
+            <div style={styles.summaryValue}>${parseFloat(summary?.total_interest_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            {summary?.total_late_fees > 0 && (
               <div style={{...styles.summarySubtext, color: '#ef4444'}}>
-                +${parseFloat(payment_summary?.total_late_fees || 0).toFixed(2)} late fees
+                +${parseFloat(summary?.total_late_fees || 0).toFixed(2)} late fees
               </div>
             )}
           </div>
         </div>
-      </div>
+
+          <div style={{...styles.summaryCard, gridColumn: 'span 2'}}>
+            <div style={styles.summaryIcon}>📊</div>
+            <div style={{flex: 1}}>
+              <div style={styles.summaryLabel}>Loan Progress</div>
+              <div style={styles.summaryValue}>{summary?.loan_progress_percent || 0}% Paid Off</div>
+              <div style={{...styles.summarySubtext}}>
+                ${parseFloat(summary?.total_principal_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} of ${parseFloat(loan_info?.principal || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} principal
+              </div>
+            </div>
+          </div>
+        </div>
 
       {/* Filters and Sort */}
       <div style={styles.controlsContainer}>
@@ -194,7 +245,7 @@ export default function PaymentHistory({ loanId }) {
                 ...(filter === 'all' ? styles.filterButtonActive : {})
               }}
             >
-              All ({payment_summary?.total_payments || 0})
+              All ({summary?.total_payments || 0})
             </button>
             <button
               onClick={() => setFilter('completed')}
@@ -203,7 +254,7 @@ export default function PaymentHistory({ loanId }) {
                 ...(filter === 'completed' ? styles.filterButtonActiveGreen : {})
               }}
             >
-              ✓ Completed ({payment_summary?.completed_payments || 0})
+              ✓ Completed ({summary?.completed_payments || 0})
             </button>
             <button
               onClick={() => setFilter('pending')}
@@ -212,9 +263,9 @@ export default function PaymentHistory({ loanId }) {
                 ...(filter === 'pending' ? styles.filterButtonActiveYellow : {})
               }}
             >
-              ⏳ Pending ({payment_summary?.pending_payments || 0})
+              ⏳ Pending ({summary?.pending_payments || 0})
             </button>
-            {payment_summary?.failed_payments > 0 && (
+            {summary?.failed_payments > 0 && (
               <button
                 onClick={() => setFilter('failed')}
                 style={{
@@ -222,7 +273,7 @@ export default function PaymentHistory({ loanId }) {
                   ...(filter === 'failed' ? styles.filterButtonActiveRed : {})
                 }}
               >
-                ✗ Failed ({payment_summary?.failed_payments || 0})
+                ✗ Failed ({summary?.failed_payments || 0})
               </button>
             )}
           </div>
