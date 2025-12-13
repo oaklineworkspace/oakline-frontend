@@ -19,7 +19,7 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { loan_id, account_id, amount, payment_type } = req.body;
+    const { loan_id, account_id, amount, payment_type, timezone } = req.body;
 
     if (!loan_id || !account_id || !amount || amount <= 0) {
       return res.status(400).json({ error: 'Invalid payment details' });
@@ -196,7 +196,7 @@ export default async function handler(req, res) {
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; color: #64748b;">Payment Date:</td>
-                  <td style="padding: 8px 0; color: #1a365d; font-weight: 600; text-align: right;">${new Date(currentDateTime).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</td>
+                  <td style="padding: 8px 0; color: #1a365d; font-weight: 600; text-align: right;">${new Date(currentDateTime).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: timezone || 'UTC' })}</td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; color: #64748b;">Status:</td>

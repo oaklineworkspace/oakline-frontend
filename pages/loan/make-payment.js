@@ -336,6 +336,9 @@ function MakePaymentContent() {
         return;
       }
 
+      // Get user's timezone
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
       const response = await fetch('/api/user/make-payment', {
         method: 'POST',
         headers: {
@@ -346,7 +349,8 @@ function MakePaymentContent() {
           loan_id: loanId,
           account_id: paymentForm.account_id,
           amount: amount,
-          payment_type: paymentForm.payment_type
+          payment_type: paymentForm.payment_type,
+          timezone: userTimezone
         })
       });
 
