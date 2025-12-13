@@ -123,6 +123,7 @@ export default function TransactionsHistory() {
         .limit(100);
 
       // Fetch ALL loan payments with joined loan data (same approach as dashboard)
+      console.log('Transactions: Fetching loan payments for user:', user.id);
       const { data: allLoanPayments, error: loanPaymentsError } = await supabase
         .from('loan_payments')
         .select(`
@@ -147,6 +148,8 @@ export default function TransactionsHistory() {
         .order('created_at', { ascending: false })
         .limit(200);
       
+      console.log('Transactions: Raw loan payments fetched:', allLoanPayments?.length || 0, 'Error:', loanPaymentsError);
+      
       if (loanPaymentsError) {
         console.error('Error fetching loan payments:', loanPaymentsError);
       }
@@ -155,13 +158,18 @@ export default function TransactionsHistory() {
       const loanPaymentsData = (allLoanPayments || []).filter(payment => 
         payment.loans?.user_id === user.id
       );
-      console.log('Fetched loan payments for user:', loanPaymentsData.length);
+      console.log('Transactions: Filtered loan payments for user:', loanPaymentsData.length);
 
       // Format loan payments as transactions
       if (loanPaymentsData && loanPaymentsData.length > 0) {
         console.log('Formatting loan payments for display:', loanPaymentsData);
         console.log('Loan payments raw data:', JSON.stringify(loanPaymentsData, null, 2));
-        const formattedLoanPayments = loanPaymentsData.map(payment => {
+        const formattedLoanPayments = loanPaymentsData
+          .filter(payment => {
+            // Filter out old-style pending admin approval transactions (same as dashboard)
+            return payment.status !== 'pending_admin_approval';
+          })
+          .map(payment => {
           const isDeposit = payment.is_deposit === true || payment.payment_type === 'deposit';
           const loanType = payment.loans?.loan_type || 'PERSONAL LOAN';
 
@@ -381,6 +389,7 @@ export default function TransactionsHistory() {
       case 'zelle_receive': return 'Z';
       case 'crypto_deposit': return '₿';
       case 'loan_payment': return '🏦';
+      case 'loan_deposit': return '🏦';
       default: return '💼';
     }
   };
@@ -418,6 +427,7 @@ export default function TransactionsHistory() {
         txType === 'cashback' || 
         txType === 'zelle_receive' ||
         txType === 'crypto_deposit' ||
+        txType === 'loan_deposit' ||
         description.includes('received from') ||
         description.includes('transfer from')) {
       return true;
