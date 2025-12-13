@@ -122,56 +122,41 @@ export default function TransactionsHistory() {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      // First, fetch the user's loan IDs to filter loan_payments properly
-      const { data: userLoans } = await supabase
-        .from('loans')
-        .select('id')
-        .eq('user_id', user.id);
-      
-      const userLoanIds = (userLoans || []).map(loan => loan.id);
-      console.log('Transactions: User loan IDs:', userLoanIds.length);
-
+      // Fetch loan payments (EXACT same approach as dashboard)
       let loanPaymentsData = [];
-      
-      if (userLoanIds.length > 0) {
-        // Fetch loan payments for this user's loans (same approach as dashboard)
-        const { data: paymentsData, error: loanPaymentsError } = await supabase
-          .from('loan_payments')
-          .select(`
-            *,
-            loans:loan_id (
-              id,
-              loan_type,
-              loan_reference,
-              user_id,
-              status,
-              remaining_balance,
-              principal,
-              account_id
-            ),
-            accounts:account_id (
-              id,
-              account_number,
-              account_type
-            )
-          `)
-          .in('loan_id', userLoanIds)
-          .gte('created_at', dateFilter)
-          .order('created_at', { ascending: false })
-          .limit(200);
-        
-        console.log('Transactions: Raw loan payments fetched:', paymentsData?.length || 0, 'Error:', loanPaymentsError);
-        
-        if (loanPaymentsError) {
-          console.error('Error fetching loan payments:', loanPaymentsError);
-        }
-        
-        loanPaymentsData = paymentsData || [];
+
+      const { data: paymentsData, error: paymentsError } = await supabase
+        .from('loan_payments')
+        .select(`
+          *,
+          loans:loan_id (
+            id,
+            loan_type,
+            status,
+            remaining_balance,
+            principal,
+            account_id,
+            user_id
+          ),
+          accounts:account_id (
+            id,
+            account_number,
+            account_type
+          )
+        `)
+        .gte('created_at', dateFilter)
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (paymentsError) {
+        console.error('Error fetching loan payments:', paymentsError);
       } else {
-        console.log('Transactions: No loans found for user');
+        // Filter to only include payments for the current user's loans (same as dashboard)
+        loanPaymentsData = (paymentsData || []).filter(payment => 
+          payment.loans?.user_id === user.id
+        );
+        console.log('Transactions: Fetched loan payments with joined data:', loanPaymentsData.length);
       }
-      
-      console.log('Transactions: Loan payments for user:', loanPaymentsData.length);
 
       // Format loan payments as transactions
       if (loanPaymentsData && loanPaymentsData.length > 0) {
