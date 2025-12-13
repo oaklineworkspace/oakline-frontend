@@ -371,9 +371,9 @@ function MakePaymentContent() {
     } catch (err) {
       console.error('Error processing payment:', err);
       showToast('An error occurred while processing payment', 'error');
-    } finally {
       setProcessing(false);
     }
+    // Don't reset processing on success - let the page navigation handle it
   };
 
   const handleSubmitCryptoPayment = async () => {
