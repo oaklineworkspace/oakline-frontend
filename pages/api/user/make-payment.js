@@ -134,27 +134,9 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to record payment' });
     }
 
-    // Create transaction record with pending status (amount should be positive)
-    const { data: transaction, error: transactionError } = await supabaseAdmin
-      .from('transactions')
-      .insert([{
-        user_id: user.id,
-        account_id: account_id,
-        type: 'debit',
-        amount: parseFloat(amount), // Corrected: amount should be positive for debit transactions
-        balance_before: parseFloat(account.balance),
-        balance_after: newAccountBalance,
-        description: `Loan Repayment — Account Balance`,
-        status: 'pending',
-        reference: referenceNumber,
-        created_at: currentDateTime
-      }])
-      .select()
-      .single();
-
-    if (transactionError) {
-      console.error('Error creating transaction record:', transactionError);
-    }
+    // Note: Transaction record is not needed for balance payments
+    // Loan payments are tracked in loan_payments table
+    // Only crypto payments need a transactions record for admin visibility
 
     // Send notification to user
     await supabaseAdmin
@@ -214,7 +196,7 @@ export default async function handler(req, res) {
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; color: #64748b;">Payment Date:</td>
-                  <td style="padding: 8px 0; color: #1a365d; font-weight: 600; text-align: right;">${new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</td>
+                  <td style="padding: 8px 0; color: #1a365d; font-weight: 600; text-align: right;">${new Date(currentDateTime).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; color: #64748b;">Status:</td>
