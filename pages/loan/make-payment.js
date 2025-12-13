@@ -355,7 +355,7 @@ function MakePaymentContent() {
       if (response.ok) {
         // Immediately redirect to success page without delay
         const paymentMethod = paymentForm.payment_type === 'crypto' ? 'crypto' : 'balance';
-        let successUrl = `/loan/payment-success?reference=${data.payment.reference_number}&amount=${data.payment.amount}&loan_id=${loanId}&payment_method=${paymentMethod}`;
+        let successUrl = `/loan/payment-success?reference=${data.payment.reference_number}&amount=${data.payment.amount}&loan_id=${loanId}&payment_method=${paymentMethod}&status=pending`;
 
         if (paymentMethod === 'balance' && data.payment.account_number) {
           successUrl += `&account_number=${data.payment.account_number}`;

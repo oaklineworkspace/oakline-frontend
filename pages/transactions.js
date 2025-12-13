@@ -1069,7 +1069,7 @@ export default function TransactionsHistory() {
                       </div>
                     )}
 
-                    {selectedTransaction.late_fee && parseFloat(selectedTransaction.late_fee) > 0 && (
+                    {parseFloat(selectedTransaction.late_fee || 0) > 0 && (
                       <div style={{
                         display: 'flex',
                         justifyContent: 'space-between',
