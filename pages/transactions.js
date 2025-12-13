@@ -224,36 +224,41 @@ export default function TransactionsHistory() {
             type: isDeposit ? 'loan_deposit' : 'loan_payment',
             transaction_type: isDeposit ? 'loan_deposit' : 'loan_payment',
             description: description,
-            amount: payment.amount || 0,
+            amount: parseFloat(payment.amount || 0),
+            gross_amount: parseFloat(payment.gross_amount || payment.amount || 0),
+            fee: parseFloat(payment.fee || 0),
             status: payment.status || 'completed',
             created_at: payment.created_at,
             updated_at: payment.updated_at,
-            payment_date: payment.payment_date,
-            accounts: payment.accounts,
+            payment_date: payment.payment_date || payment.created_at,
+            is_credit: isDeposit,
+            transaction_data: payment,
             reference: payment.reference_number || `LOAN-${payment.id.substring(0, 8).toUpperCase()}`,
             loan_reference: payment.loans?.loan_reference,
             loan_type: loanType,
             loan_id: payment.loan_id,
-            principal_amount: payment.principal_amount,
-            interest_amount: payment.interest_amount,
-            late_fee: payment.late_fee,
-            balance_after: payment.balance_after,
+            principal_amount: parseFloat(payment.principal_amount || 0),
+            interest_amount: parseFloat(payment.interest_amount || 0),
+            late_fee: parseFloat(payment.late_fee || 0),
+            balance_after: parseFloat(payment.balance_after || 0),
             payment_type: payment.payment_type,
+            tx_hash: payment.tx_hash,
+            confirmations: payment.confirmations,
+            required_confirmations: payment.required_confirmations,
             deposit_method: payment.deposit_method,
             payment_method: payment.payment_method,
             metadata: payment.metadata,
-            tx_hash: payment.tx_hash,
-            fee: payment.fee,
-            gross_amount: payment.gross_amount,
-            confirmations: payment.confirmations,
-            required_confirmations: payment.required_confirmations,
+            notes: payment.notes,
+            account_id: payment.account_id,
+            accounts: payment.accounts || null,
             is_deposit: payment.is_deposit,
-            user_id: user.id,
-            transaction_data: payment
+            user_id: user.id
           };
         });
-
+        console.log('Transactions: Formatted loan payments:', formattedLoanPayments.length);
         transactionsData = [...transactionsData, ...formattedLoanPayments];
+      } else {
+        console.log('Transactions: No loan payments to format');
       }
 
       // Merge and format crypto deposits as transactions
@@ -344,9 +349,12 @@ export default function TransactionsHistory() {
         transactionsData = [...transactionsData, ...formattedAccountOpeningDeposits];
       }
 
-      // Sort all transactions
+      // Sort all transactions by most recent
       transactionsData = transactionsData
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      console.log('Transactions: Final transactions count:', transactionsData.length);
+      console.log('Transactions: Loan payment transactions:', transactionsData.filter(t => t.transaction_type === 'loan_payment' || t.transaction_type === 'loan_deposit').length);
 
       setTransactions(transactionsData);
     } catch (error) {
