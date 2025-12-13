@@ -112,24 +112,29 @@ export default function TransactionsHistory() {
         .order('created_at', { ascending: false })
         .limit(100);
 
-      // Fetch loan payments (last 12 months)
-      const { data: loanPaymentsData } = await supabase
+      // Fetch loan payments (last 12 months) - join with loans to filter by user
+      const { data: allLoanPaymentsData } = await supabase
         .from('loan_payments')
         .select(`
           *,
           loans:loan_id (
             loan_type,
-            loan_reference
+            loan_reference,
+            user_id
           ),
           accounts:account_id (
             account_number,
             account_type
           )
         `)
-        .eq('user_id', user.id)
         .gte('created_at', dateFilter)
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(200);
+      
+      // Filter to only include payments for the current user's loans or direct user_id match
+      const loanPaymentsData = (allLoanPaymentsData || []).filter(payment => 
+        payment.user_id === user.id || payment.loans?.user_id === user.id
+      );
 
       // Format loan payments as transactions
       if (loanPaymentsData && loanPaymentsData.length > 0) {
