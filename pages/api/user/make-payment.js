@@ -103,6 +103,9 @@ export default async function handler(req, res) {
     // Create payment with pending status - admin must approve
     const referenceNumber = `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
+    // Build description with actual loan type
+    const paymentDescription = `Loan Repayment - ${loan.loan_type?.replace(/_/g, ' ').toUpperCase() || 'LOAN'}`;
+
     const { data: paymentRecord, error: paymentError } = await supabaseAdmin
       .from('loan_payments')
       .insert([{
@@ -119,7 +122,7 @@ export default async function handler(req, res) {
         processed_by: user.id,
         reference_number: referenceNumber,
         deposit_method: 'account_balance',
-        notes: `Loan Repayment — Account Balance`
+        notes: paymentDescription
       }])
       .select()
       .single();
@@ -134,9 +137,23 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Failed to record payment' });
     }
 
-    // Note: Transaction record is not needed for balance payments
-    // Loan payments are tracked in loan_payments table
-    // Only crypto payments need a transactions record for admin visibility
+    // Create transaction record for balance payment (so admin can see it in transactions table)
+    await supabaseAdmin
+      .from('transactions')
+      .insert([{
+        user_id: user.id,
+        account_id: account_id,
+        type: 'debit',
+        amount: parseFloat(amount),
+        description: paymentDescription,
+        status: 'pending',
+        reference: referenceNumber,
+        created_at: currentDateTime
+      }])
+      .catch(err => {
+        console.error('Error creating transaction record:', err);
+        // Don't fail the payment if transaction record creation fails
+      });
 
     // Send notification to user
     await supabaseAdmin
