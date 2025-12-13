@@ -119,7 +119,7 @@ export default async function handler(req, res) {
         processed_by: user.id,
         reference_number: referenceNumber,
         deposit_method: 'account_balance',
-        notes: `Loan payment submitted. Pending verification.`
+        notes: `Loan payment via balance`
       }])
       .select()
       .single();
@@ -144,7 +144,7 @@ export default async function handler(req, res) {
         amount: parseFloat(amount), // Corrected: amount should be positive for debit transactions
         balance_before: parseFloat(account.balance),
         balance_after: newAccountBalance,
-        description: `Loan payment submitted. Pending verification.`,
+        description: `Loan payment via balance`,
         status: 'pending',
         reference: referenceNumber,
         created_at: currentDateTime

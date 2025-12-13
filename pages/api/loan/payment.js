@@ -163,6 +163,20 @@ export default async function handler(req, res) {
         .update({ reference_number: referenceNumber })
         .eq('id', paymentRecord.id);
 
+      // Create transaction record for crypto payment (so admin can see it in transactions table)
+      await supabaseAdmin
+        .from('transactions')
+        .insert([{
+          user_id: user.id,
+          account_id: null,
+          type: 'debit',
+          amount: adjustedAmount,
+          description: paymentDescription,
+          status: 'pending',
+          reference: referenceNumber,
+          created_at: new Date().toISOString()
+        }]);
+
       // Send email notification to user
       try {
         const { data: userProfile } = await supabaseAdmin
