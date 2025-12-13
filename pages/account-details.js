@@ -93,11 +93,17 @@ export default function AccountDetails() {
 
   const fetchTransactions = async (accountId) => {
     try {
+      // Set date filter for 1 year (12 months) old
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      const dateFilter = oneYearAgo.toISOString();
+
       // Fetch regular transactions
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
         .select('*')
         .eq('account_id', accountId)
+        .gte('created_at', dateFilter)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -123,6 +129,7 @@ export default function AccountDetails() {
         `)
         .eq('account_id', accountId)
         .in('status', ['pending', 'awaiting_confirmations', 'under_review'])
+        .gte('created_at', dateFilter)
         .order('created_at', { ascending: false });
 
       if (depositsError) {
@@ -141,6 +148,7 @@ export default function AccountDetails() {
           )
         `)
         .eq('account_id', accountId)
+        .gte('created_at', dateFilter)
         .order('created_at', { ascending: false });
 
       if (cryptoError) {

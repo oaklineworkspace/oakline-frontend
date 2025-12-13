@@ -342,18 +342,23 @@ function LoanApplicationContent() {
 
   // New handler to manage file selection and immediate upload
   const handleFileChange = async (e, documentType) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const file = e.target.files?.[0];
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
 
     // Validate file
     const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
     if (!allowedTypes.includes(file.type)) {
       setError('Only JPG and PNG files are allowed');
+      setErrorTitle('Invalid File Type');
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
       setError('File size must be less than 5MB');
+      setErrorTitle('File Too Large');
       return;
     }
 
@@ -370,11 +375,13 @@ function LoanApplicationContent() {
     // Upload immediately
     setIdDocuments(prev => ({ ...prev, [`${documentType}Uploading`]: true }));
     setError('');
+    setErrorTitle('Error');
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         setError('Session expired. Please log in again.');
+        setErrorTitle('Session Expired');
         setIdDocuments(prev => ({ ...prev, [`${documentType}Uploading`]: false }));
         return;
       }
@@ -395,7 +402,8 @@ function LoanApplicationContent() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || `Failed to upload ${documentType} ID`);
+        const errorMessage = result.error || result.details || `Failed to upload ${documentType} ID`;
+        throw new Error(errorMessage);
       }
 
       // Store the uploaded file path
@@ -406,9 +414,13 @@ function LoanApplicationContent() {
       }));
 
       setError('');
+      setErrorTitle('Error');
+      
+      console.log(`✅ ${documentType} ID uploaded successfully:`, result.filePath);
     } catch (err) {
       console.error(`Error uploading ${documentType} ID:`, err);
-      setError(err.message || `Failed to upload ${documentType} ID document`);
+      setError(err.message || `Failed to upload ${documentType} ID document. Please try again.`);
+      setErrorTitle('Upload Failed');
       setIdDocuments(prev => ({ 
         ...prev, 
         [documentType]: null,
