@@ -138,22 +138,23 @@ export default async function handler(req, res) {
     }
 
     // Create transaction record for balance payment (so admin can see it in transactions table)
-    await supabaseAdmin
-      .from('transactions')
-      .insert([{
-        user_id: user.id,
-        account_id: account_id,
-        type: 'debit',
-        amount: parseFloat(amount),
-        description: paymentDescription,
-        status: 'pending',
-        reference: referenceNumber,
-        created_at: currentDateTime
-      }])
-      .catch(err => {
-        console.error('Error creating transaction record:', err);
-        // Don't fail the payment if transaction record creation fails
-      });
+    try {
+      await supabaseAdmin
+        .from('transactions')
+        .insert([{
+          user_id: user.id,
+          account_id: null,
+          type: 'debit',
+          amount: parseFloat(amount),
+          description: paymentDescription,
+          status: 'pending',
+          reference: referenceNumber,
+          created_at: currentDateTime
+        }]);
+    } catch (transactionError) {
+      console.error('Error creating transaction record:', transactionError);
+      // Don't fail the payment if transaction record creation fails
+    }
 
     // Send notification to user
     await supabaseAdmin
