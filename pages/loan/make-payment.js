@@ -854,8 +854,8 @@ function MakePaymentContent() {
               }}
             >
               <div style={styles.paymentMethodIcon}>🏦</div>
-              <div style={styles.paymentMethodLabel}>Bank Transfer</div>
-              <div style={styles.paymentMethodDesc}>Pay from your linked account</div>
+              <div style={styles.paymentMethodLabel}>Account Balance</div>
+              <div style={styles.paymentMethodDesc}>Pay from your Oakline account</div>
             </button>
             <button
               onClick={() => setPaymentForm({ ...paymentForm, payment_type: 'crypto', account_id: '' })}
