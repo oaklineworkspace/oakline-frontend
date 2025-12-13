@@ -658,275 +658,566 @@ export default function TransactionsHistory() {
         )}
       </div>
 
-      {/* Transaction Details Modal */}
+      {/* Transaction Receipt Modal - styled like dashboard */}
       {selectedTransaction && (
-        <div style={styles.modalOverlay} onClick={() => setSelectedTransaction(null)}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.modalHeader}>
-              <h2 style={styles.modalTitle}>Transaction Details</h2>
-              <button 
-                style={styles.closeButton}
-                onClick={() => setSelectedTransaction(null)}
-              >
-                ✕
-              </button>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '2rem'
+          }}
+          onClick={() => setSelectedTransaction(null)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              padding: '2rem',
+              maxWidth: '500px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                color: '#64748b',
+                padding: '0.25rem 0.5rem'
+              }}
+              onClick={() => setSelectedTransaction(null)}
+            >
+              ×
+            </button>
+
+            <div style={{
+              borderBottom: '2px solid #e2e8f0',
+              paddingBottom: '1rem',
+              marginBottom: '1.5rem',
+              textAlign: 'center'
+            }}>
+              <h2 style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                color: '#1e293b',
+                marginBottom: '0.5rem'
+              }}>
+                Transaction Receipt
+              </h2>
+              <p style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                {selectedTransaction.accounts?.account_type?.replace(/_/g, ' ').toUpperCase() || 'Account'}
+              </p>
             </div>
 
-            <div style={styles.modalBody}>
-              <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>Type:</span>
-                <span style={styles.detailValue}>
-                  {getTransactionIcon(selectedTransaction.type || selectedTransaction.transaction_type)} {' '}
-                  {selectedTransaction.description || (selectedTransaction.type || selectedTransaction.transaction_type)?.replace(/_/g, ' ').toUpperCase()}
+            <div style={{
+              backgroundColor: '#f0f9ff',
+              padding: '1.5rem',
+              borderRadius: '12px',
+              margin: '1.5rem 0',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                fontSize: '0.9rem',
+                color: '#64748b',
+                marginBottom: '0.5rem'
+              }}>
+                Amount
+              </div>
+              <div style={{
+                fontSize: '2rem',
+                fontWeight: '700',
+                color: isTransactionCredit(selectedTransaction) ? '#059669' : '#dc2626'
+              }}>
+                {isTransactionCredit(selectedTransaction) ? '+' : '-'}
+                {formatCurrency(Math.abs(parseFloat(selectedTransaction.amount) || 0))}
+              </div>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '0.75rem 0',
+              borderBottom: '1px solid #f1f5f9'
+            }}>
+              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                Transaction Type
+              </span>
+              <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right', maxWidth: '60%' }}>
+                {(selectedTransaction.type || selectedTransaction.transaction_type || 'Transaction')
+                  .replace(/_/g, ' ')
+                  .toUpperCase()}
+              </span>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '0.75rem 0',
+              borderBottom: '1px solid #f1f5f9'
+            }}>
+              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                Description
+              </span>
+              <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-word' }}>
+                {selectedTransaction.description || 'N/A'}
+              </span>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '0.75rem 0',
+              borderBottom: '1px solid #f1f5f9'
+            }}>
+              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                Status
+              </span>
+              <span style={{
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                textAlign: 'right',
+                ...(() => {
+                  const status = (selectedTransaction.status || 'completed').toLowerCase();
+                  if (status === 'completed' || status === 'approved' || status === 'confirmed') {
+                    return { color: '#065f46', backgroundColor: '#d1fae5', padding: '0.25rem 0.75rem', borderRadius: '12px' };
+                  } else if (status === 'pending' || status === 'awaiting_confirmations' || status === 'processing' || status === 'hold') {
+                    return { color: '#92400e', backgroundColor: '#fef3c7', padding: '0.25rem 0.75rem', borderRadius: '12px' };
+                  } else if (status === 'failed' || status === 'rejected') {
+                    return { color: '#991b1b', backgroundColor: '#fee2e2', padding: '0.25rem 0.75rem', borderRadius: '12px' };
+                  }
+                  return { color: '#4b5563' };
+                })()
+              }}>
+                {(selectedTransaction.status?.toLowerCase() === 'hold' ? 'PENDING' : (selectedTransaction.status || 'Completed').replace(/_/g, ' ').toUpperCase())}
+              </span>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '0.75rem 0',
+              borderBottom: '1px solid #f1f5f9'
+            }}>
+              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                Date & Time
+              </span>
+              <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                {formatDate(selectedTransaction.created_at)}
+              </span>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              padding: '0.75rem 0',
+              borderBottom: '1px solid #f1f5f9'
+            }}>
+              <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                Reference Number
+              </span>
+              <span style={{ fontSize: '0.8rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right' }}>
+                {selectedTransaction.reference || selectedTransaction.id?.slice(0, 8).toUpperCase() || 'N/A'}
+              </span>
+            </div>
+
+            {!((selectedTransaction.transaction_type === 'loan_deposit' || selectedTransaction.transaction_type === 'loan_payment') && (selectedTransaction.deposit_method === 'crypto' || selectedTransaction.payment_method === 'crypto')) && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '0.75rem 0',
+                borderBottom: '1px solid #f1f5f9'
+              }}>
+                <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                  Account Number
+                </span>
+                <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right' }}>
+                  {selectedTransaction.accounts?.account_number || 'N/A'}
                 </span>
               </div>
+            )}
 
-              <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>Amount:</span>
-                <span style={{
-                  ...styles.detailValue,
-                  color: isTransactionCredit(selectedTransaction) ? '#059669' : '#dc2626',
-                  fontWeight: '700',
-                  fontSize: '1.1rem'
+            {/* Loan Payment/Deposit Details */}
+            {(selectedTransaction.transaction_type === 'loan_payment' || selectedTransaction.transaction_type === 'loan_deposit') && (
+              <>
+                <div style={{
+                  marginTop: '1.5rem',
+                  paddingTop: '1.5rem',
+                  borderTop: '2px solid #e2e8f0'
                 }}>
-                  {isTransactionCredit(selectedTransaction) ? '+' : '-'}
-                  {formatCurrency(Math.abs(parseFloat(selectedTransaction.amount) || 0))}
-                </span>
-              </div>
-
-              <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>Status:</span>
-                <span style={{
-                  ...styles.statusBadge,
-                  ...getStatusColor(selectedTransaction.status || 'completed')
-                }}>
-                  {getDisplayStatus(selectedTransaction.status || 'completed')}
-                </span>
-              </div>
-
-              <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>Date:</span>
-                <span style={styles.detailValue}>{formatDate(selectedTransaction.created_at)}</span>
-              </div>
-
-              {selectedTransaction.accounts?.account_number && (
-                <div style={styles.detailRow}>
-                  <span style={styles.detailLabel}>Account:</span>
-                  <span style={styles.detailValue}>
-                    {selectedTransaction.accounts.account_type} (••••{selectedTransaction.accounts.account_number.slice(-4)})
-                  </span>
-                </div>
-              )}
-
-              {selectedTransaction.reference && (
-                <div style={styles.detailRow}>
-                  <span style={styles.detailLabel}>Reference:</span>
-                  <span 
-                    style={{...styles.detailValue, ...styles.copyableText}}
-                    onClick={() => copyToClipboard(selectedTransaction.reference)}
-                  >
-                    {selectedTransaction.reference} 📋
-                  </span>
-                </div>
-              )}
-
-              {(selectedTransaction.transaction_type === 'loan_payment' || selectedTransaction.transaction_type === 'loan_deposit') && (
-                <>
-                  <div style={styles.divider}></div>
-                  <h3 style={styles.sectionTitle}>
-                    {selectedTransaction.transaction_type === 'loan_deposit' ? 'Loan Deposit Details' : 'Loan Payment Details'}
+                  <h3 style={{
+                    fontSize: '1.1rem',
+                    fontWeight: '700',
+                    color: '#1e293b',
+                    marginBottom: '1rem'
+                  }}>
+                    Payment Method Details
                   </h3>
+                </div>
 
-                  {selectedTransaction.loan_type && (
-                    <div style={styles.detailRow}>
-                      <span style={styles.detailLabel}>Loan Type:</span>
-                      <span style={styles.detailValue}>{selectedTransaction.loan_type.replace(/_/g, ' ').toUpperCase()}</span>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '0.75rem 0',
+                  borderBottom: '1px solid #f1f5f9'
+                }}>
+                  <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                    Payment Method
+                  </span>
+                  <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                    {selectedTransaction.deposit_method === 'crypto' || selectedTransaction.payment_method === 'crypto' ? '🪙 Cryptocurrency' :
+                     selectedTransaction.deposit_method === 'balance' || selectedTransaction.payment_method === 'account_balance' || !selectedTransaction.payment_method ? '💰 Account Balance' :
+                     selectedTransaction.deposit_method === 'bank_transfer' ? '🏦 Bank Transfer' :
+                     '💰 Account Balance'}
+                  </span>
+                </div>
+
+                {(selectedTransaction.deposit_method === 'crypto' || selectedTransaction.payment_method === 'crypto') && selectedTransaction.metadata && (
+                  <>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      padding: '0.75rem 0',
+                      borderBottom: '1px solid #f1f5f9'
+                    }}>
+                      <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                        Cryptocurrency
+                      </span>
+                      <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                        {selectedTransaction.metadata.crypto_symbol || selectedTransaction.metadata.crypto_type || 'Cryptocurrency'}
+                      </span>
                     </div>
-                  )}
-
-                  {selectedTransaction.loan_reference && (
-                    <div style={styles.detailRow}>
-                      <span style={styles.detailLabel}>Loan Reference:</span>
-                      <span style={styles.detailValue}>{selectedTransaction.loan_reference}</span>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      padding: '0.75rem 0',
+                      borderBottom: '1px solid #f1f5f9'
+                    }}>
+                      <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                        Network
+                      </span>
+                      <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                        {selectedTransaction.metadata.network_type || 'Network'}
+                      </span>
                     </div>
-                  )}
-
-                  <div style={styles.divider}></div>
-                  <h3 style={styles.sectionTitle}>Payment Method Details</h3>
-
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Payment Method:</span>
-                    <span style={styles.detailValue}>
-                      {selectedTransaction.deposit_method === 'crypto' || selectedTransaction.payment_method === 'crypto' ? '🪙 Cryptocurrency' :
-                       selectedTransaction.deposit_method === 'balance' || selectedTransaction.payment_method === 'account_balance' || !selectedTransaction.payment_method ? '💰 Account Balance' :
-                       selectedTransaction.deposit_method === 'bank_transfer' ? '🏦 Bank Transfer' :
-                       'Account Balance'}
-                    </span>
-                  </div>
-
-                  {(selectedTransaction.deposit_method === 'crypto' || selectedTransaction.payment_method === 'crypto') && selectedTransaction.metadata && (
-                    <>
-                      <div style={styles.detailRow}>
-                        <span style={styles.detailLabel}>Cryptocurrency:</span>
-                        <span style={styles.detailValue}>
-                          {selectedTransaction.metadata.crypto_symbol || selectedTransaction.metadata.crypto_type || 'Cryptocurrency'}
+                    {selectedTransaction.metadata.wallet_address && (
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        padding: '0.75rem 0',
+                        borderBottom: '1px solid #f1f5f9'
+                      }}>
+                        <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                          Wallet Address
+                        </span>
+                        <span 
+                          style={{ fontSize: '0.75rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right', wordBreak: 'break-all', cursor: 'pointer' }}
+                          onClick={() => copyToClipboard(selectedTransaction.metadata.wallet_address)}
+                        >
+                          {selectedTransaction.metadata.wallet_address} 📋
                         </span>
                       </div>
-                      <div style={styles.detailRow}>
-                        <span style={styles.detailLabel}>Network:</span>
-                        <span style={styles.detailValue}>
-                          {selectedTransaction.metadata.network_type || 'Network'}
+                    )}
+                    {selectedTransaction.tx_hash && (
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        padding: '0.75rem 0',
+                        borderBottom: '1px solid #f1f5f9'
+                      }}>
+                        <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                          Transaction Hash
+                        </span>
+                        <span 
+                          style={{ fontSize: '0.75rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right', wordBreak: 'break-all', cursor: 'pointer' }}
+                          onClick={() => copyToClipboard(selectedTransaction.tx_hash)}
+                        >
+                          {selectedTransaction.tx_hash} 📋
                         </span>
                       </div>
-                      {selectedTransaction.metadata.wallet_address && (
-                        <div style={styles.detailRow}>
-                          <span style={styles.detailLabel}>Wallet Address:</span>
-                          <span 
-                            style={{...styles.detailValue, ...styles.copyableText, fontSize: '0.75rem'}}
-                            onClick={() => copyToClipboard(selectedTransaction.metadata.wallet_address)}
-                          >
-                            {selectedTransaction.metadata.wallet_address.substring(0, 20)}...{selectedTransaction.metadata.wallet_address.slice(-10)} 📋
-                          </span>
-                        </div>
-                      )}
-                      {selectedTransaction.tx_hash && (
-                        <div style={styles.detailRow}>
-                          <span style={styles.detailLabel}>Transaction Hash:</span>
-                          <span 
-                            style={{...styles.detailValue, ...styles.copyableText, fontSize: '0.75rem'}}
-                            onClick={() => copyToClipboard(selectedTransaction.tx_hash)}
-                          >
-                            {selectedTransaction.tx_hash.substring(0, 20)}...{selectedTransaction.tx_hash.slice(-10)} 📋
-                          </span>
-                        </div>
-                      )}
-                      {selectedTransaction.fee > 0 && (
-                        <div style={styles.detailRow}>
-                          <span style={styles.detailLabel}>Network Fee:</span>
-                          <span style={styles.detailValue}>{formatCurrency(selectedTransaction.fee)}</span>
-                        </div>
-                      )}
-                      {selectedTransaction.gross_amount && (
-                        <div style={styles.detailRow}>
-                          <span style={styles.detailLabel}>Gross Amount:</span>
-                          <span style={styles.detailValue}>{formatCurrency(selectedTransaction.gross_amount)}</span>
-                        </div>
-                      )}
-                    </>
-                  )}
+                    )}
+                    {selectedTransaction.fee > 0 && (
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        padding: '0.75rem 0',
+                        borderBottom: '1px solid #f1f5f9'
+                      }}>
+                        <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                          Network Fee
+                        </span>
+                        <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                          {formatCurrency(selectedTransaction.fee)}
+                        </span>
+                      </div>
+                    )}
+                    {selectedTransaction.gross_amount && (
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        padding: '0.75rem 0',
+                        borderBottom: '1px solid #f1f5f9'
+                      }}>
+                        <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                          Gross Amount
+                        </span>
+                        <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                          {formatCurrency(selectedTransaction.gross_amount)}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                )}
 
-                  {((selectedTransaction.deposit_method === 'balance' || selectedTransaction.payment_method === 'account_balance' || !selectedTransaction.payment_method) && selectedTransaction.accounts) && (
-                    <div style={styles.detailRow}>
-                      <span style={styles.detailLabel}>Account Number:</span>
-                      <span style={{...styles.detailValue, fontFamily: 'monospace'}}>
-                        {selectedTransaction.accounts.account_number || 'N/A'}
-                      </span>
-                    </div>
-                  )}
-
-                  {selectedTransaction.transaction_type === 'loan_payment' && (
-                    <>
-                      <div style={styles.divider}></div>
-                      <h3 style={styles.sectionTitle}>Payment Breakdown</h3>
-
-                      {selectedTransaction.principal_amount && (
-                        <div style={styles.detailRow}>
-                          <span style={styles.detailLabel}>Principal:</span>
-                          <span style={styles.detailValue}>{formatCurrency(selectedTransaction.principal_amount)}</span>
-                        </div>
-                      )}
-
-                      {selectedTransaction.interest_amount && (
-                        <div style={styles.detailRow}>
-                          <span style={styles.detailLabel}>Interest:</span>
-                          <span style={styles.detailValue}>{formatCurrency(selectedTransaction.interest_amount)}</span>
-                        </div>
-                      )}
-
-                      {selectedTransaction.late_fee && parseFloat(selectedTransaction.late_fee) > 0 && (
-                        <div style={styles.detailRow}>
-                          <span style={styles.detailLabel}>Late Fee:</span>
-                          <span style={{...styles.detailValue, color: '#ef4444'}}>{formatCurrency(selectedTransaction.late_fee)}</span>
-                        </div>
-                      )}
-
-                      {selectedTransaction.balance_after !== undefined && (
-                        <div style={styles.detailRow}>
-                          <span style={styles.detailLabel}>Remaining Balance:</span>
-                          <span style={styles.detailValue}>{formatCurrency(selectedTransaction.balance_after)}</span>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </>
-              )}
-
-              {selectedTransaction.transaction_type === 'crypto_deposit' && (
-                <>
-                  <div style={styles.divider}></div>
-                  <h3 style={styles.sectionTitle}>Crypto Details</h3>
-
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Cryptocurrency:</span>
-                    <span style={styles.detailValue}>
-                      {selectedTransaction.crypto_symbol} ({selectedTransaction.crypto_type})
+                {((selectedTransaction.deposit_method === 'balance' || selectedTransaction.payment_method === 'account_balance' || !selectedTransaction.payment_method) && selectedTransaction.accounts) && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 0',
+                    borderBottom: '1px solid #f1f5f9'
+                  }}>
+                    <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                      Account Number
+                    </span>
+                    <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right' }}>
+                      {selectedTransaction.accounts.account_number || 'N/A'}
                     </span>
                   </div>
+                )}
 
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Network:</span>
-                    <span style={styles.detailValue}>{selectedTransaction.network_type}</span>
+                {selectedTransaction.transaction_type === 'loan_payment' && (selectedTransaction.principal_amount || selectedTransaction.interest_amount || selectedTransaction.balance_after !== undefined) && (
+                  <>
+                    <div style={{
+                      marginTop: '1.5rem',
+                      paddingTop: '1.5rem',
+                      borderTop: '2px solid #e2e8f0'
+                    }}>
+                      <h3 style={{
+                        fontSize: '1.1rem',
+                        fontWeight: '700',
+                        color: '#1e293b',
+                        marginBottom: '1rem'
+                      }}>
+                        Payment Breakdown
+                      </h3>
+                    </div>
+
+                    {selectedTransaction.principal_amount && (
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        padding: '0.75rem 0',
+                        borderBottom: '1px solid #f1f5f9'
+                      }}>
+                        <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                          Principal
+                        </span>
+                        <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                          {formatCurrency(selectedTransaction.principal_amount)}
+                        </span>
+                      </div>
+                    )}
+
+                    {selectedTransaction.interest_amount && (
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        padding: '0.75rem 0',
+                        borderBottom: '1px solid #f1f5f9'
+                      }}>
+                        <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                          Interest
+                        </span>
+                        <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                          {formatCurrency(selectedTransaction.interest_amount)}
+                        </span>
+                      </div>
+                    )}
+
+                    {selectedTransaction.late_fee && parseFloat(selectedTransaction.late_fee) > 0 && (
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        padding: '0.75rem 0',
+                        borderBottom: '1px solid #f1f5f9'
+                      }}>
+                        <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                          Late Fee
+                        </span>
+                        <span style={{ fontSize: '0.9rem', color: '#ef4444', fontWeight: '600', textAlign: 'right' }}>
+                          {formatCurrency(selectedTransaction.late_fee)}
+                        </span>
+                      </div>
+                    )}
+
+                    {selectedTransaction.balance_after !== undefined && (
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        padding: '0.75rem 0',
+                        borderBottom: '1px solid #f1f5f9'
+                      }}>
+                        <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                          Remaining Balance
+                        </span>
+                        <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                          {formatCurrency(selectedTransaction.balance_after)}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+
+            {/* Crypto Deposit Details */}
+            {selectedTransaction.transaction_type === 'crypto_deposit' && (
+              <>
+                <div style={{
+                  marginTop: '1.5rem',
+                  paddingTop: '1.5rem',
+                  borderTop: '2px solid #e2e8f0'
+                }}>
+                  <h3 style={{
+                    fontSize: '1.1rem',
+                    fontWeight: '700',
+                    color: '#1e293b',
+                    marginBottom: '1rem'
+                  }}>
+                    Cryptocurrency Details
+                  </h3>
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '0.75rem 0',
+                  borderBottom: '1px solid #f1f5f9'
+                }}>
+                  <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                    Cryptocurrency
+                  </span>
+                  <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                    {selectedTransaction.crypto_symbol} ({selectedTransaction.crypto_type})
+                  </span>
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '0.75rem 0',
+                  borderBottom: '1px solid #f1f5f9'
+                }}>
+                  <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                    Network
+                  </span>
+                  <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                    {selectedTransaction.network_type}
+                  </span>
+                </div>
+
+                {selectedTransaction.wallet_address && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 0',
+                    borderBottom: '1px solid #f1f5f9'
+                  }}>
+                    <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                      Wallet Address
+                    </span>
+                    <span 
+                      style={{ fontSize: '0.75rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right', wordBreak: 'break-all', cursor: 'pointer' }}
+                      onClick={() => copyToClipboard(selectedTransaction.wallet_address)}
+                    >
+                      {selectedTransaction.wallet_address.substring(0, 20)}...{selectedTransaction.wallet_address.slice(-10)} 📋
+                    </span>
                   </div>
+                )}
 
-                  {selectedTransaction.wallet_address && (
-                    <div style={styles.detailRow}>
-                      <span style={styles.detailLabel}>Wallet Address:</span>
-                      <span 
-                        style={{...styles.detailValue, ...styles.copyableText, fontSize: '0.75rem'}}
-                        onClick={() => copyToClipboard(selectedTransaction.wallet_address)}
-                      >
-                        {selectedTransaction.wallet_address.substring(0, 20)}...{selectedTransaction.wallet_address.slice(-10)} 📋
-                      </span>
-                    </div>
-                  )}
+                {selectedTransaction.transaction_hash && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 0',
+                    borderBottom: '1px solid #f1f5f9'
+                  }}>
+                    <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                      Transaction Hash
+                    </span>
+                    <span 
+                      style={{ fontSize: '0.75rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right', wordBreak: 'break-all', cursor: 'pointer' }}
+                      onClick={() => copyToClipboard(selectedTransaction.transaction_hash)}
+                    >
+                      {selectedTransaction.transaction_hash.substring(0, 20)}...{selectedTransaction.transaction_hash.slice(-10)} 📋
+                    </span>
+                  </div>
+                )}
 
-                  {selectedTransaction.transaction_hash && (
-                    <div style={styles.detailRow}>
-                      <span style={styles.detailLabel}>Transaction Hash:</span>
-                      <span 
-                        style={{...styles.detailValue, ...styles.copyableText, fontSize: '0.75rem'}}
-                        onClick={() => copyToClipboard(selectedTransaction.transaction_hash)}
-                      >
-                        {selectedTransaction.transaction_hash.substring(0, 20)}...{selectedTransaction.transaction_hash.slice(-10)} 📋
-                      </span>
-                    </div>
-                  )}
+                {selectedTransaction.fee && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 0',
+                    borderBottom: '1px solid #f1f5f9'
+                  }}>
+                    <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                      Fee
+                    </span>
+                    <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                      {formatCurrency(selectedTransaction.fee)}
+                    </span>
+                  </div>
+                )}
 
-                  {selectedTransaction.fee && (
-                    <div style={styles.detailRow}>
-                      <span style={styles.detailLabel}>Fee:</span>
-                      <span style={styles.detailValue}>{formatCurrency(selectedTransaction.fee)}</span>
-                    </div>
-                  )}
+                {selectedTransaction.gross_amount && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 0',
+                    borderBottom: '1px solid #f1f5f9'
+                  }}>
+                    <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                      Gross Amount
+                    </span>
+                    <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                      {formatCurrency(selectedTransaction.gross_amount)}
+                    </span>
+                  </div>
+                )}
 
-                  {selectedTransaction.gross_amount && (
-                    <div style={styles.detailRow}>
-                      <span style={styles.detailLabel}>Gross Amount:</span>
-                      <span style={styles.detailValue}>{formatCurrency(selectedTransaction.gross_amount)}</span>
-                    </div>
-                  )}
-
-                  {selectedTransaction.confirmations !== undefined && (
-                    <div style={styles.detailRow}>
-                      <span style={styles.detailLabel}>Confirmations:</span>
-                      <span style={styles.detailValue}>
-                        {selectedTransaction.confirmations}/{selectedTransaction.required_confirmations || 3}
-                      </span>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+                {selectedTransaction.confirmations !== undefined && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 0',
+                    borderBottom: '1px solid #f1f5f9'
+                  }}>
+                    <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '500' }}>
+                      Confirmations
+                    </span>
+                    <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', textAlign: 'right' }}>
+                      {selectedTransaction.confirmations}/{selectedTransaction.required_confirmations || 3}
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}
