@@ -69,7 +69,17 @@ export default function TransactionsHistory() {
 
         if (txError) throw txError;
 
-        transactionsData = txs || [];
+        // Filter out loan-related transactions since we fetch enriched data from loan_payments table
+        transactionsData = (txs || []).filter(tx => {
+          const desc = (tx.description || '').toLowerCase();
+          const txType = (tx.type || tx.transaction_type || '').toLowerCase();
+          // Exclude loan payments/deposits - they'll be fetched from loan_payments table
+          const isLoanTx = desc.includes('loan payment') || 
+                          desc.includes('loan pay-') ||
+                          txType === 'loan_payment' || 
+                          txType === 'loan_deposit';
+          return !isLoanTx;
+        });
       }
 
       // Fetch crypto deposits with account details (last 12 months)
