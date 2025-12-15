@@ -341,12 +341,62 @@ export default function TransactionsHistory() {
         transactionsData = [...transactionsData, ...formattedAccountOpeningDeposits];
       }
 
+      // Fetch Oakline Pay transactions (same as dashboard)
+      const { data: oaklinePayData } = await supabase
+        .from('oakline_pay_transactions')
+        .select(`
+          *,
+          sender_account:sender_account_id(id, account_number, account_type),
+          recipient_account:recipient_account_id(id, account_number, account_type)
+        `)
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .gte('created_at', dateFilter)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      // Format Oakline Pay transactions
+      if (oaklinePayData && oaklinePayData.length > 0) {
+        const formattedOaklinePayTransactions = oaklinePayData.map(tx => {
+          const isSender = tx.sender_id === user.id;
+          const account = isSender ? tx.sender_account : tx.recipient_account;
+          const recipientDisplay = tx.recipient_contact || 'User';
+          const senderDisplay = tx.sender_contact || 'Sender';
+
+          return {
+            id: tx.id,
+            type: isSender ? 'oakline_pay_send' : 'oakline_pay_receive',
+            transaction_type: isSender ? 'oakline_pay_send' : 'oakline_pay_receive',
+            description: isSender
+              ? `Oakline Pay to ${recipientDisplay}`
+              : `Oakline Pay from ${senderDisplay}`,
+            amount: parseFloat(tx.amount) || 0,
+            status: tx.status,
+            created_at: tx.created_at,
+            updated_at: tx.updated_at,
+            completed_at: tx.completed_at,
+            recipient_contact: tx.recipient_contact,
+            recipient_type: tx.recipient_type,
+            recipient_name: tx.recipient_name,
+            sender_contact: tx.sender_contact,
+            sender_name: tx.sender_name,
+            memo: tx.memo,
+            reference: tx.reference_number || `OPAY-${tx.id.substring(0, 8).toUpperCase()}`,
+            accounts: account,
+            is_credit: !isSender,
+            user_id: user.id
+          };
+        });
+        console.log('Transactions: Formatted Oakline Pay transactions:', formattedOaklinePayTransactions.length);
+        transactionsData = [...transactionsData, ...formattedOaklinePayTransactions];
+      }
+
       // Sort all transactions by most recent
       transactionsData = transactionsData
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
       console.log('Transactions: Final transactions count:', transactionsData.length);
       console.log('Transactions: Loan payment transactions:', transactionsData.filter(t => t.transaction_type === 'loan_payment' || t.transaction_type === 'loan_deposit').length);
+      console.log('Transactions: Oakline Pay transactions:', transactionsData.filter(t => t.transaction_type === 'oakline_pay_send' || t.transaction_type === 'oakline_pay_receive').length);
 
       setTransactions(transactionsData);
     } catch (error) {
@@ -387,6 +437,8 @@ export default function TransactionsHistory() {
       case 'interest': return '💎';
       case 'zelle_send': return 'Z';
       case 'zelle_receive': return 'Z';
+      case 'oakline_pay_send': return 'O';
+      case 'oakline_pay_receive': return 'O';
       case 'crypto_deposit': return '₿';
       case 'loan_payment': return '🏦';
       case 'loan_deposit': return '🏦';
@@ -426,6 +478,7 @@ export default function TransactionsHistory() {
         txType === 'reward' || 
         txType === 'cashback' || 
         txType === 'zelle_receive' ||
+        txType === 'oakline_pay_receive' ||
         txType === 'crypto_deposit' ||
         txType === 'loan_deposit' ||
         description.includes('received from') ||
@@ -441,6 +494,7 @@ export default function TransactionsHistory() {
         txType === 'payment' || 
         txType === 'loan_payment' ||
         txType === 'zelle_send' ||
+        txType === 'oakline_pay_send' ||
         description.includes('online shopping') ||
         description.includes('purchase') ||
         description.includes('shopping') ||

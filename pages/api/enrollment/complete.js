@@ -143,11 +143,11 @@ export default async function handler(req, res) {
             <p>To get started, simply sign in with your email and the password you just created.</p>
             
             <div style="text-align: center;">
-              <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://oaklinebank.com'}/login" class="button">Sign In Now</a>
+              <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.theoaklinebank.com'}/login" class="button">Sign In Now</a>
             </div>
             
             <p style="margin-top: 30px; font-size: 14px; color: #666;">
-              If you have any questions or need assistance, please don't hesitate to contact us at contact-us@theoaklinebank.com
+              If you have any questions or need assistance, please don't hesitate to contact us at <a href="mailto:contact-us@theoaklinebank.com" style="color: #1A3E6F;">contact-us@theoaklinebank.com</a>
             </p>
           </div>
         </div>
@@ -159,7 +159,7 @@ export default async function handler(req, res) {
       to: application.email,
       subject: 'Welcome to Oakline Bank - Your Account is Active!',
       html: emailHtml,
-      text: `Welcome to Oakline Bank, ${application.first_name}! Your enrollment is complete. You can now sign in at ${process.env.NEXT_PUBLIC_BASE_URL || 'https://oaklinebank.com'}/login`,
+      text: `Welcome to Oakline Bank, ${application.first_name}! Your enrollment is complete. You can now sign in at ${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.theoaklinebank.com'}/login`,
       from: 'welcome',
       emailType: 'enrollment_complete',
       userId: userId

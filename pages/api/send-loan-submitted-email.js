@@ -99,14 +99,14 @@ export default async function handler(req, res) {
 
             <!-- CTA -->
             <div style="text-align: center; margin-bottom: 1.5rem;">
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://oaklinebank.com'}/dashboard" style="display: inline-block; background: linear-gradient(135deg, #1a365d 0%, #059669 100%); color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://www.theoaklinebank.com'}/dashboard" style="display: inline-block; background: linear-gradient(135deg, #1a365d 0%, #059669 100%); color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
                 Go to Dashboard
               </a>
             </div>
 
             <!-- Support -->
             <p style="font-size: 13px; color: #64748b; margin: 0; text-align: center; line-height: 1.6;">
-              Questions? Contact our Loan Department at loans@oaklinebank.com<br>
+              Questions? Contact our Loan Department at <a href="mailto:loans@theoaklinebank.com" style="color: #1a365d; text-decoration: none;">loans@theoaklinebank.com</a><br>
               Available Monday-Friday, 9 AM - 5 PM EST
             </p>
           </div>

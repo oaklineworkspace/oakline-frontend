@@ -28,19 +28,7 @@ const nextConfig = {
   
   // Webpack optimizations
   webpack: (config, { isServer }) => {
-    if (!isServer) {
-      // Client-side optimizations
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-        },
-      };
-    }
+    // Let Next.js handle chunk splitting by default
     return config;
   },
   
