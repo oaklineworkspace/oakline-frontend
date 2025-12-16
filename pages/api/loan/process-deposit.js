@@ -132,14 +132,13 @@ export default async function handler(req, res) {
         .from('loan_payments')
         .insert([{
           loan_id: loan_id,
-          user_id: user.id,
           amount: parseFloat(amount),
           payment_type: 'deposit',
           status: 'completed', // Account balance payments are immediately confirmed
           is_deposit: true,
           deposit_method: 'account_balance',
+          account_id: account_id,
           metadata: {
-            account_id: account_id,
             account_number: account.account_number,
             reference: referenceNumber
           },
