@@ -5598,15 +5598,16 @@ if (typeof document !== 'undefined') {
 
       .banking-plus-right-section {
         flex: 0 0 auto !important;
-        gap: 0.3rem !important;
+        gap: 0.25rem !important;
         justify-content: flex-end !important;
         order: 2 !important;
         display: flex !important;
-        flex-direction: column !important;
-        align-items: flex-end !important;
+        flex-direction: row !important;
+        align-items: center !important;
         position: absolute !important;
         right: 0 !important;
         top: 0.5rem !important;
+        flex-wrap: wrap !important;
       }
 
       .banking-plus-container {
@@ -5617,27 +5618,49 @@ if (typeof document !== 'undefined') {
       }
 
       .language-selector-inline {
-        transform: scale(0.85) !important;
+        transform: scale(0.8) !important;
         flex: 0 0 auto !important;
         position: relative !important;
         right: auto !important;
         top: auto !important;
         order: 1 !important;
+        margin-right: 0.25rem !important;
       }
 
       .sign-out-button {
         order: 2 !important;
-        margin-top: 0.15rem !important;
-        font-size: 0.7rem !important;
-        padding: 0.3rem 0.6rem !important;
+        margin-top: 0 !important;
+        font-size: 0.65rem !important;
+        padding: 0.25rem 0.5rem !important;
       }
 
       .mobile-banking-plus-inline {
         display: flex !important;
-        position: absolute !important;
-        left: 50% !important;
-        top: 2rem !important;
-        transform: translateX(-50%) !important;
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
+        margin-left: 0.5rem !important;
+      }
+
+      .mobile-banking-plus-inline button {
+        padding: 0.35rem 0.6rem !important;
+        font-size: 0.7rem !important;
+        min-width: auto !important;
+        gap: 0.25rem !important;
+      }
+
+      .mobile-banking-plus-inline button span {
+        font-size: 0.65rem !important;
+      }
+
+      .mobile-banking-plus-inline button > div {
+        width: 12px !important;
+        height: 10px !important;
+      }
+
+      .mobile-banking-plus-inline button > div > div {
+        height: 1.5px !important;
       }
 
       .banking-dropdown {
