@@ -222,6 +222,9 @@ function DashboardContent() {
             // Exclude loan payments/deposits - they'll be fetched from loan_payments table
             const isLoanTx = desc.includes('loan payment') || 
                             desc.includes('loan pay-') ||
+                            desc.includes('loan 10%') ||
+                            desc.includes('collateral deposit') ||
+                            desc.includes('loan deposit') ||
                             txType === 'loan_payment' || 
                             txType === 'loan_deposit';
             return !isLoanTx;
