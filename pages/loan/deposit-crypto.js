@@ -165,8 +165,8 @@ function LoanDetailsCard({ loanDetails, minDeposit, depositProgress }) {
   if (!loanDetails) return null;
   
   const hasPartialPayment = depositProgress && depositProgress.totalPaid > 0;
-  const depositRequired = depositProgress?.depositRequired || minDeposit;
-  const remaining = depositProgress?.remaining || minDeposit;
+  const depositRequired = depositProgress?.depositRequired ?? minDeposit;
+  const remaining = depositProgress?.remaining ?? minDeposit;
 
   return (
     <div style={{
