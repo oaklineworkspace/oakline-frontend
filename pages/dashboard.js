@@ -198,6 +198,16 @@ function DashboardContent() {
           .limit(20)
       );
 
+      // Also fetch Oakline Pay pending claims (sent by user)
+      queryPromises.push(
+        supabase
+          .from('oakline_pay_pending_claims')
+          .select('*')
+          .eq('sender_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(50)
+      );
+
       // Execute all parallel queries
       const results = await Promise.all(queryPromises);
       let resultIndex = 0;
@@ -236,6 +246,15 @@ function DashboardContent() {
         oaklinePayTransactions = oaklinePayResult.data || [];
       } else if (oaklinePayResult?.error) {
         console.warn('Oakline Pay transactions fetch warning:', oaklinePayResult.error);
+      }
+
+      // Get Oakline Pay pending claims (sent by user)
+      const pendingClaimsResult = results[resultIndex++];
+      let pendingClaims = [];
+      if (pendingClaimsResult && !pendingClaimsResult.error && pendingClaimsResult.data) {
+        pendingClaims = pendingClaimsResult.data || [];
+      } else if (pendingClaimsResult?.error) {
+        console.warn('Oakline Pay pending claims fetch warning:', pendingClaimsResult.error);
       }
 
       // Fetch wallet addresses in parallel for both crypto types
@@ -514,6 +533,36 @@ function DashboardContent() {
         });
 
         transactionsData = [...transactionsData, ...formattedOaklinePayTransactions];
+      }
+
+      // Format and merge Oakline Pay pending claims (sent by user - waiting to be claimed)
+      if (pendingClaims && pendingClaims.length > 0) {
+        const formattedPendingClaims = pendingClaims.map(claim => ({
+          id: claim.id,
+          type: 'oakline_pay_send',
+          transaction_type: 'oakline_pay_send',
+          description: `Oakline Pay - Sent to ${claim.recipient_email}`,
+          amount: -parseFloat(claim.amount),
+          status: claim.status === 'pending' ? 'pending' : claim.status,
+          created_at: claim.created_at,
+          updated_at: claim.updated_at,
+          completed_at: claim.completed_at,
+          recipient_contact: claim.recipient_email,
+          recipient_type: 'email',
+          recipient_name: claim.recipient_email,
+          sender_contact: claim.sender_name,
+          sender_name: claim.sender_name,
+          is_pending_claim: true,
+          reference_number: claim.reference_number,
+          memo: claim.memo,
+          accounts: null,
+          sender_id: claim.sender_id,
+          sender_display: claim.sender_name,
+          recipient_display: claim.recipient_email,
+          transaction_data: claim
+        }));
+
+        transactionsData = [...transactionsData, ...formattedPendingClaims];
       }
 
       // Fetch loan payments (both deposits and regular payments - last 30 days)
@@ -1776,7 +1825,7 @@ function DashboardContent() {
             <span style={styles.quickActionText}>Loans</span>
           </Link>
           <Link href="/oakline-pay" style={styles.standardActionButton}>
-            <span style={styles.quickActionIcon}>🅾️</span>
+            <span style={{...styles.quickActionIcon, color: '#ffffff', fontWeight: 'bold', fontSize: '1.3rem', background: 'linear-gradient(135deg, #1a365d, #2d4a7c)', borderRadius: '50%', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>O</span>
             <span style={styles.quickActionText}>Oakline Pay</span>
           </Link>
         </div>)}

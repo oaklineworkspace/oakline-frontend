@@ -390,6 +390,43 @@ export default function TransactionsHistory() {
         transactionsData = [...transactionsData, ...formattedOaklinePayTransactions];
       }
 
+      // Fetch Oakline Pay pending claims (sent by user - waiting to be claimed)
+      const { data: pendingClaimsData, error: pendingClaimsError } = await supabase
+        .from('oakline_pay_pending_claims')
+        .select('*')
+        .eq('sender_id', user.id)
+        .gte('created_at', dateFilter)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      // Format and merge Oakline Pay pending claims
+      if (pendingClaimsData && pendingClaimsData.length > 0) {
+        const formattedPendingClaims = pendingClaimsData.map(claim => ({
+          id: claim.id,
+          type: 'oakline_pay_send',
+          transaction_type: 'oakline_pay_send',
+          description: `Oakline Pay - Sent to ${claim.recipient_email}`,
+          amount: parseFloat(claim.amount) || 0,
+          status: claim.status === 'pending' ? 'pending' : claim.status,
+          created_at: claim.created_at,
+          updated_at: claim.updated_at,
+          completed_at: claim.completed_at,
+          recipient_contact: claim.recipient_email,
+          recipient_type: 'email',
+          recipient_name: claim.recipient_email,
+          sender_contact: claim.sender_name,
+          sender_name: claim.sender_name,
+          is_pending_claim: true,
+          reference: claim.reference_number || `OPAY-${claim.id.substring(0, 8).toUpperCase()}`,
+          memo: claim.memo,
+          accounts: null,
+          is_credit: false,
+          user_id: user.id
+        }));
+        console.log('Transactions: Formatted Oakline Pay pending claims:', formattedPendingClaims.length);
+        transactionsData = [...transactionsData, ...formattedPendingClaims];
+      }
+
       // Sort all transactions by most recent
       transactionsData = transactionsData
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
