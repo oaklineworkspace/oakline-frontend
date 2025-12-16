@@ -42,9 +42,17 @@ export default async function handler(req, res) {
           .eq('is_deposit', true)
           .order('created_at', { ascending: false });
 
+        const depositTransactions = depositsError ? [] : (deposits || []);
+        
+        // Check if any deposit payment is completed - override loan's deposit status
+        const hasCompletedDeposit = depositTransactions.some(d => d.status === 'completed');
+        
         return {
           ...loan,
-          deposit_transactions: depositsError ? [] : (deposits || [])
+          deposit_transactions: depositTransactions,
+          // Override deposit_paid and deposit_status if any deposit payment is completed
+          deposit_paid: hasCompletedDeposit ? true : loan.deposit_paid,
+          deposit_status: hasCompletedDeposit ? 'completed' : loan.deposit_status
         };
       })
     );
