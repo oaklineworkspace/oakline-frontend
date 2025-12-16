@@ -272,7 +272,7 @@ function LoansOverviewContent() {
                         </span>
                       </div>
                     )}
-                    {loan.deposit_required && loan.deposit_required > 0 && (
+                    {loan.deposit_required && loan.deposit_required > 0 && loan.status !== 'closed' && loan.status !== 'rejected' && (
                       <div style={styles.detailRow}>
                         <span style={styles.detailLabel}>Security Deposit (10%):</span>
                         <span style={{
@@ -317,6 +317,7 @@ function LoansOverviewContent() {
                     )}
                   </div>
 
+                  {loan.status !== 'closed' && loan.status !== 'rejected' && (
                   <div style={styles.depositStatusContainer}>
                     {(() => {
                       const hasDepositTransactions = loan.deposit_transactions && Array.isArray(loan.deposit_transactions) && loan.deposit_transactions.length > 0;
@@ -456,6 +457,7 @@ function LoansOverviewContent() {
                       return null;
                     })()}
                   </div>
+                  )}
 
                   <div style={styles.loanActions}>
                     {(loan.status === 'active' || loan.status === 'approved') && !isLoanPaidOff(loan.remaining_balance) && (
