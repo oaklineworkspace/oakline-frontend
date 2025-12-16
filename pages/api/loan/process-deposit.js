@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../../../lib/supabaseAdmin';
+import { sendDepositConfirmedEmail } from '../../../lib/email';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -219,8 +220,6 @@ export default async function handler(req, res) {
 
       // Send deposit confirmed email
       try {
-        const { sendDepositConfirmedEmail } = require('../../../lib/email');
-
         await sendDepositConfirmedEmail({
           to: userEmail,
           userName,
