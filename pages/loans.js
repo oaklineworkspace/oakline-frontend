@@ -28,6 +28,8 @@ function LoansOverviewContent() {
   useEffect(() => {
     if (user) {
       fetchUserLoans();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
@@ -56,8 +58,10 @@ function LoansOverviewContent() {
   const fetchUserLoans = async () => {
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error('Session error:', sessionError);
         setLoading(false);
         return;
       }
@@ -69,6 +73,12 @@ function LoansOverviewContent() {
       });
 
       const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Failed to fetch loans:', data.error || response.statusText);
+        setLoading(false);
+        return;
+      }
 
       if (response.ok && data.loans) {
         setLoans(data.loans);
