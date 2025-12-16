@@ -5599,15 +5599,15 @@ if (typeof document !== 'undefined') {
 
       .banking-plus-right-section {
         flex: 0 0 auto !important;
-        gap: 0.4rem !important;
+        gap: 0.2rem !important;
         justify-content: flex-end !important;
         order: 3 !important;
         display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
+        flex-direction: column !important;
+        align-items: flex-end !important;
         position: absolute !important;
         right: 0 !important;
-        top: 0.5rem !important;
+        top: 0.3rem !important;
         flex-wrap: nowrap !important;
       }
 
@@ -5619,21 +5619,22 @@ if (typeof document !== 'undefined') {
       }
 
       .language-selector-inline {
-        transform: scale(0.75) !important;
+        transform: scale(0.7) !important;
         flex: 0 0 auto !important;
         position: relative !important;
         right: auto !important;
         top: auto !important;
         order: 1 !important;
         margin-right: 0 !important;
+        margin-bottom: 0.1rem !important;
       }
 
       .sign-out-button {
         order: 2 !important;
         margin-top: 0 !important;
-        font-size: 0.6rem !important;
-        padding: 0.2rem 0.4rem !important;
-        transform: scale(0.85) !important;
+        font-size: 0.55rem !important;
+        padding: 0.15rem 0.35rem !important;
+        transform: scale(0.9) !important;
       }
 
       .mobile-banking-plus-inline {
