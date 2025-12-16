@@ -5547,16 +5547,17 @@ if (typeof document !== 'undefined') {
       }
 
       .top-header-responsive {
-        justify-content: space-between !important;
+        justify-content: flex-start !important;
         flex-wrap: wrap !important;
-        gap: 0.5rem !important;
+        gap: 0 !important;
         padding: 0.5rem 0 !important;
         position: relative !important;
+        align-items: flex-start !important;
       }
 
       .top-header-responsive a[href="/"] {
         flex: 0 0 auto !important;
-        max-width: 50% !important;
+        max-width: 45% !important;
         justify-content: flex-start !important;
         order: 1 !important;
         margin-left: 0 !important;
@@ -5564,25 +5565,25 @@ if (typeof document !== 'undefined') {
       }
 
       .top-header-responsive a[href="/"] img {
-        height: 140px !important;
+        height: 70px !important;
         width: auto !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:first-child {
-        font-size: 3.5rem !important;
+        font-size: 1.5rem !important;
         font-weight: 700 !important;
       }
 
       .top-header-responsive a[href="/"] > div > div:last-child {
-        font-size: 1.4rem !important;
+        font-size: 0.7rem !important;
         font-weight: 500 !important;
       }
 
       .scrolling-welcome-inline {
         display: block !important;
         flex: 0 0 100% !important;
-        margin: 1rem 0 0 0 !important;
-        padding: 0.8rem 1.5rem !important;
+        margin: 0.5rem 0 0 0 !important;
+        padding: 0.6rem 1rem !important;
         min-width: 0 !important;
         max-width: 100% !important;
         width: 100% !important;
@@ -5591,23 +5592,23 @@ if (typeof document !== 'undefined') {
       }
 
       .scrolling-welcome-inline > div {
-        font-size: 1.1rem !important;
+        font-size: 0.9rem !important;
         font-weight: 500 !important;
         animation: scrollWelcome 35s linear infinite !important;
       }
 
       .banking-plus-right-section {
         flex: 0 0 auto !important;
-        gap: 0.25rem !important;
+        gap: 0.4rem !important;
         justify-content: flex-end !important;
-        order: 2 !important;
+        order: 3 !important;
         display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
         position: absolute !important;
         right: 0 !important;
         top: 0.5rem !important;
-        flex-wrap: wrap !important;
+        flex-wrap: nowrap !important;
       }
 
       .banking-plus-container {
@@ -5618,45 +5619,47 @@ if (typeof document !== 'undefined') {
       }
 
       .language-selector-inline {
-        transform: scale(0.8) !important;
+        transform: scale(0.75) !important;
         flex: 0 0 auto !important;
         position: relative !important;
         right: auto !important;
         top: auto !important;
         order: 1 !important;
-        margin-right: 0.25rem !important;
+        margin-right: 0 !important;
       }
 
       .sign-out-button {
         order: 2 !important;
         margin-top: 0 !important;
-        font-size: 0.65rem !important;
-        padding: 0.25rem 0.5rem !important;
+        font-size: 0.6rem !important;
+        padding: 0.2rem 0.4rem !important;
+        transform: scale(0.85) !important;
       }
 
       .mobile-banking-plus-inline {
         display: flex !important;
-        position: relative !important;
-        left: auto !important;
-        top: auto !important;
-        transform: none !important;
-        margin-left: 0.5rem !important;
+        position: absolute !important;
+        left: 45% !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        margin-left: 0 !important;
+        order: 2 !important;
       }
 
       .mobile-banking-plus-inline button {
-        padding: 0.35rem 0.6rem !important;
-        font-size: 0.7rem !important;
+        padding: 0.3rem 0.5rem !important;
+        font-size: 0.65rem !important;
         min-width: auto !important;
-        gap: 0.25rem !important;
+        gap: 0.2rem !important;
       }
 
       .mobile-banking-plus-inline button span {
-        font-size: 0.65rem !important;
+        font-size: 0.6rem !important;
       }
 
       .mobile-banking-plus-inline button > div {
-        width: 12px !important;
-        height: 10px !important;
+        width: 10px !important;
+        height: 8px !important;
       }
 
       .mobile-banking-plus-inline button > div > div {
