@@ -242,8 +242,39 @@ export default function AccountDetails() {
         };
       });
 
+      // Fetch Oakline Pay pending claims (sent by user - waiting to be claimed)
+      const { data: pendingClaims, error: pendingClaimsError } = await supabase
+        .from('oakline_pay_pending_claims')
+        .select('*')
+        .eq('sender_id', user.id)
+        .gte('created_at', dateFilter)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (pendingClaimsError) {
+        console.warn('Pending claims fetch warning:', pendingClaimsError);
+      }
+
+      // Format Oakline Pay pending claims
+      const pendingClaimsFormatted = (pendingClaims || []).map(claim => ({
+        id: claim.id,
+        account_id: accountId,
+        type: 'oakline_pay_send',
+        transaction_type: 'oakline_pay_send',
+        description: `Oakline Pay - Sent to ${claim.recipient_email}`,
+        amount: -parseFloat(claim.amount),
+        created_at: claim.created_at,
+        status: claim.status === 'pending' ? 'pending' : claim.status,
+        is_pending_claim: true,
+        sender_id: claim.sender_id,
+        sender_name: claim.sender_name,
+        recipient_email: claim.recipient_email,
+        memo: claim.memo,
+        reference_number: claim.reference_number
+      }));
+
       // Merge and sort by date
-      const allTransactions = [...regularTx, ...depositTx, ...cryptoTx, ...oaklinePayFormatted].sort((a, b) => 
+      const allTransactions = [...regularTx, ...depositTx, ...cryptoTx, ...oaklinePayFormatted, ...pendingClaimsFormatted].sort((a, b) => 
         new Date(b.created_at) - new Date(a.created_at)
       );
 

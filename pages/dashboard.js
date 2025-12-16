@@ -2406,7 +2406,9 @@ function DashboardContent() {
                 Account Number
               </span>
               <span style={{ fontSize: '0.9rem', color: '#1e293b', fontWeight: '600', fontFamily: 'monospace', textAlign: 'right' }}>
-                {selectedTransaction.accounts?.account_number || 'N/A'}
+                {selectedTransaction.accounts?.account_number || 
+                 (selectedTransaction.is_pending_claim ? 'Pending Claim' : 
+                  (selectedTransaction.transaction_type === 'oakline_pay_send' || selectedTransaction.transaction_type === 'oakline_pay_receive' ? 'Oakline Pay' : 'N/A'))}
               </span>
             </div>
           )}
