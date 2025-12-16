@@ -16,12 +16,25 @@ export default async function handler(req, res) {
       selectedNetwork,
       walletAddress,
       txHash,
-      depositId
+      depositId,
+      // Partial payment fields
+      depositRequired,
+      totalPaidBefore,
+      isPartialPayment
     } = req.body;
 
     if (!userEmail || !depositAmount || !cryptoType) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
+    
+    // Calculate partial payment progress
+    const required = parseFloat(depositRequired || 0);
+    const paidBefore = parseFloat(totalPaidBefore || 0);
+    const thisPayment = parseFloat(depositAmount || 0);
+    const totalAfterThis = paidBefore + thisPayment;
+    const remainingAfterThis = Math.max(0, required - totalAfterThis);
+    const isFullyPaid = remainingAfterThis <= 0;
+    const progressPercent = required > 0 ? Math.min(100, (totalAfterThis / required) * 100) : 0;
 
     // Fetch bank details
     const { data: bankDetails, error: fetchError } = await supabaseAdmin
@@ -64,12 +77,59 @@ export default async function handler(req, res) {
           <!-- Main Content -->
           <div style="padding: 40px 32px;">
             <h1 style="color: #059669; font-size: 24px; font-weight: 700; margin: 0 0 24px 0;">
-              ✓ Crypto Deposit Received
+              ✓ ${isPartialPayment && !isFullyPaid ? 'Partial Deposit' : 'Crypto Deposit'} Received
             </h1>
 
             <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
-              Thank you for submitting your 10% loan collateral deposit. We have successfully received your cryptocurrency payment and it is now pending blockchain confirmation.
+              ${isPartialPayment && !isFullyPaid 
+                ? `Thank you for submitting a partial payment toward your 10% loan collateral deposit. We have successfully received your cryptocurrency payment and it is now pending blockchain confirmation.`
+                : `Thank you for submitting your 10% loan collateral deposit. We have successfully received your cryptocurrency payment and it is now pending blockchain confirmation.`
+              }
             </p>
+            
+            ${isPartialPayment && required > 0 ? `
+            <!-- Deposit Progress -->
+            <div style="background-color: ${isFullyPaid ? '#ecfdf5' : '#eff6ff'}; border: 1px solid ${isFullyPaid ? '#10b981' : '#3b82f6'}; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+              <h3 style="color: ${isFullyPaid ? '#059669' : '#1e40af'}; font-size: 14px; font-weight: 600; margin: 0 0 12px 0;">
+                ${isFullyPaid ? '✅ Deposit Complete!' : '📊 Deposit Progress'}
+              </h3>
+              <div style="margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; font-size: 13px; color: ${isFullyPaid ? '#059669' : '#1e40af'}; margin-bottom: 8px;">
+                  <span>This Payment: ${formatCurrency(thisPayment)}</span>
+                  <span>${progressPercent.toFixed(0)}% Complete</span>
+                </div>
+                <div style="background-color: ${isFullyPaid ? '#bbf7d0' : '#bfdbfe'}; border-radius: 4px; height: 8px; overflow: hidden;">
+                  <div style="background-color: ${isFullyPaid ? '#10b981' : '#3b82f6'}; height: 100%; width: ${progressPercent}%; border-radius: 4px;"></div>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                <div>
+                  <span style="color: #64748b;">Total Paid:</span>
+                  <span style="color: ${isFullyPaid ? '#059669' : '#1e40af'}; font-weight: 600;"> ${formatCurrency(totalAfterThis)}</span>
+                </div>
+                <div>
+                  <span style="color: #64748b;">Required:</span>
+                  <span style="color: #1e293b; font-weight: 600;"> ${formatCurrency(required)}</span>
+                </div>
+              </div>
+              ${!isFullyPaid ? `
+              <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+                <span style="color: #dc2626; font-weight: 600; font-size: 14px;">
+                  Remaining Balance: ${formatCurrency(remainingAfterThis)}
+                </span>
+                <p style="color: #64748b; font-size: 13px; margin: 8px 0 0 0;">
+                  Please submit the remaining amount to complete your deposit and activate your loan.
+                </p>
+              </div>
+              ` : `
+              <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #bbf7d0;">
+                <p style="color: #059669; font-size: 14px; margin: 0;">
+                  🎉 Your deposit is now complete! Once all payments are confirmed, your loan will be activated.
+                </p>
+              </div>
+              `}
+            </div>
+            ` : ''}
 
             <!-- Deposit Details -->
             <div style="background-color: #f0fdf4; border: 1px solid #d1e7dd; border-radius: 8px; padding: 24px; margin-bottom: 24px;">

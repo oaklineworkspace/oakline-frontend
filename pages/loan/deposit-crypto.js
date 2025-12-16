@@ -942,7 +942,11 @@ function LoanDepositCryptoContent() {
                 selectedNetwork: depositForm.network_type,
                 walletAddress: walletAddress,
                 txHash: txHash || null,
-                depositId: insertedDeposit?.[0]?.id
+                depositId: insertedDeposit?.[0]?.id,
+                // Partial payment info
+                depositRequired: depositProgress.depositRequired || minDeposit,
+                totalPaidBefore: depositProgress.totalPaid || 0,
+                isPartialPayment: true
               })
             });
           }
