@@ -161,6 +161,7 @@ export default async function handler(req, res) {
       const isDepositComplete = newTotalPaid >= depositRequired;
 
       // Update loan with deposit information - status is PENDING for admin review
+      // Note: deposit_status only allows 'pending', 'completed', 'not_required'
       const { error: updateLoanError } = await supabaseAdmin
         .from('loans')
         .update({
@@ -168,7 +169,7 @@ export default async function handler(req, res) {
           deposit_amount: newTotalPaid,
           deposit_date: new Date().toISOString(),
           deposit_method: 'balance',
-          deposit_status: isDepositComplete ? 'completed' : 'partial',
+          deposit_status: isDepositComplete ? 'completed' : 'pending',
           status: 'pending',
           updated_at: new Date().toISOString()
         })
