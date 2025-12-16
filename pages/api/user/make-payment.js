@@ -111,8 +111,8 @@ export default async function handler(req, res) {
       .insert([{
         loan_id: loan_id,
         account_id: account_id,
-        amount: parseFloat(amount),
-        principal_amount: principalAmount > 0 ? principalAmount : parseFloat(amount),
+        amount: paymentAmount,
+        principal_amount: principalAmount > 0 ? principalAmount : paymentAmount,
         interest_amount: interestAmount > 0 ? interestAmount : 0,
         late_fee: 0,
         balance_after: newRemainingBalance,
@@ -145,7 +145,7 @@ export default async function handler(req, res) {
           user_id: user.id,
           account_id: null,
           type: 'debit',
-          amount: parseFloat(amount),
+          amount: paymentAmount,
           description: paymentDescription,
           status: 'pending',
           reference: referenceNumber,
@@ -163,7 +163,7 @@ export default async function handler(req, res) {
         user_id: user.id,
         type: 'loan',
         title: 'Loan Payment Submitted',
-        message: `Your loan payment of $${parseFloat(amount).toLocaleString()} has been submitted and is being processed. Reference: ${referenceNumber}`,
+        message: `Your loan payment of $${paymentAmount.toLocaleString()} has been submitted and is being processed. Reference: ${referenceNumber}`,
         read: false
       }]);
 
