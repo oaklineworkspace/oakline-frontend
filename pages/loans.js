@@ -286,19 +286,26 @@ function LoansOverviewContent() {
                             const required = parseFloat(loan.deposit_required || 0);
                             const paid = parseFloat(loan.total_deposits_paid || 0);
                             const pending = parseFloat(loan.total_deposits_pending || 0);
-                            const remaining = Math.max(0, required - paid - pending);
+                            const totalContributed = paid + pending;
+                            const remaining = Math.max(0, required - totalContributed);
                             
                             // Only show Confirmed if actually fully paid (paid >= required)
                             if (loan.deposit_status === 'completed' && paid >= required) {
                               return `$${required.toLocaleString()} ✓ Confirmed`;
-                            } else if (loan.deposit_status === 'partial' || (paid > 0 && paid < required)) {
-                              return `$${paid.toLocaleString()} / $${required.toLocaleString()} 📊 Partial`;
-                            } else if ((loan.deposit_status === 'pending' && loan.deposit_transactions?.length > 0) || pending > 0) {
+                            } else if (totalContributed >= required && pending > 0) {
+                              // Fully contributed but some still pending
                               return (
                                 <span>
-                                  ${paid.toLocaleString()} paid + ${pending.toLocaleString()} pending
-                                  {remaining > 0 && <span style={{ color: '#6b7280' }}> | ${remaining.toLocaleString()} remaining</span>}
-                                  <span> ⏳</span>
+                                  ${paid.toLocaleString()} ✓ + ${pending.toLocaleString()} ⏳
+                                </span>
+                              );
+                            } else if (totalContributed > 0 && totalContributed < required) {
+                              // Partial - show combined progress
+                              return (
+                                <span>
+                                  ${totalContributed.toLocaleString()} / ${required.toLocaleString()}
+                                  {pending > 0 && <span style={{ color: '#f59e0b' }}> ({pending.toLocaleString()} pending)</span>}
+                                  <span> 📊</span>
                                 </span>
                               );
                             } else {
@@ -331,25 +338,15 @@ function LoansOverviewContent() {
                         );
                       }
 
-                      if (hasDepositTransactions && loan.deposit_status === 'pending' && !loan.deposit_paid) {
-                        return (
-                          <div style={{
-                            backgroundColor: '#fffbeb',
-                            border: '2px solid #f59e0b',
-                            borderRadius: '12px',
-                            padding: '16px',
-                            fontSize: '15px',
-                            color: '#92400e',
-                            marginBottom: '16px',
-                            fontWeight: '600'
-                          }}>
-                            ⏳ Blockchain Verification Pending — Confirmation typically completes within 15 minutes to 2 hours.
-                          </div>
-                        );
-                      }
-
-                      if (loan.deposit_status === 'partial' && !loan.deposit_paid && loan.deposit_required > 0) {
-                        const progressPercent = loan.deposit_progress_percent || 0;
+                      if ((loan.deposit_status === 'partial' || loan.deposit_status === 'pending') && !loan.deposit_paid && loan.deposit_required > 0 && hasDepositTransactions) {
+                        const paidAmount = parseFloat(loan.total_deposits_paid || 0);
+                        const pendingAmount = parseFloat(loan.total_deposits_pending || 0);
+                        const totalContributed = paidAmount + pendingAmount;
+                        const required = parseFloat(loan.deposit_required);
+                        const remaining = Math.max(0, required - totalContributed);
+                        const progressPercent = required > 0 ? Math.min(100, (totalContributed / required) * 100) : 0;
+                        const confirmedPercent = required > 0 ? (paidAmount / required) * 100 : 0;
+                        
                         return (
                           <div style={{
                             backgroundColor: '#eff6ff',
@@ -360,10 +357,14 @@ function LoansOverviewContent() {
                             lineHeight: '1.8'
                           }}>
                             <div style={{ fontSize: '15px', fontWeight: '700', color: '#1e40af', marginBottom: '12px' }}>
-                              📊 Partial Deposit Received
+                              📊 Deposit Progress
                             </div>
                             <p style={{ fontSize: '14px', color: '#1e3a8a', margin: '0 0 12px 0' }}>
-                              You've paid ${parseFloat(loan.total_deposits_paid || 0).toLocaleString()} of your ${parseFloat(loan.deposit_required).toLocaleString()} required deposit. Complete the remaining ${parseFloat(loan.deposit_remaining || 0).toLocaleString()} to activate your loan.
+                              {pendingAmount > 0 
+                                ? `You've contributed $${totalContributed.toLocaleString()} ($${paidAmount.toLocaleString()} confirmed + $${pendingAmount.toLocaleString()} pending) toward your $${required.toLocaleString()} deposit.`
+                                : `You've paid $${paidAmount.toLocaleString()} of your $${required.toLocaleString()} required deposit.`
+                              }
+                              {remaining > 0 && ` Complete the remaining $${remaining.toLocaleString()} to activate your loan.`}
                             </p>
                             <div style={{
                               backgroundColor: '#dbeafe',
@@ -373,18 +374,40 @@ function LoansOverviewContent() {
                             }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#1e40af', marginBottom: '8px' }}>
                                 <span>Progress: {progressPercent.toFixed(0)}%</span>
-                                <span>Remaining: ${parseFloat(loan.deposit_remaining || 0).toLocaleString()}</span>
+                                <span>Remaining: ${remaining.toLocaleString()}</span>
                               </div>
-                              <div style={{ backgroundColor: '#bfdbfe', borderRadius: '4px', height: '8px', overflow: 'hidden' }}>
-                                <div style={{ backgroundColor: '#3b82f6', height: '100%', width: `${progressPercent}%`, borderRadius: '4px', transition: 'width 0.3s ease' }} />
+                              <div style={{ backgroundColor: '#bfdbfe', borderRadius: '4px', height: '8px', overflow: 'hidden', position: 'relative' }}>
+                                {/* Confirmed (green) */}
+                                <div style={{ backgroundColor: '#10b981', height: '100%', width: `${confirmedPercent}%`, borderRadius: '4px', position: 'absolute', left: 0, top: 0 }} />
+                                {/* Pending (amber) on top */}
+                                <div style={{ backgroundColor: '#f59e0b', height: '100%', width: `${progressPercent - confirmedPercent}%`, borderRadius: '4px', position: 'absolute', left: `${confirmedPercent}%`, top: 0 }} />
                               </div>
+                              {pendingAmount > 0 && (
+                                <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: '#64748b', marginTop: '8px' }}>
+                                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <span style={{ width: '10px', height: '10px', backgroundColor: '#10b981', borderRadius: '2px' }}></span>
+                                    Confirmed: ${paidAmount.toLocaleString()}
+                                  </span>
+                                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <span style={{ width: '10px', height: '10px', backgroundColor: '#f59e0b', borderRadius: '2px' }}></span>
+                                    Pending: ${pendingAmount.toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
                             </div>
-                            <Link 
-                              href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${loan.deposit_remaining}`}
-                              style={{...styles.urgentDepositButton, backgroundColor: '#3b82f6', borderColor: '#3b82f6'}}
-                            >
-                              💰 Continue Deposit (${parseFloat(loan.deposit_remaining || 0).toLocaleString()} remaining) →
-                            </Link>
+                            {remaining > 0 && (
+                              <Link 
+                                href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${remaining}`}
+                                style={{...styles.urgentDepositButton, backgroundColor: '#3b82f6', borderColor: '#3b82f6'}}
+                              >
+                                💰 Continue Deposit (${remaining.toLocaleString()} remaining) →
+                              </Link>
+                            )}
+                            {remaining <= 0 && pendingAmount > 0 && (
+                              <div style={{ backgroundColor: '#fef3c7', padding: '12px', borderRadius: '8px', fontSize: '14px', color: '#92400e' }}>
+                                ⏳ Your payments are awaiting blockchain confirmation. Once confirmed, your loan will be activated.
+                              </div>
+                            )}
                           </div>
                         );
                       }
