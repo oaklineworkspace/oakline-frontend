@@ -109,13 +109,12 @@ export default async function handler(req, res) {
           user_id: user.id,
           account_id: account_id,
           type: 'debit',
-          amount: -parseFloat(amount),
+          amount: parseFloat(amount), // Amount must be positive, type indicates debit/credit
           balance_before: parseFloat(account.balance),
           balance_after: newBalance,
           description: depositDescription,
           status: 'hold',
-          reference: referenceNumber,
-          created_at: new Date().toISOString()
+          reference: referenceNumber
         }]);
 
       if (transactionError) {
