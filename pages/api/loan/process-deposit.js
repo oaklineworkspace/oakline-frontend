@@ -218,13 +218,18 @@ export default async function handler(req, res) {
       const userName = profile ? `${profile.first_name} ${profile.last_name}` : 'Valued Customer';
       const userEmail = profile?.email || user.email;
 
-      // Send deposit confirmed email
+      // Send deposit confirmed email with progress information
       try {
         await sendDepositConfirmedEmail({
           to: userEmail,
           userName,
           depositAmount: amount,
-          loanType: loan.loan_type.replace(/_/g, ' ').toUpperCase()
+          loanType: loan.loan_type ? loan.loan_type.replace(/_/g, ' ').toUpperCase() : 'LOAN',
+          totalPaid: newTotalPaid,
+          depositRequired: depositRequired,
+          remaining: remainingAfterThis,
+          isComplete: isDepositComplete,
+          paymentMethod: 'account_balance'
         });
       } catch (emailError) {
         console.error('Error sending deposit confirmation email:', emailError);
