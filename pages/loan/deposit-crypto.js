@@ -1162,7 +1162,7 @@ function LoanDepositCryptoContent() {
                     type="number"
                     step="0.01"
                     min="1"
-                    value={depositForm.amount || depositProgress.remaining?.toFixed(2) || minDeposit.toFixed(2)}
+                    value={depositForm.amount}
                     onChange={(e) => setDepositForm({ ...depositForm, amount: e.target.value })}
                     style={{
                       width: '100%',
@@ -1234,7 +1234,7 @@ function LoanDepositCryptoContent() {
                         type="number"
                         step="0.01"
                         min="1"
-                        value={depositForm.amount || depositProgress.remaining?.toFixed(2) || minDeposit.toFixed(2)}
+                        value={depositForm.amount}
                         onChange={(e) => setDepositForm({ ...depositForm, amount: e.target.value })}
                         style={{
                           width: '100%',
