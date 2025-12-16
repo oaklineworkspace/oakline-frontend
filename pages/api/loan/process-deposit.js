@@ -100,7 +100,8 @@ export default async function handler(req, res) {
 
       // Create transaction record with HOLD status (can be reversed)
       const loanTypeName = loan.loan_type ? loan.loan_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Loan';
-      const referenceNumber = `LOAN-DEP-${loan_id.substring(0, 8).toUpperCase()}`;
+      const uniqueTimestamp = Date.now().toString(36);
+      const referenceNumber = `LOAN-DEP-${loan_id.substring(0, 8).toUpperCase()}-${uniqueTimestamp}`;
       const depositDescription = `Loan 10% Collateral Deposit via Account Balance - ${loanTypeName}`;
 
       const { error: transactionError } = await supabaseAdmin
@@ -118,13 +119,13 @@ export default async function handler(req, res) {
         }]);
 
       if (transactionError) {
-        console.error('Error creating transaction record:', transactionError);
+        console.error('Error creating transaction record:', JSON.stringify(transactionError, null, 2));
         // Rollback account balance
         await supabaseAdmin
           .from('accounts')
           .update({ balance: accountBalance })
           .eq('id', account_id);
-        return res.status(500).json({ error: 'Failed to create transaction record' });
+        return res.status(500).json({ error: 'Failed to create transaction record: ' + (transactionError.message || transactionError.details || 'Unknown error') });
       }
 
       // Insert into loan_payments for tracking
