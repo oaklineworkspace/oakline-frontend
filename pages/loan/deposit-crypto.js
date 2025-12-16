@@ -1161,8 +1161,8 @@ function LoanDepositCryptoContent() {
                   <input
                     type="number"
                     step="0.01"
-                    min={isNaN(minDeposit) ? '0' : minDeposit}
-                    value={depositForm.amount || minDeposit.toFixed(2)}
+                    min="1"
+                    value={depositForm.amount || depositProgress.remaining?.toFixed(2) || minDeposit.toFixed(2)}
                     onChange={(e) => setDepositForm({ ...depositForm, amount: e.target.value })}
                     style={{
                       width: '100%',
@@ -1174,7 +1174,7 @@ function LoanDepositCryptoContent() {
                     }}
                   />
                   <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem', marginBottom: '0.75rem' }}>
-                    Minimum: ${minDeposit.toFixed(2)}
+                    Minimum: $1.00 (partial payments accepted) | Remaining: ${depositProgress.remaining?.toFixed(2) || minDeposit.toFixed(2)}
                   </div>
                   {networkFeePercent > 0 && depositForm.amount && (
                     <div style={{
@@ -1233,8 +1233,8 @@ function LoanDepositCryptoContent() {
                       <input
                         type="number"
                         step="0.01"
-                        min={minDeposit}
-                        value={depositForm.amount || minDeposit.toFixed(2)}
+                        min="1"
+                        value={depositForm.amount || depositProgress.remaining?.toFixed(2) || minDeposit.toFixed(2)}
                         onChange={(e) => setDepositForm({ ...depositForm, amount: e.target.value })}
                         style={{
                           width: '100%',
@@ -1246,7 +1246,7 @@ function LoanDepositCryptoContent() {
                         }}
                       />
                       <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.5rem' }}>
-                        Minimum required: ${minDeposit.toFixed(2)} (10% of your loan)
+                        Minimum: $1.00 (partial payments accepted) | Remaining: ${depositProgress.remaining?.toFixed(2) || minDeposit.toFixed(2)}
                       </div>
                     </div>
 
