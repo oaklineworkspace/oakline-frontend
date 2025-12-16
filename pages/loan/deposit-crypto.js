@@ -814,6 +814,7 @@ function LoanDepositCryptoContent() {
           payment_date: new Date().toISOString().split('T')[0],
           status: 'pending',
           payment_type: 'deposit',
+          payment_method: 'crypto',
           is_deposit: true,
           deposit_method: 'crypto',
           tx_hash: txHash || null,
