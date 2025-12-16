@@ -117,6 +117,9 @@ export default async function handler(req, res) {
     // Calculate total payments (principal + all interest)
     const totalPaymentsAmount = principal + totalInterest;
 
+    // Use calculated payments_completed for accuracy (based on principal paid)
+    const calculatedPaymentsMade = paidPayments.length;
+
     return res.status(200).json({
       success: true,
       loan_details: {
@@ -125,7 +128,7 @@ export default async function handler(req, res) {
         principal: parseFloat(loan.principal),
         interest_rate: parseFloat(loan.interest_rate),
         term_months: termMonths,
-        payments_made: paymentsMade,
+        payments_made: calculatedPaymentsMade, // Use calculated value for accuracy
         remaining_payments: remainingPayments.length,
         status: loan.status,
         current_balance: parseFloat(currentRemainingBalance.toFixed(2))

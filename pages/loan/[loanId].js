@@ -225,7 +225,12 @@ function LoanDetailContent() {
   const remainingBalance = parseFloat(loan?.remaining_balance || 0);
   const principal = parseFloat(loan?.principal || 0);
   const isFullyPaid = remainingBalance < 0.50 || loan?.status === 'paid' || loan?.status === 'closed' || (principal > 0 && remainingBalance <= principal * 0.001);
-  const progressPercent = isFullyPaid ? 100 : (loan?.term_months ? ((loan.payments_made || 0) / loan.term_months) * 100 : 0);
+  
+  // Calculate payments made based on principal paid off (more accurate than database field)
+  const principalPaid = Math.max(0, principal - remainingBalance);
+  const principalPerPayment = principal > 0 && loan?.term_months > 0 ? principal / loan.term_months : 1;
+  const calculatedPaymentsMade = isFullyPaid ? loan?.term_months : Math.min(Math.round(principalPaid / principalPerPayment), loan?.term_months || 0);
+  const progressPercent = isFullyPaid ? 100 : (loan?.term_months ? (calculatedPaymentsMade / loan.term_months) * 100 : 0);
 
   // Helper function to format remaining balance
   const formatRemainingBalance = (balance) => {
@@ -371,7 +376,7 @@ function LoanDetailContent() {
                     {isFullyPaid ? (
                       <span style={{color: '#059669', fontWeight: '700'}}>✓ Fully Paid</span>
                     ) : (
-                      `${loan.payments_made || 0} of ${loan.term_months} payments completed`
+                      `${calculatedPaymentsMade} of ${loan.term_months} payments completed`
                     )}
                   </div>
                 </div>
@@ -397,7 +402,7 @@ function LoanDetailContent() {
 
             <div style={styles.infoCard}>
               <div style={styles.infoLabel}>Payments Made</div>
-              <div style={styles.infoValue}>{loan.payments_made || 0} / {loan.term_months}</div>
+              <div style={styles.infoValue}>{calculatedPaymentsMade} / {loan.term_months}</div>
             </div>
 
             {loan.next_payment_date && !isFullyPaid && (
