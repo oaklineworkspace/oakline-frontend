@@ -391,6 +391,20 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Sign Out Button - Shows when user is logged in */}
+            {user && (
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  window.location.href = '/sign-in';
+                }}
+                style={styles.signOutButton}
+                className="sign-out-button"
+              >
+                <TranslatedText>Sign Out</TranslatedText>
+              </button>
+            )}
+
             {showBankingDropdown && (
               <>
                 <div
@@ -1637,6 +1651,21 @@ const styles = {
     backdropFilter: 'blur(10px)',
     minWidth: '100px',
     justifyContent: 'center'
+  },
+
+  // Sign Out Button Style
+  signOutButton: {
+    padding: '0.5rem 1rem',
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    color: '#ffffff',
+    border: '2px solid rgba(239, 68, 68, 0.4)',
+    borderRadius: '8px',
+    fontSize: '0.8rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    backdropFilter: 'blur(10px)',
+    whiteSpace: 'nowrap'
   },
 
   // Banking+ Dropdown Styles

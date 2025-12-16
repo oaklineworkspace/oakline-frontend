@@ -200,8 +200,50 @@ export default function AccountDetails() {
         gross_amount: deposit.amount
       }));
 
+      // Fetch Oakline Pay transactions for this account
+      const { data: oaklinePayTxns, error: oaklinePayError } = await supabase
+        .from('oakline_pay_transactions')
+        .select('*')
+        .or(`sender_account_id.eq.${accountId},recipient_account_id.eq.${accountId}`)
+        .gte('created_at', dateFilter)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (oaklinePayError) {
+        console.warn('Oakline Pay transactions fetch warning:', oaklinePayError);
+      }
+
+      // Format Oakline Pay transactions
+      const oaklinePayFormatted = (oaklinePayTxns || []).map(txn => {
+        const isSender = txn.sender_account_id === accountId;
+        const recipientDisplay = txn.recipient_tag ? `@${txn.recipient_tag}` : (txn.recipient_email || txn.recipient_name || 'User');
+        const senderDisplay = txn.sender_tag ? `@${txn.sender_tag}` : (txn.sender_name || 'User');
+        const txnAmount = parseFloat(txn.amount) || 0;
+        return {
+          id: txn.id,
+          account_id: accountId,
+          type: isSender ? 'oakline_pay_send' : 'oakline_pay_receive',
+          transaction_type: isSender ? 'oakline_pay_send' : 'oakline_pay_receive',
+          description: isSender 
+            ? `Oakline Pay to ${recipientDisplay}` 
+            : `Oakline Pay from ${senderDisplay}`,
+          amount: isSender ? -txnAmount : txnAmount,
+          created_at: txn.created_at,
+          status: txn.status || 'completed',
+          is_pending_claim: txn.is_pending_claim,
+          sender_id: txn.sender_id,
+          recipient_id: txn.recipient_id,
+          sender_name: txn.sender_name,
+          recipient_name: txn.recipient_name,
+          sender_tag: txn.sender_tag,
+          recipient_tag: txn.recipient_tag,
+          recipient_email: txn.recipient_email,
+          memo: txn.memo
+        };
+      });
+
       // Merge and sort by date
-      const allTransactions = [...regularTx, ...depositTx, ...cryptoTx].sort((a, b) => 
+      const allTransactions = [...regularTx, ...depositTx, ...cryptoTx, ...oaklinePayFormatted].sort((a, b) => 
         new Date(b.created_at) - new Date(a.created_at)
       );
 
@@ -245,6 +287,8 @@ export default function AccountDetails() {
       case 'zelle_send': return 'Z';
       case 'zelle_receive': return 'Z';
       case 'crypto_deposit': return '₿';
+      case 'oakline_pay_send': return 'O';
+      case 'oakline_pay_receive': return 'O';
       default: return '💼';
     }
   };

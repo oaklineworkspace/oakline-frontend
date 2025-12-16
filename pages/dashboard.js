@@ -1775,6 +1775,10 @@ function DashboardContent() {
             <span style={styles.quickActionIcon}>💰</span>
             <span style={styles.quickActionText}>Loans</span>
           </Link>
+          <Link href="/oakline-pay" style={styles.standardActionButton}>
+            <span style={styles.quickActionIcon}>🅾️</span>
+            <span style={styles.quickActionText}>Oakline Pay</span>
+          </Link>
         </div>)}
       </section>
 

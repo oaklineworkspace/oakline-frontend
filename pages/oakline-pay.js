@@ -1363,9 +1363,9 @@ export default function OaklinePayPage() {
                         onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 8px 16px rgba(26, 56, 93, 0.15)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
                         onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; e.currentTarget.style.transform = 'translateY(0)'; }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>
-                            <h3 style={{ margin: 0, color: '#1a365d', fontWeight: '600' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '0.75rem' : '0' }}>
+                          <div style={{ width: '100%' }}>
+                            <h3 style={{ margin: 0, color: '#1a365d', fontWeight: '600', fontSize: isMobile ? '0.9rem' : '1rem', wordBreak: 'break-word' }}>
                               {txn.is_pending_claim ? (
                                 txn.sender_id === user?.id 
                                   ? `📤 Pending - Sent to ${txn.recipient_email}`
@@ -1374,15 +1374,15 @@ export default function OaklinePayPage() {
                                 txn.sender_id === user?.id ? '📤 Sent to' : '📥 Received from'
                               )} {!txn.is_pending_claim && (txn.sender_id === user?.id ? (txn.recipient_name || txn.recipient_tag || 'User') : (txn.sender_name || txn.sender_tag || 'User'))}
                             </h3>
-                            <p style={{ margin: '0.5rem 0 0', color: '#64748b', fontSize: '0.85rem' }}>
+                            <p style={{ margin: '0.5rem 0 0', color: '#64748b', fontSize: '0.8rem' }}>
                               {new Date(txn.created_at).toLocaleDateString()} • {new Date(txn.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                             </p>
                           </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '1.3rem', fontWeight: '700', color: txn.sender_id === user?.id ? '#ef4444' : '#059669' }}>
+                          <div style={{ textAlign: isMobile ? 'left' : 'right', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                            <div style={{ fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: '700', color: txn.sender_id === user?.id ? '#ef4444' : '#059669' }}>
                               {txn.sender_id === user?.id ? '-' : '+'} ${parseFloat(txn.amount).toFixed(2)}
                             </div>
-                            <span style={{ backgroundColor: txn.status === 'completed' ? '#d1fae5' : txn.status === 'expired' ? '#fee2e2' : '#fef3c7', color: txn.status === 'completed' ? '#047857' : txn.status === 'expired' ? '#991b1b' : '#92400e', padding: '0.25rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '600' }}>
+                            <span style={{ backgroundColor: txn.status === 'completed' ? '#d1fae5' : txn.status === 'expired' ? '#fee2e2' : '#fef3c7', color: txn.status === 'completed' ? '#047857' : txn.status === 'expired' ? '#991b1b' : '#92400e', padding: '0.25rem 0.5rem', borderRadius: '6px', fontSize: '0.7rem', fontWeight: '600' }}>
                               {(txn.status || 'PENDING').toUpperCase()}
                             </span>
                           </div>
@@ -2685,7 +2685,7 @@ const styles = {
   transactionCard: {
     backgroundColor: '#f8fafc',
     borderRadius: '12px',
-    padding: '1rem',
+    padding: 'clamp(0.75rem, 2vw, 1rem)',
     border: '2px solid #e2e8f0'
   },
   settingsCard: {
