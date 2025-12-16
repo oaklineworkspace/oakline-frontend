@@ -278,13 +278,16 @@ function LoansOverviewContent() {
                         <span style={{
                           ...styles.detailValue, 
                           color: (loan.deposit_status === 'completed' || loan.deposit_paid === true) ? '#10b981' : 
+                                 loan.deposit_status === 'partial' ? '#3b82f6' :
                                  (loan.deposit_status === 'pending' && loan.deposit_transactions?.length > 0) ? '#f59e0b' : '#ef4444',
                           fontWeight: '700'
                         }}>
                           {(loan.deposit_status === 'completed' || loan.deposit_paid === true) ? (
-                            `$${parseFloat(loan.deposit_amount || loan.deposit_required).toLocaleString()} ✓ Confirmed`
+                            `$${parseFloat(loan.deposit_required).toLocaleString()} ✓ Confirmed`
+                          ) : loan.deposit_status === 'partial' ? (
+                            `$${parseFloat(loan.total_deposits_paid || 0).toLocaleString()} / $${parseFloat(loan.deposit_required).toLocaleString()} 📊 Partial`
                           ) : (loan.deposit_status === 'pending' && loan.deposit_transactions?.length > 0) ? (
-                            `$${parseFloat(loan.deposit_amount || loan.deposit_required).toLocaleString()} ⏳ Pending Confirmation`
+                            `$${parseFloat(loan.total_deposits_paid || 0).toLocaleString()} + $${parseFloat(loan.total_deposits_pending || 0).toLocaleString()} pending ⏳`
                           ) : (
                             `$${parseFloat(loan.deposit_required).toLocaleString()} ⏸️ Waiting for Deposit`
                           )}
@@ -331,6 +334,47 @@ function LoansOverviewContent() {
                         );
                       }
 
+                      if (loan.deposit_status === 'partial' && !loan.deposit_paid && loan.deposit_required > 0) {
+                        const progressPercent = loan.deposit_progress_percent || 0;
+                        return (
+                          <div style={{
+                            backgroundColor: '#eff6ff',
+                            border: '2px solid #3b82f6',
+                            borderRadius: '12px',
+                            padding: '16px',
+                            marginBottom: '16px',
+                            lineHeight: '1.8'
+                          }}>
+                            <div style={{ fontSize: '15px', fontWeight: '700', color: '#1e40af', marginBottom: '12px' }}>
+                              📊 Partial Deposit Received
+                            </div>
+                            <p style={{ fontSize: '14px', color: '#1e3a8a', margin: '0 0 12px 0' }}>
+                              You've paid ${parseFloat(loan.total_deposits_paid || 0).toLocaleString()} of your ${parseFloat(loan.deposit_required).toLocaleString()} required deposit. Complete the remaining ${parseFloat(loan.deposit_remaining || 0).toLocaleString()} to activate your loan.
+                            </p>
+                            <div style={{
+                              backgroundColor: '#dbeafe',
+                              borderRadius: '8px',
+                              padding: '12px',
+                              marginBottom: '12px'
+                            }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#1e40af', marginBottom: '8px' }}>
+                                <span>Progress: {progressPercent.toFixed(0)}%</span>
+                                <span>Remaining: ${parseFloat(loan.deposit_remaining || 0).toLocaleString()}</span>
+                              </div>
+                              <div style={{ backgroundColor: '#bfdbfe', borderRadius: '4px', height: '8px', overflow: 'hidden' }}>
+                                <div style={{ backgroundColor: '#3b82f6', height: '100%', width: `${progressPercent}%`, borderRadius: '4px', transition: 'width 0.3s ease' }} />
+                              </div>
+                            </div>
+                            <Link 
+                              href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${loan.deposit_remaining}`}
+                              style={{...styles.urgentDepositButton, backgroundColor: '#3b82f6', borderColor: '#3b82f6'}}
+                            >
+                              💰 Continue Deposit (${parseFloat(loan.deposit_remaining || 0).toLocaleString()} remaining) →
+                            </Link>
+                          </div>
+                        );
+                      }
+
                       if (loan.status === 'pending' && !hasDepositTransactions && !loan.deposit_paid && loan.deposit_required > 0) {
                         return (
                           <div style={{
@@ -357,16 +401,16 @@ function LoansOverviewContent() {
                               color: '#1e5631'
                             }}>
                               <div style={{ fontWeight: '600', marginBottom: '4px' }}>📋 Deposit Required: ${parseFloat(loan.deposit_required).toLocaleString()}</div>
-                              <div style={{ fontSize: '12px', color: '#1e7e34' }}>Plus applicable network fees if paying with crypto</div>
+                              <div style={{ fontSize: '12px', color: '#1e7e34' }}>You can make partial payments or pay the full amount</div>
                             </div>
                             <div style={{ fontSize: '13px', color: '#1e7e34', marginBottom: '8px' }}>
-                              <strong>Step 1:</strong> Select crypto & network | <strong>Step 2:</strong> Send total | <strong>Step 3:</strong> Upload proof | <strong>Step 4:</strong> We disburse
+                              <strong>Step 1:</strong> Select crypto & network | <strong>Step 2:</strong> Send amount | <strong>Step 3:</strong> Upload proof | <strong>Step 4:</strong> We disburse
                             </div>
                             <Link 
                               href={`/loan/deposit-crypto?loan_id=${loan.id}&amount=${loan.deposit_required}`}
                               style={{...styles.urgentDepositButton, backgroundColor: '#10b981', borderColor: '#10b981'}}
                             >
-                              💰 Complete Deposit Now →
+                              💰 Make Deposit →
                             </Link>
                           </div>
                         );

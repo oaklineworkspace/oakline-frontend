@@ -44,15 +44,46 @@ export default async function handler(req, res) {
 
         const depositTransactions = depositsError ? [] : (deposits || []);
         
-        // Check if any deposit payment is completed - override loan's deposit status
-        const hasCompletedDeposit = depositTransactions.some(d => d.status === 'completed');
+        // Calculate total deposits paid (completed deposits only)
+        const totalDepositsPaid = depositTransactions
+          .filter(d => d.status === 'completed')
+          .reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
+        
+        // Calculate pending deposits (submitted but not yet confirmed)
+        const totalDepositsPending = depositTransactions
+          .filter(d => d.status === 'pending' || d.status === 'processing')
+          .reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
+        
+        const depositRequired = parseFloat(loan.deposit_required || 0);
+        const depositRemaining = Math.max(0, depositRequired - totalDepositsPaid);
+        
+        // Deposit is fully paid if total completed deposits >= required
+        const isDepositFullyPaid = totalDepositsPaid >= depositRequired && depositRequired > 0;
+        
+        // Determine deposit status based on payments
+        let effectiveDepositStatus = loan.deposit_status;
+        let effectiveDepositPaid = loan.deposit_paid;
+        
+        if (isDepositFullyPaid) {
+          effectiveDepositStatus = 'completed';
+          effectiveDepositPaid = true;
+        } else if (totalDepositsPending > 0) {
+          effectiveDepositStatus = 'pending';
+        } else if (totalDepositsPaid > 0 && totalDepositsPaid < depositRequired) {
+          effectiveDepositStatus = 'partial';
+        }
         
         return {
           ...loan,
           deposit_transactions: depositTransactions,
-          // Override deposit_paid and deposit_status if any deposit payment is completed
-          deposit_paid: hasCompletedDeposit ? true : loan.deposit_paid,
-          deposit_status: hasCompletedDeposit ? 'completed' : loan.deposit_status
+          // Calculated deposit progress fields
+          total_deposits_paid: totalDepositsPaid,
+          total_deposits_pending: totalDepositsPending,
+          deposit_remaining: depositRemaining,
+          deposit_progress_percent: depositRequired > 0 ? Math.min(100, (totalDepositsPaid / depositRequired) * 100) : 0,
+          // Override deposit_paid and deposit_status based on actual payments
+          deposit_paid: effectiveDepositPaid,
+          deposit_status: effectiveDepositStatus
         };
       })
     );
