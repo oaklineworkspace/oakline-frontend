@@ -5633,9 +5633,9 @@ if (typeof document !== 'undefined') {
       .sign-out-button {
         order: 2 !important;
         margin-top: 0.15rem !important;
-        font-size: 0.55rem !important;
-        padding: 0.15rem 0.35rem !important;
-        transform: scale(0.9) !important;
+        font-size: 0.65rem !important;
+        padding: 0.25rem 0.5rem !important;
+        transform: scale(1) !important;
         transform-origin: top right !important;
         margin-right: 0 !important;
       }
