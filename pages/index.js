@@ -400,6 +400,20 @@ export default function Home() {
               <div style={styles.languageSelectorInline} className="language-selector-inline">
                 <LanguageSelector compact={true} />
               </div>
+
+              {/* Sign Out Button - Inside right section for proper mobile ordering */}
+              {user && (
+                <button
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    window.location.href = '/sign-in';
+                  }}
+                  style={styles.signOutButton}
+                  className="sign-out-button"
+                >
+                  <TranslatedText>Sign Out</TranslatedText>
+                </button>
+              )}
             </div>
 
             {/* Scrolling Welcome Message - Separate row for mobile portrait */}
@@ -408,20 +422,6 @@ export default function Home() {
                 <TranslatedText>Welcome to Oakline Bank - Your trusted financial partner since 1995 • Explore all 23 account types with detailed benefits • Join over 500,000+ satisfied customers • Award-winning mobile app • FDIC Insured up to $500,000 • Rated #1 Customer Service</TranslatedText>
               </div>
             </div>
-
-            {/* Sign Out Button - Shows when user is logged in */}
-            {user && (
-              <button
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  window.location.href = '/sign-in';
-                }}
-                style={styles.signOutButton}
-                className="sign-out-button"
-              >
-                <TranslatedText>Sign Out</TranslatedText>
-              </button>
-            )}
 
             {showBankingDropdown && (
               <>
