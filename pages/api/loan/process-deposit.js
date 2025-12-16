@@ -129,14 +129,14 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Failed to create transaction record: ' + (transactionError.message || transactionError.details || 'Unknown error') });
       }
 
-      // Insert into loan_payments for tracking
+      // Insert into loan_payments for tracking - status is pending for admin review
       const { error: loanPaymentError } = await supabaseAdmin
         .from('loan_payments')
         .insert([{
           loan_id: loan_id,
           amount: parseFloat(amount),
           payment_type: 'deposit',
-          status: 'completed', // Account balance payments are immediately confirmed
+          status: 'pending', // Pending admin review
           is_deposit: true,
           deposit_method: 'account_balance',
           account_id: account_id,
