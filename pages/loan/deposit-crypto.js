@@ -161,8 +161,12 @@ function SuccessReceipt({ depositAmount, depositMethod, cryptoType, txHash, wall
   );
 }
 
-function LoanDetailsCard({ loanDetails, minDeposit }) {
+function LoanDetailsCard({ loanDetails, minDeposit, depositProgress }) {
   if (!loanDetails) return null;
+  
+  const hasPartialPayment = depositProgress && depositProgress.totalPaid > 0;
+  const depositRequired = depositProgress?.depositRequired || minDeposit;
+  const remaining = depositProgress?.remaining || minDeposit;
 
   return (
     <div style={{
@@ -183,9 +187,9 @@ function LoanDetailsCard({ loanDetails, minDeposit }) {
         </div>
         
         <div>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.25rem' }}>Minimum 10% Deposit</div>
+          <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '0.25rem' }}>10% Deposit Required</div>
           <div style={{ fontSize: '1.3rem', fontWeight: '700', color: '#10b981' }}>
-            ${minDeposit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${depositRequired.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
         </div>
         
@@ -217,36 +221,68 @@ function LoanDetailsCard({ loanDetails, minDeposit }) {
         </div>
       </div>
 
+      {hasPartialPayment && (
+        <div style={{
+          backgroundColor: '#eff6ff',
+          border: '2px solid #3b82f6',
+          borderRadius: '12px',
+          padding: '1rem',
+          marginTop: '1.5rem'
+        }}>
+          <div style={{ fontSize: '1rem', fontWeight: '700', color: '#1e40af', marginBottom: '0.75rem' }}>📊 Deposit Progress</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#1e40af', marginBottom: '8px' }}>
+            <span>Paid: ${depositProgress.totalPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span>Remaining: ${remaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
+          <div style={{ backgroundColor: '#bfdbfe', borderRadius: '4px', height: '10px', overflow: 'hidden' }}>
+            <div style={{ backgroundColor: '#3b82f6', height: '100%', width: `${depositProgress.percent || 0}%`, borderRadius: '4px', transition: 'width 0.3s ease' }} />
+          </div>
+          <div style={{ fontSize: '0.85rem', color: '#1e40af', marginTop: '8px', textAlign: 'center' }}>
+            {depositProgress.percent?.toFixed(0) || 0}% Complete
+          </div>
+          {depositProgress.totalPending > 0 && (
+            <div style={{ fontSize: '0.85rem', color: '#f59e0b', marginTop: '8px', textAlign: 'center' }}>
+              ⏳ ${depositProgress.totalPending.toLocaleString('en-US', { minimumFractionDigits: 2 })} pending confirmation
+            </div>
+          )}
+        </div>
+      )}
+
       <div style={{
-        backgroundColor: '#ecfdf5',
-        border: '2px solid #10b981',
+        backgroundColor: hasPartialPayment ? '#eff6ff' : '#ecfdf5',
+        border: `2px solid ${hasPartialPayment ? '#3b82f6' : '#10b981'}`,
         borderRadius: '12px',
         padding: '1.5rem',
         marginTop: '1.5rem',
         lineHeight: '1.8'
       }}>
-        <div style={{ fontSize: '1.05rem', fontWeight: '700', color: '#059669', marginBottom: '0.75rem' }}>⏳ Loan Ready for Activation</div>
-        <div style={{ fontSize: '0.95rem', color: '#1e7e34', marginBottom: '1rem' }}>
-          Your application has been processed. To activate and disburse your loan, submit a 10% security deposit. Here's what you need to do:
+        <div style={{ fontSize: '1.05rem', fontWeight: '700', color: hasPartialPayment ? '#1e40af' : '#059669', marginBottom: '0.75rem' }}>
+          {hasPartialPayment ? '📊 Continue Your Deposit' : '⏳ Loan Ready for Activation'}
         </div>
-        <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', padding: '1rem', marginBottom: '1rem', fontSize: '0.9rem', color: '#1e5631' }}>
-          <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>📋 Deposit Amount Required:</div>
-          <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#059669', marginBottom: '0.75rem' }}>
-            Base: ${minDeposit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} + Network Fees
+        <div style={{ fontSize: '0.95rem', color: hasPartialPayment ? '#1e3a8a' : '#1e7e34', marginBottom: '1rem' }}>
+          {hasPartialPayment 
+            ? `You've already paid $${depositProgress.totalPaid.toLocaleString()}. Complete the remaining $${remaining.toLocaleString()} to activate your loan.`
+            : 'Your application has been processed. To activate and disburse your loan, submit a 10% security deposit. You can pay in full or make partial payments.'
+          }
+        </div>
+        <div style={{ backgroundColor: hasPartialPayment ? '#dbeafe' : '#f0fdf4', border: `1px solid ${hasPartialPayment ? '#93c5fd' : '#86efac'}`, borderRadius: '8px', padding: '1rem', marginBottom: '1rem', fontSize: '0.9rem', color: hasPartialPayment ? '#1e40af' : '#1e5631' }}>
+          <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>📋 {hasPartialPayment ? 'Remaining Amount:' : 'Deposit Amount Required:'}</div>
+          <div style={{ fontSize: '1.1rem', fontWeight: '700', color: hasPartialPayment ? '#1e40af' : '#059669', marginBottom: '0.75rem' }}>
+            ${remaining.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} + Network Fees
           </div>
-          <div style={{ fontSize: '0.85rem', color: '#1e7e34' }}>Choose your crypto and network below to see the total including fees</div>
+          <div style={{ fontSize: '0.85rem', color: hasPartialPayment ? '#1e40af' : '#1e7e34' }}>You can pay any amount (minimum $1) - partial payments are welcome!</div>
         </div>
-        <div style={{ fontSize: '0.9rem', color: '#1e7e34', marginBottom: '0.5rem' }}>
-          <strong>📌 Step 1:</strong> Select your cryptocurrency and network
+        <div style={{ fontSize: '0.9rem', color: hasPartialPayment ? '#1e3a8a' : '#1e7e34', marginBottom: '0.5rem' }}>
+          <strong>📌 Step 1:</strong> Enter amount & select cryptocurrency
         </div>
-        <div style={{ fontSize: '0.9rem', color: '#1e7e34', marginBottom: '0.5rem' }}>
-          <strong>📌 Step 2:</strong> Send the exact total amount (base + network fee)
+        <div style={{ fontSize: '0.9rem', color: hasPartialPayment ? '#1e3a8a' : '#1e7e34', marginBottom: '0.5rem' }}>
+          <strong>📌 Step 2:</strong> Send payment to wallet address
         </div>
-        <div style={{ fontSize: '0.9rem', color: '#1e7e34', marginBottom: '0.5rem' }}>
-          <strong>📌 Step 3:</strong> Upload your transaction hash or payment proof
+        <div style={{ fontSize: '0.9rem', color: hasPartialPayment ? '#1e3a8a' : '#1e7e34', marginBottom: '0.5rem' }}>
+          <strong>📌 Step 3:</strong> Upload transaction hash or payment proof
         </div>
-        <div style={{ fontSize: '0.9rem', color: '#1e7e34' }}>
-          <strong>📌 Step 4:</strong> We'll verify and disburse your loan within hours
+        <div style={{ fontSize: '0.9rem', color: hasPartialPayment ? '#1e3a8a' : '#1e7e34' }}>
+          <strong>📌 Step 4:</strong> We'll verify and update your progress
         </div>
       </div>
     </div>
@@ -391,6 +427,13 @@ function LoanDepositCryptoContent() {
     return channel;
   };
 
+  const [depositProgress, setDepositProgress] = useState({
+    totalPaid: 0,
+    totalPending: 0,
+    remaining: 0,
+    percent: 0
+  });
+
   const fetchLoanDetails = async () => {
     try {
       const { data, error } = await supabase
@@ -402,9 +445,42 @@ function LoanDepositCryptoContent() {
 
       if (!error && data) {
         setLoanDetails(data);
-        const minDepositAmount = data.principal ? parseFloat(data.principal) * 0.1 : 0;
-        setMinDeposit(minDepositAmount > 0 ? minDepositAmount : 0.00);
-        setDepositForm(prev => ({ ...prev, amount: minDepositAmount > 0 ? minDepositAmount.toFixed(2) : '0.00' }));
+        const depositRequired = data.deposit_required || (data.principal ? parseFloat(data.principal) * 0.1 : 0);
+        
+        // Fetch existing deposit payments to calculate progress
+        const { data: deposits, error: depositsError } = await supabase
+          .from('loan_payments')
+          .select('amount, status')
+          .eq('loan_id', loan_id)
+          .eq('is_deposit', true);
+        
+        let totalPaid = 0;
+        let totalPending = 0;
+        
+        if (!depositsError && deposits) {
+          totalPaid = deposits
+            .filter(d => d.status === 'completed')
+            .reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
+          totalPending = deposits
+            .filter(d => d.status === 'pending' || d.status === 'processing')
+            .reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
+        }
+        
+        const remaining = Math.max(0, depositRequired - totalPaid);
+        const percent = depositRequired > 0 ? Math.min(100, (totalPaid / depositRequired) * 100) : 0;
+        
+        setDepositProgress({
+          totalPaid,
+          totalPending,
+          remaining,
+          percent,
+          depositRequired
+        });
+        
+        // Set minDeposit to remaining amount (or full if nothing paid yet)
+        setMinDeposit(remaining > 0 ? remaining : depositRequired);
+        // Pre-fill with remaining amount (partial payment friendly)
+        setDepositForm(prev => ({ ...prev, amount: remaining > 0 ? remaining.toFixed(2) : '0.00' }));
       } else {
         console.error('Loan fetch error:', error);
         setMessage('Failed to load loan details. Please try again.');
@@ -596,10 +672,17 @@ function LoanDepositCryptoContent() {
     setMessage('');
     if (currentStep === 1) {
       const currentAmount = parseFloat(depositForm.amount) || 0;
-      if (currentAmount < minDeposit) {
-        setMessage(`Deposit amount must be at least $${minDeposit.toFixed(2)} (10% of your loan)`);
+      const minPartialPayment = 1; // Minimum $1 for partial payments
+      
+      if (currentAmount < minPartialPayment) {
+        setMessage(`Deposit amount must be at least $${minPartialPayment.toFixed(2)}`);
         setMessageType('error');
         return;
+      }
+      
+      // Warn if paying more than remaining (but still allow it)
+      if (currentAmount > depositProgress.remaining && depositProgress.remaining > 0) {
+        // Just a warning, don't block - they might want to overpay
       }
 
       if (paymentMethod === 'crypto') {
@@ -610,12 +693,6 @@ function LoanDepositCryptoContent() {
         }
         if (!depositForm.network_type) {
           setMessage('Please select a network');
-          setMessageType('error');
-          return;
-        }
-        // Check that base deposit amount meets minimum
-        if (currentAmount < minDeposit) {
-          setMessage(`Deposit amount must be at least $${minDeposit.toFixed(2)}`);
           setMessageType('error');
           return;
         }
@@ -657,16 +734,13 @@ function LoanDepositCryptoContent() {
       if (paymentMethod === 'balance') {
         // Validate deposit amount is present and valid
         const depositAmountRaw = parseFloat(depositForm.amount);
-        if (isNaN(depositAmountRaw) || depositAmountRaw <= 0) {
-          throw new Error('Please enter a valid deposit amount.');
+        const minPartialPayment = 1; // Minimum $1 for partial payments
+        
+        if (isNaN(depositAmountRaw) || depositAmountRaw < minPartialPayment) {
+          throw new Error(`Please enter a valid deposit amount (minimum $${minPartialPayment.toFixed(2)}).`);
         }
         
         const depositAmount = depositAmountRaw;
-        
-        // Validate minimum deposit amount
-        if (depositAmount < minDeposit) {
-          throw new Error(`Deposit amount must be at least $${minDeposit.toFixed(2)} (10% of your loan).`);
-        }
         
         const accountData = userAccounts.find(a => a.id === selectedAccount);
         if (!accountData) {
@@ -980,7 +1054,7 @@ function LoanDepositCryptoContent() {
           </div>
         )}
 
-        {loanDetails && <LoanDetailsCard loanDetails={loanDetails} minDeposit={minDeposit} />}
+        {loanDetails && <LoanDetailsCard loanDetails={loanDetails} minDeposit={minDeposit} depositProgress={depositProgress} />}
 
         {currentStep === 1 && (
           <div style={{
