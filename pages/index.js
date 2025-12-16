@@ -5631,10 +5631,11 @@ if (typeof document !== 'undefined') {
 
       .sign-out-button {
         order: 2 !important;
-        margin-top: 0 !important;
+        margin-top: 0.15rem !important;
         font-size: 0.55rem !important;
         padding: 0.15rem 0.35rem !important;
         transform: scale(0.9) !important;
+        margin-right: 0.35rem !important;
       }
 
       .mobile-banking-plus-inline {
