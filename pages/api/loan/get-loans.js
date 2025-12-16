@@ -60,17 +60,31 @@ export default async function handler(req, res) {
         // Deposit is fully paid if total completed deposits >= required
         const isDepositFullyPaid = totalDepositsPaid >= depositRequired && depositRequired > 0;
         
-        // Determine deposit status based on payments
-        let effectiveDepositStatus = loan.deposit_status;
-        let effectiveDepositPaid = loan.deposit_paid;
+        // Determine deposit status based on actual payment amounts
+        // IMPORTANT: Override loan.deposit_paid and loan.deposit_status based on real calculated values
+        let effectiveDepositStatus;
+        let effectiveDepositPaid;
         
         if (isDepositFullyPaid) {
+          // Deposit is fully paid - total completed payments >= required amount
           effectiveDepositStatus = 'completed';
           effectiveDepositPaid = true;
-        } else if (totalDepositsPending > 0) {
+        } else if (totalDepositsPending > 0 && (totalDepositsPaid + totalDepositsPending) >= depositRequired) {
+          // Have enough pending + paid to cover required - waiting on confirmations
           effectiveDepositStatus = 'pending';
+          effectiveDepositPaid = false;
         } else if (totalDepositsPaid > 0 && totalDepositsPaid < depositRequired) {
+          // Partial payment - some completed but not enough
           effectiveDepositStatus = 'partial';
+          effectiveDepositPaid = false;
+        } else if (totalDepositsPending > 0) {
+          // Only pending payments, not enough yet
+          effectiveDepositStatus = 'pending';
+          effectiveDepositPaid = false;
+        } else {
+          // No payments or insufficient - use original status or default to 'required'
+          effectiveDepositStatus = depositRequired > 0 ? 'required' : (loan.deposit_status || 'none');
+          effectiveDepositPaid = false;
         }
         
         return {

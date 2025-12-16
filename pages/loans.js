@@ -288,11 +288,12 @@ function LoansOverviewContent() {
                             const pending = parseFloat(loan.total_deposits_pending || 0);
                             const remaining = Math.max(0, required - paid - pending);
                             
-                            if (loan.deposit_status === 'completed' || loan.deposit_paid === true) {
+                            // Only show Confirmed if actually fully paid (paid >= required)
+                            if (loan.deposit_status === 'completed' && paid >= required) {
                               return `$${required.toLocaleString()} ✓ Confirmed`;
-                            } else if (loan.deposit_status === 'partial') {
+                            } else if (loan.deposit_status === 'partial' || (paid > 0 && paid < required)) {
                               return `$${paid.toLocaleString()} / $${required.toLocaleString()} 📊 Partial`;
-                            } else if (loan.deposit_status === 'pending' && loan.deposit_transactions?.length > 0) {
+                            } else if ((loan.deposit_status === 'pending' && loan.deposit_transactions?.length > 0) || pending > 0) {
                               return (
                                 <span>
                                   ${paid.toLocaleString()} paid + ${pending.toLocaleString()} pending
@@ -388,7 +389,7 @@ function LoansOverviewContent() {
                         );
                       }
 
-                      if (loan.status === 'pending' && !hasDepositTransactions && !loan.deposit_paid && loan.deposit_required > 0) {
+                      if (loan.status === 'pending' && !loan.deposit_paid && loan.deposit_required > 0 && (loan.deposit_status === 'required' || (!hasDepositTransactions && loan.deposit_status !== 'partial'))) {
                         return (
                           <div style={{
                             backgroundColor: '#ecfdf5',
