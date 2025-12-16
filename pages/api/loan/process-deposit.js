@@ -37,12 +37,31 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Loan not found' });
     }
 
-    // Check if deposit already paid
-    if (loan.deposit_paid) {
-      return res.status(400).json({ error: 'Loan deposit has already been submitted for this loan. Your application is under review by the Loan Department.' });
+    // Check existing deposits to calculate total paid and pending
+    const { data: existingDeposits } = await supabaseAdmin
+      .from('loan_payments')
+      .select('amount, status')
+      .eq('loan_id', loan_id)
+      .eq('is_deposit', true);
+    
+    const totalPaid = (existingDeposits || [])
+      .filter(d => d.status === 'completed')
+      .reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
+    const totalPending = (existingDeposits || [])
+      .filter(d => d.status === 'pending' || d.status === 'processing')
+      .reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
+    const totalContributed = totalPaid + totalPending;
+    const depositRequired = parseFloat(loan.deposit_required || loan.principal * 0.1);
+    
+    // Only block if total contributions already cover the required amount
+    if (totalContributed >= depositRequired) {
+      return res.status(400).json({ 
+        error: `Your deposit of $${depositRequired.toLocaleString()} is already covered ($${totalPaid.toLocaleString()} confirmed + $${totalPending.toLocaleString()} pending). Please wait for blockchain confirmation.` 
+      });
     }
 
-    if (loan.status !== 'pending_deposit' && loan.status !== 'pending') {
+    // Allow deposits for pending loans
+    if (loan.status !== 'pending_deposit' && loan.status !== 'pending' && loan.status !== 'approved') {
       return res.status(400).json({ error: 'Loan deposit cannot be processed at this time. Current status: ' + loan.status });
     }
 
@@ -109,15 +128,48 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Failed to create transaction record' });
       }
 
+      // Insert into loan_payments for tracking
+      const { error: loanPaymentError } = await supabaseAdmin
+        .from('loan_payments')
+        .insert([{
+          loan_id: loan_id,
+          user_id: user.id,
+          amount: parseFloat(amount),
+          payment_type: 'deposit',
+          status: 'completed', // Account balance payments are immediately confirmed
+          is_deposit: true,
+          deposit_method: 'account_balance',
+          metadata: {
+            account_id: account_id,
+            account_number: account.account_number,
+            reference: referenceNumber
+          },
+          notes: depositDescription
+        }]);
+
+      if (loanPaymentError) {
+        console.error('Error creating loan payment record:', loanPaymentError);
+        // Rollback account balance
+        await supabaseAdmin
+          .from('accounts')
+          .update({ balance: accountBalance })
+          .eq('id', account_id);
+        return res.status(500).json({ error: 'Failed to create deposit record' });
+      }
+
+      // Calculate new totals after this deposit
+      const newTotalPaid = totalPaid + parseFloat(amount);
+      const isDepositComplete = newTotalPaid >= depositRequired;
+
       // Update loan with deposit information - status is PENDING for admin review
       const { error: updateLoanError } = await supabaseAdmin
         .from('loans')
         .update({
-          deposit_paid: false, // Will be set to true after admin approval
-          deposit_amount: amount,
+          deposit_paid: isDepositComplete,
+          deposit_amount: newTotalPaid,
           deposit_date: new Date().toISOString(),
           deposit_method: 'balance',
-          deposit_status: 'pending',
+          deposit_status: isDepositComplete ? 'completed' : 'partial',
           status: 'pending',
           updated_at: new Date().toISOString()
         })
@@ -137,14 +189,21 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Failed to update loan status' });
       }
 
+      // Calculate remaining balance for notification
+      const remainingAfterThis = Math.max(0, depositRequired - newTotalPaid);
+      
       // Send notification to user
+      const notificationMessage = isDepositComplete
+        ? `Your deposit of $${parseFloat(amount).toLocaleString()} has been submitted. Total paid: $${newTotalPaid.toLocaleString()}. Your deposit is now complete and your loan is under review.`
+        : `Your partial deposit of $${parseFloat(amount).toLocaleString()} has been submitted. Total paid: $${newTotalPaid.toLocaleString()} of $${depositRequired.toLocaleString()} required. Remaining: $${remainingAfterThis.toLocaleString()}.`;
+      
       await supabaseAdmin
         .from('notifications')
         .insert([{
           user_id: user.id,
           type: 'loan',
-          title: 'Loan Deposit Submitted',
-          message: `Your deposit of $${amount.toLocaleString()} has been submitted and is pending admin approval. Funds are on hold and will be processed once your loan is reviewed.`,
+          title: isDepositComplete ? 'Loan Deposit Complete' : 'Partial Loan Deposit Received',
+          message: notificationMessage,
           read: false
         }]);
 
@@ -174,8 +233,14 @@ export default async function handler(req, res) {
 
       return res.status(200).json({
         success: true,
-        message: 'Deposit submitted successfully. Pending admin approval.',
-        new_balance: newBalance
+        message: isDepositComplete 
+          ? 'Deposit complete! Your loan is now under review.'
+          : `Partial deposit submitted. $${remainingAfterThis.toLocaleString()} remaining to complete your deposit.`,
+        new_balance: newBalance,
+        total_paid: newTotalPaid,
+        deposit_required: depositRequired,
+        remaining: remainingAfterThis,
+        is_complete: isDepositComplete
       });
     } else if (deposit_method === 'crypto') {
       // For crypto deposits, keep status as pending_deposit until crypto is confirmed
