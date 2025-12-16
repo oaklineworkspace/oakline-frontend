@@ -722,7 +722,7 @@ function LoanApplicationContent() {
             <p style={styles.alertText}>You currently have {existingLoans.length} active or pending loan(s). You can still apply for a new loan, but review your existing loans first.</p>
             <div style={styles.alertButtons}>
               <button
-                onClick={() => router.push('/loan')}
+                onClick={() => router.push('/loans')}
                 style={styles.alertButton}
               >
                 View My Loans
