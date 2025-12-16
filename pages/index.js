@@ -5620,6 +5620,7 @@ if (typeof document !== 'undefined') {
 
       .language-selector-inline {
         transform: scale(0.7) !important;
+        transform-origin: top right !important;
         flex: 0 0 auto !important;
         position: relative !important;
         right: auto !important;
@@ -5635,7 +5636,8 @@ if (typeof document !== 'undefined') {
         font-size: 0.55rem !important;
         padding: 0.15rem 0.35rem !important;
         transform: scale(0.9) !important;
-        margin-right: 0.35rem !important;
+        transform-origin: top right !important;
+        margin-right: 0 !important;
       }
 
       .mobile-banking-plus-inline {
