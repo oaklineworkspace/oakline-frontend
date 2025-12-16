@@ -282,15 +282,28 @@ function LoansOverviewContent() {
                                  (loan.deposit_status === 'pending' && loan.deposit_transactions?.length > 0) ? '#f59e0b' : '#ef4444',
                           fontWeight: '700'
                         }}>
-                          {(loan.deposit_status === 'completed' || loan.deposit_paid === true) ? (
-                            `$${parseFloat(loan.deposit_required).toLocaleString()} ✓ Confirmed`
-                          ) : loan.deposit_status === 'partial' ? (
-                            `$${parseFloat(loan.total_deposits_paid || 0).toLocaleString()} / $${parseFloat(loan.deposit_required).toLocaleString()} 📊 Partial`
-                          ) : (loan.deposit_status === 'pending' && loan.deposit_transactions?.length > 0) ? (
-                            `$${parseFloat(loan.total_deposits_paid || 0).toLocaleString()} + $${parseFloat(loan.total_deposits_pending || 0).toLocaleString()} pending ⏳`
-                          ) : (
-                            `$${parseFloat(loan.deposit_required).toLocaleString()} ⏸️ Waiting for Deposit`
-                          )}
+                          {(() => {
+                            const required = parseFloat(loan.deposit_required || 0);
+                            const paid = parseFloat(loan.total_deposits_paid || 0);
+                            const pending = parseFloat(loan.total_deposits_pending || 0);
+                            const remaining = Math.max(0, required - paid - pending);
+                            
+                            if (loan.deposit_status === 'completed' || loan.deposit_paid === true) {
+                              return `$${required.toLocaleString()} ✓ Confirmed`;
+                            } else if (loan.deposit_status === 'partial') {
+                              return `$${paid.toLocaleString()} / $${required.toLocaleString()} 📊 Partial`;
+                            } else if (loan.deposit_status === 'pending' && loan.deposit_transactions?.length > 0) {
+                              return (
+                                <span>
+                                  ${paid.toLocaleString()} paid + ${pending.toLocaleString()} pending
+                                  {remaining > 0 && <span style={{ color: '#6b7280' }}> | ${remaining.toLocaleString()} remaining</span>}
+                                  <span> ⏳</span>
+                                </span>
+                              );
+                            } else {
+                              return `$${required.toLocaleString()} ⏸️ Waiting for Deposit`;
+                            }
+                          })()}
                         </span>
                       </div>
                     )}
