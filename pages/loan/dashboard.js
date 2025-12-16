@@ -712,7 +712,15 @@ Generated: ${new Date().toLocaleString()}
                     <div style={styles.overviewItem}>
                       <div style={styles.overviewLabel}>Payments Made</div>
                       <div style={styles.overviewValue}>
-                        {selectedLoan.payments_made || 0} / {selectedLoan.term_months}
+                        {(() => {
+                          const principal = parseFloat(selectedLoan.principal || 0);
+                          const remaining = parseFloat(selectedLoan.remaining_balance || 0);
+                          const principalPaid = Math.max(0, principal - remaining);
+                          const principalPerPayment = principal > 0 && selectedLoan.term_months > 0 ? principal / selectedLoan.term_months : 1;
+                          const isPaidOff = remaining < 0.50 || selectedLoan.status === 'paid' || selectedLoan.status === 'closed';
+                          const calculated = isPaidOff ? selectedLoan.term_months : Math.min(Math.round(principalPaid / principalPerPayment), selectedLoan.term_months || 0);
+                          return calculated;
+                        })()} / {selectedLoan.term_months}
                       </div>
                     </div>
 
