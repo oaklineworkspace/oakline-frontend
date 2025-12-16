@@ -359,6 +359,24 @@ export default function Home() {
               </div>
             </Link>
 
+            {/* Mobile Banking+ Button - Shows inline next to bank name on mobile */}
+            <div className="mobile-banking-plus-inline" style={{ display: 'none' }}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowBankingDropdown(!showBankingDropdown);
+                }}
+                style={styles.bankingPlusButton}
+              >
+                <div style={styles.bankingPlusIconLines}>
+                  <div style={styles.iconLine}></div>
+                  <div style={styles.iconLine}></div>
+                  <div style={styles.iconLine}></div>
+                </div>
+                <span style={styles.bankingPlusText}><TranslatedText>Banking+</TranslatedText></span>
+              </button>
+            </div>
+
             {/* Banking+ and Language Selector - Right Side */}
             <div style={styles.bankingPlusRightSection} className="banking-plus-right-section">
               <div style={styles.bankingPlusContainer} className="banking-plus-container">
@@ -5580,7 +5598,7 @@ if (typeof document !== 'undefined') {
 
       .banking-plus-right-section {
         flex: 0 0 auto !important;
-        gap: 0.5rem !important;
+        gap: 0.3rem !important;
         justify-content: flex-end !important;
         order: 2 !important;
         display: flex !important;
@@ -5593,7 +5611,7 @@ if (typeof document !== 'undefined') {
 
       .banking-plus-container {
         flex: 0 0 auto !important;
-        display: flex !important;
+        display: none !important;
         justify-content: center !important;
         order: 2 !important;
       }
@@ -5608,10 +5626,18 @@ if (typeof document !== 'undefined') {
       }
 
       .sign-out-button {
-        order: 3 !important;
-        margin-top: 0.25rem !important;
-        font-size: 0.75rem !important;
-        padding: 0.35rem 0.7rem !important;
+        order: 2 !important;
+        margin-top: 0.15rem !important;
+        font-size: 0.7rem !important;
+        padding: 0.3rem 0.6rem !important;
+      }
+
+      .mobile-banking-plus-inline {
+        display: flex !important;
+        position: absolute !important;
+        left: 50% !important;
+        top: 2rem !important;
+        transform: translateX(-50%) !important;
       }
 
       .banking-dropdown {
