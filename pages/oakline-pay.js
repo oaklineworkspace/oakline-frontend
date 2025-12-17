@@ -1607,7 +1607,7 @@ export default function OaklinePayPage() {
         </div>
       )}
 
-      {/* Receipt Modal - Professional Style */}
+      {/* Receipt Modal - Full Screen Professional Style */}
       {showReceiptModal && receiptData && (
         <div style={{
           position: 'fixed',
@@ -1615,33 +1615,44 @@ export default function OaklinePayPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          backgroundColor: '#f8fafc',
           zIndex: 10000,
-          padding: '1rem'
-        }} onClick={() => {
-          setShowReceiptModal(false);
-          setTransferStep(null);
-          setPendingTransaction(null);
-          setVerifyForm({ code: '' });
-          setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
+          overflowY: 'auto'
         }}>
           <div style={{
-            backgroundColor: 'white',
-            borderRadius: '20px',
-            padding: '2rem',
-            maxWidth: '600px',
-            width: '100%',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-            animation: 'slideUp 0.3s ease-out',
-            maxHeight: '90vh',
-            overflowY: 'auto'
-          }} onClick={(e) => e.stopPropagation()}>
+            minHeight: '100vh',
+            padding: '2rem 1rem',
+            maxWidth: '800px',
+            margin: '0 auto'
+          }}>
             
+            {/* Bank Logo Header */}
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              padding: '2rem',
+              marginBottom: '1.5rem',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              textAlign: 'center'
+            }}>
+              <img 
+                src="/images/Oakline_Bank_logo_design_c1b04ae0.png" 
+                alt="Oakline Bank" 
+                style={{ height: '60px', marginBottom: '1rem' }} 
+              />
+              <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '700', color: '#1a365d' }}>Oakline Bank</h1>
+              <p style={{ margin: '0.25rem 0 0', fontSize: '0.9rem', color: '#64748b' }}>Transaction Receipt</p>
+            </div>
+
             {/* Success Icon */}
-            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <div style={{ 
+              textAlign: 'center', 
+              marginBottom: '2rem',
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              padding: '2rem',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+            }}>
               <div style={{
                 width: '80px',
                 height: '80px',
@@ -1662,11 +1673,11 @@ export default function OaklinePayPage() {
 
             {/* Receipt Container */}
             <div style={{
-              backgroundColor: '#f8fafc',
-              borderRadius: '12px',
+              backgroundColor: 'white',
+              borderRadius: '16px',
               padding: '2rem',
               marginBottom: '2rem',
-              border: '2px solid #e2e8f0'
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
             }}>
               <div style={{
                 marginBottom: '1.5rem',
@@ -1708,9 +1719,23 @@ export default function OaklinePayPage() {
                   <span style={{ fontSize: '0.75rem', color: '#1a365d', fontWeight: '700', fontFamily: 'monospace', letterSpacing: '0.5px' }}>{receiptData.reference_number?.toUpperCase()}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
-                  <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '600' }}>Date & Time</span>
+                  <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '600' }}>Date</span>
                   <span style={{ fontSize: '0.875rem', color: '#1a365d', fontWeight: '700' }}>
-                    {new Date(receiptData.completed_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
+                    {new Date(receiptData.completed_at).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '600' }}>Time</span>
+                  <span style={{ fontSize: '0.875rem', color: '#1a365d', fontWeight: '700' }}>
+                    {new Date(receiptData.completed_at).toLocaleTimeString('en-US', { 
+                      hour: 'numeric', 
+                      minute: '2-digit',
+                      hour12: true 
+                    })}
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0' }}>
@@ -1762,17 +1787,24 @@ export default function OaklinePayPage() {
             </div>
 
             {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ 
+              display: 'flex', 
+              gap: '1rem',
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              padding: '2rem',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+            }}>
               <button
                 onClick={() => window.print()}
                 style={{
                   flex: 1,
-                  padding: '1rem',
+                  padding: '1.25rem',
                   backgroundColor: '#1e40af',
                   color: 'white',
                   border: 'none',
                   borderRadius: '12px',
-                  fontSize: '1rem',
+                  fontSize: '1.1rem',
                   fontWeight: '700',
                   cursor: 'pointer',
                   transition: 'all 0.3s',
@@ -1793,12 +1825,12 @@ export default function OaklinePayPage() {
                 }}
                 style={{
                   flex: 1,
-                  padding: '1rem',
+                  padding: '1.25rem',
                   backgroundColor: '#059669',
                   color: 'white',
                   border: 'none',
                   borderRadius: '12px',
-                  fontSize: '1rem',
+                  fontSize: '1.1rem',
                   fontWeight: '700',
                   cursor: 'pointer',
                   transition: 'all 0.3s',
