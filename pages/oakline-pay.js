@@ -423,16 +423,6 @@ export default function OaklinePayPage() {
           });
           setShowReceiptModal(true);
           setTransferStatus('');
-          
-          // Auto-close receipt and reset after 5 seconds
-          setTimeout(() => {
-            setShowReceiptModal(false);
-            setTransferStep(null);
-            setPendingTransaction(null);
-            setVerifyForm({ code: '' });
-            setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
-            checkUserAndLoadData();
-          }, 5000);
         } catch (error) {
           console.error('Error confirming payment:', error);
           setTransferStatus('An error occurred. Please try again.');
