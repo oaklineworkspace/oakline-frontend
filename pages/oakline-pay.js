@@ -1468,8 +1468,8 @@ export default function OaklinePayPage() {
         </main>
       </div>
 
-      {/* PIN VERIFICATION FULL PAGE */}
-      {activeTab === 'send' && transferStep === 'pin' && pendingTransaction && (
+      {/* PIN VERIFICATION FULL PAGE - Render at top level */}
+      {transferStep === 'pin' && pendingTransaction && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -1480,8 +1480,9 @@ export default function OaklinePayPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 999,
-          padding: '1rem'
+          zIndex: 9999,
+          padding: '1rem',
+          overflowY: 'auto'
         }}>
           <div style={{
             backgroundColor: 'white',

