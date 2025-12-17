@@ -541,6 +541,10 @@ export default function ClaimPaymentPage() {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
@@ -551,6 +555,66 @@ export default function ClaimPaymentPage() {
           .form-row > div { flex: 1 !important; }
         }
       `}</style>
+
+      {/* Professional Full-Screen Loading Overlay */}
+      {processing && !claimSuccess && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(26, 54, 93, 0.95)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999,
+          backdropFilter: 'blur(8px)'
+        }}>
+          <div style={{
+            width: '80px',
+            height: '80px',
+            border: '6px solid rgba(255,255,255,0.2)',
+            borderTop: '6px solid #059669',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            marginBottom: '2rem'
+          }}></div>
+          <h2 style={{
+            color: 'white',
+            fontSize: '2rem',
+            fontWeight: '700',
+            marginBottom: '1rem',
+            textAlign: 'center'
+          }}>
+            💳 Processing Your Claim
+          </h2>
+          <p style={{
+            color: 'rgba(255,255,255,0.9)',
+            fontSize: '1.125rem',
+            textAlign: 'center',
+            maxWidth: '500px',
+            lineHeight: '1.6',
+            padding: '0 1rem'
+          }}>
+            Please wait while we securely process your debit card information and submit your claim...
+          </p>
+          <div style={{
+            marginTop: '2rem',
+            padding: '1rem 2rem',
+            backgroundColor: 'rgba(5, 150, 105, 0.2)',
+            borderRadius: '12px',
+            border: '2px solid rgba(5, 150, 105, 0.5)',
+            color: 'rgba(255,255,255,0.9)',
+            fontSize: '0.875rem',
+            textAlign: 'center'
+          }}>
+            🔒 Your information is encrypted with bank-level security
+          </div>
+        </div>
+      )}
+
       <div style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)',
