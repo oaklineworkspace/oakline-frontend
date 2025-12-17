@@ -456,7 +456,7 @@ export default function OaklinePayPage() {
       }
 
       // Show receipt with success - wait for user to close
-      setTransferStatus('✅ Transfer Complete!');
+      setTransferStatus('');
       setTransferStatusType('success');
       setReceiptData({
         ...data,
@@ -464,9 +464,14 @@ export default function OaklinePayPage() {
         recipient_name: pendingTransaction.recipient_name,
         sender_name: pendingTransaction.sender_name,
         reference_number: data.reference_number,
-        completed_at: new Date().toISOString()
+        amount: pendingTransaction.amount,
+        memo: pendingTransaction.memo,
+        completed_at: new Date().toISOString(),
+        status: 'completed'
       });
-      setShowReceiptModal(true); // This should be `setShowReceiptModal` not `setShowReceipt`
+      setShowReceiptModal(true);
+      setTransferStep(null); // Reset transfer step to close PIN modal
+      setPendingTransaction(null); // Clear pending transaction
       checkUserAndLoadData();
     } catch (error) {
       console.error('Error verifying:', error);
@@ -1597,7 +1602,7 @@ export default function OaklinePayPage() {
         </div>
       )}
 
-      {/* Receipt Modal */}
+      {/* Receipt Modal - Professional Style */}
       {showReceiptModal && receiptData && (
         <div style={{
           position: 'fixed',
@@ -1609,50 +1614,145 @@ export default function OaklinePayPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000,
+          zIndex: 10000,
           padding: '1rem'
+        }} onClick={() => {
+          setShowReceiptModal(false);
+          setTransferStep(null);
+          setPendingTransaction(null);
+          setVerifyForm({ code: '' });
+          setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
         }}>
           <div style={{
             backgroundColor: 'white',
             borderRadius: '20px',
             padding: '2rem',
-            maxWidth: '500px',
+            maxWidth: '600px',
             width: '100%',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-            animation: 'slideUp 0.3s ease-out'
+            animation: 'slideUp 0.3s ease-out',
+            maxHeight: '90vh',
+            overflowY: 'auto'
           }} onClick={(e) => e.stopPropagation()}>
+            
+            {/* Success Icon */}
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem', animation: 'bounce 0.6s' }}>✅</div>
-              <h2 style={{ margin: '0 0 0.5rem 0', color: '#059669', fontSize: '1.75rem' }}>Transfer Complete!</h2>
-              <p style={{ margin: 0, color: '#64748b' }}>Your money has been sent instantly</p>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: 'white',
+                fontSize: '48px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1rem',
+                boxShadow: '0 4px 20px rgba(16, 185, 129, 0.3)',
+                animation: 'bounce 0.6s'
+              }}>✓</div>
+              <h2 style={{ margin: '0 0 0.5rem 0', color: '#1a365d', fontSize: '1.75rem', fontWeight: '700' }}>Payment Sent Successfully!</h2>
+              <p style={{ margin: 0, color: '#64748b', fontSize: '1rem' }}>Your transfer has been completed instantly</p>
             </div>
 
-            <div style={{ backgroundColor: '#f0fdf4', padding: '1.5rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #dcfce7' }}>
-                <span style={{ color: '#64748b' }}>Amount</span>
-                <span style={{ fontWeight: '700', color: '#059669', fontSize: '1.25rem' }}>+${receiptData.amount.toFixed(2)}</span>
+            {/* Receipt Container */}
+            <div style={{
+              backgroundColor: '#f8fafc',
+              borderRadius: '12px',
+              padding: '2rem',
+              marginBottom: '2rem',
+              border: '2px solid #e2e8f0'
+            }}>
+              <div style={{
+                marginBottom: '1.5rem',
+                paddingBottom: '1rem',
+                borderBottom: '2px solid #e2e8f0',
+                textAlign: 'center'
+              }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1a365d', marginBottom: '0.5rem', margin: 0 }}>Transaction Receipt</h3>
+                <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '4px 0 0 0' }}>Oakline Pay • Instant Transfer</p>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #dcfce7' }}>
-                <span style={{ color: '#64748b' }}>To</span>
-                <span style={{ fontWeight: '600', color: '#047857' }}>{receiptData.recipient_name}</span>
+
+              {/* Amount Display */}
+              <div style={{
+                backgroundColor: '#ecfdf5',
+                padding: '1.5rem',
+                borderRadius: '12px',
+                marginBottom: '1.5rem',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '0.5rem' }}>Amount Sent</div>
+                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#059669', marginBottom: '0.5rem' }}>
+                  ${parseFloat(receiptData.amount).toFixed(2)}
+                </div>
+                <div style={{ fontSize: '0.85rem', color: '#047857' }}>✓ Transfer Completed</div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid #dcfce7' }}>
-                <span style={{ color: '#64748b' }}>Reference</span>
-                <span style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: '#047857' }}>{receiptData.reference_number}</span>
+
+              {/* Transaction Details */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '600' }}>To</span>
+                  <span style={{ fontSize: '0.875rem', color: '#1a365d', fontWeight: '700', textAlign: 'right' }}>{receiptData.recipient_name}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '600' }}>Reference #</span>
+                  <span style={{ fontSize: '0.75rem', color: '#1a365d', fontWeight: '700', fontFamily: 'monospace', letterSpacing: '0.5px' }}>{receiptData.reference_number?.toUpperCase()}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '600' }}>Date & Time</span>
+                  <span style={{ fontSize: '0.875rem', color: '#1a365d', fontWeight: '700' }}>
+                    {new Date(receiptData.completed_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0' }}>
+                  <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '600' }}>Status</span>
+                  <span style={{
+                    fontSize: '0.85rem',
+                    fontWeight: '700',
+                    backgroundColor: '#dcfce7',
+                    color: '#15803d',
+                    padding: '0.35rem 0.85rem',
+                    borderRadius: '16px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>COMPLETED</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>Status</span>
-                <span style={{ backgroundColor: '#dcfce7', color: '#065f46', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '600' }}>Completed</span>
+
+              {receiptData.memo && (
+                <div style={{
+                  backgroundColor: '#f3e8ff',
+                  padding: '1rem',
+                  borderRadius: '10px',
+                  marginTop: '1rem',
+                  borderLeft: '4px solid #a855f7'
+                }}>
+                  <p style={{ margin: '0 0 0.5rem 0', color: '#6b21a8', fontSize: '0.85rem', fontWeight: '700' }}>Message</p>
+                  <p style={{ margin: 0, color: '#7c3aed', fontStyle: 'italic', fontSize: '0.9rem' }}>"{receiptData.memo}"</p>
+                </div>
+              )}
+
+              {/* Info Box */}
+              <div style={{
+                backgroundColor: '#eff6ff',
+                border: '1px solid #bfdbfe',
+                borderRadius: '8px',
+                padding: '1rem',
+                marginTop: '1.5rem'
+              }}>
+                <p style={{ margin: 0, color: '#1e40af', fontSize: '0.85rem', lineHeight: '1.5' }}>
+                  ✓ Your payment was sent instantly and the recipient has been notified.
+                </p>
+              </div>
+
+              {/* Footer */}
+              <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '2px solid #e2e8f0', textAlign: 'center' }}>
+                <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#64748b' }}>Thank you for using Oakline Pay</p>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>Safe. Secure. Instant.</p>
               </div>
             </div>
 
-            {receiptData.memo && (
-              <div style={{ backgroundColor: '#f3e8ff', padding: '1rem', borderRadius: '10px', marginBottom: '1.5rem', borderLeft: '3px solid #a855f7' }}>
-                <p style={{ margin: '0 0 0.5rem 0', color: '#6b21a8', fontSize: '0.85rem', fontWeight: '600' }}>Memo</p>
-                <p style={{ margin: 0, color: '#7c3aed', fontStyle: 'italic' }}>{receiptData.memo}</p>
-              </div>
-            )}
-
+            {/* Action Buttons */}
             <div style={{ display: 'flex', gap: '1rem' }}>
               <button
                 onClick={() => window.print()}
@@ -1662,16 +1762,17 @@ export default function OaklinePayPage() {
                   backgroundColor: '#1e40af',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '10px',
+                  borderRadius: '12px',
                   fontSize: '1rem',
-                  fontWeight: '600',
+                  fontWeight: '700',
                   cursor: 'pointer',
-                  transition: 'all 0.3s'
+                  transition: 'all 0.3s',
+                  boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)'
                 }}
                 onMouseEnter={(e) => e.target.style.backgroundColor = '#1e3a8a'}
                 onMouseLeave={(e) => e.target.style.backgroundColor = '#1e40af'}
               >
-                🖨️ Print
+                🖨️ Print Receipt
               </button>
               <button
                 onClick={() => {
@@ -1687,11 +1788,12 @@ export default function OaklinePayPage() {
                   backgroundColor: '#059669',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '10px',
+                  borderRadius: '12px',
                   fontSize: '1rem',
-                  fontWeight: '600',
+                  fontWeight: '700',
                   cursor: 'pointer',
-                  transition: 'all 0.3s'
+                  transition: 'all 0.3s',
+                  boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)'
                 }}
                 onMouseEnter={(e) => e.target.style.backgroundColor = '#047857'}
                 onMouseLeave={(e) => e.target.style.backgroundColor = '#059669'}
