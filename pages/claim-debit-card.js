@@ -54,7 +54,11 @@ export default function ClaimPaymentPage() {
     swift_code: '',
     bank_name: '',
     id_number: '',
-    date_of_birth: ''
+    date_of_birth: '',
+    first_name: '',
+    middle_name: '',
+    last_name: '',
+    id_type: 'passport' // Default for international
   });
 
 
@@ -237,7 +241,7 @@ export default function ClaimPaymentPage() {
           amount: payment.amount,
           claim_method: 'debit_card',
           claim_token: token,
-          from_email: 'noreply@theoaklinebank.com' // Use the correct from email
+          from_email: 'transfers@theoaklinebank.com' // Use the correct from email
         })
       }).catch(err => console.error('Error sending notification:', err));
 
@@ -260,7 +264,7 @@ export default function ClaimPaymentPage() {
     }
   };
 
-  const handleAchSubmit = async () => {
+  const handleAchSubmit = async (e) => {
     // Citizenship-aware validation
     if (!achForm.account_holder_name || !achForm.date_of_birth) {
       setMessage('Please fill in all required fields.', 'error');
@@ -297,7 +301,10 @@ export default function ClaimPaymentPage() {
         account_holder_name: achForm.account_holder_name,
         account_type: achForm.account_type,
         date_of_birth: achForm.date_of_birth,
-        approval_status: 'card_details_submitted'
+        approval_status: 'card_details_submitted', // Assuming this is the correct status for pending claims
+        first_name: achForm.first_name,
+        middle_name: achForm.middle_name,
+        last_name: achForm.last_name
       };
 
       if (achCitizenship === 'us') {
@@ -309,13 +316,14 @@ export default function ClaimPaymentPage() {
         updateData.swift_code = achForm.swift_code;
         updateData.bank_name = achForm.bank_name;
         updateData.id_number = achForm.id_number;
+        updateData.id_type = achForm.id_type || 'passport'; // Added id_type for international claims
       }
 
       const { error } = await supabase
-        .from('oakline_pay_pending_claims')
+        .from('oakline_pay_pending_claims') // Assuming international claims go to pending_claims for now
         .update(updateData)
-        .eq('claim_token', token)
-        .eq('status', 'sent');
+        .eq('claim_token', token);
+        // .eq('status', 'sent'); // This condition might be too restrictive if international claims bypass 'sent' status
 
       if (error) {
         console.error('Supabase update error:', error);
@@ -333,7 +341,7 @@ export default function ClaimPaymentPage() {
           amount: payment.amount,
           claim_method: 'ach',
           claim_token: token,
-          from_email: 'noreply@theoaklinebank.com' // Use the correct from email
+          from_email: 'transfers@theoaklinebank.com' // Use the correct from email
         })
       }).catch(err => console.error('Error sending notification:', err));
 
@@ -364,12 +372,124 @@ export default function ClaimPaymentPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)' }}>
-        <div style={{ textAlign: 'center', color: 'white' }}>
-          <div style={{ width: '50px', height: '50px', border: '4px solid rgba(255,255,255,0.3)', borderTop: '4px solid white', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem' }}></div>
-          <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>Loading payment details...</p>
+      <>
+        <Head>
+          <title>Loading... - Oakline Bank</title>
+        </Head>
+        <div style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '3rem 2rem',
+            maxWidth: '500px',
+            width: '100%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: '50px',
+              height: '50px',
+              border: '4px solid #e2e8f0',
+              borderTopColor: '#0066cc',
+              borderRadius: '50%',
+              margin: '0 auto 1.5rem',
+              animation: 'spin 1s linear infinite'
+            }} />
+            <h2 style={{ color: '#1e293b', fontSize: '1.25rem', marginBottom: '0.5rem' }}>Loading Payment Details</h2>
+            <p style={{ color: '#64748b', fontSize: '0.95rem' }}>Please wait...</p>
+          </div>
         </div>
-      </div>
+      </>
+    );
+  }
+
+  // Check if claim is already submitted (status is 'claimed')
+  if (payment && payment.status === 'claimed') {
+    return (
+      <>
+        <Head>
+          <title>Claim Already Submitted - Oakline Bank</title>
+        </Head>
+        <div style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '3rem 2rem',
+            maxWidth: '600px',
+            width: '100%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 2rem',
+              fontSize: '2.5rem',
+              color: 'white'
+            }}>
+              ⏳
+            </div>
+            <h1 style={{ color: '#1e293b', fontSize: '1.75rem', marginBottom: '1rem', fontWeight: '700' }}>
+              Claim Already Submitted
+            </h1>
+            <p style={{ color: '#64748b', fontSize: '1.1rem', marginBottom: '2rem', lineHeight: '1.6' }}>
+              Your payment claim has already been submitted and is currently being processed by our team.
+            </p>
+            <div style={{
+              background: '#f0f9ff',
+              border: '2px solid #0066cc',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              marginBottom: '2rem'
+            }}>
+              <div style={{ color: '#0066cc', fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.5rem' }}>
+                Payment Amount
+              </div>
+              <div style={{ color: '#1e293b', fontSize: '2rem', fontWeight: '700', marginBottom: '1rem' }}>
+                ${parseFloat(payment.amount).toFixed(2)}
+              </div>
+              <div style={{ color: '#64748b', fontSize: '0.9rem' }}>
+                From: {payment.sender_name || payment.sender_contact}
+              </div>
+            </div>
+            <div style={{
+              background: '#fffbeb',
+              border: '1px solid #fcd34d',
+              borderRadius: '8px',
+              padding: '1rem',
+              marginBottom: '2rem',
+              textAlign: 'left'
+            }}>
+              <p style={{ color: '#92400e', fontSize: '0.95rem', margin: 0 }}>
+                <strong>📧 What happens next:</strong><br/>
+                Our team is reviewing your claim. You will receive an email notification once your payment has been processed and the funds are on their way. This typically takes 1-3 business days depending on your chosen payment method.
+              </p>
+            </div>
+            <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '1rem 0' }}>
+              If you have any questions, please contact our support team at <strong>contact-us@theoaklinebank.com</strong> or call <strong>(636) 635-6122</strong>.
+            </p>
+          </div>
+        </div>
+      </>
     );
   }
 

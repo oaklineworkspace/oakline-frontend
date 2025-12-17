@@ -116,15 +116,14 @@ export default async function handler(req, res) {
 </html>
     `;
 
-    const mailOptions = {
-      from: getEmailAddress(EMAIL_TYPES.BANK_EMAIL),
+    await sendEmail({
       to: receiver_email,
       subject: `Payment Claim Submitted - $${parseFloat(amount).toFixed(2)} from ${sender_name}`,
       html: htmlContent,
       text: `Payment Claim Submitted\n\nDear ${receiver_name || 'Recipient'},\n\nThank you for submitting your claim! We've received your request and are processing your payment from ${sender_name}. We are currently verifying your information. Your claim will be processed ${timelineText}.\n\nAmount: $${parseFloat(amount).toFixed(2)}\nClaim Method: ${claimMethodText}\n\nYour claim has been successfully submitted and is currently under review. Funds will be available ${timelineText}.\n\nYou'll receive another email with your payment confirmation.\n\nBest regards,\nOakline Bank Team`,
-    };
-
-    await sendEmail(mailOptions);
+      emailType: 'oakline_pay',
+      userId: userId
+    });
 
     return res.status(200).json({
       success: true,
