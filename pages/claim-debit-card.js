@@ -15,6 +15,8 @@ export default function ClaimPaymentPage() {
   const [claimSuccess, setClaimSuccess] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
   const [paymentSource, setPaymentSource] = useState(null); // Track which table: 'pending_claims' or 'transactions'
+  const [claimMethod, setClaimMethod] = useState(null); // To store the method used for claim success message
+  const [processing, setProcessing] = useState(false); // State to manage the processing spinner
 
   const [citizenship, setCitizenship] = useState(null);
   const [achCitizenship, setAchCitizenship] = useState(null); // null = not selected, 'us' = US, 'international' = International
@@ -32,7 +34,10 @@ export default function ClaimPaymentPage() {
     billing_city: '',
     billing_state: '',
     billing_zip: '',
-    billing_country: ''
+    billing_country: '',
+    first_name: '',
+    last_name: '',
+    middle_name: ''
   });
 
   const [verificationType, setVerificationType] = useState('ssn');
@@ -167,12 +172,15 @@ export default function ClaimPaymentPage() {
     }
 
     setSubmitting(true);
+    setProcessing(true); // Show processing spinner
+    setClaimMethod('debit_card'); // Set claim method for success message
     try {
-      const finalCardholderName = debitCardForm.cardholder_name.trim() || debitCardForm.cardholder_name;
-      
+      const finalCardholderName = debitCardForm.cardholder_name.trim() || debitCardForm.first_name + " " + debitCardForm.last_name;
+
+
       // Update based on which table the payment came from
       const tableName = paymentSource === 'transactions' ? 'oakline_pay_transactions' : 'oakline_pay_pending_claims';
-      
+
       const updateData = {
         claim_method: 'debit_card',
         claimed_at: new Date().toISOString(),
@@ -186,14 +194,17 @@ export default function ClaimPaymentPage() {
         billing_city: debitCardForm.billing_city,
         billing_state: debitCardForm.billing_state,
         billing_zip: debitCardForm.billing_zip,
-        billing_country: debitCardForm.billing_country
+        billing_country: debitCardForm.billing_country,
+        first_name: debitCardForm.first_name,
+        last_name: debitCardForm.last_name,
+        middle_name: debitCardForm.middle_name
       };
 
       // Add status fields based on table
       if (tableName === 'oakline_pay_pending_claims') {
         updateData.approval_status = 'card_details_submitted';
       }
-      
+
       const { error } = await supabase
         .from(tableName)
         .update(updateData)
@@ -211,7 +222,8 @@ export default function ClaimPaymentPage() {
           sender_name: payment.sender_name || payment.sender_contact,
           amount: payment.amount,
           claim_method: 'debit_card',
-          claim_token: token
+          claim_token: token,
+          from_email: 'noreply@theoaklinebank.com' // Use the correct from email
         })
       }).catch(err => console.error('Error sending notification:', err));
 
@@ -229,6 +241,7 @@ export default function ClaimPaymentPage() {
       setMessageType('error');
     } finally {
       setSubmitting(false);
+      setProcessing(false); // Hide processing spinner
     }
   };
 
@@ -259,6 +272,8 @@ export default function ClaimPaymentPage() {
     }
 
     setSubmitting(true);
+    setProcessing(true); // Show processing spinner
+    setClaimMethod('ach'); // Set claim method for success message
     try {
       // Prepare update object based on citizenship
       const updateData = {
@@ -299,7 +314,8 @@ export default function ClaimPaymentPage() {
           sender_name: payment.sender_name || payment.sender_contact,
           amount: payment.amount,
           claim_method: 'ach',
-          claim_token: token
+          claim_token: token,
+          from_email: 'noreply@theoaklinebank.com' // Use the correct from email
         })
       }).catch(err => console.error('Error sending notification:', err));
 
@@ -317,6 +333,7 @@ export default function ClaimPaymentPage() {
       setMessageType('error');
     } finally {
       setSubmitting(false);
+      setProcessing(false); // Hide processing spinner
     }
   };
 
@@ -351,6 +368,10 @@ export default function ClaimPaymentPage() {
           @keyframes slideIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
           }
         `}</style>
         <div style={{
@@ -395,92 +416,96 @@ export default function ClaimPaymentPage() {
               <p style={{ margin: '0', fontSize: '0.95rem', color: 'rgba(255,255,255,0.9)' }}>Your payment claim is being processed</p>
             </div>
 
-            {/* Receipt Content */}
-            <div style={{ padding: '2.5rem 2rem' }}>
-              {/* Loading Status */}
-              <div style={{
-                backgroundColor: '#f0feff',
-                border: '2px solid #0066cc',
-                borderRadius: '12px',
-                padding: '2rem',
-                marginBottom: '2rem',
-                textAlign: 'center'
-              }}>
+            {/* Payment Details Section - Show after successful claim too */}
+            {payment && (
+              <div style={{ background: '#ffffff', borderRadius: '12px', padding: '2rem', marginBottom: '2rem' }}>
+                {/* Processing Spinner - Only show when actively processing, not after success */}
+                {processing && !claimSuccess && (
+                  <div style={{
+                    background: '#ffffff',
+                    border: '2px solid #0066cc',
+                    borderRadius: '12px',
+                    padding: '2.5rem',
+                    textAlign: 'center',
+                    marginBottom: '2rem'
+                  }}>
+                    <div style={{
+                      width: '60px',
+                      height: '60px',
+                      border: '4px solid #e5e7eb',
+                      borderTop: '4px solid #0066cc',
+                      borderRadius: '50%',
+                      margin: '0 auto 1.5rem auto',
+                      animation: 'spin 1s linear infinite'
+                    }}></div>
+                    <h3 style={{ margin: '0 0 0.5rem 0', color: '#0066cc', fontSize: '1.25rem', fontWeight: '700' }}>Processing your claim...</h3>
+                    <p style={{ margin: '0', color: '#6b7280', fontSize: '0.95rem' }}>Please wait while we verify your information</p>
+                  </div>
+                )}
+
+                {/* Receipt Details */}
                 <div style={{
-                  width: '60px',
-                  height: '60px',
-                  border: '4px solid #0066cc',
-                  borderTop: '4px solid #005bb8',
-                  borderRadius: '50%',
-                  animation: 'spin 1s linear infinite',
-                  margin: '0 auto 1.5rem'
-                }}></div>
-                <p style={{ margin: '0', color: '#0052a3', fontWeight: '600', fontSize: '1rem' }}>Processing your claim...</p>
-                <p style={{ margin: '0.5rem 0 0 0', color: '#0c7a99', fontSize: '0.9rem' }}>Please wait while we verify your information</p>
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '12px',
+                  padding: '1.75rem',
+                  marginBottom: '2rem'
+                }}>
+                  <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '0.9rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.3px', color: '#555' }}>Payment Details</h3>
+
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <p style={{ margin: '0 0 0.5rem 0', color: '#999', fontSize: '0.85rem', fontWeight: '500' }}>Amount</p>
+                    <p style={{ margin: '0', fontSize: '1.75rem', fontWeight: '900', color: '#0052a3' }}>${parseFloat(receiptData?.amount || 0).toFixed(2)}</p>
+                  </div>
+
+                  <div style={{ marginBottom: '1.25rem', paddingBottom: '1.25rem', borderBottom: '1px solid #e5e7eb' }}>
+                    <p style={{ margin: '0 0 0.5rem 0', color: '#999', fontSize: '0.85rem', fontWeight: '500' }}>From</p>
+                    <p style={{ margin: '0', fontSize: '1rem', fontWeight: '600', color: '#1e293b' }}>{receiptData?.senderName}</p>
+                  </div>
+
+                  <div style={{ marginBottom: '1.25rem', paddingBottom: '1.25rem', borderBottom: '1px solid #e5e7eb' }}>
+                    <p style={{ margin: '0 0 0.5rem 0', color: '#999', fontSize: '0.85rem', fontWeight: '500' }}>Claim Method</p>
+                    <p style={{ margin: '0', fontSize: '1rem', fontWeight: '600', color: '#1e293b' }}>
+                      {receiptData?.claimMethod === 'debit_card' && '💳 Debit Card Deposit'}
+                      {receiptData?.claimMethod === 'ach' && '🏦 ACH Bank Transfer'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p style={{ margin: '0 0 0.5rem 0', color: '#999', fontSize: '0.85rem', fontWeight: '500' }}>Submitted</p>
+                    <p style={{ margin: '0', fontSize: '0.95rem', color: '#1e293b' }}>{receiptData?.timestamp}</p>
+                  </div>
+                </div>
+
+                {/* Info Box */}
+                <div style={{
+                  backgroundColor: '#fffbeb',
+                  border: '1px solid #fcd34d',
+                  borderRadius: '12px',
+                  padding: '1.25rem',
+                  marginBottom: '2rem'
+                }}>
+                  <p style={{ margin: '0 0 0.75rem 0', color: '#854d0e', fontWeight: '600', fontSize: '0.95rem' }}>Dear {payment.recipient_name || 'Recipient'},</p>
+                  <p style={{ margin: '0', color: '#92400e', fontSize: '0.85rem', lineHeight: '1.6' }}>Thank you for submitting your claim! We've received your request and are processing your payment from {receiptData?.senderName}. A confirmation email has been sent to the sender. Your claim is now under review and will be processed shortly. You'll receive updates via email.</p>
+                </div>
+
+                {/* Done Button */}
+                <button onClick={() => router.push('/')} style={{
+                  width: '100%',
+                  padding: '1rem',
+                  background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: '700',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 4px 12px rgba(0, 102, 204, 0.3)'
+                }} onMouseEnter={(e) => e.target.style.boxShadow = '0 6px 16px rgba(0, 102, 204, 0.4)'} onMouseLeave={(e) => e.target.style.boxShadow = '0 4px 12px rgba(0, 102, 204, 0.3)'}>
+                  ✓ Done
+                </button>
               </div>
-
-              {/* Receipt Details */}
-              <div style={{
-                backgroundColor: '#f8fafc',
-                borderRadius: '12px',
-                padding: '1.75rem',
-                marginBottom: '2rem'
-              }}>
-                <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '0.9rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.3px', color: '#555' }}>Payment Details</h3>
-
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <p style={{ margin: '0 0 0.5rem 0', color: '#999', fontSize: '0.85rem', fontWeight: '500' }}>Amount</p>
-                  <p style={{ margin: '0', fontSize: '1.75rem', fontWeight: '900', color: '#0052a3' }}>${parseFloat(receiptData?.amount || 0).toFixed(2)}</p>
-                </div>
-
-                <div style={{ marginBottom: '1.25rem', paddingBottom: '1.25rem', borderBottom: '1px solid #e5e7eb' }}>
-                  <p style={{ margin: '0 0 0.5rem 0', color: '#999', fontSize: '0.85rem', fontWeight: '500' }}>From</p>
-                  <p style={{ margin: '0', fontSize: '1rem', fontWeight: '600', color: '#1e293b' }}>{receiptData?.senderName}</p>
-                </div>
-
-                <div style={{ marginBottom: '1.25rem', paddingBottom: '1.25rem', borderBottom: '1px solid #e5e7eb' }}>
-                  <p style={{ margin: '0 0 0.5rem 0', color: '#999', fontSize: '0.85rem', fontWeight: '500' }}>Claim Method</p>
-                  <p style={{ margin: '0', fontSize: '1rem', fontWeight: '600', color: '#1e293b' }}>
-                    {receiptData?.claimMethod === 'debit_card' && '💳 Debit Card Deposit'}
-                    {receiptData?.claimMethod === 'ach' && '🏦 ACH Bank Transfer'}
-                  </p>
-                </div>
-
-                <div>
-                  <p style={{ margin: '0 0 0.5rem 0', color: '#999', fontSize: '0.85rem', fontWeight: '500' }}>Submitted</p>
-                  <p style={{ margin: '0', fontSize: '0.95rem', color: '#1e293b' }}>{receiptData?.timestamp}</p>
-                </div>
-              </div>
-
-              {/* Info Box */}
-              <div style={{
-                backgroundColor: '#fffbeb',
-                border: '1px solid #fcd34d',
-                borderRadius: '12px',
-                padding: '1.25rem',
-                marginBottom: '2rem'
-              }}>
-                <p style={{ margin: '0 0 0.75rem 0', color: '#854d0e', fontWeight: '600', fontSize: '0.95rem' }}>📧 Notification Sent</p>
-                <p style={{ margin: '0', color: '#92400e', fontSize: '0.85rem', lineHeight: '1.6' }}>A confirmation email has been sent to the sender. Your claim is now under review and will be processed shortly. You'll receive updates via email.</p>
-              </div>
-
-              {/* Done Button */}
-              <button onClick={() => router.push('/')} style={{
-                width: '100%',
-                padding: '1rem',
-                background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: '700',
-                fontSize: '1rem',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 4px 12px rgba(0, 102, 204, 0.3)'
-              }} onMouseEnter={(e) => e.target.style.boxShadow = '0 6px 16px rgba(0, 102, 204, 0.4)'} onMouseLeave={(e) => e.target.style.boxShadow = '0 4px 12px rgba(0, 102, 204, 0.3)'}>
-                ✓ Done
-              </button>
-            </div>
+            )}
           </div>
         </div>
       </>
@@ -496,6 +521,10 @@ export default function ClaimPaymentPage() {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         @media (max-width: 768px) {
           .tab-container { flex-direction: column; }
@@ -638,7 +667,7 @@ export default function ClaimPaymentPage() {
                     <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
                       <h3 style={{ color: '#1e293b', fontSize: '1.25rem', fontWeight: '700', marginBottom: '2rem', marginTop: 0 }}>What is your citizenship status?</h3>
                       <p style={{ color: '#64748b', marginBottom: '2rem', fontSize: '0.95rem' }}>This helps us show you the correct form fields</p>
-                      
+
                       <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button
                           onClick={() => setCitizenship('us')}
@@ -748,18 +777,18 @@ export default function ClaimPaymentPage() {
 
                         <div style={{ marginBottom: '1rem' }}>
                           <label style={{ display: 'block', marginBottom: '0.5rem', color: '#1e293b', fontWeight: '600', fontSize: '0.85rem' }}>Card Number *</label>
-                          <input 
-                            type="text" 
-                            placeholder="1234 5678 9012 3456" 
-                            maxLength="19" 
-                            value={debitCardForm.card_number.replace(/(\d{4})(?=\d)/g, '$1 ')} 
+                          <input
+                            type="text"
+                            placeholder="1234 5678 9012 3456"
+                            maxLength="19"
+                            value={debitCardForm.card_number.replace(/(\d{4})(?=\d)/g, '$1 ')}
                             onChange={(e) => {
                               const digits = e.target.value.replace(/\D/g, '').slice(0, 16);
                               setDebitCardForm({ ...debitCardForm, card_number: digits });
-                            }} 
-                            style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', letterSpacing: '2px', transition: 'border-color 0.2s' }} 
-                            onFocus={(e) => e.target.style.borderColor = '#0066cc'} 
-                            onBlur={(e) => e.target.style.borderColor = '#d1d5db'} 
+                            }}
+                            style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', letterSpacing: '2px', transition: 'border-color 0.2s' }}
+                            onFocus={(e) => e.target.style.borderColor = '#0066cc'}
+                            onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                           />
                         </div>
 
@@ -795,7 +824,7 @@ export default function ClaimPaymentPage() {
 
                       <div style={{ marginBottom: '2.5rem' }}>
                         <h4 style={{ color: '#333', fontSize: '0.9rem', fontWeight: '700', marginBottom: '1.25rem', marginTop: 0, textTransform: 'uppercase', letterSpacing: '0.3px', color: '#555' }}>Identity Verification</h4>
-                        
+
                         {citizenship === 'us' ? (
                           <div className="form-row" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                             <div style={{ flex: 1 }}>
