@@ -414,14 +414,19 @@ export default function OaklinePayPage() {
 
           // Show professional receipt modal for non-member transfers
           setReceiptData({
-            amount: confirmResponse.amount,
+            amount: confirmData.amount || pendingTransaction.amount,
             recipient_name: pendingTransaction.recipient_contact,
-            reference_number: confirmResponse.reference_number,
-            memo: pendingTransaction.memo,
-            status: 'waiting'
+            reference_number: confirmData.reference_number,
+            memo: pendingTransaction.memo || '',
+            completed_at: confirmData.completed_at || new Date().toISOString(),
+            status: confirmData.status || 'waiting'
           });
-          setShowReceiptModal(true); // This should be `setShowReceiptModal` not `setShowReceipt`
+          setShowReceiptModal(true);
           setTransferStatus('');
+          setTransferStep(null);
+          setPendingTransaction(null);
+          setVerifyForm({ code: '' });
+          setSendForm({ ...sendForm, recipient_contact: '', amount: '', memo: '' });
         } catch (error) {
           console.error('Error confirming payment:', error);
           setTransferStatus('An error occurred. Please try again.');

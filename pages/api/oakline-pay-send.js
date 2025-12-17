@@ -631,14 +631,20 @@ export default async function handler(req, res) {
         console.error('Error in email notification process:', emailError);
       }
 
+      // Generate a unique reference for this payment
+      const paymentReference = `OPAY-${pendingPayment.id.substring(0, 8).toUpperCase()}`;
+      
       return res.status(200).json({
         success: true,
         message: '✅ Payment sent!',
-        payment_id: payment_id,
+        payment_id: pendingPayment.id,
         recipient_email: pendingPayment.recipient_email,
+        recipient_name: pendingPayment.recipient_email,
         amount: transferAmount,
-        reference_number: generateReference(),
-        expires_at: pendingPayment.expires_at
+        reference_number: paymentReference,
+        expires_at: pendingPayment.expires_at,
+        completed_at: new Date().toISOString(),
+        status: 'waiting'
       });
 
     } else {
