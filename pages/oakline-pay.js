@@ -394,7 +394,6 @@ export default function OaklinePayPage() {
             },
             body: JSON.stringify({
               step: 'confirm',
-              payment_id: pendingTransaction.payment_id,
               sender_account_id: pendingTransaction.sender_account_id,
               recipient_contact: pendingTransaction.recipient_contact,
               recipient_type: pendingTransaction.recipient_type,
@@ -415,13 +414,13 @@ export default function OaklinePayPage() {
 
           // Show professional receipt modal for non-member transfers
           setReceiptData({
-            amount: confirmData.amount,
+            amount: confirmResponse.amount,
             recipient_name: pendingTransaction.recipient_contact,
-            reference_number: confirmData.reference_number,
+            reference_number: confirmResponse.reference_number,
             memo: pendingTransaction.memo,
             status: 'waiting'
           });
-          setShowReceiptModal(true);
+          setShowReceiptModal(true); // This should be `setShowReceiptModal` not `setShowReceipt`
           setTransferStatus('');
         } catch (error) {
           console.error('Error confirming payment:', error);
@@ -467,7 +466,7 @@ export default function OaklinePayPage() {
         reference_number: data.reference_number,
         completed_at: new Date().toISOString()
       });
-      setShowReceiptModal(true);
+      setShowReceiptModal(true); // This should be `setShowReceiptModal` not `setShowReceipt`
       checkUserAndLoadData();
     } catch (error) {
       console.error('Error verifying:', error);
@@ -1303,7 +1302,7 @@ export default function OaklinePayPage() {
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
                                 <div>
                                   <p style={{ margin: 0, fontWeight: '600', color: '#1a365d' }}>
-                                    {req.requester_id ? '📤 Sent to' : '📥 Received from'} {req.recipient_contact}
+                                    {req.requester_id ? '➙ Sent to' : '📥 Received from'} {req.recipient_contact}
                                   </p>
                                   <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
                                     {new Date(req.created_at).toLocaleDateString()}
@@ -1365,7 +1364,7 @@ export default function OaklinePayPage() {
                               )} {!txn.is_pending_claim && (txn.sender_id === user?.id ? (txn.recipient_name || txn.recipient_tag || 'User') : (txn.sender_name || txn.sender_tag || 'User'))}
                             </h3>
                             <p style={{ margin: '0.5rem 0 0', color: '#64748b', fontSize: '0.8rem' }}>
-                              {new Date(txn.created_at).toLocaleDateString()} • {new Date(txn.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                              {new Date(txn.created_at).toLocaleDateString()} • {new Date(txn.created_at).toLocaleTimeString([],{hour: '2-digit', minute:'2-digit'})}
                             </p>
                           </div>
                           <div style={{ textAlign: isMobile ? 'left' : 'right', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -1598,7 +1597,6 @@ export default function OaklinePayPage() {
         </div>
       )}
 
-      {/* Setup Oakline Tag Modal */}
       {/* Receipt Modal */}
       {showReceiptModal && receiptData && (
         <div style={{
@@ -1705,6 +1703,7 @@ export default function OaklinePayPage() {
         </div>
       )}
 
+      {/* Setup Oakline Tag Modal */}
       {showSetupModal && (
         <div style={styles.modalOverlay} onClick={() => setShowSetupModal(false)}>
           <div style={{ ...styles.modal, maxWidth: '450px' }} onClick={(e) => e.stopPropagation()}>
@@ -2081,6 +2080,16 @@ export default function OaklinePayPage() {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.2); }
         }
+        @keyframes slideUp {
+          from {
+            transform: translateY(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
       `}</style>
 
       {/* QR Code Modal */}
@@ -2113,7 +2122,7 @@ export default function OaklinePayPage() {
             {qrCodeDataUrl && (
               <img src={qrCodeDataUrl} alt="QR Code" style={styles.qrImage} />
             )}
-            <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '1rem', marginBottom: '1rem', textAlign: 'center' }}>
+            <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '1rem', marginBottom: '1.5rem', textAlign: 'center' }}>
               <p style={{ margin: 0, color: '#1e40af', fontSize: '0.9rem', fontWeight: '600' }}>
                 🏷️ @{oaklineProfile?.oakline_tag}
               </p>
