@@ -1696,6 +1696,10 @@ export default function OaklinePayPage() {
               {/* Transaction Details */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '600' }}>From</span>
+                  <span style={{ fontSize: '0.875rem', color: '#1a365d', fontWeight: '700', textAlign: 'right' }}>{oaklineProfile?.display_name || userProfile?.full_name || userProfile?.first_name || 'You'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
                   <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '600' }}>To</span>
                   <span style={{ fontSize: '0.875rem', color: '#1a365d', fontWeight: '700', textAlign: 'right' }}>{receiptData.recipient_name}</span>
                 </div>
