@@ -100,6 +100,7 @@ export default function ClaimPaymentPage() {
         if (paymentData.approval_status === 'card_details_submitted') {
           setMessage('📋 Claim Under Review\n\nYour claim has been successfully submitted and is currently under review by our team. You will receive an email notification as soon as the payment is processed. Thank you for your patience!');
           setMessageType('info');
+          setPayment(paymentData); // Set payment data so we can show details
           setLoading(false);
           return;
         }
@@ -107,6 +108,7 @@ export default function ClaimPaymentPage() {
         if (paymentData.approval_status === 'approved') {
           setMessage('✅ Payment Approved & Processing\n\nYour claim has been approved and your funds are being transferred. You will receive the payment within 1-3 business days. A confirmation email has been sent to you.');
           setMessageType('success');
+          setPayment(paymentData); // Set payment data so we can show details
           setLoading(false);
           return;
         }
@@ -114,6 +116,7 @@ export default function ClaimPaymentPage() {
         if (paymentData.approval_status === 'rejected') {
           setMessage('❌ Claim Not Approved\n\nYour claim was not approved. Please contact support for more information.');
           setMessageType('error');
+          setPayment(paymentData); // Set payment data so we can show details
           setLoading(false);
           return;
         }
@@ -123,6 +126,7 @@ export default function ClaimPaymentPage() {
       if (paymentData.status && paymentData.status === 'completed') {
         setMessage('✅ Payment Completed\n\nThis payment has already been completed. You should see the funds in your account shortly.');
         setMessageType('success');
+        setPayment(paymentData); // Set payment data so we can show details
         setLoading(false);
         return;
       }
@@ -131,6 +135,7 @@ export default function ClaimPaymentPage() {
       if (paymentData.expires_at && new Date(paymentData.expires_at) < new Date()) {
         setMessage('⏰ Payment Link Expired\n\nThis payment link has expired. Please contact the sender for a new link.');
         setMessageType('error');
+        setPayment(paymentData); // Set payment data even for expired
         setLoading(false);
         return;
       }
