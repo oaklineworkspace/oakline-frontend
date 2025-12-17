@@ -114,13 +114,13 @@ export default function OaklinePayPage() {
         .select('*')
         .eq('id', session.user.id)
         .single();
-      
+
       if (profile?.requires_verification) {
         setLoading(false);
         router.push('/verify-identity');
         return;
       }
-      
+
       setUserProfile(profile);
 
       // Load Oakline Pay profile
@@ -129,7 +129,7 @@ export default function OaklinePayPage() {
         .select('*')
         .eq('user_id', session.user.id)
         .single();
-      
+
       setOaklineProfile(oaklinePay);
 
       // Load accounts
@@ -160,7 +160,7 @@ export default function OaklinePayPage() {
         .eq('status', 'completed')
         .order('created_at', { ascending: false })
         .limit(50);
-      
+
       if (txnError) {
         console.error('Error loading transactions:', txnError);
       }
@@ -201,7 +201,7 @@ export default function OaklinePayPage() {
       const allTransactions = [...(payTxns || []), ...formattedClaims].sort((a, b) => 
         new Date(b.created_at) - new Date(a.created_at)
       );
-      
+
       setTransactions(allTransactions);
 
       // Load payment requests
@@ -742,8 +742,8 @@ export default function OaklinePayPage() {
                 {transferStep === null && (
                   <>
                     <h2 style={styles.sectionTitle}>💸 Send Money</h2>
-                    
-                    
+
+
                     {!loading && sendForm.from_account && accounts.find(acc => acc.id === sendForm.from_account) && 
                      parseFloat(accounts.find(acc => acc.id === sendForm.from_account)?.balance || 0) < parseFloat(sendForm.amount || 0) && sendForm.amount && (
                       <div style={{
@@ -774,7 +774,7 @@ export default function OaklinePayPage() {
                         </div>
                       </div>
                     )}
-                    
+
                     <form onSubmit={handleSendMoney} style={styles.form}>
                   <div style={styles.formGrid}>
                     <div style={styles.formGroup}>
@@ -957,7 +957,7 @@ export default function OaklinePayPage() {
                       </div>
                     </div>
                   )}
-                  
+
                   <button type="submit" style={{
                     ...styles.primaryButton,
                     opacity: isSubmitting ? 0.6 : 1,
@@ -1361,7 +1361,7 @@ export default function OaklinePayPage() {
                                   ? `📤 Pending - Sent to ${txn.recipient_email}`
                                   : `📥 Pending - From ${txn.sender_name || 'User'}`
                               ) : (
-                                txn.sender_id === user?.id ? '📤 Sent to' : '📥 Received from'
+                                txn.sender_id === user?.id ? ' Sent to' : ' Received from'
                               )} {!txn.is_pending_claim && (txn.sender_id === user?.id ? (txn.recipient_name || txn.recipient_tag || 'User') : (txn.sender_name || txn.sender_tag || 'User'))}
                             </h3>
                             <p style={{ margin: '0.5rem 0 0', color: '#64748b', fontSize: '0.8rem' }}>
@@ -1817,7 +1817,7 @@ export default function OaklinePayPage() {
                   value={setupForm.bio}
                   onChange={(e) => setSetupForm({ ...setupForm, bio: e.target.value })}
                   placeholder="Software Engineer • San Francisco"
-                  maxLength="150"
+                  maxLength={150}
                 />
                 <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: '#64748b' }}>
                   {setupForm.bio.length}/150 characters
@@ -2228,11 +2228,11 @@ export default function OaklinePayPage() {
             {/* Payment Details Section */}
             <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '12px', marginBottom: '1rem' }}>
               <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '0.85rem', fontWeight: '700', color: '#1a365d', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Payment Details</h3>
-              
+
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
                 <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '500' }}>Type</span>
                 <span style={{ fontSize: '0.85rem', color: '#1e293b', fontWeight: '600' }}>
-                  {selectedOaklineTransaction.sender_id === user?.id ? '📤 Sent' : '📥 Received'}
+                  {selectedOaklineTransaction.sender_id === user?.id ? 'Sent' : 'Received'}
                 </span>
               </div>
 
