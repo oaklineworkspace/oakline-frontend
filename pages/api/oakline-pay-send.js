@@ -578,49 +578,110 @@ export default async function handler(req, res) {
           console.log('📧 Sending sender email to:', senderProfile?.email || user.email);
           await sendEmail({
             to: senderProfile?.email || user.email,
-            subject: `Payment Sent: $${transferAmount.toFixed(2)} is waiting to be claimed`,
+            subject: `💸 Oakline Pay Sent - $${transferAmount.toFixed(2)} | Oakline Bank`,
             emailType: 'oakline_pay',
             text: `Your payment of $${transferAmount.toFixed(2)} has been sent to ${pendingPayment.recipient_email}. The recipient has 14 days to claim it.`,
             html: `
-              <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-                <div style="background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%); color: white; padding: 2.5rem; text-align: center;">
-                  <h1 style="margin: 0; font-size: 32px; font-weight: 700;">✅ Payment Sent!</h1>
-                  <p style="margin: 0.5rem 0 0 0; font-size: 16px; opacity: 0.95;">Your transfer is waiting to be claimed</p>
-                </div>
-                <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 0 0 8px 8px;">
-                  <p style="color: #333; font-size: 16px;">
-                    Your Oakline Pay transfer of <strong style="color: #16a34a; font-size: 20px;">$${transferAmount.toFixed(2)}</strong> has been sent to <strong>${pendingPayment.recipient_email}</strong>
-                  </p>
-                  
-                  <div style="background: white; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid #0066cc;">
-                    <p style="margin: 0; color: #666; font-size: 14px; margin-bottom: 1rem;"><strong>Status: ⏳ Waiting for Recipient to Claim</strong></p>
-                    <p style="color: #666; font-size: 13px; margin: 0.5rem 0 0 0;">
-                      The recipient has 14 days to claim this payment via their Oakline Bank account or debit card.
-                    </p>
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              </head>
+              <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #f8fafc;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                  <!-- Header with Logo -->
+                  <div style="background: linear-gradient(135deg, #1a365d 0%, #2c5aa0 100%); padding: 40px 32px; text-align: center;">
+                    <div style="color: #ffffff; font-size: 48px; margin-bottom: 16px;">💸</div>
+                    <div style="color: #ffffff; font-size: 32px; font-weight: 700; margin-bottom: 8px;">Oakline Bank</div>
+                    <div style="color: #ffffff; opacity: 0.95; font-size: 18px; font-weight: 500;">Oakline Pay</div>
                   </div>
 
-                  <div style="background: #f0f7ff; padding: 1rem; border-radius: 8px; margin: 1.5rem 0; border-left: 4px solid #0066cc;">
-                    <p style="color: #333; font-size: 13px; margin: 0;"><strong>Payment Details:</strong></p>
-                    <p style="color: #666; font-size: 12px; margin: 0.5rem 0 0 0;">
-                      Amount: $${transferAmount.toFixed(2)}<br/>
-                      Recipient: ${pendingPayment.recipient_email}<br/>
-                      Expires: ${expiryDate}
-                    </p>
-                  </div>
+                  <!-- Main Content -->
+                  <div style="padding: 40px 32px;">
+                    <h1 style="color: #059669; font-size: 28px; font-weight: 700; margin: 0 0 24px 0; text-align: center;">
+                      ✓ Transfer Sent Successfully
+                    </h1>
 
-                  <p style="color: #999; font-size: 12px; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd;">
-                    You'll receive another notification once the recipient claims their payment.
-                  </p>
+                    <!-- Amount Card -->
+                    <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #059669; border-radius: 16px; padding: 32px; text-align: center; margin: 32px 0; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);">
+                      <div style="color: #047857; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Amount Sent</div>
+                      <div style="color: #047857; font-size: 48px; font-weight: 800; margin: 0;">$${transferAmount.toFixed(2)}</div>
+                    </div>
+
+                    <!-- Transfer Details -->
+                    <div style="background-color: #f7fafc; border-radius: 12px; padding: 24px; margin: 24px 0;">
+                      <h3 style="color: #1a365d; font-size: 18px; font-weight: 600; margin: 0 0 20px 0;">
+                        📋 Transfer Details
+                      </h3>
+                      
+                      <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #e2e8f0;">
+                        <div style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 6px;">To</div>
+                        <div style="color: #1a365d; font-size: 16px; font-weight: 700;">${pendingPayment.recipient_email}</div>
+                      </div>
+
+                      <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #e2e8f0;">
+                        <div style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 6px;">Reference Number</div>
+                        <div style="color: #1a365d; font-size: 16px; font-weight: 700; font-family: monospace;">${paymentReference}</div>
+                      </div>
+
+                      <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #e2e8f0;">
+                        <div style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 6px;">Date & Time</div>
+                        <div style="color: #1a365d; font-size: 14px; font-weight: 600;">${new Date().toLocaleString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}</div>
+                      </div>
+
+                      <div>
+                        <div style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; margin-bottom: 6px;">Expires</div>
+                        <div style="color: #dc2626; font-size: 14px; font-weight: 600;">${expiryDate}</div>
+                      </div>
+                    </div>
+
+                    <!-- Status Notice -->
+                    <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 24px 0;">
+                      <div style="color: #92400e; font-size: 14px; line-height: 1.6;">
+                        <strong style="font-size: 15px;">⏳ Waiting for Recipient to Claim</strong><br/>
+                        <span style="color: #78350f;">The recipient has 14 days to claim this payment. You'll receive a confirmation email once they accept the transfer.</span>
+                      </div>
+                    </div>
+
+                    <!-- What Happens Next -->
+                    <div style="background-color: #eff6ff; border-radius: 12px; padding: 20px; margin: 24px 0;">
+                      <h3 style="color: #1e40af; font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">
+                        💡 What Happens Next
+                      </h3>
+                      <ul style="color: #4a5568; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                        <li style="margin-bottom: 8px;">The recipient can claim funds via debit card or bank account</li>
+                        <li style="margin-bottom: 8px;">If unclaimed after 14 days, funds will be returned to your account</li>
+                        <li>You'll be notified immediately when the payment is claimed</li>
+                      </ul>
+                    </div>
+                  </div>
 
                   <!-- Footer -->
-                  <div style="border-top: 1px solid #e0e0e0; margin-top: 2rem; padding-top: 1.5rem; text-align: center;">
-                    <p style="margin: 0; color: #999; font-size: 12px; line-height: 1.6;">
-                      Oakline Bank • Secure Payment System<br/>
-                      Questions? Contact our support team at <a href="mailto:${supportEmail}" style="color: #0066cc; text-decoration: none;">${supportEmail}</a>
+                  <div style="background-color: #f7fafc; padding: 32px 24px; text-align: center; border-top: 1px solid #e2e8f0;">
+                    <p style="color: #718096; font-size: 14px; margin: 0 0 16px 0;">
+                      Need help? Contact our support team 24/7:
                     </p>
+                    <p style="color: #4a5568; font-size: 14px; font-weight: 600; margin: 0 0 8px 0;">
+                      📧 <a href="mailto:${supportEmail}" style="color: #0066cc; text-decoration: none;">${supportEmail}</a>
+                    </p>
+                    
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 20px;">
+                      <p style="color: #718096; font-size: 12px; margin: 0;">
+                        © ${new Date().getFullYear()} Oakline Bank. All rights reserved.<br>
+                        Member FDIC | Secure Payment System
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </body>
+              </html>
             `
           });
           console.log('✅ Sender notification email sent to:', senderProfile?.email || user.email);
