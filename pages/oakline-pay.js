@@ -1885,7 +1885,7 @@ export default function OaklinePayPage() {
       {/* Setup Oakline Tag Modal */}
       {showSetupModal && (
         <div style={styles.modalOverlay} onClick={() => setShowSetupModal(false)}>
-          <div style={{ ...styles.modal, maxWidth: '450px' }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ ...styles.modal, maxWidth: '450px', paddingBottom: '6rem', marginBottom: '5rem' }} onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div style={{ textAlign: 'center', paddingBottom: '1.5rem', borderBottom: '2px solid #f0f4f8' }}>
               <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🏷️</div>
@@ -2894,7 +2894,8 @@ const styles = {
     justifyContent: 'center',
     zIndex: 1000,
     backdropFilter: 'blur(4px)',
-    padding: '1rem'
+    padding: '1rem',
+    overflowY: 'auto'
   },
   modal: {
     backgroundColor: 'white',
@@ -2902,10 +2903,11 @@ const styles = {
     padding: '2rem',
     maxWidth: '500px',
     width: '100%',
-    maxHeight: '90vh',
+    maxHeight: '85vh',
     overflowY: 'auto',
     boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-    textAlign: 'center'
+    textAlign: 'center',
+    margin: '2rem auto'
   },
   modalTitle: {
     fontSize: '1.5rem',
