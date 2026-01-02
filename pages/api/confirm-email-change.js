@@ -31,16 +31,27 @@ export default async function handler(req, res) {
     }
 
     // Find and verify the code
-    const { data: codeRecord, error: codeError } = await supabaseAdmin
-      .from('email_verification_codes')
-      .select('*')
-      .eq('user_id', currentUser.id)
-      .eq('new_email', newEmail)
-      .eq('code', verificationCode)
-      .single()
-      .catch(() => ({ data: null, error: true }));
+    let codeRecord = null;
+    let codeError = null;
+    
+    try {
+      const result = await supabaseAdmin
+        .from('email_verification_codes')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .eq('new_email', newEmail)
+        .eq('code', verificationCode)
+        .single();
+      
+      codeRecord = result.data;
+      codeError = result.error;
+    } catch (queryError) {
+      console.error('Code lookup error:', queryError);
+      codeError = queryError;
+    }
 
     if (!codeRecord || codeError) {
+      console.error('Code verification failed:', codeError);
       return res.status(400).json({ error: 'Invalid verification code' });
     }
 
