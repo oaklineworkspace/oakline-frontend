@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 import { createClient } from '@supabase/supabase-js';
+import { validateNewEmailVerificationCode, clearNewEmailVerificationCode } from '../../lib/verificationStorage';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -30,34 +31,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Verification code and email required' });
     }
 
-    // Find and verify the code
-    let codeRecord = null;
-    let codeError = null;
+    // Validate the code using in-memory storage
+    const validation = await validateNewEmailVerificationCode(currentUser.id, newEmail, verificationCode);
     
-    try {
-      const result = await supabaseAdmin
-        .from('email_verification_codes')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .eq('new_email', newEmail)
-        .eq('code', verificationCode)
-        .single();
-      
-      codeRecord = result.data;
-      codeError = result.error;
-    } catch (queryError) {
-      console.error('Code lookup error:', queryError);
-      codeError = queryError;
-    }
-
-    if (!codeRecord || codeError) {
-      console.error('Code verification failed:', codeError);
-      return res.status(400).json({ error: 'Invalid verification code' });
-    }
-
-    // Check if code has expired
-    if (new Date() > new Date(codeRecord.expires_at)) {
-      return res.status(400).json({ error: 'Verification code has expired' });
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.error });
     }
 
     // Update email in auth
@@ -91,15 +69,9 @@ export default async function handler(req, res) {
       console.log('Note: applications table update skipped');
     }
 
-    // Mark verification as complete and delete old codes
-    try {
-      await supabaseAdmin
-        .from('email_verification_codes')
-        .delete()
-        .eq('user_id', currentUser.id);
-    } catch (deleteError) {
-      console.log('Note: cleanup skipped');
-    }
+    // Clear the verification code from memory
+    await clearNewEmailVerificationCode(currentUser.id);
+    console.log('✅ Email change completed for user:', currentUser.id, 'new email:', newEmail);
 
     // Send confirmation email to old email (from currentUser.email before update)
     try {

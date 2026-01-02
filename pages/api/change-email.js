@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
-import { validateVerificationCode, clearVerificationCode } from '../../lib/verificationStorage';
+import { validateVerificationCode, clearVerificationCode, storeNewEmailVerificationCode } from '../../lib/verificationStorage';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -87,28 +87,12 @@ export default async function handler(req, res) {
 
     console.log('✅ Identity verified for user:', currentUser.id, 'for email change to:', newEmail);
 
-    // Send verification code to new email address instead
+    // Send verification code to new email address
     const newEmailVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const codeExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
     
-    // Store code
-    try {
-      const { error: storeError } = await supabaseAdmin
-        .from('email_verification_codes')
-        .insert({
-          user_id: currentUser.id,
-          new_email: newEmail,
-          code: newEmailVerificationCode,
-          expires_at: codeExpiry.toISOString(),
-          verified: false
-        });
-
-      if (storeError) {
-        console.error('Failed to store verification code:', storeError);
-      }
-    } catch (storageError) {
-      console.error('Error storing verification code:', storageError);
-    }
+    // Store code in memory
+    await storeNewEmailVerificationCode(currentUser.id, newEmail, newEmailVerificationCode);
+    console.log('📧 Stored new email verification code for:', newEmail);
 
     // Send email
     try {
