@@ -306,6 +306,9 @@ export default function LoginPage() {
             }
           }
 
+          // Get user's device timezone
+          const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          
           await fetch('/api/send-login-notification', {
             method: 'POST',
             headers: { 
@@ -317,7 +320,8 @@ export default function LoginPage() {
                 device_type: deviceType,
                 browser: browser,
                 os: os,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                timezone: userTimezone
               }
             })
           });
