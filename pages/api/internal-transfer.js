@@ -25,7 +25,8 @@ export default async function handler(req, res) {
       from_account_id,
       to_account_number,
       amount,
-      memo
+      memo,
+      timezone
     } = req.body;
 
     if (!from_account_id || !to_account_number || !amount) {
@@ -222,7 +223,7 @@ export default async function handler(req, res) {
       // Get sender's email
       const senderEmail = user.email;
 
-      // Send email to sender
+      // Send email to sender (use sender's timezone from request)
       try {
         await sendTransferSentEmail({
           to: senderEmail,
@@ -231,14 +232,15 @@ export default async function handler(req, res) {
           amount: transferAmount,
           reference: referenceNumber,
           accountNumber: toAccount.account_number,
-          userId: user.id
+          userId: user.id,
+          timezone: timezone
         });
-        console.log('✅ Transfer sent email sent to:', senderEmail);
+        console.log('✅ Transfer sent email sent to:', senderEmail, 'with timezone:', timezone);
       } catch (emailError) {
         console.error('❌ Failed to send transfer sent email:', emailError.message);
       }
 
-      // Send email to recipient
+      // Send email to recipient (recipient may have different timezone, will be looked up)
       if (recipientAuthUser?.email) {
         try {
           await sendTransferReceivedEmail({

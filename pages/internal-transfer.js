@@ -447,6 +447,9 @@ export default function InternalTransfer() {
         return;
       }
 
+      // Get user's device timezone
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
       const response = await fetch('/api/internal-transfer', {
         method: 'POST',
         headers: {
@@ -457,7 +460,8 @@ export default function InternalTransfer() {
           from_account_id: fromAccount,
           to_account_number: recipientAccountNumber,
           amount: transferAmount,
-          memo: memo || 'Internal Transfer'
+          memo: memo || 'Internal Transfer',
+          timezone: userTimezone
         })
       });
 
