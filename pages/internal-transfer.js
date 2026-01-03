@@ -485,44 +485,6 @@ export default function InternalTransfer() {
         memo: memo || 'Internal Transfer'
       };
 
-      // Send credit alert email to recipient
-      if (recipientInfo.userId) {
-        try {
-          await fetch('/api/send-transfer-notification', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              recipientUserId: recipientInfo.userId,
-              amount: transferAmount,
-              senderName: user?.email?.split('@')[0] || 'Account Holder',
-              accountNumber: recipientInfo.accountNumber,
-              referenceNumber: referenceNumber,
-              notificationType: 'credit'
-            })
-          });
-        } catch (error) {
-          console.error('Error sending recipient notification:', error);
-        }
-      }
-
-      // Send debit alert email to sender
-      try {
-        await fetch('/api/send-transfer-notification', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            recipientUserId: user.id,
-            amount: transferAmount,
-            recipientName: recipientInfo.ownerName,
-            accountNumber: recipientInfo.accountNumber,
-            referenceNumber: referenceNumber,
-            notificationType: 'debit'
-          })
-        });
-      } catch (error) {
-        console.error('Error sending sender notification:', error);
-      }
-
       setReceiptData(receipt);
       setShowReceipt(true);
 
