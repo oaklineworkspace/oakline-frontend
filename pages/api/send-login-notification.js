@@ -106,6 +106,33 @@ export default async function handler(req, res) {
     }
 
     const loginDate = new Date(timestamp);
+    
+    // Use user's timezone if provided, otherwise try to determine from location
+    let userTimezone = timezone;
+    if (!userTimezone && actualCountry) {
+      // Common timezone mappings by country
+      const countryTimezones = {
+        'Nigeria': 'Africa/Lagos',
+        'United States': 'America/New_York',
+        'United Kingdom': 'Europe/London',
+        'Canada': 'America/Toronto',
+        'Australia': 'Australia/Sydney',
+        'India': 'Asia/Kolkata',
+        'Germany': 'Europe/Berlin',
+        'France': 'Europe/Paris',
+        'Japan': 'Asia/Tokyo',
+        'China': 'Asia/Shanghai',
+        'Brazil': 'America/Sao_Paulo',
+        'South Africa': 'Africa/Johannesburg',
+        'Kenya': 'Africa/Nairobi',
+        'Ghana': 'Africa/Accra',
+        'Egypt': 'Africa/Cairo',
+        'UAE': 'Asia/Dubai',
+        'Singapore': 'Asia/Singapore'
+      };
+      userTimezone = countryTimezones[actualCountry] || 'UTC';
+    }
+    
     const formattedDate = loginDate.toLocaleString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -113,6 +140,7 @@ export default async function handler(req, res) {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: userTimezone || 'UTC',
       timeZoneName: 'short'
     });
 
