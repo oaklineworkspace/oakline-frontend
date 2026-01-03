@@ -233,7 +233,16 @@ export default function InternalTransfer() {
   const [pageLoading, setPageLoading] = useState(true);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
+  const [processingTransfer, setProcessingTransfer] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
+
+  // Helper function to parse amount (strips $, commas, and whitespace)
+  const parseAmount = (value) => {
+    if (!value) return NaN;
+    // Remove $, commas, and whitespace, then parse as float
+    const cleanValue = String(value).replace(/[$,\s]/g, '');
+    return parseFloat(cleanValue);
+  };
 
   useEffect(() => {
     if (user) {
@@ -406,27 +415,28 @@ export default function InternalTransfer() {
       return;
     }
 
+    // Parse amount (handles $3,000 and 3000 formats)
+    const transferAmount = parseAmount(amount);
+    const selectedFromAccount = accounts.find(acc => acc.id === fromAccount);
+
+    if (isNaN(transferAmount) || transferAmount <= 0) {
+      setMessage('Please enter a valid amount');
+      setMessageType('error');
+      return;
+    }
+
+    if (transferAmount > parseFloat(selectedFromAccount?.balance || 0)) {
+      setMessage('Insufficient funds');
+      setMessageType('error');
+      return;
+    }
+
     setLoading(true);
+    setProcessingTransfer(true);
     setMessage('');
     setMessageType('');
 
     try {
-      const transferAmount = parseFloat(amount);
-      const selectedFromAccount = accounts.find(acc => acc.id === fromAccount);
-
-      if (transferAmount <= 0) {
-        setMessage('Please enter a valid amount');
-        setMessageType('error');
-        setLoading(false);
-        return;
-      }
-
-      if (transferAmount > parseFloat(selectedFromAccount?.balance || 0)) {
-        setMessage('Insufficient funds');
-        setMessageType('error');
-        setLoading(false);
-        return;
-      }
 
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
@@ -503,6 +513,7 @@ export default function InternalTransfer() {
       setMessageType('error');
     } finally {
       setLoading(false);
+      setProcessingTransfer(false);
     }
   };
 
@@ -907,6 +918,49 @@ export default function InternalTransfer() {
       color: '#64748b',
       fontSize: '1.1rem',
       fontWeight: '500'
+    },
+    processingOverlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.75)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999,
+      padding: '20px'
+    },
+    processingModal: {
+      backgroundColor: 'white',
+      borderRadius: '20px',
+      padding: '48px 40px',
+      textAlign: 'center',
+      boxShadow: '0 25px 80px rgba(0, 0, 0, 0.35)',
+      maxWidth: '420px',
+      width: '100%'
+    },
+    processingSpinner: {
+      width: '70px',
+      height: '70px',
+      border: '5px solid #e5e7eb',
+      borderTopColor: '#1e40af',
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite',
+      margin: '0 auto 28px'
+    },
+    processingTitle: {
+      fontSize: '22px',
+      fontWeight: '700',
+      color: '#1e293b',
+      marginBottom: '12px'
+    },
+    processingSubtext: {
+      fontSize: '15px',
+      color: '#64748b',
+      marginBottom: '0',
+      lineHeight: '1.5'
     }
   };
 
@@ -933,6 +987,19 @@ export default function InternalTransfer() {
         <title>Send to Oakline User - Oakline Bank</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
+
+      {/* Processing Transfer Overlay */}
+      {processingTransfer && (
+        <div style={styles.processingOverlay}>
+          <div style={styles.processingModal}>
+            <div style={styles.processingSpinner}></div>
+            <p style={styles.processingTitle}>Processing Your Transfer</p>
+            <p style={styles.processingSubtext}>
+              Please wait while we securely transfer your funds to the recipient...
+            </p>
+          </div>
+        </div>
+      )}
 
       <div style={styles.container}>
         <div style={styles.header}>
