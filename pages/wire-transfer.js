@@ -10,6 +10,7 @@ import {
   validateSwiftCode, 
   validateAmount 
 } from '../lib/wireTransferValidators';
+import SelfieVerification from '../components/SelfieVerification';
 
 const useMediaQuery = (query) => {
   const [matches, setMatches] = useState(false);
@@ -65,6 +66,10 @@ export default function WireTransfer() {
   const [loadingBanks, setLoadingBanks] = useState(false);
   const [codeSentSuccess, setCodeSentSuccess] = useState(false);
   const [pinVerifiedSuccess, setPinVerifiedSuccess] = useState(false);
+  const [wireTransferSuspended, setWireTransferSuspended] = useState(false);
+  const [wireTransferSuspensionReason, setWireTransferSuspensionReason] = useState('');
+  const [showWireVerification, setShowWireVerification] = useState(false);
+  const [wireVerificationSubmitted, setWireVerificationSubmitted] = useState(false);
 
   const [wireForm, setWireForm] = useState({
     from_account_id: '',
@@ -104,12 +109,32 @@ export default function WireTransfer() {
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('requires_verification')
+        .select('requires_verification, wire_transfer_suspended, wire_transfer_suspension_reason')
         .eq('id', user.id)
         .single();
 
       if (profile?.requires_verification) {
         router.push('/verify-identity');
+        return;
+      }
+
+      if (profile?.wire_transfer_suspended) {
+        setWireTransferSuspended(true);
+        setWireTransferSuspensionReason(profile.wire_transfer_suspension_reason || 'Wire transfer access has been temporarily restricted.');
+        setShowWireVerification(true);
+        
+        const { data: verification } = await supabase
+          .from('selfie_verifications')
+          .select('status, metadata')
+          .eq('user_id', user.id)
+          .eq('triggered_by', 'wire_transfer_suspension')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+          
+        if (verification?.status === 'submitted' || verification?.status === 'under_review') {
+          setWireVerificationSubmitted(true);
+        }
       }
     } catch (error) {
       console.error('Error checking verification status:', error);
@@ -665,6 +690,32 @@ export default function WireTransfer() {
     return colors[status] || '#6b7280';
   };
 
+  const handleWireVerificationComplete = async (data) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      await supabase
+        .from('selfie_verifications')
+        .insert({
+          user_id: user.id,
+          verification_type: 'video',
+          status: 'submitted',
+          video_path: data?.filePath || null,
+          reason: wireTransferSuspensionReason || 'Wire transfer verification required',
+          triggered_by: 'wire_transfer_suspension',
+          metadata: { 
+            context: 'wire_transfer_verification',
+            suspension_reason: wireTransferSuspensionReason
+          }
+        });
+
+      setWireVerificationSubmitted(true);
+    } catch (error) {
+      console.error('Error submitting wire transfer verification:', error);
+    }
+  };
+
   const styles = getWireTransferStyles(isMobile);
 
 
@@ -680,6 +731,143 @@ export default function WireTransfer() {
         <div style={styles.spinner}></div>
         <p style={{ marginTop: '1rem', color: '#64748b' }}>Loading...</p>
       </div>
+    );
+  }
+
+  if (wireTransferSuspended && showWireVerification) {
+    if (wireVerificationSubmitted) {
+      return (
+        <>
+          <Head>
+            <title>Wire Transfer Verification - Oakline Bank</title>
+          </Head>
+          <div style={{
+            minHeight: '100vh',
+            backgroundColor: '#f8fafc',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem'
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              padding: isMobile ? '2rem' : '3rem',
+              maxWidth: '500px',
+              width: '100%',
+              textAlign: 'center',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+            }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                backgroundColor: '#dcfce7',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1.5rem',
+                fontSize: '2.5rem'
+              }}>
+                ✓
+              </div>
+              <h2 style={{
+                fontSize: isMobile ? '1.5rem' : '1.75rem',
+                fontWeight: '700',
+                color: '#1a365d',
+                marginBottom: '1rem'
+              }}>
+                Verification Submitted
+              </h2>
+              <p style={{
+                color: '#64748b',
+                fontSize: '1rem',
+                lineHeight: '1.6',
+                marginBottom: '1.5rem'
+              }}>
+                Thank you for submitting your verification. Our team will review your submission within 24-48 hours.
+                You'll receive an email notification once your verification has been reviewed.
+              </p>
+              <p style={{
+                color: '#059669',
+                fontSize: '0.9rem',
+                fontWeight: '500',
+                marginBottom: '2rem'
+              }}>
+                Your wire transfer access will be restored once your verification is approved.
+              </p>
+              <button
+                onClick={() => router.push('/dashboard')}
+                style={{
+                  padding: '1rem 2rem',
+                  backgroundColor: '#1a365d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  width: '100%'
+                }}
+              >
+                Return to Dashboard
+              </button>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <Head>
+          <title>Wire Transfer Verification Required - Oakline Bank</title>
+        </Head>
+        <div style={{
+          minHeight: '100vh',
+          backgroundColor: '#f8fafc'
+        }}>
+          <div style={{
+            backgroundColor: '#1a365d',
+            padding: isMobile ? '1.5rem' : '2rem',
+            marginBottom: '1rem'
+          }}>
+            <div style={{
+              maxWidth: '800px',
+              margin: '0 auto',
+              textAlign: 'center'
+            }}>
+              <h1 style={{
+                fontSize: isMobile ? '1.5rem' : '2rem',
+                fontWeight: '700',
+                color: 'white',
+                marginBottom: '0.75rem'
+              }}>
+                Wire Transfer Verification Required
+              </h1>
+              <p style={{
+                color: 'rgba(255, 255, 255, 0.9)',
+                fontSize: isMobile ? '0.9rem' : '1rem',
+                lineHeight: '1.6'
+              }}>
+                {wireTransferSuspensionReason}
+              </p>
+              <p style={{
+                color: 'rgba(255, 255, 255, 0.75)',
+                fontSize: '0.875rem',
+                marginTop: '0.75rem'
+              }}>
+                Please complete video verification to restore wire transfer access.
+              </p>
+            </div>
+          </div>
+          <SelfieVerification
+            verificationType="video"
+            onVerificationComplete={handleWireVerificationComplete}
+          />
+        </div>
+      </>
     );
   }
 
