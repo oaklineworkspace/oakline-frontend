@@ -1642,7 +1642,8 @@ export default function OaklinePayPage() {
                 style={{ 
                   height: '70px', 
                   marginBottom: '1.25rem',
-                  filter: 'brightness(0) invert(1)'
+                  display: 'block',
+                  margin: '0 auto 1.25rem'
                 }} 
               />
               <h1 style={{ 
