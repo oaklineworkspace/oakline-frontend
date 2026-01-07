@@ -40,6 +40,7 @@ export default function Investment() {
   const [messageType, setMessageType] = useState('');
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const amountInputRef = useRef(null);
 
@@ -107,11 +108,11 @@ export default function Investment() {
 
   const handleInvest = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setIsSubmitting(true);
     setMessage('');
 
     try {
-      const investmentAmount = parseFloat(amount);
+      const investmentAmount = parseFloat(amount.replace(/,/g, ''));
       if (isNaN(investmentAmount) || investmentAmount <= 0) throw new Error('Please enter a valid amount');
 
       const product = products.find(p => p.id === selectedProduct);
@@ -156,6 +157,26 @@ export default function Investment() {
 
       await supabase.from('investment_transactions').insert([{ investment_id: investment.id, type: 'buy', amount: investmentAmount }]);
 
+      // Send email notification (fire-and-forget)
+      try {
+        fetch('/api/investments/send-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            productName: product.name,
+            productType: product.type,
+            amount: investmentAmount,
+            reference,
+            accountNumber: account.account_number,
+            accountType: account.account_type,
+            newBalance
+          })
+        }).catch(err => console.error('Email notification error:', err));
+      } catch (emailErr) {
+        console.error('Email notification error:', emailErr);
+      }
+
       setReceiptData({
         reference, date: new Date().toLocaleString(), productName: product.name, productType: product.type,
         riskLevel: product.risk_level, expectedReturn: product.annual_return, amount: investmentAmount,
@@ -169,12 +190,20 @@ export default function Investment() {
       setMessage(error.message || 'Investment failed. Please try again.');
       setMessageType('error');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   const formatCurrency = (value) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value || 0);
   const formatPercent = (value) => `${(value || 0).toFixed(2)}%`;
+
+  const handleAmountChange = (e) => {
+    const value = e.target.value.replace(/[^0-9.]/g, '');
+    const parts = value.split('.');
+    if (parts.length > 2) return;
+    if (parts[1] && parts[1].length > 2) return;
+    setAmount(value);
+  };
 
   const getTypeIcon = (type) => {
     const icons = { stock: '📈', mutual_fund: '💼', bond: '📊', crypto: '₿', etf: '📉', reit: '🏢', commodity: '🌾', index_fund: '📑', money_market: '💵', other: '💰' };
@@ -250,44 +279,25 @@ export default function Investment() {
       </Head>
 
       <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc' }}>
-        {/* Header */}
-        <header style={{ background: 'linear-gradient(135deg, #1a365d 0%, #2d4a7c 100%)', borderBottom: '3px solid #22c55e' }}>
-          <div style={{ maxWidth: '1400px', margin: '0 auto', padding: isMobile ? '1rem' : '1rem 2rem' }}>
-            {isMobile ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textDecoration: 'none' }}>
-                  <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={{ height: '48px', width: 'auto', marginBottom: '0.5rem' }} />
-                  <span style={{ fontSize: '1.25rem', fontWeight: '700', color: 'white' }}>Oakline Bank</span>
-                  <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', letterSpacing: '1.5px', marginTop: '0.25rem' }}>INVESTMENT CENTER</span>
-                </Link>
-                <div style={{ display: 'flex', gap: '0.75rem', width: '100%', justifyContent: 'center' }}>
-                  <Link href="/dashboard" style={{ padding: '0.6rem 1.25rem', backgroundColor: 'transparent', border: '2px solid rgba(255,255,255,0.5)', color: 'white', borderRadius: '8px', fontSize: '0.875rem', fontWeight: '600', textDecoration: 'none' }}>
-                    Dashboard
-                  </Link>
-                  <Link href="/main-menu" style={{ padding: '0.6rem 1.25rem', backgroundColor: '#22c55e', border: '2px solid #22c55e', color: 'white', borderRadius: '8px', fontSize: '0.875rem', fontWeight: '600', textDecoration: 'none' }}>
-                    Main Menu
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
-                  <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={{ height: '44px', width: 'auto' }} />
-                  <div>
-                    <span style={{ fontSize: '1.35rem', fontWeight: '700', color: 'white', display: 'block' }}>Oakline Bank</span>
-                    <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', letterSpacing: '1px' }}>INVESTMENT CENTER</span>
-                  </div>
-                </Link>
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                  <Link href="/dashboard" style={{ padding: '0.6rem 1.25rem', backgroundColor: 'transparent', border: '2px solid rgba(255,255,255,0.5)', color: 'white', borderRadius: '8px', fontSize: '0.875rem', fontWeight: '600', textDecoration: 'none', transition: 'all 0.3s' }}>
-                    Dashboard
-                  </Link>
-                  <Link href="/main-menu" style={{ padding: '0.6rem 1.25rem', backgroundColor: '#22c55e', border: '2px solid #22c55e', color: 'white', borderRadius: '8px', fontSize: '0.875rem', fontWeight: '600', textDecoration: 'none', transition: 'all 0.3s' }}>
-                    Main Menu
-                  </Link>
-                </div>
-              </div>
-            )}
+        {/* Full-screen Loading Overlay */}
+        {isSubmitting && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(26, 54, 93, 0.95)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+            <div style={{ width: '64px', height: '64px', border: '4px solid rgba(255,255,255,0.2)', borderTopColor: '#22c55e', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+            <p style={{ color: 'white', fontSize: '1.25rem', fontWeight: '600', marginTop: '1.5rem' }}>Processing Your Investment...</p>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', marginTop: '0.5rem' }}>Please wait while we complete your transaction</p>
+          </div>
+        )}
+
+        {/* Header - Matches Oakline Pay Style */}
+        <header style={{ backgroundColor: '#1a365d', padding: '1rem', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', borderBottom: '3px solid #059669' }}>
+          <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', color: 'white' }}>
+              <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={{ height: '40px', width: 'auto' }} />
+              <span style={{ fontSize: 'clamp(1rem, 4vw, 1.4rem)', fontWeight: '700' }}>Oakline Bank</span>
+            </Link>
+            <Link href="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', backgroundColor: 'rgba(255,255,255,0.2)', color: 'white', textDecoration: 'none', borderRadius: '8px', fontSize: '0.9rem', border: '1px solid rgba(255,255,255,0.3)', transition: 'all 0.3s ease', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+              ← Back to Dashboard
+            </Link>
           </div>
         </header>
 
@@ -545,7 +555,7 @@ export default function Investment() {
                     ) : (
                       <form onSubmit={handleInvest}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '2px solid #e2e8f0' }}>
-                          <div style={{ width: '4px', height: '24px', backgroundColor: '#22c55e', borderRadius: '2px' }}></div>
+                          <span style={{ fontSize: '1.5rem' }}>📋</span>
                           <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#1a365d', margin: 0 }}>Investment Details</h3>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: '1.25rem' }}>
@@ -559,7 +569,10 @@ export default function Investment() {
                           </div>
                           <div>
                             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>Investment Amount ($) *</label>
-                            <input ref={amountInputRef} type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount" step="0.01" min="1" required style={{ width: '100%', padding: '0.875rem', border: '2px solid #22c55e', borderRadius: '10px', fontSize: '0.875rem', boxSizing: 'border-box', boxShadow: '0 0 0 3px rgba(34, 197, 94, 0.1)' }} />
+                            <div style={{ position: 'relative' }}>
+                              <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontWeight: '600', fontSize: '1rem' }}>$</span>
+                              <input ref={amountInputRef} type="text" inputMode="decimal" value={amount} onChange={handleAmountChange} placeholder="0.00" required style={{ width: '100%', padding: '0.875rem', paddingLeft: '2rem', border: '2px solid #22c55e', borderRadius: '10px', fontSize: '1rem', fontWeight: '600', boxSizing: 'border-box', boxShadow: '0 0 0 3px rgba(34, 197, 94, 0.1)' }} />
+                            </div>
                             {selectedProduct && <small style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem', display: 'block' }}>Minimum: {formatCurrency(products.find(p => p.id === selectedProduct)?.min_investment || 100)}</small>}
                           </div>
                           <div>
@@ -587,18 +600,19 @@ export default function Investment() {
                                 <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.25rem' }}>Available Balance</div>
                                 <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1a365d' }}>{formatCurrency(accounts.find(a => a.id === selectedAccount)?.balance || 0)}</div>
                               </div>
-                              {amount && (
+                              {amount && parseFloat(amount) > 0 && (
                                 <div style={{ textAlign: 'right' }}>
                                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.25rem' }}>After Investment</div>
-                                  <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#22c55e' }}>{formatCurrency(parseFloat(accounts.find(a => a.id === selectedAccount)?.balance || 0) - parseFloat(amount || 0))}</div>
+                                  <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#22c55e' }}>{formatCurrency(parseFloat(accounts.find(a => a.id === selectedAccount)?.balance || 0) - parseFloat(amount.replace(/,/g, '') || 0))}</div>
                                 </div>
                               )}
                             </div>
                           </div>
                         )}
 
-                        <button type="submit" disabled={loading} style={{ width: '100%', padding: '1rem', backgroundColor: loading ? '#94a3b8' : '#22c55e', color: 'white', border: 'none', borderRadius: '12px', fontSize: '1rem', fontWeight: '700', cursor: loading ? 'not-allowed' : 'pointer', marginTop: '1.5rem', transition: 'all 0.3s', boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)' }}>
-                          {loading ? 'Processing...' : `Invest ${formatCurrency(parseFloat(amount) || 0)}`}
+                        <button type="submit" disabled={isSubmitting} style={{ width: '100%', padding: '1rem', backgroundColor: isSubmitting ? '#94a3b8' : '#22c55e', color: 'white', border: 'none', borderRadius: '12px', fontSize: '1rem', fontWeight: '700', cursor: isSubmitting ? 'not-allowed' : 'pointer', marginTop: '1.5rem', transition: 'all 0.3s', boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                          {isSubmitting && <span style={{ width: '18px', height: '18px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 1s linear infinite', display: 'inline-block' }}></span>}
+                          {isSubmitting ? 'Processing Investment...' : `Invest ${formatCurrency(parseFloat(amount?.replace(/,/g, '') || 0) || 0)}`}
                         </button>
                       </form>
                     )}
