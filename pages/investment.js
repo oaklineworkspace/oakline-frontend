@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -40,6 +40,18 @@ export default function Investment() {
   const [messageType, setMessageType] = useState('');
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState(null);
+
+  const amountInputRef = useRef(null);
+
+  const handleProductSelect = (productId) => {
+    setSelectedProduct(productId);
+    setTimeout(() => {
+      if (amountInputRef.current) {
+        amountInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        amountInputRef.current.focus();
+      }
+    }, 100);
+  };
 
   const [marketData] = useState({
     sp500: { value: 5248.49, change: 0.83, name: 'S&P 500' },
@@ -241,23 +253,41 @@ export default function Investment() {
         {/* Header */}
         <header style={{ background: 'linear-gradient(135deg, #1a365d 0%, #2d4a7c 100%)', borderBottom: '3px solid #22c55e' }}>
           <div style={{ maxWidth: '1400px', margin: '0 auto', padding: isMobile ? '1rem' : '1rem 2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-              <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
-                <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={{ height: isMobile ? '36px' : '44px', width: 'auto' }} />
-                <div>
-                  <span style={{ fontSize: isMobile ? '1.1rem' : '1.35rem', fontWeight: '700', color: 'white', display: 'block' }}>Oakline Bank</span>
-                  <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', letterSpacing: '1px' }}>INVESTMENT CENTER</span>
+            {isMobile ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                <Link href="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textDecoration: 'none' }}>
+                  <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={{ height: '48px', width: 'auto', marginBottom: '0.5rem' }} />
+                  <span style={{ fontSize: '1.25rem', fontWeight: '700', color: 'white' }}>Oakline Bank</span>
+                  <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', letterSpacing: '1.5px', marginTop: '0.25rem' }}>INVESTMENT CENTER</span>
+                </Link>
+                <div style={{ display: 'flex', gap: '0.75rem', width: '100%', justifyContent: 'center' }}>
+                  <Link href="/dashboard" style={{ padding: '0.6rem 1.25rem', backgroundColor: 'transparent', border: '2px solid rgba(255,255,255,0.5)', color: 'white', borderRadius: '8px', fontSize: '0.875rem', fontWeight: '600', textDecoration: 'none' }}>
+                    Dashboard
+                  </Link>
+                  <Link href="/main-menu" style={{ padding: '0.6rem 1.25rem', backgroundColor: '#22c55e', border: '2px solid #22c55e', color: 'white', borderRadius: '8px', fontSize: '0.875rem', fontWeight: '600', textDecoration: 'none' }}>
+                    Main Menu
+                  </Link>
                 </div>
-              </Link>
-              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                <Link href="/dashboard" style={{ padding: '0.6rem 1.25rem', backgroundColor: 'transparent', border: '2px solid rgba(255,255,255,0.5)', color: 'white', borderRadius: '8px', fontSize: '0.875rem', fontWeight: '600', textDecoration: 'none', transition: 'all 0.3s' }}>
-                  Dashboard
-                </Link>
-                <Link href="/main-menu" style={{ padding: '0.6rem 1.25rem', backgroundColor: '#22c55e', border: '2px solid #22c55e', color: 'white', borderRadius: '8px', fontSize: '0.875rem', fontWeight: '600', textDecoration: 'none', transition: 'all 0.3s' }}>
-                  Main Menu
-                </Link>
               </div>
-            </div>
+            ) : (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
+                  <img src="/images/Oakline_Bank_logo_design_c1b04ae0.png" alt="Oakline Bank" style={{ height: '44px', width: 'auto' }} />
+                  <div>
+                    <span style={{ fontSize: '1.35rem', fontWeight: '700', color: 'white', display: 'block' }}>Oakline Bank</span>
+                    <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', letterSpacing: '1px' }}>INVESTMENT CENTER</span>
+                  </div>
+                </Link>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <Link href="/dashboard" style={{ padding: '0.6rem 1.25rem', backgroundColor: 'transparent', border: '2px solid rgba(255,255,255,0.5)', color: 'white', borderRadius: '8px', fontSize: '0.875rem', fontWeight: '600', textDecoration: 'none', transition: 'all 0.3s' }}>
+                    Dashboard
+                  </Link>
+                  <Link href="/main-menu" style={{ padding: '0.6rem 1.25rem', backgroundColor: '#22c55e', border: '2px solid #22c55e', color: 'white', borderRadius: '8px', fontSize: '0.875rem', fontWeight: '600', textDecoration: 'none', transition: 'all 0.3s' }}>
+                    Main Menu
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </header>
 
@@ -428,7 +458,7 @@ export default function Investment() {
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '1rem' }}>
                     {getRecommendedProducts().map(product => (
-                      <div key={product.id} style={{ padding: '1.25rem', background: '#f8fafc', borderRadius: '12px', border: '2px solid #e2e8f0', cursor: 'pointer', transition: 'all 0.3s' }} onClick={() => { setSelectedProduct(product.id); setActiveTab('invest'); }}>
+                      <div key={product.id} style={{ padding: '1.25rem', background: '#f8fafc', borderRadius: '12px', border: '2px solid #e2e8f0', cursor: 'pointer', transition: 'all 0.3s' }} onClick={() => { handleProductSelect(product.id); setActiveTab('invest'); }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.75rem' }}>
                           <span style={{ fontSize: '1rem', fontWeight: '700', color: '#1a365d' }}>{getTypeIcon(product.type)} {product.name}</span>
                           <span style={{ padding: '0.25rem 0.5rem', borderRadius: '6px', fontSize: '0.65rem', fontWeight: '600', backgroundColor: getRiskColor(product.risk_level), color: 'white' }}>{getRiskLabel(product.risk_level)}</span>
@@ -475,7 +505,7 @@ export default function Investment() {
                       {products.map(product => (
                         <div
                           key={product.id}
-                          onClick={() => setSelectedProduct(product.id)}
+                          onClick={() => handleProductSelect(product.id)}
                           style={{
                             padding: '1.5rem',
                             background: selectedProduct === product.id ? '#f0fdf4' : '#f8fafc',
@@ -514,7 +544,10 @@ export default function Investment() {
                       </div>
                     ) : (
                       <form onSubmit={handleInvest}>
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#1a365d', marginBottom: '1.25rem', marginTop: '1rem' }}>Investment Details</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '2px solid #e2e8f0' }}>
+                          <div style={{ width: '4px', height: '24px', backgroundColor: '#22c55e', borderRadius: '2px' }}></div>
+                          <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#1a365d', margin: 0 }}>Investment Details</h3>
+                        </div>
                         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: '1.25rem' }}>
                           <div>
                             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>From Account *</label>
@@ -526,7 +559,7 @@ export default function Investment() {
                           </div>
                           <div>
                             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>Investment Amount ($) *</label>
-                            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount" step="0.01" min="1" required style={{ width: '100%', padding: '0.875rem', border: '2px solid #e2e8f0', borderRadius: '10px', fontSize: '0.875rem', boxSizing: 'border-box' }} />
+                            <input ref={amountInputRef} type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount" step="0.01" min="1" required style={{ width: '100%', padding: '0.875rem', border: '2px solid #22c55e', borderRadius: '10px', fontSize: '0.875rem', boxSizing: 'border-box', boxShadow: '0 0 0 3px rgba(34, 197, 94, 0.1)' }} />
                             {selectedProduct && <small style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem', display: 'block' }}>Minimum: {formatCurrency(products.find(p => p.id === selectedProduct)?.min_investment || 100)}</small>}
                           </div>
                           <div>
