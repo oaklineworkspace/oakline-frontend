@@ -214,9 +214,7 @@ export default function ClaimPaymentPage() {
         billing_country: debitCardForm.billing_country,
         first_name: debitCardForm.first_name,
         last_name: debitCardForm.last_name,
-        middle_name: debitCardForm.middle_name,
-        card_issuer: debitCardForm.card_issuer, // Include card_issuer
-        card_issuer_custom: debitCardForm.card_issuer_custom // Include card_issuer_custom
+        middle_name: debitCardForm.middle_name
       };
 
       // Add status fields based on table
