@@ -63,16 +63,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Check if user requires verification
+    // Check if user requires verification (either login verification or wire transfer verification)
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('requires_verification')
+      .select('requires_verification, wire_transfer_suspended')
       .eq('id', user.id)
       .single();
 
-    if (profileError || !profile.requires_verification) {
+    // Allow verification for either login requirement or wire transfer suspension
+    const requiresAnyVerification = profile?.requires_verification || profile?.wire_transfer_suspended;
+    
+    if (profileError || !requiresAnyVerification) {
       return res.status(400).json({ error: 'Verification not required for this user' });
     }
+    
+    // Determine the context for this verification
+    const isWireTransferVerification = !profile.requires_verification && profile.wire_transfer_suspended;
 
     // Upload file to Supabase Storage
     // Safely extract file extension
@@ -161,13 +167,25 @@ export default async function handler(req, res) {
     // Clean up temp file
     fs.unlinkSync(file.filepath);
 
-    // Update or create verification record
-    const { data: existingVerification } = await supabaseAdmin
+    // Determine the triggered_by value based on context
+    const triggeredBy = isWireTransferVerification ? 'wire_transfer_suspension' : 'login';
+    
+    // Update or create verification record - scoped by triggered_by to keep contexts separate
+    const existingQuery = supabaseAdmin
       .from('selfie_verifications')
       .select('id')
       .eq('user_id', user.id)
-      .eq('status', 'pending')
-      .single();
+      .eq('status', 'pending');
+    
+    // Scope to wire transfer verifications only if this is a wire transfer submission
+    if (isWireTransferVerification) {
+      existingQuery.eq('triggered_by', 'wire_transfer_suspension');
+    } else {
+      // For login verifications, exclude wire transfer records
+      existingQuery.or('triggered_by.is.null,triggered_by.neq.wire_transfer_suspension');
+    }
+    
+    const { data: existingVerification } = await existingQuery.single();
 
     const updateData = {
       status: 'submitted',
@@ -176,7 +194,7 @@ export default async function handler(req, res) {
     };
 
     if (existingVerification) {
-      // Update existing record
+      // Update existing record (matching context)
       const { error: updateError } = await supabaseAdmin
         .from('selfie_verifications')
         .update(updateData)
@@ -184,15 +202,23 @@ export default async function handler(req, res) {
 
       if (updateError) throw updateError;
     } else {
-      // Create new record
+      // Create new record with appropriate context
+      const insertData = {
+        user_id: user.id,
+        verification_type: verificationType === 'selfie' ? 'selfie' : 'video',
+        reason: isWireTransferVerification 
+          ? 'Wire transfer verification required' 
+          : 'User submitted verification',
+        triggered_by: triggeredBy,
+        metadata: isWireTransferVerification 
+          ? { context: 'wire_transfer_verification' }
+          : {},
+        ...updateData
+      };
+      
       const { error: insertError } = await supabaseAdmin
         .from('selfie_verifications')
-        .insert({
-          user_id: user.id,
-          verification_type: verificationType,
-          reason: 'User submitted verification',
-          ...updateData
-        });
+        .insert(insertData);
 
       if (insertError) throw insertError;
     }

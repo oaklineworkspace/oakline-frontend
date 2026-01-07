@@ -691,29 +691,9 @@ export default function WireTransfer() {
   };
 
   const handleWireVerificationComplete = async (data) => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      await supabase
-        .from('selfie_verifications')
-        .insert({
-          user_id: user.id,
-          verification_type: 'video',
-          status: 'submitted',
-          video_path: data?.filePath || null,
-          reason: wireTransferSuspensionReason || 'Wire transfer verification required',
-          triggered_by: 'wire_transfer_suspension',
-          metadata: { 
-            context: 'wire_transfer_verification',
-            suspension_reason: wireTransferSuspensionReason
-          }
-        });
-
-      setWireVerificationSubmitted(true);
-    } catch (error) {
-      console.error('Error submitting wire transfer verification:', error);
-    }
+    // The API endpoint /api/verification/submit handles database record creation
+    // This callback just updates the UI state
+    setWireVerificationSubmitted(true);
   };
 
   const styles = getWireTransferStyles(isMobile);
