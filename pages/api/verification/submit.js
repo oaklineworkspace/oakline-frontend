@@ -102,8 +102,8 @@ export default async function handler(req, res) {
     const sanitizedType = verificationType.replace(/[^a-zA-Z0-9_-]/g, '_');
     const filePath = `${sanitizedType}/${fileName}`;
     
-    // Additional validation: ensure path doesn't contain invalid characters
-    if (!/^[a-zA-Z0-9_\/-]+$/.test(filePath)) {
+    // Additional validation: ensure path doesn't contain invalid characters (allow dots for file extensions)
+    if (!/^[a-zA-Z0-9_.\/-]+$/.test(filePath)) {
       throw new Error('Invalid file path format');
     }
 
