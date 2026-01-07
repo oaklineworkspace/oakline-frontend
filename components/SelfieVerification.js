@@ -57,8 +57,8 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { 
           facingMode: facingMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+          width: { ideal: 640 },
+          height: { ideal: 480 }
         },
         audio: verificationType === 'video'
       });
@@ -214,7 +214,11 @@ export default function SelfieVerification({ onVerificationComplete, verificatio
       }
 
       console.log('Creating MediaRecorder with MIME type:', mimeType);
-      const mediaRecorder = new MediaRecorder(stream, { mimeType });
+      const mediaRecorder = new MediaRecorder(stream, { 
+        mimeType,
+        videoBitsPerSecond: 800000,
+        audioBitsPerSecond: 64000
+      });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
