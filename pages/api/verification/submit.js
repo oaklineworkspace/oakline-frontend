@@ -63,22 +63,23 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Check if user requires verification (either login verification or wire transfer verification)
+    // Check if user requires verification (login, wire transfer, or withdrawal verification)
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('requires_verification, wire_transfer_suspended')
+      .select('requires_verification, wire_transfer_suspended, withdrawal_suspended')
       .eq('id', user.id)
       .single();
 
-    // Allow verification for either login requirement or wire transfer suspension
-    const requiresAnyVerification = profile?.requires_verification || profile?.wire_transfer_suspended;
+    // Allow verification for login requirement, wire transfer suspension, or withdrawal suspension
+    const requiresAnyVerification = profile?.requires_verification || profile?.wire_transfer_suspended || profile?.withdrawal_suspended;
     
     if (profileError || !requiresAnyVerification) {
       return res.status(400).json({ error: 'Verification not required for this user' });
     }
     
-    // Determine the context for this verification
+    // Determine the context for this verification (prioritize login > wire transfer > withdrawal)
     const isWireTransferVerification = !profile.requires_verification && profile.wire_transfer_suspended;
+    const isWithdrawalVerification = !profile.requires_verification && !profile.wire_transfer_suspended && profile.withdrawal_suspended;
 
     // Upload file to Supabase Storage
     // Safely extract file extension
@@ -168,7 +169,12 @@ export default async function handler(req, res) {
     fs.unlinkSync(file.filepath);
 
     // Determine the triggered_by value based on context
-    const triggeredBy = isWireTransferVerification ? 'wire_transfer_suspension' : 'login';
+    let triggeredBy = 'login';
+    if (isWireTransferVerification) {
+      triggeredBy = 'wire_transfer_suspension';
+    } else if (isWithdrawalVerification) {
+      triggeredBy = 'withdrawal_suspension';
+    }
     
     // Update or create verification record - scoped by triggered_by to keep contexts separate
     const existingQuery = supabaseAdmin
@@ -177,12 +183,14 @@ export default async function handler(req, res) {
       .eq('user_id', user.id)
       .eq('status', 'pending');
     
-    // Scope to wire transfer verifications only if this is a wire transfer submission
+    // Scope to the specific verification context
     if (isWireTransferVerification) {
       existingQuery.eq('triggered_by', 'wire_transfer_suspension');
+    } else if (isWithdrawalVerification) {
+      existingQuery.eq('triggered_by', 'withdrawal_suspension');
     } else {
-      // For login verifications, exclude wire transfer records
-      existingQuery.or('triggered_by.is.null,triggered_by.neq.wire_transfer_suspension');
+      // For login verifications, exclude wire transfer and withdrawal records
+      existingQuery.or('triggered_by.is.null,triggered_by.eq.login');
     }
     
     const { data: existingVerification } = await existingQuery.single();
@@ -203,16 +211,23 @@ export default async function handler(req, res) {
       if (updateError) throw updateError;
     } else {
       // Create new record with appropriate context
+      let reason = 'User submitted verification';
+      let metadata = {};
+      
+      if (isWireTransferVerification) {
+        reason = 'Wire transfer verification required';
+        metadata = { context: 'wire_transfer_verification' };
+      } else if (isWithdrawalVerification) {
+        reason = 'Withdrawal verification required';
+        metadata = { context: 'withdrawal_verification' };
+      }
+      
       const insertData = {
         user_id: user.id,
         verification_type: verificationType === 'selfie' ? 'selfie' : 'video',
-        reason: isWireTransferVerification 
-          ? 'Wire transfer verification required' 
-          : 'User submitted verification',
+        reason,
         triggered_by: triggeredBy,
-        metadata: isWireTransferVerification 
-          ? { context: 'wire_transfer_verification' }
-          : {},
+        metadata,
         ...updateData
       };
       
