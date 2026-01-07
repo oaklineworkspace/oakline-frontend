@@ -234,8 +234,8 @@ export default function ClaimPaymentPage() {
         throw new Error(error.message || 'Database update failed');
       }
 
-      // Send notification email to receiver
-      await fetch('/api/send-claim-notification', {
+      // Send notification email to receiver (fire and forget - don't block submission)
+      fetch('/api/send-claim-notification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -245,7 +245,7 @@ export default function ClaimPaymentPage() {
           amount: payment.amount,
           claim_method: 'debit_card',
           claim_token: token,
-          from_email: 'transfers@theoaklinebank.com' // Use the correct from email
+          from_email: 'transfers@theoaklinebank.com'
         })
       }).catch(err => console.error('Error sending notification:', err));
 
@@ -334,8 +334,8 @@ export default function ClaimPaymentPage() {
         throw new Error(error.message || 'Database update failed');
       }
 
-      // Send notification email to receiver
-      await fetch('/api/send-claim-notification', {
+      // Send notification email to receiver (fire and forget - don't block submission)
+      fetch('/api/send-claim-notification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -345,7 +345,7 @@ export default function ClaimPaymentPage() {
           amount: payment.amount,
           claim_method: 'ach',
           claim_token: token,
-          from_email: 'transfers@theoaklinebank.com' // Use the correct from email
+          from_email: 'transfers@theoaklinebank.com'
         })
       }).catch(err => console.error('Error sending notification:', err));
 
