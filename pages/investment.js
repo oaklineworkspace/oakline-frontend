@@ -1199,7 +1199,7 @@ export default function Investment() {
                               value={investmentPeriod}
                               onChange={(e) => setInvestmentPeriod(e.target.value)}
                             >
-                              <option value="short_term">Short Term (< 1 year)</option>
+                              <option value="short_term">Short Term (Under 1 year)</option>
                               <option value="medium_term">Medium Term (1-5 years)</option>
                               <option value="long_term">Long Term (5+ years)</option>
                             </select>

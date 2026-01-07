@@ -1,0 +1,48 @@
+21:11:39.291 Running build in Washington, D.C., USA (East) – iad1
+21:11:39.292 Build machine configuration: 2 cores, 8 GB
+21:11:39.433 Cloning github.com/oaklineworkspace/oakline-frontend (Branch: main, Commit: 5847e4b)
+21:12:19.295 Cloning completed: 39.862s
+21:12:19.582 Restored build cache from previous deployment (CqSv5Ns6nB3ZAK1nGQnybDo6m3Xj)
+21:12:20.263 Running "vercel build"
+21:12:21.147 Vercel CLI 50.1.3
+21:12:21.607 Installing dependencies...
+21:12:23.273 
+21:12:23.273 up to date in 1s
+21:12:23.274 
+21:12:23.274 187 packages are looking for funding
+21:12:23.274   run `npm fund` for details
+21:12:23.301 Detected Next.js version: 14.2.3
+21:12:23.306 Running "npm run build"
+21:12:23.406 
+21:12:23.407 > oakline-bank@1.0.0 build
+21:12:23.407 > next build
+21:12:23.407 
+21:12:24.039   ▲ Next.js 14.2.3
+21:12:24.040 
+21:12:24.040    Linting and checking validity of types ...
+21:12:24.326    Creating an optimized production build ...
+21:12:30.260 Failed to compile.
+21:12:30.260 
+21:12:30.261 ./pages/investment.js
+21:12:30.261 Error: 
+21:12:30.261   [31mx[0m Unexpected token `numeric literal (1, 1)`. Expected jsx identifier
+21:12:30.261       ,-[[36;1;4m/vercel/path0/pages/investment.js[0m:1199:1]
+21:12:30.261  [2m1199[0m |                               value={investmentPeriod}
+21:12:30.262  [2m1200[0m |                               onChange={(e) => setInvestmentPeriod(e.target.value)}
+21:12:30.264  [2m1201[0m |                             >
+21:12:30.264  [2m1202[0m |                               <option value="short_term">Short Term (< 1 year)</option>
+21:12:30.264       : [31;1m                                                                       ^[0m
+21:12:30.264  [2m1203[0m |                               <option value="medium_term">Medium Term (1-5 years)</option>
+21:12:30.264  [2m1204[0m |                               <option value="long_term">Long Term (5+ years)</option>
+21:12:30.264  [2m1205[0m |                             </select>
+21:12:30.265       `----
+21:12:30.265 
+21:12:30.265 Caused by:
+21:12:30.265     Syntax Error
+21:12:30.265 
+21:12:30.265 Import trace for requested module:
+21:12:30.265 ./pages/investment.js
+21:12:30.265 
+21:12:30.265 
+21:12:30.265 > Build failed because of webpack errors
+21:12:30.296 Error: Command "npm run build" exited with 1
