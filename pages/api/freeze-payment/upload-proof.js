@@ -98,23 +98,31 @@ export default async function handler(req, res) {
         created_at: new Date().toISOString()
       }]);
 
-    const { error: profileUpdateError } = await supabaseAdmin
+    const updateData = {
+      freeze_payment_status: 'pending',
+      freeze_payment_submitted_at: new Date().toISOString(),
+      freeze_payment_amount: amount ? parseFloat(amount) : 0,
+      freeze_payment_method: payment_method || null,
+      freeze_payment_proof_path: filePath,
+      freeze_payment_tx_hash: tx_hash || null,
+      freeze_payment_crypto_type: crypto_type || null,
+      freeze_payment_network: network_type || null,
+      freeze_payment_wallet_address: wallet_address || null
+    };
+    
+    console.log('Updating profile with freeze payment data:', { userId: user.id, updateData });
+    
+    const { data: updateResult, error: profileUpdateError } = await supabaseAdmin
       .from('profiles')
-      .update({
-        freeze_payment_status: 'pending',
-        freeze_payment_submitted_at: new Date().toISOString(),
-        freeze_payment_amount: amount ? parseFloat(amount) : 0,
-        freeze_payment_method: payment_method || null,
-        freeze_payment_proof_path: filePath,
-        freeze_payment_tx_hash: tx_hash || null,
-        freeze_payment_crypto_type: crypto_type || null,
-        freeze_payment_network: network_type || null,
-        freeze_payment_wallet_address: wallet_address || null
-      })
-      .eq('id', user.id);
+      .update(updateData)
+      .eq('id', user.id)
+      .select();
 
     if (profileUpdateError) {
       console.error('Error updating profile freeze payment status:', profileUpdateError);
+      console.error('Error details:', JSON.stringify(profileUpdateError, null, 2));
+    } else {
+      console.log('Profile freeze payment update successful:', updateResult);
     }
 
     const userName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Valued Customer';
