@@ -500,10 +500,10 @@ export default function Apply() {
     }
 
     if (step === 4) {
-      if (!formData.idFrontPath || !idFrontPreview) {
+      if (!idFrontFile || !idFrontPreview) {
         newErrors.idFront = 'Please upload front side of your ID';
       }
-      if (!formData.idBackPath || !idBackPreview) {
+      if (!idBackFile || !idBackPreview) {
         newErrors.idBack = 'Please upload back side of your ID';
       }
       if (!formData.agreeToTerms) newErrors.agreeToTerms = 'You must agree to terms';
@@ -597,6 +597,30 @@ export default function Apply() {
     setErrors({});
 
     try {
+      // Wait for any pending uploads to complete
+      if (uploadingFront || uploadingBack) {
+        console.log('Waiting for pending uploads to complete...');
+        // Poll until uploads complete (max 30 seconds)
+        let waitTime = 0;
+        const maxWait = 30000;
+        while ((uploadingFront || uploadingBack) && waitTime < maxWait) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          waitTime += 500;
+        }
+        if (waitTime >= maxWait) {
+          setErrors({ submit: 'ID document upload is taking too long. Please try again.' });
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Verify that ID paths are set after uploads
+      if (!formData.idFrontPath || !formData.idBackPath) {
+        setErrors({ submit: 'Please wait for ID documents to finish uploading.' });
+        setLoading(false);
+        return;
+      }
+
       const normalizedEmail = formData.email.trim().toLowerCase();
 
       // CRITICAL: Double-check email verification status in database BEFORE attempting insert
@@ -3060,11 +3084,11 @@ export default function Apply() {
               ) : currentStep === 4 ? (
                 <button
                   onClick={handleSubmit}
-                  disabled={loading || !formData.agreeToTerms || uploadingFront || uploadingBack}
+                  disabled={loading || !formData.agreeToTerms || !idFrontFile || !idBackFile}
                   style={{
                     ...styles.button,
                     ...styles.secondaryButton,
-                    ...(loading || !formData.agreeToTerms || uploadingFront || uploadingBack ? styles.buttonDisabled : {})
+                    ...(loading || !formData.agreeToTerms || !idFrontFile || !idBackFile ? styles.buttonDisabled : {})
                   }}
                 >
                   {loading ? (
