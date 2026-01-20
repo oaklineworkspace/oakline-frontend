@@ -26,6 +26,7 @@ function DashboardContent() {
   const [cryptoDeposits, setCryptoDeposits] = useState([]);
   const router = useRouter();
   const [addFundsDropdownVisible, setAddFundsDropdownVisible] = useState(false); // State to control add funds dropdown visibility
+  const [linkOptionsDropdownVisible, setLinkOptionsDropdownVisible] = useState(false); // State for link debit/bank dropdown
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [accountDetailsExpanded, setAccountDetailsExpanded] = useState(false);
@@ -1402,6 +1403,12 @@ function DashboardContent() {
                           <div style={styles.dropdownItemDesc}>Add funds to your balance using cryptocurrency</div>
                         </div>
                       </Link>
+                      <Link href="/link-bank-account" style={styles.addFundsDropdownItem}>
+                        <div>
+                          <div style={styles.dropdownItemTitle}>🏦 Link Bank Account</div>
+                          <div style={styles.dropdownItemDesc}>Connect an external bank account for transfers</div>
+                        </div>
+                      </Link>
                     </div>
                   )}
                 </div>
@@ -1923,10 +1930,68 @@ function DashboardContent() {
             <span style={styles.quickActionIcon}>➕</span>
             <span style={styles.quickActionText}>Add Funds via Crypto</span>
           </Link>
-          <Link href="/link-debit-card" style={styles.standardActionButton}>
-            <span style={styles.quickActionIcon}>💳</span>
-            <span style={styles.quickActionText}>Link Debit Card</span>
-          </Link>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setLinkOptionsDropdownVisible(!linkOptionsDropdownVisible)}
+              style={{
+                ...styles.standardActionButton,
+                cursor: 'pointer',
+                border: 'none',
+                width: '100%'
+              }}
+            >
+              <span style={styles.quickActionIcon}>💳</span>
+              <span style={styles.quickActionText}>Link Account</span>
+              <span style={{ fontSize: '0.7rem', marginLeft: '0.25rem' }}>▼</span>
+            </button>
+            {linkOptionsDropdownVisible && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                backgroundColor: '#ffffff',
+                borderRadius: '12px',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+                zIndex: 100,
+                marginTop: '0.5rem',
+                overflow: 'hidden',
+                border: '1px solid #e2e8f0'
+              }}>
+                <Link href="/link-debit-card" style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '1rem',
+                  color: '#1e293b',
+                  textDecoration: 'none',
+                  borderBottom: '1px solid #e2e8f0',
+                  transition: 'background-color 0.2s'
+                }}>
+                  <span style={{ fontSize: '1.25rem' }}>💳</span>
+                  <div>
+                    <div style={{ fontWeight: '600', fontSize: '0.9rem' }}>Link Debit Card</div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Add your debit card</div>
+                  </div>
+                </Link>
+                <Link href="/link-bank-account" style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '1rem',
+                  color: '#1e293b',
+                  textDecoration: 'none',
+                  transition: 'background-color 0.2s'
+                }}>
+                  <span style={{ fontSize: '1.25rem' }}>🏦</span>
+                  <div>
+                    <div style={{ fontWeight: '600', fontSize: '0.9rem' }}>Link Bank Account</div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Connect external bank</div>
+                  </div>
+                </Link>
+              </div>
+            )}
+          </div>
           <Link href="/request-account" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>➕</span>
             <span style={styles.quickActionText}>Request Additional Account</span>
@@ -1934,6 +1999,10 @@ function DashboardContent() {
           <Link href="/loan/dashboard" style={styles.standardActionButton}>
             <span style={styles.quickActionIcon}>💰</span>
             <span style={styles.quickActionText}>Loans</span>
+          </Link>
+          <Link href="/investment" style={styles.standardActionButton}>
+            <span style={styles.quickActionIcon}>📈</span>
+            <span style={styles.quickActionText}>Investment</span>
           </Link>
           <Link href="/oakline-pay" style={styles.standardActionButton}>
             <span style={{...styles.quickActionIcon, color: '#ffffff', fontWeight: 'bold', fontSize: '1.3rem', background: 'linear-gradient(135deg, #1a365d, #2d4a7c)', borderRadius: '50%', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>O</span>
