@@ -74,6 +74,10 @@ export default function PaymentMethod() {
   const [adminWallets, setAdminWallets] = useState([]);
   const [selectedCrypto, setSelectedCrypto] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(true);
+  const [proofFile, setProofFile] = useState(null);
+  const [uploadingProof, setUploadingProof] = useState(false);
+  const [proofSubmitted, setProofSubmitted] = useState(false);
+  const [txHash, setTxHash] = useState('');
 
   const methodInfo = paymentMethodDetails[method] || paymentMethodDetails.wire;
 
@@ -256,6 +260,69 @@ export default function PaymentMethod() {
       {copied === label ? 'Copied!' : 'Copy'}
     </button>
   );
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Please upload a JPG, PNG, or PDF file');
+        return;
+      }
+      setProofFile(file);
+    }
+  };
+
+  const handleProofUpload = async () => {
+    if (!proofFile) {
+      alert('Please select a file to upload');
+      return;
+    }
+
+    setUploadingProof(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        alert('Session expired. Please sign in again.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', proofFile);
+      formData.append('payment_method', method);
+      formData.append('amount', freezeAmount.toString());
+      if (txHash) formData.append('tx_hash', txHash);
+      if (selectedCrypto) {
+        formData.append('crypto_type', selectedCrypto.crypto_type);
+        formData.append('network_type', selectedCrypto.network_type);
+      }
+
+      const response = await fetch('/api/freeze-payment/upload-proof', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setProofSubmitted(true);
+        setProofFile(null);
+      } else {
+        alert(data.error || 'Failed to upload proof. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error uploading proof:', error);
+      alert('Error uploading proof. Please try again.');
+    } finally {
+      setUploadingProof(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -887,6 +954,355 @@ export default function PaymentMethod() {
                 </>
               )}
 
+              {/* Buy Crypto Section - Only for crypto method */}
+              {!loadingDetails && method === 'crypto' && (
+                <div style={{
+                  marginTop: '1.5rem',
+                  backgroundColor: '#eff6ff',
+                  borderRadius: '12px',
+                  padding: '1.25rem',
+                  border: '1px solid #bfdbfe'
+                }}>
+                  <h3 style={{
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    color: '#1e40af',
+                    margin: '0 0 0.75rem 0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    💡 Need to buy cryptocurrency?
+                  </h3>
+                  <p style={{
+                    fontSize: '0.875rem',
+                    color: '#1e40af',
+                    margin: '0 0 1rem 0',
+                    lineHeight: '1.5'
+                  }}>
+                    If you don't have crypto yet, you can purchase it from these trusted providers:
+                  </p>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+                    gap: '0.5rem'
+                  }}>
+                    <a href="https://www.coinbase.com" target="_blank" rel="noopener noreferrer" style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.25rem',
+                      padding: '0.6rem 0.75rem',
+                      backgroundColor: '#1652f0',
+                      color: 'white',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontSize: '0.8rem',
+                      fontWeight: '600'
+                    }}>
+                      🟦 Coinbase
+                    </a>
+                    <a href="https://www.binance.com" target="_blank" rel="noopener noreferrer" style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.25rem',
+                      padding: '0.6rem 0.75rem',
+                      backgroundColor: '#f3ba2f',
+                      color: '#000',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontSize: '0.8rem',
+                      fontWeight: '600'
+                    }}>
+                      🟡 Binance
+                    </a>
+                    <a href="https://www.kraken.com" target="_blank" rel="noopener noreferrer" style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.25rem',
+                      padding: '0.6rem 0.75rem',
+                      backgroundColor: '#5741d9',
+                      color: 'white',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontSize: '0.8rem',
+                      fontWeight: '600'
+                    }}>
+                      🟣 Kraken
+                    </a>
+                    <a href="https://www.moonpay.com" target="_blank" rel="noopener noreferrer" style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.25rem',
+                      padding: '0.6rem 0.75rem',
+                      backgroundColor: '#7B3FE4',
+                      color: 'white',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontSize: '0.8rem',
+                      fontWeight: '600'
+                    }}>
+                      🟣 MoonPay
+                    </a>
+                    <a href="https://global.transak.com" target="_blank" rel="noopener noreferrer" style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.25rem',
+                      padding: '0.6rem 0.75rem',
+                      backgroundColor: '#1A5AFF',
+                      color: 'white',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontSize: '0.8rem',
+                      fontWeight: '600'
+                    }}>
+                      🔵 Transak
+                    </a>
+                    <a href="https://www.simplex.com" target="_blank" rel="noopener noreferrer" style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.25rem',
+                      padding: '0.6rem 0.75rem',
+                      backgroundColor: '#3D5AFE',
+                      color: 'white',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontSize: '0.8rem',
+                      fontWeight: '600'
+                    }}>
+                      🔷 Simplex
+                    </a>
+                  </div>
+                  <p style={{
+                    fontSize: '0.75rem',
+                    color: '#64748b',
+                    margin: '0.75rem 0 0 0',
+                    fontStyle: 'italic'
+                  }}>
+                    After purchasing, send the crypto to the wallet address shown above.
+                  </p>
+                </div>
+              )}
+
+              {/* Proof of Payment Upload Section */}
+              {!loadingDetails && !proofSubmitted && (
+                <div style={{
+                  marginTop: '1.5rem',
+                  backgroundColor: '#ffffff',
+                  borderRadius: '12px',
+                  padding: '1.25rem',
+                  border: '2px solid #e5e7eb'
+                }}>
+                  <h3 style={{
+                    fontSize: '1rem',
+                    fontWeight: '700',
+                    color: '#1e293b',
+                    margin: '0 0 0.75rem 0'
+                  }}>
+                    📤 Submit Payment Proof
+                  </h3>
+                  <p style={{
+                    fontSize: '0.85rem',
+                    color: '#64748b',
+                    margin: '0 0 1rem 0',
+                    lineHeight: '1.5'
+                  }}>
+                    {method === 'crypto' 
+                      ? 'Upload a screenshot or confirmation document from your cryptocurrency exchange platform (Coinbase, Binance, etc.). This helps our team verify your payment faster.'
+                      : 'Upload a screenshot or confirmation document of your payment. This helps our team verify your payment faster.'
+                    }
+                  </p>
+
+                  {method === 'crypto' && (
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '0.8rem',
+                        color: '#64748b',
+                        marginBottom: '0.5rem',
+                        fontWeight: '500'
+                      }}>
+                        Transaction Hash (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={txHash}
+                        onChange={(e) => setTxHash(e.target.value)}
+                        placeholder="Enter your transaction hash..."
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '8px',
+                          fontSize: '0.9rem',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  <div style={{
+                    border: '2px dashed #d1d5db',
+                    borderRadius: '10px',
+                    padding: '1.5rem',
+                    textAlign: 'center',
+                    backgroundColor: '#f9fafb',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}>
+                    {!proofFile ? (
+                      <label style={{ cursor: 'pointer', display: 'block' }}>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/jpg,application/pdf"
+                          onChange={handleFileSelect}
+                          style={{ display: 'none' }}
+                        />
+                        <div style={{
+                          fontSize: '2rem',
+                          marginBottom: '0.5rem'
+                        }}>
+                          📁
+                        </div>
+                        <p style={{
+                          fontSize: '0.9rem',
+                          color: '#4b5563',
+                          margin: '0 0 0.25rem 0',
+                          fontWeight: '500'
+                        }}>
+                          Click to upload proof
+                        </p>
+                        <p style={{
+                          fontSize: '0.75rem',
+                          color: '#9ca3af',
+                          margin: 0
+                        }}>
+                          PNG, JPG, or PDF (max 10MB)
+                        </p>
+                      </label>
+                    ) : (
+                      <div>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.5rem',
+                          marginBottom: '0.75rem'
+                        }}>
+                          <span style={{ fontSize: '1.5rem' }}>✅</span>
+                          <span style={{
+                            fontSize: '0.9rem',
+                            color: '#166534',
+                            fontWeight: '500'
+                          }}>
+                            {proofFile.name}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => setProofFile(null)}
+                          style={{
+                            padding: '0.4rem 0.75rem',
+                            backgroundColor: '#fee2e2',
+                            color: '#dc2626',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            fontWeight: '500'
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={handleProofUpload}
+                    disabled={!proofFile || uploadingProof}
+                    style={{
+                      width: '100%',
+                      marginTop: '1rem',
+                      padding: '0.875rem',
+                      backgroundColor: proofFile && !uploadingProof ? '#059669' : '#94a3b8',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '10px',
+                      fontSize: '0.95rem',
+                      fontWeight: '600',
+                      cursor: proofFile && !uploadingProof ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    {uploadingProof ? (
+                      <>
+                        <span style={{
+                          width: '18px',
+                          height: '18px',
+                          border: '2px solid rgba(255,255,255,0.3)',
+                          borderTop: '2px solid white',
+                          borderRadius: '50%',
+                          animation: 'spin 1s linear infinite'
+                        }} />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>📤 Submit Payment Proof</>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {/* Proof Submitted Success */}
+              {proofSubmitted && (
+                <div style={{
+                  marginTop: '1.5rem',
+                  backgroundColor: '#f0fdf4',
+                  borderRadius: '12px',
+                  padding: '1.5rem',
+                  border: '2px solid #22c55e',
+                  textAlign: 'center'
+                }}>
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    backgroundColor: '#dcfce7',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 1rem',
+                    fontSize: '1.75rem'
+                  }}>
+                    ✅
+                  </div>
+                  <h3 style={{
+                    fontSize: '1.125rem',
+                    fontWeight: '700',
+                    color: '#166534',
+                    margin: '0 0 0.5rem 0'
+                  }}>
+                    Payment Proof Submitted
+                  </h3>
+                  <p style={{
+                    fontSize: '0.9rem',
+                    color: '#15803d',
+                    margin: 0,
+                    lineHeight: '1.6'
+                  }}>
+                    Your payment proof has been submitted successfully. Our team will review it within 24-48 hours. You'll receive an email confirmation shortly.
+                  </p>
+                </div>
+              )}
+
               {/* Important Notice */}
               <div style={{
                 marginTop: '1.5rem',
@@ -959,13 +1375,17 @@ export default function PaymentMethod() {
               lineHeight: '1.6'
             }}>
               Questions? Contact our support team at{' '}
-              <a href="mailto:support@theoaklinebank.com" style={{ color: '#ffffff', fontWeight: '600' }}>
-                support@theoaklinebank.com
+              <a href={`mailto:${bankDetails?.email_support || bankDetails?.email_contact || 'contact-us@theoaklinebank.com'}`} style={{ color: '#ffffff', fontWeight: '600' }}>
+                {bankDetails?.email_support || bankDetails?.email_contact || 'contact-us@theoaklinebank.com'}
               </a>
-              {' '}or call{' '}
-              <a href="tel:+16366356122" style={{ color: '#ffffff', fontWeight: '600' }}>
-                +1 (636) 635-6122
-              </a>
+              {bankDetails?.phone && (
+                <>
+                  {' '}or call{' '}
+                  <a href={`tel:${bankDetails.phone}`} style={{ color: '#ffffff', fontWeight: '600' }}>
+                    {bankDetails.phone}
+                  </a>
+                </>
+              )}
             </p>
           </div>
         </main>
