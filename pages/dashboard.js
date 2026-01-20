@@ -1425,6 +1425,59 @@ function DashboardContent() {
             {message}
           </div>
         )}
+
+        {/* Frozen Account Banner */}
+        {userProfile?.is_frozen && (
+          <div style={{
+            marginTop: '1rem',
+            padding: '1rem 1.25rem',
+            background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+            border: '2px solid #dc2626',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: '1' }}>
+              <span style={{ fontSize: '1.5rem' }}>❄️</span>
+              <div>
+                <p style={{
+                  margin: 0,
+                  fontSize: '0.95rem',
+                  fontWeight: '700',
+                  color: '#991b1b'
+                }}>
+                  Balance Frozen
+                </p>
+                <p style={{
+                  margin: '0.25rem 0 0 0',
+                  fontSize: '0.8rem',
+                  color: '#b91c1c'
+                }}>
+                  {userProfile.freeze_amount_required > 0 
+                    ? `Payment of ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(userProfile.freeze_amount_required)} required to restore access`
+                    : 'Your account access has been temporarily restricted'}
+                </p>
+              </div>
+            </div>
+            {userProfile.freeze_amount_required > 0 && (
+              <Link href={`/freeze-payment?amount=${userProfile.freeze_amount_required}`} style={{
+                padding: '0.625rem 1.25rem',
+                background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+                color: '#ffffff',
+                borderRadius: '8px',
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap'
+              }}>
+                Resolve Now
+              </Link>
+            )}
+          </div>
+        )}
       </section>
 
       {/* Funding Notices for Pending Funding Accounts */}

