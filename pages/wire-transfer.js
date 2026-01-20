@@ -70,6 +70,9 @@ export default function WireTransfer() {
   const [wireTransferSuspensionReason, setWireTransferSuspensionReason] = useState('');
   const [showWireVerification, setShowWireVerification] = useState(false);
   const [wireVerificationSubmitted, setWireVerificationSubmitted] = useState(false);
+  const [isFrozen, setIsFrozen] = useState(false);
+  const [frozenReason, setFrozenReason] = useState('');
+  const [requiresSelfieVerification, setRequiresSelfieVerification] = useState(false);
 
   const [wireForm, setWireForm] = useState({
     from_account_id: '',
@@ -109,13 +112,39 @@ export default function WireTransfer() {
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('requires_verification, wire_transfer_suspended, wire_transfer_suspension_reason')
+        .select('requires_verification, wire_transfer_suspended, wire_transfer_suspension_reason, is_frozen, frozen_reason, wire_transfer_requires_selfie')
         .eq('id', user.id)
         .single();
 
       if (profile?.requires_verification) {
         router.push('/verify-identity');
         return;
+      }
+
+      // Check if account is frozen
+      if (profile?.is_frozen) {
+        setIsFrozen(true);
+        setFrozenReason(profile.frozen_reason || 'Your account has been temporarily frozen. Please contact support for assistance.');
+      }
+
+      // Check if selfie verification is required for wire transfers
+      if (profile?.wire_transfer_requires_selfie) {
+        setRequiresSelfieVerification(true);
+        setShowWireVerification(true);
+        
+        // Check if selfie verification has already been submitted
+        const { data: verification } = await supabase
+          .from('selfie_verifications')
+          .select('status, metadata')
+          .eq('user_id', user.id)
+          .eq('triggered_by', 'wire_transfer_selfie')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+          
+        if (verification?.status === 'submitted' || verification?.status === 'under_review') {
+          setWireVerificationSubmitted(true);
+        }
       }
 
       if (profile?.wire_transfer_suspended) {
@@ -714,7 +743,7 @@ export default function WireTransfer() {
     );
   }
 
-  if (wireTransferSuspended && showWireVerification) {
+  if ((wireTransferSuspended || requiresSelfieVerification) && showWireVerification) {
     if (wireVerificationSubmitted) {
       return (
         <>
@@ -824,21 +853,23 @@ export default function WireTransfer() {
                 color: 'white',
                 marginBottom: '0.75rem'
               }}>
-                Wire Transfer Verification Required
+                {requiresSelfieVerification ? 'Selfie Verification Required' : 'Wire Transfer Verification Required'}
               </h1>
               <p style={{
                 color: 'rgba(255, 255, 255, 0.9)',
                 fontSize: isMobile ? '0.9rem' : '1rem',
                 lineHeight: '1.6'
               }}>
-                {wireTransferSuspensionReason}
+                {requiresSelfieVerification 
+                  ? 'For your security, we require a selfie verification before processing wire transfers.'
+                  : wireTransferSuspensionReason}
               </p>
               <p style={{
                 color: 'rgba(255, 255, 255, 0.75)',
                 fontSize: '0.875rem',
                 marginTop: '0.75rem'
               }}>
-                Please complete video verification to restore wire transfer access.
+                Please complete video verification to {requiresSelfieVerification ? 'proceed with' : 'restore'} wire transfer access.
               </p>
             </div>
           </div>
@@ -936,6 +967,60 @@ export default function WireTransfer() {
         </header>
 
         <main style={styles.main}>
+          {/* Frozen Account Notification Banner */}
+          {isFrozen && (
+            <div style={{
+              backgroundColor: '#fef2f2',
+              border: '2px solid #dc2626',
+              borderRadius: '12px',
+              padding: isMobile ? '1rem' : '1.5rem',
+              marginBottom: '1.5rem',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '1rem'
+            }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: '#dc2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                fontSize: '1.5rem'
+              }}>
+                ❄️
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{
+                  fontSize: isMobile ? '1rem' : '1.125rem',
+                  fontWeight: '700',
+                  color: '#991b1b',
+                  margin: '0 0 0.5rem 0'
+                }}>
+                  Account Frozen
+                </h3>
+                <p style={{
+                  fontSize: isMobile ? '0.875rem' : '1rem',
+                  color: '#b91c1c',
+                  margin: '0 0 0.75rem 0',
+                  lineHeight: '1.6'
+                }}>
+                  {frozenReason}
+                </p>
+                <p style={{
+                  fontSize: '0.875rem',
+                  color: '#991b1b',
+                  margin: 0,
+                  fontWeight: '500'
+                }}>
+                  Please contact our support team for assistance in resolving this issue.
+                </p>
+              </div>
+            </div>
+          )}
+
           <h1 style={styles.pageTitle}>Wire Transfer Services</h1>
           <p style={styles.pageSubtitle}>
             Secure, fast, and reliable domestic and international wire transfers with competitive rates and professional banking service
