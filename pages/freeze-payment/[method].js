@@ -78,6 +78,7 @@ export default function PaymentMethod() {
   const [uploadingProof, setUploadingProof] = useState(false);
   const [proofSubmitted, setProofSubmitted] = useState(false);
   const [txHash, setTxHash] = useState('');
+  const [submissionDetails, setSubmissionDetails] = useState(null);
 
   const methodInfo = paymentMethodDetails[method] || paymentMethodDetails.wire;
 
@@ -120,6 +121,11 @@ export default function PaymentMethod() {
         }
         if (profileRes.data.freeze_payment_status === 'pending') {
           setProofSubmitted(true);
+          setSubmissionDetails({
+            submittedAt: profileRes.data.freeze_payment_submitted_at,
+            amount: profileRes.data.freeze_payment_amount,
+            method: profileRes.data.freeze_payment_method
+          });
         }
       }
 
@@ -320,6 +326,11 @@ export default function PaymentMethod() {
       if (response.ok && data.success) {
         setProofSubmitted(true);
         setProofFile(null);
+        setSubmissionDetails({
+          submittedAt: new Date().toISOString(),
+          amount: freezeAmount,
+          method: method
+        });
       } else {
         alert(data.error || 'Failed to upload proof. Please try again.');
       }
@@ -1308,7 +1319,7 @@ export default function PaymentMethod() {
                     Your payment proof has been submitted and is currently being reviewed by our verification team. You will receive an email once your payment is confirmed.
                   </p>
                   
-                  {profile?.freeze_payment_submitted_at && (
+                  {submissionDetails && (
                     <div style={{
                       backgroundColor: '#ffffff',
                       borderRadius: '8px',
@@ -1330,22 +1341,22 @@ export default function PaymentMethod() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
                           <span style={{ color: '#92400e' }}>Submitted:</span>
                           <span style={{ fontWeight: '600', color: '#78350f' }}>
-                            {new Date(profile.freeze_payment_submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            {new Date(submissionDetails.submittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
-                        {profile?.freeze_payment_amount > 0 && (
+                        {submissionDetails.amount > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
                             <span style={{ color: '#92400e' }}>Amount:</span>
                             <span style={{ fontWeight: '600', color: '#78350f' }}>
-                              ${parseFloat(profile.freeze_payment_amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                              ${parseFloat(submissionDetails.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                             </span>
                           </div>
                         )}
-                        {profile?.freeze_payment_method && (
+                        {submissionDetails.method && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
                             <span style={{ color: '#92400e' }}>Method:</span>
                             <span style={{ fontWeight: '600', color: '#78350f' }}>
-                              {profile.freeze_payment_method.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              {submissionDetails.method.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                             </span>
                           </div>
                         )}
