@@ -1431,8 +1431,12 @@ function DashboardContent() {
           <div style={{
             marginTop: '1rem',
             padding: '1rem 1.25rem',
-            background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
-            border: '2px solid #dc2626',
+            background: (userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review')
+              ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)'
+              : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+            border: (userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review')
+              ? '2px solid #f59e0b'
+              : '2px solid #dc2626',
             borderRadius: '12px',
             display: 'flex',
             alignItems: 'center',
@@ -1441,28 +1445,56 @@ function DashboardContent() {
             flexWrap: 'wrap'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: '1' }}>
-              <span style={{ fontSize: '1.5rem' }}>❄️</span>
+              <span style={{ fontSize: '1.5rem' }}>
+                {(userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review') ? '⏳' : '❄️'}
+              </span>
               <div>
                 <p style={{
                   margin: 0,
                   fontSize: '0.95rem',
                   fontWeight: '700',
-                  color: '#991b1b'
+                  color: (userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review') ? '#92400e' : '#991b1b'
                 }}>
-                  Balance Frozen
+                  {(userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review')
+                    ? 'Payment Pending Verification'
+                    : 'Balance Frozen'}
                 </p>
                 <p style={{
                   margin: '0.25rem 0 0 0',
                   fontSize: '0.8rem',
-                  color: '#b91c1c'
+                  color: (userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review') ? '#a16207' : '#b91c1c'
                 }}>
-                  {userProfile.freeze_amount_required > 0 
-                    ? `Payment of ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(userProfile.freeze_amount_required)} required to restore access`
-                    : 'Your account access has been temporarily restricted'}
+                  {(userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review')
+                    ? 'Your payment is being reviewed. Account will be restored once confirmed.'
+                    : userProfile.freeze_amount_required > 0 
+                      ? `Payment of ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(userProfile.freeze_amount_required)} required to restore access`
+                      : 'Your account access has been temporarily restricted'}
                 </p>
               </div>
             </div>
-            {userProfile.freeze_amount_required > 0 && (
+            {(userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review') ? (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.625rem 1.25rem',
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                color: '#ffffff',
+                borderRadius: '8px',
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                whiteSpace: 'nowrap'
+              }}>
+                <div style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ffffff',
+                  animation: 'blink 1.5s infinite'
+                }} />
+                Processing
+              </div>
+            ) : userProfile.freeze_amount_required > 0 && (
               <Link href={`/freeze-payment?amount=${userProfile.freeze_amount_required}`} style={{
                 padding: '0.625rem 1.25rem',
                 background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',

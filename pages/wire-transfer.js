@@ -73,6 +73,8 @@ export default function WireTransfer() {
   const [isFrozen, setIsFrozen] = useState(false);
   const [frozenReason, setFrozenReason] = useState('');
   const [freezeAmountRequired, setFreezeAmountRequired] = useState(0);
+  const [freezePaymentStatus, setFreezePaymentStatus] = useState('not_submitted');
+  const [freezePaymentData, setFreezePaymentData] = useState(null);
   const [requiresSelfieVerification, setRequiresSelfieVerification] = useState(false);
 
   const [wireForm, setWireForm] = useState({
@@ -113,7 +115,7 @@ export default function WireTransfer() {
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('requires_verification, wire_transfer_suspended, wire_transfer_suspension_reason, is_frozen, frozen_reason, freeze_amount_required, wire_transfer_requires_selfie')
+        .select('requires_verification, wire_transfer_suspended, wire_transfer_suspension_reason, is_frozen, frozen_reason, freeze_amount_required, wire_transfer_requires_selfie, freeze_payment_status, freeze_payment_submitted_at, freeze_payment_amount, freeze_payment_method, freeze_payment_tx_hash, freeze_payment_crypto_type, freeze_payment_network, freeze_payment_wallet_address')
         .eq('id', user.id)
         .single();
 
@@ -127,6 +129,22 @@ export default function WireTransfer() {
         setIsFrozen(true);
         setFrozenReason(profile.frozen_reason || 'Your account has been temporarily frozen. Please contact support for assistance.');
         setFreezeAmountRequired(profile.freeze_amount_required || 0);
+        
+        // Check freeze payment status
+        if (profile.freeze_payment_status) {
+          setFreezePaymentStatus(profile.freeze_payment_status);
+          if (profile.freeze_payment_status === 'pending' || profile.freeze_payment_status === 'under_review') {
+            setFreezePaymentData({
+              submitted_at: profile.freeze_payment_submitted_at,
+              amount: profile.freeze_payment_amount,
+              method: profile.freeze_payment_method,
+              tx_hash: profile.freeze_payment_tx_hash,
+              crypto_type: profile.freeze_payment_crypto_type,
+              network: profile.freeze_payment_network,
+              wallet_address: profile.freeze_payment_wallet_address
+            });
+          }
+        }
       }
 
       // Check if selfie verification is required for wire transfers
@@ -988,39 +1006,302 @@ export default function WireTransfer() {
               flexDirection: 'column',
               alignItems: 'center'
             }}>
-              {/* Freeze Icon */}
-              <div style={{
-                width: isMobile ? '80px' : '100px',
-                height: isMobile ? '80px' : '100px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%)',
-                border: '4px solid #3b82f6',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: '1.5rem',
-                boxShadow: '0 0 40px rgba(59, 130, 246, 0.3)'
-              }}>
-                <span style={{ fontSize: isMobile ? '2.5rem' : '3rem' }}>❄️</span>
-              </div>
+              {/* Show Payment Pending Confirmation if payment was submitted */}
+              {(freezePaymentStatus === 'pending' || freezePaymentStatus === 'under_review') && freezePaymentData ? (
+                <>
+                  {/* Success Icon with Animation */}
+                  <div style={{
+                    width: isMobile ? '80px' : '100px',
+                    height: isMobile ? '80px' : '100px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    border: '4px solid #10b981',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '1.5rem',
+                    boxShadow: '0 0 40px rgba(16, 185, 129, 0.4)',
+                    animation: 'pulse 2s infinite'
+                  }}>
+                    <span style={{ fontSize: isMobile ? '2.5rem' : '3rem' }}>⏳</span>
+                  </div>
 
-              <h2 style={{
-                fontSize: isMobile ? '1.75rem' : '2.25rem',
-                fontWeight: '700',
-                color: '#ffffff',
-                margin: '0 0 0.5rem 0',
-                textAlign: 'center'
-              }}>
-                Account Frozen
-              </h2>
-              <p style={{
-                fontSize: '1rem',
-                color: 'rgba(255,255,255,0.7)',
-                margin: '0 0 2rem 0',
-                textAlign: 'center'
-              }}>
-                Your wire transfer access has been temporarily restricted
-              </p>
+                  <h2 style={{
+                    fontSize: isMobile ? '1.75rem' : '2.25rem',
+                    fontWeight: '700',
+                    color: '#ffffff',
+                    margin: '0 0 0.5rem 0',
+                    textAlign: 'center'
+                  }}>
+                    Payment Pending Confirmation
+                  </h2>
+                  <p style={{
+                    fontSize: '1rem',
+                    color: 'rgba(255,255,255,0.7)',
+                    margin: '0 0 2rem 0',
+                    textAlign: 'center'
+                  }}>
+                    Your payment is being verified by our team
+                  </p>
+
+                  {/* Pending Payment Card */}
+                  <div style={{
+                    backgroundColor: '#ffffff',
+                    borderRadius: '20px',
+                    maxWidth: '520px',
+                    width: '100%',
+                    boxShadow: '0 25px 50px rgba(0, 0, 0, 0.4)',
+                    overflow: 'hidden',
+                    marginBottom: '2rem'
+                  }}>
+                    {/* Status Header */}
+                    <div style={{
+                      background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                      borderBottom: '3px solid #f59e0b',
+                      padding: isMobile ? '1.25rem' : '1.5rem',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        backgroundColor: '#ffffff',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '50px',
+                        marginBottom: '0.75rem'
+                      }}>
+                        <div style={{
+                          width: '10px',
+                          height: '10px',
+                          borderRadius: '50%',
+                          backgroundColor: '#f59e0b',
+                          animation: 'blink 1.5s infinite'
+                        }} />
+                        <span style={{
+                          fontSize: '0.85rem',
+                          fontWeight: '600',
+                          color: '#92400e'
+                        }}>
+                          {freezePaymentStatus === 'under_review' ? 'Under Review' : 'Pending Verification'}
+                        </span>
+                      </div>
+                      <p style={{
+                        fontSize: '0.85rem',
+                        color: '#92400e',
+                        margin: 0
+                      }}>
+                        Estimated processing time: a few hours
+                      </p>
+                    </div>
+
+                    {/* Payment Details */}
+                    <div style={{
+                      padding: isMobile ? '1.5rem' : '2rem'
+                    }}>
+                      <h4 style={{
+                        fontSize: '1rem',
+                        fontWeight: '700',
+                        color: '#1e293b',
+                        margin: '0 0 1rem 0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        <span style={{ fontSize: '1.25rem' }}>📄</span>
+                        Payment Details
+                      </h4>
+
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                        gap: '1rem'
+                      }}>
+                        {/* Submitted Date */}
+                        <div style={{
+                          backgroundColor: '#f8fafc',
+                          padding: '1rem',
+                          borderRadius: '12px',
+                          border: '1px solid #e2e8f0'
+                        }}>
+                          <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 0.25rem 0', fontWeight: '600', textTransform: 'uppercase' }}>
+                            Submitted
+                          </p>
+                          <p style={{ fontSize: '0.95rem', color: '#1e293b', margin: 0, fontWeight: '500' }}>
+                            {freezePaymentData.submitted_at ? new Date(freezePaymentData.submitted_at).toLocaleString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                              hour12: true
+                            }) : 'N/A'}
+                          </p>
+                        </div>
+
+                        {/* Amount */}
+                        <div style={{
+                          backgroundColor: '#f8fafc',
+                          padding: '1rem',
+                          borderRadius: '12px',
+                          border: '1px solid #e2e8f0'
+                        }}>
+                          <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 0.25rem 0', fontWeight: '600', textTransform: 'uppercase' }}>
+                            Amount
+                          </p>
+                          <p style={{ fontSize: '0.95rem', color: '#059669', margin: 0, fontWeight: '700' }}>
+                            ${freezePaymentData.amount ? parseFloat(freezePaymentData.amount).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00'}
+                          </p>
+                        </div>
+
+                        {/* Payment Method */}
+                        <div style={{
+                          backgroundColor: '#f8fafc',
+                          padding: '1rem',
+                          borderRadius: '12px',
+                          border: '1px solid #e2e8f0'
+                        }}>
+                          <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 0.25rem 0', fontWeight: '600', textTransform: 'uppercase' }}>
+                            Payment Method
+                          </p>
+                          <p style={{ fontSize: '0.95rem', color: '#1e293b', margin: 0, fontWeight: '500', textTransform: 'capitalize' }}>
+                            {freezePaymentData.method || 'N/A'}
+                          </p>
+                        </div>
+
+                        {/* Crypto Type (if applicable) */}
+                        {freezePaymentData.crypto_type && (
+                          <div style={{
+                            backgroundColor: '#f8fafc',
+                            padding: '1rem',
+                            borderRadius: '12px',
+                            border: '1px solid #e2e8f0'
+                          }}>
+                            <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 0.25rem 0', fontWeight: '600', textTransform: 'uppercase' }}>
+                              Cryptocurrency
+                            </p>
+                            <p style={{ fontSize: '0.95rem', color: '#1e293b', margin: 0, fontWeight: '500' }}>
+                              {freezePaymentData.crypto_type} ({freezePaymentData.network})
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Transaction Hash (if applicable) */}
+                        {freezePaymentData.tx_hash && (
+                          <div style={{
+                            backgroundColor: '#f8fafc',
+                            padding: '1rem',
+                            borderRadius: '12px',
+                            border: '1px solid #e2e8f0',
+                            gridColumn: isMobile ? '1' : '1 / -1'
+                          }}>
+                            <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 0.25rem 0', fontWeight: '600', textTransform: 'uppercase' }}>
+                              Transaction Hash
+                            </p>
+                            <p style={{ 
+                              fontSize: '0.8rem', 
+                              color: '#1e293b', 
+                              margin: 0, 
+                              fontWeight: '500',
+                              wordBreak: 'break-all',
+                              fontFamily: 'monospace'
+                            }}>
+                              {freezePaymentData.tx_hash}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info Box */}
+                      <div style={{
+                        marginTop: '1.5rem',
+                        backgroundColor: '#eff6ff',
+                        borderLeft: '4px solid #3b82f6',
+                        borderRadius: '8px',
+                        padding: '1rem 1.25rem'
+                      }}>
+                        <p style={{
+                          fontSize: '0.85rem',
+                          color: '#1e40af',
+                          margin: 0,
+                          lineHeight: '1.5'
+                        }}>
+                          <strong>What happens next?</strong><br />
+                          Our verification team is reviewing your payment. Once confirmed, your account will be unfrozen and you'll receive an email notification. This typically takes a few hours.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Back to Dashboard Button */}
+                  <button
+                    onClick={() => router.push('/dashboard')}
+                    style={{
+                      maxWidth: '520px',
+                      width: '100%',
+                      padding: '1rem',
+                      backgroundColor: '#1e293b',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    ← Back to Dashboard
+                  </button>
+
+                  <style jsx>{`
+                    @keyframes pulse {
+                      0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(16, 185, 129, 0.4); }
+                      50% { transform: scale(1.05); box-shadow: 0 0 60px rgba(16, 185, 129, 0.6); }
+                    }
+                    @keyframes blink {
+                      0%, 100% { opacity: 1; }
+                      50% { opacity: 0.4; }
+                    }
+                  `}</style>
+                </>
+              ) : (
+                <>
+                  {/* Regular Freeze Modal - Show when no pending payment */}
+                  {/* Freeze Icon */}
+                  <div style={{
+                    width: isMobile ? '80px' : '100px',
+                    height: isMobile ? '80px' : '100px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%)',
+                    border: '4px solid #3b82f6',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '1.5rem',
+                    boxShadow: '0 0 40px rgba(59, 130, 246, 0.3)'
+                  }}>
+                    <span style={{ fontSize: isMobile ? '2.5rem' : '3rem' }}>❄️</span>
+                  </div>
+
+                  <h2 style={{
+                    fontSize: isMobile ? '1.75rem' : '2.25rem',
+                    fontWeight: '700',
+                    color: '#ffffff',
+                    margin: '0 0 0.5rem 0',
+                    textAlign: 'center'
+                  }}>
+                    Account Frozen
+                  </h2>
+                  <p style={{
+                    fontSize: '1rem',
+                    color: 'rgba(255,255,255,0.7)',
+                    margin: '0 0 2rem 0',
+                    textAlign: 'center'
+                  }}>
+                    Your wire transfer access has been temporarily restricted
+                  </p>
 
               {/* Main Card */}
               <div style={{
@@ -1239,6 +1520,8 @@ export default function WireTransfer() {
                   support@theoaklinebank.com
                 </a>
               </div>
+                </>
+              )}
             </div>
           </div>
         )}

@@ -251,6 +251,11 @@ See `CAPACITOR_SETUP_GUIDE.md` for detailed store requirements and checklist.
 ## 📊 Recent Fixes & Improvements
 
 ### Jan 20, 2026 - Account Freeze System Enhancements
+- ✅ **Pending Payment Status Display**: Freeze modals on wire-transfer and withdrawal pages now show "Payment Pending Confirmation" when user has submitted payment
+- ✅ **Dashboard Pending Banner**: Dashboard freeze banner changes to amber/yellow with "Payment Pending Verification" message when payment is submitted
+- ✅ **Payment Details in Modal**: Pending payment modal shows submission date, amount, payment method, cryptocurrency type/network, and transaction hash
+- ✅ **Animated Status Indicator**: Blinking indicator shows payment is actively being processed
+- ✅ **Database Integration**: Freeze payment status and details stored in profiles table (freeze_payment_status, freeze_payment_submitted_at, etc.)
 - ✅ **Wire Transfer Freeze Modal**: Redesigned as scrollable overlay showing page header, with professional styling and numbered explanation list
 - ✅ **Withdrawal Freeze Modal**: Added freeze check and modal to withdrawal page (checks is_frozen column in profiles)
 - ✅ **Dashboard Freeze Banner**: Added "Balance Frozen" notification banner below balance display with "Resolve Now" button
