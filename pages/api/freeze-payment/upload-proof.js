@@ -98,6 +98,25 @@ export default async function handler(req, res) {
         created_at: new Date().toISOString()
       }]);
 
+    const { error: profileUpdateError } = await supabaseAdmin
+      .from('profiles')
+      .update({
+        freeze_payment_status: 'pending',
+        freeze_payment_submitted_at: new Date().toISOString(),
+        freeze_payment_amount: amount ? parseFloat(amount) : 0,
+        freeze_payment_method: payment_method || null,
+        freeze_payment_proof_path: filePath,
+        freeze_payment_tx_hash: tx_hash || null,
+        freeze_payment_crypto_type: crypto_type || null,
+        freeze_payment_network: network_type || null,
+        freeze_payment_wallet_address: wallet_address || null
+      })
+      .eq('id', user.id);
+
+    if (profileUpdateError) {
+      console.error('Error updating profile freeze payment status:', profileUpdateError);
+    }
+
     const userName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Valued Customer';
     const userEmail = profile.email || user.email;
 

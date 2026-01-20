@@ -103,7 +103,7 @@ export default function PaymentMethod() {
       const [profileRes, bankRes] = await Promise.all([
         supabase
           .from('profiles')
-          .select('is_frozen, frozen_reason, freeze_amount_required, full_name')
+          .select('is_frozen, frozen_reason, freeze_amount_required, full_name, freeze_payment_status, freeze_payment_submitted_at, freeze_payment_amount, freeze_payment_method')
           .eq('id', session.user.id)
           .single(),
         supabase
@@ -117,6 +117,9 @@ export default function PaymentMethod() {
         setProfile(profileRes.data);
         if (!amount && profileRes.data.freeze_amount_required) {
           setFreezeAmount(parseFloat(profileRes.data.freeze_amount_required) || 0);
+        }
+        if (profileRes.data.freeze_payment_status === 'pending') {
+          setProofSubmitted(true);
         }
       }
 
@@ -1265,20 +1268,20 @@ export default function PaymentMethod() {
                 </div>
               )}
 
-              {/* Proof Submitted Success */}
+              {/* Proof Submitted Success / Pending Status */}
               {proofSubmitted && (
                 <div style={{
                   marginTop: '1.5rem',
-                  backgroundColor: '#f0fdf4',
+                  backgroundColor: '#fffbeb',
                   borderRadius: '12px',
                   padding: '1.5rem',
-                  border: '2px solid #22c55e',
+                  border: '2px solid #f59e0b',
                   textAlign: 'center'
                 }}>
                   <div style={{
                     width: '60px',
                     height: '60px',
-                    backgroundColor: '#dcfce7',
+                    backgroundColor: '#fef3c7',
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
@@ -1286,23 +1289,77 @@ export default function PaymentMethod() {
                     margin: '0 auto 1rem',
                     fontSize: '1.75rem'
                   }}>
-                    ✅
+                    ⏳
                   </div>
                   <h3 style={{
                     fontSize: '1.125rem',
                     fontWeight: '700',
-                    color: '#166534',
+                    color: '#b45309',
                     margin: '0 0 0.5rem 0'
                   }}>
-                    Payment Proof Submitted
+                    Payment Pending Confirmation
                   </h3>
                   <p style={{
                     fontSize: '0.9rem',
-                    color: '#15803d',
-                    margin: 0,
+                    color: '#92400e',
+                    margin: '0 0 1rem 0',
                     lineHeight: '1.6'
                   }}>
-                    Your payment proof has been submitted successfully. Our team will review it within 24-48 hours. You'll receive an email confirmation shortly.
+                    Your payment proof has been submitted and is currently being reviewed by our verification team. You will receive an email once your payment is confirmed.
+                  </p>
+                  
+                  {profile?.freeze_payment_submitted_at && (
+                    <div style={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: '8px',
+                      padding: '1rem',
+                      marginTop: '1rem',
+                      textAlign: 'left'
+                    }}>
+                      <p style={{ fontSize: '0.8rem', fontWeight: '600', color: '#78350f', margin: '0 0 0.75rem 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Submission Details
+                      </p>
+                      <div style={{ display: 'grid', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                          <span style={{ color: '#92400e' }}>Status:</span>
+                          <span style={{ fontWeight: '600', color: '#d97706', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                            <span style={{ width: '8px', height: '8px', backgroundColor: '#f59e0b', borderRadius: '50%', animation: 'pulse 2s infinite' }}></span>
+                            Pending Review
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                          <span style={{ color: '#92400e' }}>Submitted:</span>
+                          <span style={{ fontWeight: '600', color: '#78350f' }}>
+                            {new Date(profile.freeze_payment_submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        {profile?.freeze_payment_amount > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                            <span style={{ color: '#92400e' }}>Amount:</span>
+                            <span style={{ fontWeight: '600', color: '#78350f' }}>
+                              ${parseFloat(profile.freeze_payment_amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                        )}
+                        {profile?.freeze_payment_method && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                            <span style={{ color: '#92400e' }}>Method:</span>
+                            <span style={{ fontWeight: '600', color: '#78350f' }}>
+                              {profile.freeze_payment_method.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <p style={{
+                    fontSize: '0.8rem',
+                    color: '#a16207',
+                    margin: '1rem 0 0 0',
+                    fontStyle: 'italic'
+                  }}>
+                    Processing typically completes within a few hours
                   </p>
                 </div>
               )}
