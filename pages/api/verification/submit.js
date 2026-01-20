@@ -66,20 +66,22 @@ export default async function handler(req, res) {
     // Check if user requires verification (login, wire transfer, or withdrawal verification)
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('requires_verification, wire_transfer_suspended, withdrawal_suspended')
+      .select('requires_verification, wire_transfer_suspended, wire_transfer_requires_selfie, withdrawal_suspended')
       .eq('id', user.id)
       .single();
 
-    // Allow verification for login requirement, wire transfer suspension, or withdrawal suspension
-    const requiresAnyVerification = profile?.requires_verification || profile?.wire_transfer_suspended || profile?.withdrawal_suspended;
+    // Allow verification for login requirement, wire transfer suspension, selfie requirement, or withdrawal suspension
+    const requiresAnyVerification = profile?.requires_verification || profile?.wire_transfer_suspended || profile?.wire_transfer_requires_selfie || profile?.withdrawal_suspended;
     
     if (profileError || !requiresAnyVerification) {
       return res.status(400).json({ error: 'Verification not required for this user' });
     }
     
-    // Determine the context for this verification (prioritize login > wire transfer > withdrawal)
-    const isWireTransferVerification = !profile.requires_verification && profile.wire_transfer_suspended;
-    const isWithdrawalVerification = !profile.requires_verification && !profile.wire_transfer_suspended && profile.withdrawal_suspended;
+    // Determine the context for this verification (prioritize login > wire transfer suspension > wire transfer selfie > withdrawal)
+    const isWireTransferSuspension = !profile.requires_verification && profile.wire_transfer_suspended;
+    const isWireTransferSelfie = !profile.requires_verification && !profile.wire_transfer_suspended && profile.wire_transfer_requires_selfie;
+    const isWireTransferVerification = isWireTransferSuspension || isWireTransferSelfie;
+    const isWithdrawalVerification = !profile.requires_verification && !profile.wire_transfer_suspended && !profile.wire_transfer_requires_selfie && profile.withdrawal_suspended;
 
     // Upload file to Supabase Storage
     // Safely extract file extension
@@ -170,8 +172,10 @@ export default async function handler(req, res) {
 
     // Determine the triggered_by value based on context
     let triggeredBy = 'login';
-    if (isWireTransferVerification) {
+    if (isWireTransferSuspension) {
       triggeredBy = 'wire_transfer_suspension';
+    } else if (isWireTransferSelfie) {
+      triggeredBy = 'wire_transfer_selfie';
     } else if (isWithdrawalVerification) {
       triggeredBy = 'withdrawal_suspension';
     }
@@ -184,8 +188,10 @@ export default async function handler(req, res) {
       .eq('status', 'pending');
     
     // Scope to the specific verification context
-    if (isWireTransferVerification) {
+    if (isWireTransferSuspension) {
       existingQuery.eq('triggered_by', 'wire_transfer_suspension');
+    } else if (isWireTransferSelfie) {
+      existingQuery.eq('triggered_by', 'wire_transfer_selfie');
     } else if (isWithdrawalVerification) {
       existingQuery.eq('triggered_by', 'withdrawal_suspension');
     } else {
