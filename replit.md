@@ -250,6 +250,12 @@ See `CAPACITOR_SETUP_GUIDE.md` for detailed store requirements and checklist.
 
 ## 📊 Recent Fixes & Improvements
 
+### Jan 20, 2026 - Account Freeze System Enhancements
+- ✅ **Wire Transfer Freeze Modal**: Redesigned as scrollable overlay showing page header, with professional styling and numbered explanation list
+- ✅ **Withdrawal Freeze Modal**: Added freeze check and modal to withdrawal page (checks is_frozen column in profiles)
+- ✅ **Dashboard Freeze Banner**: Added "Balance Frozen" notification banner below balance display with "Resolve Now" button
+- ✅ **Freeze Payment Flow**: pages/freeze-payment/index.js and pages/freeze-payment/[method].js for payment resolution
+
 ### Dec 1, 2025 - Loan Deposit Enhancements
 - ✅ **Wallet Address in Receipt**: Receipt now displays the cryptocurrency wallet address users sent their deposit to
 - ✅ **Professional Receipt Layout**: Updated to 2-column grid layout with proper spacing and typography
