@@ -1431,12 +1431,16 @@ function DashboardContent() {
           <div style={{
             marginTop: '1rem',
             padding: '1rem 1.25rem',
-            background: (userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review')
-              ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)'
-              : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
-            border: (userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review')
-              ? '2px solid #f59e0b'
-              : '2px solid #dc2626',
+            background: userProfile.freeze_payment_status === 'confirmed'
+              ? 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)'
+              : (userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review')
+                ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)'
+                : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+            border: userProfile.freeze_payment_status === 'confirmed'
+              ? '2px solid #10b981'
+              : (userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review')
+                ? '2px solid #f59e0b'
+                : '2px solid #dc2626',
             borderRadius: '12px',
             display: 'flex',
             alignItems: 'center',
@@ -1446,33 +1450,52 @@ function DashboardContent() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: '1' }}>
               <span style={{ fontSize: '1.5rem' }}>
-                {(userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review') ? '⏳' : '❄️'}
+                {userProfile.freeze_payment_status === 'confirmed' ? '✅' : (userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review') ? '⏳' : '❄️'}
               </span>
               <div>
                 <p style={{
                   margin: 0,
                   fontSize: '0.95rem',
                   fontWeight: '700',
-                  color: (userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review') ? '#92400e' : '#991b1b'
+                  color: userProfile.freeze_payment_status === 'confirmed' ? '#065f46' : (userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review') ? '#92400e' : '#991b1b'
                 }}>
-                  {(userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review')
-                    ? 'Payment Pending Verification'
-                    : 'Balance Frozen'}
+                  {userProfile.freeze_payment_status === 'confirmed'
+                    ? 'Payment Confirmed'
+                    : (userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review')
+                      ? 'Payment Pending Verification'
+                      : 'Balance Frozen'}
                 </p>
                 <p style={{
                   margin: '0.25rem 0 0 0',
                   fontSize: '0.8rem',
-                  color: (userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review') ? '#a16207' : '#b91c1c'
+                  color: userProfile.freeze_payment_status === 'confirmed' ? '#047857' : (userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review') ? '#a16207' : '#b91c1c'
                 }}>
-                  {(userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review')
-                    ? 'Your payment is being reviewed. Account will be restored once confirmed.'
-                    : userProfile.freeze_amount_required > 0 
-                      ? `Payment of ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(userProfile.freeze_amount_required)} required to restore access`
-                      : 'Your account access has been temporarily restricted'}
+                  {userProfile.freeze_payment_status === 'confirmed'
+                    ? 'Your payment has been verified. Your account will be unfrozen shortly.'
+                    : (userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review')
+                      ? 'Your payment is being reviewed. Account will be restored once confirmed.'
+                      : userProfile.freeze_amount_required > 0 
+                        ? `Payment of ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(userProfile.freeze_amount_required)} required to restore access`
+                        : 'Your account access has been temporarily restricted'}
                 </p>
               </div>
             </div>
-            {(userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review') ? (
+            {userProfile.freeze_payment_status === 'confirmed' ? (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.625rem 1.25rem',
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: '#ffffff',
+                borderRadius: '8px',
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                whiteSpace: 'nowrap'
+              }}>
+                <span>✓</span> Confirmed
+              </div>
+            ) : (userProfile.freeze_payment_status === 'pending' || userProfile.freeze_payment_status === 'under_review') ? (
               <div style={{
                 display: 'flex',
                 alignItems: 'center',

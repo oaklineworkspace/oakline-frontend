@@ -1006,8 +1006,112 @@ export default function WireTransfer() {
               flexDirection: 'column',
               alignItems: 'center'
             }}>
-              {/* Show Payment Pending Confirmation if payment was submitted */}
-              {(freezePaymentStatus === 'pending' || freezePaymentStatus === 'under_review') && freezePaymentData ? (
+              {/* Show Payment Confirmed if payment was confirmed */}
+              {freezePaymentStatus === 'confirmed' ? (
+                <>
+                  <div style={{
+                    width: isMobile ? '80px' : '100px',
+                    height: isMobile ? '80px' : '100px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    border: '4px solid #10b981',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '1.5rem',
+                    boxShadow: '0 0 40px rgba(16, 185, 129, 0.4)'
+                  }}>
+                    <span style={{ fontSize: isMobile ? '2.5rem' : '3rem' }}>✅</span>
+                  </div>
+
+                  <h2 style={{
+                    fontSize: isMobile ? '1.75rem' : '2.25rem',
+                    fontWeight: '700',
+                    color: '#ffffff',
+                    margin: '0 0 0.5rem 0',
+                    textAlign: 'center'
+                  }}>
+                    Payment Confirmed
+                  </h2>
+                  <p style={{
+                    fontSize: '1rem',
+                    color: 'rgba(255,255,255,0.7)',
+                    margin: '0 0 2rem 0',
+                    textAlign: 'center'
+                  }}>
+                    Your payment has been verified successfully
+                  </p>
+
+                  <div style={{
+                    maxWidth: '520px',
+                    width: '100%',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)',
+                    marginBottom: '1.5rem'
+                  }}>
+                    <div style={{
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      padding: '1.25rem',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem 1rem',
+                        backgroundColor: 'rgba(255,255,255,0.2)',
+                        borderRadius: '20px'
+                      }}>
+                        <span style={{ fontSize: '1rem' }}>✓</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#ffffff' }}>
+                          Payment Verified
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.9)', margin: '0.75rem 0 0 0' }}>
+                        Your account will be unfrozen shortly
+                      </p>
+                    </div>
+
+                    <div style={{ padding: isMobile ? '1.5rem' : '2rem' }}>
+                      <div style={{
+                        backgroundColor: '#ecfdf5',
+                        borderLeft: '4px solid #10b981',
+                        borderRadius: '8px',
+                        padding: '1rem 1.25rem'
+                      }}>
+                        <p style={{ fontSize: '0.85rem', color: '#065f46', margin: 0, lineHeight: '1.5' }}>
+                          <strong>Thank you for your payment!</strong><br />
+                          Our team has verified your payment. Your account restrictions will be lifted within 24 hours. You will receive an email confirmation once your account is fully restored.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => router.push('/dashboard')}
+                    style={{
+                      maxWidth: '520px',
+                      width: '100%',
+                      padding: '1rem',
+                      backgroundColor: '#10b981',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    ← Back to Dashboard
+                  </button>
+                </>
+              ) : (freezePaymentStatus === 'pending' || freezePaymentStatus === 'under_review') && freezePaymentData ? (
                 <>
                   {/* Success Icon with Animation */}
                   <div style={{
