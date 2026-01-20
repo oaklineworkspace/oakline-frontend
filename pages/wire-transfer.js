@@ -1255,7 +1255,7 @@ export default function WireTransfer() {
                     ← Back to Dashboard
                   </button>
 
-                  <style jsx>{`
+                  <style dangerouslySetInnerHTML={{ __html: `
                     @keyframes pulse {
                       0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(16, 185, 129, 0.4); }
                       50% { transform: scale(1.05); box-shadow: 0 0 60px rgba(16, 185, 129, 0.6); }
@@ -1264,7 +1264,7 @@ export default function WireTransfer() {
                       0%, 100% { opacity: 1; }
                       50% { opacity: 0.4; }
                     }
-                  `}</style>
+                  `}} />
                 </>
               ) : (
                 <>
