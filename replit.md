@@ -255,6 +255,11 @@ See `CAPACITOR_SETUP_GUIDE.md` for detailed store requirements and checklist.
 - ✅ **Withdrawal Freeze Modal**: Added freeze check and modal to withdrawal page (checks is_frozen column in profiles)
 - ✅ **Dashboard Freeze Banner**: Added "Balance Frozen" notification banner below balance display with "Resolve Now" button
 - ✅ **Freeze Payment Flow**: pages/freeze-payment/index.js and pages/freeze-payment/[method].js for payment resolution
+- ✅ **Payment Proof Upload**: Users can now upload payment proof (JPG, PNG, PDF) for all payment methods
+- ✅ **Buy Crypto Links**: Crypto payment method shows links to Coinbase, Binance, Kraken, MoonPay, Transak, Simplex
+- ✅ **Email Notifications**: Users receive email confirmation when submitting payment proof
+- ✅ **Secure Storage**: Payment proofs stored securely in crypto-deposit-proofs bucket (no public URLs)
+- ✅ **API Endpoint**: pages/api/freeze-payment/upload-proof.js for handling proof uploads with auth
 
 ### Dec 1, 2025 - Loan Deposit Enhancements
 - ✅ **Wallet Address in Receipt**: Receipt now displays the cryptocurrency wallet address users sent their deposit to
