@@ -27,6 +27,7 @@ export default function FreezePayment() {
   const [selectedMethod, setSelectedMethod] = useState('');
   const [frozenReason, setFrozenReason] = useState('');
   const [freezeAmount, setFreezeAmount] = useState(0);
+  const [bankDetails, setBankDetails] = useState(null);
 
   useEffect(() => {
     checkUserAndFetchData();
@@ -47,18 +48,29 @@ export default function FreezePayment() {
       }
       setUser(session.user);
 
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('is_frozen, frozen_reason, freeze_amount_required, full_name')
-        .eq('id', session.user.id)
-        .single();
+      const [profileRes, bankRes] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('is_frozen, frozen_reason, freeze_amount_required, full_name')
+          .eq('id', session.user.id)
+          .single(),
+        supabase
+          .from('bank_details')
+          .select('*')
+          .limit(1)
+          .single()
+      ]);
 
-      if (profileData) {
-        setProfile(profileData);
-        setFrozenReason(profileData.frozen_reason || '');
-        if (!amount && profileData.freeze_amount_required) {
-          setFreezeAmount(parseFloat(profileData.freeze_amount_required) || 0);
+      if (profileRes.data) {
+        setProfile(profileRes.data);
+        setFrozenReason(profileRes.data.frozen_reason || '');
+        if (!amount && profileRes.data.freeze_amount_required) {
+          setFreezeAmount(parseFloat(profileRes.data.freeze_amount_required) || 0);
         }
+      }
+
+      if (bankRes.data) {
+        setBankDetails(bankRes.data);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -463,10 +475,10 @@ export default function FreezePayment() {
                 lineHeight: '1.6'
               }}>
                 Need assistance? Contact our support team at{' '}
-                <a href="mailto:support@theoaklinebank.com" style={{ color: '#1a365d', fontWeight: '500' }}>
-                  support@theoaklinebank.com
+                <a href={`mailto:${bankDetails?.email_support || bankDetails?.email_contact || 'contact-us@theoaklinebank.com'}`} style={{ color: '#1a365d', fontWeight: '500' }}>
+                  {bankDetails?.email_support || bankDetails?.email_contact || 'contact-us@theoaklinebank.com'}
                 </a>
-                {' '}or call <a href="tel:+16366356122" style={{ color: '#1a365d', fontWeight: '500' }}>+1 (636) 635-6122</a>
+                {' '}or call <a href={`tel:${bankDetails?.phone || '+16366356122'}`} style={{ color: '#1a365d', fontWeight: '500' }}>{bankDetails?.phone || '+1 (636) 635-6122'}</a>
               </p>
             </div>
           </div>

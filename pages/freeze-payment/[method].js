@@ -70,6 +70,10 @@ export default function PaymentMethod() {
   const [bankDetails, setBankDetails] = useState(null);
   const [freezeAmount, setFreezeAmount] = useState(0);
   const [copied, setCopied] = useState('');
+  const [cryptoAssets, setCryptoAssets] = useState([]);
+  const [adminWallets, setAdminWallets] = useState([]);
+  const [selectedCrypto, setSelectedCrypto] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(true);
 
   const methodInfo = paymentMethodDetails[method] || paymentMethodDetails.wire;
 
@@ -120,6 +124,105 @@ export default function PaymentMethod() {
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (method === 'crypto' && user) {
+      fetchCryptoData();
+    } else if (method && user) {
+      setTimeout(() => setLoadingDetails(false), 1000);
+    }
+  }, [method, user]);
+
+  const fetchCryptoData = async () => {
+    setLoadingDetails(true);
+    try {
+      const [assetsRes, userWalletsRes, globalWalletsRes] = await Promise.all([
+        supabase
+          .from('crypto_assets')
+          .select('*')
+          .eq('status', 'active')
+          .order('crypto_type'),
+        supabase
+          .from('admin_assigned_wallets')
+          .select('*')
+          .eq('user_id', user.id),
+        supabase
+          .from('admin_assigned_wallets')
+          .select('*')
+          .is('user_id', null)
+      ]);
+
+      if (assetsRes.data) {
+        const uniqueCryptos = [];
+        const seen = new Set();
+        assetsRes.data.forEach(asset => {
+          const key = `${asset.crypto_type}-${asset.network_type}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            uniqueCryptos.push(asset);
+          }
+        });
+        setCryptoAssets(uniqueCryptos);
+      }
+
+      const allWallets = [
+        ...(userWalletsRes.data || []),
+        ...(globalWalletsRes.data || [])
+      ];
+      
+      const uniqueWallets = [];
+      const seenWallets = new Set();
+      allWallets.forEach(wallet => {
+        const key = `${wallet.crypto_type}-${wallet.network_type}`;
+        if (!seenWallets.has(key)) {
+          seenWallets.add(key);
+          uniqueWallets.push(wallet);
+        }
+      });
+      
+      setAdminWallets(uniqueWallets);
+    } catch (error) {
+      console.error('Error fetching crypto data:', error);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const getWalletForCrypto = (cryptoType, networkType) => {
+    return adminWallets.find(
+      w => w.crypto_type === cryptoType && w.network_type === networkType
+    );
+  };
+
+  const cryptoIcons = {
+    'Bitcoin': '₿',
+    'Ethereum': 'Ξ',
+    'Tether USD': '₮',
+    'USD Coin': '$',
+    'BNB': 'B',
+    'Solana': 'S',
+    'Cardano': 'A',
+    'Polygon': 'M',
+    'Avalanche': 'A',
+    'Litecoin': 'Ł',
+    'XRP': 'X',
+    'TON': 'T'
+  };
+
+  const cryptoColors = {
+    'Bitcoin': '#F7931A',
+    'Ethereum': '#627EEA',
+    'Tether USD': '#26A17B',
+    'USD Coin': '#2775CA',
+    'BNB': '#F3BA2F',
+    'Solana': '#9945FF',
+    'Cardano': '#0033AD',
+    'Polygon': '#8247E5',
+    'Avalanche': '#E84142',
+    'Litecoin': '#345D9D',
+    'XRP': '#23292F',
+    'TON': '#0088CC'
   };
 
   const formatCurrency = (amount) => {
@@ -353,97 +456,120 @@ export default function PaymentMethod() {
             <div style={{
               padding: isMobile ? '1.5rem' : '2rem'
             }}>
-              {method === 'wire' && bankDetails && (
-                <>
-                  <h3 style={{
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    color: '#1a365d',
-                    margin: '0 0 1rem 0'
-                  }}>
-                    Bank Details
-                  </h3>
+              {/* Loading State */}
+              {loadingDetails && (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '3rem 1rem'
+                }}>
                   <div style={{
-                    display: 'grid',
-                    gap: '0.75rem'
+                    width: '40px',
+                    height: '40px',
+                    border: '3px solid #e5e7eb',
+                    borderTop: '3px solid #059669',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    marginBottom: '1rem'
+                  }} />
+                  <p style={{
+                    fontSize: '0.95rem',
+                    color: '#64748b',
+                    margin: 0
                   }}>
-                    {[
-                      { label: 'Bank Name', value: bankDetails.name || 'Oakline Bank' },
-                      { label: 'Routing Number', value: bankDetails.routing_number || '075915826' },
-                      { label: 'SWIFT Code', value: bankDetails.swift_code || 'OAKLUS33' },
-                      { label: 'Bank Address', value: bankDetails.address || '12201 N May Avenue, Oklahoma City, OK 73120' },
-                      { label: 'Reference/Memo', value: user?.id?.slice(0, 8).toUpperCase() || 'N/A' }
-                    ].map((item) => (
-                      <div key={item.label} style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '0.875rem 1rem',
-                        backgroundColor: '#f8fafc',
-                        borderRadius: '10px',
-                        border: '1px solid #e5e7eb'
-                      }}>
-                        <div>
-                          <p style={{
-                            fontSize: '0.75rem',
-                            color: '#64748b',
-                            margin: '0 0 0.125rem 0',
-                            fontWeight: '500'
-                          }}>
-                            {item.label}
-                          </p>
-                          <p style={{
-                            fontSize: '0.95rem',
-                            color: '#1e293b',
-                            margin: 0,
-                            fontWeight: '600'
-                          }}>
-                            {item.value}
-                          </p>
-                        </div>
-                        <CopyButton text={item.value} label={item.label} />
-                      </div>
-                    ))}
-                  </div>
-                </>
+                    Loading payment details...
+                  </p>
+                </div>
               )}
 
-              {method === 'crypto' && (
+              {/* Wire Transfer - Contact Bank */}
+              {!loadingDetails && method === 'wire' && (
                 <>
-                  <h3 style={{
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    color: '#1a365d',
-                    margin: '0 0 1rem 0'
-                  }}>
-                    Cryptocurrency Options
-                  </h3>
-                  <p style={{
-                    fontSize: '0.9rem',
-                    color: '#64748b',
-                    margin: '0 0 1rem 0'
-                  }}>
-                    Contact our support team at <a href="mailto:crypto@theoaklinebank.com" style={{ color: '#059669', fontWeight: '500' }}>crypto@theoaklinebank.com</a> to receive your personalized wallet address for Bitcoin, Ethereum, USDT, or other supported cryptocurrencies.
-                  </p>
                   <div style={{
-                    backgroundColor: '#f0fdf4',
-                    borderRadius: '10px',
-                    padding: '1rem',
-                    border: '1px solid #bbf7d0'
+                    backgroundColor: '#f0f9ff',
+                    border: '2px solid #0ea5e9',
+                    borderRadius: '12px',
+                    padding: '1.5rem',
+                    textAlign: 'center'
                   }}>
+                    <div style={{
+                      width: '60px',
+                      height: '60px',
+                      backgroundColor: '#e0f2fe',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 1rem',
+                      fontSize: '1.75rem'
+                    }}>
+                      📞
+                    </div>
+                    <h3 style={{
+                      fontSize: '1.125rem',
+                      fontWeight: '700',
+                      color: '#0c4a6e',
+                      margin: '0 0 0.75rem 0'
+                    }}>
+                      Contact Us for Wire Transfer Details
+                    </h3>
                     <p style={{
-                      fontSize: '0.875rem',
-                      color: '#15803d',
-                      margin: 0,
+                      fontSize: '0.9rem',
+                      color: '#0369a1',
+                      margin: '0 0 1.25rem 0',
                       lineHeight: '1.6'
                     }}>
-                      <strong>Supported:</strong> Bitcoin (BTC), Ethereum (ETH), Tether (USDT), USD Coin (USDC), and more. Exchange rates are calculated at the time of confirmation.
+                      To receive wire transfer instructions and bank account details for your payment, please contact our support team. We will provide you with the specific account information for your transaction.
                     </p>
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem',
+                      alignItems: 'center'
+                    }}>
+                      <a href={`mailto:${bankDetails?.email_support || bankDetails?.email_contact || 'contact-us@theoaklinebank.com'}`} style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.75rem 1.5rem',
+                        backgroundColor: '#0284c7',
+                        color: '#ffffff',
+                        borderRadius: '10px',
+                        textDecoration: 'none',
+                        fontWeight: '600',
+                        fontSize: '0.95rem'
+                      }}>
+                        ✉️ {bankDetails?.email_support || bankDetails?.email_contact || 'contact-us@theoaklinebank.com'}
+                      </a>
+                      {bankDetails?.phone && (
+                        <a href={`tel:${bankDetails.phone}`} style={{
+                          color: '#0369a1',
+                          fontSize: '0.9rem',
+                          fontWeight: '500',
+                          textDecoration: 'none'
+                        }}>
+                          📱 {bankDetails.phone}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{
+                    marginTop: '1rem',
+                    padding: '1rem',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '10px',
+                    border: '1px solid #e5e7eb'
+                  }}>
+                    <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0 0 0.25rem 0', fontWeight: '500' }}>Your Reference Number</p>
+                    <p style={{ fontSize: '1rem', color: '#1e293b', margin: 0, fontWeight: '700' }}>{user?.id?.slice(0, 8).toUpperCase() || 'N/A'}</p>
                   </div>
                 </>
               )}
 
-              {method === 'zelle' && (
+              {/* Cryptocurrency - Show crypto types and wallets */}
+              {!loadingDetails && method === 'crypto' && (
                 <>
                   <h3 style={{
                     fontSize: '1rem',
@@ -451,98 +577,312 @@ export default function PaymentMethod() {
                     color: '#1a365d',
                     margin: '0 0 1rem 0'
                   }}>
-                    Zelle Payment Details
+                    Select Cryptocurrency
                   </h3>
-                  <div style={{
-                    display: 'grid',
-                    gap: '0.75rem'
-                  }}>
-                    {[
-                      { label: 'Zelle Email', value: bankDetails?.email_billing || 'payments@theoaklinebank.com' },
-                      { label: 'Reference/Memo', value: user?.id?.slice(0, 8).toUpperCase() || 'N/A' }
-                    ].map((item) => (
-                      <div key={item.label} style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '0.875rem 1rem',
-                        backgroundColor: '#f8fafc',
-                        borderRadius: '10px',
-                        border: '1px solid #e5e7eb'
+                  
+                  {cryptoAssets.length === 0 ? (
+                    <p style={{ fontSize: '0.9rem', color: '#64748b' }}>No cryptocurrencies available at this time.</p>
+                  ) : (
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                      gap: '0.75rem',
+                      marginBottom: '1.5rem'
+                    }}>
+                      {cryptoAssets.map((asset) => {
+                        const wallet = getWalletForCrypto(asset.crypto_type, asset.network_type);
+                        if (!wallet) return null;
+                        
+                        return (
+                          <button
+                            key={asset.id}
+                            onClick={() => setSelectedCrypto(selectedCrypto?.id === asset.id ? null : asset)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.75rem',
+                              padding: '1rem',
+                              backgroundColor: selectedCrypto?.id === asset.id ? '#ecfdf5' : '#ffffff',
+                              border: selectedCrypto?.id === asset.id ? '2px solid #059669' : '1px solid #e5e7eb',
+                              borderRadius: '12px',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <span style={{
+                              width: '40px',
+                              height: '40px',
+                              backgroundColor: cryptoColors[asset.crypto_type] || '#64748b',
+                              color: '#ffffff',
+                              borderRadius: '10px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.25rem',
+                              fontWeight: '700'
+                            }}>
+                              {cryptoIcons[asset.crypto_type] || asset.crypto_type[0]}
+                            </span>
+                            <div style={{ flex: 1 }}>
+                              <p style={{
+                                fontSize: '0.95rem',
+                                fontWeight: '600',
+                                color: '#1a365d',
+                                margin: '0 0 0.125rem 0'
+                              }}>
+                                {asset.crypto_type}
+                              </p>
+                              <p style={{
+                                fontSize: '0.75rem',
+                                color: '#64748b',
+                                margin: 0
+                              }}>
+                                {asset.network_type}
+                              </p>
+                            </div>
+                            {selectedCrypto?.id === asset.id && (
+                              <span style={{ color: '#059669', fontSize: '1.25rem' }}>✓</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Show wallet address when crypto is selected */}
+                  {selectedCrypto && (
+                    <div style={{
+                      backgroundColor: '#f0fdf4',
+                      borderRadius: '12px',
+                      padding: '1.25rem',
+                      border: '2px solid #22c55e'
+                    }}>
+                      <h4 style={{
+                        fontSize: '0.95rem',
+                        fontWeight: '600',
+                        color: '#15803d',
+                        margin: '0 0 1rem 0'
                       }}>
-                        <div>
+                        Send {selectedCrypto.crypto_type} to this address
+                      </h4>
+                      <div style={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '8px',
+                        padding: '1rem',
+                        marginBottom: '0.75rem'
+                      }}>
+                        <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 0.25rem 0', fontWeight: '500' }}>Network</p>
+                        <p style={{ fontSize: '0.9rem', color: '#1e293b', margin: '0 0 0.75rem 0', fontWeight: '600' }}>{selectedCrypto.network_type}</p>
+                        <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 0.25rem 0', fontWeight: '500' }}>Wallet Address</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <p style={{
-                            fontSize: '0.75rem',
-                            color: '#64748b',
-                            margin: '0 0 0.125rem 0',
-                            fontWeight: '500'
-                          }}>
-                            {item.label}
-                          </p>
-                          <p style={{
-                            fontSize: '0.95rem',
+                            fontSize: '0.85rem',
                             color: '#1e293b',
                             margin: 0,
-                            fontWeight: '600'
+                            fontWeight: '600',
+                            wordBreak: 'break-all',
+                            flex: 1
                           }}>
-                            {item.value}
+                            {getWalletForCrypto(selectedCrypto.crypto_type, selectedCrypto.network_type)?.wallet_address || 'N/A'}
                           </p>
+                          <CopyButton 
+                            text={getWalletForCrypto(selectedCrypto.crypto_type, selectedCrypto.network_type)?.wallet_address || ''} 
+                            label="wallet" 
+                          />
                         </div>
-                        <CopyButton text={item.value} label={item.label} />
+                        {getWalletForCrypto(selectedCrypto.crypto_type, selectedCrypto.network_type)?.memo && (
+                          <>
+                            <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0.75rem 0 0.25rem 0', fontWeight: '500' }}>Memo/Tag (Required)</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <p style={{ fontSize: '0.9rem', color: '#dc2626', margin: 0, fontWeight: '700' }}>
+                                {getWalletForCrypto(selectedCrypto.crypto_type, selectedCrypto.network_type)?.memo}
+                              </p>
+                              <CopyButton 
+                                text={getWalletForCrypto(selectedCrypto.crypto_type, selectedCrypto.network_type)?.memo || ''} 
+                                label="memo" 
+                              />
+                            </div>
+                          </>
+                        )}
                       </div>
-                    ))}
+                      <p style={{
+                        fontSize: '0.8rem',
+                        color: '#166534',
+                        margin: 0,
+                        lineHeight: '1.5'
+                      }}>
+                        Send exactly <strong>{formatCurrency(freezeAmount)}</strong> worth of {selectedCrypto.crypto_type}. Exchange rates are calculated at time of confirmation.
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Zelle - Contact Bank */}
+              {!loadingDetails && method === 'zelle' && (
+                <>
+                  <div style={{
+                    backgroundColor: '#faf5ff',
+                    border: '2px solid #a855f7',
+                    borderRadius: '12px',
+                    padding: '1.5rem',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{
+                      width: '60px',
+                      height: '60px',
+                      backgroundColor: '#f3e8ff',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 1rem',
+                      fontSize: '1.75rem'
+                    }}>
+                      💸
+                    </div>
+                    <h3 style={{
+                      fontSize: '1.125rem',
+                      fontWeight: '700',
+                      color: '#581c87',
+                      margin: '0 0 0.75rem 0'
+                    }}>
+                      Contact Us for Zelle Payment Details
+                    </h3>
+                    <p style={{
+                      fontSize: '0.9rem',
+                      color: '#7e22ce',
+                      margin: '0 0 1.25rem 0',
+                      lineHeight: '1.6'
+                    }}>
+                      To receive the Zelle payment email or phone number for your transaction, please contact our support team. We will provide you with the specific details for your payment.
+                    </p>
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem',
+                      alignItems: 'center'
+                    }}>
+                      <a href={`mailto:${bankDetails?.email_support || bankDetails?.email_contact || 'contact-us@theoaklinebank.com'}`} style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.75rem 1.5rem',
+                        backgroundColor: '#9333ea',
+                        color: '#ffffff',
+                        borderRadius: '10px',
+                        textDecoration: 'none',
+                        fontWeight: '600',
+                        fontSize: '0.95rem'
+                      }}>
+                        ✉️ {bankDetails?.email_support || bankDetails?.email_contact || 'contact-us@theoaklinebank.com'}
+                      </a>
+                      {bankDetails?.phone && (
+                        <a href={`tel:${bankDetails.phone}`} style={{
+                          color: '#7e22ce',
+                          fontSize: '0.9rem',
+                          fontWeight: '500',
+                          textDecoration: 'none'
+                        }}>
+                          📱 {bankDetails.phone}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{
+                    marginTop: '1rem',
+                    padding: '1rem',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '10px',
+                    border: '1px solid #e5e7eb'
+                  }}>
+                    <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0 0 0.25rem 0', fontWeight: '500' }}>Your Reference Number</p>
+                    <p style={{ fontSize: '1rem', color: '#1e293b', margin: 0, fontWeight: '700' }}>{user?.id?.slice(0, 8).toUpperCase() || 'N/A'}</p>
                   </div>
                 </>
               )}
 
-              {method === 'cashapp' && (
+              {/* Cash App - Contact Bank */}
+              {!loadingDetails && method === 'cashapp' && (
                 <>
-                  <h3 style={{
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    color: '#1a365d',
-                    margin: '0 0 1rem 0'
-                  }}>
-                    Cash App Payment Details
-                  </h3>
                   <div style={{
-                    display: 'grid',
-                    gap: '0.75rem'
+                    backgroundColor: '#f0fdf4',
+                    border: '2px solid #22c55e',
+                    borderRadius: '12px',
+                    padding: '1.5rem',
+                    textAlign: 'center'
                   }}>
-                    {[
-                      { label: '$Cashtag', value: '$OaklineBank' },
-                      { label: 'Reference/Memo', value: user?.id?.slice(0, 8).toUpperCase() || 'N/A' }
-                    ].map((item) => (
-                      <div key={item.label} style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
+                    <div style={{
+                      width: '60px',
+                      height: '60px',
+                      backgroundColor: '#dcfce7',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 1rem',
+                      fontSize: '1.75rem'
+                    }}>
+                      💵
+                    </div>
+                    <h3 style={{
+                      fontSize: '1.125rem',
+                      fontWeight: '700',
+                      color: '#14532d',
+                      margin: '0 0 0.75rem 0'
+                    }}>
+                      Contact Us for Cash App Payment Details
+                    </h3>
+                    <p style={{
+                      fontSize: '0.9rem',
+                      color: '#15803d',
+                      margin: '0 0 1.25rem 0',
+                      lineHeight: '1.6'
+                    }}>
+                      To receive the Cash App $Cashtag for your payment, please contact our support team. We will provide you with the specific payment details for your transaction.
+                    </p>
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem',
+                      alignItems: 'center'
+                    }}>
+                      <a href={`mailto:${bankDetails?.email_support || bankDetails?.email_contact || 'contact-us@theoaklinebank.com'}`} style={{
+                        display: 'inline-flex',
                         alignItems: 'center',
-                        padding: '0.875rem 1rem',
-                        backgroundColor: '#f8fafc',
+                        gap: '0.5rem',
+                        padding: '0.75rem 1.5rem',
+                        backgroundColor: '#16a34a',
+                        color: '#ffffff',
                         borderRadius: '10px',
-                        border: '1px solid #e5e7eb'
+                        textDecoration: 'none',
+                        fontWeight: '600',
+                        fontSize: '0.95rem'
                       }}>
-                        <div>
-                          <p style={{
-                            fontSize: '0.75rem',
-                            color: '#64748b',
-                            margin: '0 0 0.125rem 0',
-                            fontWeight: '500'
-                          }}>
-                            {item.label}
-                          </p>
-                          <p style={{
-                            fontSize: '0.95rem',
-                            color: '#1e293b',
-                            margin: 0,
-                            fontWeight: '600'
-                          }}>
-                            {item.value}
-                          </p>
-                        </div>
-                        <CopyButton text={item.value} label={item.label} />
-                      </div>
-                    ))}
+                        ✉️ {bankDetails?.email_support || bankDetails?.email_contact || 'contact-us@theoaklinebank.com'}
+                      </a>
+                      {bankDetails?.phone && (
+                        <a href={`tel:${bankDetails.phone}`} style={{
+                          color: '#15803d',
+                          fontSize: '0.9rem',
+                          fontWeight: '500',
+                          textDecoration: 'none'
+                        }}>
+                          📱 {bankDetails.phone}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{
+                    marginTop: '1rem',
+                    padding: '1rem',
+                    backgroundColor: '#f8fafc',
+                    borderRadius: '10px',
+                    border: '1px solid #e5e7eb'
+                  }}>
+                    <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0 0 0.25rem 0', fontWeight: '500' }}>Your Reference Number</p>
+                    <p style={{ fontSize: '1rem', color: '#1e293b', margin: 0, fontWeight: '700' }}>{user?.id?.slice(0, 8).toUpperCase() || 'N/A'}</p>
                   </div>
                 </>
               )}
