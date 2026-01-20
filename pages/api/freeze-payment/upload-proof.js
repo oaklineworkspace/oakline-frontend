@@ -53,6 +53,7 @@ export default async function handler(req, res) {
     const tx_hash = Array.isArray(fields.tx_hash) ? fields.tx_hash[0] : fields.tx_hash;
     const crypto_type = Array.isArray(fields.crypto_type) ? fields.crypto_type[0] : fields.crypto_type;
     const network_type = Array.isArray(fields.network_type) ? fields.network_type[0] : fields.network_type;
+    const wallet_address = Array.isArray(fields.wallet_address) ? fields.wallet_address[0] : fields.wallet_address;
     const file = Array.isArray(files.file) ? files.file[0] : files.file;
 
     if (!file) {
@@ -92,7 +93,7 @@ export default async function handler(req, res) {
         user_id: user.id,
         type: 'freeze_payment',
         title: 'Payment Proof Submitted',
-        message: `Your freeze payment proof of ${amount ? `$${parseFloat(amount).toLocaleString()}` : 'your balance'} has been submitted successfully. Our team will review it within 24-48 hours.`,
+        message: `Your payment proof of ${amount ? `$${parseFloat(amount).toLocaleString()}` : 'your balance'} has been submitted successfully. Our team will review it shortly.`,
         read: false,
         created_at: new Date().toISOString()
       }]);
@@ -105,6 +106,20 @@ export default async function handler(req, res) {
       .select('*')
       .limit(1)
       .single();
+
+    const submissionDate = new Date();
+    const formattedDate = submissionDate.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    const formattedTime = submissionDate.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      timeZoneName: 'short'
+    });
+    const receiptNumber = `RCP-${Date.now().toString(36).toUpperCase()}-${user.id.slice(0, 4).toUpperCase()}`;
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -122,69 +137,98 @@ export default async function handler(req, res) {
           </div>
 
           <div style="padding: 40px 32px;">
-            <h1 style="color: #1a365d; font-size: 24px; font-weight: 700; margin: 0 0 16px 0;">
-              Payment Proof Received
-            </h1>
+            <div style="text-align: center; margin-bottom: 32px;">
+              <div style="display: inline-block; background-color: #f0fdf4; border-radius: 50%; width: 64px; height: 64px; line-height: 64px; margin-bottom: 16px;">
+                <span style="font-size: 32px;">✓</span>
+              </div>
+              <h1 style="color: #166534; font-size: 24px; font-weight: 700; margin: 0 0 8px 0;">
+                Payment Proof Received
+              </h1>
+              <p style="color: #64748b; font-size: 14px; margin: 0;">
+                Receipt #${receiptNumber}
+              </p>
+            </div>
 
             <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
               Dear ${userName},
             </p>
 
             <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
-              We have received your payment proof for the balance restoration fee. Our verification team will review your submission within 24-48 business hours.
+              Thank you for submitting your payment documentation. We have successfully received your proof of payment for the balance restoration fee. Our verification team is reviewing your submission and will process it within the next few hours.
             </p>
 
-            <div style="background-color: #f0fdf4; border: 1px solid #22c55e; border-radius: 12px; padding: 24px; margin: 24px 0;">
-              <h3 style="color: #166534; font-size: 16px; font-weight: 600; margin: 0 0 16px 0;">Submission Details</h3>
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Payment Method:</td>
-                  <td style="padding: 8px 0; color: #1e293b; font-size: 14px; font-weight: 600; text-align: right;">${payment_method?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'N/A'}</td>
-                </tr>
-                ${amount ? `
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Amount:</td>
-                  <td style="padding: 8px 0; color: #1e293b; font-size: 14px; font-weight: 600; text-align: right;">$${parseFloat(amount).toLocaleString()}</td>
-                </tr>
-                ` : ''}
-                ${crypto_type ? `
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Cryptocurrency:</td>
-                  <td style="padding: 8px 0; color: #1e293b; font-size: 14px; font-weight: 600; text-align: right;">${crypto_type}</td>
-                </tr>
-                ` : ''}
-                ${network_type ? `
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Network:</td>
-                  <td style="padding: 8px 0; color: #1e293b; font-size: 14px; font-weight: 600; text-align: right;">${network_type}</td>
-                </tr>
-                ` : ''}
-                ${tx_hash ? `
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Transaction Hash:</td>
-                  <td style="padding: 8px 0; color: #1e293b; font-size: 12px; font-weight: 500; text-align: right; word-break: break-all;">${tx_hash}</td>
-                </tr>
-                ` : ''}
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Submitted:</td>
-                  <td style="padding: 8px 0; color: #1e293b; font-size: 14px; font-weight: 600; text-align: right;">${new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Reference:</td>
-                  <td style="padding: 8px 0; color: #1e293b; font-size: 14px; font-weight: 600; text-align: right;">${user.id.slice(0, 8).toUpperCase()}</td>
-                </tr>
-              </table>
+            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin: 24px 0;">
+              <div style="background-color: #1a365d; padding: 16px 24px;">
+                <h3 style="color: #ffffff; font-size: 16px; font-weight: 600; margin: 0;">Payment Receipt</h3>
+              </div>
+              <div style="padding: 24px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 12px 0; color: #64748b; font-size: 14px;">Date</td>
+                    <td style="padding: 12px 0; color: #1e293b; font-size: 14px; font-weight: 600; text-align: right;">${formattedDate}</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 12px 0; color: #64748b; font-size: 14px;">Time</td>
+                    <td style="padding: 12px 0; color: #1e293b; font-size: 14px; font-weight: 600; text-align: right;">${formattedTime}</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 12px 0; color: #64748b; font-size: 14px;">Payment Method</td>
+                    <td style="padding: 12px 0; color: #1e293b; font-size: 14px; font-weight: 600; text-align: right;">${payment_method?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'N/A'}</td>
+                  </tr>
+                  ${amount ? `
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 12px 0; color: #64748b; font-size: 14px;">Amount Submitted</td>
+                    <td style="padding: 12px 0; color: #166534; font-size: 16px; font-weight: 700; text-align: right;">$${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  </tr>
+                  ` : ''}
+                  ${crypto_type ? `
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 12px 0; color: #64748b; font-size: 14px;">Cryptocurrency</td>
+                    <td style="padding: 12px 0; color: #1e293b; font-size: 14px; font-weight: 600; text-align: right;">${crypto_type}</td>
+                  </tr>
+                  ` : ''}
+                  ${network_type ? `
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 12px 0; color: #64748b; font-size: 14px;">Network</td>
+                    <td style="padding: 12px 0; color: #1e293b; font-size: 14px; font-weight: 600; text-align: right;">${network_type}</td>
+                  </tr>
+                  ` : ''}
+                  ${wallet_address ? `
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 12px 0; color: #64748b; font-size: 14px;">Wallet Address</td>
+                    <td style="padding: 12px 0; color: #1e293b; font-size: 11px; font-weight: 500; text-align: right; word-break: break-all; font-family: 'Courier New', monospace;">${wallet_address}</td>
+                  </tr>
+                  ` : ''}
+                  ${tx_hash ? `
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 12px 0; color: #64748b; font-size: 14px;">Transaction Hash</td>
+                    <td style="padding: 12px 0; color: #1e293b; font-size: 11px; font-weight: 500; text-align: right; word-break: break-all; font-family: 'Courier New', monospace;">${tx_hash}</td>
+                  </tr>
+                  ` : ''}
+                  <tr>
+                    <td style="padding: 12px 0; color: #64748b; font-size: 14px;">Reference Number</td>
+                    <td style="padding: 12px 0; color: #1e293b; font-size: 14px; font-weight: 600; text-align: right;">${user.id.slice(0, 8).toUpperCase()}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <div style="background-color: #f0fdf4; border: 1px solid #22c55e; border-radius: 8px; padding: 16px; margin: 24px 0;">
+              <p style="color: #166534; font-size: 14px; margin: 0; display: flex; align-items: flex-start;">
+                <span style="margin-right: 8px;">✓</span>
+                <span><strong>Status:</strong> Your payment proof has been received and is pending verification. You will receive a confirmation once your account balance has been restored.</span>
+              </p>
             </div>
 
             <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 24px 0;">
               <p style="color: #1e40af; font-size: 14px; margin: 0;">
                 <strong>What happens next?</strong><br/>
-                Once your payment is verified, your account balance will be unfrozen and you will receive a confirmation email. This typically takes 24-48 business hours.
+                Our verification team will review your payment documentation. Once confirmed, your account balance will be unfrozen and fully accessible. This process typically completes within a few hours.
               </p>
             </div>
 
             <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 24px 0 0 0;">
-              If you have any questions about your submission, please contact our support team.
+              Please retain this email for your records. If you have any questions regarding your submission, our support team is available to assist you.
             </p>
           </div>
 

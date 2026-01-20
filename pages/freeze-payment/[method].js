@@ -299,6 +299,10 @@ export default function PaymentMethod() {
       if (selectedCrypto) {
         formData.append('crypto_type', selectedCrypto.crypto_type);
         formData.append('network_type', selectedCrypto.network_type);
+        const wallet = getWalletForCrypto(selectedCrypto.crypto_type, selectedCrypto.network_type);
+        if (wallet?.wallet_address) {
+          formData.append('wallet_address', wallet.wallet_address);
+        }
       }
 
       const response = await fetch('/api/freeze-payment/upload-proof', {
