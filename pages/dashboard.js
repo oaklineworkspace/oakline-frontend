@@ -1617,14 +1617,15 @@ function DashboardContent() {
                     <span style={styles.expandedDetailLabel}>Status:</span>
                     <span style={styles.expandedDetailValue}>
                       <span style={{
-                        backgroundColor: '#d1fae5',
-                        color: '#059669',
+                        backgroundColor: account.status === 'active' ? '#d1fae5' : (account.status?.includes('pending') ? '#fffbe6' : '#f5f5f5'),
+                        color: account.status === 'active' ? '#059669' : (account.status?.includes('pending') ? '#d48806' : '#595959'),
                         padding: '0.25rem 0.75rem',
                         borderRadius: '6px',
                         fontSize: '0.85rem',
-                        fontWeight: '600'
+                        fontWeight: '600',
+                        textTransform: 'capitalize'
                       }}>
-                        Active
+                        {account.status ? account.status.replace(/_/g, ' ') : 'Active'}
                       </span>
                     </span>
                   </div>

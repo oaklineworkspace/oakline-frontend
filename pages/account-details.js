@@ -980,11 +980,21 @@ export default function AccountDetails() {
                   <div style={{
                     ...styles.infoValue,
                     color: selectedAccount.status === 'active' ? '#059669' : 
-                           selectedAccount.status === 'suspended' ? '#ef4444' :
-                           selectedAccount.status === 'closed' ? '#6b7280' : '#f59e0b',
-                    textTransform: 'capitalize'
+                           (selectedAccount.status?.includes('pending') ? '#d48806' : 
+                           (selectedAccount.status === 'suspended' ? '#ef4444' :
+                           (selectedAccount.status === 'closed' ? '#6b7280' : '#f59e0b'))),
+                    backgroundColor: selectedAccount.status === 'active' ? '#d1fae5' : 
+                                    (selectedAccount.status?.includes('pending') ? '#fffbe6' : 
+                                    (selectedAccount.status === 'suspended' ? '#fee2e2' :
+                                    (selectedAccount.status === 'closed' ? '#f3f4f6' : '#fef3c7'))),
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '6px',
+                    display: 'inline-block',
+                    textTransform: 'capitalize',
+                    fontWeight: '600',
+                    fontSize: '0.85rem'
                   }}>
-                    {selectedAccount.status || 'Pending'}
+                    {selectedAccount.status ? selectedAccount.status.replace(/_/g, ' ') : 'Pending'}
                   </div>
                 </div>
                 <div style={styles.infoItem}>
